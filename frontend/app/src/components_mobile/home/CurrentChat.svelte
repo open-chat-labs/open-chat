@@ -46,6 +46,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import ExternalContent from "./ExternalContent.svelte";
+    import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
     import Footer from "./Footer.svelte";
     import MemeBuilder from "./MemeBuilder.svelte";
     import { keyboard } from "@stores/keyboard.svelte";
@@ -374,6 +375,7 @@
             selectedChatSummary={chat}
             hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
     {/if}
+    <ActiveCallSummary />
     {#if externalUrl !== undefined}
         <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
     {:else}

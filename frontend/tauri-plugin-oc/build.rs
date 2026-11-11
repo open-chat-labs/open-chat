@@ -36,6 +36,7 @@ const COMMANDS: &[&str] = &[
     "set_call_end_token",
     "native_call_join",
     "native_call_leave",
+    "native_call_control",
     "get_store_update",
     "haptic",
     "share",

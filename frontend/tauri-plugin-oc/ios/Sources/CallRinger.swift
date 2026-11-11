@@ -8,20 +8,21 @@ import Tauri
 import UIKit
 import UserNotifications
 
-// Rings for a call through PushKit and CallKit. The rules are in CallCore's CallRegistry; this is
-// the iOS around them.
+// Rings for a call through PushKit and CallKit, and holds the CallKit call for every native call,
+// however it started. The rules are in CallCore's CallRegistry; this is the iOS around them.
 final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
     static let shared = CallRinger()
 
     private static let pollInterval: TimeInterval = 2
 
     private let provider: CXProvider
+    private let callController = CXCallController()
     private let registry = CallRegistry()
     private var pushRegistry: PKPushRegistry?
     private var rings: [UUID: IncomingCall] = [:]
     private var pollers: [UUID: Task<Void, Never>] = [:]
-    // The ring the user answered, while its call lasts
-    private var answered: UUID?
+    // What CallKit last showed for the call in progress
+    private var shownMuted = false
     private(set) var voipToken: String?
 
     private override init() {
@@ -156,18 +157,61 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         provider.reportCall(with: uuid, endedAt: nil, reason: .answeredElsewhere)
     }
 
-    // The native call this ring became has finished, however it ended
-    func nativeCallFinished() {
-        guard let uuid = answered else { return }
-        answered = nil
+    // MARK: The call in progress
+
+    // A call started or joined in the app gets a CallKit call too. Nil when one is already in
+    // progress, such as a ring answered here that the web layer is now catching up with.
+    func startInAppCall(title: String, video: Bool) -> UUID? {
+        let uuid = UUID()
+        guard registry.callStarted(uuid) else { return nil }
+        shownMuted = false
+        let start = CXStartCallAction(call: uuid, handle: CXHandle(type: .generic, value: title))
+        start.isVideo = video
+        start.contactIdentifier = title
+        callController.request(CXTransaction(action: start)) { error in
+            if let error { NSLog("[CallRinger] start failed: %@", "\(error)") }
+        }
+        return uuid
+    }
+
+    func inAppCallConnected(_ uuid: UUID) {
+        guard registry.activeCall == uuid else { return }
+        provider.reportOutgoingCall(with: uuid, connectedAt: nil)
+    }
+
+    // #10402 invariant A: the native call for `uuid` has finished, however it ended
+    func nativeCallFinished(_ uuid: UUID) {
+        guard registry.nativeEnded(uuid) else { return }
         provider.reportCall(with: uuid, endedAt: nil, reason: .remoteEnded)
+    }
+
+    // The mic was muted or unmuted in the app, so the system call screen shows the same
+    func localMuteChanged(_ muted: Bool) {
+        guard let uuid = registry.activeCall, muted != shownMuted else { return }
+        shownMuted = muted
+        callController.request(CXTransaction(action: CXSetMutedCallAction(call: uuid, muted: muted))) { error in
+            if let error { NSLog("[CallRinger] mute failed: %@", "\(error)") }
+        }
+    }
+
+    private static func configureAudioSession() {
+        try? AVAudioSession.sharedInstance().setCategory(
+            .playAndRecord, mode: .voiceChat, options: [.allowBluetoothHFP])
     }
 
     // MARK: CXProviderDelegate
 
     func providerDidReset(_ provider: CXProvider) {
         rings.keys.forEach(finish)
-        answered = nil
+        if let uuid = registry.activeCall, registry.systemEnded(uuid) {
+            NativeCallBridge.shared.hangUp()
+        }
+    }
+
+    func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
+        Self.configureAudioSession()
+        action.fulfill()
+        provider.reportOutgoingCall(with: action.callUUID, startedConnectingAt: nil)
     }
 
     func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
@@ -176,23 +220,25 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
             return
         }
         finish(action.callUUID)
-        answered = action.callUUID
-        try? AVAudioSession.sharedInstance().setCategory(
-            .playAndRecord, mode: .voiceChat, options: [.allowBluetoothHFP])
+        // A call already in progress was ended first, with End & Accept
+        guard registry.callStarted(action.callUUID) else {
+            action.fail()
+            return
+        }
+        shownMuted = false
+        Self.configureAudioSession()
         action.fulfill()
 
-        NativeCallBridge.shared.answer(call) { [weak self] joined in
-            guard let self else { return }
-            if !joined, self.answered == action.callUUID {
-                self.nativeCallFinished()
-            }
+        let uuid = action.callUUID
+        NativeCallBridge.shared.answer(call, callId: uuid) { [weak self] joined in
+            if !joined { self?.nativeCallFinished(uuid) }
         }
     }
 
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
         action.fulfill()
-        if action.callUUID == answered {
-            answered = nil
+        // #10402 invariant A: ended on the system call screen, so the native call leaves
+        if registry.systemEnded(action.callUUID) {
             NativeCallBridge.shared.hangUp()
             return
         }
@@ -202,7 +248,10 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
     }
 
     func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
-        NativeCallBridge.shared.setMuted(action.isMuted)
+        if action.callUUID == registry.activeCall {
+            shownMuted = action.isMuted
+            NativeCallBridge.shared.setMuted(action.isMuted)
+        }
         action.fulfill()
     }
 

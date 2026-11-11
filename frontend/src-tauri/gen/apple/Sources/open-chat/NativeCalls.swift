@@ -11,6 +11,8 @@ final class NativeCalls: NSObject {
     private static var shared: NativeCalls?
     private var call: NativeCallController?
     private var screen: UIViewController?
+    // A join that came while the previous call was still leaving, as with End & Accept
+    private var pendingJoin: [AnyHashable: Any]?
 
     @objc static func start() {
         MainActor.assumeIsolated {
@@ -34,9 +36,10 @@ final class NativeCalls: NSObject {
         center.addObserver(forName: .init("ocNativeCallHangUp"), object: nil, queue: .main) { _ in
             Task { @MainActor in self.call?.hangUp() }
         }
-        center.addObserver(forName: .init("ocNativeCallMute"), object: nil, queue: .main) { note in
-            let muted = note.userInfo?["muted"] as? Bool ?? false
-            Task { @MainActor in self.call?.setMuted(muted) }
+        center.addObserver(forName: .init("ocNativeCallControl"), object: nil, queue: .main) { note in
+            let kind = note.userInfo?["kind"] as? String
+            let on = note.userInfo?["on"] as? Bool ?? false
+            Task { @MainActor in self.control(kind, on: on) }
         }
         center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
             Task { @MainActor in self.call?.applicationBecameActive() }
@@ -54,6 +57,13 @@ final class NativeCalls: NSObject {
             call.whenJoined(reply)
             return
         }
+        if let call, call.isEnding {
+            if let replaced = pendingJoin?["reply"] as? ([String: Any]) -> Void {
+                replaced(["error": "Another call was joined"])
+            }
+            pendingJoin = info
+            return
+        }
         guard call == nil else {
             reply(["error": "A call is already running"])
             return
@@ -68,12 +78,15 @@ final class NativeCalls: NSObject {
             cameraOn: info["cameraOn"] as? Bool ?? false,
             micOn: info["micOn"] as? Bool ?? true,
             cameraWhenActive: info["cameraWhenActive"] as? Bool ?? false,
-            broadcast: info["broadcast"] as? Bool ?? false
+            broadcast: info["broadcast"] as? Bool ?? false,
+            callId: info["callId"] as? String,
+            audioDevice: AudioDeviceType(named: info["audioDevice"] as? String) ?? .earpiece
         )
         let call = NativeCallController(settings: settings) { event in
             NotificationCenter.default.post(name: .init("ocNativeCallEvent"), object: nil, userInfo: event)
         }
         call.onFinished = { [weak self] in self?.finish() }
+        call.onMinimise = { [weak self] in self?.minimise() }
         self.call = call
         present(call)
         UIApplication.shared.isIdleTimerDisabled = settings.video
@@ -86,6 +99,25 @@ final class NativeCalls: NSObject {
                 reply(["error": "\(error)"])
             }
         }
+    }
+
+    private func control(_ kind: String?, on: Bool) {
+        guard let call else { return }
+        switch kind {
+        case "mic": call.setMicOn(on)
+        case "camera": call.setCameraOn(on)
+        case "speaker": call.setSpeakerOn(on)
+        case "show": if screen == nil { present(call) }
+        default: break
+        }
+    }
+
+    // Back to the chat. The web layer shows the call as minimised and asks for the screen back.
+    private func minimise() {
+        guard let screen, let call else { return }
+        self.screen = nil
+        screen.dismiss(animated: true)
+        call.minimised()
     }
 
     private func present(_ call: NativeCallController) {
@@ -109,6 +141,10 @@ final class NativeCalls: NSObject {
         UIApplication.shared.isIdleTimerDisabled = false
         screen?.dismiss(animated: true)
         screen = nil
+        if let next = pendingJoin {
+            pendingJoin = nil
+            join(next)
+        }
     }
 }
 
@@ -123,6 +159,33 @@ struct NativeCallSettings {
     // A video call answered on a locked phone, where iOS won't give it the camera yet
     let cameraWhenActive: Bool
     let broadcast: Bool
+    // The CallKit call, handed back when the call leaves
+    let callId: String?
+    // Where the audio starts (#10402 invariant B, decided in the plugin)
+    let audioDevice: AudioDeviceType
+}
+
+extension AudioDeviceType {
+    init?(named name: String?) {
+        switch name {
+        case "earpiece": self = .earpiece
+        case "speakerphone": self = .speakerphone
+        case "bluetooth": self = .bluetooth
+        case "wired": self = .wired
+        default: return nil
+        }
+    }
+
+    // What the system routed the call to, when it's somewhere a call can go
+    init?(port: AVAudioSession.Port?) {
+        switch port {
+        case .builtInSpeaker: self = .speakerphone
+        case .builtInReceiver: self = .earpiece
+        case .bluetoothHFP, .bluetoothA2DP, .bluetoothLE: self = .bluetooth
+        case .headphones, .headsetMic, .usbAudio: self = .wired
+        default: return nil
+        }
+    }
 }
 
 struct NativeCallTile: Identifiable {
@@ -144,6 +207,9 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     @Published private(set) var micDenied = false
     @Published private(set) var cameraDenied = false
     var onFinished: (() -> Void)?
+    var onMinimise: (() -> Void)?
+    // Leaving, so a new call has to wait for this one to finish
+    private(set) var isEnding = false
 
     private let client = CallClient()
     private let send: ([String: Any]) -> Void
@@ -152,6 +218,10 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     private var joinWaiters: [([String: Any]) -> Void] = []
     private var cameraWanted: Bool
     private var leaveRequested = false
+    private var routeObserver: NSObjectProtocol?
+    // The device Daily was last asked for. Daily's own preferredAudioDevice lags while a request is
+    // in flight, so a Speaker press made then would be lost.
+    private var requestedDevice: AudioDeviceType?
 
     init(settings: NativeCallSettings, send: @escaping ([String: Any]) -> Void) {
         self.settings = settings
@@ -159,11 +229,18 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
         micOn = settings.micOn && !settings.broadcast
         cameraOn = settings.cameraOn && !settings.broadcast
         cameraWanted = settings.cameraWhenActive
-        // Voice calls are held to the ear, video calls are watched
-        speakerOn = settings.video
+        speakerOn = settings.audioDevice == .speakerphone
         super.init()
         client.delegate = self
+        routeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt)
+                .flatMap(AVAudioSession.RouteChangeReason.init(rawValue:))
+            Task { @MainActor in self?.routeChanged(reason) }
+        }
     }
+
 
     func join() async throws -> [String: Any] {
         if !settings.broadcast {
@@ -186,7 +263,7 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
             leave()
             return currentState()
         }
-        try? await client.setPreferredAudioDevice(speakerOn ? .speakerphone : .earpiece)
+        await prefer(settings.audioDevice)
         refreshTiles()
         let state = currentState()
         joinResult = .success(state)
@@ -216,9 +293,27 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
         toggleCamera()
     }
 
-    func setMuted(_ muted: Bool) {
-        guard micOn == muted else { return }
+    func setMicOn(_ on: Bool) {
+        guard micOn != on else { return }
         toggleMic()
+    }
+
+    func setCameraOn(_ on: Bool) {
+        guard settings.video, cameraOn != on else { return }
+        toggleCamera()
+    }
+
+    func setSpeakerOn(_ on: Bool) {
+        guard speakerOn != on else { return }
+        toggleSpeaker()
+    }
+
+    func minimise() {
+        onMinimise?()
+    }
+
+    func minimised() {
+        send(["kind": "minimised"])
     }
 
     private func requestPermissions() async {
@@ -250,13 +345,46 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
 
     func toggleSpeaker() {
         speakerOn.toggle()
-        let device: AudioDeviceType = speakerOn ? .speakerphone : .earpiece
-        Task { try? await client.setPreferredAudioDevice(device) }
+        send(["kind": "route", "speaker": speakerOn])
+        let device: AudioDeviceType = speakerOn ? .speakerphone : (headset ?? .earpiece)
+        Task { await prefer(device) }
+    }
+
+    private func prefer(_ device: AudioDeviceType) async {
+        requestedDevice = device
+        try? await client.setPreferredAudioDevice(device)
+    }
+
+    // A headset still connected, for when the speaker is turned off
+    private var headset: AudioDeviceType? {
+        let ports = AVAudioSession.sharedInstance().currentRoute.outputs.map(\.portType)
+            + (AVAudioSession.sharedInstance().availableInputs ?? []).map(\.portType)
+        return ports.compactMap { AudioDeviceType(port: $0) }.first { $0 == .bluetooth || $0 == .wired }
+    }
+
+    // The system call screen's Speaker button, or a headset coming or going, moved the audio. The
+    // screen follows, and Daily is told so it doesn't move it back. Any reason counts: the Speaker
+    // button can arrive as a category change, as Daily reshapes the session around the override.
+    // Daily's own moves land on the device it was asked for, so following them changes nothing.
+    private func routeChanged(_ reason: AVAudioSession.RouteChangeReason?) {
+        let output = AVAudioSession.sharedInstance().currentRoute.outputs.first?.portType
+        NSLog("[NativeCall] route %@ reason %d", output?.rawValue ?? "none", Int(reason?.rawValue ?? 0))
+        guard joined, let device = AudioDeviceType(port: output) else { return }
+        let speaker = device == .speakerphone
+        if speakerOn != speaker {
+            speakerOn = speaker
+            send(["kind": "route", "speaker": speaker])
+        }
+        if requestedDevice != device {
+            NSLog("[NativeCall] following route to %@", "\(device)")
+            Task { await prefer(device) }
+        }
     }
 
     // The web layer runs a hang-up, as it knows whether this was the last person there. If it
     // doesn't answer, leave anyway.
     func hangUp() {
+        isEnding = true
         send(["kind": "hangup"])
         Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -265,6 +393,7 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     }
 
     func leave() {
+        isEnding = true
         // Not started yet, so join() has to act on this when it gets there
         if client.callState == .initialized {
             leaveRequested = true
@@ -282,7 +411,13 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
         finished = true
         joinWaiters.forEach { $0(["error": "The call ended"]) }
         joinWaiters = []
-        send(["kind": "left"])
+        if let routeObserver {
+            NotificationCenter.default.removeObserver(routeObserver)
+            self.routeObserver = nil
+        }
+        var left: [String: Any] = ["kind": "left"]
+        if let callId = settings.callId { left["callId"] = callId }
+        send(left)
         onFinished?()
     }
 

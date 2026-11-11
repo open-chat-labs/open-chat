@@ -40,6 +40,7 @@ Default permissions for the plugin
 - `allow-set-call-end-token`
 - `allow-native-call-join`
 - `allow-native-call-leave`
+- `allow-native-call-control`
 - `allow-get-store-update`
 - `allow-haptic`
 - `allow-get-window-insets`
@@ -597,6 +598,32 @@ Enables the minimize_app command without any pre-configured scope.
 <td>
 
 Denies the minimize_app command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-native-call-control`
+
+</td>
+<td>
+
+Enables the native_call_control command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-native-call-control`
+
+</td>
+<td>
+
+Denies the native_call_control command without any pre-configured scope.
 
 </td>
 </tr>

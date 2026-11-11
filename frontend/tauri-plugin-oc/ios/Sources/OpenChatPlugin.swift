@@ -251,6 +251,13 @@ class OpenChatPlugin: Plugin {
         invoke.resolve()
     }
 
+    @objc func nativeCallControl(_ invoke: Invoke) {
+        if let args = try? invoke.parseArgs(NativeCallControlArgs.self) {
+            NativeCallBridge.shared.control(args.kind, on: args.on)
+        }
+        invoke.resolve()
+    }
+
     @objc func setCallConfig(_ invoke: Invoke) {
         if let args = try? invoke.parseArgs(CallConfigArgs.self) {
             NativeCallBridge.shared.setConfig(videoBridgeUrl: args.videoBridgeUrl, username: args.username)

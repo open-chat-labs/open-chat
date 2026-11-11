@@ -37,6 +37,7 @@ permissions = [
     "allow-set-call-end-token",
     "allow-native-call-join",
     "allow-native-call-leave",
+    "allow-native-call-control",
     "allow-get-store-update",
     "allow-haptic",
     "allow-get-window-insets",

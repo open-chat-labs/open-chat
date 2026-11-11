@@ -1,5 +1,6 @@
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { addPluginListener, invoke, type PluginListener } from "@tauri-apps/api/core";
+import { nativeCallControl } from "./call_bridge";
 
 // iOS calls run in the shell, on the Daily iOS SDK with a native call screen (#10445), because
 // WebKit mutes the microphone during a CallKit call. This stands in for the Daily frame, so that
@@ -29,6 +30,8 @@ type NativeParticipant = {
 
 type NativeCallEvent =
     | { kind: "hangup" }
+    | { kind: "minimised" }
+    | { kind: "route"; speaker: boolean }
     | { kind: "left" }
     | { kind: "error"; message: string }
     | {
@@ -55,13 +58,25 @@ function parse<T>(raw: unknown): T {
     return JSON.parse((raw as { json: string }).json) as T;
 }
 
-// `onHangup` is the hang-up button on the native screen
-export function createNativeCall(start: NativeCallStart, onHangup: () => void): DailyCall {
+// What the native screen asks of the web layer
+export type NativeCallHooks = {
+    // the hang-up button
+    onHangup: () => void;
+    // the screen was minimised back to the chat
+    onMinimise: () => void;
+    // the audio route changed, from the screen or the system call controls
+    onRoute: (speaker: boolean) => void;
+};
+
+export function createNativeCall(start: NativeCallStart, hooks: NativeCallHooks): DailyCall {
     const handlers = new Map<string, Handler[]>();
     let listener: PluginListener | undefined;
     let local: NativeParticipant | undefined;
     let present = 0;
     let finished = false;
+    // The shell holds a join until the call it replaces has left (End & Accept), so events before
+    // this call has joined belong to that one
+    let joined = false;
 
     const emit = (name: string, ev?: unknown) => handlers.get(name)?.forEach((h) => h(ev));
     const leave = () => invoke<void>("plugin:oc|native_call_leave").catch(() => undefined);
@@ -71,9 +86,16 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
     };
 
     function onEvent(event: NativeCallEvent) {
+        if (!joined) return;
         switch (event.kind) {
             case "hangup":
-                onHangup();
+                hooks.onHangup();
+                break;
+            case "minimised":
+                hooks.onMinimise();
+                break;
+            case "route":
+                hooks.onRoute(event.speaker);
                 break;
             case "left":
                 // The shell holds one call at a time, so anything said after this concerns the next
@@ -101,14 +123,15 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
                 onEvent(parse<NativeCallEvent>(raw)),
             );
             try {
-                const joined = parse<{ local: NativeParticipant; present: number }>(
+                const state = parse<{ local: NativeParticipant; present: number }>(
                     await invoke("plugin:oc|native_call_join", start),
                 );
-                local = joined.local;
-                present = joined.present;
-                emit("joined-meeting", { participants: { local: toDaily(joined.local) } });
+                local = state.local;
+                present = state.present;
+                joined = true;
+                emit("joined-meeting", { participants: { local: toDaily(state.local) } });
                 // the state the frame's first update would give, such as having presence
-                emit("participant-updated", { participant: toDaily(joined.local) });
+                emit("participant-updated", { participant: toDaily(state.local) });
             } catch (e) {
                 stopListening();
                 throw e;
@@ -122,9 +145,17 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
         },
         participants: () => ({ local: local ? toDaily(local) : undefined }),
         participantCounts: () => ({ present, hidden: 0 }),
-        // The native screen has its own controls for these
-        setLocalAudio: () => call,
-        setLocalVideo: () => call,
+        // For the minimised call's strip. The native call reports the change back as a participant update.
+        localAudio: () => local?.audio ?? false,
+        localVideo: () => local?.video ?? false,
+        setLocalAudio: (on: boolean) => {
+            void nativeCallControl({ kind: "mic", on });
+            return call;
+        },
+        setLocalVideo: (on: boolean) => {
+            void nativeCallControl({ kind: "camera", on });
+            return call;
+        },
         setTheme: async () => undefined,
     };
     return call as unknown as DailyCall;

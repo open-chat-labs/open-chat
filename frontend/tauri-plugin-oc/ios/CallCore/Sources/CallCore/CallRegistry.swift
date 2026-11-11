@@ -71,12 +71,14 @@ public enum RingEnd: Equatable {
     public var isMissedCall: Bool { self == .timedOut || self == .callEnded }
 }
 
-// The ring rules with no iOS in them, a port of the Android CallRegistry. CallKit, PushKit and
-// the bridge are adapters around it. Called on the main thread only.
+// The ring rules with no iOS in them, a port of the Android CallRegistry, and the call in progress.
+// CallKit, PushKit and the bridge are adapters around it. Called on the main thread only.
 public final class CallRegistry {
     private let rememberLimit: Int
     private var ringing: [CallId: IncomingCall] = [:]
     private var finished: [CallId] = []
+    // The CallKit call of the native call in progress. The shell holds one call at a time.
+    public private(set) var activeCall: UUID?
 
     public init(rememberLimit: Int = 100) {
         self.rememberLimit = rememberLimit
@@ -108,6 +110,29 @@ public final class CallRegistry {
         guard let id = ringing.keys.first(where: { $0.messageId == messageId }) else { return nil }
         _ = end(id, as: .answeredHere)
         return id
+    }
+
+    // A native call is starting under the CallKit call `uuid`. False when one is already in progress.
+    public func callStarted(_ uuid: UUID) -> Bool {
+        guard activeCall == nil else { return false }
+        activeCall = uuid
+        return true
+    }
+
+    // #10402 invariant A: CallKit ended `uuid`. True when that is the call in progress, which the
+    // native call must now leave. Anything else has already ended on the native side.
+    public func systemEnded(_ uuid: UUID) -> Bool {
+        guard activeCall == uuid else { return false }
+        activeCall = nil
+        return true
+    }
+
+    // #10402 invariant A: the native call for `uuid` finished. True when CallKit still has it as the
+    // call in progress and must now be told it ended.
+    public func nativeEnded(_ uuid: UUID) -> Bool {
+        guard activeCall == uuid else { return false }
+        activeCall = nil
+        return true
     }
 
     private func remember(_ id: CallId) {
