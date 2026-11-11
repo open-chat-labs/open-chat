@@ -14,7 +14,7 @@ import type {
     ComposerContext,
     ComposerMention,
 } from "@openchat/ui/src/lib/types";
-import { messageText, type ConversationContext } from "@src/logic/conversation/messageRow";
+import { quoteText, type ConversationContext } from "@src/logic/conversation/messageRow";
 
 // The composer's props as every tree's composer (MessageComposer) takes them: the text it starts
 // from, the reply or edit strip, the staged attachment and who it offers to mention.
@@ -40,7 +40,7 @@ export function composerStartText(
 /**
  * The composer's strip for the chat's draft: the message being edited (with `editText`, the text
  * it starts from: logic/composer's `editStartText`), else the one being replied to, with who
- * wrote it.
+ * wrote it. The quoted text shows its mentions as the @names typed (`quoteText`).
  */
 export function composerContext(
     draft:
@@ -49,7 +49,7 @@ export function composerContext(
               replyingTo?: EnhancedReplyContext;
           }
         | undefined,
-    ctx: Pick<ConversationContext, "me" | "you" | "userName" | "contentText">,
+    ctx: Pick<ConversationContext, "me" | "you" | "userName" | "contentText" | "mentionsAsTyped">,
     editText: string | undefined,
 ): ComposerContext | null {
     const editing = draft?.editingEvent;
@@ -57,7 +57,7 @@ export function composerContext(
         return {
             key: `edit:${editing.event.messageId}`,
             mode: "edit",
-            quote: messageText(editing.event.content, ctx),
+            quote: quoteText(editing.event.content, ctx),
             text: editText ?? "",
         };
     }
@@ -67,7 +67,7 @@ export function composerContext(
         key: `reply:${reply.messageId}`,
         mode: "reply",
         name: reply.senderId === ctx.me ? ctx.you : ctx.userName(reply.senderId),
-        quote: messageText(reply.content, ctx),
+        quote: quoteText(reply.content, ctx),
     };
 }
 

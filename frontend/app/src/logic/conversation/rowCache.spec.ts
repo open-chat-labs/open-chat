@@ -7,6 +7,7 @@ const ctx: ConversationContext = {
     you: "You",
     userName: (id) => ({ alice: "Alice", bob: "Bob" })[id] ?? id,
     contentText: (content) => `[${content.kind}]`,
+    mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },

@@ -51,6 +51,27 @@ export function expandTypedMentions(
     return { text: expanded, mentioned: [...mentioned.values()] };
 }
 
+/**
+ * A message's text with each mention (`@UserId(…)`, `@UserGroup(…)`) as the `@name` it was typed
+ * as, for where the text shows as it is (a quote, the text an edit starts from): the other way to
+ * `expandTypedMentions`. One whose user or group isn't known stays as it is.
+ */
+export function mentionsAsTyped(
+    text: string,
+    username: (userId: string) => string | undefined,
+    userGroupName: (id: number) => string | undefined,
+): string {
+    return text
+        .replace(userIdMentionRegex, (match, userId: string) => {
+            const name = username(userId);
+            return name !== undefined ? `@${name}` : match;
+        })
+        .replace(userGroupMentionRegex, (match, id: string) => {
+            const name = userGroupName(Number(id));
+            return name !== undefined ? `@${name}` : match;
+        });
+}
+
 export function userOrUserGroupName(u: UserOrUserGroup): string {
     switch (u.kind) {
         case "user_group":

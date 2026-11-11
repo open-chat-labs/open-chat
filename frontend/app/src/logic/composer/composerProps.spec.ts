@@ -12,6 +12,7 @@ const ctx: ConversationContext = {
     you: "You",
     userName: (id) => ({ alice: "Alice", bob: "Bob" })[id] ?? id,
     contentText: (content) => `[${content.kind}]`,
+    mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
@@ -97,6 +98,14 @@ describe("the composer's reply or edit strip", () => {
         ).toBe("You");
     });
 
+    test("a quote shows its mentions as the @names typed", () => {
+        const mentioning = {
+            ...replyingTo,
+            content: { kind: "text_content" as const, text: "ask @UserId(bob)" },
+        };
+        expect(composerContext({ replyingTo: mentioning }, ctx, undefined)?.quote).toBe("ask @bob");
+    });
+
     test("an edit starts from the text it's given and takes the place of the message's own reply", () => {
         const editing = message({
             sender: "me",
@@ -105,7 +114,7 @@ describe("the composer's reply or edit strip", () => {
         expect(composerContext({ editingEvent: editing, replyingTo }, ctx, "hi @alice")).toEqual({
             key: "edit:42",
             mode: "edit",
-            quote: "hi @UserId(alice)",
+            quote: "hi @alice",
             text: "hi @alice",
         });
     });

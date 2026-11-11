@@ -2356,7 +2356,10 @@ design export needs. Each entry says where it came up.
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
   as the old entries started it (`editStartText`, logic/composer, which both old entries now
   call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
-  out, a caption for a captioned message; 5c). Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  out, a caption for a captioned message, its mentions as typed too; 5c). The quoted text above
+  it, an edit's or a reply's, shows its mentions the same way (`quoteText` in
+  `logic/conversation/messageRow`, through `mentionsAsTyped` in `@shared`, L2), as the bubbles'
+  reply quotes do, where the old trees' Markdown shows them as `@username`. Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
   private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
   saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;

@@ -310,6 +310,7 @@
             openThread,
             formatter: $_,
             users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
             webhooks: $selectedChatWebhooksStore,
             webhookIds: $webhookUserIdsStore,
             detailsLoaded: $selectedServerChatStore !== undefined,
