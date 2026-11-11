@@ -2094,8 +2094,8 @@ design export needs. Each entry says where it came up.
   doesn't cover these lines, so they stay the old UI's (`TODO(design)`). The header has no back
   button (`ConversationHeader` has none; narrow layouts don't show the shell yet), and its menu does
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. A
-  DM's header has the old last-seen line (L2: `directChatSubtitle` in `@client`, shared with the
-  old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
+  DM's header has the old last-seen line (L2: `LastOnline` in `logic/conversation`, over
+  `directChatSubtitle` in `@client`, shared with the old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
   under two minutes; web/05's header doesn't say what that line says, so it's the old words
   (`TODO(design)`). Own runs show the reader's own name over them in groups and channels, as
   others' runs do (display name, else username; once per run, at its start, in `--ink-3`), and

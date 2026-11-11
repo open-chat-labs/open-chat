@@ -8,8 +8,6 @@
         anonUserStore,
         blockedUsersStore,
         chatIdentifierToString,
-        directChatStatus,
-        directChatSubtitle,
         favouritesStore,
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
@@ -22,6 +20,7 @@
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
+    import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { now } from "@src/stores/time";
     import { headerMenuItems } from "./conversation.adapter";
@@ -48,38 +47,17 @@
 
     // a DM's line under the name: when the other person was last online, following the app clock
     // ("Online now", "Last online 5 minutes ago"), or that their account is suspended; nothing for
-    // a bot (directChatSubtitle, as the old trees' ChatSubtext). TODO(design): web/05 doesn't say
+    // a bot (LastOnline, as the old trees' ChatSubtext). TODO(design): web/05 doesn't say
     // what the presence line says; the old words
     const them = $derived(
         chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
     );
-    const lastOnlineFor = $derived(
-        chat?.kind === "direct_chat" && directChatStatus(them) === "last_online"
-            ? chat.them.userId
-            : undefined,
-    );
-    // asked again on each tick of the clock, as the old trees do (getLastOnlineDate batches and
-    // caches it); kept with whose it is, so another DM's never shows
-    let lastOnline = $state<{ userId: string; at: number | undefined }>();
-    $effect(() => {
-        const userId = lastOnlineFor;
-        const at = $now;
-        if (userId !== undefined) void loadLastOnline(userId, at);
+    const dmLine = new LastOnline(client, {
+        userId: () => (chat?.kind === "direct_chat" ? chat.them.userId : undefined),
+        user: () => them,
+        now: () => $now,
+        formatter: () => $_,
     });
-    async function loadLastOnline(userId: string, at: number) {
-        const seen = await client.getLastOnlineDate(userId, at);
-        lastOnline = { userId, at: seen };
-    }
-    const dmLine = $derived(
-        chat?.kind === "direct_chat"
-            ? directChatSubtitle(
-                  $_,
-                  them,
-                  $now,
-                  lastOnline?.userId === chat.them.userId ? lastOnline.at : undefined,
-              )
-            : undefined,
-    );
 
     const headerKind = $derived(
         chat?.kind === "direct_chat" ? "user" : chat?.kind === "group_chat" ? "group" : "channel",
@@ -142,8 +120,8 @@
                       ? "Public"
                       : "Private"}
                 memberCount={chat.kind === "direct_chat" ? 0 : chat.memberCount}
-                online={dmLine?.online ?? false}
-                presence={dmLine?.text ?? ""}
+                online={dmLine.online}
+                presence={dmLine.text}
                 statusFav={favourite}
                 statusMuted={chat.membership.notificationsMuted}
                 statusEveryone={chat.membership.atEveryoneMuted}

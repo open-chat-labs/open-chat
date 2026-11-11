@@ -28,8 +28,6 @@
         communitiesStore,
         cryptoLookup,
         currentUserIdStore,
-        directChatStatus,
-        directChatSubtitle,
         eventIndexesLoadedStore,
         eventsStore,
         exchangeRatesLookupStore,
@@ -102,6 +100,7 @@
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
+    import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
@@ -280,22 +279,12 @@
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
 
     // a DM: when they were last online (a suspended account says so; a bot, nothing)
-    const dmStatus = $derived(directChatStatus(them));
-    const dmUserId = $derived(chat?.kind === "direct_chat" ? chat.them.userId : undefined);
-    let lastOnline = $state<number>();
-    $effect(() => {
-        const userId = dmUserId;
-        lastOnline = undefined;
-        if (userId === undefined || dmStatus !== "last_online") return;
-        let current = true;
-        void client.getLastOnlineDate(userId, Date.now()).then((at) => {
-            if (current) lastOnline = at;
-        });
-        return () => {
-            current = false;
-        };
+    const dmLine = new LastOnline(client, {
+        userId: () => (chat?.kind === "direct_chat" ? chat.them.userId : undefined),
+        user: () => them,
+        now: () => $now,
+        formatter: () => $_,
     });
-    const dmLine = $derived(directChatSubtitle($_, them, $now, lastOnline));
 
     const sub = $derived.by(() => {
         if (chat === undefined) return "";
@@ -1135,7 +1124,7 @@
                 <Avatar
                     size={36}
                     color={avatarColor}
-                    online={chat?.kind === "direct_chat" && dmLine.online}
+                    online={dmLine.online}
                 />
             {/snippet}
         </NativePageHeader>

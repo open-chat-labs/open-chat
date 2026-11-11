@@ -58,6 +58,7 @@ export {
     compareIsNotYouThenUsername,
     directChatStatus,
     directChatSubtitle,
+    type DirectChatSubtitle,
     directChatUsers,
     formatLastOnlineDate,
     isDeletedWebhook,
