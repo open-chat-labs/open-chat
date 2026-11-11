@@ -21,6 +21,7 @@ import {
     hasPresence,
     microphone,
     sharing,
+    speaker,
     type InterCallMessage,
 } from "@stores/video";
 import {
@@ -181,7 +182,11 @@ export class CallSession {
                     micOn: options.micOn,
                     broadcast: callType === "broadcast",
                 },
-                () => this.hangup(),
+                {
+                    onHangup: () => this.hangup(),
+                    onMinimise: () => activeVideoCall.setView("minimised"),
+                    onRoute: (on) => speaker.set(on),
+                },
             );
         }
 

@@ -249,8 +249,19 @@ export function setCallRingback(on: boolean): Promise<void> {
     return invoke<void>("plugin:oc|set_call_ringback", { on }).catch(() => undefined);
 }
 
-// The in-app speaker control. Telecom owns the route in the shell; this is a request.
+// iOS: the strip shown while the call is minimised drives the native call through these (#10402)
+export function nativeCallControl(control: {
+    kind: "mic" | "camera" | "speaker" | "show";
+    on: boolean;
+}): Promise<void> {
+    if (!isIosTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|native_call_control", control).catch(() => undefined);
+}
+
+// The in-app speaker control. The shell owns the route (Telecom, or the native call on iOS);
+// this is a request.
 export function setCallSpeaker(speaker: boolean): Promise<void> {
+    if (isIosTauriApp()) return nativeCallControl({ kind: "speaker", on: speaker });
     if (!isAndroidTauriApp()) return Promise.resolve();
     return invoke<void>("plugin:oc|set_call_speaker", { speaker }).catch(() => undefined);
 }

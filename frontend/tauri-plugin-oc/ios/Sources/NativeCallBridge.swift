@@ -1,3 +1,4 @@
+import AVFoundation
 import CallCore
 import Foundation
 import Tauri
@@ -12,6 +13,12 @@ class NativeCallJoinArgs: Decodable {
     let cameraOn: Bool
     let micOn: Bool
     let broadcast: Bool
+}
+
+// From the strip shown while the call is minimised: mic, camera, speaker, or show the call screen
+class NativeCallControlArgs: Decodable {
+    let kind: String
+    let on: Bool
 }
 
 class CallConfigArgs: Decodable {
@@ -85,7 +92,7 @@ final class NativeCallBridge {
     }
 
     // Answers a ring with no help from the web layer, which may not be running
-    func answer(_ call: IncomingCall, completion: @escaping (Bool) -> Void) {
+    func answer(_ call: IncomingCall, callId: UUID, completion: @escaping (Bool) -> Void) {
         guard let bridge = ringBridge else {
             completion(false)
             return
@@ -103,7 +110,8 @@ final class NativeCallBridge {
                 userInfo: [
                     "url": join.url, "token": join.token, "userName": join.userName, "title": join.title,
                     "video": join.video, "cameraOn": false, "cameraWhenActive": join.cameraWhenActive,
-                    "micOn": true, "broadcast": false, "reply": reply,
+                    "micOn": true, "broadcast": false, "reply": reply, "callId": callId.uuidString,
+                    "audioDevice": Self.initialAudioDevice(video: join.video),
                 ])
         }
     }
@@ -141,7 +149,11 @@ final class NativeCallBridge {
     }
 
     func setMuted(_ muted: Bool) {
-        NotificationCenter.default.post(name: .init("ocNativeCallMute"), object: nil, userInfo: ["muted": muted])
+        control("mic", on: !muted)
+    }
+
+    func control(_ kind: String, on: Bool) {
+        NotificationCenter.default.post(name: .init("ocNativeCallControl"), object: nil, userInfo: ["kind": kind, "on": on])
     }
 
     func setTeardown(_ teardown: CallTeardown) {
@@ -149,13 +161,43 @@ final class NativeCallBridge {
     }
 
     func join(_ args: NativeCallJoinArgs, reply: @escaping ([String: Any]) -> Void) {
-        NotificationCenter.default.post(
-            name: .init("ocNativeCallJoin"), object: nil,
-            userInfo: [
-                "url": args.url, "token": args.token, "userName": args.userName, "title": args.title,
-                "video": args.video, "cameraOn": args.cameraOn, "micOn": args.micOn,
-                "broadcast": args.broadcast, "reply": reply,
-            ])
+        var info: [String: Any] = [
+            "url": args.url, "token": args.token, "userName": args.userName, "title": args.title,
+            "video": args.video, "cameraOn": args.cameraOn, "micOn": args.micOn,
+            "broadcast": args.broadcast, "reply": reply, "audioDevice": Self.initialAudioDevice(video: args.video),
+        ]
+        // Nil when the call is already in progress, a ring answered here that the web layer joins
+        if let callId = CallRinger.shared.startInAppCall(title: args.title, video: args.video) {
+            info["callId"] = callId.uuidString
+            info["reply"] = { (result: [String: Any]) in
+                if result["error"] == nil {
+                    CallRinger.shared.inAppCallConnected(callId)
+                } else {
+                    CallRinger.shared.nativeCallFinished(callId)
+                }
+                reply(result)
+            }
+        }
+        NotificationCenter.default.post(name: .init("ocNativeCallJoin"), object: nil, userInfo: info)
+    }
+
+    // #10402 invariant B, with the session as it is when the call starts
+    static func initialAudioDevice(video: Bool) -> String {
+        let headset = headsetDevice()
+        switch CallAudioPolicy.initialRoute(video: video, headsetConnected: headset != nil) {
+        case .headset: return headset ?? "earpiece"
+        case .speaker: return "speakerphone"
+        case .earpiece: return "earpiece"
+        }
+    }
+
+    // The Daily name of a connected headset, if there is one
+    private static func headsetDevice() -> String? {
+        let session = AVAudioSession.sharedInstance()
+        let ports = session.currentRoute.outputs.map(\.portType) + (session.availableInputs ?? []).map(\.portType)
+        if ports.contains(where: { [.bluetoothHFP, .bluetoothA2DP, .bluetoothLE].contains($0) }) { return "bluetooth" }
+        if ports.contains(where: { [.headphones, .headsetMic, .usbAudio].contains($0) }) { return "wired" }
+        return nil
     }
 
     func leave() {
@@ -171,9 +213,16 @@ final class NativeCallBridge {
             sendTeardown(waiting: false)
             leave()
         }
+        if kind == "participant-updated", let participant = event["participant"] as? [String: Any],
+            participant["local"] as? Bool == true, let audio = participant["audio"] as? Bool
+        {
+            CallRinger.shared.localMuteChanged(!audio)
+        }
         if kind == "left" {
             teardown = nil
-            CallRinger.shared.nativeCallFinished()
+            if let callId = (event["callId"] as? String).flatMap(UUID.init(uuidString:)) {
+                CallRinger.shared.nativeCallFinished(callId)
+            }
         }
         OCCompanion.shared.trigger("native-call-event", Self.flatten(event))
     }

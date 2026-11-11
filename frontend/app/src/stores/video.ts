@@ -12,6 +12,7 @@ import type {
 } from "@daily-co/daily-js";
 import {
     keepCallTeardownTokenFresh,
+    nativeCallControl,
     reportCallActive,
     reportCallEnded,
     type NativeCallControl,
@@ -232,6 +233,10 @@ export const activeVideoCall = {
         }));
     },
     setView: (view: VideoCallView) => {
+        // iOS: the native call screen is up whenever the call isn't minimised
+        if (view !== "minimised" && get(activeStore)?.view === "minimised") {
+            void nativeCallControl({ kind: "show", on: true });
+        }
         return updateCall((current) => ({ ...current, view }));
     },
 

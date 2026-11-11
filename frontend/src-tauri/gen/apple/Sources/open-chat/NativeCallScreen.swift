@@ -12,11 +12,24 @@ struct NativeCallScreen: View {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text(call.settings.title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                    .padding(.top, 8)
+                ZStack {
+                    Text(call.settings.title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .padding(.horizontal, 48)
+                    HStack {
+                        Button(action: call.minimise) {
+                            Image(systemName: "chevron.down")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel("Minimise")
+                        Spacer()
+                    }
+                }
+                .padding(.top, 8)
 
                 if call.settings.video && remote.count <= 1 {
                     tile(remote.first).clipShape(RoundedRectangle(cornerRadius: 16))
