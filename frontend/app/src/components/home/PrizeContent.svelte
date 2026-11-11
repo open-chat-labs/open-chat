@@ -16,6 +16,7 @@
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
+        type ResourceKey,
         type OpenChat,
         type PrizeContent,
     } from "@client";
@@ -23,6 +24,7 @@
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
+    import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { claimsStore } from "../../stores/claims";
     import { rtlStore } from "../../stores/rtl";
@@ -34,6 +36,7 @@
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
     import Streak from "./profile/Streak.svelte";
@@ -118,6 +121,16 @@
     let mirror = $derived(intersecting && !$mobileWidth);
 </script>
 
+<!-- A round badge, as in the mobile layout, so it isn't mistaken for the countdown's clock. -->
+{#snippet accountAgeBadge(label: ResourceKey)}
+    <Tooltip uppercase position="top" align="middle">
+        <span class="age-badge"><ClockOutline size={"0.7em"} color={"#ffffff"} /></span>
+        {#snippet popupTemplate()}
+            <Translatable resourceKey={label} />
+        {/snippet}
+    </Tooltip>
+{/snippet}
+
 <div class={`prize ${content.token}`}>
     <div class="top">
         <div class="countdown" class:rtl={$rtlStore}>
@@ -136,6 +149,9 @@
                         uniquePerson={false}
                         chitEarned={content.minChitEarned}
                         streak={content.streakOnly} />
+                    {#if ageLabel !== undefined}
+                        {@render accountAgeBadge(ageLabel)}
+                    {/if}
                 </div>
             {/if}
         </div>
@@ -154,11 +170,12 @@
                 <div class="restricted">
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
                     {#if content.minChitEarned > 0}
-                        <div class="chit_earned">
-                            <span class="chit_icon">
-                                <ChitEarnedBadge earned={content.minChitEarned}></ChitEarnedBadge>
+                        <div class="restriction">
+                            <span class="restriction-icon">
+                                <span class="chit_icon">
+                                    <ChitEarnedBadge earned={content.minChitEarned}></ChitEarnedBadge>
+                                </span>
                             </span>
-
                             <Translatable
                                 resourceKey={i18nKey("prizes.minChitEarnedValue", {
                                     n: chitBands.get(content.minChitEarned) ?? "0",
@@ -166,12 +183,12 @@
                         </div>
                     {/if}
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
-                        <div onclick={onDiamondClick}>
-                            <div>
+                        <div class="restriction clickable" onclick={onDiamondClick}>
+                            <span class="restriction-icon">
                                 <Diamond
                                     size={"1.1em"}
                                     status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
-                            </div>
+                            </span>
                             <Translatable
                                 resourceKey={i18nKey(
                                     "prizes." +
@@ -183,8 +200,8 @@
                     {/if}
                     <!-- Unique person ("verified user") gating is suspended -->
                     {#if content.streakOnly > 0}
-                        <div onclick={onStreakClick}>
-                            <div><Streak days={content.streakOnly} /></div>
+                        <div class="restriction clickable" onclick={onStreakClick}>
+                            <span class="restriction-icon"><Streak days={content.streakOnly} /></span>
                             <Translatable
                                 resourceKey={i18nKey("prizes.streakFull", {
                                     n: content.streakOnly,
@@ -192,8 +209,9 @@
                         </div>
                     {/if}
                     {#if ageLabel !== undefined}
-                        <div>
-                            <div><Clock size={"1.1em"} color={"var(--txt)"} /></div>
+                        <div class="restriction">
+                            <span class="restriction-icon"
+                                >{@render accountAgeBadge(ageLabel)}</span>
                             <Translatable resourceKey={ageLabel} />
                         </div>
                     {/if}
@@ -252,6 +270,16 @@
 </div>
 
 <style lang="scss">
+    .age-badge {
+        width: 1.1em;
+        height: 1.1em;
+        border-radius: 50%;
+        background-color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     $accent: var(--prize);
 
     :global(.message .prize .restricted .noselect) {
@@ -387,16 +415,24 @@
         flex-direction: column;
         gap: $sp2;
 
-        div {
+        .restriction {
             display: flex;
             flex-direction: row;
             gap: $sp3;
             align-items: center;
-            cursor: pointer;
 
-            :first-child {
-                width: $sp5;
+            &.clickable {
+                cursor: pointer;
             }
+        }
+
+        // One fixed-width column, each icon centred in it, so the labels line up whatever
+        // the icon's own width (the streak badge is wider than the others).
+        .restriction-icon {
+            flex: 0 0 $sp6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     }
 
