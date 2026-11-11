@@ -10,6 +10,7 @@ description: OpenChat release train runbook — tagging components, prod-test (i
 - Claude NEVER creates tags, deploys, or submits proposals without an explicit per-action instruction. The developer runs all deploy/proposal commands himself; Claude's job is scope confirmation, exact commands, and metrics verification.
 - Releases are tag-driven. Tags come first, always.
 - Changelogs are cut ([unreleased] → versioned section) in a post-release tidy PR, NOT before the release.
+- Every command handed to the developer that takes a dfx identity names `openchat` explicitly. A proposal script that reads `DFX_IDENTITY` falls back to `default`, which can't upload the wasm chunks, so leaving it off breaks the proposal. Before giving any `scripts/proposals/upgrade_*.sh` command, check it with `grep -c DFX_IDENTITY= scripts/proposals/upgrade_<x>.sh`, and if that's 1, end the command with ` openchat` (see Phase 2).
 
 ## Phase 0 — scope and tags
 
@@ -89,10 +90,13 @@ The developer MUST review the proposal text before the proposal script is execut
 
 ### Canisters
 
-Per-canister wrapper scripts in `scripts/proposals/` (e.g. `upgrade_storage_buckets.sh`, `upgrade_storage_index.sh`, `upgrade_user_index.sh`...) wrap `make_upgrade_canister_proposal.sh` with the right SNS function id. Args: version, plus an optional dfx identity for the chunked ones:
+Per-canister wrapper scripts in `scripts/proposals/` (e.g. `upgrade_storage_buckets.sh`, `upgrade_storage_index.sh`, `upgrade_user_index.sh`...) wrap `make_upgrade_canister_proposal.sh` with the right SNS function id. Their args are the version, then, for the scripts that upload the wasm in chunks, the dfx identity.
+
+**The identity is not optional for those scripts: always pass `openchat`.** They read it as `DFX_IDENTITY=${2:-default}`, and `default` can't upload the chunks. As of 2026-11-11 they are `upgrade_user_index.sh`, `upgrade_local_user_indexes.sh`, `upgrade_groups.sh`, `upgrade_communities.sh`, `upgrade_group_index.sh`, `upgrade_identity.sh`, `upgrade_multi_users.sh` and `upgrade_notifications_index.sh`. The list changes, so check the script itself (`grep -c DFX_IDENTITY= scripts/proposals/upgrade_<x>.sh`) rather than this list:
 
 ```bash
-sh ./scripts/proposals/upgrade_storage_buckets.sh 2.0.<tag>
+sh ./scripts/proposals/upgrade_user_index.sh 2.0.<tag> openchat     # reads DFX_IDENTITY: pass openchat
+sh ./scripts/proposals/upgrade_storage_buckets.sh 2.0.<tag>         # takes no identity
 ```
 
 The script takes the proposal's changelog from the `[unreleased]` section of `backend/canisters/<canister>/CHANGELOG.md` **as of the tag commit** (so entries merged after tagging are left out), and fails if that section is empty. Before the developer runs it, show them that section as the script will see it:
@@ -141,6 +145,8 @@ sh ./scripts/prepare-frontend-assets.sh openchat 2.0.<tag>
 ```
 
 builds and stages assets via `dfx deploy --network ic --by-proposal website`, printing a **batch id** and **evidence hash**. Then write `./local/summary.md` with the proposal text, drawn from the commit history since the last website tag (`frontend/CHANGELOG.md` is no longer maintained), and once the developer has reviewed it:
+
+**The website summary must contain no double quotes (`"`).** `commit_frontend_assets.sh` puts it inside a double-quoted string, so a quote breaks the proposal. Write the text without quotes from the start rather than quoting UI copy, and check with `grep -c '"' local/summary.md` (must print 0) before giving the command.
 
 ```bash
 sh ./scripts/proposals/commit_frontend_assets.sh 2.0.<tag> "<abs path to local/summary.md>" <batch_id> <evidence_hash>
