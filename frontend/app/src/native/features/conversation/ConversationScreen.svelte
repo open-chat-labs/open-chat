@@ -653,8 +653,15 @@
     });
     const pinHidden = (messageIndex: number) =>
         chatKey !== undefined && context.removals.has(unpinKey(chatKey, messageIndex));
+    // held while the screen slides out, as the chat is, so the strip doesn't go from under the header
+    const heldPins = new HeldWhileLeaving<number[]>([]);
     const pinOrder = $derived(
-        multiUserId === undefined ? [] : stripOrder($selectedChatPinnedMessagesStore, pinHidden),
+        heldPins.of(
+            selected,
+            multiUserId === undefined
+                ? []
+                : stripOrder($selectedChatPinnedMessagesStore, pinHidden),
+        ),
     );
     // the pinned messages loaded, by index
     const pinnedEvents = $derived(
