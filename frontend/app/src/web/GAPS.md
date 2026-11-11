@@ -1360,7 +1360,11 @@ design export needs. Each entry says where it came up.
   client's `DEFAULT_EVENTS_TTL`, which the legacy trees keep).
   By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
   the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
-  has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
+  has no read receipts setting. The OpenChat Bot's DM has no right column at all, nor the header's
+  panel toggle (`chatHasRightColumn` in `router/regions`): it's the read-only welcome chat a new
+  account lands on, and its panel (a picture, Search, Favourite) only took width from it; its name
+  still opens its profile. TODO(design): the plan docks `DmPanel` for every DM and says nothing
+  about bots; other bots' DMs keep it. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
   old panel's durations other than the eight `DmChatSettings` offers (a TTL set elsewhere shows as
   its own length, "2 hours", and saves unchanged).
   - **TimedToggle's 8 lengths** (web plan 08 of 2026-11-10, by hand, EXPORT-LOG 2026-11-10): 5 min,
@@ -2159,6 +2163,12 @@ design export needs. Each entry says where it came up.
 - **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
   (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
   (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
+  - **nothing selected**: a list with no chat to open (the router opens its default chat once it
+    has one) has `NoChatScreen` in the middle, the kit's `EmptyState` with the old desktop's words
+    by scope (`noChatSelectedText` in `logic/chats`, which the old `NoChatSelected` uses too), in
+    place of the development placeholder ("middle: empty"). TODO(design): the design doesn't say
+    which words, icon or action; there's no action (the list's own New message has no handler
+    yet either).
   - **mentions in the preview**: as the `@names` typed (`typedMentions` in `logic/conversation`,
     through `mentionsAsTyped`), where the old rows show the preview through Markdown, which shows
     them as `@username` too. The same goes for every other text the new UI shows as it is, not

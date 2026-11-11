@@ -1658,6 +1658,14 @@ export class OpenChat {
             user.userId,
             user.blobReference?.blobId,
         );
+        // Until now the session was the anonymous user's (an identity without an account runs as
+        // one), and its chats loaded as such. The new account's start afresh, as after a sign-in:
+        // an initial load, and a sync session of its own. Otherwise its first load counts as a
+        // later one (no snapshot), and the puller, still on the anonymous user, ignores its heads,
+        // so its chats (the OpenChat Bot's welcome DM) never reach the UI until a reload.
+        this.#chatsPoller?.stop();
+        chatsInitialisedStore.set(false);
+        this.#syncPuller.clear();
         this.onCreatedUser(user);
         userStore.addUser({
             kind: user.isBot ? "bot" : "user",

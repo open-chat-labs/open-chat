@@ -1,5 +1,7 @@
 import {
+    OPENCHAT_BOT_USER_ID,
     routeForScope,
+    type ChatIdentifier,
     type ChatListScope,
     type RouteParams,
     type WalletPage,
@@ -106,6 +108,7 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
                 left: { kind: "chats", scope: route.scope },
                 middle: { kind: "conversation", route },
                 narrowView: "middle",
+                ...(chatHasRightColumn(route.chatId) ? {} : { rightColumn: false }),
             };
         case "notifications_route":
             return {
@@ -138,6 +141,16 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
                 narrowView: "left",
             };
     }
+}
+
+/**
+ * Whether a chat's conversation has the right column (its details, its threads). The OpenChat
+ * Bot's DM doesn't: it's the read-only welcome chat a new account lands on, and its details (a
+ * picture, Search and Favourite) would only take width from it. Its name still opens its profile.
+ * TODO(design): the plan docks `DmPanel` for every DM and doesn't say whether a bot's has one.
+ */
+export function chatHasRightColumn(chatId: ChatIdentifier): boolean {
+    return !(chatId.kind === "direct_chat" && chatId.userId === OPENCHAT_BOT_USER_ID);
 }
 
 // The rail's destinations, in the order NavRail shows them, with their labels: the app's own

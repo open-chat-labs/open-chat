@@ -121,9 +121,9 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 
 | Path | Route kind (scope) | Left | Middle | Right | Narrow | Guest |
 |---|---|---|---|---|---|---|
-| `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
-| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one | – | list | yes |
-| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" tab (`dmTabs`) below 1476px; thread → `ThreadPanel` | conversation | sign in, then the DM |
+| `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats`, once the chats are in (a new account too: its chats load afresh after the sign-up, and it lands on the OpenChat Bot's DM) |
+| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one (`NoChatScreen`, the old desktop's words: `noChatSelectedText`) | – | list | yes |
+| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" tab (`dmTabs`) below 1476px; thread → `ThreadPanel`. The OpenChat Bot's DM has none, and no panel toggle (`chatHasRightColumn`, TODO(design)) | conversation | sign in, then the DM |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
 | `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then the page |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |

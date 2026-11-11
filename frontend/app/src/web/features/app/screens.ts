@@ -61,8 +61,8 @@ export const leftScreens: Screens<LeftRegion> = {
 };
 
 export const middleScreens: Screens<MiddleRegion> = {
-    // nothing selected
-    empty: undefined,
+    // nothing selected: a chat list with no chat to open yet, or the notifications
+    empty: () => import("../chats/NoChatScreen.svelte"),
 
     // the selected conversation (phase 3b)
     conversation: () => import("../conversation/ConversationScreen.svelte"),

@@ -1,5 +1,12 @@
-import type { RouteParams } from "@client";
-import { activityOverPage, narrowBack, railItems, railSelectionFor, regionsFor } from "./regions";
+import { OPENCHAT_BOT_USER_ID, type RouteParams } from "@client";
+import {
+    activityOverPage,
+    chatHasRightColumn,
+    narrowBack,
+    railItems,
+    railSelectionFor,
+    regionsFor,
+} from "./regions";
 
 const none = { kind: "none" } as const;
 const chats = { kind: "chats" } as const;
@@ -139,6 +146,27 @@ describe("what a route shows", () => {
         expect(
             regionsFor(route({ kind: "notifications_route", scope: none }), false),
         ).not.toHaveProperty("rightColumn");
+    });
+
+    test("the OpenChat Bot's DM has no right column; someone else's DM has", () => {
+        const dm = (userId: string) =>
+            route({
+                kind: "global_chat_selected_route",
+                chatId: { kind: "direct_chat", userId },
+                chatType: "direct_chat",
+                open: false,
+                scope: chats,
+            });
+        expect(regionsFor(dm(OPENCHAT_BOT_USER_ID), false)).toMatchObject({
+            middle: { kind: "conversation" },
+            rightColumn: false,
+        });
+        expect(regionsFor(dm("u1"), false)).not.toHaveProperty("rightColumn");
+        expect(chatHasRightColumn({ kind: "direct_chat", userId: OPENCHAT_BOT_USER_ID })).toBe(
+            false,
+        );
+        expect(chatHasRightColumn({ kind: "direct_chat", userId: "u1" })).toBe(true);
+        expect(chatHasRightColumn({ kind: "group_chat", groupId: "g1" })).toBe(true);
     });
 
     test("mobile's profile path has no page of its own (the router redirects it)", () => {
