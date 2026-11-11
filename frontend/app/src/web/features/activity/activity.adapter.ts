@@ -11,7 +11,7 @@ import {
 } from "@client";
 import type { ActivityItem } from "@openchat/ui/src/features/components/ActivityPanel.svelte";
 import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
-import { pickById } from "@src/utils/pickById";
+import { swatchFor } from "@src/logic/swatch";
 
 // The activity feed's events to ActivityPanel's items (DATA.md, ActivityPanel), in the old feed's
 // words (ActivityEvent.svelte). The client's lookups and wording come in through ActivityContext,
@@ -40,15 +40,6 @@ export type ActivityContext = {
     /** Events after this have not been read. */
     readUpTo: bigint;
 };
-
-// people with avatars upload them, so a colour is picked from the id (GAPS.md, Swatches)
-const COLOURS: readonly NonNullable<ActivityItem["color"]>[] = [
-    "violet",
-    "blue",
-    "teal",
-    "amber",
-    "plum",
-];
 
 const TYPES: Record<MessageActivityEvent["activity"], ActivityItem["type"]> = {
     mention: "mention",
@@ -91,7 +82,8 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
                 : `${ctx.author(message)}: ${ctx.contentText(message.content)}`,
         time: ctx.time(event.timestamp),
         unread: event.timestamp > ctx.readUpTo,
-        color: pickById(event.userId ?? id, COLOURS),
+        // their swatch, as everywhere (swatchFor)
+        color: swatchFor(event.userId ?? id),
         kind: "user",
         reactions:
             event.activity === "reaction" ? (message?.reactions.map((r) => r.reaction) ?? []) : [],

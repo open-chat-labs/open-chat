@@ -43,6 +43,7 @@
   import { LANGUAGES, languageFlag } from '../../lib/languages';
   import Translate from '../../lib/components/Translate.svelte';
   import { cssUrl } from '../../lib/cssUrl';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   // resource-key prefix; constants below hold keys, resolved with t() at render time
   const CG = 'ui.createGroupDialog.';
@@ -54,10 +55,8 @@
   type Perms = { general: Record<string, GroupRole>; messages: Record<string, PermValue>; threads: Record<string, PermValue> };
 
   const GRADIENTS: Record<string, string> = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
   };
   // swatches are the theme's --cover-<key> tokens
   const COVERS = ['plum', 'teal', 'violet', 'amber', 'slate'];

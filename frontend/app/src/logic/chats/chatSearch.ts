@@ -1,4 +1,11 @@
-import { chatMatchesSearch, type ChatSummary, type UserLookup, type UserSummary } from "@client";
+import {
+    chatMatchesSearch,
+    type BotMatch,
+    type ChatListSearchResults,
+    type ChatSummary,
+    type UserLookup,
+    type UserSummary,
+} from "@client";
 import { trimLeadingAtSymbol } from "@src/utils/user";
 
 // Searching from the chat list (native design notes §3.2): the user's chats that match, and people
@@ -34,6 +41,30 @@ export function newPeople(
         chats.flatMap((chat) => (chat.kind === "direct_chat" ? [chat.them.userId] : [])),
     );
     return found.filter((user) => user.userId !== me && !inChats.has(user.userId));
+}
+
+/**
+ * What a chat list search found (the client's searchChatList) that isn't a chat already: the
+ * people not the user and not already a DM (`newPeople`), and the bots not already a DM. `chats`
+ * are the ones to leave out: a scope's list, with the user's DMs from every scope for the people.
+ */
+export function outsideList(
+    found: ChatListSearchResults,
+    chats: readonly ChatSummary[],
+    me: string,
+): ChatListSearchResults {
+    const dms = new Set(
+        chats.flatMap((chat) => (chat.kind === "direct_chat" ? [chat.them.userId] : [])),
+    );
+    return {
+        users: newPeople(found.users, chats, me),
+        bots: found.bots.filter((bot) => !dms.has(bot.id)),
+    };
+}
+
+/** A bot's avatar: its own, else the app's bot picture (as the old trees show it). */
+export function botAvatarUrl(bot: Pick<BotMatch, "avatarUrl">): string {
+    return bot.avatarUrl ?? "/assets/bot_avatar.svg";
 }
 
 /** A section of results: its first `cap` until it's expanded (Show all), and whether there's more. */

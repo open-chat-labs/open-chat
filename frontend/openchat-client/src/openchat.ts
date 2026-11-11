@@ -430,6 +430,11 @@ import { claimPrizeFailedMessage, isTrustedClick } from "./utils/prizes";
 import { isCsamReport, type ReportReason } from "./utils/report";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
+    CHAT_LIST_SEARCH_MAX,
+    runChatListSearch,
+    type ChatListSearchResults,
+} from "./utils/chatListSearch";
+import {
     FilteredProposals,
     achievementsStore,
     allChatsStore,
@@ -661,7 +666,6 @@ import {
     eventIndexesLoaded,
     findMessageById,
     getMessageText,
-    getTypingString,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -677,6 +681,7 @@ import {
     mergeServerEvents,
     metricsEqual,
     newDefaultChannel,
+    ownGroupAvatarUrl,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     readByThemNowConfirmed,
@@ -2011,13 +2016,12 @@ export class OpenChat {
     }
 
     #initWebRtc(): void {
+        // subscribed up front, so messages reach us from whichever init's peer opens: this one,
+        // or a later one if this one's peer closes before it opens
+        rtcConnectionsManager.subscribe((msg) => this.#handleWebRtcMessage(msg as WebRtcMessage));
         rtcConnectionsManager
             .init(currentUserIdStore.value, this.config.meteredApiKey)
-            .then((_) => {
-                rtcConnectionsManager.subscribe((msg) =>
-                    this.#handleWebRtcMessage(msg as WebRtcMessage),
-                );
-            });
+            .catch((err) => console.debug("RTC: peer didn't open: ", err));
     }
 
     previewChat(chatId: MultiUserChatIdentifier): Promise<Success | Failure | GroupMoved> {
@@ -2875,21 +2879,18 @@ export class OpenChat {
         },
         community?: CommunitySummary,
     ): string {
-        if (chat?.blobUrl !== undefined) {
-            return chat.blobUrl;
-        } else if (chat?.subtype?.kind === "governance_proposals") {
-            // If this is a governance proposals chat and no avatar has been set, use the default one for the SNS
-            const snsLogo = this.#getSnsLogo(chat.subtype.governanceCanisterId);
-            if (snsLogo !== undefined) {
-                return snsLogo;
-            }
-        } else if (chat?.id?.kind === "channel") {
-            community = this.getCommunityForChannel(chat?.id) ?? community;
-            if (community !== undefined) {
-                return this.communityAvatarUrl(community.id.communityId, community.avatar);
-            }
-        }
-        return this.mobileLayout === "v2" ? "unknown" : "/assets/group.svg";
+        const own =
+            chat &&
+            ownGroupAvatarUrl(chat, {
+                // a governance proposals chat with no avatar of its own has its SNS's
+                snsLogo: (governanceCanisterId) => this.#getSnsLogo(governanceCanisterId),
+                // a channel's community's avatar, else the community's identicon
+                communityAvatar: (channelId) => {
+                    const c = this.getCommunityForChannel(channelId) ?? community;
+                    return c && this.communityAvatarUrl(c.id.communityId, c.avatar);
+                },
+            });
+        return own ?? (this.mobileLayout === "v2" ? "unknown" : "/assets/group.svg");
     }
 
     toShortTimeString(date: Date): string {
@@ -2962,7 +2963,6 @@ export class OpenChat {
     partition = partition;
     groupBySender = groupBySender;
     groupBy = groupBy;
-    getTypingString = getTypingString;
     getMessageText = getMessageText;
     contentTypeToPermission = contentTypeToPermission;
     stripLinkDisabledMarker = stripLinkDisabledMarker;
@@ -8250,6 +8250,33 @@ export class OpenChat {
         });
     }
 
+    /**
+     * The chat list's search on OpenChat for a term (any leading "@" dropped by the caller): up to
+     * ten people and ten bots that take direct chats. An empty term asks the backend nothing; a
+     * search that fails finds nothing of its kind.
+     */
+    searchChatList(term: string): Promise<ChatListSearchResults> {
+        return runChatListSearch(term, {
+            users: (t) => this.searchUsers(t, CHAT_LIST_SEARCH_MAX),
+            bots: async (t) => {
+                // the user's own direct chat as the location asks for the bots that take direct
+                // chats (there's no such chat)
+                const location: DirectChatIdentifier = {
+                    kind: "direct_chat",
+                    userId: currentUserIdStore.value,
+                };
+                const response = await this.exploreBots(
+                    t,
+                    0,
+                    CHAT_LIST_SEARCH_MAX,
+                    location,
+                    false,
+                );
+                return response.kind === "success" ? response.matches : [];
+            },
+        });
+    }
+
     exploreBots(
         searchTerm: string | undefined,
         pageIndex: number,
@@ -9709,10 +9736,12 @@ export class OpenChat {
                         ...currentUser,
                         blobReference,
                         blobData: undefined,
+                        // the new avatar's (rehydrated below), or none once it's removed: the old
+                        // one's url stayed until a reload
                         blobUrl: buildUserAvatarUrl(
                             this.config.blobUrlPattern,
                             currentUser.userId,
-                            currentUser.blobReference?.blobId,
+                            blobReference?.blobId,
                         ),
                     };
 

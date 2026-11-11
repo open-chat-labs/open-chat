@@ -35,17 +35,15 @@
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   type Color = InviteColor;
   type TabKey = 'add' | 'invite' | 'share';
 
   const GRADIENTS: Record<Color, string> = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
-    plum: 'linear-gradient(140deg,#b06bff,#6a2bff)',
   };
 
   interface Props {

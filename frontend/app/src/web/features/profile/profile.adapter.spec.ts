@@ -1,5 +1,7 @@
 import {
     AuthProvider,
+    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_BOT_USER_ID,
     type CommunitySummary,
     type LinkedAuthenticationPrincipal,
     type Metrics,
@@ -14,11 +16,14 @@ import {
     signinMethodsProps,
     storageProps,
     chatSettingsProps,
+    profileAvatarUrl,
     profileProps,
     ringtoneKeyOf,
     statsProps,
     type AppChatSettings,
 } from "./profile.adapter";
+import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
+import { senderColor } from "@src/logic/conversation/messageRow";
 
 const user = {
     kind: "user",
@@ -74,6 +79,15 @@ describe("the profile dialog's props", () => {
         });
     });
 
+    test("the user's swatch in place of a picture of their own", () => {
+        const chit = { streak: 0, balance: 0 };
+        const props = profileProps("me", user, profile, chit, {
+            avatarUrl: undefined,
+            coverUrl: undefined,
+        });
+        expect(props.avatar).toBe(AVATAR_GRADIENTS[senderColor("me")]);
+    });
+
     // #10193 invariant 1: ProfileDialog never shows the verified badge while the gate is suspended
     test("never marks the user verified, even one whose record says they're a unique person", () => {
         const chit = { streak: 0, balance: 0 };
@@ -126,16 +140,23 @@ describe("the profile dialog's props", () => {
     });
 
     test("the communities, and the name the user goes by in each that has one", () => {
-        const community = (id: string, displayName?: string) =>
+        const community = (id: string, displayName?: string, avatar?: string) =>
             ({
                 id: { kind: "community", communityId: id },
                 name: `Community ${id}`,
+                avatar: { blobUrl: avatar },
                 membership: { displayName },
             }) as CommunitySummary;
-        const props = communitiesProps([community("a", "Jules"), community("b")], () => "/c.png");
+        const props = communitiesProps([community("a", "Jules", "/c.png"), community("b")]);
         expect(props.communities).toEqual([
-            { id: "a", name: "Community a", avatar: 'url("/c.png") center / cover no-repeat' },
-            { id: "b", name: "Community b", avatar: 'url("/c.png") center / cover no-repeat' },
+            {
+                id: "a",
+                name: "Community a",
+                color: senderColor("a"),
+                avatar: 'url("/c.png") center / cover no-repeat',
+            },
+            // no picture of its own: its swatch
+            { id: "b", name: "Community b", color: senderColor("b"), avatar: undefined },
         ]);
         expect(props.communityNames).toEqual({ a: "Jules" });
     });
@@ -209,5 +230,25 @@ describe("the profile dialog's props", () => {
             code: "ABC123",
             expiresAt: 1_700_000_000_000,
         });
+    });
+});
+
+describe("someone's own picture from their profile", () => {
+    const pattern = "https://{canisterId}.raw.icp0.io/{blobType}";
+
+    test("is their avatar", () => {
+        expect(profileAvatarUrl(pattern, "rturd-qaaaa-aaaaf-aabaq-cai", 7n)).toBe(
+            "https://rturd-qaaaa-aaaaf-aabaq-cai.raw.icp0.io/avatar/7",
+        );
+    });
+
+    test("is none without one (their swatch), not a generated identicon", () => {
+        expect(profileAvatarUrl(pattern, "rturd-qaaaa-aaaaf-aabaq-cai", undefined)).toBeUndefined();
+    });
+
+    test("is a system user's fixed picture", () => {
+        expect(profileAvatarUrl(pattern, OPENCHAT_BOT_USER_ID, undefined)).toBe(
+            OPENCHAT_BOT_AVATAR_URL,
+        );
     });
 });

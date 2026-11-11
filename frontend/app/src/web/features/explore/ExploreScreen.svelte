@@ -103,7 +103,7 @@
         void answered;
         return exploreCommunities(
             communitySearchState.results,
-            (m: CommunityMatch) => client.communityAvatarUrl(m.id.communityId, m.avatar),
+            (m: CommunityMatch) => m.avatar.blobUrl,
             supportedLanguagesByCode,
         );
     });

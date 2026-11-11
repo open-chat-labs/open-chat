@@ -1,4 +1,12 @@
-import type { ChatSummary, EventWrapper, Message, UserGroupDetails, UserSummary } from "@client";
+import {
+    OPENCHAT_BOT_AVATAR_URL,
+    type ChatSummary,
+    type EventWrapper,
+    type Message,
+    type UserGroupDetails,
+    type UserSummary,
+    type WebhookDetails,
+} from "@client";
 import {
     conversationContext,
     mediaHeld,
@@ -34,6 +42,7 @@ const ctx: ConversationContext = {
     text: (key) => key.key,
     openThread: undefined,
     face: (userId) => `face:${userId}`,
+    avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
     token: (ledger) =>
@@ -107,6 +116,12 @@ describe("a message row", () => {
             color: senderColor("alice"),
             message: { id: "42", kind: "text", text: "hi", time: "t7", status: "sent" },
         });
+    });
+
+    test("has its sender's own picture, none without one", () => {
+        const pictured = { ...ctx, avatar: (id: string) => `https://blobs/${id}` };
+        expect(messageRow(message(), "sent", pictured).avatarUrl).toBe("https://blobs/alice");
+        expect(messageRow(message(), "sent", ctx).avatarUrl).toBeUndefined();
     });
 
     test("is the reader's own as sent, under their own name", () => {
@@ -681,5 +696,58 @@ describe("a conversation's context", () => {
         expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
             "hi @alice, @mods and @UserId(zz)",
         );
+    });
+
+    test("gives a sender's own picture: an avatar, a bot's, a webhook's; none for a generated one", () => {
+        const user = (userId: string, blobUrl?: string) =>
+            ({ kind: "user", userId, username: userId, blobUrl }) as UserSummary;
+        const users = new Map([
+            ["alice", user("alice", "https://blobs/alice")],
+            ["bob", user("bob", "data:image/svg+xml;base64,PHN2Zz4=")],
+            ["bot", { ...user("bot", OPENCHAT_BOT_AVATAR_URL), kind: "bot" } as UserSummary],
+        ]);
+        const webhooks = new Map([
+            [
+                "hook",
+                { id: "hook", name: "Hook", avatarUrl: "https://blobs/hook" } as WebhookDetails,
+            ],
+        ]);
+        const ctx = conversationContext({
+            client: {
+                displayName: () => "",
+                getContentAsText: () => "",
+                toShortTimeString: () => "",
+                formatMessageDate: () => "",
+                isChatReadOnly: () => false,
+                unreadThreadMessageCount: () => 0,
+            },
+            chat: undefined,
+            me: "me",
+            formatter: (key) => String(key),
+            users,
+            userGroups: new Map(),
+            webhooks,
+            webhookIds: new Set<string>(["hook"]),
+            detailsLoaded: true,
+            lowBandwidth: false,
+            revealed: () => false,
+            claimant: {
+                previewingOrLapsed: false,
+                diamond: false,
+                lifetimeDiamond: false,
+                streak: 0,
+                chitEarned: 0,
+                accountCreated: 0,
+            },
+            tokens: new Map(),
+            rates: () => new Map(),
+            face: (userId) => userId,
+            threads: true,
+        });
+        expect(ctx.avatar("alice")).toBe("https://blobs/alice");
+        expect(ctx.avatar("bob")).toBeUndefined();
+        expect(ctx.avatar("bot")).toBe(OPENCHAT_BOT_AVATAR_URL);
+        expect(ctx.avatar("hook")).toBe("https://blobs/hook");
+        expect(ctx.avatar("nobody")).toBeUndefined();
     });
 });

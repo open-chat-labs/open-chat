@@ -45,7 +45,8 @@
 
 {#if queue[0] !== undefined}
     {@const toast = queue[0]}
-    <!-- the toast's anchor: centred, just above the bottom of the window -->
+    <!-- the toast's anchor: centred at the top of the app (web plan 00: "global, top of the
+         app, with confetti"), just under the panels' headers -->
     <div class="anchor">
         {#key toast.key}
             <AchievementToast
@@ -62,7 +63,12 @@
     .anchor {
         position: fixed;
         left: 50%;
-        bottom: calc(var(--space-32) * 2);
+        /* the toast hangs from here (it's 64px tall, its bottom on the anchor), its top 12px under
+           the panels' headers (the shell's 12px page, then the headers' 67px: ConversationHeader's
+           42px avatar, 12px padding either side and its line), so it covers none of their names
+           or buttons, and its confetti has room to fly up and fall back in view. The app's toasts
+           are at the bottom, so the two never meet */
+        top: calc(var(--safe-top) + var(--space-12) + 67px + var(--space-12) + 64px);
         width: 0;
         height: 0;
         z-index: 80;

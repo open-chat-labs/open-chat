@@ -95,7 +95,7 @@ export function landingCommunities(
  */
 export function pinnedLandingCommunity(
     community: CommunitySummary,
-    avatarUrl: string,
+    avatarUrl: string | undefined,
     onOpen: (communityId: string) => void,
 ): LandingCommunity {
     return {

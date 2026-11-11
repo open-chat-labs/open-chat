@@ -1,15 +1,24 @@
 import {
+    OPENCHAT_BOT_AVATAR_URL,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_OWNER,
+    type CommunitySummary,
     type FullMember,
+    type GroupAvatarLookups,
     type MemberActions,
     type MultiUserChat,
     type UserLookup,
     type UserSummary,
 } from "@client";
 import { describe, expect, test } from "vitest";
-import { memberPerson, panelHeader, userGroupDialogGroup } from "./group.adapter";
+import {
+    collectionAvatarUrl,
+    memberPerson,
+    panelHeader,
+    userGroupDialogGroup,
+    userPerson,
+} from "./group.adapter";
 
 const noActions: MemberActions = {
     canPromoteToOwner: false,
@@ -81,5 +90,48 @@ describe("the user group dialog adapter", () => {
         );
 
         expect(group.members.map((m) => m.userId)).toEqual(["a", "b"]);
+    });
+
+    test("a member's row has their own picture, and none (their colour) without one", () => {
+        const member = (blobUrl?: string) =>
+            ({ userId: "u", username: "alice", role: ROLE_MEMBER, blobUrl }) as FullMember;
+        expect(memberPerson(member("https://blobs/u"), "me", noActions).image).toBe(
+            "https://blobs/u",
+        );
+        // the client's generated identicon isn't a picture of their own
+        expect(
+            memberPerson(member("data:image/svg+xml;base64,PHN2Zz4="), "me", noActions).image,
+        ).toBeUndefined();
+        expect(memberPerson(member(), "me", noActions).image).toBeUndefined();
+        expect(
+            userPerson(
+                { userId: "b", username: "bot", blobUrl: OPENCHAT_BOT_AVATAR_URL } as UserSummary,
+                "BLOCKED",
+            ).image,
+        ).toBe(OPENCHAT_BOT_AVATAR_URL);
+    });
+
+    test("a group's, channel's or community's own picture, none without one", () => {
+        const lookups: GroupAvatarLookups = {
+            snsLogo: () => undefined,
+            communityAvatar: () => "https://blobs/community",
+        };
+        const community = (blobUrl?: string) =>
+            ({ kind: "community", avatar: { blobUrl } }) as CommunitySummary;
+        expect(collectionAvatarUrl(community("https://blobs/c"), lookups)).toBe("https://blobs/c");
+        expect(collectionAvatarUrl(community(), lookups)).toBeUndefined();
+        const group = {
+            kind: "group_chat",
+            id: { kind: "group_chat", groupId: "g" },
+        } as MultiUserChat;
+        expect(collectionAvatarUrl(group, lookups)).toBeUndefined();
+        expect(collectionAvatarUrl({ ...group, blobUrl: "https://blobs/g" }, lookups)).toBe(
+            "https://blobs/g",
+        );
+        const channel = {
+            kind: "channel",
+            id: { kind: "channel", communityId: "c", channelId: 1 },
+        } as MultiUserChat;
+        expect(collectionAvatarUrl(channel, lookups)).toBe("https://blobs/community");
     });
 });

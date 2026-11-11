@@ -1,10 +1,17 @@
+import {
+    chatIdentifierToString,
+    type BotMatch,
+    type ChatListSearchResults,
+    type UserSummary,
+} from "@client";
 import type ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
 import type { MenuItem } from "@openchat/ui/src/lib/types";
+import { swatchFor } from "@src/logic/chats/chatRow";
 import type { CommunityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
 import type { ComponentProps } from "svelte";
 
-// The chat list's community header menu. The rows are logic/chats/chatRow's, shared with the
-// native Chats tab.
+// The chat list's community header menu and its search's rows for what isn't in the list. The
+// chats' rows are logic/chats/chatRow's, shared with the native Chats tab.
 
 /** ChatListPanel's row: a chat list row (logic/chats/chatRow) with its menu. */
 export type ChatListPanelRow = ComponentProps<typeof ChatListPanel>["rows"][number];
@@ -78,4 +85,65 @@ export function communityHeaderMenu(
         });
     }
     return items;
+}
+
+/** What picking a search result does: a chat with the user or bot. */
+export type FoundTarget = { kind: "chat_with"; userId: string };
+
+/** A search result's row and what picking it does. */
+export type FoundRow = { row: ChatListPanelRow; target: FoundTarget };
+
+export type FoundRowsInput = {
+    /** What the search found outside the list (`outsideList`). */
+    found: ChatListSearchResults;
+    /** A user's name as the app shows it. */
+    userName: (user: UserSummary) => string;
+    /** A person's own picture; none gives the row's swatch (ownUserAvatarUrl). */
+    userAvatar: (user: UserSummary) => string | undefined;
+    botAvatar: (bot: BotMatch) => string;
+};
+
+type FoundFields = Pick<ChatListPanelRow, "title" | "preview" | "kind" | "color" | "avatarUrl">;
+
+function foundRow(id: string, fields: FoundFields): ChatListPanelRow {
+    return { id: `found:${id}`, ...fields, time: "", menu: [] };
+}
+
+// a user's or bot's swatch is their DM's
+const dmSwatch = (userId: string) =>
+    swatchFor(chatIdentifierToString({ kind: "direct_chat", userId }));
+
+/**
+ * The search's people as ChatListPanel's `people` rows, its People tab and All's People section:
+ * people, then bots (web plan 04's search has chats, people and messages: no public groups). A
+ * person's line is their @username, a bot's its description. Their ids can't be a chat's
+ * (`found:…`), and they have no menu.
+ */
+export function foundRows(input: FoundRowsInput): FoundRow[] {
+    const { found } = input;
+    const users = found.users.map(
+        (user): FoundRow => ({
+            row: foundRow(`user:${user.userId}`, {
+                title: input.userName(user),
+                preview: `@${user.username}`,
+                kind: "user",
+                color: dmSwatch(user.userId),
+                avatarUrl: input.userAvatar(user),
+            }),
+            target: { kind: "chat_with", userId: user.userId },
+        }),
+    );
+    const bots = found.bots.map(
+        (bot): FoundRow => ({
+            row: foundRow(`bot:${bot.id}`, {
+                title: bot.name,
+                preview: bot.definition.description,
+                kind: "user",
+                color: dmSwatch(bot.id),
+                avatarUrl: input.botAvatar(bot),
+            }),
+            target: { kind: "chat_with", userId: bot.id },
+        }),
+    );
+    return [...users, ...bots];
 }

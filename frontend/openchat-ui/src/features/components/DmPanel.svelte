@@ -10,6 +10,7 @@
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import PanelCover from '../../lib/components/PanelCover.svelte';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   type MuteKey = '8h' | '1w' | 'always';
 
@@ -19,12 +20,9 @@
     { key: 'always', label: 'ui.mute.untilOn', tile: 'ui.mute.muted' },
   ];
   const GRADIENTS = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     rose: 'linear-gradient(140deg,#ff7a9c,#d6336c)',
-    plum: 'linear-gradient(140deg,#b06bff,#5b2a86)',
     slate: 'linear-gradient(140deg,#8a93a6,#3b4252)',
   };
 

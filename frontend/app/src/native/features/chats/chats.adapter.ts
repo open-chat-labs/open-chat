@@ -7,8 +7,14 @@ import { splitAtMatch } from "@src/logic/chats/chatSearch";
 // The Chats tab's data as the native kit and the library take it (native design notes §3.2). The
 // words come in from the screen (`label`), translated, as the kit shows its rows' labels as they are.
 
-/** ChatRow's props for a list row (`chatRow`), with the favourite's heart. */
-export type NativeChatRow = Omit<ChatListRow, "id" | "section" | "selected"> & {
+/**
+ * ChatRow's props for a list row (`chatRow`), with the favourite's heart. The row's avatar and
+ * unread mentions (the web's, L1) aren't shown here yet.
+ */
+export type NativeChatRow = Omit<
+    ChatListRow,
+    "id" | "section" | "selected" | "avatarUrl" | "mentions"
+> & {
     fav: boolean;
 };
 

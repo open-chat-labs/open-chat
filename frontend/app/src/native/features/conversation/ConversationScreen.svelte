@@ -74,6 +74,7 @@
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import TypingIndicator from "@openchat/ui/src/lib/components/TypingIndicator.svelte";
     import UnreadDivider from "@openchat/ui/src/lib/components/UnreadDivider.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
@@ -132,6 +133,7 @@
         MessageLink,
         OpenAtUnread,
         othersTyping,
+        typingPlacement,
     } from "@src/logic/conversation/timeline";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
@@ -643,7 +645,9 @@
     }
 
     // ---- who is typing: a received-style bubble at the end of a DM, a strip resting on the
-    // composer in a group or channel (kept while it fades out)
+    // composer in a group or channel (kept while it fades out; typingPlacement)
+
+    const typingAt = $derived(chat === undefined ? "strip" : typingPlacement(chat.kind, undefined));
 
     const typingNames = $derived(
         chat === undefined
@@ -1154,7 +1158,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="messages"
-            class:typing={!direct && typingNames.length > 0}
+            class:typing={typingAt === "strip" && typingNames.length > 0}
             style:--group-gap="8px"
             onmousedown={keepFocus}
         >
@@ -1404,9 +1408,9 @@
             </ChatEventList>
         </div>
 
-        {#if direct && typingNames.length > 0}
-            <div class="typing-bubble" role="status" aria-label={typingText}>
-                <span class="dots"><span></span><span></span><span></span></span>
+        {#if typingAt === "bubble" && typingNames.length > 0}
+            <div class="typing-bubble">
+                <TypingIndicator variant="bubble" names={typingNames} />
             </div>
         {/if}
 
@@ -1415,7 +1419,7 @@
             <div class="search-end"></div>
         {:else}
             <footer class="composer" bind:this={footer}>
-                {#if !direct}
+                {#if typingAt === "strip"}
                     <div
                         class="typing-strip"
                         class:shown={typingNames.length > 0}
@@ -1746,24 +1750,12 @@
         inset-inline-end: var(--space-16);
     }
 
-    // a DM's typing bubble: received style, no avatar, 34px tall, small corner top left
+    // a DM's typing bubble (the library's: received style, no avatar, 34px tall, small corner top
+    // left) under the list, which is bottom-anchored: the messages slide up for it
     .typing-bubble {
         flex: none;
         display: flex;
         padding: var(--space-4) var(--space-12) var(--space-6);
-        animation: typing-in 0.2s ease-out;
-    }
-
-    .typing-bubble .dots {
-        height: 34px;
-        padding: 0 13px;
-        border-radius: 5px 16px 16px 16px;
-        background: var(--bubble-recv-bg);
-        box-shadow: var(--bubble-ring), var(--bubble-shadow);
-
-        &:dir(rtl) {
-            border-radius: 16px 5px 16px 16px;
-        }
     }
 
     .dots {
@@ -1872,21 +1864,10 @@
         @include truncate;
     }
 
-    @keyframes typing-in {
-        from {
-            opacity: 0;
-            transform: translateY(4px);
-        }
-    }
-
     @include reduced-motion {
         .typing-strip {
             transition: none;
             transform: none;
-        }
-
-        .typing-bubble {
-            animation: none;
         }
 
         .dots span {

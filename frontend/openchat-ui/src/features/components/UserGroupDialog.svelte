@@ -21,13 +21,11 @@
   import { onDestroy, untrack } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   const GRADIENTS: Record<string, string> = {
-    violet: 'linear-gradient(140deg,#8B7BFF,#5B3FD9)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FA6B8)',
-    amber: 'linear-gradient(140deg,#FFC061,#F58A2E)',
-    blue: 'linear-gradient(140deg,#5CB8FF,#2F6BFF)',
-    plum: 'linear-gradient(140deg,#E27BFF,#9B3FD9)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     rose: 'linear-gradient(140deg,#FF8FA8,#E0456A)',
     slate: 'linear-gradient(140deg,#8A93A8,#4F586C)',
   };

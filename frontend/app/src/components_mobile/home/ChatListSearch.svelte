@@ -2,10 +2,9 @@
     import { Search } from "component-lib";
     import {
         chatListScopeStore,
-        currentUserIdStore,
+        chatListSearchMatches,
         type BotMatch,
         type ChatListScope,
-        type DirectChatIdentifier,
         type GroupSearchResponse,
         type OpenChat,
         type UserSummary,
@@ -86,38 +85,16 @@
         }
     }
 
-    function sortUsersOrBots(_a: UserSummary | BotMatch, _b: UserSummary | BotMatch): number {
-        return 0;
-    }
-
-    function searchBots(term: string): Promise<BotMatch[]> {
-        // This location is rather hacky because we can't have a direct chat with ourselves
-        // but it signals to the explore_bots endpoint that we want to see bots that are
-        // available for direct chat.
-        const location = {
-            kind: "direct_chat",
-            userId: $currentUserIdStore,
-        } as DirectChatIdentifier;
-
-        return client.exploreBots(term, 0, 10, location, false).then((result) => {
-            return result.kind === "success" ? result.matches : [];
-        });
-    }
-
-    function searchUsers(term: string): Promise<UserSummary[]> {
-        return client.searchUsers(term, 10);
-    }
-
     async function searchQuery(term: string) {
         groupSearchResults = client.searchGroups(term, 10).then((res) => {
             console.log(res);
             return res;
         });
-        userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
-            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
-        );
+        // people, then bots that take direct chats (the client's searchChatList)
+        userAndBotsSearchResults = client.searchChatList(term).then(chatListSearchMatches);
         Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
+
     let placeholder = $derived(getPlaceholder($chatListScopeStore.kind));
 
     $effect(() => {

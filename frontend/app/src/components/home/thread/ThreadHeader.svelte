@@ -11,6 +11,7 @@
         allUsersStore,
         AvatarSize,
         byContext,
+        getTypingString,
         iconSize,
         mobileWidth,
         selectedCommunitySummaryStore,
@@ -45,7 +46,7 @@
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const someoneTyping = client.getTypingString(
+        const someoneTyping = getTypingString(
             $_,
             $allUsersStore,
             { chatId: chatSummary.id, threadRootMessageIndex },

@@ -8,6 +8,7 @@ import {
     isDeletedWebhook,
     mentionsAsTyped,
     ogPreviewCard,
+    ownUserAvatarUrl,
     pollView,
     prizeView,
     swapActions,
@@ -45,7 +46,7 @@ import { interpolate } from "@i18n/i18n";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
-import { pickById } from "@src/utils/pickById";
+import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
 
@@ -55,14 +56,11 @@ import { threadUnreadCount } from "@src/logic/threads/threadRead";
 // client's lookups (names, text, dates) come in through ConversationContext (`conversationContext`
 // makes it from the client and the stores' values), so the mapping stays pure.
 
-export type SenderColor = "violet" | "amber" | "teal" | "blue";
+export type SenderColor = Swatch;
 
-// senders have uploaded avatars rather than the design's colours, so one is picked from the id
-// (src/web/GAPS.md, Swatches)
-const COLOURS: readonly SenderColor[] = ["violet", "amber", "teal", "blue"];
-
+/** A sender's swatch: the one their id has everywhere (`swatchFor`), their DM's row's too. */
 export function senderColor(id: string): SenderColor {
-    return pickById(id, COLOURS);
+    return swatchFor(id);
 }
 
 export type ConversationContext = {
@@ -97,6 +95,12 @@ export type ConversationContext = {
     openThread: number | undefined;
     /** A user's face as the conversation shows it (their avatar's colour, a CSS background). */
     face: (userId: string) => string;
+    /**
+     * A sender's own picture, over their colour: a user's avatar, a bot's or a system user's fixed
+     * picture, a webhook's own (ownUserAvatarUrl). None without one: their colour alone, as a
+     * person without a picture shows their swatch everywhere in the new web UI (2026-11-10).
+     */
+    avatar: (userId: string) => string | undefined;
     /**
      * A thread's unread replies, by its root's index: as the list of threads counts them
      * (`threadUnreadCount`), none for a thread the reader doesn't follow.
@@ -143,6 +147,8 @@ export type MessageRow = {
     side: "sent" | "received";
     senderName: string;
     color: SenderColor;
+    /** The sender's own picture (ConversationContext's `avatar`), over `color`. */
+    avatarUrl?: string;
     message: GroupMessage;
 };
 
@@ -309,6 +315,7 @@ export function messageRow(
             side: mine ? "sent" : "received",
             senderName: ctx.userName(msg.sender),
             color: senderColor(msg.sender),
+            avatarUrl: ctx.avatar(msg.sender),
             message: kind,
         };
     }
@@ -316,6 +323,7 @@ export function messageRow(
         side: mine ? "sent" : "received",
         senderName: ctx.userName(msg.sender),
         color: senderColor(msg.sender),
+        avatarUrl: ctx.avatar(msg.sender),
         message: {
             id: String(msg.messageId),
             kind: "text",
@@ -768,6 +776,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         text: (key) => interpolate(formatter, key),
         openThread: input.openThread,
         face: input.face,
+        avatar: (userId) => ownUserAvatarUrl(findUser(userId, users, webhooks)),
         threads: input.threads,
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>

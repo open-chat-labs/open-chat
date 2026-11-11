@@ -32,10 +32,12 @@
     } from "@src/logic/groupOrCommunity/manage.svelte";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { pickById } from "@src/utils/pickById";
+    import { swatchFor } from "@src/logic/swatch";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { dialogTarget } from "./dialogTarget";
     import { leaveOrDeleteFor, manageNavGroups, settingsPage } from "./manage.adapter";
+    import { collectionAvatarUrl } from "./group.adapter";
+    import { groupAvatarLookups } from "@src/logic/chats/chatRow";
     import GroupPanelView from "./GroupPanelView.svelte";
     import ManageInvite from "./ManageInvite.svelte";
     import ManageSettings from "./ManageSettings.svelte";
@@ -46,8 +48,6 @@
         $props();
 
     const client = getContext<OpenChat>("client");
-
-    const COLORS = ["violet", "amber", "teal", "blue"] as const;
 
     // what it was opened for; another chat or community being opened closes it (a navigation does)
     const target = $derived(
@@ -113,13 +113,11 @@
             ? ""
             : `${$_(target.public ? "access.public" : "access.private")} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
-    // uploaded images only: a swatch stands in otherwise, as in GroupPanel
+    // its own picture only: its swatch stands in otherwise, as in GroupPanel
     const avatarUrl = $derived(
         target === undefined
             ? undefined
-            : target.kind === "community"
-              ? target.avatar.blobUrl
-              : (target.blobUrl ?? community?.avatar.blobUrl),
+            : collectionAvatarUrl(target, groupAvatarLookups(client, community)),
     );
 
     const close = () => manage.close(onClose);
@@ -149,7 +147,7 @@
                           ? "ui.manageChannels.embeddedApp"
                           : "ui.manageChannels.noDescription"),
                   meta: `${c.memberCount.toLocaleString()} · ${$_(c.public ? "access.public" : "access.private")}`,
-                  color: pickById(chatIdentifierToString(c.id), COLORS),
+                  color: swatchFor(chatIdentifierToString(c.id)),
                   current: chatIdentifiersEqual(c.id, $selectedChatIdStore),
               }))
             : [],
@@ -190,9 +188,8 @@
     <ManageDialog
         title={target.name}
         {subtitle}
-        color={pickById(
+        color={swatchFor(
             target.kind === "community" ? target.id.communityId : chatIdentifierToString(target.id),
-            COLORS,
         )}
         {avatarUrl}
         round={target.kind === "channel"}

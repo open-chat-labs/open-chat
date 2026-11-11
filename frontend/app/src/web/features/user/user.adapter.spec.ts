@@ -1,9 +1,11 @@
 import type { PublicProfile } from "@client";
 import { describe, expect, test } from "vitest";
+import { senderColor } from "@src/logic/conversation/messageRow";
 import { userDialogProps, type UserDialogInput } from "./user.adapter";
 
 const input: UserDialogInput = {
     name: "Alice",
+    userId: "alice-id",
     profile: { username: "alice", bio: "hi", created: 0n } as PublicProfile,
     avatarUrl: "/a.png",
     coverUrl: undefined,
@@ -20,5 +22,12 @@ describe("userDialogProps", () => {
         expect(
             userDialogProps({ ...input, chit: undefined }).facts.map((f) => f.label),
         ).not.toContain("ui.dmPanel.chitEarned");
+    });
+
+    test("shows their own picture, else their swatch", () => {
+        expect(userDialogProps(input).avatar).toBe('url("/a.png") center / cover no-repeat');
+        const without = userDialogProps({ ...input, avatarUrl: undefined });
+        expect(without.avatar).toBeUndefined();
+        expect(without.color).toBe(senderColor("alice-id"));
     });
 });

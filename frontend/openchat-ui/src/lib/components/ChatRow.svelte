@@ -1,4 +1,5 @@
-<!-- One chat in the chat list: avatar, title, last message (or typing dots / live call), time, unread count.
+<!-- One chat in the chat list: avatar, title, last message (or typing dots and who's typing / live call), time, unread
+     mentions (@) and unread count.
      Row menu (menuItems): right-click opens at the cursor, the kebab (hover / focus only) anchors under itself,
      a touch long-press anchors to the row at the finger, Shift+F10 / Menu key anchors to the row. All share one ContextMenu. -->
 <script lang="ts">
@@ -18,9 +19,14 @@
     time: string;
     kind?: 'user' | 'group' | 'channel';
     color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+    /** The avatar's image (an uploaded avatar) over the `color` gradient. */
+    avatarUrl?: string;
     liveCall?: '' | 'voice' | 'video';
     unreadCount?: number;
-    typing?: boolean;
+    /** Unread mentions of the user: an @ before the unread count. */
+    mentions?: number;
+    /** Someone is typing, in place of the preview: the dots, then the text if it's one ("Lucy is typing"). */
+    typing?: boolean | string;
     /** A private channel or group: a lock before the title. */
     locked?: boolean;
     pinned?: boolean;
@@ -43,8 +49,10 @@
     time,
     kind = 'user',
     color = 'violet',
+    avatarUrl,
     liveCall = '',
     unreadCount = 0,
+    mentions = 0,
     typing = false,
     locked = false,
     pinned = false,
@@ -184,7 +192,7 @@
       <div class="selected"></div>
     {/if}
     <div class="avatar">
-      <Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} online={online && kind === 'user'} />
+      <Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && kind === 'user'} />
     </div>
     <div class="body">
       <div class="line">
@@ -208,9 +216,12 @@
       <div class="line second">
         {#if typing}
           <div class="typing">
-            <span class="dot"></span>
-            <span class="dot mid"></span>
-            <span class="dot dim"></span>
+            <span class="dots" aria-hidden={typeof typing === 'string' ? 'true' : undefined}>
+              <span class="dot"></span>
+              <span class="dot mid"></span>
+              <span class="dot dim"></span>
+            </span>
+            {#if typeof typing === 'string'}<span class="typing-text">{typing}</span>{/if}
           </div>
         {:else if liveCall}
           <span class="call"><span class="call-icon" style:mask="var(--icon-{liveCall === 'video' ? 'video' : 'phone'}) center/contain no-repeat"></span><span class="call-label">{t(liveCall === 'video' ? 'ui.chatRow.videoCallLive' : 'ui.chatRow.voiceCallLive')}</span></span>
@@ -223,6 +234,9 @@
                 aria-label={previewIcon === 'forward' ? t('ui.chatRow.forwarded') : undefined}
                 aria-hidden={previewIcon === 'forward' ? undefined : 'true'}></span
               >{/if}<span class="preview-text">{preview}</span></span>
+        {/if}
+        {#if mentions > 0}
+          <span class="count mention" role="img" aria-label={t('ui.chatRow.mentions', { count: mentions })} title={t('ui.chatRow.mentions', { count: mentions })}>@</span>
         {/if}
         {#if unreadCount > 0}
           <span class="count">{unreadCount}</span>
@@ -375,9 +389,26 @@
   }
 
   .typing {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .dots {
+    flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-4);
+  }
+
+  // who's typing, in the accent as the composer's typing strip has it
+  .typing-text {
+    min-width: 0;
+    font: var(--weight-medium) 12.5px/1.35 'Plus Jakarta Sans', sans-serif;
+    color: var(--accent-bright);
+    @include truncate;
   }
 
   .dot {

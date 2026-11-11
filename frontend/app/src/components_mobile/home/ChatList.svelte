@@ -15,11 +15,11 @@
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
         currentUserIdStore,
-        emptyCombinedUnreadCounts,
         numberOfThreadsStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
+        scopeUnreadCounts,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
@@ -78,24 +78,13 @@
     }
 
     let user = $derived($allUsersStore.get($currentUserIdStore));
-    let unreadCounts = $derived.by(() => {
-        switch ($chatListScopeStore.kind) {
-            case "chats": {
-                return $unreadDirectAndGroupCountsStore;
-            }
-            case "favourite": {
-                return $unreadFavouriteCountsStore;
-            }
-            case "community": {
-                return (
-                    $unreadCommunityChannelCountsStore.get($chatListScopeStore.id) ??
-                    emptyCombinedUnreadCounts()
-                );
-            }
-            default:
-                return emptyCombinedUnreadCounts();
-        }
-    });
+    let unreadCounts = $derived(
+        scopeUnreadCounts($chatListScopeStore, {
+            directAndGroup: $unreadDirectAndGroupCountsStore,
+            favourite: $unreadFavouriteCountsStore,
+            communityChannels: $unreadCommunityChannelCountsStore,
+        }),
+    );
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     let allChats = $derived($chatSummariesListStore);
     let filteredChats = $derived.by(() => {

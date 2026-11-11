@@ -82,6 +82,89 @@ describe("RtcConnectionsManager", () => {
         expect(peer.options).toEqual({ config: { iceServers } });
     });
 
+    it("connects directly only when the TURN service refuses the key", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(() =>
+                Promise.resolve({ json: () => Promise.resolve({ error: "Invalid API Key" }) }),
+            ),
+        );
+        const { peer } = await setup();
+        expect(peer.options).toEqual({ config: { iceServers: [] } });
+    });
+
+    it("connects directly only when the TURN service can't be reached", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(() => Promise.reject(new Error("offline"))),
+        );
+        const { peer } = await setup();
+        expect(peer.options).toEqual({ config: { iceServers: [] } });
+    });
+
+    it("asks for no TURN credentials without a key", async () => {
+        vi.resetModules();
+        const { RtcConnectionsManager } = await import("./rtcConnectionsManager");
+        const initPromise = new RtcConnectionsManager().init("me", "");
+        await vi.waitFor(() => expect(peers.instances.length).toBe(1));
+        const peer = peers.instances[0];
+        peer.emit("open", peer.id);
+        await initPromise;
+        expect(fetch).not.toHaveBeenCalled();
+        expect(peer.options).toEqual({ config: { iceServers: [] } });
+    });
+
+    it("makes one peer for inits made while it's on its way", async () => {
+        vi.resetModules();
+        const { RtcConnectionsManager } = await import("./rtcConnectionsManager");
+        const mgr = new RtcConnectionsManager();
+        const first = mgr.init("me", "api-key");
+        const second = mgr.init("me", "api-key");
+        await vi.waitFor(() => expect(peers.instances.length).toBe(1));
+        const peer = peers.instances[0];
+        peer.emit("open", peer.id);
+        expect(await first).toBe(peer);
+        expect(await second).toBe(peer);
+        expect(peers.instances.length).toBe(1);
+        expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("makes an init that comes once the peer is made, before it opens, wait for it", async () => {
+        vi.resetModules();
+        const { RtcConnectionsManager } = await import("./rtcConnectionsManager");
+        const mgr = new RtcConnectionsManager();
+        const first = mgr.init("me", "api-key");
+        await vi.waitFor(() => expect(peers.instances.length).toBe(1));
+        const peer = peers.instances[0];
+        let opened = false;
+        const second = mgr.init("me", "api-key").then((p) => {
+            opened = true;
+            return p;
+        });
+        await Promise.resolve();
+        expect(opened).toBe(false);
+        peer.emit("open", peer.id);
+        expect(await first).toBe(peer);
+        expect(await second).toBe(peer);
+        expect(peers.instances.length).toBe(1);
+    });
+
+    it("makes a new peer on the next init when one closes before it opens", async () => {
+        vi.resetModules();
+        const { RtcConnectionsManager } = await import("./rtcConnectionsManager");
+        const mgr = new RtcConnectionsManager();
+        const first = mgr.init("me", "api-key");
+        await vi.waitFor(() => expect(peers.instances.length).toBe(1));
+        peers.instances[0].emit("close");
+        await expect(first).rejects.toThrow();
+
+        const second = mgr.init("me", "api-key");
+        await vi.waitFor(() => expect(peers.instances.length).toBe(2));
+        const peer = peers.instances[1];
+        peer.emit("open", peer.id);
+        expect(await second).toBe(peer);
+    });
+
     it("reuses the existing peer on subsequent init", async () => {
         const { mgr } = await setup();
         await mgr.init("me", "api-key");

@@ -46,7 +46,7 @@
     import QRCode from "@src/core/QRCode.svelte";
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { searchTerm } from "@src/logic/chats/chatSearch";
-    import { PeopleSearch } from "@src/logic/chats/peopleSearch.svelte";
+    import { TermSearch } from "@src/logic/chats/termSearch.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import {
         chatInviteAccess,
@@ -139,7 +139,7 @@
 
     let query = $state("");
     const term = $derived(searchTerm(query));
-    const people = new PeopleSearch(async (term) => {
+    const people = new TermSearch<UserSummary[]>(async (term) => {
         if (chat === undefined) return [];
         const [inCommunity, others] = await searchToInvite(client, chat.level, term);
         return [...inCommunity, ...others];
@@ -164,7 +164,7 @@
 
     const found = $derived.by((): UserSummary[] => {
         const results = people.results;
-        return results.kind === "found" && results.term === term ? results.people : [];
+        return results.kind === "found" && results.term === term ? results.found : [];
     });
 
     const lists = $derived(

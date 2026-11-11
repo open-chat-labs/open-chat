@@ -30,6 +30,7 @@ const ctx: ConversationContext = {
     text: (key) => key.key,
     openThread: undefined,
     face: (userId) => `face:${userId}`,
+    avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
     token: (ledger) =>

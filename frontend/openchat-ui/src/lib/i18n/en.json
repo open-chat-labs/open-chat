@@ -515,8 +515,15 @@
         "groups": "Groups",
         "unread": "Unread"
       },
+      "moreChats": "{count, plural, one {+# more chat} other {+# more chats}}",
+      "morePeople": "{count, plural, one {+# more person} other {+# more people}}",
       "pinned": "Pinned",
       "searchPlaceholder": "Search conversations",
+      "searchTabs": {
+        "all": "All results",
+        "chats": "Chats",
+        "people": "People"
+      },
       "threadReplies": "Thread replies"
     },
     "chatPicker": {
@@ -535,6 +542,7 @@
     "chatRow": {
       "favourite": "Favourite",
       "forwarded": "Forwarded",
+      "mentions": "{count, plural, one {# unread mention} other {# unread mentions}}",
       "muted": "Notifications muted",
       "private": "Private",
       "videoCallLive": "Video call in progress",

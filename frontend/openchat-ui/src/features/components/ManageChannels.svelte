@@ -3,6 +3,7 @@
      "You're here" chip on the open one, its description, and its members and visibility. Built by hand from the App
      prototype's Manage dialog (its Channels section); the design export has no component for it. -->
 <script lang="ts" module>
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
   export interface ManageChannel {
     key: string;
     title: string;
@@ -17,12 +18,9 @@
   }
 
   const GRADIENTS: Record<string, string> = {
-    violet: 'linear-gradient(140deg,#8B7BFF,#5B3FD9)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     rose: 'linear-gradient(140deg,#FF8FA8,#E0456A)',
-    blue: 'linear-gradient(140deg,#5CB8FF,#2F6BFF)',
-    amber: 'linear-gradient(140deg,#FFC061,#F58A2E)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FA6B8)',
-    plum: 'linear-gradient(140deg,#E27BFF,#9B3FD9)',
     slate: 'linear-gradient(140deg,#9AA3B5,#5D6678)',
   };
 </script>

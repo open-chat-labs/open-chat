@@ -1,11 +1,14 @@
 import {
     memberRoleChoices,
+    ownGroupAvatarUrl,
+    ownUserAvatarUrl,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_OWNER,
     type CommunitySummary,
     type FullMember,
+    type GroupAvatarLookups,
     type MemberActions,
     type MemberRole,
     type MultiUserChat,
@@ -18,12 +21,10 @@ import {
 import type { MemberRole as PanelRole } from "@openchat/ui/src/features/components/GroupPanel.svelte";
 import type { InvitePerson } from "@openchat/ui/src/features/components/InviteDialog.svelte";
 import type { UserGroupPerson } from "@openchat/ui/src/features/components/UserGroupDialog.svelte";
-import { pickById } from "@src/utils/pickById";
+import { swatchFor } from "@src/logic/swatch";
 
 // GroupPanel's people, pins and user groups from the app's members, pinned messages and user
 // groups. What a viewer may do to each member is decided before this (memberActions).
-
-const COLORS = ["violet", "amber", "teal", "blue"] as const;
 
 const PANEL_ROLES: [MemberRole, PanelRole][] = [
     [ROLE_OWNER, "OWNER"],
@@ -46,14 +47,18 @@ function roleTag(role: MemberRole): string {
     return name === "MEMBER" ? "" : name;
 }
 
-/** A member's row; `actions` is what the viewer may do to them. */
+/**
+ * A member's row; `actions` is what the viewer may do to them. Their own picture shows over their
+ * colour, the colour alone without one (ownUserAvatarUrl, the user's decision of 2026-11-10).
+ */
 export function memberPerson(member: FullMember, me: string, actions: MemberActions) {
     return {
         title: member.displayName ?? member.username,
         handle: member.username,
         userId: member.userId,
         tag: member.userId === me ? "YOU" : roleTag(member.role),
-        color: pickById(member.userId, COLORS),
+        color: swatchFor(member.userId),
+        image: ownUserAvatarUrl(member),
         actions: {
             roles: memberRoleChoices(actions).map(panelRole),
             remove: actions.canRemoveMember,
@@ -62,14 +67,15 @@ export function memberPerson(member: FullMember, me: string, actions: MemberActi
     };
 }
 
-/** A lapsed or blocked user's row. */
+/** A lapsed or blocked user's row, with their own picture as a member's. */
 export function userPerson(user: UserSummary, tag: "LAPSED" | "BLOCKED") {
     return {
         title: user.displayName ?? user.username,
         handle: user.username,
         userId: user.userId,
         tag,
-        color: pickById(user.userId, COLORS),
+        color: swatchFor(user.userId),
+        image: ownUserAvatarUrl(user),
     };
 }
 
@@ -87,7 +93,7 @@ export function pinRow(pin: {
         date: pin.date,
         author: pin.author,
         authorId: pin.senderId,
-        color: pickById(pin.senderId, COLORS),
+        color: swatchFor(pin.senderId),
         text: pin.text,
         time: pin.time,
     };
@@ -107,7 +113,7 @@ export function userGroupRow(group: UserGroupDetails, users: UserLookup) {
                           userId,
                           name: user.displayName ?? user.username,
                           handle: user.username,
-                          color: pickById(userId, COLORS),
+                          color: swatchFor(userId),
                       },
                   ];
         }),
@@ -121,7 +127,7 @@ export function botRow(bot: ExternalBotLike) {
         variant: "bot" as const,
         title: bot.name,
         subtitle: bot.definition.description,
-        color: pickById(bot.id, COLORS),
+        color: swatchFor(bot.id),
         image: bot.avatarUrl,
     };
 }
@@ -132,7 +138,7 @@ export function webhookRow(webhook: WebhookDetails) {
         id: webhook.id,
         variant: "webhook" as const,
         title: webhook.name,
-        color: pickById(webhook.id, COLORS),
+        color: swatchFor(webhook.id),
         image: webhook.avatarUrl,
     };
 }
@@ -143,7 +149,7 @@ export function userGroupPerson(userId: string, user: UserSummary | undefined): 
         userId,
         name: user === undefined ? userId : (user.displayName ?? user.username),
         handle: user?.username ?? "",
-        color: pickById(userId, COLORS),
+        color: swatchFor(userId),
     };
 }
 
@@ -158,6 +164,20 @@ export function userGroupDialogGroup(group: UserGroupDetails, users: UserLookup)
         mention: `@${group.name}`,
         members: [...group.members].map((userId) => userGroupPerson(userId, users.get(userId))),
     };
+}
+
+/**
+ * A group's, channel's or community's own picture: a community's avatar, a group's or channel's
+ * (ownGroupAvatarUrl: its avatar, a proposals chat's SNS logo, a channel's community's). None
+ * without one: GroupPanel and Manage then show its swatch, as everywhere in the new web UI.
+ */
+export function collectionAvatarUrl(
+    collection: MultiUserChat | CommunitySummary,
+    groups: GroupAvatarLookups,
+): string | undefined {
+    return collection.kind === "community"
+        ? collection.avatar.blobUrl
+        : ownGroupAvatarUrl(collection, groups);
 }
 
 /**
@@ -185,6 +205,6 @@ export function invitePerson(user: UserSummary): InvitePerson {
         id: user.userId,
         name: user.displayName ?? user.username,
         handle: user.username,
-        color: pickById(user.userId, COLORS),
+        color: swatchFor(user.userId),
     };
 }

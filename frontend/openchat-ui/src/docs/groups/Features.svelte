@@ -6,7 +6,7 @@
   import { features, sec } from '../sections';
   import {
     samples, callPeople, coinSizes as coins, dividerThread, headerMenu, infoDetails, joinGate, messageActionItems,
-    patternRows, receivedGroup, sentGroup, threadFaces, threadGroups, threadReplies, threadRoot, tiles,
+    patternPeople, patternRows, receivedGroup, sentGroup, threadFaces, threadGroups, threadReplies, threadRoot, tiles,
   } from '../samples';
   import * as S from '../samples';
   import {
@@ -188,6 +188,8 @@
         <ChatBubble side="received" text="No faces given: the reply arrow" time="09:12" threadCount={1} threadLastAt="09:30" />
         <VoiceMessage side="received" elapsed="0:07" total="0:24" progress={0.3} time="09:12" playing={voicePlaying} onPlay={() => (voicePlaying = true)} onPause={() => (voicePlaying = false)} />
         <TypingIndicator names={['Danielle', 'Priya']} colors={['violet', 'teal']} />
+        <TypingIndicator names={['Danielle']} variant="bubble" />
+        <TypingIndicator names={['Danielle']} variant="bubble" showAvatar avatarColor="teal" />
       </div>
     </Frame>
     <Frame label="Sent">
@@ -361,7 +363,7 @@
 <Section {...sec(features, 'pattern-chat-list')}>
   <Frame cols={300}>
     <div class="panel" style:height="560px">
-      <ChatListPanel rows={[...patternRows]} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
+      <ChatListPanel rows={[...patternRows]} people={[...patternPeople]} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
     </div>
     <div class="panel" style:height="560px">
       <ChatListPanel rows={[...patternRows]} headerKind="community" headerTitle="OpenChat Devs" headerMembers={2481} headerColor="amber" loading showThreads={false} />
