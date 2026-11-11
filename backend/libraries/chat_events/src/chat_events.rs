@@ -1516,6 +1516,7 @@ impl ChatEvents {
         total_chit_earned: u32,
         streak: u16,
         streak_ends: TimestampMillis,
+        account_created: Option<TimestampMillis>,
     ) -> OCResult<ReservePrizeSuccess> {
         match self.update_message(
             None,
@@ -1534,6 +1535,7 @@ impl ChatEvents {
                     total_chit_earned,
                     streak,
                     streak_ends,
+                    account_created,
                 )
             },
         ) {
@@ -1553,6 +1555,7 @@ impl ChatEvents {
         total_chit_earned: u32,
         streak: u16,
         streak_ends: TimestampMillis,
+        account_created: Option<TimestampMillis>,
     ) -> Result<ReservePrizeSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
@@ -1573,6 +1576,19 @@ impl ChatEvents {
         // Unique person verification (DecideAI) is suspended - every user is eligible.
 
         if content.min_chit_earned > total_chit_earned {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
+
+        // A claimer whose registration date didn't reach the chat can't show their account is old
+        // enough, so is refused
+        if content.min_account_age > 0
+            && account_created.is_none_or(|created| now.saturating_sub(created) < content.min_account_age)
+        {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
+
+        // Refused exactly as any other ineligible claimer is, so the claimer can't tell why
+        if content.excluded_users.contains(&user_id) {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
         }
 
@@ -3809,6 +3825,79 @@ mod tests {
         );
 
         (events, proposal_message_index, text_message_index)
+    }
+
+    // A group with one prize message (one prize of 100, ending at 1_000), returned with its id
+    fn setup_prize(min_account_age: Milliseconds, excluded_users: Vec<UserId>) -> (ChatEvents, MessageId) {
+        let (mut events, _, _) = setup_events();
+        let sender: UserId = Principal::from_slice(&[2]).into();
+        let mut prize = crate::message_content_internal::prize_tests::prize(Principal::anonymous());
+        prize.min_account_age = min_account_age;
+        prize.excluded_users = excluded_users.into_iter().collect();
+        push_message(&mut events, sender, 3, MessageContentInternal::Prize(prize));
+        (events, MessageId::from(3u128))
+    }
+
+    fn reserve(
+        events: &mut ChatEvents,
+        message_id: MessageId,
+        user_id: UserId,
+        now: TimestampMillis,
+        account_created: Option<TimestampMillis>,
+    ) -> OCResult<ReservePrizeSuccess> {
+        events.reserve_prize(
+            user_id,
+            EventIndex::default(),
+            message_id,
+            now,
+            false,
+            DiamondMembershipStatus::Inactive,
+            0,
+            0,
+            0,
+            account_created,
+        )
+    }
+
+    fn not_eligible(result: OCResult<ReservePrizeSuccess>) -> bool {
+        result
+            .err()
+            .is_some_and(|e| e.matches_code(OCErrorCode::PrizeUserNotElligible))
+    }
+
+    // Invariants: an excluded user is refused as not eligible, like any other ineligible claimer,
+    // and their refused claim reserves nothing
+    #[test]
+    fn excluded_user_is_refused_and_the_prize_stays_claimable() {
+        let excluded: UserId = Principal::from_slice(&[20]).into();
+        let other: UserId = Principal::from_slice(&[21]).into();
+        let (mut events, message_id) = setup_prize(0, vec![excluded]);
+
+        assert!(not_eligible(reserve(&mut events, message_id, excluded, 500, Some(1))));
+        // The only prize is still there for someone else
+        assert!(reserve(&mut events, message_id, other, 500, Some(1)).is_ok());
+    }
+
+    // Invariant: with a minimum account age, a claim succeeds only from an account at least that old
+    #[test]
+    fn account_younger_than_the_minimum_age_is_refused() {
+        let user: UserId = Principal::from_slice(&[20]).into();
+        let (mut events, message_id) = setup_prize(100, Vec::new());
+
+        assert!(not_eligible(reserve(&mut events, message_id, user, 500, Some(401))));
+        assert!(reserve(&mut events, message_id, user, 500, Some(400)).is_ok());
+    }
+
+    // Invariant: a claim without the claimer's registration date fails only where a minimum age is set
+    #[test]
+    fn claim_without_a_registration_date_is_refused_only_when_a_minimum_age_is_set() {
+        let user: UserId = Principal::from_slice(&[20]).into();
+
+        let (mut events, message_id) = setup_prize(100, Vec::new());
+        assert!(not_eligible(reserve(&mut events, message_id, user, 500, None)));
+
+        let (mut events, message_id) = setup_prize(0, Vec::new());
+        assert!(reserve(&mut events, message_id, user, 500, None).is_ok());
     }
 
     fn proposal_content(id: u64) -> MessageContentInternal {

@@ -15248,6 +15248,17 @@
         "doc": "The claim restrictions offered, in the dialog's order (all by default)."
       },
       {
+        "name": "exclusions",
+        "type": "{ search: (query: string) => Promise<{ id: string; name: string }[]>; nameOf: (id: string) => string; max: number }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Lets the sender exclude users from claiming (none without it): finds users by name, names one by id, and the most that can be excluded."
+      },
+      {
         "name": "pricing",
         "type": "(token: PrizeToken, amount: number, winners: number) => { fees: number; min: number }",
         "default": null,

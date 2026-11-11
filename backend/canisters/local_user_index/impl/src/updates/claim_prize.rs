@@ -27,6 +27,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             user_id,
             diamond_membership_expires_at,
             unique_person_proof,
+            date_created,
             ..
         },
         now,
@@ -67,6 +68,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 total_chit_earned,
                 streak: chit.streak,
                 streak_ends: chit.streak_ends,
+                account_created: date_created,
             };
             let canister_id = CanisterId::from(chat_id);
             top_up_and_retry_if_out_of_cycles(canister_id, || {
@@ -84,6 +86,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 total_chit_earned,
                 streak: chit.streak,
                 streak_ends: chit.streak_ends,
+                account_created: date_created,
             };
             let canister_id = CanisterId::from(community_id);
             top_up_and_retry_if_out_of_cycles(canister_id, || {

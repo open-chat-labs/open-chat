@@ -6,6 +6,8 @@ import { walletApprovalFee, type ChatIdentifier, type PrizeContentInitial } from
 export const PRIZE_FEE_PERCENT = 5n;
 /** The most winners a prize can have. */
 export const MAX_PRIZE_WINNERS = 1000;
+/** The most users a prize can exclude from claiming it. */
+export const MAX_PRIZE_EXCLUDED_USERS = 50;
 
 /** How a prize's fund is split: the same for every winner, or a random amount each. */
 export type PrizeDistribution = "equal" | "random";
@@ -147,6 +149,10 @@ export type NewPrize = {
     minStreak: number;
     /** At least this much CHIT earned; 0 for none. */
     minChitEarned: number;
+    /** An account registered at least this long ago, in ms; 0 for none. */
+    minAccountAgeMs: number;
+    /** Users who can't claim it (user ids). */
+    excludedUsers: string[];
     /** Where the fund comes from: an external wallet that has approved it (`fromAccount`), one a
      * draft will ask (`fromWallet`), or neither for the user's OpenChat account. */
     from?: { fromAccount?: string; fromWallet?: string };
@@ -181,6 +187,8 @@ export function newPrizeContent(
         uniquePersonOnly: false,
         streakOnly: prize.minStreak,
         minChitEarned: prize.minChitEarned,
+        minAccountAgeMs: prize.minAccountAgeMs,
+        excludedUsers: prize.excludedUsers.slice(0, MAX_PRIZE_EXCLUDED_USERS),
         transfer: {
             kind: "pending",
             ledger: prize.ledger,

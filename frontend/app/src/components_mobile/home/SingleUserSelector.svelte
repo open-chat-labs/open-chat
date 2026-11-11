@@ -12,6 +12,8 @@
         selectedReceiver?: UserOrUserGroup | undefined;
         placeholder?: string;
         mentionSelf?: boolean;
+        // Users not offered, by id
+        hidden?: string[];
         onUserSelected?: (user: UserSummary) => void;
         subtext?: Snippet;
     }
@@ -20,6 +22,7 @@
         selectedReceiver = $bindable(undefined),
         placeholder = interpolate($_, i18nKey("tokenTransfer.chooseReceiver")),
         mentionSelf = false,
+        hidden,
         onUserSelected,
         subtext,
     }: Props = $props();
@@ -49,7 +52,7 @@
         {/if}
     {/snippet}
     {#snippet selectOptions(onSelect)}
-        <MentionPickerLogic prefix={searchTerm} {mentionSelf} onMention={onSelect}>
+        <MentionPickerLogic prefix={searchTerm} {mentionSelf} {hidden} onMention={onSelect}>
             {#snippet children(userOrGroupKey, mention, filtered)}
                 <Container
                     onClick={(e) => e?.stopPropagation()}

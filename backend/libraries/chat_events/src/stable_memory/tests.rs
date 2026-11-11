@@ -7,7 +7,7 @@ use crate::stable_memory::tests::test_values::{
     MESSAGE_REMINDER_CREATED_PREV1, MESSAGE_REMINDER_CREATED_PREV2, MESSAGE_REMINDER_CURRENT, MESSAGE_REMINDER_PREV1,
     MESSAGE_REMINDER_PREV2, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, P2P_SWAP_PREV3, P2P_SWAP_PREV4, POLL_CURRENT,
     POLL_PREV1, POLL_PREV2, PRIZE_CURRENT, PRIZE_PREV1, PRIZE_PREV2, PRIZE_PREV3, PRIZE_PREV4, PRIZE_PREV5, PRIZE_PREV6,
-    PRIZE_PREV7, PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, PRIZE_WINNER_PREV2, REPORTED_MESSAGE_CURRENT,
+    PRIZE_PREV7, PRIZE_PREV8, PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, PRIZE_WINNER_PREV2, REPORTED_MESSAGE_CURRENT,
     REPORTED_MESSAGE_PREV1, REPORTED_MESSAGE_PREV2, TEXT_CURRENT, TEXT_PREV1, TEXT_PREV2, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1,
     VIDEO_CALL_PREV2, VIDEO_CURRENT, VIDEO_PREV1, VIDEO_PREV2,
 };
@@ -332,6 +332,10 @@ fn prize_content() {
         fee_percent: 5,
         min_chit_earned: 100,
         principal: random_principal(&mut rng),
+        min_account_age: 30 * 24 * 60 * 60 * 1000,
+        excluded_users: [random_from_principal(&mut rng), random_from_principal(&mut rng)]
+            .into_iter()
+            .collect(),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, PRIZE_CURRENT);
@@ -345,6 +349,7 @@ fn prize_content() {
         PRIZE_PREV5,
         PRIZE_PREV6,
         PRIZE_PREV7,
+        PRIZE_PREV8,
     ] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Prize(_)));
     }
@@ -354,6 +359,20 @@ fn prize_content() {
         panic!()
     };
     assert_eq!(prize.principal, Principal::anonymous());
+
+    // A prize's minimum account age and excluded users survive being stored
+    let MessageContentInternal::Prize(prize) = test_deserialization(PRIZE_CURRENT) else {
+        panic!()
+    };
+    assert_eq!(prize.min_account_age, 30 * 24 * 60 * 60 * 1000);
+    assert_eq!(prize.excluded_users.len(), 2);
+
+    // Prizes stored before either existed have no minimum account age and exclude nobody
+    let MessageContentInternal::Prize(prize) = test_deserialization(PRIZE_PREV8) else {
+        panic!()
+    };
+    assert_eq!(prize.min_account_age, 0);
+    assert!(prize.excluded_users.is_empty());
 }
 
 #[test]

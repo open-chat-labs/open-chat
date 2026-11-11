@@ -1376,6 +1376,7 @@ function messageToEvent(
                     uniquePersonOnly: message.content.uniquePersonOnly,
                     streakOnly: message.content.streakOnly,
                     minChitEarned: message.content.minChitEarned,
+                    minAccountAgeMs: message.content.minAccountAgeMs || undefined,
                 };
                 break;
             case "p2p_swap_content_initial":

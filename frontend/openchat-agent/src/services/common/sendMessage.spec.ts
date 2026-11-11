@@ -30,6 +30,7 @@ const ICP = { fee: 10_000n, decimals: 8, symbol: "ICP", ledger: LEDGER };
 const CHAT = { fee: 100_000n, decimals: 8, symbol: "CHAT", ledger: "2ouva-viaaa-aaaaq-aaamq-cai" };
 
 const RECIPIENT = "rdmx6-jaaaa-aaaaa-aaadq-cai";
+const EXCLUDED = "renrk-eyaaa-aaaaa-aaada-cai";
 
 const transfer: PendingCryptocurrencyTransfer = {
     kind: "pending",
@@ -50,6 +51,8 @@ const prize: PrizeContentInitial = {
     uniquePersonOnly: false,
     streakOnly: 0,
     minChitEarned: 5,
+    minAccountAgeMs: 86_400_000,
+    excludedUsers: [EXCLUDED],
     endDate: 1_000n,
     caption: "a prize",
     transfer: { ...transfer, recipient: CANISTER },
@@ -208,6 +211,15 @@ describe.each([
         ]);
     });
 
+    test("a prize's minimum account age and excluded users are sent to the chat", async () => {
+        await send(prize);
+
+        expect(sent[0][2].content.Prize).toMatchObject({
+            min_account_age: 86_400_000n,
+            excluded_users: [Principal.fromText(EXCLUDED).toUint8Array()],
+        });
+    });
+
     // The group or community pulls a swap offer from the wallet of the member offering it
     test("a swap offer names no account to be pulled from", async () => {
         await send(swap);
@@ -229,8 +241,12 @@ describe.each([
                 ledger: LEDGER,
                 caption: "a prize",
                 minChitEarned: 5,
+                minAccountAgeMs: 86_400_000,
             },
         });
+        expect(
+            JSON.stringify(message.content, (_, v) => (typeof v === "bigint" ? `${v}` : v)),
+        ).not.toContain(EXCLUDED);
     });
 
     test("a swap offer whose transfer was made comes back as the offer", async () => {

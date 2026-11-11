@@ -14,11 +14,18 @@
         title?: Snippet;
         // The longest duration which may be chosen, if there is a limit
         maxMilliseconds?: bigint;
+        // The units offered, all of them by default
+        units?: Unit[];
     }
 
-    let { duration = $bindable(BigInt(ONE_DAY)), title, maxMilliseconds }: Props = $props();
-
     type Unit = "minutes" | "hours" | "days";
+
+    let {
+        duration = $bindable(BigInt(ONE_DAY)),
+        title,
+        maxMilliseconds,
+        units = ["minutes", "hours", "days"],
+    }: Props = $props();
 
     const options: Record<Unit, number[]> = {
         minutes: [1, 5, 15, 30, 45],
@@ -26,8 +33,7 @@
         days: [1, 7, 30, 90, 365],
     };
 
-    const units: Unit[] = ["minutes", "hours", "days"];
-    let selectedUnit = $state<Unit>("hours");
+    let selectedUnit = $state<Unit>(untrack(() => (units.includes("hours") ? "hours" : units[0])));
     const values = $derived(options[selectedUnit].filter((value) => withinMax(selectedUnit, value)));
     let selectedValue = $state<number>(1);
 
@@ -80,19 +86,21 @@
 
 <Column gap="sm">
     {@render title?.()}
-    <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
-        {#each units as unit}
-            <Chip
-                fill
-                onClick={() => {
-                    selectedUnit = unit;
-                    selectedValue = 1;
-                }}
-                mode={unit === selectedUnit ? "rounded" : "unselected"}>
-                {unit}
-            </Chip>
-        {/each}
-    </Container>
+    {#if units.length > 1}
+        <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
+            {#each units as unit}
+                <Chip
+                    fill
+                    onClick={() => {
+                        selectedUnit = unit;
+                        selectedValue = 1;
+                    }}
+                    mode={unit === selectedUnit ? "rounded" : "unselected"}>
+                    {unit}
+                </Chip>
+            {/each}
+        </Container>
+    {/if}
     <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
         {#each values as value}
             <Chip

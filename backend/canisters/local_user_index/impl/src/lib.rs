@@ -769,6 +769,7 @@ impl RuntimeState {
             local_community_count: self.data.local_communities.len() as u64,
             local_multi_user_count: self.data.local_multi_user_canisters.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
+            undated_user_count: self.data.global_users.undated_user_count() as u64,
             multi_user_canister_count: self.data.global_users.multi_user_canisters().len() as u64,
             bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
@@ -1157,6 +1158,8 @@ pub struct Metrics {
     pub local_community_count: u64,
     pub local_multi_user_count: u64,
     pub global_user_count: u64,
+    // Users without a registration date, which every user is once they've been backfilled
+    pub undated_user_count: u64,
     pub multi_user_canister_count: u64,
     pub bot_user_count: u64,
     pub oc_controlled_bots: Vec<UserId>,

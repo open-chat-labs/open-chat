@@ -22,13 +22,17 @@
                     foregroundColour={ColourVars.primarySurface} />
             </Row>
         {/if}
-        <TextContent me>
-            {#snippet content()}
-                <ChatCaption colour={failed ? "validationError" : "primaryAccent"}>
-                    <Translatable resourceKey={text} />
-                </ChatCaption>
-            {/snippet}
-        </TextContent>
+        <!-- TextContent renders a full-width spacer beside its text, which in this row would
+             squeeze the text to nothing -->
+        <Column width="fill">
+            <TextContent me>
+                {#snippet content()}
+                    <ChatCaption colour={failed ? "validationError" : "primaryAccent"}>
+                        <Translatable resourceKey={text} />
+                    </ChatCaption>
+                {/snippet}
+            </TextContent>
+        </Column>
     </Row>
 </Column>
 

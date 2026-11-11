@@ -6,6 +6,8 @@ import {
     type ResourceKey,
 } from "@shared";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** Who is looking at a prize, and what they hold that its requirements ask about. */
 export type PrizeReader = {
     /** The reader sent it. */
@@ -19,6 +21,8 @@ export type PrizeReader = {
     lifetimeDiamond: boolean;
     streak: number;
     chitEarned: number;
+    /** When the reader registered, in ms. */
+    accountCreated: number;
 };
 
 export type PrizeView = {
@@ -58,11 +62,18 @@ export function prizeView(content: PrizeContent, reader: PrizeReader): PrizeView
             met: reader.chitEarned >= content.minChitEarned,
         });
     }
+    const minAccountAgeMs = content.minAccountAgeMs ?? 0;
+    const oldEnough = reader.now - reader.accountCreated >= minAccountAgeMs;
+    const ageLabel = minAccountAgeLabel(content);
+    if (ageLabel !== undefined) {
+        gates.push({ label: ageLabel, met: oldEnough });
+    }
     const eligible =
         (!content.diamondOnly || reader.diamond) &&
         (!content.lifetimeDiamondOnly || reader.lifetimeDiamond) &&
         content.streakOnly <= reader.streak &&
-        content.minChitEarned <= reader.chitEarned;
+        content.minChitEarned <= reader.chitEarned &&
+        oldEnough;
     return {
         finished,
         claimedByYou,
@@ -78,6 +89,14 @@ export function prizeView(content: PrizeContent, reader: PrizeReader): PrizeView
             eligible,
         gates,
     };
+}
+
+/** A prize's minimum account age requirement, in days, if it has one. */
+export function minAccountAgeLabel(content: { minAccountAgeMs?: number }): ResourceKey | undefined {
+    const ms = content.minAccountAgeMs ?? 0;
+    return ms > 0
+        ? i18nKey("prizes.minAccountAgeValue", { n: Math.round(ms / DAY_MS) })
+        : undefined;
 }
 
 /**
@@ -115,6 +134,10 @@ export function claimPrizeFailedMessage(
 ): ResourceKey {
     if (resp.kind === "error" && resp.code === ErrorCode.AlreadyInProgress) {
         return i18nKey("prizes.claimInProgress");
+    }
+    // whichever requirement it was: a prize's excluded users aren't told they were excluded
+    if (resp.kind === "error" && resp.code === ErrorCode.PrizeUserNotElligible) {
+        return i18nKey("prizes.claimIneligible");
     }
     if (resp.kind === "error" && resp.code === ErrorCode.LimitReached) {
         const claimableFrom = Number(resp.message);

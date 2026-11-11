@@ -1,4 +1,4 @@
-import { ErrorCode, type PrizeContent } from "@shared";
+import { ErrorCode, i18nKey, type PrizeContent } from "@shared";
 import {
     claimPrizeFailedMessage,
     isTrustedClick,
@@ -32,6 +32,7 @@ const reader: PrizeReader = {
     lifetimeDiamond: false,
     streak: 0,
     chitEarned: 0,
+    accountCreated: 0,
 };
 
 describe("claiming a prize", () => {
@@ -51,6 +52,22 @@ describe("claiming a prize", () => {
             canClaim: false,
             gates: [{ met: false }],
         });
+    });
+});
+
+describe("a prize with a minimum account age", () => {
+    const DAY = 86_400_000;
+    const aged = { ...prize, minAccountAgeMs: 30 * DAY, endDate: BigInt(200 * DAY) };
+
+    test("is offered only to a reader whose account is at least that old, and shows the requirement", () => {
+        const now = 100 * DAY;
+        expect(prizeView(aged, { ...reader, now, accountCreated: now - 30 * DAY })).toMatchObject({
+            canClaim: true,
+            gates: [{ label: { key: "prizes.minAccountAgeValue", params: { n: 30 } }, met: true }],
+        });
+        expect(
+            prizeView(aged, { ...reader, now, accountCreated: now - 30 * DAY + 1 }),
+        ).toMatchObject({ canClaim: false, gates: [{ met: false }] });
     });
 });
 
@@ -76,6 +93,16 @@ describe("a claim which didn't succeed", () => {
                 formatTime,
             ),
         ).toMatchObject({ key: "prizes.claimInProgress" });
+    });
+
+    // Invariant: a claim refused as not eligible says so, and nothing about which requirement failed
+    test("says you aren't eligible when a requirement isn't met, whichever it was", () => {
+        expect(
+            claimPrizeFailedMessage(
+                { kind: "error", code: ErrorCode.PrizeUserNotElligible, message: undefined },
+                formatTime,
+            ),
+        ).toEqual(i18nKey("prizes.claimIneligible"));
     });
 
     test("says it was unsuccessful for any other reason", () => {

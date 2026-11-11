@@ -41,18 +41,21 @@
     [D + 'thirtyDays', D + 'thirtyDaysShort', 30 * 86400e3],
     [D + 'ninetyDays', D + 'ninetyDaysShort', 90 * 86400e3],
   ];
-  type GateKey = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak';
-  const GATES: { k: GateKey; label: string; icon: string; pick?: 'chit' | 'streak' }[] = [
+  type GateKey = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak' | 'age';
+  type Pick = 'chit' | 'streak' | 'age';
+  const GATES: { k: GateKey; label: string; icon: string; pick?: Pick }[] = [
     { k: 'auth', label: 'ui.prizeBuilderDialog.gates.auth', icon: 'passkey' },
     { k: 'diamond', label: 'ui.prizeBuilderDialog.gates.diamond', icon: 'diamond-outline' },
     { k: 'lifetime', label: 'ui.prizeBuilderDialog.gates.lifetime', icon: 'diamond' },
     { k: 'chit', label: 'ui.prizeBuilderDialog.gates.chit', icon: 'chit', pick: 'chit' },
     { k: 'streak', label: 'ui.prizeBuilderDialog.gates.streak', icon: 'flame', pick: 'streak' },
+    { k: 'age', label: 'ui.prizeBuilderDialog.gates.age', icon: 'calendar', pick: 'age' },
   ];
   // title and amount keys; amounts are formatted with t() at render time
   const PICKS = {
     streak: { title: 'ui.prizeBuilderDialog.minStreak', opts: [3, 7, 14, 30, 100, 365], amount: 'ui.prizeBuilderDialog.streakDays', short: (n: number) => n },
     chit: { title: 'ui.prizeBuilderDialog.minChit', opts: [1000, 5000, 10000, 50000, 100000], amount: 'ui.prizeBuilderDialog.chitAmount', short: (n: number) => (n >= 1000 ? n / 1000 + 'k' : n) },
+    age: { title: 'ui.prizeBuilderDialog.minAge', opts: [7, 30, 90, 180, 365], amount: 'ui.prizeBuilderDialog.ageDays', short: (n: number) => n },
   };
   const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
 
@@ -66,6 +69,9 @@
     defaults?: Partial<PrizeDraft>;
     /** The claim restrictions offered, in the dialog's order (all by default). */
     restrictions?: PrizeGateKind[];
+    /** Lets the sender exclude users from claiming (none without it): finds users by name, names one by id, and
+     *  the most that can be excluded. */
+    exclusions?: { search: (query: string) => Promise<{ id: string; name: string }[]>; nameOf: (id: string) => string; max: number };
     /** The host's prices for `amount` among `winners`: every fee on top of the amount, and the least the amount
      *  can be. Without it a fee per winner plus one for the fund, and `minPer` a winner. */
     pricing?: (token: PrizeToken, amount: number, winners: number) => { fees: number; min: number };
@@ -73,7 +79,7 @@
     onClose?: () => void;
   }
 
-  let { tokens, z = 80, initial = null, defaults, restrictions, pricing, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, initial = null, defaults, restrictions, exclusions, pricing, onAttach, onClose }: Props = $props();
   // closing plays the shared exit before the host unmounts it
   const flow = new DialogFlow();
   onDestroy(() => flow.destroy());
@@ -82,7 +88,7 @@
   const i18n = getI18n();
   const K = 'ui.prizeBuilderDialog.';
 
-  const start: PrizeDraft = untrack(() => ({ tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...defaults, ...initial?.draft }));
+  const start: PrizeDraft = untrack(() => ({ tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, age: 30, excluded: [], ...defaults, ...initial?.draft }));
   const offered = $derived(restrictions ? GATES.filter((g) => restrictions.includes(g.k)) : GATES);
   let tok = $state(start.tok);
   let amt = $state(start.amt);
@@ -92,11 +98,15 @@
   let gates = $state<Record<string, boolean | number>>(start.gates);
   let streak = $state(start.streak);
   let chit = $state(start.chit);
-  let pick = $state<'chit' | 'streak' | null>(null);
+  let age = $state(start.age ?? 30);
+  let excluded = $state<string[]>(start.excluded ?? []);
+  let query = $state('');
+  let found = $state<{ id: string; name: string }[]>([]);
+  let pick = $state<Pick | null>(null);
   // the picker last opened, so its chips stay in place while it shrinks closed
-  let shownPick = $state<'chit' | 'streak' | null>(null);
+  let shownPick = $state<Pick | null>(null);
   let tokOpen = $state(false);
-  let row = $state<'win' | 'dur' | 'who' | null>(null);
+  let row = $state<'win' | 'dur' | 'who' | 'out' | null>(null);
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
   let amountInput: HTMLInputElement;
 
@@ -108,7 +118,7 @@
   const min = $derived(priced ? priced.min : T.minPer * Math.max(w, 1));
   const max = $derived(Math.max(0, T.bal - fee));
   const F = (n: number) => fmt(n, T.dp);
-  const pickAmount = (p: 'chit' | 'streak', n: number) => t(PICKS[p].amount, { count: n, n: PICKS[p].short(n) });
+  const pickAmount = (p: Pick, n: number) => t(PICKS[p].amount, { count: n, n: PICKS[p].short(n) });
   // why Attach is disabled: a resource key under ui.prizeBuilderDialog ('' = ready)
   const reason = $derived(
     w < 1 || w > 1000
@@ -127,6 +137,8 @@
   const gateLabel = (g: (typeof GATES)[number]) =>
     g.k === 'streak'
       ? t(K + 'gateStreak', { count: streak })
+      : g.k === 'age'
+        ? t(K + 'gateAge', { count: age })
       : g.k === 'chit'
         ? t(K + 'gateChit', { amount: pickAmount('chit', chit) })
         : g.k === 'diamond'
@@ -143,7 +155,25 @@
     { k: 'win' as const, icon: 'trophy', label: t(K + 'winners'), value: `${w} · ${t(even ? K + 'evenSplit' : K + 'randomAmounts')}` },
     { k: 'dur' as const, icon: 'timer', label: t(K + 'endsAfter'), value: t(DURS[dur][0]) },
     { k: 'who' as const, icon: 'shield', label: t(K + 'whoCanClaim'), value: gateOn.length ? gateOn.map(gateLabel).join(' · ') : t(K + 'anyone') },
+    ...(exclusions
+      ? [{ k: 'out' as const, icon: 'user-minus', label: t(K + 'excluded'), value: excluded.length ? t(K + 'excludedCount', { count: excluded.length }) : t(K + 'nobody') }]
+      : []),
   ]);
+  const pickValue = (p: Pick) => (p === 'chit' ? chit : p === 'age' ? age : streak);
+
+  // the latest search wins: a slower earlier one doesn't replace its results
+  let searchId = 0;
+  async function search(q: string) {
+    query = q;
+    const id = ++searchId;
+    const results = exclusions && q.trim().length >= 2 ? await exclusions.search(q.trim()) : [];
+    if (id === searchId) found = results.filter((u) => !excluded.includes(u.id));
+  }
+
+  function exclude(id: string) {
+    if (exclusions && excluded.length < exclusions.max && !excluded.includes(id)) excluded = [...excluded, id];
+    found = found.filter((u) => u.id !== id);
+  }
   const costRows = $derived([
     { label: t(K + 'costPrize'), value: `${F(a)} ${T.symbol}` },
     { label: t(K + 'costFees'), value: `${F(fee)} ${T.symbol}` },
@@ -176,6 +206,7 @@
   function choose(n: number) {
     if (!pick) return;
     if (pick === 'chit') chit = n;
+    else if (pick === 'age') age = n;
     else streak = n;
     gates = { ...gates, [pick]: true };
     pick = null;
@@ -195,12 +226,12 @@
       endsAt: Date.now() + DURS[dur][2],
       durationMs: DURS[dur][2],
       gates: gateOn.map((g) => ({ label: gateLabel(g), met: true })),
-      rules: gateOn.map((g) => (g.pick ? { kind: g.k, min: g.pick === 'streak' ? streak : chit } : { kind: g.k })),
+      rules: gateOn.map((g) => (g.pick ? { kind: g.k, min: pickValue(g.pick) } : { kind: g.k })),
       fee,
       feeText: `${F(fee)} ${T.symbol}`,
       totalText: `${F(total)} ${T.symbol}`,
       summary: [t(K + 'summaryWinners', { count: w }), t(DURS[dur][1]), ...(gateOn.length ? [t(K + 'summaryRules', { count: gateOn.length })] : [])].join(' · '),
-      draft: { tok, amt, win, dur, even, gates, streak, chit },
+      draft: { tok, amt, win, dur, even, gates, streak, chit, age, excluded },
     });
   }
 
@@ -322,13 +353,43 @@
                               <span class="picker-title">{t(PICKS[shownPick].title)}</span>
                               <div class="chips">
                                 {#each PICKS[shownPick].opts as n}
-                                  <button class="choice small" class:on={n === (shownPick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(shownPick, n) })}</button>
+                                  <button class="choice small" class:on={n === pickValue(shownPick)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(shownPick, n) })}</button>
                                 {/each}
                               </div>
                             </div>
                           {/if}
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              {/if}
+              {#if r.k === 'out' && exclusions}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel column gap10">
+                      <span class="range">{t(K + 'excludedHelp', { max: exclusions.max })}</span>
+                      {#if excluded.length}
+                        <div class="chips">
+                          {#each excluded as id (id)}
+                            <button class="choice gate on" onclick={() => (excluded = excluded.filter((e) => e !== id))} aria-label={t(K + 'unexclude', { name: exclusions.nameOf(id) })}
+                              >{exclusions.nameOf(id)}<span class="gate-trail" style:mask="var(--icon-close) center/contain no-repeat" style:-webkit-mask="var(--icon-close) center/contain no-repeat"></span></button
+                            >
+                          {/each}
+                        </div>
+                      {/if}
+                      {#if excluded.length < exclusions.max}
+                        <div class="stepper">
+                          <input class="search" value={query} oninput={(e) => search(e.currentTarget.value)} placeholder={t(K + 'excludedSearch')} aria-label={t(K + 'excludedSearch')} />
+                        </div>
+                        {#if found.length}
+                          <div class="chips">
+                            {#each found.slice(0, 8) as u (u.id)}
+                              <button class="choice small" onclick={() => exclude(u.id)}>{u.name}</button>
+                            {/each}
+                          </div>
+                        {/if}
+                      {/if}
                     </div>
                   </div>
                 </div>
@@ -704,6 +765,12 @@
     text-align: center;
     font: 700 16px/1 var(--font-sans);
     color: var(--ink);
+  }
+
+  .stepper input.search {
+    padding: 0 8px;
+    text-align: start;
+    font: 400 15px/1 var(--font-sans);
   }
 
   .range {

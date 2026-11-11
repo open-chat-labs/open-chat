@@ -33,6 +33,8 @@ const prize: NewPrize = {
     diamond: "none",
     minStreak: 0,
     minChitEarned: 0,
+    minAccountAgeMs: 0,
+    excludedUsers: [],
 };
 
 describe("a prize", () => {

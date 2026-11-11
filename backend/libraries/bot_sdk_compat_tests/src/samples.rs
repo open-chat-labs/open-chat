@@ -497,6 +497,7 @@ fn prize() -> PrizeContent {
         streak_only: max(),
         requires_captcha: true,
         min_chit_earned: max(),
+        min_account_age: Some(max()),
     }
 }
 

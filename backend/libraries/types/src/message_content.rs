@@ -528,6 +528,7 @@ impl From<MessageContentInitial> for MessageContent {
                 streak_only: c.streak_only,
                 requires_captcha: false,
                 min_chit_earned: c.min_chit_earned,
+                min_account_age: c.min_account_age.filter(|age| *age > 0),
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
@@ -771,6 +772,10 @@ pub struct PrizeContentInitial {
     pub unique_person_only: bool,
     pub streak_only: u16,
     pub min_chit_earned: u32,
+    // How long a claimer must have been registered for, if at all
+    pub min_account_age: Option<Milliseconds>,
+    // Users who can't claim the prize. Kept by the chat and never returned to any reader.
+    pub excluded_users: Option<Vec<UserId>>,
 }
 
 #[ts_export]
@@ -797,6 +802,8 @@ pub struct PrizeContent {
     #[ts(skip)]
     pub requires_captcha: bool,
     pub min_chit_earned: u32,
+    // How long a claimer must have been registered for, if at all
+    pub min_account_age: Option<Milliseconds>,
 }
 
 #[ts_export]

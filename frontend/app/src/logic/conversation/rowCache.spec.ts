@@ -19,6 +19,7 @@ const ctx: ConversationContext = {
         lifetimeDiamond: false,
         streak: 0,
         chitEarned: 0,
+        accountCreated: 0,
     },
     text: (key) => key.key,
     openThread: undefined,

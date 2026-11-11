@@ -3,8 +3,16 @@
 </script>
 
 <script lang="ts">
-    import type { ChatSummary, MessageContext, OpenChat, SignerWallet } from "@client";
+    import type {
+        ChatSummary,
+        MessageContext,
+        OpenChat,
+        SignerWallet,
+        UserOrUserGroup,
+        UserSummary,
+    } from "@client";
     import {
+        allUsersStore,
         chitBands,
         cryptoBalanceStore,
         cryptoLookup,
@@ -12,6 +20,7 @@
         ONE_DAY,
         ONE_HOUR,
         ONE_WEEK,
+        MAX_PRIZE_EXCLUDED_USERS,
         prizeCosts,
         prizeMaximum,
         walletApprovalFee,
@@ -36,9 +45,12 @@
     import Select from "../Select.svelte";
     import TextArea from "../TextArea.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import UserPill from "../UserPill.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import DurationPicker from "./DurationPicker.svelte";
+    import SingleUserSelector from "./SingleUserSelector.svelte";
     import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
@@ -83,6 +95,15 @@
     const uniquePersonOnly = false;
     let streakOnly = $derived(form.minStreak > 0);
     let chitOnly = $derived(form.minChitEarned > 0);
+    let ageOnly = $derived(form.minAccountAgeMs > 0);
+    // the users remembered as excluded from the last prize are loaded to show who they are
+    client.getMissingUsers(form.excludedUsers);
+    let excludedUsers = $derived(
+        form.excludedUsers.flatMap((id) => {
+            const user = $allUsersStore.get(id);
+            return user === undefined ? [] : [user];
+        }),
+    );
     const refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
@@ -97,7 +118,9 @@
     let sourceWallet = $state<SignerWallet | undefined>();
     let payFromWallet = $derived(sourceWallet !== undefined);
     let approval: ExternalWalletApproval | undefined = $state();
-    let anyUser = $derived(!diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly);
+    let anyUser = $derived(
+        !diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly && !ageOnly,
+    );
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
@@ -231,6 +254,25 @@
         form.diamond = "none";
         form.minStreak = 0;
         form.minChitEarned = 0;
+        form.minAccountAgeMs = 0;
+    }
+
+    // counts the users picked to exclude, making the picker again empty after each
+    let exclusionPicks = $state(0);
+
+    function exclude(user: UserSummary) {
+        form.exclude(user.userId);
+        exclusionPicks += 1;
+    }
+
+    function onAgeChanged() {
+        form.minAccountAgeMs = ageOnly ? 30 * ONE_DAY : 0;
+    }
+
+    function unexclude(user: UserOrUserGroup) {
+        if (user.kind !== "user_group" && user.kind !== "everyone") {
+            form.unexclude(user.userId);
+        }
     }
 
     function onStreakChanged() {
@@ -430,7 +472,49 @@
                                         {/each}
                                     </Select>
                                 {/if}
+                                <Checkbox
+                                    id="age_only"
+                                    label={i18nKey(`prizes.onlyOlderAccounts`)}
+                                    onChange={onAgeChanged}
+                                    bind:checked={ageOnly} />
+                                {#if ageOnly}
+                                    <DurationPicker
+                                        unitFilter={(unit) => unit === "days"}
+                                        bind:milliseconds={
+                                            () => BigInt(form.minAccountAgeMs),
+                                            (ms) => (form.minAccountAgeMs = Number(ms))
+                                        } />
+                                {/if}
                             </div>
+                        </div>
+                        <div class="exclusions">
+                            <Legend label={i18nKey("prizes.excludeUsers")} />
+                            <p class="info">
+                                <Translatable
+                                    resourceKey={i18nKey("prizes.excludeUsersInfo", {
+                                        n: MAX_PRIZE_EXCLUDED_USERS,
+                                    })} />
+                            </p>
+                            {#if excludedUsers.length > 0}
+                                <div class="excluded">
+                                    {#each excludedUsers as user (user.userId)}
+                                        <UserPill onDeleteUser={unexclude} userOrGroup={user} />
+                                    {/each}
+                                </div>
+                            {/if}
+                            {#if form.canExcludeMore}
+                                <!-- picks from the chat's members as @mentions do; made again after each pick so
+                                     its input is empty for the next -->
+                                {#key exclusionPicks}
+                                    <SingleUserSelector
+                                        autofocus={exclusionPicks > 0}
+                                        direction={"up"}
+                                        border={false}
+                                        placeholder={"prizes.excludeUsersSearch"}
+                                        hidden={form.excludedUsers}
+                                        onUserSelected={exclude} />
+                                {/key}
+                            {/if}
                         </div>
                         {#if errorMessage !== undefined}
                             <div class="error">
@@ -558,6 +642,23 @@
         .restrictions,
         .duration {
             flex: 1;
+        }
+    }
+
+    .exclusions {
+        margin-top: $sp4;
+
+        .info {
+            @include font(book, normal, fs-80);
+            color: var(--txt-light);
+            margin-bottom: $sp3;
+        }
+
+        .excluded {
+            display: flex;
+            flex-wrap: wrap;
+            gap: $sp3;
+            margin-bottom: $sp3;
         }
     }
 

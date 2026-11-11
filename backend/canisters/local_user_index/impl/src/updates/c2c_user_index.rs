@@ -264,6 +264,7 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
                     username: user.username,
                     user_type: user.user_type,
                     referred_by: user.referred_by,
+                    date_created: user.date_created,
                 },
                 **now,
                 state,
@@ -383,7 +384,10 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
 }
 
 fn handle_user_registered(user: UserRegistered, now: TimestampMillis, state: &mut RuntimeState) {
-    state.data.global_users.add(user.user_principal, user.user_id, user.user_type);
+    state
+        .data
+        .global_users
+        .add(user.user_principal, user.user_id, user.user_type, user.date_created);
 
     if let Some(referred_by) = user.referred_by {
         state.push_event_to_user(
