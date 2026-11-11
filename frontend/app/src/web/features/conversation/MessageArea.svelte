@@ -182,6 +182,7 @@
         mediaHeld,
         messageStatus,
         senderColor,
+        showsSenderName,
         untilNextDay,
         withFields,
         type ConversationContext,
@@ -1392,7 +1393,7 @@
                     senderName={row.senderName}
                     color={row.color}
                     showAvatar={item.first}
-                    showName={item.first && row.side === "received" && chat.kind !== "direct_chat"}
+                    showName={showsSenderName(item.first, chat.kind === "direct_chat")}
                     avatarSpace
                     endsRun={item.last}
                     onSenderClick={(el) => el.dispatchEvent(profileClickedEvent(msg.sender))}

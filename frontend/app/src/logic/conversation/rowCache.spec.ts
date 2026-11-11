@@ -72,6 +72,17 @@ describe("the rows kept per event", () => {
         expect(rows.row("k", evt, "delivered", renamed).senderName).toBe("Alicia");
     });
 
+    test("are made again when the reader renames themselves, as their own runs show their name", () => {
+        const rows = new RowCache();
+        const evt = message();
+        evt.event.sender = "me";
+        const first = rows.row("k", evt, "sent", ctx);
+        const renamed = { ...ctx, userName: (id: string) => (id === "me" ? "Ivan" : id) };
+        const second = rows.row("k", evt, "sent", renamed);
+        expect(second).not.toBe(first);
+        expect(second.senderName).toBe("Ivan");
+    });
+
     test("are made again only where the open thread changes which row's thread is selected", () => {
         const rows = new RowCache();
         const threaded = (messageIndex: number) => {

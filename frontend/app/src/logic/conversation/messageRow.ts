@@ -257,6 +257,14 @@ export function messageText(
 }
 
 /**
+ * Whether a run of messages shows its sender's name over it: once, at the run's start, in a group
+ * or channel, the reader's own runs as well as others'; never in a DM.
+ */
+export function showsSenderName(runStart: boolean, direct: boolean): boolean {
+    return runStart && !direct;
+}
+
+/**
  * A message as MessageGroup shows it, with its sender. Every kind shows as a text bubble for now:
  * the rich kinds are phase 5 (GAPS.md).
  */
@@ -283,14 +291,14 @@ export function messageRow(
     if (kind !== undefined) {
         return {
             side: mine ? "sent" : "received",
-            senderName: mine ? ctx.you : ctx.userName(msg.sender),
+            senderName: ctx.userName(msg.sender),
             color: senderColor(msg.sender),
             message: kind,
         };
     }
     return {
         side: mine ? "sent" : "received",
-        senderName: mine ? ctx.you : ctx.userName(msg.sender),
+        senderName: ctx.userName(msg.sender),
         color: senderColor(msg.sender),
         message: {
             id: String(msg.messageId),

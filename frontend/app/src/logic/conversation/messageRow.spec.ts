@@ -5,6 +5,7 @@ import {
     messageRow,
     messageStatus,
     senderColor,
+    showsSenderName,
     untilNextDay,
     withFields,
     type ConversationContext,
@@ -85,6 +86,18 @@ describe("a message's status", () => {
     });
 });
 
+describe("a run's sender name", () => {
+    test("shows once, at the run's start, for own runs and others' alike, outside a DM", () => {
+        expect(showsSenderName(true, false)).toBe(true);
+        expect(showsSenderName(false, false)).toBe(false);
+    });
+
+    test("never shows in a DM", () => {
+        expect(showsSenderName(true, true)).toBe(false);
+        expect(showsSenderName(false, true)).toBe(false);
+    });
+});
+
 describe("a message row", () => {
     test("is someone else's text, with its sender, id and time", () => {
         expect(messageRow(message(), "sent", ctx)).toMatchObject({
@@ -95,10 +108,11 @@ describe("a message row", () => {
         });
     });
 
-    test("is the reader's own as sent, by You", () => {
-        expect(messageRow(message({ sender: "me" }), "sending", ctx)).toMatchObject({
+    test("is the reader's own as sent, under their own name", () => {
+        const named = { ...ctx, userName: (id: string) => (id === "me" ? "Ivan" : id) };
+        expect(messageRow(message({ sender: "me" }), "sending", named)).toMatchObject({
             side: "sent",
-            senderName: "You",
+            senderName: "Ivan",
             message: { status: "sending" },
         });
     });

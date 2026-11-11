@@ -34,7 +34,7 @@ export class RowCache {
         const msg = evt.event;
         const reply = msg.repliesTo;
         const name = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
-        const names = `${name(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
+        const names = `${ctx.userName(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
         // another thread opening, or a thread's replies being read, redoes only the rows it concerns
         const thread =
             msg.thread === undefined || !ctx.threads

@@ -2097,8 +2097,10 @@ design export needs. Each entry says where it came up.
   DM's header has the old last-seen line (L2: `directChatSubtitle` in `@client`, shared with the
   old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
   under two minutes; web/05's header doesn't say what that line says, so it's the old words
-  (`TODO(design)`). Own messages show no name (the design's "You" would be the lower-case app
-  string).
+  (`TODO(design)`). Own runs show the reader's own name over them in groups and channels, as
+  others' runs do (display name, else username; once per run, at its start, in `--ink-3`), and
+  no name in a DM, where neither side has one (`showsSenderName` in `logic/conversation/messageRow`,
+  L2, at the user's request; web/05 doesn't say, and the design's "You" gives way to the name).
 - **No sticky date** (`features/conversation`): the web follows web/05 ("Date pills don't stick;
   one 'Today' pill. The Unread divider doesn't stick."), so the list's dates are only the inline
   pills between days, and nothing pins the day at the top as the old lists do (L2 had built one,
