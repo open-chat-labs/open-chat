@@ -1871,7 +1871,9 @@ design export needs. Each entry says where it came up.
     and sign out): the form says why, and signing up again goes ahead without the code (the
     client won't send it again); closing signs out;
   - the terms shown in a popup at sign-up (`AuthDialog` links to `/terms` instead, which opens
-    the terms page in a new tab);
+    the terms page in a new tab). There's no checkbox: the form says "By creating an account you
+    agree to the terms and conditions." (the user's call, 2026-11-11; EXPORT-LOG), and the
+    sign-up sends `termsAccepted` as `true`;
   - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);
   - the Solana adapters' own icons (Phantom has none here).
 - **Learn content** (`features/marketing/learn`): converted from the existing pages, verbatim
