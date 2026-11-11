@@ -1,14 +1,12 @@
-<!-- Person pill: gradient avatar (optional online dot), name, optional tag, and a remove ×. onClick makes the whole chip pressable.
+<!-- Person pill: gradient avatar (or their photo; optional online dot), name, optional tag, and a remove ×. onClick makes the whole chip pressable.
      variant: neutral | accent | danger. size: sm | md | lg. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import { AVATAR_GRADIENTS } from './Avatar.svelte';
   const GRADIENTS = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     rose: 'linear-gradient(140deg,#FF6B8B,#C13584)',
-    plum: 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
   };
 
@@ -17,6 +15,8 @@
     size?: 'sm' | 'md' | 'lg';
     variant?: 'neutral' | 'accent' | 'danger';
     color?: keyof typeof GRADIENTS;
+    /** Their photo, shown over the swatch. */
+    photoUrl?: string;
     /** Resource key (or literal text), e.g. a role. */
     tag?: string;
     showAvatar?: boolean;
@@ -26,13 +26,16 @@
     onClick?: () => void;
   }
 
-  let { label, size = 'md', variant = 'neutral', color = 'violet', tag = '', showAvatar = true, showRemove = true, online = false, onRemove, onClick }: Props = $props();
+  let { label, size = 'md', variant = 'neutral', color = 'violet', photoUrl, tag = '', showAvatar = true, showRemove = true, online = false, onRemove, onClick }: Props = $props();
   const t = useT();
 </script>
 
 <div class="chip {size} {variant}" class:pressable={!!onClick} class:bare={!showAvatar} onclick={onClick} role="button" tabindex="0">
   {#if showAvatar}
     <span class="avatar" style:background={GRADIENTS[color] ?? GRADIENTS.violet}>
+      {#if photoUrl}
+        <img class="photo" src={photoUrl} alt="" />
+      {/if}
       {#if online}
         <span class="dot"></span>
       {/if}
@@ -114,6 +117,15 @@
       width: 32px;
       height: 32px;
     }
+  }
+
+  // their photo over the swatch, where the host has one
+  .photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
   }
 
   .dot {

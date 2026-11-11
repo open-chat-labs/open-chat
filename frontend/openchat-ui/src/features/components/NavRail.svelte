@@ -9,6 +9,7 @@
   import { useT } from '../../lib/i18n';
   import { cssUrl } from '../../lib/cssUrl';
   import ContextMenu from '../../lib/components/ContextMenu.svelte';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
   import type { MenuItem } from '../../lib/types';
 
   // nav item keys → canonical names in lib/icons.js
@@ -16,10 +17,9 @@
   // default accessible names (resource keys)
   const NAMES = { messages: 'ui.navRail.chats', bell: 'ui.navRail.notifications', wallet: 'ui.navRail.wallet', chit: 'ui.navRail.chitRewards', heart: 'ui.navRail.favourites' };
   const GRADIENTS = {
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     sunset: 'linear-gradient(140deg,#ff8a3d,#ff2d74)',
-    blue: 'linear-gradient(140deg,#3d7bff,#7a3dff)',
-    teal: 'linear-gradient(140deg,#2ee6a8,#1f8fbf)',
-    plum: 'linear-gradient(140deg,#b04dff,#4d2dff)',
   };
 
   type ItemIcon = keyof typeof ICONS;
@@ -65,6 +65,8 @@
     profileHandle: string;
     /** Your avatar image. */
     profileAvatarUrl?: string;
+    /** Your swatch, shown without an avatar image (and while it loads). Defaults to violet. */
+    profileColor?: keyof typeof AVATAR_GRADIENTS;
     /** Your own presence dot, shown only when the host says so (defaults to false). A future status (away, busy …)
      *  would replace this flag. */
     profileOnline?: boolean;
@@ -98,6 +100,7 @@
     profileLabel,
     profileHandle,
     profileAvatarUrl,
+    profileColor = 'violet',
     profileOnline = false,
     onSelect,
     onSelectPin,
@@ -321,7 +324,7 @@
   {:else}
     <div class="row profile" onclick={() => onProfile?.()} role="button" tabindex="0">
       <span class="slot tall">
-        <span class="me" style:background={profileAvatarUrl ? `center/cover no-repeat ${cssUrl(profileAvatarUrl)}` : undefined}
+        <span class="me" style:background={profileAvatarUrl ? `center/cover no-repeat ${cssUrl(profileAvatarUrl)}, ${AVATAR_GRADIENTS[profileColor] ?? AVATAR_GRADIENTS.violet}` : (AVATAR_GRADIENTS[profileColor] ?? AVATAR_GRADIENTS.violet)}
           >{#if profileOnline}<span class="me-online"></span>{/if}</span
         >
       </span>

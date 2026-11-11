@@ -19,16 +19,18 @@ export function messageSwipeAction(
 }
 
 /**
- * What a left swipe does on a message, as far as its menu offers it (`messageMenu`): undefined
- * where it offers no such thing (someone else's message that can't be forwarded, say), so the
- * swipe isn't taken.
+ * What a message's left swipe hands the new web tree (`MessageGroup`'s `onSwipeLeft`). The web
+ * keeps the group's own mapping (web/05): your own text swipes right to edit and left to reply,
+ * through the edit and reply the message offers; any other message swipes right to reply and left
+ * to forward, and only the forward comes here. So it's "forward" where the message's menu
+ * (`messageMenu`) offers one, and undefined where it doesn't (a message that can't be forwarded),
+ * so that swipe isn't taken. Not the old mobile tree's rule (`messageSwipeAction`), where your own
+ * message swipes left to edit.
  */
-export function messageSwipeLeft(
-    mine: boolean,
+export function webMessageSwipeLeft(
     actions: ReadonlySet<MessageMenuAction>,
-): MessageSwipeAction | undefined {
-    const action = messageSwipeAction("left", mine, actions.has("edit"));
-    return actions.has(action) ? action : undefined;
+): "forward" | undefined {
+    return actions.has("forward") ? "forward" : undefined;
 }
 
 /**

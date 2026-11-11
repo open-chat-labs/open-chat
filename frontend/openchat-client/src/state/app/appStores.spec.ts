@@ -18,6 +18,8 @@ import {
     type CommunityPermissions,
     type CommunitySummary,
     type CryptocurrencyDetails,
+    type DirectChatIdentifier,
+    type DirectChatSummary,
     type EventWrapper,
     type GroupChatIdentifier,
     type GroupChatSummary,
@@ -28,6 +30,7 @@ import {
 import { get } from "svelte/store";
 import { vi } from "vitest";
 import { OpenChat } from "../../openchat";
+import { unconfirmedReadByThem } from "../../stores/unconfirmed";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import { ChatDetailsState } from "../chat/serverDetails";
 import { communityLocalUpdates } from "../community/detailUpdates";
@@ -1161,5 +1164,82 @@ describe("unread count stores", () => {
         unsub();
         // initial subscription + 50 marks + the final mark
         expect(publishes).toEqual(52);
+    });
+});
+
+describe("a DM's read receipts", () => {
+    const them: DirectChatIdentifier = { kind: "direct_chat", userId: "them" };
+
+    function dm(readByThemUpTo: number | undefined): DirectChatSummary {
+        return {
+            kind: "direct_chat",
+            id: them,
+            them,
+            readByThemUpTo,
+            dateCreated: 0n,
+            lastUpdated: 0n,
+            latestMessage: undefined,
+            latestEventIndex: 0,
+            latestMessageIndex: 0,
+            metrics: emptyChatMetrics(),
+            membership: { ...nullMembership(), role: ROLE_OWNER },
+            eventsTTL: undefined,
+            eventsTtlLastUpdated: 0n,
+        };
+    }
+
+    function applyDirectChat(chat: DirectChatSummary) {
+        OpenChat.setGlobalStateStores(
+            [chat],
+            [],
+            [],
+            [],
+            [],
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+    }
+
+    beforeEach(() => {
+        setRouteParams(mockContext, {
+            kind: "global_chat_selected_route",
+            chatId: them,
+            chatType: "direct_chat",
+            open: false,
+            scope: { kind: "chats" },
+        });
+        setSelectedChat();
+        selectedChatFor(them)?.updateEvents(() => [chatMessage()]);
+        unconfirmedReadByThem.clear();
+    });
+
+    test("invariant 2: once readByThemUpTo covers a message, its id leaves unconfirmedReadByThem", () => {
+        const { messageId, messageIndex } = chatMessage().event;
+        unconfirmedReadByThem.add(messageId, { chatId: them, messageIndex });
+
+        applyDirectChat(dm(undefined));
+        expect(unconfirmedReadByThem.value.has(messageId)).toBe(true);
+
+        applyDirectChat(dm(messageIndex));
+        expect(unconfirmedReadByThem.value.has(messageId)).toBe(false);
+    });
+
+    test("invariant 2: a DM that isn't selected drops its confirmed receipts too", () => {
+        const other: DirectChatIdentifier = { kind: "direct_chat", userId: "other" };
+        unconfirmedReadByThem.add(999n, { chatId: other, messageIndex: 7 });
+
+        applyDirectChat({ ...dm(7), id: other, them: other });
+        expect(unconfirmedReadByThem.value.has(999n)).toBe(false);
     });
 });

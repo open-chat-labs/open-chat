@@ -6,7 +6,8 @@ import type { PreviewBar } from "@src/logic/join/previewBar";
 
 export type PreviewBarProps = {
     community: string;
-    avatarUrl: string;
+    // its own picture; none shows the bar's swatch
+    avatarUrl: string | undefined;
     state: PreviewBar["state"];
     requirements: number;
     hint: string | undefined;
@@ -18,7 +19,7 @@ export type PreviewBarProps = {
 
 export function previewBarProps(
     bar: PreviewBar,
-    avatarUrl: string,
+    avatarUrl: string | undefined,
     text: (key: ResourceKey) => string,
 ): PreviewBarProps {
     const optional = (key: ResourceKey | undefined) => (key === undefined ? undefined : text(key));

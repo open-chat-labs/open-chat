@@ -15,12 +15,11 @@
   import { durationText, useT } from '../../lib/i18n';
   import { type DisappearSetting } from './DmChatSettings.svelte';
   import { durationMs } from '../../lib/durations';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   const GRADIENTS = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
   };
 
   type CoverProps = ComponentProps<typeof PanelCover>;

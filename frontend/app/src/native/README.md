@@ -66,10 +66,13 @@ native/
                      chat's rules accepted (RulesSheet, on logic/composer/sendPrompts)
     details/         a chat's details (N6), pushed from the conversation without a URL: a DM's
                      (DmDetails) or a group's or channel's (GroupDetails) on ChatDetailsScreen,
-                     the Members screen (MembersScreen, chat_members) and a member's profile sheet;
-                     the Search tile goes back to the conversation and opens its search
-                     (conversation/searchRequests); Manage's pages, Edit group and Invite are
-                     N7's (group_settings, placeholders)
+                     the Members screen with its tabs (MembersScreen, chat_members), Invite
+                     people (InvitePeopleScreen, invite_people; openInvite decides whether
+                     Invite pushes it or says who can) and a member's profile sheet;
+                     the disappearing messages, the library's TimedToggle (DisappearingRow), one
+                     setting with the conversation menu's submenu; the Search tile goes back to
+                     the conversation and opens its search (conversation/searchRequests);
+                     Manage's pages and Edit group are N7's (group_settings, placeholders)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -99,11 +102,15 @@ and the GIFs' content with the old UIs; the emoji by category in
 `utils/emojis`, the old pickers' data; the phone's recent photos in `utils/native/recentMedia`,
 shared with the old native UI's strip; the photos and videos picked (the composer's media and the
 attach panel's selection) and the recent emoji in `logic/composer`), a chat's details (the web
-panel's: `logic/members`' MemberManagement, and the members' role sections and ⋯ in `@client`'s
-`memberSections` and `memberMenu`, `logic/groupOrCommunity/detailsPermissions`, `logic/profile`'s ProfileCardData, a
+panel's: `logic/members`' MemberManagement, and the members' role sections, ⋯ and tabs in
+`@client`'s `memberSections`, `memberMenu` and `memberTabs`, who may invite and how each person
+joins in `logic/members/invitePeople`, `logic/groupOrCommunity/detailsPermissions`, `logic/profile`'s ProfileCardData, a
 DM's settings in `logic/chats/dmSettings`, a group's disappearing messages in
-`logic/chats/groupDisappearing` and the disappearing lengths in
-`logic/chats/disappearingMessages`), and the theme the web and Welcome's menu keep
+`logic/chats/groupDisappearing`, the disappearing lengths in
+`logic/chats/disappearingMessages` (on the library's `lib/durations`, TimedToggle's), and the one
+setting the details' switch and the conversation menu's submenu both read and save in
+`logic/chats/chatDisappearing`, with the length switching it on goes back to in the client's
+`disappearingLengthsStore`), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link

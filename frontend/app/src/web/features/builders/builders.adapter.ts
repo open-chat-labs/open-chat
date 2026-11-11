@@ -330,13 +330,20 @@ function prizeGates(
     diamond: PrizeDiamond,
     minStreak: number,
     minChitEarned: number,
+    minAccountAgeMs: number,
 ): PrizeDraft["gates"] {
     return {
         ...(diamond === "standard" ? { diamond: true } : {}),
         ...(diamond === "lifetime" ? { lifetime: true } : {}),
         ...(minStreak > 0 ? { streak: true } : {}),
         ...(minChitEarned > 0 ? { chit: true } : {}),
+        ...(minAccountAgeMs > 0 ? { age: true } : {}),
     };
+}
+
+/** A minimum account age as the dialog holds it, in whole days (at least 1). */
+function ageDays(ms: number): number {
+    return Math.max(1, Math.round(ms / ONE_DAY));
 }
 
 /** A new prize's starting point in the dialog: the split, duration and restrictions last used. */
@@ -344,9 +351,16 @@ export function prizeDefaults(config: PrizeConfig): Partial<PrizeDraft> {
     return {
         even: config.distribution === "equal",
         dur: prizeDurationIndex(config.durationMs),
-        gates: prizeGates(config.diamond, config.minStreak, config.minChitEarned),
+        gates: prizeGates(
+            config.diamond,
+            config.minStreak,
+            config.minChitEarned,
+            config.minAccountAgeMs,
+        ),
         ...(config.minStreak > 0 ? { streak: config.minStreak } : {}),
         ...(config.minChitEarned > 0 ? { chit: config.minChitEarned } : {}),
+        ...(config.minAccountAgeMs > 0 ? { age: ageDays(config.minAccountAgeMs) } : {}),
+        excluded: config.excludedUsers,
     };
 }
 
@@ -361,6 +375,8 @@ export function prizeChoices(prize: Prize): PrizeConfig & { winners: number } {
         diamond: rule("lifetime") ? "lifetime" : rule("diamond") ? "standard" : "none",
         minStreak: rule("streak")?.min ?? 0,
         minChitEarned: rule("chit")?.min ?? 0,
+        minAccountAgeMs: (rule("age")?.min ?? 0) * ONE_DAY,
+        excludedUsers: prize.draft.excluded ?? [],
     };
 }
 
@@ -402,7 +418,12 @@ export function composerPrize(
         : content.diamondOnly
           ? "standard"
           : "none";
-    const gates = prizeGates(diamond, content.streakOnly, content.minChitEarned);
+    const gates = prizeGates(
+        diamond,
+        content.streakOnly,
+        content.minChitEarned,
+        content.minAccountAgeMs,
+    );
     const rules: Prize["rules"] = [
         ...(diamond === "standard" ? [{ kind: "diamond" as const }] : []),
         ...(diamond === "lifetime" ? [{ kind: "lifetime" as const }] : []),
@@ -410,6 +431,9 @@ export function composerPrize(
             ? [{ kind: "chit" as const, min: content.minChitEarned }]
             : []),
         ...(content.streakOnly > 0 ? [{ kind: "streak" as const, min: content.streakOnly }] : []),
+        ...(content.minAccountAgeMs > 0
+            ? [{ kind: "age" as const, min: ageDays(content.minAccountAgeMs) }]
+            : []),
     ];
     const short = t(`ui.prizeBuilderDialog.durations.${key}Short`);
     const amountText = tokenAmount(content.amount, token);
@@ -444,6 +468,8 @@ export function composerPrize(
             gates,
             streak: content.streakOnly > 0 ? content.streakOnly : 7,
             chit: content.minChitEarned > 0 ? content.minChitEarned : 10000,
+            age: content.minAccountAgeMs > 0 ? ageDays(content.minAccountAgeMs) : 30,
+            excluded: content.excludedUsers,
         },
     };
 }

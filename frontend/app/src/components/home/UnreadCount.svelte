@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { emptyUnreadCounts, type UnreadCounts } from "@client";
+    import { emptyUnreadCounts, unreadCountShown, type UnreadCounts } from "@client";
 
     interface Props {
         unread?: UnreadCounts;
@@ -10,8 +10,7 @@
 
     let { unread = emptyUnreadCounts(), solid = true }: Props = $props();
 
-    let muted = $derived(!unread.mentions && unread.unmuted <= 0);
-    let count = $derived(muted ? unread.muted : unread.unmuted);
+    let { count, muted } = $derived(unreadCountShown(unread));
 </script>
 
 {#if count > 0 || unread.mentions}

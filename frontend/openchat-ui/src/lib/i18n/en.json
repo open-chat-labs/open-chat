@@ -515,8 +515,15 @@
         "groups": "Groups",
         "unread": "Unread"
       },
+      "moreChats": "{count, plural, one {+# more chat} other {+# more chats}}",
+      "morePeople": "{count, plural, one {+# more person} other {+# more people}}",
       "pinned": "Pinned",
       "searchPlaceholder": "Search conversations",
+      "searchTabs": {
+        "all": "All results",
+        "chats": "Chats",
+        "people": "People"
+      },
       "threadReplies": "Thread replies"
     },
     "chatPicker": {
@@ -535,6 +542,7 @@
     "chatRow": {
       "favourite": "Favourite",
       "forwarded": "Forwarded",
+      "mentions": "{count, plural, one {# unread mention} other {# unread mentions}}",
       "muted": "Notifications muted",
       "private": "Private",
       "videoCallLive": "Video call in progress",
@@ -1132,7 +1140,7 @@
     "duration": {
       "days": "{count, plural, one {# day} other {# days}}",
       "hours": "{count, plural, one {# hour} other {# hours}}",
-      "minutes": "{count, plural, one {# minute} other {# minutes}}",
+      "minutes": "{count, plural, other {# min}}",
       "months": "{count, plural, one {# month} other {# months}}",
       "weeks": "{count, plural, one {# week} other {# weeks}}",
       "years": "{count, plural, one {# year} other {# years}}"
@@ -2325,6 +2333,7 @@
       "viewVotes": "View votes"
     },
     "prizeBuilderDialog": {
+      "ageDays": "{count} days",
       "anyone": "Anyone in this chat",
       "attach": "Attach prize",
       "balanceAfter": "Balance after",
@@ -2351,13 +2360,19 @@
       "endsAfter": "Ends after",
       "enterAmount": "Enter an amount",
       "evenSplit": "even split",
+      "excluded": "Excluded",
+      "excludedCount": "{count, plural, one {{count} user} other {{count} users}}",
+      "excludedHelp": "Excluded users can't claim this prize and are only told they aren't eligible. Nobody else can see who you excluded. Up to {max} users.",
+      "excludedSearch": "Search for a user to exclude",
       "feeAdded": "Fee {fee} {symbol} ({count} transfers) is added on top",
       "feesAdded": "Fees of {fee} {symbol} are added on top",
       "fewerWinners": "Fewer winners",
+      "gateAge": "Accounts {count}+ days old",
       "gateAuth": "Authenticated users",
       "gateChit": "{amount}+",
       "gateDiamond": "Diamond members",
       "gates": {
+        "age": "Account age",
         "auth": "Authenticated",
         "chit": "CHIT earned",
         "diamond": "Diamond",
@@ -2365,10 +2380,12 @@
         "streak": "Streak"
       },
       "gateStreak": "{count}+ day streak",
+      "minAge": "Minimum account age",
       "minChit": "Minimum CHIT earned",
       "minimum": "Minimum for {count} winners is {min} {symbol}",
       "minStreak": "Minimum streak",
       "moreWinners": "More winners",
+      "nobody": "Nobody",
       "notEnough": "Not enough {symbol} (max {max} after fees)",
       "numberOfWinners": "Number of winners",
       "orMore": "{amount} or more",
@@ -2387,6 +2404,7 @@
       "title": "Create a prize",
       "totalAmount": "Total prize amount",
       "totalInclFees": "Total {total} {symbol} incl. fees",
+      "unexclude": "Stop excluding {name}",
       "update": "Update prize",
       "whoCanClaim": "Who can claim",
       "winners": "Winners",

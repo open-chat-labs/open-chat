@@ -30,6 +30,9 @@ describe("the prize settings remembered", () => {
             diamond: "lifetime",
             minStreak: 7,
             minChitEarned: 5000,
+            // stored before prizes had either: no minimum age, nobody excluded
+            minAccountAgeMs: 0,
+            excludedUsers: [],
         });
         // the mobile builder's bigint, as JSON.stringify wrote it
         expect(parsePrizeConfig('{"duration":"3600000"}').durationMs).toBe(3_600_000);
@@ -54,6 +57,22 @@ describe("a prize from a builder", () => {
     });
 
     const attached = () => localUpdates.draftMessages.value.get(context)?.attachment;
+
+    // Invariant: the builder remembers the last minimum account age and excluded users
+    test("remembers its minimum account age and excluded users for the next prize", () => {
+        const form = new PrizeForm();
+        form.minAccountAgeMs = 30 * ONE_DAY;
+        form.exclude("user1");
+        form.exclude("user2");
+        form.unexclude("user1");
+        expect(form.attachTyped(context, icp, 10_000_000_000n, "2")).toBe("attached");
+        const content = attached();
+        expect(content).toMatchObject({ minAccountAgeMs: 30 * ONE_DAY, excludedUsers: ["user2"] });
+
+        const next = new PrizeForm();
+        expect(next.minAccountAgeMs).toBe(30 * ONE_DAY);
+        expect(next.excludedUsers).toEqual(["user2"]);
+    });
 
     // 5d invariant 3
     test("an attached prize amount is the typed amount in the token's smallest unit exactly", () => {

@@ -1083,6 +1083,15 @@ export const patternRows = [
   { id: 'ch-announcements', title: '#announcements', kind: 'channel', preview: 'Diamond members get early access', time: 'Sun', color: 'teal' },
 ] as const;
 
+// People a search found outside the list (ChatListPanel's `people`): the docs' panel filters them by title as it does its rows.
+export const patternPeople = [
+  { id: 'found:lucia', title: 'Lucia Martins', preview: '@lucia', time: '', color: 'teal' },
+  { id: 'found:luca', title: 'Luca Rossi', preview: '@luca_r', time: '', color: 'blue' },
+  { id: 'found:marcus2', title: 'Marcus Lund', preview: '@mlund', time: '', color: 'amber' },
+  { id: 'found:lumi', title: 'Lumi', preview: 'Answers questions about OpenChat', time: '', color: 'plum' },
+  { id: 'found:lux', title: 'Lux Okafor', preview: '@lux', time: '', color: 'violet' },
+] as const;
+
 export const infoDetails = [
   { label: 'docs.features.info.username', value: '@alice_anderson' },
   { label: 'docs.features.info.memberSince', value: 'Nov 2021' },

@@ -2,6 +2,7 @@
      corners on --overlay-1, the search icon, and a clear × once there's text, which keeps the
      keyboard. What else the input takes (focus, blur, an attachment) is passed on to it. -->
 <script lang="ts">
+    import { SEARCH_INPUT_ATTRIBUTES } from "@openchat/ui/src/lib/searchInput";
     import type { HTMLInputAttributes } from "svelte/elements";
     import { _ } from "svelte-i18n";
 
@@ -20,10 +21,8 @@
     <span class="search-icon" aria-hidden="true"></span>
     <input
         bind:this={field}
-        type="search"
+        {...SEARCH_INPUT_ATTRIBUTES}
         {value}
-        autocomplete="off"
-        enterkeyhint="search"
         {...input}
         oninput={(e) => onInput(e.currentTarget.value)}
     />

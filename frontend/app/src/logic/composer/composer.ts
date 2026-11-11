@@ -4,10 +4,9 @@ import {
     isCaptionedContent,
     MAX_MENTION_CANDIDATES_SHOWN,
     mentionCandidates,
+    mentionsAsTyped,
     ScreenWidth,
     stripLinkDisabledMarker,
-    userGroupMentionRegex,
-    userIdMentionRegex,
     type AttachFileOutcome,
     type AttachmentContent,
     type ChatSummary,
@@ -233,26 +232,22 @@ export function focusEntryOnOpen(width: ScreenWidth, touchOnly: boolean): boolea
 /**
  * The text an edit starts from: a text message's text with each `@UserId(…)` and `@UserGroup(…)`
  * as the `@name` it was typed as (one not known stays as it is, and is mentioned again as it was
- * on saving) and the link-disabled marker taken out; a captioned message's caption. Nothing for a
- * message whose text can't be edited.
+ * on saving: `mentionsAsTyped`) and the link-disabled marker taken out; a captioned message's
+ * caption, its mentions as typed too. Nothing for a message whose text can't be edited.
  */
 export function editStartText(
     content: MessageContent,
     users: UserLookup,
     userGroups: Pick<ReadonlyMap<number, UserGroupDetails>, "get">,
 ): string | undefined {
-    if (content.kind === "text_content") {
-        return stripLinkDisabledMarker(content.text)
-            .replace(userIdMentionRegex, (match, userId: string) => {
-                const username = users.get(userId)?.username;
-                return username !== undefined ? `@${username}` : match;
-            })
-            .replace(userGroupMentionRegex, (match, id: string) => {
-                const group = userGroups.get(Number(id));
-                return group !== undefined ? `@${group.name}` : match;
-            });
-    }
-    if (isCaptionedContent(content)) return content.caption ?? "";
+    const typed = (text: string) =>
+        mentionsAsTyped(
+            text,
+            (userId) => users.get(userId)?.username,
+            (id) => userGroups.get(id)?.name,
+        );
+    if (content.kind === "text_content") return typed(stripLinkDisabledMarker(content.text));
+    if (isCaptionedContent(content)) return typed(content.caption ?? "");
     return undefined;
 }
 

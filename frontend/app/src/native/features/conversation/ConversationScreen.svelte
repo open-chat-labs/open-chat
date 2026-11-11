@@ -1,6 +1,7 @@
 <!-- A conversation (native design notes §3.3): pushed over the Chats (or a community's) root, with the
      whole window. The header (back, the avatar, name and status, video and voice, the kebab: Search
-     in chat, details, Mute, Favourite, Leave group / Block / Delete),
+     in chat, details, Mute, Favourite, Disappearing messages (a submenu, for those who may set
+     them, one setting with the details' switch), Leave group / Block / Delete),
      which turns into the in-chat search bar; the live call strip while the live call's item is off
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
@@ -13,6 +14,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
         blockedUsersStore,
         botState,
         bridgedUsersStore,
@@ -22,6 +24,7 @@
         chatIdentifierToString,
         chatsInitialisedStore,
         chitStateStore,
+        currentUserStore,
         communitiesStore,
         cryptoLookup,
         currentUserIdStore,
@@ -35,8 +38,8 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
-        lastOnlineStatus,
         messageIndexStore,
+        messageReadByThem,
         messagesRead,
         selectedChatBlockedUsersStore,
         selectedChatDraftMessageStore,
@@ -46,6 +49,7 @@
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
         selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
         selectedServerChatStore,
         TimelineGrouper,
         translationsStore,
@@ -70,6 +74,7 @@
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import TypingIndicator from "@openchat/ui/src/lib/components/TypingIndicator.svelte";
     import UnreadDivider from "@openchat/ui/src/lib/components/UnreadDivider.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
@@ -79,10 +84,15 @@
     import Markdown from "@src/core/Markdown.svelte";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
+    import { stickyDateTop } from "@src/core/stickyDateTop";
+    import {
+        canSetDisappearing,
+        ChatDisappearing,
+        setChatDisappearing,
+    } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
-    import { directChatStatus } from "@src/logic/conversation/chatStatus";
     import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
     import {
         quoteFor,
@@ -93,6 +103,7 @@
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
+    import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
@@ -100,7 +111,6 @@
         isMedia,
         mediaHeld,
         messageStatus,
-        readByThem,
         senderColor,
         untilNextDay,
         withFields,
@@ -123,6 +133,7 @@
         MessageLink,
         OpenAtUnread,
         othersTyping,
+        typingPlacement,
     } from "@src/logic/conversation/timeline";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
@@ -144,10 +155,13 @@
     import { removeWithUndo } from "../chats/removeWithUndo";
     import {
         callEventProps,
+        disappearingPick,
         headerMenuItems,
+        isDisappearingItem,
         listWaiting,
         type HeaderMenuAction,
     } from "./conversation.adapter";
+    import { durationLabel } from "../details/details.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import MessageActions from "./MessageActions.svelte";
     import RulesSheet from "./RulesSheet.svelte";
@@ -200,6 +214,7 @@
         lifetimeDiamond: $isLifetimeDiamondStore,
         streak: $chitStateStore.streak,
         chitEarned: $chitStateStore.totalChitEarned,
+        accountCreated: Number($currentUserStore.dateCreated),
     });
 
     // the exchange rates load after the first rows; once they do, rows are made again
@@ -222,6 +237,7 @@
             me,
             formatter: $_,
             users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
             webhooks: $selectedChatWebhooksStore,
             webhookIds: $webhookUserIdsStore,
             detailsLoaded: $selectedServerChatStore !== undefined,
@@ -268,22 +284,12 @@
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
 
     // a DM: when they were last online (a suspended account says so; a bot, nothing)
-    const dmStatus = $derived(directChatStatus(them));
-    const dmUserId = $derived(chat?.kind === "direct_chat" ? chat.them.userId : undefined);
-    let lastOnline = $state<number>();
-    $effect(() => {
-        const userId = dmUserId;
-        lastOnline = undefined;
-        if (userId === undefined || dmStatus !== "last_online") return;
-        let current = true;
-        void client.getLastOnlineDate(userId, Date.now()).then((at) => {
-            if (current) lastOnline = at;
-        });
-        return () => {
-            current = false;
-        };
+    const dmLine = new LastOnline(client, {
+        userId: () => (chat?.kind === "direct_chat" ? chat.them.userId : undefined),
+        user: () => them,
+        now: () => $now,
+        formatter: () => $_,
     });
-    const online = $derived(lastOnlineStatus($_, $now, lastOnline));
 
     const sub = $derived.by(() => {
         if (chat === undefined) return "";
@@ -295,8 +301,7 @@
                 },
             });
         }
-        if (dmStatus === "suspended") return $_("accountSuspended");
-        return dmStatus === "last_online" ? online[0] : "";
+        return dmLine.text;
     });
 
     const avatarColor = $derived(
@@ -355,6 +360,38 @@
               }),
     );
 
+    // the chat's disappearing messages, one setting with the details' switch (native plan 04, 10):
+    // both a ChatDisappearing, going back to the same length when switched on again; for those who
+    // may set them (not in a DM with a bot, a deleted user or someone blocked)
+    const disappear = new ChatDisappearing(
+        untrack(() => screen.route.chatId),
+        () => chat?.eventsTTL,
+        (setting) =>
+            chat === undefined
+                ? Promise.reject(new Error("no chat"))
+                : setChatDisappearing(client, chat, setting),
+    );
+    $effect.pre(() => {
+        void chat?.eventsTTL;
+        untrack(() => disappear.sync());
+    });
+    const disappearing = $derived(
+        chat !== undefined &&
+            canSetDisappearing(
+                client,
+                chat,
+                chat.kind === "channel" ? $selectedCommunitySummaryStore : undefined,
+                $anonUserStore,
+                {
+                    user: them,
+                    blocked:
+                        chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                },
+            )
+            ? disappear.current
+            : undefined,
+    );
+
     const menuItems = $derived(
         chat === undefined
             ? []
@@ -370,10 +407,24 @@
                       favourite,
                       isBot,
                       actions: menuActions,
+                      disappearing,
                   },
                   menuLabel,
+                  {
+                      off: $_("native.you.off"),
+                      duration: (id) => durationLabel(id, (key, values) => $_(key, { values })),
+                  },
               ),
     );
+
+    // a pick from the disappearing submenu: Off or a length
+    async function setDisappearing(id: string) {
+        const setting = disappearing === undefined ? undefined : disappearingPick(id, disappearing);
+        if (setting === undefined) return;
+        if (!(await disappear.set(setting.on, setting.after))) {
+            context.toast($_("native.details.saveFailed"));
+        }
+    }
 
     function menuLabel(id: HeaderMenuAction): string {
         switch (id) {
@@ -395,6 +446,8 @@
                 return $_("native.conversation.menu.block", {
                     values: { name: title },
                 });
+            case "disappearing":
+                return $_("native.details.disappearing");
             default:
                 return $_(`native.conversation.menu.${id}`);
         }
@@ -403,6 +456,10 @@
     function onMenu(id: string) {
         const current = chat;
         if (current === undefined) return;
+        if (isDisappearingItem(id)) {
+            void setDisappearing(id);
+            return;
+        }
         switch (id) {
             case "search":
                 openSearch();
@@ -588,7 +645,9 @@
     }
 
     // ---- who is typing: a received-style bubble at the end of a DM, a strip resting on the
-    // composer in a group or channel (kept while it fades out)
+    // composer in a group or channel (kept while it fades out; typingPlacement)
+
+    const typingAt = $derived(chat === undefined ? "strip" : typingPlacement(chat.kind, undefined));
 
     const typingNames = $derived(
         chat === undefined
@@ -807,7 +866,8 @@
             failed,
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
-                chat !== undefined && readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+                chat !== undefined &&
+                messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
         });
     }
 
@@ -828,22 +888,10 @@
 
     // the day of the messages at the top of the list, pinned there while it scrolls through that
     // day (the list says which: VirtualChatList's sticky date), as the old app's; the day's own pill
-    // takes over as it passes under it
-    let stickyEl = $state<HTMLElement>();
+    // takes over as it passes under it. Where it sits is core/stickyDateTop's, as the web's: again
+    // whenever what's above the list changes (the search bar, the live call's strip)
     let stickyTop = $state<number>();
     let stickyDate = $state<bigint>();
-    $effect(() => {
-        const el = stickyEl;
-        const area = el?.parentElement;
-        if (el === undefined || area == null) return;
-        // where it is on the screen, again whenever what's above the list changes (the search bar,
-        // the live call's strip)
-        const measure = () => (stickyTop = el.getBoundingClientRect().top);
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(area);
-        return () => observer.disconnect();
-    });
 
     function dateLabel(timestamp: bigint): string {
         void day;
@@ -1071,7 +1119,7 @@
                 <Avatar
                     size={36}
                     color={avatarColor}
-                    online={chat?.kind === "direct_chat" && online[1]}
+                    online={dmLine.online}
                 />
             {/snippet}
         </NativePageHeader>
@@ -1110,11 +1158,15 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="messages"
-            class:typing={!direct && typingNames.length > 0}
+            class:typing={typingAt === "strip" && typingNames.length > 0}
             style:--group-gap="8px"
             onmousedown={keepFocus}
         >
-            <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
+            <div
+                class="sticky-date"
+                class:shown={stickyDate !== undefined}
+                use:stickyDateTop={(top) => (stickyTop = top)}
+            >
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
                 {/if}
@@ -1356,9 +1408,9 @@
             </ChatEventList>
         </div>
 
-        {#if direct && typingNames.length > 0}
-            <div class="typing-bubble" role="status" aria-label={typingText}>
-                <span class="dots"><span></span><span></span><span></span></span>
+        {#if typingAt === "bubble" && typingNames.length > 0}
+            <div class="typing-bubble">
+                <TypingIndicator variant="bubble" names={typingNames} />
             </div>
         {/if}
 
@@ -1367,7 +1419,7 @@
             <div class="search-end"></div>
         {:else}
             <footer class="composer" bind:this={footer}>
-                {#if !direct}
+                {#if typingAt === "strip"}
                     <div
                         class="typing-strip"
                         class:shown={typingNames.length > 0}
@@ -1698,24 +1750,12 @@
         inset-inline-end: var(--space-16);
     }
 
-    // a DM's typing bubble: received style, no avatar, 34px tall, small corner top left
+    // a DM's typing bubble (the library's: received style, no avatar, 34px tall, small corner top
+    // left) under the list, which is bottom-anchored: the messages slide up for it
     .typing-bubble {
         flex: none;
         display: flex;
         padding: var(--space-4) var(--space-12) var(--space-6);
-        animation: typing-in 0.2s ease-out;
-    }
-
-    .typing-bubble .dots {
-        height: 34px;
-        padding: 0 13px;
-        border-radius: 5px 16px 16px 16px;
-        background: var(--bubble-recv-bg);
-        box-shadow: var(--bubble-ring), var(--bubble-shadow);
-
-        &:dir(rtl) {
-            border-radius: 16px 5px 16px 16px;
-        }
     }
 
     .dots {
@@ -1824,21 +1864,10 @@
         @include truncate;
     }
 
-    @keyframes typing-in {
-        from {
-            opacity: 0;
-            transform: translateY(4px);
-        }
-    }
-
     @include reduced-motion {
         .typing-strip {
             transition: none;
             transform: none;
-        }
-
-        .typing-bubble {
-            animation: none;
         }
 
         .dots span {

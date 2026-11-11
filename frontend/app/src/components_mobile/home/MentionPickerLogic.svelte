@@ -26,6 +26,8 @@
         supportsUserGroups?: boolean;
         usersOnly?: boolean;
         inline?: boolean;
+        // Users not offered, by id
+        hidden?: string[];
         onMention: (user: UserOrUserGroup) => void;
         children: Snippet<
             [
@@ -51,6 +53,7 @@
         supportsUserGroups = false,
         usersOnly = false,
         inline = false,
+        hidden = [],
         onMention,
         children,
     }: Props = $props();
@@ -87,7 +90,9 @@
             supportsUserGroups,
             usersOnly,
             keepUserOrder: false,
-        }).slice(0, MAX_MENTION_CANDIDATES_SHOWN),
+        })
+            .filter((u) => !("userId" in u && hidden.includes(u.userId)))
+            .slice(0, MAX_MENTION_CANDIDATES_SHOWN),
     );
     let height = $derived(filtered.length * itemHeight + borderWidth);
     let style = $derived(

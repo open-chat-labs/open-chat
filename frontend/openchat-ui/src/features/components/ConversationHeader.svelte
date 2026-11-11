@@ -22,7 +22,9 @@
   interface Props {
     title: string;
     kind?: 'user' | 'group' | 'channel';
-    color?: 'violet' | 'amber' | 'teal' | 'blue';
+    color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+    /** The chat's picture over its colour (Avatar's `url`); the colour alone without it. */
+    avatarUrl?: string;
     online?: boolean;
     verified?: boolean;
     /** Overrides the second line ("Online", or "Public · 248 members" for groups and channels): resource key (or literal text). */
@@ -65,6 +67,7 @@
     title,
     kind = 'user',
     color = 'violet',
+    avatarUrl,
     online = false,
     verified = false,
     presence = '',
@@ -174,7 +177,7 @@
 
 <div class="header" data-oc-header>
   <div class="identity" onclick={openDetails} role="button" tabindex="0" aria-label={titleHint ? t(titleHint) : undefined} title={titleHint ? t(titleHint) : undefined}>
-    <div class="avatar"><Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} online={online && user} /></div>
+    <div class="avatar"><Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && user} /></div>
     <div class="names">
       <div class="line">
         <span class="title">{channel ? '#' : ''}{title}</span>

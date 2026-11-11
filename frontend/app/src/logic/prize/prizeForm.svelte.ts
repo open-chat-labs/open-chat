@@ -5,6 +5,7 @@
 import {
     LocalStorageStore,
     localUpdates,
+    MAX_PRIZE_EXCLUDED_USERS,
     newPrizeContent,
     ONE_DAY,
     ONE_HOUR,
@@ -28,6 +29,10 @@ export type PrizeConfig = {
     diamond: PrizeDiamond;
     minStreak: number;
     minChitEarned: number;
+    /** An account registered at least this long ago, in ms; 0 for none. */
+    minAccountAgeMs: number;
+    /** Users who can't claim it (user ids), remembered only on this device. */
+    excludedUsers: string[];
 };
 
 export const DEFAULT_PRIZE_CONFIG: PrizeConfig = {
@@ -36,6 +41,8 @@ export const DEFAULT_PRIZE_CONFIG: PrizeConfig = {
     diamond: "none",
     minStreak: 0,
     minChitEarned: 0,
+    minAccountAgeMs: 0,
+    excludedUsers: [],
 };
 
 // shared by every tree, which have stored it in their own ways
@@ -50,6 +57,12 @@ const NAMED_DURATIONS: Record<string, number> = {
 
 function field(raw: object, key: string): unknown {
     return Reflect.get(raw, key);
+}
+
+function userIds(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    const ids = value.filter((v): v is string => typeof v === "string");
+    return [...new Set(ids)].slice(0, MAX_PRIZE_EXCLUDED_USERS);
 }
 
 function count(value: unknown): number {
@@ -85,6 +98,8 @@ export function parsePrizeConfig(text: string): PrizeConfig {
         diamond: diamond === "standard" || diamond === "lifetime" ? diamond : "none",
         minStreak: count(field(raw, "minStreak")),
         minChitEarned: count(field(raw, "minChitEarned")),
+        minAccountAgeMs: count(field(raw, "minAccountAgeMs")),
+        excludedUsers: userIds(field(raw, "excludedUsers")),
     };
 }
 
@@ -106,6 +121,8 @@ export class PrizeForm {
     diamond = $state<PrizeDiamond>(this.#config.value.diamond);
     minStreak = $state<number>(this.#config.value.minStreak);
     minChitEarned = $state<number>(this.#config.value.minChitEarned);
+    minAccountAgeMs = $state<number>(this.#config.value.minAccountAgeMs);
+    excludedUsers = $state<string[]>(this.#config.value.excludedUsers);
 
     /** Takes what a builder that keeps its own form (the new UI's) picked. */
     choose(choices: PrizeConfig & { winners: number }): void {
@@ -115,6 +132,23 @@ export class PrizeForm {
         this.diamond = choices.diamond;
         this.minStreak = choices.minStreak;
         this.minChitEarned = choices.minChitEarned;
+        this.minAccountAgeMs = choices.minAccountAgeMs;
+        this.excludedUsers = choices.excludedUsers;
+    }
+
+    get canExcludeMore(): boolean {
+        return this.excludedUsers.length < MAX_PRIZE_EXCLUDED_USERS;
+    }
+
+    /** Excludes `userId` from claiming, unless they already are or the list is full. */
+    exclude(userId: string): void {
+        if (this.canExcludeMore && !this.excludedUsers.includes(userId)) {
+            this.excludedUsers = [...this.excludedUsers, userId];
+        }
+    }
+
+    unexclude(userId: string): void {
+        this.excludedUsers = this.excludedUsers.filter((u) => u !== userId);
     }
 
     get validWinners(): boolean {
@@ -156,6 +190,8 @@ export class PrizeForm {
                 diamond: this.diamond,
                 minStreak: this.minStreak,
                 minChitEarned: this.minChitEarned,
+                minAccountAgeMs: this.minAccountAgeMs,
+                excludedUsers: this.excludedUsers,
                 from,
             },
             now,
@@ -170,6 +206,8 @@ export class PrizeForm {
             diamond: this.diamond,
             minStreak: this.minStreak,
             minChitEarned: this.minChitEarned,
+            minAccountAgeMs: this.minAccountAgeMs,
+            excludedUsers: this.excludedUsers,
         });
     }
 

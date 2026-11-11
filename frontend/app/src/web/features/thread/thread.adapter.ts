@@ -23,19 +23,19 @@ export type ThreadSummaryProps = Pick<
 >;
 
 /**
- * The thread's root as the panel's card shows it (who wrote it, its text, when), the colours of
- * those in the thread, and how many replies it has.
+ * The thread's root as the panel's card shows it (who wrote it, its text with its mentions as the
+ * @names typed, when), the colours of those in the thread, and how many replies it has.
  */
 export function threadSummaryProps(
     root: EventWrapper<Message>,
-    ctx: Pick<ConversationContext, "userName" | "contentText" | "date">,
+    ctx: Pick<ConversationContext, "userName" | "contentText" | "mentionsAsTyped" | "date">,
 ): ThreadSummaryProps {
     const msg = root.event;
     return {
         root: {
             author: ctx.userName(msg.sender),
             color: senderColor(msg.sender),
-            text: ctx.contentText(msg.content),
+            text: ctx.mentionsAsTyped(ctx.contentText(msg.content)),
             time: ctx.date(root.timestamp),
         },
         faces: [...(msg.thread?.participantIds ?? [])].map(senderColor),
@@ -46,7 +46,10 @@ export function threadSummaryProps(
 type ThreadListGroup = ComponentProps<typeof ThreadList>["groups"][number];
 
 /** What the list of threads needs to know about each thread, and the chats they're in. */
-export type ThreadListContext = Pick<ConversationContext, "userName" | "contentText" | "date"> & {
+export type ThreadListContext = Pick<
+    ConversationContext,
+    "userName" | "contentText" | "mentionsAsTyped" | "date"
+> & {
     chat: (chatId: ChatIdentifier) => ChatSummary | undefined;
     /** "N replies", in the app's language. */
     replies: (count: number) => string;
@@ -62,8 +65,9 @@ const CHAT_RADIUS = "11px";
 
 /**
  * The followed threads, a group per chat in the order their threads come (`client.threadPreviews`
- * orders them), each thread its root (who wrote it, when, its text) with its reply count and
- * unread replies. A thread whose chat isn't in the list (left since) isn't shown.
+ * orders them), each thread its root (who wrote it, when, its text with its mentions as the @names
+ * typed) with its reply count and unread replies. A thread whose chat isn't in the list (left
+ * since) isn't shown.
  */
 export function threadListGroups(
     threads: ThreadPreview[],
@@ -90,7 +94,7 @@ export function threadListGroups(
             author: ctx.userName(root.event.sender),
             grad: AVATAR_GRADIENTS[swatchFor(root.event.sender)],
             time: ctx.date(root.timestamp),
-            text: ctx.contentText(root.event.content),
+            text: ctx.mentionsAsTyped(ctx.contentText(root.event.content)),
             count: ctx.replies(thread.totalReplies),
             unread: unread > 0 ? unread : undefined,
             selected: ctx.selected(thread),

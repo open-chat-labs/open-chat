@@ -2,7 +2,7 @@
 //! a P2P swap within it. See `ledger_utils::UserTransfer` for which transfers the canister accepts.
 
 use candid::Principal;
-use constants::{MEMO_P2P_SWAP_CREATE, MEMO_PRIZE_REFUND, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT};
+use constants::{MAX_PRIZE_EXCLUDED_USERS, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE_REFUND, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT};
 use escrow_canister::deposit_subaccount;
 use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
@@ -15,6 +15,14 @@ use types::{
 pub fn validate_prize(prize: &PrizeContentInitial, thread_root_message_index: Option<MessageIndex>) -> OCResult {
     if thread_root_message_index.is_some() {
         return Err(OCErrorCode::InvalidRequest.with_message("Prize messages cannot be sent within threads"));
+    }
+
+    if prize
+        .excluded_users
+        .as_ref()
+        .is_some_and(|users| users.len() > MAX_PRIZE_EXCLUDED_USERS)
+    {
+        return Err(OCErrorCode::InvalidRequest.with_message("Too many excluded users"));
     }
 
     // Checked, since unchecked arithmetic wraps in release builds, which would let a small transfer
@@ -198,6 +206,8 @@ mod tests {
             unique_person_only: false,
             streak_only: 0,
             min_chit_earned: 0,
+            min_account_age: None,
+            excluded_users: None,
         }
     }
 
@@ -213,5 +223,17 @@ mod tests {
         // Without checked arithmetic the total wraps to 30, which a transfer of 30 would then match
         assert!(validate_prize(&prize(vec![u128::MAX, 1], 30), None).is_err());
         assert!(validate_prize(&prize(vec![u128::MAX / 2, u128::MAX / 2], 1), None).is_err());
+    }
+
+    // Invariant: a prize sent with more than 50 excluded users is rejected before any funds are pulled
+    #[test]
+    fn prize_excluding_more_than_50_users_is_rejected() {
+        let excluding = |count: u8| {
+            let mut prize = prize(vec![1000], 1000 + 10 + 50);
+            prize.excluded_users = Some((0..count).map(|i| Principal::from_slice(&[i]).into()).collect());
+            prize
+        };
+        assert!(validate_prize(&excluding(50), None).is_ok());
+        assert!(validate_prize(&excluding(51), None).is_err());
     }
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, ColourVars, Container, CountBadge } from "component-lib";
-    import { numberOfThreadsStore, type UnreadCounts } from "@client";
+    import { numberOfThreadsStore, unreadCountShown, type UnreadCounts } from "@client";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import MessageText from "svelte-material-icons/MessageTextOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -12,8 +12,7 @@
     }
 
     let { unread, onClick }: Props = $props();
-    let muted = $derived(!unread.mentions && unread.unmuted <= 0);
-    let count = $derived(muted ? unread.muted : unread.unmuted);
+    let { count, muted } = $derived(unreadCountShown(unread));
 </script>
 
 {#if $numberOfThreadsStore > 0}

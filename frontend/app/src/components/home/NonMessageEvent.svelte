@@ -1,9 +1,7 @@
 <script lang="ts">
-    import type { OpenChat } from "@client";
-    import { getContext } from "svelte";
+    import { toLongDatetimeString } from "@client";
+    import { locale } from "svelte-i18n";
     import Markdown from "@src/core/Markdown.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         text: string;
@@ -17,7 +15,7 @@
 <div class="timeline-event">
     <Markdown suppressLinks {text} />
     <p class="timestamp">
-        {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
+        {toLongDatetimeString(date, $locale ?? "en")}
     </p>
 </div>
 

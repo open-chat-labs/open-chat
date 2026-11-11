@@ -3,7 +3,7 @@
      density: compact (64px row, clock icon) | regular (taller text, no icon) | flush (no padding or hover, for nesting). -->
 <script lang="ts">
   import { durationText, segments, useT } from '../i18n';
-  import { DISAPPEARING_DURATIONS } from '../durations';
+  import { DISAPPEARING_DURATIONS, durationColumns } from '../durations';
   const ICONS = { clock: 'var(--icon-clock) center/contain no-repeat', refresh: 'var(--icon-refresh) center/contain no-repeat' };
   // values stay stable English ids (what onDurationChange reports) and are shown through durationText;
   // 'Always' (no expiry) is the one value that isn't a duration
@@ -14,10 +14,19 @@
     label: string;
     on?: boolean;
     value: string;
+    /** The choices, as values (duration ids); the disappearing-messages lengths (5 minutes … 30 days) without. */
     options?: string[];
+    /** The choices' grid columns; without, 4 when their count divides by 4, else 3 (`durationColumns`). */
+    columns?: number;
+    /** How a value reads (the choices, the subtitle, the read-only status): the host's own words, in place of the
+        library's duration words (`durationText`). */
+    valueLabel?: (value: string) => string;
     /** Subtitle while on: resource key with a {value} placeholder ("After {value}"); text without one is followed by
         the value. */
     prefix?: string;
+    /** Subtitle while on, the host's own words for the whole of it, in place of `prefix` and the value: for a
+        language whose words around the value change its case ("Nach 30 Tagen", not "Nach 30 Tage"). */
+    subtitle?: (value: string) => string;
     /** Subtitle while off: resource key (or literal text). */
     offHint?: string;
     /** Defaults to clock, except for density "regular" (none). */
@@ -39,7 +48,10 @@
     on = false,
     value,
     options,
+    columns,
+    valueLabel,
     prefix = 'ui.timedToggle.after',
+    subtitle,
     offHint = 'ui.timedToggle.off',
     icon,
     density = 'compact',
@@ -61,14 +73,16 @@
   const open = $derived(!readOnly && enabled && (openState ?? defaultOpen));
   const shownIcon = $derived(icon === undefined ? (density === 'compact' ? 'clock' : null) : icon);
   const list = $derived(options?.length ? options : DISAPPEARING_DURATIONS);
+  const cols = $derived(durationColumns(list.length, columns));
 
-  const duration = (v: string) => (SPECIAL[v] ? t(SPECIAL[v]) : durationText(t, v));
+  const duration = (v: string) => (valueLabel ? valueLabel(v) : SPECIAL[v] ? t(SPECIAL[v]) : durationText(t, v));
   // a prefix with a {value} placeholder takes the value in place; literal text ("Every") is followed by it
   const withPrefix = (v: string) => {
     const shown = duration(v);
     const takesValue = segments(t, prefix, ['value']).some((part) => 'slot' in part);
     return takesValue ? t(prefix, { value: shown }) : `${t(prefix)} ${shown}`;
   };
+  const onText = (v: string) => (subtitle ? subtitle(v) : withPrefix(v));
 
   function setOn(next: boolean) {
     enabled = next;
@@ -106,7 +120,7 @@
     <span class="text">
       <span class="label">{t(label)}</span>
       <span class="sub" class:on={enabled}
-        >{enabled ? withPrefix(current) : t(offHint)}{#if enabled && !readOnly}<span class="caret" class:open></span>{/if}</span
+        >{enabled ? onText(current) : t(offHint)}{#if enabled && !readOnly}<span class="caret" class:open></span>{/if}</span
       >
     </span>
     {#if readOnly}
@@ -126,11 +140,16 @@
       >
     {/if}
   </div>
-  {#if open}
-    <div class="choices" role="radiogroup" aria-label={t(label)}>
-      {#each list as choice}
-        <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
-      {/each}
+  <!-- the choices grow open and shrink closed under the row; out of reach (inert, hidden) while closed -->
+  {#if !readOnly}
+    <div class="reveal" class:open inert={!open} aria-hidden={!open}>
+      <div class="reveal-inner">
+        <div class="choices" style:--cols={cols} role="radiogroup" aria-label={t(label)}>
+          {#each list as choice}
+            <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
+          {/each}
+        </div>
+      </div>
     </div>
   {/if}
 </div>
@@ -172,17 +191,20 @@
       padding: 0px;
     }
 
-    &:hover {
-      background: var(--overlay-1);
+    // only where there's a pointer that hovers: a touch screen keeps :hover on what was tapped
+    @media (hover: hover) {
+      &:hover {
+        background: var(--overlay-1);
+      }
+
+      &.readonly:hover,
+      .flush &:hover {
+        background: transparent;
+      }
     }
 
     &.readonly {
       cursor: default;
-    }
-
-    &.readonly:hover,
-    .flush &:hover {
-      background: transparent;
     }
   }
 
@@ -279,9 +301,43 @@
     color: var(--ink-3);
   }
 
+  // opening grows the row's height from 0 (grid rows 0fr → 1fr) as the choices fade in; closing plays it back
+  .reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      opacity var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+
+    &.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      visibility: visible;
+      transition:
+        grid-template-rows var(--duration-base) var(--ease-out),
+        opacity var(--duration-base) var(--ease-out),
+        visibility 0s;
+    }
+  }
+
+  .reveal-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  @include reduced-motion {
+    .reveal,
+    .reveal.open {
+      transition: none;
+    }
+  }
+
   .choices {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
     gap: var(--space-6);
     margin-top: var(--space-12);
     padding: var(--space-16) var(--pad-x) var(--space-18) var(--pad-x);
@@ -310,8 +366,10 @@
       color: var(--accent-bright);
     }
 
-    &:hover {
-      background: var(--overlay-2);
+    @media (hover: hover) {
+      &:hover {
+        background: var(--overlay-2);
+      }
     }
   }
 </style>

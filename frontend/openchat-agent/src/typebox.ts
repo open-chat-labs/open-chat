@@ -5685,6 +5685,7 @@ export const PrizeContent = /* @__PURE__ */ Type.Object({
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
     min_chit_earned: Type.Number(),
+    min_account_age: Type.Optional(Type.BigInt()),
 });
 
 export type GroupRulesChanged = Static<typeof GroupRulesChanged>;
@@ -9399,6 +9400,8 @@ export const PrizeContentInitial = /* @__PURE__ */ Type.Object({
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
     min_chit_earned: Type.Number(),
+    min_account_age: Type.Optional(Type.BigInt()),
+    excluded_users: Type.Optional(Type.Array(UserId)),
 });
 
 export type MessageContent = Static<typeof MessageContent>;

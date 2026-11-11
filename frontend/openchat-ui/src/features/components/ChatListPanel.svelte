@@ -1,10 +1,13 @@
 <!-- The chat list column: optional header (dms or community), search, All / Direct / Groups / Unread filter, a "Thread replies"
      entry, then rows grouped into sections (Pinned, Chats). Section order is fixed, never inherited from row order.
-     Rows are identified by `id` (titles repeat: two DMs with "Alex"). Search filters `rows` by title; with onSearch the host
-     searches instead (users and groups not loaded yet) and supplies the rows. -->
+     Rows are identified by `id` (titles repeat: two DMs with "Alex"). Search filters `rows` (and `people`) by title; with
+     onSearch the host searches instead (users and groups not loaded yet) and supplies the rows. While a search is on, the
+     filter tabs push out (sliding up and away) and the search tabs push in, All / Chats / People with a badge of each
+     one's results (web plan 04); clearing the search pushes the filters back, their pick kept. All shows up to 5 chats
+     and 3 people, each section ending in "+N more …" that switches to its tab (lib/searchTabs). -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import { untrack, type ComponentProps } from 'svelte';
+  import type { ComponentProps } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Badge from '../../lib/components/Badge.svelte';
   import ChatListHeader from './ChatListHeader.svelte';
@@ -13,6 +16,7 @@
   import Field from '../../lib/components/Field.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
+  import { SEARCH_TABS, searchSections, searchTabBadges } from '../../lib/searchTabs';
 
   const SECTION_ORDER = ['', 'Pinned', 'Chats'];
   // sections and filters are identified by their English names (rows and logic use them); these keys are for display
@@ -23,6 +27,8 @@
     Groups: 'ui.chatListPanel.filters.groups',
     Unread: 'ui.chatListPanel.filters.unread',
   };
+  const SEARCH_TAB_KEYS = SEARCH_TABS.map((tab) => `ui.chatListPanel.searchTabs.${tab}`);
+  const MORE_KEYS = { chats: 'ui.chatListPanel.moreChats', people: 'ui.chatListPanel.morePeople' } as const;
 
   type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems'>;
 
@@ -39,6 +45,9 @@
 
   interface Props {
     rows: Row[];
+    /** People (and bots) a search found, for its People tab and All's People section; unused with no search. With
+        onSearch the host has found them for the query; without, they're filtered by title as `rows` are. */
+    people?: Row[];
     /** Section headings with counts; off = one flat list. */
     showLabels?: boolean;
     onSelect?: (id: string, row: Row) => void;
@@ -61,10 +70,12 @@
     searchPlaceholder?: string;
     /** Live search; otherwise the field is a static chip. */
     searchable?: boolean;
-    /** Initial search text. */
+    /** The search text. The user's typing sticks until the host passes a different text: passing '' clears the search
+        (the filter tabs come back, their pick kept). */
     query?: string;
     /** Server-side search: called as the user types; local title filtering is then off. */
     onSearch?: (query: string) => void;
+    /** The Thread replies row, above the chats. Hidden while a search is on, whatever this says. */
     showThreads?: boolean;
     threadCount?: number;
     threadsAction?: () => void;
@@ -78,6 +89,7 @@
 
   let {
     rows,
+    people = [],
     showLabels = true,
     onSelect,
     headerKind,
@@ -109,19 +121,31 @@
 
   // the user's pick sticks until the parent selects a different filter
   let filter = $derived(selectedFilter);
-  let query = $state(untrack(() => initialQuery));
+  // the user's typing sticks until the host sends a different text (it clears the search with '')
+  let query = $derived(initialQuery);
   const search = (q: string) => {
     query = q;
     onSearch?.(q);
   };
 
-  const all = $derived(rows.map((r) => ({ ...r, kind: r.kind ?? 'user', pinned: r.pinned ?? r.section === 'Pinned' })));
-  const filterKey = $derived((filterLabels[filter] ?? 'All').toLowerCase());
+  // a search pushes the filter tabs out for its own, and the filter they hide doesn't narrow the results
+  const searching = $derived(searchable && query.trim() !== '');
+  // the search tab (SEARCH_TABS' index): the user's pick sticks until the search is cleared, and every new search
+  // starts on All (it's worked out again, as 0, whenever `searching` changes)
+  let searchTab = $derived.by(() => {
+    void searching;
+    return 0;
+  });
+
+  const withDefaults = (r: Row) => ({ ...r, kind: r.kind ?? 'user', pinned: r.pinned ?? r.section === 'Pinned' });
+  const all = $derived(rows.map(withDefaults));
+  const filterKey = $derived(searching ? 'all' : (filterLabels[filter] ?? 'All').toLowerCase());
+  // with onSearch the host has already filtered `rows` and `people`
+  const localTerm = $derived(searchable && !onSearch ? query.trim().toLowerCase() : '');
+  const matches = (r: Row) => !localTerm || r.title.toLowerCase().includes(localTerm);
   const shown = $derived.by(() => {
-    // with onSearch the host has already filtered `rows`
-    const q = searchable && !onSearch ? query.trim().toLowerCase() : '';
     return all
-      .filter((r) => !q || r.title.toLowerCase().includes(q))
+      .filter(matches)
       .filter((r) =>
         filterKey === 'direct' ? r.kind === 'user' : filterKey === 'groups' ? r.kind !== 'user' : filterKey === 'unread' ? (r.unreadCount ?? 0) > 0 : true,
       );
@@ -143,7 +167,42 @@
     };
     return order.sort((a, b) => rank(a.label) - rank(b.label));
   });
+
+  // a search's results: the chats in the list's section order (pinned first), then the people found
+  const found = $derived({ chats: groups.flatMap((g) => g.rows), people: searching ? people.map(withDefaults).filter(matches) : [] });
+  const badges = $derived(searchTabBadges(found));
+  const sections = $derived(searchSections(SEARCH_TABS[searchTab] ?? 'all', found));
 </script>
+
+{#snippet chatRow(row: (typeof all)[number])}
+  <div class="cell">
+    <ChatRow
+      liveCall={row.liveCall}
+      muted={row.muted}
+      title={row.title}
+      kind={row.kind}
+      preview={row.preview}
+      previewIcon={row.previewIcon}
+      time={row.time}
+      unreadCount={row.unreadCount}
+      mentions={row.mentions}
+      color={row.color}
+      avatarUrl={row.avatarUrl}
+      online={row.online}
+      verified={row.verified}
+      locked={row.locked}
+      pinned={row.pinned}
+      selected={row.selected}
+      typing={row.typing}
+      onClick={onSelect ? () => onSelect(row.id, row) : undefined}
+      menuItems={row.menu}
+    />
+  </div>
+{/snippet}
+
+{#snippet searchBar()}
+  <SegmentedTabs labels={SEARCH_TAB_KEYS} counts={badges} selectedIndex={searchTab} dotIndexes={[]} onSelect={(i) => (searchTab = i)} />
+{/snippet}
 
 <div class="panel">
   {#if headerKind}
@@ -168,11 +227,23 @@
     <Field placeholder={t(searchPlaceholder)} value={query} onInput={searchable ? (e) => search(e.currentTarget.value) : undefined} onClear={() => search('')} />
   </div>
   {#if showTabs}
-    <div class="cell">
-      <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread && filterLabels.includes('Unread') ? [filterLabels.indexOf('Unread')] : []} onSelect={(i) => (filter = i)} />
+    <!-- a search pushes the filter tabs up and away as its own tabs come up after them, and clearing it pushes them
+         back (web/04); the row out of view is out of reach (inert, hidden) -->
+    <div class="tab-rows">
+      <div class="tab-track" class:searching>
+        <div class="cell tab-row" inert={searching} aria-hidden={searching}>
+          <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread && filterLabels.includes('Unread') ? [filterLabels.indexOf('Unread')] : []} onSelect={(i) => (filter = i)} />
+        </div>
+        <div class="cell tab-row" inert={!searching} aria-hidden={!searching}>
+          {@render searchBar()}
+        </div>
+      </div>
     </div>
+  {:else if searching}
+    <div class="cell">{@render searchBar()}</div>
   {/if}
-  {#if showThreads && shown.length > 0}
+  <!-- the Thread replies row isn't a search result: it hides while a search is on (web plan 04) -->
+  {#if showThreads && shown.length > 0 && !searching}
     <div class="threads" onclick={threadsAction} role="button" tabindex="0">
       <span class="threads-slot"><span class="threads-icon"></span></span>
       <span class="threads-label">{t('ui.chatListPanel.threadReplies')}</span>
@@ -181,7 +252,32 @@
       {/if}
     </div>
   {/if}
-  {#if shown.length > 0}
+  {#if searching}
+    <!-- a search's tab: its results fade in as the search starts and as another tab is picked -->
+    {#key searchTab}
+      {#if sections.length > 0}
+        <div class="list searching">
+          {#each sections as section, i (section.tab)}
+            <div class="section" class:first={i === 0}>
+              {#if section.labelled}
+                <div class="section-label">{t(SEARCH_TAB_KEYS[SEARCH_TABS.indexOf(section.tab)]).toUpperCase()} <span class="section-count">{section.total}</span></div>
+              {/if}
+              {#each section.rows as row (row.id)}
+                {@render chatRow(row)}
+              {/each}
+              {#if section.more > 0}
+                <button type="button" class="more" onclick={() => (searchTab = SEARCH_TABS.indexOf(section.tab))}>{t(MORE_KEYS[section.tab], { count: section.more })}</button>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="empty searching">
+          <div class="empty-inner"><EmptyState preset="no-results" /></div>
+        </div>
+      {/if}
+    {/key}
+  {:else if shown.length > 0}
     <div class="list">
       {#if loading}
         <Skeleton variant="chat" count={7} />
@@ -192,27 +288,7 @@
               <div class="section-label">{t(SECTION_KEYS[group.label] ?? group.label).toUpperCase()} <span class="section-count">{group.rows.length}</span></div>
             {/if}
             {#each group.rows as row (row.id)}
-              <div class="cell">
-                <ChatRow
-                  liveCall={row.liveCall}
-                  muted={row.muted}
-                  title={row.title}
-                  kind={row.kind}
-                  preview={row.preview}
-                  previewIcon={row.previewIcon}
-                  time={row.time}
-                  unreadCount={row.unreadCount}
-                  color={row.color}
-                  online={row.online}
-                  verified={row.verified}
-                  locked={row.locked}
-                  pinned={row.pinned}
-                  selected={row.selected}
-                  typing={row.typing}
-                  onClick={onSelect ? () => onSelect(row.id, row) : undefined}
-                  menuItems={row.menu}
-                />
-              </div>
+              {@render chatRow(row)}
             {/each}
           </div>
         {/each}
@@ -226,6 +302,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .panel {
     width: 100%;
     height: 100%;
@@ -240,6 +318,86 @@
   .cell {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  // the filter tabs and the search tabs, one above the other in a window one row tall: a search pushes the track up
+  // a row (the filters up and away, the search tabs in after them), 400ms (web/04); clearing it pushes it back. The
+  // row out of view is hidden once the push is over, and shown from its start
+  // TODO(design): the push's easing and whether the rows fade too; web/04 gives the motion and its 400ms only
+  .tab-rows {
+    overflow: hidden;
+    // the plate's shadow, clear of the window's edge
+    margin: calc(-1 * var(--space-4));
+    padding: var(--space-4);
+  }
+
+  .tab-track {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    height: var(--control-xl);
+    transition: transform 400ms var(--ease-standard);
+
+    &.searching {
+      transform: translateY(calc(-100% - var(--space-8)));
+    }
+  }
+
+  .tab-row {
+    flex: none;
+    transition: visibility 0s;
+
+    &[inert] {
+      visibility: hidden;
+      transition: visibility 0s linear 400ms;
+    }
+  }
+
+  // a search's results (or its "no results") fade in as it starts and as another tab is picked
+  .list.searching,
+  .empty.searching {
+    animation: results-in var(--duration-base) var(--ease-out);
+  }
+
+  @keyframes results-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @include reduced-motion {
+    .tab-track,
+    .tab-row,
+    .tab-row[inert] {
+      transition: none;
+    }
+
+    .list.searching,
+    .empty.searching {
+      animation: none;
+    }
+  }
+
+  // All's "+N more …": switches to the section's tab
+  // TODO(design): its look; web/04 gives its words only
+  .more {
+    align-self: flex-start;
+    margin: var(--space-2) 0 0;
+    padding: var(--space-6) var(--space-8);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--overlay-1);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
   }
 
   .threads {

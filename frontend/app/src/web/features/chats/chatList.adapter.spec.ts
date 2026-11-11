@@ -1,4 +1,68 @@
-import { communityHeaderMenu } from "./chatList.adapter";
+import { buildUserAvatarUrl, ownUserAvatarUrl, type BotMatch, type UserSummary } from "@client";
+import { botAvatarUrl } from "@src/logic/chats/chatSearch";
+import { communityHeaderMenu, foundRows } from "./chatList.adapter";
+
+describe("the search's rows for what isn't in the list", () => {
+    const user = { userId: "u1", username: "lucy", displayName: "Lucy" } as UserSummary;
+    const bot = { id: "b1", name: "Helper", definition: { description: "Helps" } } as BotMatch;
+    const rows = foundRows({
+        found: { users: [user], bots: [bot] },
+        userName: (u) => u.displayName ?? u.username,
+        userAvatar: (u) => `user:${u.userId}`,
+        botAvatar: (b) => `bot:${b.id}`,
+    });
+
+    test("are people, then bots, in no section of the list's (they're the panel's People)", () => {
+        expect(rows.map(({ row }) => [row.title, row.preview, row.section, row.avatarUrl])).toEqual(
+            [
+                ["Lucy", "@lucy", undefined, "user:u1"],
+                ["Helper", "Helps", undefined, "bot:b1"],
+            ],
+        );
+    });
+
+    test("have ids no chat has, and no menu", () => {
+        expect(rows.map(({ row }) => row.id)).toEqual(["found:user:u1", "found:bot:b1"]);
+        expect(rows.every(({ row }) => row.menu?.length === 0)).toBe(true);
+    });
+
+    test("have their own pictures, else none (the swatch), but a bot the bot picture", () => {
+        const pattern = "https://{canisterId}.raw.icp0.io/{blobType}/{blobId}";
+        const person = (userId: string, avatarId?: bigint) =>
+            ({
+                userId,
+                username: userId,
+                blobUrl: buildUserAvatarUrl(pattern, userId, avatarId),
+            }) as UserSummary;
+        const avatars = (found: Parameters<typeof foundRows>[0]["found"]) =>
+            foundRows({
+                found,
+                userName: (u) => u.username,
+                // as the chat list has them (ChatsScreen)
+                userAvatar: ownUserAvatarUrl,
+                botAvatar: botAvatarUrl,
+            }).map(({ row }) => row.avatarUrl);
+
+        expect(
+            avatars({
+                users: [person("lucy", 3n), person("tom")],
+                bots: [bot, { ...bot, id: "b2", avatarUrl: "b2.png" }],
+            }),
+        ).toEqual([
+            buildUserAvatarUrl(pattern, "lucy", 3n),
+            undefined,
+            "/assets/bot_avatar.svg",
+            "b2.png",
+        ]);
+    });
+
+    test("start a chat with the person or bot", () => {
+        expect(rows.map(({ target }) => target)).toEqual([
+            { kind: "chat_with", userId: "u1" },
+            { kind: "chat_with", userId: "b1" },
+        ]);
+    });
+});
 
 describe("a community's header menu", () => {
     const ids = (can: { canCreateChannel: boolean; canManageUserGroups: boolean }) =>

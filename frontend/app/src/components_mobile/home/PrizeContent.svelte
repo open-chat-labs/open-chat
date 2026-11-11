@@ -12,11 +12,13 @@
         Row,
         Sheet,
         Subtitle,
+        Tooltip,
     } from "component-lib";
     import {
         allChatsStore,
         chitBands,
         chitStateStore,
+        currentUserStore,
         communitiesStore,
         cryptoLookup,
         enhancedCryptoLookup,
@@ -24,9 +26,11 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isTrustedClick,
+        minAccountAgeLabel,
         prizeView,
         type ChatIdentifier,
         type DiamondMembershipStatus,
+        type ResourceKey,
         type OpenChat,
         type PrizeContent,
         type PrizeContentInitial,
@@ -45,6 +49,7 @@
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import BadgeContainer, { type BadgeSize } from "./profile/BadgeContainer.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
     import Streak from "./profile/Streak.svelte";
@@ -134,6 +139,7 @@
                   lifetimeDiamond: $isLifetimeDiamondStore,
                   streak: $chitStateStore.streak,
                   chitEarned: $chitStateStore.totalChitEarned,
+                  accountCreated: Number($currentUserStore.dateCreated),
               })
             : undefined,
     );
@@ -156,11 +162,13 @@
               ? "active"
               : "inactive") as DiamondMembershipStatus["kind"],
     );
+    let ageLabel = $derived(minAccountAgeLabel(content));
     let restrictedPrize = $derived(
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
             content.streakOnly > 0 ||
-            content.minChitEarned > 0,
+            content.minChitEarned > 0 ||
+            ageLabel !== undefined,
     );
     let spin = $derived(intersecting && !finished && !allClaimed);
 
@@ -281,6 +289,7 @@
                     {#if restrictedPrize}
                         <Row
                             mainAxisAlignment="center"
+                            crossAxisAlignment="center"
                             onClick={() => (showRestrictionDetails = true)}>
                             <!-- If chit features are turned off minChitEarned is zero, and chit badge cannot be rendered. -->
                             <!-- Streak badge can still be forced to show, since that prize restriction is returned. -->
@@ -294,6 +303,15 @@
                                 borderColor={me
                                     ? ColourVars.primarySurface
                                     : ColourVars.surface1} />
+                            {#if ageLabel !== undefined}
+                                <div class="age-badge">
+                                    {@render accountAgeBadge(
+                                        ageLabel,
+                                        "large",
+                                        me ? ColourVars.primarySurface : ColourVars.surface1,
+                                    )}
+                                </div>
+                            {/if}
                         </Row>
                     {/if}
                 </Column>
@@ -383,6 +401,18 @@
     </Column>
 {/snippet}
 
+<!-- A circular badge like the diamond, streak and CHIT ones, so the age restriction lines up with them. -->
+{#snippet accountAgeBadge(label: ResourceKey, size: BadgeSize, borderColor: string)}
+    <Tooltip uppercase position="top" align="middle">
+        <BadgeContainer {size} {borderColor} backgroundColor={ColourVars.secondary}>
+            <Clock size={size === "large" ? "1rem" : "0.625rem"} color={ColourVars.textPrimary} />
+        </BadgeContainer>
+        {#snippet popup()}
+            <Translatable resourceKey={label} />
+        {/snippet}
+    </Tooltip>
+{/snippet}
+
 {#if showRestrictionDetails}
     <Sheet onDismiss={() => (showRestrictionDetails = false)}>
         <!-- Prize participation gates -->
@@ -449,6 +479,15 @@
                             </Body>
                         </Row>
                     {/if}
+
+                    {#if ageLabel !== undefined}
+                        <Row gap="md">
+                            {@render accountAgeBadge(ageLabel, "default", ColourVars.surface1)}
+                            <Body>
+                                <Translatable resourceKey={ageLabel} />
+                            </Body>
+                        </Row>
+                    {/if}
                 </Column>
             {/if}
             {#if me}
@@ -463,6 +502,12 @@
 {/if}
 
 <style lang="scss">
+    // Overlaps the badge before it, as the badges inside Badges overlap each other.
+    .age-badge {
+        z-index: 1;
+        margin-left: -0.65rem;
+    }
+
     .progress {
         height: 0.35rem;
         width: 100%;

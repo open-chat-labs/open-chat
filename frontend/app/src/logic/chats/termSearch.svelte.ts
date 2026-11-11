@@ -1,30 +1,31 @@
-import type { UserSummary } from "@client";
+// Looking something up on OpenChat as the user types (the native Chats search's People and New chat
+// look people up, the web chat list people, bots and groups): once the text has stopped changing
+// for a moment, only the latest search's answer is kept, and an emptied text drops it.
 
-// Looking people up on OpenChat as the user types (the Chats search's People, New chat): once the
-// text has stopped changing for a moment, only the latest search's answer is kept, and an emptied
-// text drops it.
+export const TERM_SEARCH_DEBOUNCE_MS = 300;
 
-export const PEOPLE_SEARCH_DEBOUNCE_MS = 300;
-
-/** What a search shows: nothing asked, an answer on its way, or the people found for `term`. */
-export type PeopleResults =
+/** What a search shows: nothing asked, an answer on its way, or what was found for `term`. */
+export type TermResults<T> =
     | { kind: "idle" }
     | { kind: "searching"; term: string }
-    | { kind: "found"; term: string; people: UserSummary[] };
+    | { kind: "found"; term: string; found: T };
 
-/** How people are looked up (client.searchUsers, which never rejects: a failure finds nobody). */
-export type SearchUsers = (term: string) => Promise<UserSummary[]>;
+/**
+ * How a term is looked up (client.searchUsers, client.searchChatList), which never rejects: a
+ * failure finds nothing.
+ */
+export type SearchTerm<T> = (term: string) => Promise<T>;
 
-export class PeopleSearch {
-    #search: SearchUsers;
+export class TermSearch<T> {
+    #search: SearchTerm<T>;
     #delay: number;
     #timer: ReturnType<typeof setTimeout> | undefined;
     // the latest search: an older one's answer is dropped
     #asked = 0;
 
-    results = $state<PeopleResults>({ kind: "idle" });
+    results = $state<TermResults<T>>({ kind: "idle" });
 
-    constructor(search: SearchUsers, delay: number = PEOPLE_SEARCH_DEBOUNCE_MS) {
+    constructor(search: SearchTerm<T>, delay: number = TERM_SEARCH_DEBOUNCE_MS) {
         this.#search = search;
         this.#delay = delay;
     }
@@ -51,7 +52,7 @@ export class PeopleSearch {
     }
 
     async #run(term: string, asked: number): Promise<void> {
-        const people = await this.#search(term);
-        if (asked === this.#asked) this.results = { kind: "found", term, people };
+        const found = await this.#search(term);
+        if (asked === this.#asked) this.results = { kind: "found", term, found };
     }
 }

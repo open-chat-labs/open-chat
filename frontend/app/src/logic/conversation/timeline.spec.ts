@@ -6,6 +6,7 @@ import {
     MessageLink,
     OpenAtUnread,
     othersTyping,
+    typingPlacement,
 } from "./timeline";
 
 const group = (groupId: string): ChatIdentifier => ({ kind: "group_chat", groupId });
@@ -139,5 +140,27 @@ describe("who is typing", () => {
             "Ben",
         ]);
         expect(othersTyping(undefined, "me", (id) => id)).toEqual([]);
+    });
+});
+
+describe("where who's typing shows", () => {
+    test("is a bubble at the end of a DM's messages", () => {
+        expect(typingPlacement("direct_chat", undefined)).toBe("bubble");
+    });
+
+    test("is the strip on the composer in a group or channel", () => {
+        expect(typingPlacement("group_chat", undefined)).toBe("strip");
+        expect(typingPlacement("channel", undefined)).toBe("strip");
+    });
+
+    test("is the strip in a thread, a DM's too", () => {
+        expect(typingPlacement("group_chat", 4)).toBe("strip");
+        expect(typingPlacement("direct_chat", 0)).toBe("strip");
+    });
+
+    test("is the strip in a DM until its latest messages are loaded", () => {
+        expect(typingPlacement("direct_chat", undefined, true)).toBe("strip");
+        expect(typingPlacement("direct_chat", undefined, false)).toBe("bubble");
+        expect(typingPlacement("group_chat", undefined, false)).toBe("strip");
     });
 });

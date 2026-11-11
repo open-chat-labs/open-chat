@@ -5,7 +5,6 @@
     import {
         allUsersStore,
         blockedUsersStore,
-        buildUserAvatarUrl,
         favouritesStore,
         lastOnlineStatus,
         OpenChat,
@@ -23,6 +22,7 @@
     import { closeRightColumn } from "../app/rightPanel";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { dmPanelProps } from "./dm.adapter";
+    import { profileAvatarUrl } from "../profile/profile.adapter";
     import { favouriteDm, muteDm, setDmDisappearing } from "@src/logic/chats/dmSettings";
 
     let { region, context }: ScreenProps<Extract<RightRegion, { kind: "direct_chat_details" }>> =
@@ -51,7 +51,8 @@
         return dmPanelProps({
             name: client.getDisplayName(userId),
             profile,
-            avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+            userId,
+            avatarUrl: profileAvatarUrl(blobUrlPattern, userId, profile.avatarId),
             online: lastOnlineStatus($_, Date.now(), card.lastOnline)[1],
             joined: client.toMonthYearString(new Date(Number(profile.created))),
             chit: userBadges(

@@ -279,3 +279,43 @@ export function lastOnlineStatus(
         ? formatLastOnlineDate(formatter, now, lastOnline)
         : ["", false];
 }
+
+/**
+ * What a DM's header says about the other person, in every tree: that their account is suspended,
+ * nothing for a bot, else when they were last online (`getLastOnlineDate`), which is worth asking
+ * only then.
+ */
+export type DirectChatStatus = "suspended" | "bot" | "last_online";
+
+export function directChatStatus(
+    them: Pick<UserSummary, "kind" | "suspended"> | undefined,
+): DirectChatStatus {
+    if (them?.suspended ?? false) return "suspended";
+    return them?.kind === "bot" ? "bot" : "last_online";
+}
+
+/** A DM header's line under the name, and whether the other person is online now. */
+export type DirectChatSubtitle = { text: string; online: boolean };
+
+/**
+ * A DM header's line under the name (the old trees' `ChatSubtext`): "Account suspended" for a
+ * suspended account, never a time; nothing for a bot, or when when they were last online isn't
+ * known (undefined or 0); else "Online now" or "Last online 5 minutes ago" as of `now`.
+ */
+export function directChatSubtitle(
+    formatter: MessageFormatter,
+    them: Pick<UserSummary, "kind" | "suspended"> | undefined,
+    now: number,
+    lastOnline: number | undefined,
+): DirectChatSubtitle {
+    switch (directChatStatus(them)) {
+        case "suspended":
+            return { text: formatter("accountSuspended"), online: false };
+        case "bot":
+            return { text: "", online: false };
+        case "last_online": {
+            const [text, online] = lastOnlineStatus(formatter, now, lastOnline);
+            return { text, online };
+        }
+    }
+}

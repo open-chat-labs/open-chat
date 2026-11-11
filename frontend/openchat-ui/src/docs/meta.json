@@ -71,9 +71,10 @@
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
+          "blue",
           "teal",
-          "blue"
+          "amber",
+          "plum"
         ],
         "section": null,
         "required": false,
@@ -344,6 +345,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "url",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An image over the gradient (an uploaded avatar); the gradient shows while it loads and if it fails to."
       }
     ],
     "group": "library"
@@ -1179,6 +1191,17 @@
         "doc": ""
       },
       {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The avatar's image (an uploaded avatar) over the `color` gradient."
+      },
+      {
         "name": "liveCall",
         "type": "'' | 'voice' | 'video'",
         "default": "",
@@ -1205,15 +1228,26 @@
         "doc": ""
       },
       {
+        "name": "mentions",
+        "type": "number",
+        "default": 0,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Unread mentions of the user: an @ before the unread count."
+      },
+      {
         "name": "typing",
-        "type": "boolean",
+        "type": "boolean | string",
         "default": false,
         "editor": "boolean",
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": ""
+        "doc": "Someone is typing, in place of the preview: the dots, then the text if it's one (\"Lucy is typing\")."
       },
       {
         "name": "pinned",
@@ -3305,11 +3339,11 @@
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
-          "teal",
           "blue",
-          "rose",
+          "teal",
+          "amber",
           "plum",
+          "rose",
           "slate"
         ],
         "section": null,
@@ -3715,19 +3749,31 @@
       },
       {
         "name": "color",
-        "type": "'violet' | 'amber' | 'teal' | 'blue'",
+        "type": "'violet' | 'blue' | 'teal' | 'amber' | 'plum'",
         "default": "violet",
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
+          "blue",
           "teal",
-          "blue"
+          "amber",
+          "plum"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'violet'",
         "doc": ""
+      },
+      {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sender's picture over their colour (Avatar's `url`); the colour alone without it."
       },
       {
         "name": "showAvatar",
@@ -5039,7 +5085,29 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The choices, as values (duration ids); the disappearing-messages lengths (5 minutes … 30 days) without."
+      },
+      {
+        "name": "columns",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The choices' grid columns; without, 4 when their count divides by 4, else 3 (`durationColumns`)."
+      },
+      {
+        "name": "valueLabel",
+        "type": "(value: string) => string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How a value reads (the choices, the subtitle, the read-only status): the host's own words, in place of the library's duration words (`durationText`)."
       },
       {
         "name": "prefix",
@@ -5051,6 +5119,17 @@
         "required": false,
         "componentDefault": "'After'",
         "doc": "Subtitle before the value: \"After 12 hours\"."
+      },
+      {
+        "name": "subtitle",
+        "type": "(value: string) => string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Subtitle while on, the host's own words for the whole of it, in place of `prefix` and the value: for a language whose words around the value change its case (\"Nach 30 Tagen\", not \"Nach 30 Tage\")."
       },
       {
         "name": "offHint",
@@ -5653,7 +5732,7 @@
         "section": null,
         "required": false,
         "componentDefault": "['violet', 'teal']",
-        "doc": "Face colours, cycled over names: violet | amber | teal | blue."
+        "doc": "Face colours (Avatar's), cycled over names: violet | blue | teal | amber | plum."
       },
       {
         "name": "ringColor",
@@ -5676,6 +5755,59 @@
         "required": false,
         "componentDefault": "''",
         "doc": "Overrides the generated label."
+      },
+      {
+        "name": "variant",
+        "type": "'faces' | 'bubble'",
+        "default": "faces",
+        "editor": "enum",
+        "options": [
+          "faces",
+          "bubble"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'faces'",
+        "doc": "faces: the faces, dots and label in a row. bubble: a DM's, the dots in a received-style bubble (the label is read out, not shown)."
+      },
+      {
+        "name": "showAvatar",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "bubble only: the typer's 34px avatar before the bubble, as a received MessageGroup run has it (the web's DMs). Native's bubble has none."
+      },
+      {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "bubble with showAvatar: the typer's picture over their colour (Avatar's `url`); the colour alone without it."
+      },
+      {
+        "name": "avatarColor",
+        "type": "'violet' | 'blue' | 'teal' | 'amber' | 'plum'",
+        "default": "violet",
+        "editor": "enum",
+        "options": [
+          "violet",
+          "blue",
+          "teal",
+          "amber",
+          "plum"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'violet'",
+        "doc": "bubble with showAvatar: the typer's colour (an Avatar gradient)."
       }
     ],
     "group": "library"
@@ -5911,17 +6043,28 @@
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
-          "teal",
           "blue",
-          "rose",
+          "teal",
+          "amber",
           "plum",
+          "rose",
           "slate"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'violet'",
         "doc": ""
+      },
+      {
+        "name": "photoUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Their photo, shown over the swatch."
       },
       {
         "name": "tag",
@@ -7879,14 +8022,15 @@
       },
       {
         "name": "color",
-        "type": "'violet' | 'amber' | 'teal' | 'blue'",
+        "type": "'violet' | 'blue' | 'teal' | 'amber' | 'plum'",
         "default": "teal",
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
+          "blue",
           "teal",
-          "blue"
+          "amber",
+          "plum"
         ],
         "section": null,
         "required": false,
@@ -7993,6 +8137,17 @@
         "required": true,
         "componentDefault": null,
         "doc": "Rows; each needs an `id` (reported by onSelect)."
+      },
+      {
+        "name": "people",
+        "type": "Row[]",
+        "default": [],
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "People (and bots) a search found: its People tab and All's People section; unused with no search. With onSearch the host finds them for the query; without, they're filtered by title as rows are."
       },
       {
         "name": "showLabels",
@@ -8190,7 +8345,7 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
-        "doc": "Initial search text."
+        "doc": "The search text. The user's typing sticks until the host passes a different text: passing '' clears the search (the filter tabs come back, their pick kept)."
       },
       {
         "name": "onSearch",
@@ -8212,7 +8367,7 @@
         "section": null,
         "required": false,
         "componentDefault": "true",
-        "doc": ""
+        "doc": "The Thread replies row, above the chats. Hidden while a search is on, whatever this says."
       },
       {
         "name": "threadCount",
@@ -8676,19 +8831,31 @@
       },
       {
         "name": "color",
-        "type": "'violet' | 'amber' | 'teal' | 'blue'",
+        "type": "'violet' | 'blue' | 'teal' | 'amber' | 'plum'",
         "default": "violet",
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
+          "blue",
           "teal",
-          "blue"
+          "amber",
+          "plum"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'violet'",
         "doc": ""
+      },
+      {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The chat's picture over its colour (Avatar's `url`); the colour alone without it."
       },
       {
         "name": "online",
@@ -9971,11 +10138,11 @@
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
-          "teal",
           "blue",
-          "rose",
+          "teal",
+          "amber",
           "plum",
+          "rose",
           "slate"
         ],
         "section": null,
@@ -10860,7 +11027,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Members, with optional userId and presence (online, activity: \"typing\", \"now\", \"2m\", or last seen). Nobody is shown online without it."
+        "doc": "Members, with optional userId, picture (image, over the colour) and presence (online, activity: \"typing\", \"now\", \"2m\", or last seen). Nobody is shown online without it."
       },
       {
         "name": "lapsed",
@@ -12073,9 +12240,10 @@
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
+          "blue",
           "teal",
-          "blue"
+          "amber",
+          "plum"
         ],
         "section": null,
         "required": false,
@@ -14643,6 +14811,23 @@
         "doc": "Your avatar image."
       },
       {
+        "name": "profileColor",
+        "type": "keyof typeof AVATAR_GRADIENTS",
+        "default": "violet",
+        "editor": "enum",
+        "options": [
+          "violet",
+          "blue",
+          "teal",
+          "amber",
+          "plum"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'violet'",
+        "doc": "Your swatch, shown without an avatar image (and while it loads)."
+      },
+      {
         "name": "profileOnline",
         "type": "boolean",
         "default": null,
@@ -15202,6 +15387,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "The claim restrictions offered, in the dialog's order (all by default)."
+      },
+      {
+        "name": "exclusions",
+        "type": "{ search: (query: string) => Promise<{ id: string; name: string }[]>; nameOf: (id: string) => string; max: number }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Lets the sender exclude users from claiming (none without it): finds users by name, names one by id, and the most that can be excluded."
       },
       {
         "name": "pricing",
@@ -18331,11 +18527,11 @@
         "editor": "enum",
         "options": [
           "violet",
-          "amber",
-          "teal",
           "blue",
-          "rose",
+          "teal",
+          "amber",
           "plum",
+          "rose",
           "slate"
         ],
         "section": null,
@@ -21436,7 +21632,7 @@
     "name": "SettingsAction",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",
-    "description": "A settings row that does something at once: an icon and a label in the accent, or in the danger colour for a destructive one (the host offers Undo in a toast). At least 52px.",
+    "description": "A settings row that does something at once: an icon and a label in the accent, or in the danger colour for a destructive one (the host offers Undo in a toast), with an optional line under the label that says what it does. At least 52px.",
     "preview": {
       "width": 370,
       "height": 52
@@ -21463,6 +21659,17 @@
         "required": true,
         "componentDefault": null,
         "doc": "An icons.js name."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a line under the label, saying what it does."
       },
       {
         "name": "danger",

@@ -1,4 +1,5 @@
-<!-- Gradient avatar placeholder with an optional online dot. shape: circle | squircle (radius = a third of the size). -->
+<!-- Gradient avatar placeholder with an optional online dot. shape: circle | squircle (radius = a third of the size).
+     url: an image (an uploaded avatar) over the gradient, which shows while it loads and if it fails to. -->
 <script lang="ts" module>
   /** The avatar swatches' gradients, for a host drawing a face the same colour elsewhere (a picker's tile). */
   export const AVATAR_GRADIENTS = {
@@ -16,11 +17,16 @@
     shape?: 'circle' | 'squircle';
     color?: keyof typeof AVATAR_GRADIENTS;
     online?: boolean;
+    /** An image over the gradient (an uploaded avatar); the gradient shows while it loads and if it fails to. */
+    url?: string;
   }
 
-  let { size = 42, shape = 'circle', color = 'violet', online = false }: Props = $props();
+  let { size = 42, shape = 'circle', color = 'violet', online = false, url }: Props = $props();
 
   const big = $derived(size >= 60);
+  // the image that failed to load: a new url is tried
+  let failed = $state<string>();
+  const image = $derived(url && url !== failed ? url : undefined);
 </script>
 
 <div class="avatar" style:width="{size}px" style:height="{size}px">
@@ -29,6 +35,9 @@
     style:border-radius={shape === 'circle' ? '999px' : `${Math.round(size * 0.33)}px`}
     style:background={AVATAR_GRADIENTS[color] ?? AVATAR_GRADIENTS.violet}
   >
+    {#if image}
+      <img class="image" src={image} alt="" loading="lazy" draggable="false" onerror={() => (failed = image)} />
+    {/if}
     {#if online}
       <span class="dot" class:big></span>
     {/if}
@@ -49,6 +58,15 @@
     width: 100%;
     height: 100%;
     @include flex-center;
+  }
+
+  .image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
   }
 
   .dot {

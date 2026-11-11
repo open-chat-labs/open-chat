@@ -78,10 +78,17 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   web's user card's actions; the rules sheet when sending needs a chat's rules accepted. On the
   web panel's logic (`logic/members`, `logic/groupOrCommunity/detailsPermissions`,
   `logic/profile`'s profile card), the DM settings moved to `logic/chats`, and the send prompts
-  moved to `logic/composer/sendPrompts`. Manage's pages, Edit group and Invite are N7's, pushed as
-  placeholders. Design briefs to come, each its own PR: the Invite screen, the disappearing
-  length's picker, pinned messages and the Members screen. What it left is in GAPS.md ("Native
-  details").
+  moved to `logic/composer/sendPrompts`. Manage's pages and Edit group are N7's, pushed as
+  placeholders. A design brief to come, as its own PR: pinned messages. The disappearing messages'
+  brief (the plan's 10 and 04 of 2026-11-10) is in: the library's TimedToggle in This chat (8
+  lengths, 4 × 2, starting at a day), one setting with a Disappearing messages submenu in the
+  conversation's menu (`logic/chats/chatDisappearing`). What it left is in GAPS.md ("Native details").
+- **Built:** N6's Members tabs and Invite people (the plan's 10, changelog of 2026-11-10): the
+  Members screen's Members | Lapsed | Blocked tabs for owners, admins and moderators (Lapsed only
+  with access gates; `@client`'s `memberTabs`), Remove for the lapsed and Unblock for the blocked,
+  each with Undo; Invite people (People | Invite link), from the Invite tile and the Members tab,
+  on MemberManagement and the web's invite search (`logic/members/invitePeople` decides who gets
+  which tab and how each person joins). What it left is in GAPS.md ("Native details").
 - **Next:** the screens. N10a, N11 and N13 need only N3; N7 (group settings) and N8a
   (communities) can start now that N6 is in; N9 (the builders) needs N10b too.
 
@@ -104,8 +111,8 @@ Screens:
 | [N5b](https://github.com/open-chat-labs/open-chat/issues/10369) | Conversation | N5a |
 | [N5c](https://github.com/open-chat-labs/open-chat/issues/10370) | Composer and keyboard-area panels | N5b |
 | [N5d](https://github.com/open-chat-labs/open-chat/issues/10371) | Message long-press menu, message info and forward | N5b |
-| [N6](https://github.com/open-chat-labs/open-chat/issues/10372) | DM and group details, members and roles; a DM's disappearing messages as a switch there (not in the conversation's menu) | N5b |
-| [N7](https://github.com/open-chat-labs/open-chat/issues/10373) | Group and community settings screens | N6 |
+| [N6](https://github.com/open-chat-labs/open-chat/issues/10372) | DM and group details, members and roles; the disappearing messages as a TimedToggle there, one setting with the conversation menu's submenu | N5b |
+| [N7](https://github.com/open-chat-labs/open-chat/issues/10373) | Group and community settings screens; Create group's Disappearing messages is a TimedToggle row (the same 8 lengths, plan 11 of 2026-11-10), not a dropdown row | N6 |
 | [N8a](https://github.com/open-chat-labs/open-chat/issues/10374) | Communities tab: switcher, channels and threads; a message's thread: the replies link under messages (hidden until then, `threads: false`) and the thread screen (replies, composer, follow) | N6, N5c |
 | [N8b](https://github.com/open-chat-labs/open-chat/issues/10375) | Explore, preview, join and create community | N8a, N7 |
 | [N9](https://github.com/open-chat-labs/open-chat/issues/10376) | Builders: poll, prize, send crypto, swap offer, meme fighter, file | N5c, N10b |

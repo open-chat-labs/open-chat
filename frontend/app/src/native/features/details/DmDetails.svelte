@@ -2,8 +2,9 @@
      (Delete chat, the one thing the conversation's menu has that isn't here already); the other
      person's avatar, name and @username; the tiles Call / Search / Mute (a bot's only tile, Search,
      goes on the cover); About (their bio, member
-     since, the CHIT they've earned); This chat (disappearing messages: a switch and, while it's on,
-     how long; the plan's read receipts aren't a setting the app has); Block. Their profile is
+     since, the CHIT they've earned); This chat (disappearing messages, the library's TimedToggle:
+     DisappearingRow; not with a bot, a deleted user or someone blocked, as the conversation's menu:
+     `dmDisappearingAllowed`; the plan's read receipts aren't a setting the app has); Block. Their profile is
      loaded as it opens (logic/profile's ProfileCardData, the web's user card's); About shows once
      it's in. -->
 <script lang="ts">
@@ -20,19 +21,11 @@
         type DirectChatSummary,
         type OpenChat,
     } from "@client";
-    import { Optimistic } from "@openchat/ui/src/lib/behaviours/optimistic.svelte";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
-    import SettingsSwitch from "@openchat/ui/src/native/SettingsSwitch.svelte";
-    import SettingsValue from "@openchat/ui/src/native/SettingsValue.svelte";
+    import { dmDisappearingAllowed } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import {
-        disappearingChoices,
-        durationMs,
-        ttlDurationId,
-    } from "@src/logic/chats/disappearingMessages";
-    import { setDmDisappearing } from "@src/logic/chats/dmSettings";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
@@ -47,9 +40,10 @@
     import { requestSearch } from "../conversation/searchRequests";
     import DetailsHead from "./DetailsHead.svelte";
     import DetailTiles from "./DetailTiles.svelte";
+    import DisappearingRow from "./DisappearingRow.svelte";
     import FactRow from "./FactRow.svelte";
     import TextRow from "./TextRow.svelte";
-    import { dmTiles, durationLabel, searchOnCover, type DetailTileId } from "./details.adapter";
+    import { dmTiles, searchOnCover, type DetailTileId } from "./details.adapter";
 
     let { chat, context }: { chat: DirectChatSummary; context: ScreenContext } = $props();
 
@@ -73,6 +67,7 @@
     const favourite = $derived($favouritesStore.has(chat.id));
     const muted = $derived(chat.membership.notificationsMuted);
     const blocked = $derived($blockedUsersStore.has(userId));
+    const disappearing = $derived(dmDisappearingAllowed({ user: them, blocked }));
 
     const tiles = $derived(
         dmTiles(
@@ -167,27 +162,6 @@
         );
     }
 
-    // ---- disappearing messages: shown at once, back as it was (with a toast) if it's refused
-
-    const disappear = new Optimistic(() => ({
-        on: chat.eventsTTL !== undefined,
-        after: ttlDurationId(chat.eventsTTL),
-    }));
-    $effect.pre(() => {
-        void chat.eventsTTL;
-        untrack(() => disappear.sync());
-    });
-    const durations = $derived(
-        disappearingChoices(chat.eventsTTL).map((id) => ({ id, label: durationLabel(id, t) })),
-    );
-
-    async function setDisappearing(on: boolean, after: string) {
-        const saved = await disappear.set({ on, after }, () =>
-            setDmDisappearing(client, chat, { on, afterMs: durationMs(after) }),
-        );
-        if (!saved) context.toast($_("native.details.saveFailed"));
-    }
-
     // ---- block: with Undo, as the conversation's menu
 
     function block(blocking: boolean) {
@@ -243,20 +217,11 @@
             </SettingsGroup>
         {/if}
 
-        <SettingsGroup label={$_("native.details.thisChat")}>
-            <SettingsSwitch
-                label={$_("native.details.disappearing")}
-                help={$_("native.details.disappearingHelp")}
-                on={disappear.current.on}
-                onChange={(on) => setDisappearing(on, disappear.current.after)} />
-            {#if disappear.current.on}
-                <SettingsValue
-                    label={$_("native.details.disappearAfterLabel")}
-                    options={durations}
-                    value={disappear.current.after}
-                    onChange={(after) => setDisappearing(true, after)} />
-            {/if}
-        </SettingsGroup>
+        {#if disappearing}
+            <SettingsGroup label={$_("native.details.thisChat")}>
+                <DisappearingRow {chat} {context} />
+            </SettingsGroup>
+        {/if}
 
         {#if !isBot}
             <SettingsGroup>

@@ -13,10 +13,11 @@
         type UserSummary,
     } from "@client";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { SEARCH_INPUT_ATTRIBUTES } from "@openchat/ui/src/lib/searchInput";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { searchTerm } from "@src/logic/chats/chatSearch";
-    import { PeopleSearch } from "@src/logic/chats/peopleSearch.svelte";
+    import { TermSearch } from "@src/logic/chats/termSearch.svelte";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
@@ -35,7 +36,7 @@
     let query = $state("");
     const term = $derived(searchTerm(query));
 
-    const people = new PeopleSearch((t) => client.searchUsers(t, 20));
+    const people = new TermSearch((t) => client.searchUsers(t, 20));
     onDestroy(() => people.dispose());
 
     function onInput(next: string) {
@@ -51,7 +52,7 @@
     const found = $derived.by((): UserSummary[] | undefined => {
         const results = people.results;
         if (results.kind !== "found" || results.term !== term) return undefined;
-        return results.people.filter((user) => user.userId !== $currentUserIdStore);
+        return results.found.filter((user) => user.userId !== $currentUserIdStore);
     });
 
     const shown = $derived(term === "" ? frequent : (found ?? []));
@@ -69,13 +70,13 @@
     <NativePageHeader title={$_("newChat")} onBack={context.back} />
 
     <div class="field">
+        <!-- a search, not a sign-in field: password managers leave it alone -->
         <input
+            {...SEARCH_INPUT_ATTRIBUTES}
             value={query}
             oninput={(e) => onInput(e.currentTarget.value)}
             placeholder={$_("native.chats.newChat.placeholder")}
-            aria-label={$_("native.chats.newChat.placeholder")}
-            enterkeyhint="search"
-            autocomplete="off" />
+            aria-label={$_("native.chats.newChat.placeholder")} />
     </div>
 
     <div class="list">
@@ -131,9 +132,16 @@
         background: var(--overlay-1);
         color: var(--ink);
         font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
+        appearance: none;
 
         &::placeholder {
             color: var(--ink-4);
+        }
+
+        // type="search"'s own clear button: the screen has none (the plan draws none)
+        &::-webkit-search-cancel-button,
+        &::-webkit-search-decoration {
+            display: none;
         }
 
         &:focus-visible {

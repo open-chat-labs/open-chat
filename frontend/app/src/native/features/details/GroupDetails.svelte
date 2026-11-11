@@ -1,10 +1,10 @@
 <!-- A group's or channel's details (native plan 10, Design Notes §3.6): the cover (a channel's is its
-     community's banner) with back, favourite and a kebab (Edit group, N7's page; Copy invite link,
-     for someone who may share it); the avatar, the name and "Private · 48 members"; the tiles Mute
+     community's banner) with back, favourite and Edit (N7's page, for those who may edit it; its
+     link is shared from Invite people); the avatar, the name and "Private · 48 members"; the tiles Mute
      / Search / Invite; About (the description, when it was created, whether new members see the
      history); Members, a few faces and View all, to the Members screen; This chat (the
-     disappearing messages, a switch and a length for those its settings let change them, then
-     muting @everyone); the rules, read only; Manage for owners and admins (Access gates, Rules,
+     disappearing messages, the library's TimedToggle for those its settings let change them
+     (DisappearingRow), read only for the rest, then muting @everyone); the rules, read only; Manage for owners and admins (Access gates, Rules,
      Permissions, Bots and webhooks, Stats: N7's screens); Leave and Delete, each with Undo. What
      the viewer may do is the web panel's (logic/groupOrCommunity/detailsPermissions). -->
 <script lang="ts">
@@ -28,24 +28,13 @@
         type MultiUserChat,
         type OpenChat,
     } from "@client";
-    import { copyText } from "@openchat/ui/src/lib/clipboard";
-    import { Optimistic } from "@openchat/ui/src/lib/behaviours/optimistic.svelte";
-    import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import AvatarStack from "@openchat/ui/src/lib/components/AvatarStack.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import SettingsLink from "@openchat/ui/src/native/SettingsLink.svelte";
     import SettingsSwitch from "@openchat/ui/src/native/SettingsSwitch.svelte";
-    import SettingsValue from "@openchat/ui/src/native/SettingsValue.svelte";
-    import type { NativeMenuItem } from "@openchat/ui/src/native/types";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import {
-        disappearingChoices,
-        durationMs,
-        ttlDurationId,
-    } from "@src/logic/chats/disappearingMessages";
-    import { setGroupDisappearing } from "@src/logic/chats/groupDisappearing";
     import { muteChat } from "@src/logic/chats/muteChat";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import {
@@ -53,24 +42,23 @@
         chatDetailsPermissions,
         chatRulesText,
     } from "@src/logic/groupOrCommunity/detailsPermissions";
-    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
-    import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
     import { favouriteWithToast, muteWithToast } from "../chats/chatToasts";
     import { removeWithUndo } from "../chats/removeWithUndo";
     import { requestSearch } from "../conversation/searchRequests";
     import DetailsHead from "./DetailsHead.svelte";
     import DetailTiles from "./DetailTiles.svelte";
+    import DisappearingRow from "./DisappearingRow.svelte";
     import FactRow from "./FactRow.svelte";
     import TextRow from "./TextRow.svelte";
+    import { openInvite } from "./openInvite";
     import {
         createdFacts,
         disappearingValue,
-        durationLabel,
         groupTiles,
         historyValue,
         manageRows,
@@ -81,7 +69,6 @@
     let { chat, context }: { chat: MultiUserChat; context: ScreenContext } = $props();
 
     const client = getContext<OpenChat>("client");
-    const overlays = untrack(() => context.overlays);
 
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
 
@@ -106,17 +93,9 @@
         }),
     );
 
-    // inviting is for members whose role meets "Invite users" (or "Add members", a private
-    // channel's); anyone in a public group may share its link, which is the kebab's
-    const tiles = $derived(
-        groupTiles(
-            {
-                canInvite: member && (permissions.canInvite || client.canAddMembers(chat.id)),
-                muted,
-            },
-            t,
-        ),
-    );
+    // Invite is every member's (not in a frozen chat): it opens Invite people for those who may
+    // invite or add, and in a public group; it says who can otherwise (logic/members/invitePeople)
+    const tiles = $derived(groupTiles({ canInvite: member && !frozen, muted }, t));
 
     // ---- About, and the Members row: the members held (a large group's first page), highest
     // role first, as the web's panel lists them
@@ -193,46 +172,10 @@
         );
     }
 
-    // ---- the cover's kebab: Edit group (N7's page), Copy invite link
-
-    // the link, for a member who may share it: a public chat's is there at once; a private
-    // group's is loaded (its code), for someone who may invite, and offered only while it's on.
-    // The screen is this chat's for its life
-    const sharing = untrack(() =>
-        member && (chat.public || permissions.canInvite) ? new MemberManagement(client, chat) : undefined,
-    );
-    onMount(() => {
-        void sharing?.initialiseSharing();
-    });
-    const inviteLink = $derived(sharing?.sharingLink);
-
-    const menuItems = $derived<NativeMenuItem[]>([
-        ...(permissions.canEdit
-            ? [
-                  {
-                      id: "edit",
-                      label: $_(channel ? "native.details.menu.editChannel" : "native.details.menu.editGroup"),
-                      icon: "edit",
-                  },
-              ]
-            : []),
-        ...(inviteLink !== undefined
-            ? [{ id: "copy_link", label: $_("native.details.menu.copyInviteLink"), icon: "link" }]
-            : []),
-    ]);
-    let menuAnchor = $state<HTMLElement | null>(null);
-    useOverlay(
-        overlays,
-        () => menuAnchor !== null,
-        () => (menuAnchor = null),
-    );
-
-    async function onMenu(id: string) {
-        if (id === "edit") {
-            context.push({ kind: "group_settings", chatId: chat.id, page: "edit" });
-        } else if (id === "copy_link" && inviteLink !== undefined) {
-            if (await copyText(inviteLink)) context.toast($_("linkCopiedToClipboard"));
-        }
+    // ---- the cover's Edit (N7's page), for those who may edit the group; sharing its link is
+    // Invite people's (the Invite tile)
+    function onEdit() {
+        context.push({ kind: "group_settings", chatId: chat.id, page: "edit" });
     }
 
     // ---- the tiles and toggles
@@ -255,8 +198,7 @@
                 requestSearch(chatIdentifierToString(chat.id));
                 return;
             case "invite":
-                // inviting is a settings page (N7's)
-                context.push({ kind: "group_settings", chatId: chat.id, page: "invite" });
+                openInvite(client, chat, community, $anonUserStore, context, $_);
                 return;
         }
     }
@@ -276,36 +218,19 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
-    // ---- disappearing messages: switched and set by those its settings let change them, shown
-    // at once and back as they were (with a toast) if it's refused, as a DM's; read only otherwise
+    // ---- disappearing messages: switched and set by those its settings let change them (as the
+    // conversation's menu offers them), read only otherwise
 
     const canSetDisappearing = $derived(
         canChangeDisappearing(client, chat, community, $anonUserStore),
     );
-    const disappear = new Optimistic(() => ({
-        on: chat.eventsTTL !== undefined,
-        after: ttlDurationId(chat.eventsTTL),
-    }));
-    $effect.pre(() => {
-        void chat.eventsTTL;
-        untrack(() => disappear.sync());
-    });
-    const durations = $derived(
-        disappearingChoices(chat.eventsTTL).map((id) => ({ id, label: durationLabel(id, t) })),
-    );
-
-    async function setDisappearing(on: boolean, after: string) {
-        const saved = await disappear.set({ on, after }, () =>
-            setGroupDisappearing(client, chat, { on, afterMs: durationMs(after) }),
-        );
-        if (!saved) context.toast($_("native.details.saveFailed"));
-    }
 </script>
 
 <div class="scroll">
     <DetailsHead
         title={chat.name}
         {sub}
+        locked={!chat.public}
         coverUrl={community?.banner.blobUrl}
         photoUrl={chat.blobUrl}
         color={senderColor(chatIdentifierToString(chat.id))}
@@ -313,7 +238,9 @@
         {favourite}
         onBack={context.back}
         onFavourite={toggleFavourite}
-        onMore={menuItems.length > 0 ? (anchor) => (menuAnchor = anchor) : undefined} />
+        onMore={undefined}
+        onEdit={permissions.canEdit ? onEdit : undefined}
+        editLabel={$_(channel ? "native.details.menu.editChannel" : "native.details.menu.editGroup")} />
 
     <div class="content">
         <DetailTiles {tiles} {onTile} />
@@ -344,18 +271,7 @@
         {#if member}
             <SettingsGroup label={$_("native.details.thisChat")}>
                 {#if canSetDisappearing}
-                    <SettingsSwitch
-                        label={$_("native.details.disappearing")}
-                        help={$_("native.details.disappearingGroupHelp")}
-                        on={disappear.current.on}
-                        onChange={(on) => setDisappearing(on, disappear.current.after)} />
-                    {#if disappear.current.on}
-                        <SettingsValue
-                            label={$_("native.details.disappearAfterLabel")}
-                            options={durations}
-                            value={disappear.current.after}
-                            onChange={(after) => setDisappearing(true, after)} />
-                    {/if}
+                    <DisappearingRow {chat} {context} />
                 {:else}
                     <FactRow
                         label={$_("native.details.disappearing")}
@@ -414,12 +330,6 @@
     </div>
 </div>
 
-<AnchoredMenu
-    anchor={menuAnchor}
-    items={menuItems}
-    label={$_("native.conversation.options")}
-    onSelect={(id) => void onMenu(id)}
-    onClose={() => (menuAnchor = null)} />
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;

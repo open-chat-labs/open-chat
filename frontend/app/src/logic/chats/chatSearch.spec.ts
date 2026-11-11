@@ -1,6 +1,14 @@
-import type { ChatSummary, UserLookup, UserSummary } from "@client";
+import type { BotMatch, ChatSummary, UserLookup, UserSummary } from "@client";
 import { describe, expect, test } from "vitest";
-import { matchingChats, newPeople, resultSection, searchTerm, splitAtMatch } from "./chatSearch";
+import {
+    botAvatarUrl,
+    matchingChats,
+    newPeople,
+    outsideList,
+    resultSection,
+    searchTerm,
+    splitAtMatch,
+} from "./chatSearch";
 
 const membership = { archived: false };
 
@@ -32,6 +40,35 @@ describe("searchTerm", () => {
     test("is the text trimmed, without a leading @, in lower case", () => {
         expect(searchTerm("  @Lucy ")).toBe("lucy");
         expect(searchTerm("   ")).toBe("");
+    });
+
+    // L1 invariant 4: a lone "@" is an empty term, which the server search never sends
+    test("is empty for a lone @", () => {
+        expect(searchTerm(" @ ")).toBe("");
+    });
+});
+
+describe("outsideList", () => {
+    const bot = (id: string) => ({ kind: "bot_match", id, name: id }) as BotMatch;
+
+    test("leaves out the user, and the people and bots already in the list", () => {
+        const chats = [dm("lucy"), dm("bot1"), group("g1", "Hikers")];
+        const result = outsideList(
+            {
+                users: [user("me", "me"), user("lucy", "lucy"), user("matt", "matt")],
+                bots: [bot("bot1"), bot("bot2")],
+            },
+            chats,
+            "me",
+        );
+        expect(result).toEqual({ users: [user("matt", "matt")], bots: [bot("bot2")] });
+    });
+});
+
+describe("botAvatarUrl", () => {
+    test("is the bot's own avatar, else the app's bot picture", () => {
+        expect(botAvatarUrl({ avatarUrl: "/bot.png" })).toBe("/bot.png");
+        expect(botAvatarUrl({})).toBe("/assets/bot_avatar.svg");
     });
 });
 

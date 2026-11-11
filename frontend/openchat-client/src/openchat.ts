@@ -430,6 +430,11 @@ import { claimPrizeFailedMessage, isTrustedClick } from "./utils/prizes";
 import { isCsamReport, type ReportReason } from "./utils/report";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
+    CHAT_LIST_SEARCH_MAX,
+    runChatListSearch,
+    type ChatListSearchResults,
+} from "./utils/chatListSearch";
+import {
     FilteredProposals,
     achievementsStore,
     allChatsStore,
@@ -661,7 +666,6 @@ import {
     eventIndexesLoaded,
     findMessageById,
     getMessageText,
-    getTypingString,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -675,16 +679,18 @@ import {
     makeRtcConnections,
     mergeSendMessageResponse,
     mergeServerEvents,
-    messageIsReadByThem,
     metricsEqual,
     newDefaultChannel,
+    ownGroupAvatarUrl,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
+    readByThemNowConfirmed,
     rtcMessageRecipients,
     sameUser,
     serialiseMessageForRtc,
     startTyping,
     stopTyping,
+    unconfirmedReadReceipt,
     updateExistingMessages,
 } from "./utils/chat";
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
@@ -829,7 +835,6 @@ import { addQueryStringParam } from "./utils/url";
 import {
     buildReducedProfileDataList,
     buildUsernameList,
-    formatLastOnlineDate,
     isDeletedWebhook,
     missingUserIds,
     shouldRestartForNewUserId,
@@ -2011,13 +2016,12 @@ export class OpenChat {
     }
 
     #initWebRtc(): void {
+        // subscribed up front, so messages reach us from whichever init's peer opens: this one,
+        // or a later one if this one's peer closes before it opens
+        rtcConnectionsManager.subscribe((msg) => this.#handleWebRtcMessage(msg as WebRtcMessage));
         rtcConnectionsManager
             .init(currentUserIdStore.value, this.config.meteredApiKey)
-            .then((_) => {
-                rtcConnectionsManager.subscribe((msg) =>
-                    this.#handleWebRtcMessage(msg as WebRtcMessage),
-                );
-            });
+            .catch((err) => console.debug("RTC: peer didn't open: ", err));
     }
 
     previewChat(chatId: MultiUserChatIdentifier): Promise<Success | Failure | GroupMoved> {
@@ -2505,6 +2509,16 @@ export class OpenChat {
                         if (event.userId !== undefined) {
                             userIds.add(event.userId);
                         }
+                        // and whoever its message mentions, so the feed can name them
+                        if (event.message !== undefined) {
+                            extractUserIdsFromMentions(
+                                getContentAsFormattedText(
+                                    (k) => k,
+                                    event.message.content,
+                                    cryptoLookup.value,
+                                ),
+                            ).forEach((id) => userIds.add(id));
+                        }
                     }
                     this.getMissingUsers(userIds);
                     // So the feed can show who the relayed messages are from
@@ -2875,21 +2889,18 @@ export class OpenChat {
         },
         community?: CommunitySummary,
     ): string {
-        if (chat?.blobUrl !== undefined) {
-            return chat.blobUrl;
-        } else if (chat?.subtype?.kind === "governance_proposals") {
-            // If this is a governance proposals chat and no avatar has been set, use the default one for the SNS
-            const snsLogo = this.#getSnsLogo(chat.subtype.governanceCanisterId);
-            if (snsLogo !== undefined) {
-                return snsLogo;
-            }
-        } else if (chat?.id?.kind === "channel") {
-            community = this.getCommunityForChannel(chat?.id) ?? community;
-            if (community !== undefined) {
-                return this.communityAvatarUrl(community.id.communityId, community.avatar);
-            }
-        }
-        return this.mobileLayout === "v2" ? "unknown" : "/assets/group.svg";
+        const own =
+            chat &&
+            ownGroupAvatarUrl(chat, {
+                // a governance proposals chat with no avatar of its own has its SNS's
+                snsLogo: (governanceCanisterId) => this.#getSnsLogo(governanceCanisterId),
+                // a channel's community's avatar, else the community's identicon
+                communityAvatar: (channelId) => {
+                    const c = this.getCommunityForChannel(channelId) ?? community;
+                    return c && this.communityAvatarUrl(c.id.communityId, c.avatar);
+                },
+            });
+        return own ?? (this.mobileLayout === "v2" ? "unknown" : "/assets/group.svg");
     }
 
     toShortTimeString(date: Date): string {
@@ -2962,7 +2973,6 @@ export class OpenChat {
     partition = partition;
     groupBySender = groupBySender;
     groupBy = groupBy;
-    getTypingString = getTypingString;
     getMessageText = getMessageText;
     contentTypeToPermission = contentTypeToPermission;
     stripLinkDisabledMarker = stripLinkDisabledMarker;
@@ -4189,22 +4199,30 @@ export class OpenChat {
         }
     }
 
-    // Looks up the users you have direct chats with among the members of the selected community and
-    // channel, where either holds only some of its members, so that the members held say which of
-    // them are members of each. Those who are members of the community, but not the channel, are
-    // offered to add to the channel.
-    async lookupDirectChatUsersAmongChannelMembers(): Promise<void> {
-        const communityId = selectedCommunityIdStore.value;
-        const channelId = selectedChatIdStore.value;
-        if (communityId === undefined || channelId?.kind !== "channel") {
+    // Looks up the users you have direct chats with among the members of the selected group, or of
+    // the selected channel and its community, where it holds only some of its members, so that the
+    // members held say which of them are members. Then those who are members already aren't offered
+    // to invite (a group's or channel's members held being only its first page), and those who are
+    // members of the community, but not the channel, are offered to add to the channel.
+    async lookupDirectChatUsersAmongMembers(): Promise<void> {
+        const chatId = selectedChatIdStore.value;
+        if (chatId === undefined || chatId.kind === "direct_chat") {
             return;
         }
         const userIds = [...serverDirectChatsStore.value.values()]
             .map((c) => c.them.userId)
             .filter((u) => userStore.get(u)?.kind !== "bot");
+        if (chatId.kind === "group_chat") {
+            await this.#membersAmong(chatId, userIds);
+            return;
+        }
+        const communityId = selectedCommunityIdStore.value;
+        if (communityId === undefined) {
+            return;
+        }
         // Only members of the community can be members of the channel
         const inCommunity = await this.#membersAmong(communityId, userIds);
-        await this.#membersAmong(channelId, [...inCommunity]);
+        await this.#membersAmong(chatId, [...inCommunity]);
     }
 
     // Finds members of the selected chat to offer as mentions for what has been typed, if it may not
@@ -4573,7 +4591,6 @@ export class OpenChat {
     nullUser = nullUser;
     toTitleCase = toTitleCase;
     formatTimeRemaining = formatTimeRemaining;
-    formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUserBackgroundUrl = buildUserBackgroundUrl;
     buildUsernameList = buildUsernameList;
@@ -5794,11 +5811,6 @@ export class OpenChat {
             return ranges[0].high;
         }
         return undefined;
-    }
-
-    messageIsReadByThem(chatId: ChatIdentifier, messageIndex: number): boolean {
-        const chat = chatSummariesStore.value.get(chatId);
-        return chat !== undefined && messageIsReadByThem(chat, messageIndex);
     }
 
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
@@ -7351,9 +7363,19 @@ export class OpenChat {
             case "remote_user_sent_message":
                 this.#remoteUserSentMessage(fromChatId, msg, events, threadRootMessageIndex);
                 break;
-            case "remote_user_read_message":
-                unconfirmedReadByThem.add(BigInt(msg.messageId));
+            case "remote_user_read_message": {
+                // receipts come in for the selected chat only, whose messages are the events
+                const chat = selectedChatSummaryStore.value;
+                const messageId = BigInt(msg.messageId);
+                const receipt =
+                    chat?.kind === "direct_chat"
+                        ? unconfirmedReadReceipt(chat, events, messageId)
+                        : undefined;
+                if (receipt !== undefined) {
+                    unconfirmedReadByThem.add(messageId, receipt);
+                }
                 break;
+            }
         }
     }
 
@@ -8235,6 +8257,33 @@ export class OpenChat {
                 ? moderationFlagsEnabledStore.value & ModerationFlags.UnderReview
                 : moderationFlagsEnabledStore.value,
             maxResults,
+        });
+    }
+
+    /**
+     * The chat list's search on OpenChat for a term (any leading "@" dropped by the caller): up to
+     * ten people and ten bots that take direct chats. An empty term asks the backend nothing; a
+     * search that fails finds nothing of its kind.
+     */
+    searchChatList(term: string): Promise<ChatListSearchResults> {
+        return runChatListSearch(term, {
+            users: (t) => this.searchUsers(t, CHAT_LIST_SEARCH_MAX),
+            bots: async (t) => {
+                // the user's own direct chat as the location asks for the bots that take direct
+                // chats (there's no such chat)
+                const location: DirectChatIdentifier = {
+                    kind: "direct_chat",
+                    userId: currentUserIdStore.value,
+                };
+                const response = await this.exploreBots(
+                    t,
+                    0,
+                    CHAT_LIST_SEARCH_MAX,
+                    location,
+                    false,
+                );
+                return response.kind === "success" ? response.matches : [];
+            },
         });
     }
 
@@ -9521,6 +9570,9 @@ export class OpenChat {
                     userIds.add(sender);
                 }
                 userIds.add(chat.latestMessage.event.sender);
+            }
+            // whoever the latest message mentions, a DM's too, so the lists can name them
+            if (chat.latestMessage?.event !== undefined) {
                 this.extractUserIdsFromMentions(
                     getContentAsFormattedText(
                         (k) => k,
@@ -9697,10 +9749,12 @@ export class OpenChat {
                         ...currentUser,
                         blobReference,
                         blobData: undefined,
+                        // the new avatar's (rehydrated below), or none once it's removed: the old
+                        // one's url stayed until a reload
                         blobUrl: buildUserAvatarUrl(
                             this.config.blobUrlPattern,
                             currentUser.userId,
-                            currentUser.blobReference?.blobId,
+                            blobReference?.blobId,
                         ),
                     };
 
@@ -9875,6 +9929,15 @@ export class OpenChat {
                 }
                 return map;
             });
+            // the read receipts these DMs now confirm, selected or not, are no longer needed
+            unconfirmedReadByThem.deleteMany(
+                readByThemNowConfirmed(
+                    directChatsAddedUpdated,
+                    directChatsRemoved,
+                    eventsStore.value,
+                    unconfirmedReadByThem.value,
+                ),
+            );
         }
         if (groupsAddedUpdated.length > 0 || groupsRemoved.length > 0) {
             serverGroupChatsStore.update((map) => {

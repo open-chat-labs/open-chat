@@ -2213,14 +2213,61 @@
                 "step4Stay": "لا، أمزح، سأبقى"
             }
         },
+        "invite": {
+            "title": "دعوة أشخاص",
+            "tabs": {
+                "people": "الأشخاص",
+                "link": "رابط الدعوة"
+            },
+            "search": "ابحث بالاسم أو @اسم المستخدم",
+            "noneSelected": "لم يتم اختيار أحد بعد",
+            "noneLeft": "لم يتبق أحد لدعوته: لقد انضموا أو تمت دعوتهم بالفعل",
+            "pending": "قيد الانتظار · {count}",
+            "pendingSub": "مدعو · لم يقبل بعد",
+            "cancel": "إلغاء",
+            "cancelled": "أُلغيت دعوة {name}",
+            "suggested": "مقترحون",
+            "searchHint": "ابحث عن أشخاص لدعوتهم",
+            "results": "النتائج",
+            "member": "عضو",
+            "invited": "مدعو",
+            "noMatch": "لا نتائج",
+            "send": "{count, plural, =0 {إرسال الدعوات} one {إرسال الدعوة} other {إرسال # دعوات}}",
+            "add": "{count, plural, one {إضافة شخص واحد} other {إضافة # أشخاص}}",
+            "sent": "{count, plural, one {أُرسلت دعوة واحدة} other {أُرسلت # دعوات}}",
+            "sentOne": "أُرسلت الدعوة إلى {name}",
+            "added": "{count, plural, one {أُضيف شخص واحد} other {أُضيف # أشخاص}}",
+            "addedOne": "أُضيف {name}",
+            "sentBoth": "أُضيف {added} · دُعي {invited}",
+            "shareViaLink": "المشاركة عبر رابط",
+            "shareViaLinkHelp": "يمكن لأي شخص لديه الرابط الانضمام.",
+            "linkOff": "المشاركة عبر الرابط متوقفة. يمكن فقط لمن تدعوهم الانضمام.",
+            "copyLink": "نسخ الرابط",
+            "share": "مشاركة",
+            "resetLink": "إعادة تعيين الرابط",
+            "resetHelp": "سيتوقف الرابط الحالي عن العمل. من انضم بالفعل يبقى.",
+            "linkReset": "أُعيد تعيين الرابط",
+            "gatesIgnored": "لا تنطبق شروط الوصول على من ينضم عبر الرابط.",
+            "linkFailed": "تعذّر تحميل رابط الدعوة.",
+            "retry": "حاول مجددًا",
+            "notAllowed": {
+                "owner": "يمكن للمالكين فقط الدعوة هنا",
+                "admin": "يمكن للمشرفين فقط الدعوة هنا",
+                "moderator": "يمكن للمراقبين فقط الدعوة هنا",
+                "member": "يمكن للأعضاء فقط الدعوة هنا"
+            }
+        },
         "details": {
             "back": "رجوع",
             "chitEarned": "CHIT المكتسبة",
             "thisChat": "هذه المحادثة",
             "disappearing": "الرسائل المؤقتة",
-            "disappearingHelp": "تختفي الرسائل في هذه المحادثة لديكما بعد المدة التي تختارها.",
-            "disappearingGroupHelp": "تختفي الرسائل في هذه الدردشة لدى الجميع بعد المدة التي تختارها.",
-            "disappearAfterLabel": "تختفي بعد",
+            "disappearAfter": {
+                "minute": "{count, plural, zero {بعد # دقيقة} one {بعد دقيقة واحدة} two {بعد دقيقتين} few {بعد # دقائق} many {بعد # دقيقة} other {بعد # دقيقة}}",
+                "hour": "{count, plural, zero {بعد # ساعة} one {بعد ساعة واحدة} two {بعد ساعتين} few {بعد # ساعات} many {بعد # ساعة} other {بعد # ساعة}}",
+                "day": "{count, plural, zero {بعد # يوم} one {بعد يوم واحد} two {بعد يومين} few {بعد # أيام} many {بعد # يومًا} other {بعد # يوم}}",
+                "week": "{count, plural, zero {بعد # أسبوع} one {بعد أسبوع واحد} two {بعد أسبوعين} few {بعد # أسابيع} many {بعد # أسبوعًا} other {بعد # أسبوع}}"
+            },
             "duration": {
                 "minute": "{count, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
                 "hour": "{count, plural, zero {# ساعة} one {ساعة واحدة} two {ساعتان} few {# ساعات} many {# ساعة} other {# ساعة}}",
@@ -2258,8 +2305,7 @@
             "deleted": "تم حذف {name}",
             "menu": {
                 "editGroup": "تعديل المجموعة",
-                "editChannel": "تعديل القناة",
-                "copyInviteLink": "نسخ رابط الدعوة"
+                "editChannel": "تعديل القناة"
             },
             "members": {
                 "you": "أنت",
@@ -2268,7 +2314,6 @@
                 "admins": "{count, plural, =1 {المشرفون} other {المشرفون · #}}",
                 "moderators": "{count, plural, =1 {المراقبون} other {المراقبون · #}}",
                 "members": "{count, plural, =1 {الأعضاء} other {الأعضاء · #}}",
-                "blocked": "{count, plural, =1 {المحظورون} other {المحظورون · #}}",
                 "options": "خيارات العضو",
                 "make": {
                     "owner": "تعيين مالكًا",
@@ -2289,7 +2334,22 @@
                 },
                 "notAllowed": "لا يسمح لك دورك بتغيير الأدوار أو إزالة الأعضاء هنا.",
                 "noMatch": "لا يوجد أعضاء مطابقون",
-                "message": "مراسلة"
+                "message": "مراسلة",
+                "tabs": {
+                    "members": "الأعضاء",
+                    "lapsed": "المنتهية عضويتهم",
+                    "blocked": "المحظورون"
+                },
+                "searchLapsed": "ابحث في المنتهية عضويتهم",
+                "searchBlocked": "ابحث في المحظورين",
+                "lapsedNote": "أعضاء لم يعودوا يستوفون شروط الوصول. يُعاد التحقق من الشروط وفق الجدول المحدد في شروط الوصول.",
+                "blockedNote": "أشخاص محظورون هنا. ألغِ حظر أحدهم ليتمكن من الانضمام مجددًا.",
+                "lapsedEmpty": "لا يوجد أعضاء منتهية عضويتهم. الجميع يستوفون الشروط.",
+                "blockedEmpty": "لا أحد محظور.",
+                "noOneMatches": "لا نتائج",
+                "removeFrom": "إزالة من {level}",
+                "lapsedNotAllowed": "لا يسمح لك دورك بإزالة الأعضاء هنا.",
+                "blockedNotAllowed": "لا يسمح لك دورك بإلغاء الحظر هنا."
             }
         }
     },
@@ -2599,17 +2659,23 @@
         "distribution": "كيف يتم توزيع الجوائز؟",
         "duration": "إلى متى ستكون الجائزة فعالة؟",
         "equalDistribution": "التوزيع المتساوي",
+        "excludeUsers": "استبعاد مستخدمين",
+        "excludeUsersInfo": "لا يمكن للمستخدمين المستبعدين المطالبة بهذه الجائزة، ويُبلَّغون فقط بأنهم غير مؤهلين. لا يمكن لأي شخص آخر معرفة من استبعدت. حتى {n} مستخدم.",
+        "excludeUsersSearch": "اكتب اسم عضو لاستبعاده",
         "finished": "انتهى",
         "lifetimeDiamond": "حياة",
         "lifetimeDiamondMembership": "عضوية الماس مدى الحياة",
         "live": "رسالة الجائزة مباشرة! يمكن للآخرين النقر للمطالبة بها 🎁",
         "maxPrize": "ما هو الحد الأقصى للجائزة؟",
+        "minAccountAge": "الحد الأدنى لعمر الحساب",
+        "minAccountAgeValue": "حساب عمره {n} يومًا على الأقل",
         "minChitEarned": "الحد الأدنى من CHIT المكتسبة",
         "minChitEarnedValue": "حصل على الأقل على {n} CHIT",
         "minPrize": "ما هو الحد الأدنى للجائزة؟",
         "numberOfWinners": "عدد الفائزين",
         "onlyChit": "فقط للمستخدمين الذين لديهم CHIT",
         "onlyDiamond": "فقط للمستخدمين الماسيين",
+        "onlyOlderAccounts": "الحسابات الأقدم من فقط",
         "onlyStreak": "فقط المستخدمين الذين لديهم سلسلة",
         "onlyUniquePerson": "البشر الفريدون فقط",
         "prizeFinished": "لقد انتهت رسالة الجائزة الخاصة بك الآن",

@@ -29,8 +29,12 @@ const words = {
     userName: (id: string) => ({ alice: "Alice Smith", bob: "Bob" })[id] ?? id,
     contentText: (content: Message["content"]) =>
         content.kind === "text_content" ? content.text : content.kind,
+    mentionsAsTyped: (text: string) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     date: (timestamp: bigint) => `d${timestamp}`,
 };
+
+const mentioning = (text: string) =>
+    ({ content: { kind: "text_content", text } }) as Partial<Message>;
 
 describe("threadSummaryProps", () => {
     test("the root's author, text and time, those in the thread and its replies", () => {
@@ -47,6 +51,14 @@ describe("threadSummaryProps", () => {
         expect(props.root).toMatchObject({ author: "Alice Smith", text: "m4", time: "d4" });
         expect(props.faces).toHaveLength(2);
         expect(props.replyCount).toBe(3);
+    });
+
+    test("the root's mentions are the @names typed", () => {
+        const props = threadSummaryProps(
+            message(4, "alice", mentioning("ask @UserId(bob)")),
+            words,
+        );
+        expect(props.root.text).toBe("ask @bob");
     });
 
     test("a thread just started has no replies or faces yet", () => {
@@ -106,6 +118,15 @@ describe("threadListGroups", () => {
             unread: 2,
             selected: true,
         });
+    });
+
+    test("a root's mentions are the @names typed", () => {
+        const thread: ThreadPreview = {
+            ...preview(g1, 1),
+            rootMessage: message(1, "alice", mentioning("hi @UserId(bob)")),
+        };
+        const [group] = threadListGroups([thread], context());
+        expect(group.threads[0].text).toBe("hi @bob");
     });
 
     test("a thread with nothing unread shows no count", () => {

@@ -1,10 +1,8 @@
 <script lang="ts">
     import { Caption, Container } from "component-lib";
-    import type { OpenChat } from "@client";
-    import { getContext } from "svelte";
+    import { toLongDatetimeString } from "@client";
+    import { locale } from "svelte-i18n";
     import Markdown from "@src/core/Markdown.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         text: string;
@@ -20,6 +18,6 @@
         <Markdown suppressLinks {text} />
     </Caption>
     <Caption width={"hug"} colour={"textSecondary"}>
-        {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
+        {toLongDatetimeString(date, $locale ?? "en")}
     </Caption>
 </Container>

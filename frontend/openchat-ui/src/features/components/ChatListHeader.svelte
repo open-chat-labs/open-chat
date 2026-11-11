@@ -38,7 +38,7 @@
     memberCount?: number;
     /** Overrides the "Public · 248 members" line. Resource key (or literal text). */
     meta?: string;
-    color?: 'violet' | 'amber' | 'teal' | 'blue';
+    color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
     /** Replaces the default menu; give items an `id` to be told which was picked. */
     menuItems?: ActionItem[];
     /** Community: show Edit community. */

@@ -1,9 +1,16 @@
-import { DEFAULT_EVENTS_TTL } from "@client";
 import { DISAPPEARING_DURATIONS, durationMs } from "@openchat/ui/src/lib/durations";
 
 // The lengths and their milliseconds are the library's (the web's picker's, TimedToggle), so the
 // native details offer what the web does and read it the same way.
 export { DISAPPEARING_DURATIONS, durationMs };
+
+/**
+ * The length disappearing messages start at when first switched on (native plan 10: "Default
+ * when first enabled: 1 day"), on every screen built on this module: the web's DM panel and user
+ * dialog, and the native details and conversation menu. (The legacy trees keep the client's
+ * DEFAULT_EVENTS_TTL, a week, until they go.)
+ */
+export const DISAPPEARING_START = "1 day";
 
 // the duration's units, largest first: a TTL reads in the largest one that divides it
 const UNITS: [DurationUnit, number][] = [
@@ -18,9 +25,15 @@ const UNITS: [DurationUnit, number][] = [
  * where it's another (set from another app), in order of length, so it shows and stays picked.
  */
 export function disappearingChoices(ttl: bigint | undefined): string[] {
-    const current = ttlDurationId(ttl);
-    if (DISAPPEARING_DURATIONS.includes(current)) return [...DISAPPEARING_DURATIONS];
-    return [...DISAPPEARING_DURATIONS, current].sort((a, b) => durationMs(a) - durationMs(b));
+    return disappearingChoicesWith(ttlDurationId(ttl));
+}
+
+/** The lengths to offer when `after` is the one picked: the usual ones, with it among them by length. */
+export function disappearingChoicesWith(after: string): string[] {
+    if (DISAPPEARING_DURATIONS.includes(after) || durationMs(after) === 0) {
+        return [...DISAPPEARING_DURATIONS];
+    }
+    return [...DISAPPEARING_DURATIONS, after].sort((a, b) => durationMs(a) - durationMs(b));
 }
 
 /** A duration id's unit and count ("8 hours" → hour, 8), for words in the app's language. */
@@ -34,10 +47,11 @@ export type DurationUnit = "minute" | "hour" | "day" | "week";
 /**
  * A disappearing-message TTL as a duration id ("1 week", "8 hours", "30 days"): the length a
  * settings panel shows and converts back to the same milliseconds. Off reads as the length they
- * start at when turned on (DEFAULT_EVENTS_TTL).
+ * start at when turned on (DISAPPEARING_START).
  */
 export function ttlDurationId(ttl: bigint | undefined): string {
-    const ms = Number(ttl === undefined || ttl <= 0n ? DEFAULT_EVENTS_TTL : ttl);
+    if (ttl === undefined || ttl <= 0n) return DISAPPEARING_START;
+    const ms = Number(ttl);
     const [unit, size] = UNITS.find(([, size]) => ms % size === 0) ?? UNITS[UNITS.length - 1];
     const n = Math.round(ms / size);
     return `${n} ${unit}${n === 1 ? "" : "s"}`;

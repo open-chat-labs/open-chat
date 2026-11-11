@@ -2213,17 +2213,64 @@
                 "step4Stay": "Nie, żartowałem, zostaję"
             }
         },
+        "invite": {
+            "title": "Zaproś osoby",
+            "tabs": {
+                "people": "Osoby",
+                "link": "Link zaproszenia"
+            },
+            "search": "Szukaj nazwy lub @użytkownika",
+            "noneSelected": "Nikt nie jest jeszcze wybrany",
+            "noneLeft": "Nie ma już kogo zaprosić: już dołączyli lub zostali zaproszeni",
+            "pending": "Oczekujące · {count}",
+            "pendingSub": "Zaproszony · jeszcze nie przyjął",
+            "cancel": "Anuluj",
+            "cancelled": "Anulowano zaproszenie dla {name}",
+            "suggested": "Sugerowane",
+            "searchHint": "Wyszukaj osoby do zaproszenia",
+            "results": "Wyniki",
+            "member": "Członek",
+            "invited": "Zaproszony",
+            "noMatch": "Brak wyników",
+            "send": "{count, plural, =0 {Wyślij zaproszenia} one {Wyślij zaproszenie} few {Wyślij # zaproszenia} many {Wyślij # zaproszeń} other {Wyślij # zaproszenia}}",
+            "add": "{count, plural, one {Dodaj # osobę} few {Dodaj # osoby} many {Dodaj # osób} other {Dodaj # osoby}}",
+            "sent": "{count, plural, one {Wysłano # zaproszenie} few {Wysłano # zaproszenia} many {Wysłano # zaproszeń} other {Wysłano # zaproszenia}}",
+            "sentOne": "Wysłano zaproszenie do {name}",
+            "added": "{count, plural, one {Dodano # osobę} few {Dodano # osoby} many {Dodano # osób} other {Dodano # osoby}}",
+            "addedOne": "Dodano {name}",
+            "sentBoth": "Dodano: {added} · zaproszono: {invited}",
+            "shareViaLink": "Udostępnij przez link",
+            "shareViaLinkHelp": "Każdy, kto ma link, może dołączyć.",
+            "linkOff": "Udostępnianie przez link jest wyłączone. Dołączyć mogą tylko zaproszone osoby.",
+            "copyLink": "Kopiuj link",
+            "share": "Udostępnij",
+            "resetLink": "Zresetuj link",
+            "resetHelp": "Obecny link przestanie działać. Ci, którzy już dołączyli, zostają.",
+            "linkReset": "Link zresetowany",
+            "gatesIgnored": "Warunki dostępu nie dotyczą osób dołączających przez link.",
+            "linkFailed": "Nie udało się wczytać linku z zaproszeniem.",
+            "retry": "Spróbuj ponownie",
+            "notAllowed": {
+                "owner": "Tylko właściciele mogą tu zapraszać",
+                "admin": "Tylko administratorzy mogą tu zapraszać",
+                "moderator": "Tylko moderatorzy mogą tu zapraszać",
+                "member": "Tylko członkowie mogą tu zapraszać"
+            }
+        },
         "details": {
             "back": "Wstecz",
             "chitEarned": "Zdobyte CHIT",
             "thisChat": "Ten czat",
             "disappearing": "Znikające wiadomości",
-            "disappearingHelp": "Wiadomości w tym czacie znikają u was obojga po wybranym czasie.",
-            "disappearingGroupHelp": "Wiadomości w tym czacie znikają dla wszystkich po wybranym czasie.",
-            "disappearAfterLabel": "Znikają po",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Po # min}}",
+                "hour": "{count, plural, other {Po # godz.}}",
+                "day": "{count, plural, one {Po # dniu} few {Po # dniach} many {Po # dniach} other {Po # dnia}}",
+                "week": "{count, plural, one {Po # tygodniu} few {Po # tygodniach} many {Po # tygodniach} other {Po # tygodnia}}"
+            },
             "duration": {
-                "minute": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
-                "hour": "{count, plural, one {# godzina} few {# godziny} many {# godzin} other {# godziny}}",
+                "minute": "{count, plural, other {# min}}",
+                "hour": "{count, plural, other {# godz.}}",
                 "day": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
                 "week": "{count, plural, one {# tydzień} few {# tygodnie} many {# tygodni} other {# tygodnia}}"
             },
@@ -2258,8 +2305,7 @@
             "deleted": "Usunięto {name}",
             "menu": {
                 "editGroup": "Edytuj grupę",
-                "editChannel": "Edytuj kanał",
-                "copyInviteLink": "Kopiuj link z zaproszeniem"
+                "editChannel": "Edytuj kanał"
             },
             "members": {
                 "you": "Ty",
@@ -2268,7 +2314,6 @@
                 "admins": "{count, plural, =1 {Administratorzy} other {Administratorzy · #}}",
                 "moderators": "{count, plural, =1 {Moderatorzy} other {Moderatorzy · #}}",
                 "members": "{count, plural, =1 {Członkowie} other {Członkowie · #}}",
-                "blocked": "{count, plural, =1 {Zablokowani} other {Zablokowani · #}}",
                 "options": "Opcje członka",
                 "make": {
                     "owner": "Ustaw jako właściciela",
@@ -2289,7 +2334,22 @@
                 },
                 "notAllowed": "Twoja rola nie pozwala tu zmieniać ról ani usuwać członków.",
                 "noMatch": "Brak pasujących członków",
-                "message": "Wiadomość"
+                "message": "Wiadomość",
+                "tabs": {
+                    "members": "Członkowie",
+                    "lapsed": "Wygaśli",
+                    "blocked": "Zablokowani"
+                },
+                "searchLapsed": "Szukaj wygasłych",
+                "searchBlocked": "Szukaj zablokowanych",
+                "lapsedNote": "Członkowie, którzy nie spełniają już warunków dostępu. Warunki są sprawdzane ponownie zgodnie z harmonogramem w Warunkach dostępu.",
+                "blockedNote": "Osoby zablokowane tutaj. Odblokuj kogoś, aby mógł znów dołączyć.",
+                "lapsedEmpty": "Brak wygasłych członków. Wszyscy spełniają warunki.",
+                "blockedEmpty": "Nikt nie jest zablokowany.",
+                "noOneMatches": "Brak wyników",
+                "removeFrom": "Usuń ({level})",
+                "lapsedNotAllowed": "Twoja rola nie pozwala tu usuwać członków.",
+                "blockedNotAllowed": "Twoja rola nie pozwala tu nikogo odblokować."
             }
         }
     },
@@ -2599,17 +2659,23 @@
         "distribution": "Jak powinny być rozdawane nagrody?",
         "duration": "Jak długo nagroda będzie aktywna?",
         "equalDistribution": "Równa dystrybucja",
+        "excludeUsers": "Wyklucz użytkowników",
+        "excludeUsersInfo": "Wykluczeni użytkownicy nie mogą odebrać tej nagrody i dowiadują się tylko, że nie spełniają warunków. Nikt inny nie widzi, kogo wykluczyłeś. Maksymalnie {n} użytkowników.",
+        "excludeUsersSearch": "Wpisz nazwę członka, aby go wykluczyć",
         "finished": "Skończone",
         "lifetimeDiamond": "Życie",
         "lifetimeDiamondMembership": "Dożywotnie członkostwo diamentowe",
         "live": "Wiadomość o nagrodzie na żywo! Inni mogą kliknąć, aby odebrać 🎁",
         "maxPrize": "Jaka jest maksymalna nagroda?",
+        "minAccountAge": "Minimalny wiek konta",
+        "minAccountAgeValue": "Konto założone co najmniej {n} dni temu",
         "minChitEarned": "Minimalna zdobyta liczba CHIT",
         "minChitEarnedValue": "Zarobiono co najmniej {n} CHIT",
         "minPrize": "Jaka jest minimalna nagroda?",
         "numberOfWinners": "Liczba zwycięzców",
         "onlyChit": "Tylko użytkownicy z CHIT",
         "onlyDiamond": "Tylko użytkownicy Diamonda",
+        "onlyOlderAccounts": "Tylko konta starsze niż",
         "onlyStreak": "Tylko użytkownicy z passą",
         "onlyUniquePerson": "Tylko wyjątkowi ludzie",
         "prizeFinished": "Twoja wiadomość z nagrodą została już ukończona",

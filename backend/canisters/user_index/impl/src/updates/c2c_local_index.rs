@@ -282,6 +282,7 @@ fn process_new_user(
             username: username.clone(),
             user_type: UserType::User,
             referred_by,
+            date_created: now,
         }),
         Some(local_user_index_canister_id),
     );

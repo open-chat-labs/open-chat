@@ -2,42 +2,42 @@ benches:
   add_reactions:
     total:
       calls: 1
-      instructions: 1594666123
+      instructions: 1603153302
       heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
   decode_state_with_large_binary:
     total:
       calls: 1
-      instructions: 78258884
+      instructions: 78258388
       heap_increase: 557
       stable_memory_increase: 0
     scopes: {}
   import_events:
     total:
       calls: 1
-      instructions: 122478279
+      instructions: 122576775
       heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
   import_from_group:
     total:
       calls: 1
-      instructions: 8596690
+      instructions: 8582714
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   push_simple_text_messages:
     total:
       calls: 1
-      instructions: 647520250
-      heap_increase: 4
+      instructions: 647889599
+      heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
   search_messages:
     total:
       calls: 1
-      instructions: 128577198
+      instructions: 128524068
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}

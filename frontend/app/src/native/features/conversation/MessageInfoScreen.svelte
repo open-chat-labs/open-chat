@@ -10,6 +10,7 @@
         allUsersStore,
         chatIdentifiersEqual,
         chitStateStore,
+        currentUserStore,
         communitiesStore,
         cryptoLookup,
         currentUserIdStore,
@@ -20,8 +21,10 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         localUpdates,
+        messageReadByThem,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
+        selectedCommunityUserGroupsStore,
         selectedServerChatStore,
         unconfirmedReadByThem,
         unconfirmedStore,
@@ -42,7 +45,6 @@
         conversationContext,
         messageRow,
         messageStatus,
-        readByThem,
         senderColor,
     } from "@src/logic/conversation/messageRow";
     import { lowBandwidth } from "@src/stores/settings";
@@ -100,6 +102,7 @@
             me,
             formatter: $_,
             users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
             webhooks: $selectedChatWebhooksStore,
             webhookIds: $webhookUserIdsStore,
             detailsLoaded: $selectedServerChatStore !== undefined,
@@ -111,6 +114,7 @@
                 lifetimeDiamond: $isLifetimeDiamondStore,
                 streak: $chitStateStore.streak,
                 chitEarned: $chitStateStore.totalChitEarned,
+                accountCreated: Number($currentUserStore.dateCreated),
             },
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
@@ -122,7 +126,7 @@
     const theirsRead = $derived(
         evt !== undefined &&
             chat !== undefined &&
-            readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+            messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
     );
     const status = $derived(messageStatus({ failed, accepted, readByThem: theirsRead }));
     const row = $derived(evt === undefined ? undefined : messageRow(evt, status, ctx));

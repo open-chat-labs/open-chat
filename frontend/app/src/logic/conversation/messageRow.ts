@@ -7,6 +7,7 @@ import {
     i18nKey,
     isDeletedWebhook,
     ogPreviewCard,
+    ownUserAvatarUrl,
     pollView,
     prizeView,
     swapActions,
@@ -35,6 +36,7 @@ import {
     type ResourceKey,
     type TokenExchangeRates,
     type TokenInfo,
+    type UserGroupDetails,
     type UserLookup,
     type VideoContent,
     type WebhookDetails,
@@ -43,9 +45,10 @@ import { interpolate } from "@i18n/i18n";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
-import { pickById } from "@src/utils/pickById";
+import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
+import { typedMentions } from "./typedMentions";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -53,14 +56,11 @@ import { threadUnreadCount } from "@src/logic/threads/threadRead";
 // client's lookups (names, text, dates) come in through ConversationContext (`conversationContext`
 // makes it from the client and the stores' values), so the mapping stays pure.
 
-export type SenderColor = "violet" | "amber" | "teal" | "blue";
+export type SenderColor = Swatch;
 
-// senders have uploaded avatars rather than the design's colours, so one is picked from the id
-// (src/web/GAPS.md, Swatches)
-const COLOURS: readonly SenderColor[] = ["violet", "amber", "teal", "blue"];
-
+/** A sender's swatch: the one their id has everywhere (`swatchFor`), their DM's row's too. */
 export function senderColor(id: string): SenderColor {
-    return pickById(id, COLOURS);
+    return swatchFor(id);
 }
 
 export type ConversationContext = {
@@ -71,6 +71,8 @@ export type ConversationContext = {
     userName: (userId: string) => string;
     /** A message's content as text, in the app's language (for kinds not shown yet, and quotes). */
     contentText: (content: MessageContent) => string;
+    /** A text shown as it is (a quote) with its mentions as the @names typed (`mentionsAsTyped`). */
+    mentionsAsTyped: (text: string) => string;
     /** A message's time, as its bubble shows it. */
     time: (timestamp: bigint) => string;
     /** A date as the list shows it (a time today, else a short date). */
@@ -93,6 +95,12 @@ export type ConversationContext = {
     openThread: number | undefined;
     /** A user's face as the conversation shows it (their avatar's colour, a CSS background). */
     face: (userId: string) => string;
+    /**
+     * A sender's own picture, over their colour: a user's avatar, a bot's or a system user's fixed
+     * picture, a webhook's own (ownUserAvatarUrl). None without one: their colour alone, as a
+     * person without a picture shows their swatch everywhere in the new web UI (2026-11-10).
+     */
+    avatar: (userId: string) => string | undefined;
     /**
      * A thread's unread replies, by its root's index: as the list of threads counts them
      * (`threadUnreadCount`), none for a thread the reader doesn't follow.
@@ -139,6 +147,8 @@ export type MessageRow = {
     side: "sent" | "received";
     senderName: string;
     color: SenderColor;
+    /** The sender's own picture (ConversationContext's `avatar`), over `color`. */
+    avatarUrl?: string;
     message: GroupMessage;
 };
 
@@ -257,6 +267,26 @@ export function messageText(
 }
 
 /**
+ * A quoted message's text, as a reply's quote and the composer's reply or edit strip show it: as
+ * it is, not as markdown, so its mentions show as the @names typed rather than `@UserId(…)`, as
+ * the old trees' quotes (Markdown) show them.
+ */
+export function quoteText(
+    content: MessageContent,
+    ctx: Pick<ConversationContext, "contentText" | "mentionsAsTyped">,
+): string {
+    return ctx.mentionsAsTyped(messageText(content, ctx));
+}
+
+/**
+ * Whether a run of messages shows its sender's name over it: once, at the run's start, in a group
+ * or channel, the reader's own runs as well as others'; never in a DM.
+ */
+export function showsSenderName(runStart: boolean, direct: boolean): boolean {
+    return runStart && !direct;
+}
+
+/**
  * A message as MessageGroup shows it, with its sender. Every kind shows as a text bubble for now:
  * the rich kinds are phase 5 (GAPS.md).
  */
@@ -283,15 +313,17 @@ export function messageRow(
     if (kind !== undefined) {
         return {
             side: mine ? "sent" : "received",
-            senderName: mine ? ctx.you : ctx.userName(msg.sender),
+            senderName: ctx.userName(msg.sender),
             color: senderColor(msg.sender),
+            avatarUrl: ctx.avatar(msg.sender),
             message: kind,
         };
     }
     return {
         side: mine ? "sent" : "received",
-        senderName: mine ? ctx.you : ctx.userName(msg.sender),
+        senderName: ctx.userName(msg.sender),
         color: senderColor(msg.sender),
+        avatarUrl: ctx.avatar(msg.sender),
         message: {
             id: String(msg.messageId),
             kind: "text",
@@ -314,7 +346,7 @@ export function messageRow(
                     : quoted.senderId === ctx.me
                       ? ctx.you
                       : ctx.userName(quoted.senderId),
-            quoteText: quoted === undefined ? undefined : messageText(quoted.content, ctx),
+            quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
             ...threadFields(msg, ctx),
             previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
         },
@@ -552,6 +584,7 @@ export function sendingPrize(content: PrizeContentInitial): PrizeContent {
         uniquePersonOnly: content.uniquePersonOnly,
         streakOnly: content.streakOnly,
         minChitEarned: content.minChitEarned,
+        minAccountAgeMs: content.minAccountAgeMs || undefined,
         token: content.transfer.token,
         ledger: content.transfer.ledger,
         endDate: content.endDate,
@@ -682,6 +715,8 @@ export type ConversationContextInput = {
     me: string;
     formatter: MessageFormatter;
     users: UserLookup;
+    /** The community's user groups (for their mentions). */
+    userGroups: Pick<ReadonlyMap<number, UserGroupDetails>, "get">;
     /** The chat's webhooks, and the ids of those that have sent messages in it. */
     webhooks: ReadonlyMap<string, WebhookDetails>;
     webhookIds: ReadonlySet<string>;
@@ -714,6 +749,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
                 ? formatter("webhook.deleted")
                 : client.displayName(findUser(userId, users, webhooks)),
         contentText: (content) => client.getContentAsText(formatter, content),
+        mentionsAsTyped: typedMentions({ users, userGroups: input.userGroups }),
         time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
         date: (timestamp) =>
             client.formatMessageDate(
@@ -735,6 +771,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         text: (key) => interpolate(formatter, key),
         openThread: input.openThread,
         face: input.face,
+        avatar: (userId) => ownUserAvatarUrl(findUser(userId, users, webhooks)),
         threads: input.threads,
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
@@ -761,21 +798,4 @@ export function conversationContext(input: ConversationContextInput): Conversati
             };
         },
     };
-}
-
-/**
- * Whether the other person in a DM has read one of the user's messages: as the chat says, or as
- * a read receipt not yet confirmed says. Never outside a DM.
- */
-export function readByThem(
-    client: Pick<OpenChat, "messageIsReadByThem">,
-    chat: ChatSummary,
-    msg: Pick<Message, "messageIndex" | "messageId">,
-    unconfirmedReadByThem: { has(messageId: bigint): boolean },
-): boolean {
-    return (
-        chat.kind === "direct_chat" &&
-        (client.messageIsReadByThem(chat.id, msg.messageIndex) ||
-            unconfirmedReadByThem.has(msg.messageId))
-    );
 }

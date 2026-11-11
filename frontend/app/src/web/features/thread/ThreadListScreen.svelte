@@ -15,6 +15,7 @@
         selectedCommunitySummaryStore,
         threadOpenStore,
         threadsByChatStore,
+        userGroupSummariesStore,
         type OpenChat,
         type ThreadPreview,
     } from "@client";
@@ -23,6 +24,7 @@
     import { ThreadPreviews } from "@src/logic/threads/threadPreviews.svelte";
     import { threadUnreadCount } from "@src/logic/threads/threadRead";
     import { isRouteThread } from "@src/logic/threads/threadUrl";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { openThreadInColumn } from "../app/rightPanel";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
@@ -92,6 +94,12 @@
         return threadListGroups(previews.previews.threads, {
             userName: (userId) => client.displayName(findUser(userId, users)),
             contentText: (content) => client.getContentAsText($_, content),
+            // the threads can be any community's channels': every community's groups, looked
+            // up only for a root that mentions one
+            mentionsAsTyped: typedMentions({
+                users,
+                userGroups: { get: (id) => $userGroupSummariesStore.get(id) },
+            }),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
             chat: (chatId) => chats.get(chatId),

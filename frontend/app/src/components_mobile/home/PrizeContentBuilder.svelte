@@ -4,34 +4,42 @@
         Chip,
         Column,
         CommonButton2,
+        Container,
         InputTextButton,
         NumberInput,
         Row,
         Switch,
+        UserChip,
     } from "component-lib";
-    import type { MessageContext, SignerWallet } from "@client";
+    import type { MessageContext, OpenChat, SignerWallet } from "@client";
     import {
+        allUsersStore,
         chitBands,
         cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        MAX_PRIZE_EXCLUDED_USERS,
+        ONE_DAY,
         prizeMaximum,
     } from "@client";
     import { PrizeForm } from "@src/logic/prize/prizeForm.svelte";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
+    import Clock from "svelte-material-icons/ClockOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Flash from "svelte-material-icons/FlashOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { _ } from "svelte-i18n";
     import Setting from "../Setting.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SelectChitEarned from "./SelectChitEarned.svelte";
     import SelectMinStreak from "./SelectMinStreak.svelte";
+    import SingleUserSelector from "./SingleUserSelector.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
@@ -54,6 +62,17 @@
     // the winners, split, duration and restrictions, remembered for the next prize (unique-person
     // gating is suspended, so it's always off)
     const form = new PrizeForm();
+    const client = getContext<OpenChat>("client");
+    // the users remembered as excluded from the last prize are loaded to show who they are
+    client.getMissingUsers(form.excludedUsers);
+    // counts the users picked to exclude, making the picker again empty after each
+    let exclusionPicks = $state(0);
+    let excludedUsers = $derived(
+        form.excludedUsers.flatMap((id) => {
+            const user = $allUsersStore.get(id);
+            return user === undefined ? [] : [user];
+        }),
+    );
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     // The external wallet the prize fund will come from, or undefined for the user's own OpenChat
     // account. Paying from an external wallet spends that wallet's balance rather than the user's
@@ -191,7 +210,12 @@
                 error={!form.validWinners}
                 min={1}
                 max={1000}
-                bind:value={form.winners}>
+                bind:value={
+                    // the input writes back what's typed as a string, which isn't a valid number of
+                    // winners until it's read as one
+                    () => form.winners,
+                    (v) => (form.winners = v === undefined ? undefined : Number(v) || undefined)
+                }>
                 {#snippet subtext()}
                     <Translatable
                         resourceKey={i18nKey("Please enter a number between 1 and 1000")} />
@@ -284,7 +308,54 @@
                         <Translatable resourceKey={i18nKey(`Users with streak`)} />
                     {/if}
                 </Chip>
+                <Chip
+                    onClick={() => (form.minAccountAgeMs = form.minAccountAgeMs > 0 ? 0 : 30 * ONE_DAY)}
+                    onRemove={form.minAccountAgeMs > 0 ? () => (form.minAccountAgeMs = 0) : undefined}
+                    mode={form.minAccountAgeMs > 0 ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <Clock {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("prizes.minAccountAge")} />
+                </Chip>
             </Row>
+            {#if form.minAccountAgeMs > 0}
+                <DurationSelector
+                    units={["days"]}
+                    bind:duration={
+                        () => BigInt(form.minAccountAgeMs), (d) => (form.minAccountAgeMs = Number(d))
+                    } />
+            {/if}
+        </Column>
+
+        <!-- Excluded users -->
+        <Column gap={"sm"} padding={["zero", "xs"]}>
+            {@render sectionTitle("prizes.excludeUsers", false)}
+            <Body colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey("prizes.excludeUsersInfo", { n: MAX_PRIZE_EXCLUDED_USERS })} />
+            </Body>
+            {#if excludedUsers.length > 0}
+                <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
+                    {#each excludedUsers as user (user.userId)}
+                        <UserChip
+                            avatarUrl={client.userAvatarUrl(user)}
+                            onRemove={() => form.unexclude(user.userId)}>@{user.username}</UserChip>
+                    {/each}
+                </Container>
+            {/if}
+            {#if form.canExcludeMore}
+                <!-- picks from the chat's members as @mentions do; made again after each pick so it's
+                     empty for the next -->
+                {#key exclusionPicks}
+                    <SingleUserSelector
+                        placeholder={interpolate($_, i18nKey("prizes.excludeUsersSearch"))}
+                        hidden={form.excludedUsers}
+                        onUserSelected={(user) => {
+                            form.exclude(user.userId);
+                            exclusionPicks += 1;
+                        }} />
+                {/key}
+            {/if}
         </Column>
 
         <!-- Buttons -->

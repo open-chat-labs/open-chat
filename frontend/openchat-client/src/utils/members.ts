@@ -5,6 +5,8 @@ import {
     ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_OWNER,
+    stripSuspendedGate,
+    type AccessGateConfig,
     type ExternalBot,
     type FullMember,
     type Member,
@@ -217,4 +219,53 @@ export function memberMenu(
     const block = actions.canBlockUser;
     if (roles.length === 0 && !remove && !block) return { kind: "not_allowed" };
     return { kind: "actions", roles, remove, block };
+}
+
+// The Members screen's tabs (the native design's plan 10): owners, admins and moderators see Members
+// | Lapsed | Blocked where the group or community has access gates, Members | Blocked where it
+// hasn't; a regular member sees no tabs, only the current members, as on the web's panel. The
+// lapsed and the blocked are acted on only with "Remove / block members".
+
+/** A tab of the Members screen. */
+export type MemberTab = "members" | "lapsed" | "blocked";
+
+/**
+ * Whether members can lapse here: the group, channel or community has an access gate, or (a
+ * channel) its community has one. A lone unique-person gate is none: it's suspended, never asked
+ * for (`stripSuspendedGate`).
+ */
+export function hasAccessGates(own: AccessGateConfig, community?: AccessGateConfig): boolean {
+    return [own, community].some(
+        (config) => config !== undefined && stripSuspendedGate(config.gate).kind !== "no_gate",
+    );
+}
+
+/**
+ * The Members screen's tabs for someone with `role` (`gated`: `hasAccessGates`): none for a regular
+ * member; for owners, admins and moderators Members and Blocked, with Lapsed between them where
+ * there are gates.
+ */
+export function memberTabs(role: MemberRole, gated: boolean): MemberTab[] {
+    if (compareRoles(role, ROLE_MODERATOR) < 0) return [];
+    return gated ? ["members", "lapsed", "blocked"] : ["members", "blocked"];
+}
+
+/** What the ⋯ on a lapsed or blocked row offers: a toast that your role can't, or its action. */
+export type ListedUserMenu =
+    | { kind: "not_allowed" }
+    | { kind: "action"; action: "remove" | "unblock" };
+
+/**
+ * The ⋯ on a lapsed member (Remove from the group) or a blocked user (Unblock), both under "Remove
+ * / block members" (`canRemove` for the lapsed, `canUnblock` for the blocked); without it, the ⋯
+ * says why.
+ */
+export function listedUserMenu(
+    tab: Exclude<MemberTab, "members">,
+    allowed: { canRemove: boolean; canUnblock: boolean },
+): ListedUserMenu {
+    if (tab === "lapsed") {
+        return allowed.canRemove ? { kind: "action", action: "remove" } : { kind: "not_allowed" };
+    }
+    return allowed.canUnblock ? { kind: "action", action: "unblock" } : { kind: "not_allowed" };
 }

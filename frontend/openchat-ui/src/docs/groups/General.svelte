@@ -206,7 +206,7 @@
     <Frame label="Toggle · TimedToggle · DurationChips" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
       <Toggle on={notify} label="docs.general.inputs.notifications" help="docs.general.inputs.notificationsHelp" onChange={(v) => (notify = v)} />
       <Toggle on={false} label="docs.general.buttons.disabled" disabled />
-      <TimedToggle label="docs.general.inputs.disappearing" on value="1 day" options={['1 hour', '1 day', '1 week']} prefix="ui.timedToggle.after" />
+      <TimedToggle label="docs.general.inputs.disappearing" on value="1 day" prefix="ui.timedToggle.after" />
       <DurationChips title="docs.general.inputs.muteFor" hint="docs.general.inputs.muteHint" value={duration} options={['1 hour', '8 hours', '1 day', '1 week', 'ui.timedToggle.always']} onChange={(v) => (duration = v)} />
     </Frame>
     <div class="span"><Frame label="SegmentedTabs" style="flex-direction: column; flex-wrap: nowrap" align="stretch">

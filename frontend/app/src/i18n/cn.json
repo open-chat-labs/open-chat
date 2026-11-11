@@ -2213,14 +2213,61 @@
                 "step4Stay": "开玩笑的，我留下"
             }
         },
+        "invite": {
+            "title": "邀请成员",
+            "tabs": {
+                "people": "用户",
+                "link": "邀请链接"
+            },
+            "search": "搜索名称或 @用户名",
+            "noneSelected": "尚未选择任何人",
+            "noneLeft": "没有可邀请的人了：他们已加入或已被邀请",
+            "pending": "待接受 · {count}",
+            "pendingSub": "已邀请 · 尚未接受",
+            "cancel": "取消",
+            "cancelled": "已取消对 {name} 的邀请",
+            "suggested": "推荐",
+            "searchHint": "搜索要邀请的人",
+            "results": "结果",
+            "member": "成员",
+            "invited": "已邀请",
+            "noMatch": "没有匹配的人",
+            "send": "{count, plural, =0 {发送邀请} other {发送 # 个邀请}}",
+            "add": "{count, plural, other {添加 # 人}}",
+            "sent": "{count, plural, other {已发送 # 个邀请}}",
+            "sentOne": "已向 {name} 发送邀请",
+            "added": "{count, plural, other {已添加 # 人}}",
+            "addedOne": "已添加 {name}",
+            "sentBoth": "已添加 {added} 人 · 已邀请 {invited} 人",
+            "shareViaLink": "通过链接分享",
+            "shareViaLinkHelp": "任何拥有链接的人都可以加入此{level}。",
+            "linkOff": "链接分享已关闭。只有你邀请的人可以加入。",
+            "copyLink": "复制链接",
+            "share": "分享",
+            "resetLink": "重置链接",
+            "resetHelp": "当前链接将失效。已加入的人不受影响。",
+            "linkReset": "链接已重置",
+            "gatesIgnored": "通过链接加入的人不受访问门槛限制。",
+            "linkFailed": "无法加载邀请链接。",
+            "retry": "重试",
+            "notAllowed": {
+                "owner": "只有所有者可以邀请加入此{level}",
+                "admin": "只有管理员可以邀请加入此{level}",
+                "moderator": "只有版主可以邀请加入此{level}",
+                "member": "只有成员可以邀请加入此{level}"
+            }
+        },
         "details": {
             "back": "返回",
             "chitEarned": "已赚取 CHIT",
             "thisChat": "此聊天",
             "disappearing": "限时消息",
-            "disappearingHelp": "此聊天中的消息会在你选择的时间后对双方消失。",
-            "disappearingGroupHelp": "此聊天中的消息会在你选择的时间后对所有人消失。",
-            "disappearAfterLabel": "消失时间",
+            "disappearAfter": {
+                "minute": "{count, plural, other {# 分钟后}}",
+                "hour": "{count, plural, other {# 小时后}}",
+                "day": "{count, plural, other {# 天后}}",
+                "week": "{count, plural, other {# 周后}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# 分钟}}",
                 "hour": "{count, plural, other {# 小时}}",
@@ -2258,8 +2305,7 @@
             "deleted": "已删除 {name}",
             "menu": {
                 "editGroup": "编辑群组",
-                "editChannel": "编辑频道",
-                "copyInviteLink": "复制邀请链接"
+                "editChannel": "编辑频道"
             },
             "members": {
                 "you": "你",
@@ -2268,7 +2314,6 @@
                 "admins": "{count, plural, =1 {管理员} other {管理员 · #}}",
                 "moderators": "{count, plural, =1 {版主} other {版主 · #}}",
                 "members": "{count, plural, =1 {成员} other {成员 · #}}",
-                "blocked": "{count, plural, =1 {已屏蔽} other {已屏蔽 · #}}",
                 "options": "成员选项",
                 "make": {
                     "owner": "设为所有者",
@@ -2289,7 +2334,22 @@
                 },
                 "notAllowed": "你的角色无权在这里更改角色或移除成员。",
                 "noMatch": "没有匹配的成员",
-                "message": "发消息"
+                "message": "发消息",
+                "tabs": {
+                    "members": "成员",
+                    "lapsed": "已失效",
+                    "blocked": "已屏蔽"
+                },
+                "searchLapsed": "搜索已失效成员",
+                "searchBlocked": "搜索已屏蔽的人",
+                "lapsedNote": "不再满足此{level}访问门槛的成员。门槛会按“访问门槛”中设定的时间重新检查。",
+                "blockedNote": "被此{level}屏蔽的人。解除屏蔽后，对方可以重新加入。",
+                "lapsedEmpty": "没有失效成员。每个人都满足门槛。",
+                "blockedEmpty": "没有人被屏蔽。",
+                "noOneMatches": "没有匹配的人",
+                "removeFrom": "从{level}中移除",
+                "lapsedNotAllowed": "你的角色无权在这里移除成员。",
+                "blockedNotAllowed": "你的角色无权在这里解除屏蔽。"
             }
         }
     },
@@ -2599,17 +2659,23 @@
         "distribution": "奖品应该如何分配？",
         "duration": "奖品有效期多久？",
         "equalDistribution": "均等分配",
+        "excludeUsers": "排除用户",
+        "excludeUsersInfo": "被排除的用户无法领取此奖品，他们只会被告知不符合条件。其他人无法看到你排除了谁。最多 {n} 个用户。",
+        "excludeUsersSearch": "输入成员名称以排除",
         "finished": "完成的",
         "lifetimeDiamond": "寿命",
         "lifetimeDiamondMembership": "终身钻石会员",
         "live": "奖品留言直播！其他人可以点击领取🎁",
         "maxPrize": "最高奖金是多少？",
+        "minAccountAge": "最短账户年龄",
+        "minAccountAgeValue": "账户至少已注册 {n} 天",
         "minChitEarned": "获得的最低 CHIT",
         "minChitEarnedValue": "至少获得 {n} CHIT",
         "minPrize": "最低奖金是多少？",
         "numberOfWinners": "获奖人数",
         "onlyChit": "仅限拥有 CHIT 的用户",
         "onlyDiamond": "仅限钻石用户",
+        "onlyOlderAccounts": "仅限注册时间超过以下时长的账户",
         "onlyStreak": "仅限有连胜记录的用户",
         "onlyUniquePerson": "只有独一无二的人类",
         "prizeFinished": "您的奖品留言现已完成",

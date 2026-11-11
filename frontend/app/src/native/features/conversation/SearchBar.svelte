@@ -2,6 +2,7 @@
      search, the field with "2 of 5" (or "No results", in the warning colour) at its end, then up
      (an older match) and down (a newer one), dimmed where there's none. Enter searches at once. -->
 <script lang="ts">
+    import { SEARCH_INPUT_ATTRIBUTES } from "@openchat/ui/src/lib/searchInput";
     import { onMount } from "svelte";
 
     type Props = {
@@ -56,12 +57,13 @@
     </button>
     <div class="field">
         <span class="search-icon"></span>
+        <!-- a search, not a sign-in field: password managers leave it alone -->
         <input
             bind:this={input}
+            {...SEARCH_INPUT_ATTRIBUTES}
             value={query}
             placeholder={text.placeholder}
             aria-label={text.placeholder}
-            enterkeyhint="search"
             spellcheck="false"
             maxlength="30"
             oninput={(e) => onQuery(e.currentTarget.value)}
@@ -174,9 +176,16 @@
         background: transparent;
         color: var(--ink);
         font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
+        appearance: none;
 
         &::placeholder {
             color: var(--ink-4);
+        }
+
+        // type="search"'s own clear button: the count and the arrows are the field's end
+        &::-webkit-search-cancel-button,
+        &::-webkit-search-decoration {
+            display: none;
         }
     }
 

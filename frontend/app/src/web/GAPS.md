@@ -201,7 +201,9 @@ design export needs. Each entry says where it came up.
   (`VirtualList`, pinned first, favourite / muted / pinned icons, the forward icon, live calls),
   the row long-press menu, the FAB and New chat. It lists its own scope (`chatsInScope`), so it
   stays right while another tab's route sets another scope (it's dragged into view by the swipe
-  between tabs). Left, or decided against the prototype:
+  between tabs). The rows' previews show mentions as the `@names` typed (`typedMentions`, the
+  rows shared with the web's chat list), and so does the forward sheet's preview of the message.
+  Left, or decided against the prototype:
   - **Message search**: the backend has no search across chats, and a chat's own search
     (`searchChat`) returns message indexes without their text, so the search has Chats and People
     only ("Search chats and people"). Messages, and a result opening the chat in search mode on it,
@@ -220,7 +222,11 @@ design export needs. Each entry says where it came up.
   - **Archive with Undo**: archived at once; Undo un-archives. Archived chats aren't in the list
     (the design has no archive view); search finds them.
   - **Pin, Mute, Mark all as read** confirm with a toast, as the prototype does.
-  - **New group** and **CHIT** push placeholders until N7 and N11 build them. CHIT is a local push
+  - **New group** and **CHIT** push placeholders until N7 and N11 build them. When N7 builds
+    Create group, its Settings card's Disappearing messages is a `TimedToggle` row (clock icon,
+    switch, the same 8 lengths as the details; native plan 11 of 2026-11-10), not a dropdown row:
+    the details' `DisappearingRow` words (`valueLabel`, `subtitle`) and `ChatDisappearing`'s start
+    at a day apply there too. CHIT is a local push
     (as the prototype's); N11 decides whether `?chit` (the web's) maps onto it.
   - **The Getting started card** (notes §3.1, top of Chats for new accounts) isn't built (N4's
     onboarding).
@@ -473,11 +479,20 @@ design export needs. Each entry says where it came up.
     @mention picker (the old headers' "@name" still searches for a sender); typing pauses 300ms
     before it searches, as the old ones did; up and down stop at the ends (the old headers went
     round). It takes the chat's own search (`searchChat`), up to 200 matches, the weak ones dropped.
-  - **Disappearing messages** aren't in the header's menu (decided 2026-11-07, against the design
-    notes' kebab and the prototype's submenu): a DM's are a switch on its details (N6, the design's
-    "This chat" card), as in the current app, which has them on a DM's details
-    (`DirectChatDetails`) and not in a menu; a group's or channel's are its settings (N7), and
-    its details show them (N6, "Native details", below).
+  - **Disappearing messages** are in the header's menu since the native plan's 04 and 10 of
+    2026-11-10 (the decision of 2026-11-07 to leave them out is gone): Disappearing messages,
+    after Favourite, opens a submenu of Off and the details' lengths (5 min … 30 days, and the
+    chat's own where it's another), the current one ticked. It's one setting with the details'
+    TimedToggle (N6, "Native details", below): both are a `logic/chats/chatDisappearing`
+    `ChatDisappearing`, and it's offered to the same people (`canSetDisappearing`: either side of
+    a DM, but not with a bot, a deleted user or someone blocked, `dmDisappearingAllowed`, as Mute
+    isn't for a bot; in a group or channel, owners only, `canChangeDisappearing`). Picking the
+    setting it already has sends nothing; a pick shows at once (the library's `Optimistic`), and
+    goes back with a toast if it's refused ("Couldn't save that"). No toast when it's saved, and no Undo (the plan has neither):
+    the timeline's "you set the disappearing message time" item says it. Off and on again go back
+    to the length the chat last had, from here or the details (the review of 2026-11-10; below).
+    Only a length in the submenu's ids (`disappearing:…`, `isDisappearingItem`) reaches the
+    setting; any other id goes through the menu's own cases.
   - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
     (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
     everything else").
@@ -517,7 +532,10 @@ design export needs. Each entry says where it came up.
     waiting state). Leave and delete don't wait: nothing is sent
     until their Undo has gone (`PendingRemovals`).
   - **Typing** couldn't be seen end to end here: typing reaches peers over WebRTC, which the browser
-    check's environment didn't connect. The bubble and the strip were checked by setting the names.
+    check's environment didn't connect (two client bugs, fixed in web L1: see the web's "Chat list",
+    who's typing). The bubble and the strip were checked by setting the names. The DM's bubble is
+    now the library's (`TypingIndicator`, `variant="bubble"`, web L1), which the web's DMs show too,
+    and the rule is `typingPlacement`, shared with the web.
     Their words are the library's (`ui.typingIndicator.typing`), English only.
   - **Sender names** are the library's (`--ink-3`); the prototype colours each by its swatch with
     hex values no token has.
@@ -650,10 +668,11 @@ design export needs. Each entry says where it came up.
     has no rules sheet; ours, with the old words ("Chat rules", Accept). The PIN a transfer asks
     for still has no native sheet (N10b).
 
-- **Native details** (native N6, #10372; the native plan's 10 of 2026-11-08;
-  `src/native/features/details`). Built: a DM's details and a group's or channel's, pushed from
-  the conversation's title and its menu's details item (the local `chat_details` screen), the
-  Members screen (`chat_members`) and a member's profile sheet. On the web panel's logic
+- **Native details** (native N6, #10372; the native plan's 10 of 2026-11-08, and the Invite
+  people and Members parts of its 2026-11-10 changelog; `src/native/features/details`). Built: a
+  DM's details and a group's or channel's, pushed from the conversation's title and its menu's
+  details item (the local `chat_details` screen), the Members screen (`chat_members`) with its
+  tabs, Invite people (`invite_people`) and a member's profile sheet. On the web panel's logic
   (`logic/members`' MemberManagement, `logic/groupOrCommunity/detailsPermissions`,
   `logic/profile`'s ProfileCardData), the web's DM settings, moved to `logic/chats/dmSettings`,
   and new shared logic: the members' role sections and ⋯ (`@client`'s `memberSections` and
@@ -673,19 +692,41 @@ design export needs. Each entry says where it came up.
     Member since, CHIT earned (not with CHIT off).
   - **Read receipts** (the plan's This chat): not a setting the app has, so not there (the web's
     panel hides it too).
-  - **Disappearing messages** (a DM's): a switch with help, and while it's on a "Disappear after"
-    value row (the kit's anchored menu) with the web picker's lengths (1 hour … 30 days, plus the
-    chat's own where it's another, set from another app); switching on starts at a week, as the
-    old UIs (#10112). Shown at once (the library's `Optimistic`), back as it was with a toast if
-    it's refused. The plan doesn't draw the length's control: a design brief for the length's
-    picker will follow as its own PR (the user, 2026-11-10); the anchored menu stays until then,
-    for a group's too.
-  - **Group**: the cover has back, favourite and a kebab (the user's answer, 2026-11-10): Edit
-    group (Edit channel), for those whose role meets "Update group", pushes N7's page (the
-    `group_settings` placeholder, `edit`); Copy invite link, for a member who may share it (a
-    public group's link, anyone; a private group's, those who may invite, while its link is on:
-    the invite dialog's `MemberManagement.sharingLink`), copies it with "Link copied to
-    clipboard". No Export chat. With neither, no kebab. A channel's cover is its community's
+  - **Disappearing messages** (a DM's, though not with a bot, a deleted user or someone blocked,
+    where This chat isn't shown; and a group's for its owners): the library's `TimedToggle`,
+    as the web's (the plan's 10 of 2026-11-10; `DisappearingRow`): the switch, and "After 1 day ⌄"
+    in `--accent-bright` while on, "Off" while off; switching on opens the 8 lengths (5 min,
+    15 min, 1 hour, 8 hours, 12 hours, 1 day, 1 week, 30 days; 4 × 2), picking one closes them,
+    tapping the row opens them again. It starts at a day; switched off it goes back to the length
+    the chat's TTL last had this session, whether set here, from the menu or another device
+    (`logic/chats/chatDisappearing`'s `ChatDisappearing`, on the client's
+    `disappearingLengthsStore`, so it outlives the screen and is the menu's too; since the review
+    of 2026-11-10, before which it lasted only while the row was mounted). It's read from the TTL,
+    not from a save as it finishes, so one finishing after a newer one can't change it. The app
+    restarting forgets it (back to a day): the backend keeps no length while they're off. A
+    chat's own length set from another app shows among them, picked. Shown at once (the
+    library's `Optimistic`), back as it was with a toast if it's refused. One setting with the
+    conversation menu's submenu ("Native conversation", above). The lengths and "After …" are the
+    app's words, translated (TimedToggle's `valueLabel`, and `subtitle`, ours, EXPORT-LOG
+    2026-11-10: "After 30 days" is a phrase per unit, `disappearAfterLabel`, since the preposition
+    sets the length's case: "Nach 30 Tagen", "Po 1 dniu", "Через 1 неделю"; the library's are
+    English only); minutes read "5 min", and German, French and Polish hours "12 Std." / "12 h" /
+    "12 godz.", so the widest fits a 360px phone's chip (50px for the text with the grid's indent
+    under the label: "12 hours" is 44px, "12 Stunden" was 61px). No help line under it any more
+    (the plan's row has only its subtitle). The old row's switch with help and its "Disappear
+    after" value row (the anchored menu) are gone, and the brief for the length's picker is this
+    one. The web's DM panel starts at a day too (`DISAPPEARING_START`, the one default, since the
+    review of 2026-11-10; it was the old panels' week); the web's group settings dialog still
+    starts at 12 hours (`features/group/settings.adapter`).
+    TODO(design): the TimedToggle is the library's as it is ("same as web"), so its label
+    (12.5px semibold) is smaller than the native settings rows' (15px medium), as in a group's
+    This chat card, over Mute @everyone; the plan doesn't say to change it.
+  - **Group**: under the name, "Private · N members" has a lock before it for a private group or
+    channel (the user, 2026-11-10). The cover has back, favourite and Edit (the user, 2026-11-10: a kebab with one
+    item is just a button): a pencil for those whose role meets "Update group", pushing N7's page
+    (the `group_settings` placeholder, `edit`). Copying or sharing the link is Invite people's
+    (the Invite tile), so the cover has no Copy invite link, and nothing else on the screen is
+    repeated in a menu. No Export chat. A channel's cover is its community's
     banner; a group has none, so it's the accent's gradient, as the You tab's. The avatar is the
     photo where there is one, else the chat's swatch (the conversation header's).
   - **About**: "Created" is the day it was made ("Nov 10, 2026"): a group's summary and details
@@ -700,21 +741,21 @@ design export needs. Each entry says where it came up.
     for a full list), to the Members screen.
   - **This chat** (a group's; the plan names the card, not its rows): the disappearing messages
     first, then mute @everyone (a switch, the web panel's), in the design's order. The owners
-    switch the disappearing messages on and off and pick how long, as a DM's (shown at once, back
-    with a toast if refused); everyone else sees them read only (Off, or how long). Owners only,
+    switch the disappearing messages on and off and pick how long, as a DM's (the TimedToggle,
+    above); everyone else sees them read only (Off, or how long), as a fact row: the plan doesn't
+    draw a read-only TimedToggle, so its `readOnly` status pill isn't used. Owners only,
     as the current apps and the web's settings have it (`chatManageAccess` marks them read-only
     for the rest), though the backend lets anyone whose role meets "Update group" change them.
     Not shown to someone previewing.
   - **Rules** show read only to everyone who can send (the web panel's `chatRulesText`, with the
     community's for a channel); owners and admins edit them from Manage (N7).
   - **Manage** (owners and admins, not in a frozen chat): Access gates, Rules, Permissions, Bots
-    and webhooks, Stats, each pushing N7's page (a local `group_settings` screen, the placeholder
-    until N7 builds it). The tiles' **Invite** pushes the same placeholder (`invite`): neither plan
-    10 nor 11 draws a group's invite page (12 has a community's Invite and share); a design brief
-    for it will follow as its own PR (the user, 2026-11-10). It's offered to a member whose role
-    meets "Invite users" (or "Add members", a private channel's): N6 Readers Circle (public,
-    "Invite users" at admins) showed it to a plain member because a public group's link may be
-    shared by anyone (the web's `canOpenInvite`); sharing the link is the kebab's now.
+    and webhooks, Stats (Access gates with a lock, ours: the gate icon is the same shield as
+    Permissions'), each pushing N7's page (a local `group_settings` screen, the placeholder
+    until N7 builds it). The tiles' **Invite** is every member's (not in a frozen chat, nor for
+    someone previewing): it pushes Invite people (below) where it has something to offer, and
+    otherwise says who can ("Only admins can invite to this group", naming the lowest role "Invite
+    users" allows; `logic/members/invitePeople`'s `chatInviteAccess`, `inviteRole`).
   - **Leave** goes to the list with Undo, as the conversation's menu (the plan's "Undo toast for
     leave"). **Delete** too (the user's answer, 2026-11-10, rather than a confirm): to the list
     with "Deleted N6 Book Club" and Undo; the delete is sent once the toast has gone (the shell's
@@ -723,19 +764,36 @@ design export needs. Each entry says where it came up.
     testing N6: opening the search (from here or the header's menu) took the app down to "Couldn't
     load messages" since N5c, the composer's resize observer running again on the composer gone;
     fixed.
-  - **Members screen**: the plan's role sections (Owners, Admins, Moderators, Members, empty ones
-    left out; you first, then by name), each a picker row (photo or swatch, name, You, @username).
-    A search over them (not in the plan: the web's panel has one, and a large group holds only its
-    first page of members, so the others are looked for as you type, `findMembers`). A Blocked
-    section for someone who can unblock, its ⋯ offering Unblock (the web's panel lists them).
-    Lapsed members aren't shown (the web's panel has them). The search and the Blocked section
-    stay (the user's answer, 2026-11-10); an updated design brief for the Members screen will
-    follow as its own PR. A section's label shows its count only past one ("Owners", "Admins ·
-    2").
+  - **Members screen** (with the plan's 2026-11-10 changelog): owners, admins and moderators get
+    the compact tabs, Members | Lapsed | Blocked where the group (or a channel's community) has
+    access gates, Members | Blocked where it hasn't; regular members get no tabs, the members only
+    (`@client`'s `memberTabs`, `hasAccessGates`: a lone unique-person gate is none, as it's
+    suspended). Lapsed shows a count while anyone has lapsed. It always opens on Members; switching tabs clears the search (the
+    library's `Field`, with its clear ×, as Invite people's), whose
+    placeholder follows the tab. A tab that goes while it's open (the gates taken away, a role
+    lost) goes back to Members, the search cleared, and stays there if the tab comes back
+    (`members.adapter`'s `keptTab`; the review of 2026-11-10). Members: the search (as before: a large group holds only its first
+    page of members, so the others are looked for as you type, `findMembers`), the Invite people
+    row (not on the other tabs, and only for someone it would open for: the plan doesn't say who),
+    then the plan's role sections (Owners, Admins, Moderators, Members, empty ones left out; you
+    first, then by name), each a picker row (photo or swatch, name, You, @username); a section's
+    label shows its count only past one ("Owners", "Admins · 2"). Lapsed and Blocked have the
+    plan's note over their rows and its empty line. A lapsed member's ⋯ offers Remove from group
+    (the plan; the old mobile page also offered Block there), a blocked user's Unblock, both with
+    "Remove / block members" (`listedUserMenu`), else a toast says your role can't. Lapsed members
+    keep the access they have today (nothing about it changed). The plan's second Blocked item,
+    "Remove (removes them from the blocked list, as on web)", isn't there: the backend's only way
+    off the blocked list is unblocking, and the web's panel doesn't offer a Remove either
+    (GroupPanelView passes no `onRemoveBlocked`), so it would be Unblock twice. A private group's
+    Blocked tab is always empty (blocking is a public group's), but shows as the plan has it.
   - **The ⋯** shows only on members below you (the plan): its role items up to your own role
     (several owners allowed) where your role may change roles, then Remove and Block where it may
     remove / block members (the plan names Remove; Block is the web panel's, under the same
-    permission, and stays next to Remove: the user's answer, 2026-11-10); with neither, a toast says your role can't. Note the client lets anyone whose role
+    permission, and stays next to Remove: the user's answer, 2026-11-10), Block only in a public
+    group: the backend refuses a block in a private one (`ChatNotPublic`), so the client's
+    `canBlockUsers` and the web's panel offer it in a public group only, and a private group's
+    owner rightly has none (a channel's blocking is its community's, from the profile sheet;
+    `members.spec`'s "Block in a group's ⋯"); with neither, a toast says your role can't. Note the client lets anyone whose role
     meets "Change member roles" give any role but owner, so the cap at your own role is the plan's
     and the native screen's (`memberMenu`); the web panel offers what the client allows.
   - **Removing** and **blocking** wait out their Undo before they're sent (the shell's
@@ -743,8 +801,76 @@ design export needs. Each entry says where it came up.
     they're as they were. Found testing N6: a block was sent at once and its Undo unblocked, but a
     block in a group takes them out of it and unblocking only lifts the ban (the backend has no
     add for a group: they join again themselves), so they were gone. Unblocking from the Blocked
-    section still can't bring them back, and its toast says so ("Unblocked Ann. They can join
-    again"). A role change says so in a toast ("Ann is now an admin"); a refusal says why.
+    tab can't bring them back, and its toast says so ("Unblocked Ann. They can join again"); it
+    waits out its Undo too (the plan's "Unblock (Undo)"), as does removing a lapsed member. A role
+    change says so in a toast ("Ann is now an admin"); a refusal says why. The profile sheet's
+    Unblock is the ⋯'s: it waits out its Undo, them gone from Blocked meanwhile (the review of
+    2026-11-10; it was sent at once).
+  - **Invite people** (the plan's 2026-11-10 changelog; `InvitePeopleScreen`, the local
+    `invite_people` screen), pushed from the Invite tile and the Members tab's row: "Invite
+    people" over the chat's name, then People | Invite link, each only for someone it's for
+    (`chatInviteAccess`, on the details' permissions: People with "Invite users", or "Add members"
+    in a private community's channel; Invite link in a public chat, or with "Invite users" in a
+    private one); one alone shows without the tab bar (a public group's plain member gets the
+    link only: the plan doesn't say what they get). On MemberManagement, as the web's InviteDialog
+    (`initialiseSharing`, `sharingLink`, `toggleInviteLink`, `cancelInvite`, the picks, and its new
+    `sendPicked`), and the invite pages' search (`searchToInvite`).
+    People: the search (the library's `Field`, with its clear ×, which keeps the keyboard up), the
+    picks as the library's `UserChip`s (their photo, first name, ×; "No one selected yet" after a
+    people icon), a divider (18px over it and 22px under it, the user's call of 2026-11-10: 12px
+    over it and the plan's 14px under it read cramped), then with nothing searched Pending · N (Cancel, where you may
+    uninvite, waits out its Undo) and Suggested (the people you have DMs with who'd join, the latest
+    DM first, up to 30 (`invitePeopleLists`), as the old invite pages offered: not those in the
+    chat, lapsed members included, nor the invited; for a channel, its community's members, and
+    others only where you may invite to the community). A large group or channel (or a channel's
+    community) holds only its first page of members, so the DM partners are looked up among them
+    first (the client's `lookupDirectChatUsersAmongMembers`, a group's too since the review of
+    2026-11-10), Suggested waiting meanwhile (a spinner by its label), so a member it doesn't hold
+    isn't offered to invite. With no one pending and
+    every DM partner already in the chat or invited, nothing shows under the divider (found testing
+    on an account whose DM partners are all in its groups; the plan draws no empty line there);
+    with a search, Results: those found,
+    then the invited and the members held who match, dimmed (.45) and marked Invited / Member (the
+    search leaves members out, so a large group's member it doesn't hold isn't listed). How each
+    would join is `inviteWay`: a private community's members are added to its channel where you
+    may add them (the web's Add tab; the plan has one People list), everyone else invited. The
+    pinned button (with the send glyph): "Send invites" (disabled) / "Send invite" / "Send 3
+    invites", or "Add 2 people" when everyone picked is added; it waits for the backend (disabled
+    meanwhile), then stays on the screen (the user, 2026-11-10) with "Invite sent to Sofia" / "3
+    invites sent" / "Added Sofia", the search cleared and the picks sent. Each pick goes as it
+    would join at that moment (`MemberManagement.sendPicked`): one who's joined or been invited
+    since being picked isn't sent (the backend would refuse the whole invite) and leaves the
+    picks; with no one left at all, nothing is sent and a toast says so ("No one left to invite:
+    they've joined or been invited already"). The adds and the invites go separately: those sent leave the picks and the rest stay
+    picked (a partial add's not added among them), the toast saying who went and then why the
+    rest didn't ("Added Sofia · There was an error inviting users"); with none sent, the failure
+    says why. A search that fails finds nobody ("No one matches"), not a spinner for good
+    (`searchToInvite`). With nothing pending and no one to suggest, a hint to search ("Search for
+    people to invite", ours: the plan has none). The invited show in Pending at once: the client's invite
+    puts them among the chat's invited users before the backend answers (and takes them out if it
+    refuses), which the screen's Pending follows (`inviteUsers.spec`, MemberManagement's spec).
+    The search fields of the native screens (Invite people, Members, New chat, the chat list's, the
+    conversation's, the forward sheet's, the emoji panel's) read as searches, not sign-in fields
+    (the library's `SEARCH_INPUT_ATTRIBUTES`: a search type and input mode, autocomplete off and
+    the password managers' own opt-outs), as Android's autofill offered a password manager's menu
+    on Invite people's ("Search name or @username"). If one still shows on a device, the remaining
+    switch is the Android app's: the WebView's `importantForAutofill` (MainActivity), which would
+    turn autofill off for every field, sign-in ones included; not done.
+    Invite link: the plan's card with its switch ("Share via link", read only for a public chat's
+    link, which is always on, and for someone who can't manage it), the QR code (184px on a white
+    tile, `core/QRCode`), the link in mono, Copy link and Share (`utils/share`'s `shareLink`: the
+    apps' share sheet), then Reset link (danger) with the plan's line under it in its own card (the
+    library's `SettingsAction` with `help`; it was the card's note, the user's call of 2026-11-10),
+    and the footnote that access gates are skipped, for a private chat's link only: its invite
+    code skips them, while a public chat's link is a plain one whose joiners still pass them. A
+    link that couldn't load says so in the card, with Try again (no spinner for good), and the
+    link loads when the tab comes if it wasn't there as the screen opened (`invite.adapter`'s
+    `linkTabView`, `MemberManagement.inviteLinkLoad`; the review of 2026-11-10). Reset's Undo: a reset link can't be brought back, so the reset waits out its toast
+    (the shell's PendingRemovals, as a removal), the link dimmed and Copy and Share off meanwhile;
+    then a spinner in the card until the new link and QR are in (the plan has the new link at
+    once, with Undo). Switching the link is shown at once and goes back with a toast if refused.
+    Not built: a community's Invite people (the screen takes a group or channel; communities are
+    N8a's, and `inviteAccess` takes any).
   - **Profile sheet** (tapping a member, the plan's "profile sheet", not drawn): a bottom sheet with
     their avatar, name and @username, About (bio, member since, CHIT earned) as their profile
     loads, and the web's user card's actions (the user's answer, 2026-11-10): Message (not on your
@@ -764,6 +890,14 @@ design export needs. Each entry says where it came up.
     sheet, the kebab's Copy and Edit, search from both places, and the rules sheet's Cancel and
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
+- **A search field password managers leave alone; a settings action with a line under it** (by
+  hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
+  `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a
+  clear × that keeps the input's focus; `SettingsAction` takes `help`, a line under its label (the
+  native Reset link's).
+- **A person's photo on `UserChip`** (by hand, native N6, EXPORT-LOG 2026-11-10, to take back to
+  the design export): `UserChip` takes `photoUrl`, shown over its swatch, for the native Invite
+  people screen's picks (the plan's "chips with avatar").
 - **The disappearing lengths' one home** (by hand, native N6, EXPORT-LOG 2026-11-10, to take back
   to the design export): the library's `lib/durations.ts` holds the lengths `TimedToggle` offers
   and `durationMs`, which its dialogs and the app's native details use, in place of a copy in
@@ -816,10 +950,13 @@ design export needs. Each entry says where it came up.
   has a menu (by default all but a deleted one; the app gives one to a deleted message it can
   reveal or undelete, and none in a read-only chat). The hover bar shows the quick reactions and
   the 🙂 only with `onReact` / `onReactPicker`, and Reply / Edit only with `onReply` / `onEdit`
-  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe (the
-  mobile app's `messageSwipeAction`: right replies, left edits your own or forwards someone
-  else's), where the design's own text messages swiped right to edit. The bar's position still
-  assumes its full width (`BAR_W`).
+  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe; the
+  web no longer sets it (L2): it keeps the group's own mapping, as web/05 says (others' messages:
+  right replies, left forwards; your own text: right edits, left replies), and hands
+  `onSwipeLeft` only a forward, where the message can be forwarded (`webMessageSwipeLeft`). The
+  old mobile tree keeps its rule (`messageSwipeAction`: right replies, left edits your own or
+  forwards someone else's), and native sets `swipeLeft` for its own (left edits your own). The
+  bar's position still assumes its full width (`BAR_W`).
 - **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
   links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
   place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).
@@ -883,6 +1020,48 @@ design export needs. Each entry says where it came up.
   chat list's, the rail's, the conversation's) rather than the thin grey thumb on no track. The
   scrollers that set `thin` themselves (`MessageComposer`, `Learn`'s contents, the shell's rail,
   the conversation's list) no longer do. Not a regression: the same since Safari 18.2.
+- **Own pictures in the rail, conversation and members** (by hand, L1, EXPORT-LOG 2026-11-10), to
+  take back to the design export: `NavRail`'s `profileColor` (the user's swatch under or in place of
+  `profileAvatarUrl`; the rail had one fixed gradient), `ConversationHeader`'s and `MessageGroup`'s
+  `avatarUrl` (a picture over the colour), and a `GroupPanel` member's `image` (`MemberRow` took one
+  for bots and webhooks only).
+- **Chat row avatars, mentions and typing** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to
+  the design export: `Avatar` takes `url`, an image over the gradient (which shows while it loads
+  and if it fails); `ChatRow` takes `avatarUrl`, `mentions` (an "@" pill before the unread count,
+  as both old rows had it) and a `typing` that may be the words ("Lucy is typing"), after the dots
+  in the accent as `ComposerBar`'s typing strip has them; `ChatListPanel` passes `avatarUrl` and
+  `mentions` on. Still missing from the design:
+  - a muted unread count: the old rows showed a muted chat's count, and the "Thread replies"
+    count when only muted threads are unread, in grey; `ChatRow`'s and `ChatListPanel`'s counts
+    are always the accent's, so they show as any other count;
+  - ~~a way for the host to set or clear `ChatListPanel`'s search text~~: done, its `query` now
+    follows the host (see the next entry).
+- **The chat list's search tabs** (by hand from web/04, L1, EXPORT-LOG 2026-11-11; they replace
+  the fold-away of 2026-11-10), to take back to the design export: while there's a query
+  `ChatListPanel` pushes its All / Direct / Groups / Unread tabs up and away and its search tabs
+  (All results / Chats / People) up after them, 400ms, and pushes the filters back as the search is
+  cleared, the user's pick kept; nothing moves under reduced motion. Each search tab has a badge
+  of its results (`SegmentedTabs`' `counts`), the selected tab's plate slides between them
+  (as on every `SegmentedTabs` now) and the results fade in on a switch. All shows up to 5 chats and
+  3 people, each section ending in "+N more chats / people" that switches to its tab; Chats and
+  People list everything (`lib/searchTabs`). New prop `people` (the people and bots found). The
+  filter doesn't narrow a search. `query` follows the host: the user's typing sticks until the
+  host passes a different text, so the host clears a search by passing `""`. The Thread replies
+  row hides while a search is on (web/04). The 2026-11-03 export's grouped search (EXPORT-LOG,
+  "Still to port"; its source isn't in the repo) is the reference for the exact look if it comes
+  back. TODO(design): the badges' style (the export's `SegmentedTabs` count: a pill, the accent's
+  on the selected tab, grey on the others), the push's easing (`--ease-standard`; web/04 gives the
+  motion and its 400ms only, not whether the rows fade too), the plate's slide (`--duration-slow`,
+  `--ease-out`, on every `SegmentedTabs`; the export's plate doesn't move) and
+  the look of "+N more …" (an accent text button, left-aligned under the section).
+- **A DM's typing bubble** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to the design export:
+  `TypingIndicator` takes `variant: 'bubble'`, native plan 04's DM bubble (received style, three
+  dots, 34px tall, the small corner top-left, fading in), which the native conversation drew
+  itself; both trees' conversations now use it (see "Who's typing in a conversation"). With
+  `showAvatar` (and `avatarUrl`, `avatarColor`) it has the typer's 34px avatar before it, as a
+  received `MessageGroup` run, web/05's "avatar + three dots"; native's has none.
+  `VirtualChatList` takes a `footer` (after the newest item, scrolling with the items, the reading
+  position kept as its height changes), which the web's DMs put the bubble in.
 - **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
   `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
   default, no "+" with none): the app offers "Photo or video", "File" and the builders it has
@@ -1099,7 +1278,25 @@ design export needs. Each entry says where it came up.
     extend, referred users, Discord / Telegram accounts.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
-  swatch from the id.
+  swatch from the id. A person, group or community shows its own picture over its swatch, and the
+  swatch alone without one, everywhere in the new web UI (the user's decision, 2026-11-10): never
+  the client's default pictures (a generated identicon, `unknownUserAvatar.svg`, `group.svg`, a
+  community's identicon), which the old trees keep. Own pictures come from `ownUserAvatarUrl` /
+  `ownGroupAvatarUrl` (`@client`), a profile's from `profileAvatarUrl`, a community's from its
+  `avatar.blobUrl`; bots and system users keep their fixed pictures (OpenChatBot's robot, the bot
+  picture). They are: the chat list and its search, the rail's profile button and community pins,
+  ProfileDialog (and its communities), UserDialog, DmPanel, GroupPanel and Manage (and the members
+  lists), the conversation's header and its senders, the preview bar, the composer's @mentions
+  (the library's user icon without a picture), Explore and Landing's communities. Still swatches
+  only, with no pictures: the thread list's and thread links' faces, the share picker, the
+  wallet's recipients, InviteDialog's and user groups' people, GroupPanel's pinned messages. Every
+  screen picks the swatch with one function (`app/src/logic/swatch.ts`'s `swatchFor`, which
+  `senderColor` is too) over the library `Avatar`'s five names, and every library component paints
+  those names with `Avatar`'s gradients (`AVATAR_GRADIENTS`; EXPORT-LOG 2026-11-11), so an id has
+  the same swatch everywhere: a person's in the list, their messages, their DM's panel and their
+  profile; a community's on the rail, in Explore, its panel and a profile's communities. Not in the
+  design export, whose components each had their own shades (and the rail its own names): to go
+  back to it.
 - **PIN prompt** (S3, `features/pin`): the library's only PIN entry is inside `WalletSend`, so the
   prompt the client opens for every other transfer (tips, prizes, the "+" builders, swaps, gates)
   is a plain dialog on `DialogShell` with one masked field (`PinDialog`, `TODO(design)`), the old
@@ -1157,12 +1354,25 @@ design export needs. Each entry says where it came up.
     no accessible label (`ConversationHeader` takes none).
 
 - **DM panel** (4a, `features/dm`): `DmPanel` in the right column for a DM. Changes apply at once
-  (the old desktop panel had a Save button); turning disappearing messages on starts at a week.
+  (the old desktop panel had a Save button); turning disappearing messages on starts at a day,
+  as the native details do (`logic/chats/disappearingMessages`' `DISAPPEARING_START`, the native
+  plan's 10; since the review of 2026-11-10, before which it was the old panels' week, the
+  client's `DEFAULT_EVENTS_TTL`, which the legacy trees keep).
   By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
   the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
   has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
-  old panel's durations other than the six `DmChatSettings` offers (a TTL set elsewhere shows as
+  old panel's durations other than the eight `DmChatSettings` offers (a TTL set elsewhere shows as
   its own length, "2 hours", and saves unchanged).
+  - **TimedToggle's 8 lengths** (web plan 08 of 2026-11-10, by hand, EXPORT-LOG 2026-11-10): 5 min,
+    15 min, 1 hour, 8 hours, 12 hours, 1 day, 1 week, 30 days (`lib/durations`), in 4 columns when
+    the count divides by 4, else 3 (`durationColumns`; a `columns` prop overrides). Checked in a
+    browser at the docked panel's narrowest (375px, a 1500px window; seedcommunity1's DM with
+    seedcommunity2): each chip 65.5px, 54px for its text; the widest, "12 hours", is 44.4px, so
+    the grid keeps its indent under the label (the plan's fallback, dropping it in 4-column mode,
+    isn't needed). ProfileDialog's This chat tab (600px, a 1476px window) has 121.8px chips. Not
+    measured: the group settings dialog's, whose grid has no icon and no indent. The library's minutes read "5 min" (`ui.duration.minutes`), as the
+    plan's chips; its words are English only, as before. Its row and chips no longer tint on
+    hover on a touch screen (`@media (hover: hover)`), where `:hover` stuck to the tapped row.
 
 - **Leave, delete, archive and block** (4b part 1): the conversation header, the chat-list rows,
   the community header and GroupPanel open `LeaveGroupDialog` / `DeleteGroupDialog` through the
@@ -1246,7 +1456,12 @@ design export needs. Each entry says where it came up.
     panel: its header, its menu's Members / Invite / Edit community, and a channel's community
     link open Manage. A panel asked for members (?everyone, ?usergroup=) or a community's details
     opens Manage instead.
-  - the quick panel's "Online now" has no presence data yet (see Presence).
+  - presence: who's online among the members held, from `getUserStatus` on the app's 5s clock
+    (`OnlineUsers`, as the chat list's DMs, since L1), lights their rows' dots and the quick panel's
+    "Online now"; the look-up runs again only on the clock or when the members held change, and the
+    rows take a new set only when someone comes online or goes offline. A large group holds its
+    first page of members only, so those not held aren't counted. No last-seen time ("2m") for
+    those offline (`activity`): the old member lists had no presence at all.
   - a DM's name, the header menu's Chat settings and DmPanel's View profile open the other
     person's card with the design's Profile / This chat tabs (`dmTab`): This chat has the DM's
     mute, favourite and disappearing messages (no read receipts, see above).
@@ -1393,14 +1608,16 @@ design export needs. Each entry says where it came up.
 - **Design pass 6** (2026-11-03, with the native export): ported by hand (EXPORT-LOG). In the app:
   a forwarded latest message puts the forward icon before a chat row's preview
   (`latestForwarded`), the chat list's second section is "Chats", the composer's typing line is a
-  strip resting on it (two names: "A and B are typing"), sign-up takes a pasted invite link
+  strip resting on it (two names: "A and B are typing"; a group's, a channel's and a thread's: a
+  DM shows a bubble since L1, see "Who's typing in a conversation"), sign-up takes a pasted invite link
   (`resolveReferrer`: its `ref` is the referrer's user id; bots and suspended users, whose referral the sign-up refuses, are neither found nor searched for, `canRefer`) and says "Invited by" for the link's
   referrer, and Swap shows only the best quote. Not yet:
   - `NavRail` pins take a `menu` (right-click, Shift+F10), but the rail adapter gives the
     community pins none: the community menu's actions live in the chat list header for now.
   - `ChatPicker`'s multi-select (forward to several chats; the old trees forwarded to one, as 5b
     does), `ChatListPanel`'s grouped search
-    (people and messages need search in the app), the design's `MediaViewer` (replacing
+    (messages need search in the app; people and bots show under their own heading since L1, see
+    "Chat list"), the design's `MediaViewer` (replacing
     `core/MediaViewer.svelte`, which the native conversation opens too) and `PuzzleDialog`'s screen layout (native) are
     separate pieces of work.
   - `AccessGates` no longer offers credential gates (retired by the design; one already set still
@@ -1501,7 +1718,9 @@ design export needs. Each entry says where it came up.
 - **Chats**:
   - typing reaches peers only for the selected chat (WebRTC), so the chat list rarely shows it;
   - read receipts exist only in DMs;
-  - there's no cross-chat message search;
+  - there's no cross-chat message search (web/04's Messages tab and section, and picking a
+    message to open its chat searching, aren't built: see "Chat list", the search's tabs, for a
+    search of the messages on the device instead);
   - the unread marker is implicit (the window anchor).
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
@@ -1920,7 +2139,13 @@ design export needs. Each entry says where it came up.
   setting on (`chitPopup`) and CHIT on, as the old earned popup; one toast for each achievement,
   in turn, with the CHIT it paid (the old popup listed them all in one, with the total), and the
   longest streak gets the flame icon, where the old popup shook the page and played longer. A
-  batch is marked seen as it comes, as the old popup did, so with the popup off it isn't.
+  batch is marked seen as it comes, as the old popup did, so with the popup off it isn't. It plays
+  at the top of the app, centred, 12px under the panels' headers (`AchievementToastHost`: the
+  shell's 12px page and the headers' 67px, fixed numbers), as web/00 has it ("global, top of the
+  app, with confetti"), so it covers none of the headers' names or buttons; it plays over the top
+  of the list or conversation under it (above dialogs, under their menus). The app's toasts are
+  at the bottom, so a toast showing with it (joining a group says so as its achievement plays) no
+  longer meets it. The narrow layouts (their own headers) aren't checked.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
@@ -1931,23 +2156,187 @@ design export needs. Each entry says where it came up.
   wallet send's, an invite's, a sign-in method's) show in the same layer (`setToastHost`, App),
   over every dialog and veil (design pass 7), above the app's when both show (a failed invite: the
   dialog's "That didn't go through" and the app's reason).
-- **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
-  avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions, the
-  thread count, archive / delete in the row menu, and server-side search (users and groups outside
-  the list). The preview line and the search are the old row's and list's
-  (`logic/chats/latestMessagePreview`, `chatMatchesSearch`). The community header's menu only marks all read; its other items open
-  dialogs later phases build.
+- **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
+  (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
+  (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
+  - **mentions in the preview**: as the `@names` typed (`typedMentions` in `logic/conversation`,
+    through `mentionsAsTyped`), where the old rows show the preview through Markdown, which shows
+    them as `@username` too. The same goes for every other text the new UI shows as it is, not
+    through Markdown: the list of threads, the thread's root card, the activity feed, the pinned
+    messages and the forward picker's preview. A mention of a user or group not known yet stays as
+    `@UserId(…)` until it loads (the client loads those a latest message or an activity mentions).
+  - **avatars**: a chat's own picture (`chatAvatarUrl`): a DM's user's avatar
+    (`ownUserAvatarUrl` in `@client`), a group's or channel's own (`ownGroupAvatarUrl` in
+    `@client`, which the client's `groupAvatarUrl` now uses too): its avatar, else a proposals
+    chat's SNS logo, else a channel's community's avatar if the community has one. A user, group or
+    channel with no picture of its own shows its swatch, as everywhere in the new web UI (see
+    Swatches), not the app's default picture the old rows show (a user's generated
+    identicon, `unknownUserAvatar.svg` for a user not loaded, `group.svg`, or `"unknown"` under
+    `OC_MOBILE_LAYOUT=v2`, nor a community's identicon): the user's decision, 2026-11-10. A bot
+    keeps its own picture, else the app's bot picture (`/assets/bot_avatar.svg`), in a DM with it
+    and in the search.
+  - **who's typing**, in place of the preview ("Lucy is typing", "3 members are typing":
+    `getTypingString`), over the built rows (`liveRow`). Typing reaches peers only for the
+    selected chat (see Chats, below), so another row rarely shows it. Typing (here and over the
+    conversation's composer) and read receipts go over WebRTC (`rtcConnectionsManager`), where no
+    peer ever connected (found testing L1, fixed in the client for every tree):
+    - without TURN credentials the peer was given the service's refusal (`{ "error": "Invalid API
+      Key" }`, 401) as its ICE servers, and `RTCPeerConnection` threw ("Failed to read the
+      'iceServers' property from 'RTCConfiguration'"). A local build has no `OC_METERED_APIKEY`
+      (`build_dev.sh` and `frontend/.env` don't set it), so it always asked with `apiKey=undefined`.
+      With no credentials the peer now connects directly only (no ICE servers): enough on one
+      machine or one network, so typing works locally with no key; across networks it needs the
+      key (set `OC_METERED_APIKEY` in `frontend/.env`), as before;
+    - two inits at once (the app's at sign-in, a chat's connections as it opens, as on opening a
+      chat's URL) made two peers with the one id (`d_<userId>`); the signalling server refused the
+      second ("ID-TAKEN"), which had replaced the first. They now wait for the one peer.
+    Checked end to end on the local replica (two signed-in browsers, a DM): the row's typing line
+    and the composer's strip. The peer's id is per user and device kind, so two desktop tabs of one
+    account still take it from each other (the old trees' too).
+  - **online presence**: a DM row's dot, from `getUserStatus` on the app's 5s clock
+    (`OnlineUsers`, `logic/chats/onlineUsers`), for the DMs listed. Only the effect that looks
+    them up follows the clock, and the rows take a new set only when someone comes online or goes
+    offline, so the rows aren't built again on every tick (as `ec9b75ac59` did for the old list).
+    No dot for groups, bots or the user, as the old row.
+  - **unread mentions**: an "@" before the count, groups and channels only (`unreadMentionCount`
+    in `@client`, the old rows' rule), following `messagesRead` as the unread count does, and none
+    for a chat whose latest message has expired.
+  - **a chat the user can't read into** (a preview, or anything while suspended:
+    `isChatReadOnly`) shows no unread count or mentions, as the old desktop row (the old mobile row
+    showed them). The native Chats tab's rows follow the same rule (its Unread filter too).
+  - **Thread replies' count**: the route scope's unread thread count (`scopeUnreadCounts`), the
+    unmuted count unless that's 0 with no mentions, then the muted one (`unreadCountShown`, both
+    in `@client`, as the old mobile list's and the old desktop unread pill). It shows in the
+    accent either way (the library has no muted count, see "Chat row avatars…").
+  - **search on OpenChat**: as the user types (300ms after the text settles; `TermSearch`), the
+    client's `searchChatList` looks up people and bots that take direct chats, in every scope.
+    No public groups: web/04's search has chats, people and messages only (L1 had added groups,
+    the old mobile search's; dropped 2026-11-10). What's already in the list (a DM's user or bot)
+    and the user are left out (`outsideList`). They're the search's People (the search's tabs
+    below; until 2026-11-11 they followed the list's own matches under "Users and bots", the old
+    desktop list's heading); a person's line is their @username, a bot's its description. Their avatars follow the rows' rule (above): a person with no picture of their
+    own shows their swatch, and a bot with no avatar the app's bot picture. Picking one starts a
+    chat (`chatWith`). A leading "@" is dropped, an empty term asks the backend nothing, and the
+    search starts again empty in another scope. The old trees search as they did before L1, but
+    for people and bots through `searchChatList`: the old desktop people and bots in the Chats
+    scope, people and public groups in the "none" scope (nobody reaches it); the old mobile
+    (New message) people, bots and public groups (`searchGroups` itself, as before).
+  - not carried over: the old desktop avatar's blocked overlay and max-streak ring (the old mobile
+    row had neither, nor has the design), the community scope's channels the user hasn't joined
+    (the old desktop's `BrowseChannels`, mobile's `OtherChannels`: browsing channels needs a
+    design of its own), and message search (none across chats, see Chats below).
+  - the native Chats tab's rows have the avatar and mentions in `chatRow` but don't show them
+    (`nativeChatRow` leaves them out); its search is its own (People, `searchUsers`).
+  - **the search's tabs** (built 2026-11-11 from web/04, the chat list's plan,
+    `web/04-chat-list.md` in the design plan, "Search"; by hand in `ChatListPanel`, see "The chat
+    list's search tabs" under Design / library; the user's decision, replacing the fold-away of
+    2026-11-10): while there's a query the filter tabs push out, the old tabs sliding up and away
+    and the search tabs sliding in after them over 400ms, reversed on clear (none of it moves
+    under reduced motion). The search tabs are **All / Chats / People**, in the filters'
+    segmented style, each with a badge of its results; the selected one's plate slides as it
+    changes. All's badge is every result (Chats' and People's added up), not the rows All shows:
+    its sections' "+N more" add up to it. All shows its first 5 chats and 3 people, each section
+    headed (label and total) and ending in "+N more chats / people", which switches to that tab;
+    Chats lists every matching chat (the list's own search, archived chats included, pinned
+    first), People every person and bot found (`searchChatList`, less the user and anyone
+    already a DM: `outsideList` and `foundRows`, the panel's `people`). The caps and each tab's
+    list are `lib/searchTabs` (`searchSections`, `searchTabCounts`) in `@openchat/ui`, with
+    specs. A new search after the field is cleared starts on All; clearing it brings the
+    filters back with the user's filter, and the filter doesn't narrow a search. The app passes
+    the panel its `query`; a new scope starts the panel again (`{#key scopeKey}`). The Thread
+    replies row hides while a search is on. People's badge reads 0 until the directory search
+    answers (300ms after typing stops, then the call), then the count lands: no "searching"
+    state on the tab yet.
+    **Not built: Messages.** Web/04 has a fourth tab, **Messages** (All: up to 5 messages with
+    "+N more …"), and "picking a message opens the chat already searching for that text"; its
+    backend line is a message-index search, the panel capping and paginating. There's no search
+    for messages across chats, and a chat's own search (`searchChat`, backend `search_messages`
+    per group, channel or DM) returns `{ message_index, score }` only, no text (see "Chats"
+    under "Data the design shows that the backend doesn't have", and the native Chats tab's
+    "Message search"). The user's note (2026-11-11): it can probably be done without the
+    backend, by searching the messages already on the device. What's there:
+    - **the IndexedDB cache** (`openchat-agent/src/utils/chatsDb.ts`, one database per
+      principal, every signed-in user): `chat_events` and `thread_events` hold full events, the
+      `Message` with its `MessageContent` (text, captions, poll text), keyed
+      `<chatId>[_<threadRoot>]_<eventIndex>` (a prefix cursor per chat works, as
+      `deleteEventsForChatOrCommunity` does), indexed by message key and `expiresAt` only;
+    - **what's in it**: the `CachePrimer` fetches one page per chat for every chat in the list
+      (newest first, then only newer events), skipping archived chats, chats too large for it,
+      external-URL chats and threads; deeper history only where the user has scrolled back.
+      It's emptied on every `CACHE_VERSION` bump (no migrations: 11 bumps since May 2026), when
+      the cache is 30+ days stale, and on logout. Edited messages are marked `dirty` and keep
+      their old text until refetched;
+    - **in memory**: only the selected chat's events and the open thread's (`selectedChat.ts`);
+    - **every chat's latest message**: each `ChatSummary.latestMessage` carries its content.
+    What's missing: no text index (each query would scan and deserialise every cached event, or
+    an index would have to be built and kept up to date); no API to iterate or search the cache
+    (it needs an agent method and a worker request, since only the agent may touch IndexedDB);
+    no search library in the repo (no lunr, minisearch, flexsearch or fuse); and results only
+    cover what this device happens to hold, so they'd need saying so ("messages on this device"),
+    with deleted, encrypted, expired and left chats' events filtered out. Picking a result
+    would open the chat with its search on the text (the conversation's search exists:
+    `logic/conversation/chatSearch.svelte`). TODO: Messages, when it's built.
+  - **the rail's unread** (`features/rail/rail.adapter`, as the old left nav and bottom bar): Chats
+    and Favourites a dot (collapsed) or the count (expanded) of their DMs' and groups' unmuted
+    unread messages, lit by a mention alone too (no number then), not their threads' (as the
+    native tab bar, N5a's decision; the old desktop nav added threads); Notifications its unread
+    activity; a community pin a dot while one of its channels has unmuted unread messages or a
+    mention. The old desktop nav's live call counts aren't shown (the rail has no place for them).
+  The community header's menu only marks all read; its other items open dialogs later phases
+  build.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
   3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 5), and
   link previews, translations and tips (phase 5) aren't wired; the message menu, reactions and
   swipes are 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
   (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
-  `TODO(design)`), and "N messages deleted" expands them. The old lines' date and time under each
-  event isn't shown yet (it's duplicated in both old `NonMessageEvent`s, to extract). The header has no back button (`ConversationHeader` has
-  none; narrow layouts don't show the shell yet), no last-seen line for a DM, and its menu does
-  favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
-  old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
-  Own messages show no name (the design's "You" would be the lower-case app string).
+  `TODO(design)`), and "N messages deleted" expands them. Each event's line has its date and time
+  under it, as in the old trees (`toLongDatetimeString` in `@client`, which both old
+  `NonMessageEvent`s use too; L2), smaller in `--ink-3`; the aggregated joins, deletions and role
+  changes have none, as in the old trees. The web plan's conversation (`web/05-conversation.md`)
+  doesn't cover these lines, so they stay the old UI's (`TODO(design)`). The header has no back
+  button (`ConversationHeader` has none; narrow layouts don't show the shell yet), and its menu does
+  favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. A
+  DM's header has the old last-seen line (L2: `LastOnline` in `logic/conversation`, over
+  `directChatSubtitle` in `@client`, shared with the old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
+  under two minutes; web/05's header doesn't say what that line says, so it's the old words
+  (`TODO(design)`). Own runs show the reader's own name over them in groups and channels, as
+  others' runs do (display name, else username; once per run, at its start, in `--ink-3`), and
+  no name in a DM, where neither side has one (`showsSenderName` in `logic/conversation/messageRow`,
+  L2, at the user's request; web/05 doesn't say, and the design's "You" gives way to the name).
+- **Sticky date** (`features/conversation`, L2): as web/05 says ("Date pills stick: the date of
+  the messages at the top of the window stays pinned at the top of the conversation while
+  scrolling"), the list (a thread's too) pins the day of the messages at its top, in the inline
+  dates' pill (`UnreadDivider` neutral), over the messages, as both old lists do: VirtualChatList
+  says which day (`stickyDateTimestamp`), at the height `core/stickyDateTop` measures, which
+  native's conversation uses too. It's the day's own pill until that reaches the pinned one's
+  place, then the pinned one, with the day's own hidden as it scrolls on up under it, so a date
+  never shows twice (the list's hand-off is told the pinned pill's place 16px lower, the 16px a
+  day's pill sits into its row). One "Today" pill; the Unread divider doesn't stick.
+- **Go to first mention** (`features/conversation`, L2; web/05 doesn't cover it: `TODO(design)`).
+  An @ button over go-to-latest goes to the chat's first unread mention (`IconButton` "at", as
+  go-to-latest is drawn; the old ones were round fabs with a bold "@"), and goes once that mention
+  is read; none in a thread or a read-only chat, as in the old trees. Not carried over: the old
+  lists' unread count on go-to-latest (shown even when at the bottom), and the old threads'
+  go-to-top button.
+- **Who's typing in a conversation** (L1): the web follows its plan, web/05 (the conversation's,
+  `web/05-conversation.md` in the design plan; "Typing": "never a
+  permanent row"; "DM: a received-style typing bubble (avatar + three dots) at the end of the
+  list"; groups and channels a strip resting on the composer; acceptance: "typing indicators never
+  change layout height"). In a DM, the library's `TypingIndicator` (`variant="bubble"`, with
+  `showAvatar`: the other person's 34px avatar, their own picture over their swatch or the swatch
+  alone, the values their messages' rows use, `ctx.avatar` and `senderColor`, then the three dots
+  in a 34px received bubble with the small corner top-left), laid out as a received `MessageGroup`
+  run, there while they type and gone when they stop. It's the last thing in the list's scroll
+  content, after the newest message (`ChatEventList`'s `footer`, `VirtualChatList`'s, EXPORT-LOG
+  2026-11-10), not under the list: the list's viewport keeps its height. As it comes and goes the
+  list keeps the reading position: at the bottom it comes into view (the messages above slide up
+  for it, and back down as it goes); scrolled up, it's below, out of view, and nothing visible
+  moves. It shows only after the latest message: while newer messages are still to load
+  (`moreNewMessagesAvailable`, after a jump back), a DM's typing goes to the composer's strip. In a group or channel (and any thread) the strip
+  resting on the composer (`ComposerBar`), as before. The rule is `typingPlacement`
+  (`logic/conversation/timeline`, spec'd), shared with the native conversation, whose bubble has
+  no avatar (native plan 04: "three dots, no avatar"; its DMs show no avatars at all). Checked end
+  to end on the local replica (two signed-in browsers, a DM).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
   `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
@@ -2188,7 +2577,10 @@ design export needs. Each entry says where it came up.
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
   as the old entries started it (`editStartText`, logic/composer, which both old entries now
   call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
-  out, a caption for a captioned message; 5c). Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  out, a caption for a captioned message, its mentions as typed too; 5c). The quoted text above
+  it, an edit's or a reply's, shows its mentions the same way (`quoteText` in
+  `logic/conversation/messageRow`, through `mentionsAsTyped` in `@shared`, L2), as the bubbles'
+  reply quotes do, where the old trees' Markdown shows them as `@username`. Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
   private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
   saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
@@ -2288,10 +2680,12 @@ design export needs. Each entry says where it came up.
     so theirs went to a spinner on every reload: fixed in `logic/threads/threadPreviews`).
   - **No group avatars in the list**: a chat's mark and a root author's face are swatches
     (`swatchFor`, see Swatches); `followOnly` (followed without replying) isn't known to the client.
-  - **The unread threads count** on the chat list's "Thread replies" is L1's (as the old mobile
-    list's subtitle counts them); the entry shows only where there are followed threads.
-  - **Typing**: who's typing in the thread shows over its composer (`ComposerBar`), as in the
-    conversation, not in the panel's header as the old header had it.
+  - **The unread threads count** on the chat list's "Thread replies" (L1, see "Chat list"): the
+    route scope's, as the old mobile list's subtitle counts them; the entry shows only where
+    there are followed threads.
+  - **Typing**: who's typing in the thread shows over its composer (`ComposerBar`), as in a
+    group's conversation (a DM's thread too: `typingPlacement`), not in the panel's header as the
+    old header had it.
   - **Mobile's "peek"**: the old mobile list opened a thread without changing the route; here it's
     always the root's own URL with `?threads` kept (ROUTES.md, decision 2), as the old desktop.
   - **Tipping in a thread** waits for the tip dialog (5b), and will go by the "tip messages"

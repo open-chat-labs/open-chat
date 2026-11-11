@@ -33,11 +33,16 @@ export {
     eventsTTLUpdate,
     getMembersString,
     getMessageText,
+    getTypingString,
     isPreviewing,
     isPreviewingOrLapsed,
+    messageReadByThem,
+    ownGroupAvatarUrl,
+    ownUserAvatarUrl,
     subrangesCover,
     TimelineGrouper,
     userCanDeleteMessage,
+    type GroupAvatarLookups,
 } from "./utils/chat";
 export { formatClock, formatDuration } from "./utils/time";
 export { default as formatFileSize } from "./utils/fileSize";
@@ -55,9 +60,14 @@ export {
 export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
+    directChatStatus,
+    directChatSubtitle,
+    type DirectChatSubtitle,
     directChatUsers,
+    formatLastOnlineDate,
     isDeletedWebhook,
     lastOnlineStatus,
+    userAvatarUrl,
     userBadges,
     type UserBadges,
     unsuspendUserMessage,
@@ -111,6 +121,19 @@ export {
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginCreateCommunity, postLoginJoin, postLoginPath } from "./utils/join";
 export { chatListOrder, chatsInScope } from "./utils/chatList";
+export {
+    chatListSearchMatches,
+    noChatListSearchResults,
+    type ChatListSearchResults,
+} from "./utils/chatListSearch";
+export {
+    scopeUnreadCounts,
+    unreadCountShown,
+    unreadMentionCount,
+    type MentionRead,
+    type ScopeUnreadCountsInput,
+    type UnreadCountShown,
+} from "./utils/unread";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export {
     editableGates,
@@ -121,20 +144,25 @@ export {
 } from "./utils/accessGates";
 export {
     compareMembers,
+    hasAccessGates,
     knownMembers,
+    listedUserMenu,
     memberActions,
     memberHasMenu,
     memberMatchesSearch,
     memberMenu,
     memberRoleChoices,
     memberSections,
+    memberTabs,
     roleChangeFailureMessage,
     usersFromIds,
+    type ListedUserMenu,
     type MemberActions,
     type MemberMenu,
     type MemberPermissions,
     type MemberSection,
     type MemberSectionId,
+    type MemberTab,
     type SectionMember,
 } from "./utils/members";
 export {
@@ -219,7 +247,13 @@ export {
     type PollReader,
     type PollView,
 } from "./utils/polls";
-export { isTrustedClick, prizeView, type PrizeReader, type PrizeView } from "./utils/prizes";
+export {
+    isTrustedClick,
+    minAccountAgeLabel,
+    prizeView,
+    type PrizeReader,
+    type PrizeView,
+} from "./utils/prizes";
 export {
     emojiReaction,
     messageMenu,
@@ -245,6 +279,7 @@ export {
 export { externalWalletPayment, type ExternalWalletPayment } from "./utils/draftPayment";
 export {
     generatePrizes,
+    MAX_PRIZE_EXCLUDED_USERS,
     MAX_PRIZE_WINNERS,
     newPrizeContent,
     PRIZE_FEE_PERCENT,
@@ -273,6 +308,7 @@ export {
     toDateString,
     toDatetimeString,
     toDayString,
+    toLongDatetimeString,
     toMonthString,
     toMonthYearString,
 } from "./utils/date";

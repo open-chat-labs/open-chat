@@ -7,6 +7,7 @@ import {
     type CommunitySummary,
     type MemberRole,
 } from "@client";
+import { swatchFor } from "@src/logic/swatch";
 import { exploreCommunities, exploreLanguageOptions, joinedCommunityKeys } from "./explore.adapter";
 
 const noGate: AccessGateConfig = { gate: { kind: "no_gate" }, expiry: undefined };
@@ -44,6 +45,7 @@ describe("explore's communities", () => {
                 verified: true,
                 language: "Français",
                 avatarUrl: "/avatar/a",
+                color: swatchFor("a"),
                 coverUrl: undefined,
                 gate: undefined,
             },

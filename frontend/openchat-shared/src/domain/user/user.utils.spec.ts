@@ -1,5 +1,10 @@
 import type { UserOrUserGroup } from "./user";
-import { expandTypedMentions, extractUserIdsFromMentions, typedMentions } from "./user.utils";
+import {
+    expandTypedMentions,
+    extractUserIdsFromMentions,
+    mentionsAsTyped,
+    typedMentions,
+} from "./user.utils";
 import { vi } from "vitest";
 
 const now = Date.now();
@@ -59,5 +64,38 @@ describe("mentions typed as @username", () => {
         // even if someone's username is UserId
         const userId = { kind: "user", userId: "u2", username: "UserId" } as UserOrUserGroup;
         expect(expandTypedMentions(picked, () => userId).text).toEqual(picked);
+    });
+});
+
+describe("mentions as typed", () => {
+    const users: Record<string, string> = { a1: "alice", b2: "bob" };
+    const groups: Record<number, string> = { 7: "mods" };
+    const typed = (text: string) =>
+        mentionsAsTyped(
+            text,
+            (id) => users[id],
+            (id) => groups[id],
+        );
+
+    test("each mention as the @name it was typed as", () => {
+        expect(typed("hi @UserId(a1) and @UserId(b2), ask @UserGroup(7)")).toBe(
+            "hi @alice and @bob, ask @mods",
+        );
+    });
+    test("one not known stays as it is", () => {
+        expect(typed("hi @UserId(zz) and @UserGroup(9)")).toBe("hi @UserId(zz) and @UserGroup(9)");
+    });
+    test("text without mentions is unchanged", () => {
+        expect(typed("hi @everyone, @alice")).toBe("hi @everyone, @alice");
+    });
+    test("typed back, it's the mentions again", () => {
+        const text = "hi @UserId(a1) and @UserGroup(7)";
+        const lookup = (name: string): UserOrUserGroup | undefined =>
+            name === "alice"
+                ? ({ kind: "user", userId: "a1", username: "alice" } as UserOrUserGroup)
+                : name === "mods"
+                  ? ({ kind: "user_group", id: 7 } as UserOrUserGroup)
+                  : undefined;
+        expect(expandTypedMentions(typed(text), lookup).text).toBe(text);
     });
 });

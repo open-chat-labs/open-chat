@@ -32,6 +32,8 @@
         inline?: boolean;
         // Offered instead of the selected chat's members
         users?: UserSummary[];
+        // Users not offered, by id
+        hidden?: string[];
         onMention: (user: UserOrUserGroup) => void;
         onClose: () => void;
     }
@@ -46,6 +48,7 @@
         usersOnly = false,
         inline = false,
         users,
+        hidden = [],
         onClose,
         onMention,
     }: Props = $props();
@@ -120,7 +123,7 @@
             usersOnly,
             // users given are kept in the order given
             keepUserOrder: users !== undefined,
-        }),
+        }).filter((u) => !("userId" in u && hidden.includes(u.userId))),
     );
     let index = $derived(
         Math.max(

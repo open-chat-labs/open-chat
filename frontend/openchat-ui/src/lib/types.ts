@@ -74,7 +74,7 @@ export type GroupMessage = GroupMessageBase &
 export interface MessageGroupItem {
   side?: 'received' | 'sent';
   name?: string;
-  color?: 'violet' | 'amber' | 'teal' | 'blue';
+  color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
   messages: GroupMessage[];
 }
 
@@ -114,10 +114,14 @@ export interface PrizeDraft {
   gates: Record<string, boolean | number>;
   streak: number;
   chit: number;
+  /** Minimum account age in days, for the `age` gate. */
+  age?: number;
+  /** Users who can't claim it (user ids). */
+  excluded?: string[];
 }
 
 /** PrizeBuilderDialog `onAttach` value; pass it back as `initial` to edit. */
-export type PrizeGateKind = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak';
+export type PrizeGateKind = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak' | 'age';
 
 export interface Prize {
   token: TokenRef;

@@ -4,6 +4,7 @@
 <script lang="ts">
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
+  import { AVATAR_GRADIENTS } from './Avatar.svelte';
 
   const ICONS = {
     check: 'check',
@@ -15,12 +16,9 @@
   };
 
   const GRADIENTS = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     rose: 'linear-gradient(140deg,#FF6B8B,#C13584)',
-    plum: 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
   };
 

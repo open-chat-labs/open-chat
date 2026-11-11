@@ -13,7 +13,6 @@
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
         currentUserIdStore,
-        emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
         mobileWidth,
@@ -22,6 +21,7 @@
         publish,
         ROLE_NONE,
         routeForChatIdentifier,
+        scopeUnreadCounts,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
@@ -159,24 +159,13 @@
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showBrowseChannels = $derived($chatListScopeStore.kind === "community");
-    let unreadCounts = $derived.by(() => {
-        switch ($chatListScopeStore.kind) {
-            case "chats": {
-                return $unreadDirectAndGroupCountsStore;
-            }
-            case "favourite": {
-                return $unreadFavouriteCountsStore;
-            }
-            case "community": {
-                return (
-                    $unreadCommunityChannelCountsStore.get($chatListScopeStore.id) ??
-                    emptyCombinedUnreadCounts()
-                );
-            }
-            default:
-                return emptyCombinedUnreadCounts();
-        }
-    });
+    let unreadCounts = $derived(
+        scopeUnreadCounts($chatListScopeStore, {
+            directAndGroup: $unreadDirectAndGroupCountsStore,
+            favourite: $unreadFavouriteCountsStore,
+            communityChannels: $unreadCommunityChannelCountsStore,
+        }),
+    );
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     $effect(() => {
         if ($numberOfThreadsStore === 0) {

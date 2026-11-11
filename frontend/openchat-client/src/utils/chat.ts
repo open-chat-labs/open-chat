@@ -22,9 +22,12 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
+    DirectChatIdentifier,
+    DirectChatSummary,
     EventWrapper,
     ExpiredEventsRange,
     GroupChatSummary,
+    GroupSubtype,
     HasMembershipRole,
     Immutable,
     LocalPollVote,
@@ -41,6 +44,7 @@ import type {
     MessagePermissions,
     Metrics,
     MultiUserChat,
+    MultiUserChatIdentifier,
     NewUnconfirmedMessage,
     OptionalChatPermissions,
     OptionalMessagePermissions,
@@ -288,9 +292,95 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     return chat.minVisibleMessageIndex;
 }
 
-export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): boolean {
-    if (chat.kind !== "direct_chat") return true;
-    return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
+/** What a message's read-by-them check reads from its chat: a DM's `readByThemUpTo`. */
+export type ReadByThemChat = { kind: ChatSummary["kind"]; readByThemUpTo?: number };
+
+function confirmedReadByThem(chat: ReadByThemChat, messageIndex: number): boolean {
+    return (
+        chat.kind === "direct_chat" &&
+        chat.readByThemUpTo !== undefined &&
+        chat.readByThemUpTo >= messageIndex
+    );
+}
+
+/**
+ * A read receipt from the other person in a DM over WebRTC that the DM's `readByThemUpTo` doesn't
+ * confirm yet: the DM and the index its message had when the receipt came in.
+ */
+export type UnconfirmedReadReceipt = { chatId: DirectChatIdentifier; messageIndex: number };
+
+/**
+ * Whether the other person in a DM has read one of its messages, for its ticks in every tree: as
+ * the chat says (`readByThemUpTo` covers it), or as a read receipt from them over WebRTC says, not
+ * yet confirmed (`unconfirmedReadByThem`). Never in a group or channel.
+ */
+export function messageReadByThem(
+    chat: ReadByThemChat,
+    msg: Pick<Message, "messageIndex" | "messageId">,
+    unconfirmedReadByThem: ReadonlyMap<bigint, UnconfirmedReadReceipt>,
+): boolean {
+    return (
+        chat.kind === "direct_chat" &&
+        (confirmedReadByThem(chat, msg.messageIndex) || unconfirmedReadByThem.has(msg.messageId))
+    );
+}
+
+/**
+ * What to keep of a read receipt that came in over WebRTC for the selected DM, whose loaded
+ * messages are `events`: its message's DM and index, or nothing when there's nothing to wait for.
+ * That's when the message isn't loaded (it has no ticks to show, and the DM's `readByThemUpTo`
+ * covers it by the time it is) or the DM already confirms it (a receipt that arrives late).
+ */
+export function unconfirmedReadReceipt(
+    chat: Pick<DirectChatSummary, "id" | "readByThemUpTo">,
+    events: readonly EventWrapper<ChatEvent>[],
+    messageId: bigint,
+): UnconfirmedReadReceipt | undefined {
+    for (const { event } of events) {
+        if (event.kind !== "message" || event.messageId !== messageId) continue;
+        return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= event.messageIndex
+            ? undefined
+            : { chatId: chat.id, messageIndex: event.messageIndex };
+    }
+    return undefined;
+}
+
+/**
+ * The read receipts not yet confirmed that an update to the DMs makes redundant, which the client
+ * drops as it applies the update: those whose DM's `readByThemUpTo` now covers their message, for
+ * every updated DM (selected or not), and those whose DM is gone. A message still loaded in `events`
+ * (the selected chat's) is checked at its index there, which replaces the provisional index a
+ * message not yet confirmed by the server had when its receipt came in.
+ */
+export function readByThemNowConfirmed(
+    updated: readonly Pick<DirectChatSummary, "id" | "readByThemUpTo">[],
+    removedUserIds: readonly string[],
+    events: readonly EventWrapper<ChatEvent>[],
+    unconfirmedReadByThem: ReadonlyMap<bigint, UnconfirmedReadReceipt>,
+): bigint[] {
+    if (unconfirmedReadByThem.size === 0) return [];
+    const upTo = new Map<string, number>();
+    for (const chat of updated) {
+        if (chat.readByThemUpTo !== undefined) upTo.set(chat.id.userId, chat.readByThemUpTo);
+    }
+    const removed = new Set(removedUserIds);
+    if (upTo.size === 0 && removed.size === 0) return [];
+    const loadedIndex = new Map<bigint, number>();
+    for (const { event } of events) {
+        if (event.kind === "message" && unconfirmedReadByThem.has(event.messageId)) {
+            loadedIndex.set(event.messageId, event.messageIndex);
+        }
+    }
+    const confirmed: bigint[] = [];
+    for (const [messageId, receipt] of unconfirmedReadByThem) {
+        const userId = receipt.chatId.userId;
+        const readUpTo = upTo.get(userId);
+        const messageIndex = loadedIndex.get(messageId) ?? receipt.messageIndex;
+        if (removed.has(userId) || (readUpTo !== undefined && readUpTo >= messageIndex)) {
+            confirmed.push(messageId);
+        }
+    }
+    return confirmed;
 }
 
 export function getMembersString(
@@ -1634,13 +1724,53 @@ export function buildBridgedUserAvatarUrl(
     );
 }
 
+const IDENTICON_URL_PREFIX = "data:image/svg+xml;base64,";
+
 export function buildIdenticonUrl(id: string): string {
     if (!id) return "";
     const identicon = new Identicon(md5(id), {
         margin: 0,
         format: "svg",
     });
-    return `data:image/svg+xml;base64,${identicon}`;
+    return `${IDENTICON_URL_PREFIX}${identicon}`;
+}
+
+/**
+ * A user's own picture: their avatar, a bot's (its own, else the bot picture the client gives it)
+ * or a system user's. Undefined for a user without an avatar, whom the client gives a generated
+ * identicon (buildUserAvatarUrl), and for a user not loaded. Where the old trees show those
+ * (userAvatarUrl), the new web UI shows Avatar's swatch.
+ */
+export function ownUserAvatarUrl(
+    user: Pick<UserSummary, "blobUrl"> | undefined,
+): string | undefined {
+    const url = user?.blobUrl;
+    return url === undefined || url.startsWith(IDENTICON_URL_PREFIX) ? undefined : url;
+}
+
+/** What a group's or channel's own picture is looked up from (the client's state). */
+export type GroupAvatarLookups = {
+    /** An SNS's logo, by its governance canister. */
+    snsLogo: (governanceCanisterId: string) => string | undefined;
+    /** A channel's community's picture, if it has one. */
+    communityAvatar: (channelId: ChannelIdentifier) => string | undefined;
+};
+
+/**
+ * A group's or channel's own picture: its avatar, else a proposals chat's SNS logo, else a
+ * channel's community's (`lookups`). Undefined when it has none: the old trees' groupAvatarUrl
+ * then shows the default group picture, the new web UI Avatar's swatch.
+ */
+export function ownGroupAvatarUrl(
+    chat: { id: MultiUserChatIdentifier; blobUrl?: string; subtype?: GroupSubtype },
+    lookups: GroupAvatarLookups,
+): string | undefined {
+    if (chat.blobUrl !== undefined) return chat.blobUrl;
+    if (chat.subtype?.kind === "governance_proposals") {
+        return lookups.snsLogo(chat.subtype.governanceCanisterId);
+    }
+    if (chat.id.kind === "channel") return lookups.communityAvatar(chat.id);
+    return undefined;
 }
 
 export function mergeSendMessageResponse(
