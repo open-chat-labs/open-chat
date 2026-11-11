@@ -8,8 +8,8 @@ import { unpinKey } from "./pinned.adapter";
 // An unpin (from a message's menu, the Pinned messages screen's pin button or its Unpin all) isn't
 // sent until its Undo has gone (the shell's PendingRemovals, as a leave): the pins go from the
 // strip and the screen at once (`unpinKey`), Undo brings them back and sends nothing, so an unpin
-// taken back leaves no trace for anyone. A pin shows at once (the client's own optimistic update),
-// and its Undo unpins it, in the same toast.
+// taken back leaves no trace for anyone (Pin on one still waiting does the same). A pin shows at
+// once (the client's own optimistic update), and its Undo unpins it, in the same toast.
 
 /** What the toasts say, translated. */
 export type PinWords = {
@@ -21,14 +21,24 @@ export type PinWords = {
     unpinned: string;
 };
 
-/** Pins the message; its toast offers Undo once the backend has it, which unpins it. */
+/**
+ * Pins the message; its toast offers Undo once the backend has it, which unpins it. A pin whose
+ * unpin is still waiting out its Undo is pinned on the backend: Pin takes the unpin back, as its
+ * Undo would, and sends nothing.
+ */
 export async function pinWithUndo(
     client: Pick<OpenChat, "pinMessage" | "unpinMessage">,
-    context: Pick<ScreenContext, "pendingToast">,
+    context: Pick<ScreenContext, "pendingToast" | "removals">,
     chatId: MultiUserChatIdentifier,
+    chatKey: string,
     messageIndex: number,
     words: PinWords,
 ): Promise<void> {
+    const waiting = unpinKey(chatKey, messageIndex);
+    if (context.removals.has(waiting)) {
+        context.removals.undo(waiting);
+        return;
+    }
     const pending = context.pendingToast(words.pinned);
     if (!(await client.pinMessage(chatId, messageIndex))) {
         pending.failed();

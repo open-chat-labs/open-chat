@@ -48,6 +48,15 @@ export function escapeHtml(text: string): string {
     return text.replace(/[&<>"']/g, (c) => htmlEscapes[c]);
 }
 
+/**
+ * Text to show as it is inside markdown (a name put before a message's text): its ASCII
+ * punctuation as character references, so no `*`, `_`, `[`, `<`, `||`, `@everyone`, `$TOKEN` or
+ * `!emoji(...)` in it is read as formatting, a mention, a cashtag or HTML.
+ */
+export function escapeMarkdown(text: string): string {
+    return text.replace(/[!-/:-@[-`{-~]/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
 function uniqueMatches(text: string, regex: RegExp): string[] {
     const ids: string[] = [];
     for (const m of text.matchAll(regex)) {
@@ -204,7 +213,9 @@ function cashtagElement(token: MentionedToken, suppressLinks: boolean): string {
 export function sameMentionedUsers(a: MentionedUser[], b: MentionedUser[]): boolean {
     return (
         a.length === b.length &&
-        a.every((u, i) => u.id === b[i].id && u.userId === b[i].userId && u.username === b[i].username)
+        a.every(
+            (u, i) => u.id === b[i].id && u.userId === b[i].userId && u.username === b[i].username,
+        )
     );
 }
 
@@ -225,7 +236,11 @@ export function replaceCustomEmojis(text: string): string {
     });
 }
 
-export function replaceUserIds(text: string, users: MentionedUser[], suppressLinks: boolean): string {
+export function replaceUserIds(
+    text: string,
+    users: MentionedUser[],
+    suppressLinks: boolean,
+): string {
     return text.replace(userIdMentionRegex, (match, p1) => {
         const u = users.find((u) => u.id === p1);
         if (u !== undefined) {

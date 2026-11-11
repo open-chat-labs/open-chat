@@ -65,8 +65,9 @@ native/
                      MessageInfoScreen, pushed locally); the rules sheet when sending needs the
                      chat's rules accepted (RulesSheet, on logic/composer/sendPrompts); the
                      pinned messages: the strip under the header (PinnedStrip), the Pinned
-                     messages screen (PinnedMessagesScreen, pinned_messages, pushed locally; a pin
-                     tapped there sends the conversation to it: jumpRequests), and a pin's or an
+                     messages screen (PinnedMessagesScreen, pinned_messages, pushed locally; it
+                     shows the conversation's loaded pins, and a pin tapped there sends the
+                     conversation to it: jumpRequests), and a pin's or an
                      unpin's toast with Undo (pinToasts; an unpin waits out its Undo in the
                      shell's PendingRemovals)
     details/         a chat's details (N6), pushed from the conversation without a URL: a DM's

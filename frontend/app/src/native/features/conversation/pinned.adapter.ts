@@ -1,4 +1,10 @@
 import type { EventWrapper, Message } from "@client";
+import { escapeMarkdown } from "@src/core/markdownRender";
+import {
+    messageAuthorName,
+    messageText,
+    type PreviewText,
+} from "@src/logic/chats/latestMessagePreview";
 
 // A chat's pinned messages (native plan 04, "Pinned messages"): the strip under the conversation's
 // header, which goes through them newest first, and the Pinned messages screen, oldest first by
@@ -59,6 +65,27 @@ export function firstLine(text: string): string {
             .map((line) => line.trim())
             .find((line) => line.length > 0) ?? ""
     );
+}
+
+/**
+ * The strip's line, as markdown: "Author: first line", the message as the chat list previews one
+ * (logic/chats/latestMessagePreview: restricted content as such, the reader's translation), the
+ * author's name escaped so it shows as it is.
+ */
+export function stripLine(message: Message, names: PreviewText): string {
+    const author = escapeMarkdown(messageAuthorName(message, names));
+    return `${author}: ${firstLine(messageText(message, names))}`;
+}
+
+/**
+ * What Unpin all unpins: every pin in the pinned set, the ones that didn't load too (deleted, out
+ * of reach), less those already waiting to be unpinned. The pins the strip goes through.
+ */
+export function unpinAllIndexes(
+    pinned: Iterable<number>,
+    hidden: (messageIndex: number) => boolean,
+): number[] {
+    return stripOrder(pinned, hidden);
 }
 
 /**

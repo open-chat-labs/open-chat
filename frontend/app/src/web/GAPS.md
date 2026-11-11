@@ -467,16 +467,24 @@ design export needs. Each entry says where it came up.
       the backend to send it with the pins.
     - **Undo**: an unpin (the menu's, a pin button's, Unpin all's) isn't sent until its toast has
       gone (the shell's `PendingRemovals`, as a leave), so its Undo sends nothing; meanwhile the
-      pins are gone from the strip and the screen, and the menu offers Pin again. A pin shows at
-      once; its toast waits for the backend, then offers Undo, which unpins it (an unpin of its
-      own, so others may have seen it).
+      pins are gone from the strip and the screen, and the menu offers Pin again, which takes the
+      unpin back as its Undo would (no toast, nothing sent). A pin shows at once; its toast waits
+      for the backend, then offers Undo, which unpins it (an unpin of its own, so others may have
+      seen it). Unpin all unpins every pin in the chat's pinned set, also those that didn't load
+      (deleted, out of reach), and counts them so.
     - **Going to a pin** (the strip's tap, the screen's tap or Go to message) puts the message in
       the middle of the list (ChatEventList's `scrollToMessageIndex`, as the search does), not the
       upper third, and marks it in the accent for 1.8s. The strip moves on to the next older pin
       as it's tapped, round to the newest.
     - **Loading**: the conversation loads its pinned messages as it opens (the strip needs their
       authors and text), through the loader the web's group panel and the old pinned lists use,
-      which marks new pins read. The strip shows its title until they're in.
+      which marks new pins read; the Pinned messages screen shows the conversation's (through
+      `jumpRequests`), not fetching them again. The loader loads again only as the pinned set
+      changes or the chat's details arrive, and keeps the latest load's result (a slower, older
+      one is dropped): the web's group panel and the old lists get both. The strip shows its title
+      until they're in; its line is "Author: first line" as the chat list previews a message
+      (restricted content as such, the reader's translation), the author's name escaped
+      (`escapeMarkdown`).
     - **The screen**: its list starts at the bottom (as a chat does), so a few pins sit at the
       bottom of an otherwise empty screen. Its bubbles are the chat's without their controls (a
       poll's vote, a photo's viewer): a tap goes to the message. The pin button sits on a bubble's

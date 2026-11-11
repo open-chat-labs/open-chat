@@ -5,8 +5,8 @@
      starting at the bottom. Received ones have their sender's avatar and name; your own are on the
      right. Beside each, for those who can pin, its pin button unpins it, with Undo (pinToasts). A
      tap goes back to the chat, to that message (jumpRequests); a long-press offers Go to message and
-     Unpin. They load as the shared PinnedMessages loads them, and hold what they showed while the
-     screen slides out. -->
+     Unpin. They are the conversation's (its PinnedMessages, through jumpRequests), and hold what
+     they showed while the screen slides out. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -24,6 +24,7 @@
         isPreviewingOrLapsed,
         messageReadByThem,
         routeForMessage,
+        selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
         selectedCommunityUserGroupsStore,
@@ -62,11 +63,12 @@
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
-    import { requestJump } from "./jumpRequests";
+    import { conversationPins, requestJump } from "./jumpRequests";
     import {
         offersUnpinAll,
         pinnedMenuActions,
         shownDays,
+        unpinAllIndexes,
         unpinKey,
         type PinnedMenuAction,
     } from "./pinned.adapter";
@@ -95,13 +97,19 @@
 
     // ---- the pinned messages, oldest first by day, less those waiting out an unpin's Undo
 
-    const pinned = new PinnedMessages(
-        client,
-        () => chatId,
-        () => (chat !== undefined && chat.kind !== "direct_chat" ? chat.dateLastPinned : undefined),
-    );
+    // the conversation under it has them loaded, and keeps them in step with the pins: the same
+    // ones, not fetched (and marked read) again. Its own only if that conversation isn't there.
+    const shared = conversationPins(chatKey);
+    const pinned =
+        shared ??
+        new PinnedMessages(
+            client,
+            () => chatId,
+            () =>
+                chat !== undefined && chat.kind !== "direct_chat" ? chat.dateLastPinned : undefined,
+        );
     $effect(() => {
-        if (selected) void pinned.sync();
+        if (shared === undefined && selected) void pinned.sync();
     });
 
     const hidden = (messageIndex: number) => context.removals.has(unpinKey(chatKey, messageIndex));
@@ -114,6 +122,12 @@
     );
     const shown = $derived(days.flat());
     const count = $derived(shown.length);
+    // Unpin all's: every pin in the set, the ones that didn't load (deleted, out of reach) too
+    const heldAll = new HeldWhileLeaving<number[]>([]);
+    const allPins = $derived(
+        heldAll.of(selected, unpinAllIndexes($selectedChatPinnedMessagesStore, hidden)),
+    );
+    const allCount = $derived(allPins.length);
 
     const title = $derived(
         count === 0
@@ -210,7 +224,7 @@
     const moreItems = $derived<NativeMenuItem[]>([
         {
             id: "unpin_all",
-            label: $_("native.conversation.pinned.unpinAll", { values: { count } }),
+            label: $_("native.conversation.pinned.unpinAll", { values: { count: allCount } }),
             icon: "pin",
             danger: true,
         },
@@ -219,8 +233,8 @@
     function unpinAll() {
         confirming = false;
         unpin(
-            shown.map((evt) => evt.event.messageIndex),
-            $_("native.conversation.pinned.unpinnedAll", { values: { count } }),
+            allPins,
+            $_("native.conversation.pinned.unpinnedAll", { values: { count: allCount } }),
         );
     }
 
@@ -267,7 +281,7 @@
         {title}
         sub={chatName}
         onBack={context.back}
-        onMore={offersUnpinAll(canPin, count) ? (anchor) => (moreAnchor = anchor) : undefined}
+        onMore={offersUnpinAll(canPin, allCount) ? (anchor) => (moreAnchor = anchor) : undefined}
         moreLabel={$_("native.conversation.pinned.options")}
         divider
     />
@@ -365,7 +379,7 @@
 
 <NativeAlert
     open={confirming}
-    title={$_("native.conversation.pinned.unpinAllTitle", { values: { count } })}
+    title={$_("native.conversation.pinned.unpinAllTitle", { values: { count: allCount } })}
     message={$_("native.conversation.pinned.unpinAllBody")}
     confirmLabel={$_("native.conversation.pinned.unpinAllConfirm")}
     danger

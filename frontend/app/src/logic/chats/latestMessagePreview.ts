@@ -67,6 +67,28 @@ export function messageAuthorName(
 }
 
 /**
+ * A message's text as a preview shows it: restricted content as such (moderation), else the
+ * reader's translation if they have one, else its content.
+ */
+export function messageText(
+    {
+        messageId,
+        content,
+        moderationFlags,
+    }: Pick<Message, "messageId" | "content" | "moderationFlags">,
+    { translations, contentText }: Pick<PreviewText, "translations" | "contentText">,
+): string {
+    const translation = translations.get(messageId);
+    return contentText(
+        messageFlagsRestricted(moderationFlags)
+            ? { kind: "restricted_content" }
+            : translation !== undefined
+              ? applyTranslation(content, translation)
+              : content,
+    );
+}
+
+/**
  * A chat's latest message as its row shows it, the same in every tree: in a group or channel,
  * after its author (see `messageAuthorName`);
  * a change to disappearing messages as a notice;
@@ -78,7 +100,7 @@ export function latestMessagePreview(
     names: PreviewText,
     now = Date.now(),
 ): string {
-    const { formatter, translations, contentText } = names;
+    const { formatter } = names;
     const external = chat.kind === "channel" && chat.externalUrl !== undefined;
     if (chat.latestMessageIndex === undefined || external) return "";
 
@@ -98,17 +120,9 @@ export function latestMessagePreview(
 
     if (chat.latestMessage === undefined || latestMessageExpired(chat, now)) return "";
 
-    const { messageId, content, moderationFlags, sender, senderContext } = chat.latestMessage.event;
-    const translation = translations.get(messageId);
-    const text = contentText(
-        messageFlagsRestricted(moderationFlags)
-            ? { kind: "restricted_content" }
-            : translation !== undefined
-              ? applyTranslation(content, translation)
-              : content,
-    );
+    const text = messageText(chat.latestMessage.event, names);
 
     if (chat.kind === "direct_chat") return text;
 
-    return `${messageAuthorName({ sender, senderContext }, names)}: ${text}`;
+    return `${messageAuthorName(chat.latestMessage.event, names)}: ${text}`;
 }

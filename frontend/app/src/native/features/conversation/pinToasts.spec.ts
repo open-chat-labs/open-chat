@@ -24,13 +24,15 @@ afterEach(() => {
 describe("pinning", () => {
     let done: Mock<PendingToast["done"]>;
     let failed: Mock<() => void>;
-    const context = {
-        pendingToast: (_message: string): PendingToast => ({ done, failed }),
-    };
+    let context: Parameters<typeof pinWithUndo>[1];
 
     beforeEach(() => {
         done = vi.fn((_result?: { message?: string; undo?: ToastUndo }) => () => {});
         failed = vi.fn();
+        context = {
+            pendingToast: (_message: string): PendingToast => ({ done, failed }),
+            removals: new PendingRemovals(5000),
+        };
     });
 
     test("offers Undo once it's in, which unpins it in the same toast", async () => {
@@ -38,7 +40,7 @@ describe("pinning", () => {
             pinMessage: vi.fn(async () => true),
             unpinMessage: vi.fn(async () => true),
         };
-        await pinWithUndo(client, context, chatId, 7, words);
+        await pinWithUndo(client, context, chatId, "g1", 7, words);
         expect(client.pinMessage).toHaveBeenCalledWith(chatId, 7);
         const undo = done.mock.calls[0][0]?.undo;
         if (undo === undefined || typeof undo === "function") throw new Error("no async undo");
@@ -47,9 +49,34 @@ describe("pinning", () => {
         expect(client.unpinMessage).toHaveBeenCalledWith(chatId, 7);
     });
 
+    // the unpin hasn't been sent: the message is still pinned on the backend
+    test("on a pin waiting out its unpin's Undo, takes the unpin back and sends nothing", async () => {
+        vi.useFakeTimers();
+        const client = {
+            pinMessage: vi.fn(async () => true),
+            unpinMessage: vi.fn(async () => true),
+        };
+        const toastGone = vi.fn();
+        unpinWithUndo(
+            client,
+            { removals: context.removals, toast: () => toastGone },
+            chatId,
+            "g1",
+            [7],
+            "Unpinned",
+        );
+        await pinWithUndo(client, context, chatId, "g1", 7, words);
+        expect(context.removals.has(unpinKey("g1", 7))).toBe(false);
+        expect(toastGone).toHaveBeenCalledOnce();
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(client.pinMessage).not.toHaveBeenCalled();
+        expect(client.unpinMessage).not.toHaveBeenCalled();
+        expect(done).not.toHaveBeenCalled();
+    });
+
     test("a refusal takes the toast's place with the failure", async () => {
         const client = { pinMessage: vi.fn(async () => false), unpinMessage: vi.fn() };
-        await pinWithUndo(client, context, chatId, 7, words);
+        await pinWithUndo(client, context, chatId, "g1", 7, words);
         expect(failed).toHaveBeenCalledOnce();
         expect(done).not.toHaveBeenCalled();
         expect(appToast?.kind).toBe("failure");

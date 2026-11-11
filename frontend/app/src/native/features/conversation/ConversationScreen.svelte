@@ -107,7 +107,6 @@
     } from "@src/logic/conversation/messageHandlers";
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
-    import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
@@ -173,10 +172,10 @@
     import { onSearchRequest } from "./searchRequests";
     import { onJumpRequest } from "./jumpRequests";
     import {
-        firstLine,
         nextPin,
         stripBar,
         stripCurrent,
+        stripLine,
         stripOrder,
         unpinKey,
     } from "./pinned.adapter";
@@ -646,7 +645,8 @@
         },
         () => (chat !== undefined && chat.kind !== "direct_chat" ? chat.dateLastPinned : undefined),
     );
-    // loaded again as the pins change (sync follows them), not on every update to the chat
+    // loaded again as the pins change and once the chat's details are in (sync follows only
+    // those), not on every update to the chat or its details
     const pinsLoad = $derived(multiUserId !== undefined && selected);
     $effect(() => {
         if (pinsLoad) void pinnedLoader.sync();
@@ -680,16 +680,19 @@
         const total = pinOrder.length;
         const evt = pinnedEvents.get(pinCurrent);
         const users = $allUsersStore;
+        // as the chat list previews a message: restricted content as such, the reader's translation
         const line =
             evt === undefined
                 ? undefined
-                : `${messageAuthorName(evt.event, {
+                : stripLine(evt.event, {
                       formatter: $_,
                       me,
                       displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
+                      translations: $translationsStore,
+                      contentText: (content) => client.getContentAsText($_, content),
                       bridgedUsers: $bridgedUsersStore,
                       users,
-                  })}: ${firstLine(client.getContentAsText($_, evt.event.content))}`;
+                  });
         return {
             bar: stripBar(total, position),
             title:
@@ -716,10 +719,12 @@
         }
     }
 
-    // a pin tapped on the Pinned messages screen comes back here, to its message
+    // a pin tapped on the Pinned messages screen comes back here, to its message; and the screen
+    // shows the pinned messages loaded here, not fetching (and marking read) them again
     onDestroy(
-        onJumpRequest(untrack(() => chatIdentifierToString(screen.route.chatId)), (index) => {
-            void goToMarked(index, PIN_MARK_MS);
+        onJumpRequest(untrack(() => chatIdentifierToString(screen.route.chatId)), {
+            jump: (index) => void goToMarked(index, PIN_MARK_MS),
+            pinned: pinnedLoader,
         }),
     );
 

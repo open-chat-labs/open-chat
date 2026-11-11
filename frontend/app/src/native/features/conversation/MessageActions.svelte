@@ -239,11 +239,19 @@
         if ((action === "pin" || action === "unpin") && at.chatId.kind !== "direct_chat") {
             const index = at.evt.event.messageIndex;
             if (action === "pin") {
-                void pinWithUndo(client, context, at.chatId, index, {
-                    pinned: $_("native.conversation.message.pinned"),
-                    unpinning: $_("native.conversation.pinned.unpinning"),
-                    unpinned: $_("native.conversation.message.unpinned"),
-                });
+                // on a pin whose unpin waits out its Undo, this takes the unpin back (pinToasts)
+                void pinWithUndo(
+                    client,
+                    context,
+                    at.chatId,
+                    chatIdentifierToString(at.chatId),
+                    index,
+                    {
+                        pinned: $_("native.conversation.message.pinned"),
+                        unpinning: $_("native.conversation.pinned.unpinning"),
+                        unpinned: $_("native.conversation.message.unpinned"),
+                    },
+                );
             } else {
                 unpinWithUndo(
                     client,
