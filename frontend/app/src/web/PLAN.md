@@ -50,10 +50,10 @@ every workstream.
     dialogs that need an account asking to sign in and then opening, the actions that need one
     asking to sign in in place, the sign-in dialog's state in `app/src/logic/auth`; GAPS.md
     ("Guest pass").
-  - the conversation's loose ends (L2): a DM's last-seen line, go to first mention, the event
-    lines' date and time, and one read-by-them check (`messageReadByThem`) for every tree; no
-    sticky date, as web/05 says; GAPS.md ("Conversation, first cut", "No sticky date", "Go to
-    first mention").
+  - the conversation's loose ends (L2): a DM's last-seen line, the sticky date (web/05), go to
+    first mention, the event lines' date and time, and one read-by-them check
+    (`messageReadByThem`) for every tree; GAPS.md ("Conversation, first cut", "Sticky date", "Go
+    to first mention").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
   work (5a–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
@@ -261,7 +261,7 @@ Small, any time, good between bigger pieces. Each is its own PR.
 | Id | What | Touches |
 |---|---|---|
 | [L1](https://github.com/open-chat-labs/open-chat/issues/10136) | **Chat list** (GAPS "Chat list, first cut"): <ul><li>avatars instead of swatches;</li><li>the typing line, presence, unread mentions;</li><li>the thread count;</li><li>server-side search for users and groups outside the list.</li></ul> Also `Avatar`'s `url` prop, which L3 needs too. | `features/chats` |
-| [L2](https://github.com/open-chat-labs/open-chat/issues/10137) | **Done:** what's left is in GAPS.md ("Conversation, first cut", "No sticky date", "Go to first mention"). **Conversation:** <ul><li>a DM's last-seen line;</li><li>go to first mention (no sticky date: web/05);</li><li>the timeline lines' date and time;</li><li>one read-by-them check for every tree.</li></ul> | `features/conversation` |
+| [L2](https://github.com/open-chat-labs/open-chat/issues/10137) | **Done:** what's left is in GAPS.md ("Conversation, first cut", "Sticky date", "Go to first mention"). **Conversation:** <ul><li>a DM's last-seen line;</li><li>go to first mention, the sticky date (web/05);</li><li>the timeline lines' date and time;</li><li>one read-by-them check for every tree.</li></ul> | `features/conversation` |
 | [L3](https://github.com/open-chat-labs/open-chat/issues/10138) | **Activity:** tips on the message, poll votes' tab. | `features/activity` |
 | [L4](https://github.com/open-chat-labs/open-chat/issues/10139) | **Font size** onto the library's text tokens (GAPS). The accent is done (`theme/accent.ts`); its in-app control is 8c's. | `App.svelte` |
 | [L5](https://github.com/open-chat-labs/open-chat/issues/10140) | **Router's known issues** (ROUTES.md): the legacy `/:chatId` catch-all, `landingPagePaths`, unused route kinds. | `router/` |

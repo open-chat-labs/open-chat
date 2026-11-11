@@ -207,6 +207,7 @@
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { askToSignIn, signInFirst } from "@src/logic/auth/guestPass";
     import { observeRead } from "@src/core/observeRead";
+    import { stickyDateTop } from "@src/core/stickyDateTop";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import {
         FirstUnread,
@@ -848,6 +849,17 @@
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
     }
 
+    // the day of the messages at the top of the list, pinned there while it scrolls through that
+    // day (the list says which: VirtualChatList's sticky date), as web/05 asks and the old lists
+    // do. Where it sits is core/stickyDateTop's, as native's. The list hands the day back to its
+    // own pill while that pill's row starts less than 32px above where it's told the pinned one
+    // is; a day's pill sits 16px into its row (.date), so it's told 16px lower, and the two swap
+    // just as the day's own pill reaches the pinned one's place. That pill, scrolled on up under
+    // the pinned one, is hidden, so a date never shows twice
+    const STICKY_HANDOFF_OFFSET = 16;
+    let stickyTop = $state<number>();
+    let stickyDate = $state<bigint>();
+
     // the chat's first mention of the reader they haven't read, which the list goes to, as the old
     // CurrentChat works it out: again as messages are read, so it goes once that one is. None in
     // a thread or where the chat is read only, as in the old trees
@@ -1308,6 +1320,16 @@
         <div class="state"><Spinner /></div>
     {:else}
         <div class="messages">
+            <!-- web/05: the date of the messages at the top stays pinned there, in the inline
+                 dates' pill -->
+            <div
+                class="sticky-date"
+                use:stickyDateTop={(top) => (stickyTop = top + STICKY_HANDOFF_OFFSET)}
+            >
+                {#if stickyDate !== undefined}
+                    <UnreadDivider tone="neutral" label={dateLabel(stickyDate)} />
+                {/if}
+            </div>
             <ChatEventList
                 bind:this={list}
                 rootSelector={thread === undefined ? "conversation" : "thread"}
@@ -1318,6 +1340,8 @@
                 maintainScroll={thread === undefined}
                 visible
                 bind:initialised
+                stickyDateElTop={stickyTop}
+                bind:stickyDateTimestamp={stickyDate}
                 viewportClass="message-list"
             >
                 {#snippet row(item, args)}
@@ -1350,7 +1374,9 @@
 
 {#snippet eventRow(item: FlatChatItem, args: ChatEventListArgs)}
     {#if item.kind === "timeline_date"}
-        <div class="date">
+        <!-- the day pinned at the top is this one's: this one, scrolled up under it, isn't
+             shown too -->
+        <div class="date" class:pinned={stickyDate === item.timestamp}>
             <UnreadDivider tone="neutral" label={dateLabel(item.timestamp)} />
         </div>
     {:else if item.kind === "event"}
@@ -1694,6 +1720,10 @@
         padding-block-start: var(--space-16);
     }
 
+    .date.pinned {
+        visibility: hidden;
+    }
+
     /* the old UI's markdown, inside the bubble's own text: no outer spacing */
     .row :global(.markdown-wrapper > p:first-child),
     .row :global(.markdown-wrapper > ul:first-child),
@@ -1742,5 +1772,16 @@
         display: flex;
         flex-direction: column;
         gap: var(--space-8);
+    }
+
+    /* the day of the messages at the top of the list, over them, where a day's own pill sits in
+       its row (16px down); none while that pill is below it (the list hands over to it) */
+    .sticky-date {
+        position: absolute;
+        z-index: 1;
+        inset-block-start: var(--space-16);
+        inset-inline: 0;
+        padding-inline: var(--message-list-gutter, var(--space-24));
+        pointer-events: none;
     }
 </style>

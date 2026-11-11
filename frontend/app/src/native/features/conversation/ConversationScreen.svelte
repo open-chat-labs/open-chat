@@ -82,6 +82,7 @@
     import Markdown from "@src/core/Markdown.svelte";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
+    import { stickyDateTop } from "@src/core/stickyDateTop";
     import {
         canSetDisappearing,
         ChatDisappearing,
@@ -881,22 +882,10 @@
 
     // the day of the messages at the top of the list, pinned there while it scrolls through that
     // day (the list says which: VirtualChatList's sticky date), as the old app's; the day's own pill
-    // takes over as it passes under it
-    let stickyEl = $state<HTMLElement>();
+    // takes over as it passes under it. Where it sits is core/stickyDateTop's, as the web's: again
+    // whenever what's above the list changes (the search bar, the live call's strip)
     let stickyTop = $state<number>();
     let stickyDate = $state<bigint>();
-    $effect(() => {
-        const el = stickyEl;
-        const area = el?.parentElement;
-        if (el === undefined || area == null) return;
-        // where it is on the screen, again whenever what's above the list changes (the search bar,
-        // the live call's strip)
-        const measure = () => (stickyTop = el.getBoundingClientRect().top);
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(area);
-        return () => observer.disconnect();
-    });
 
     function dateLabel(timestamp: bigint): string {
         void day;
@@ -1167,7 +1156,11 @@
             style:--group-gap="8px"
             onmousedown={keepFocus}
         >
-            <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
+            <div
+                class="sticky-date"
+                class:shown={stickyDate !== undefined}
+                use:stickyDateTop={(top) => (stickyTop = top)}
+            >
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
                 {/if}

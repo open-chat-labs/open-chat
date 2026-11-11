@@ -2101,11 +2101,15 @@ design export needs. Each entry says where it came up.
   others' runs do (display name, else username; once per run, at its start, in `--ink-3`), and
   no name in a DM, where neither side has one (`showsSenderName` in `logic/conversation/messageRow`,
   L2, at the user's request; web/05 doesn't say, and the design's "You" gives way to the name).
-- **No sticky date** (`features/conversation`): the web follows web/05 ("Date pills don't stick;
-  one 'Today' pill. The Unread divider doesn't stick."), so the list's dates are only the inline
-  pills between days, and nothing pins the day at the top as the old lists do (L2 had built one,
-  then took it out). Native's conversation keeps its own sticky date: the native plan's 04 doesn't
-  rule it out.
+- **Sticky date** (`features/conversation`, L2): as web/05 says ("Date pills stick: the date of
+  the messages at the top of the window stays pinned at the top of the conversation while
+  scrolling"), the list (a thread's too) pins the day of the messages at its top, in the inline
+  dates' pill (`UnreadDivider` neutral), over the messages, as both old lists do: VirtualChatList
+  says which day (`stickyDateTimestamp`), at the height `core/stickyDateTop` measures, which
+  native's conversation uses too. It's the day's own pill until that reaches the pinned one's
+  place, then the pinned one, with the day's own hidden as it scrolls on up under it, so a date
+  never shows twice (the list's hand-off is told the pinned pill's place 16px lower, the 16px a
+  day's pill sits into its row). One "Today" pill; the Unread divider doesn't stick.
 - **Go to first mention** (`features/conversation`, L2; web/05 doesn't cover it: `TODO(design)`).
   An @ button over go-to-latest goes to the chat's first unread mention (`IconButton` "at", as
   go-to-latest is drawn; the old ones were round fabs with a bold "@"), and goes once that mention
