@@ -11,12 +11,16 @@ import { PinnedMessages, pinnedKey } from "./pinnedMessages.svelte";
 
 const chatId: MultiUserChatIdentifier = { kind: "group_chat", groupId: "g1" };
 
-function evt(messageIndex: number): EventWrapper<Message> {
-    return { index: messageIndex, event: { messageIndex } } as EventWrapper<Message>;
+function evt(messageIndex: number, text?: string): EventWrapper<Message> {
+    return { index: messageIndex, event: { messageIndex, text } } as unknown as EventWrapper<Message>;
 }
 
-function response(indexes: number[]): EventsResponse<Message> {
-    return { events: indexes.map(evt), expiredEventRanges: [], latestEventIndex: undefined };
+function response(indexes: number[], text?: string): EventsResponse<Message> {
+    return {
+        events: indexes.map((i) => evt(i, text)),
+        expiredEventRanges: [],
+        latestEventIndex: undefined,
+    };
 }
 
 // the backend's answers, in the order the test gives them
@@ -33,7 +37,7 @@ function client(answers: Promise<EventsResponse<Message>>[]) {
             (_chatId: unknown, _thread: unknown, _indexes: number[]) => answers[n++],
         ),
         groupMessagesByDate: (events: EventWrapper<Message>[]) => [events],
-        unreadPinned: () => false,
+        unreadPinned: vi.fn((_chatId: unknown, _dateLastPinned: bigint) => false),
         markPinnedMessagesRead: vi.fn(),
         logError: vi.fn(),
     };
@@ -55,7 +59,7 @@ describe("PinnedMessages", () => {
             client([first.promise, second.promise]),
             () => chatId,
             () => undefined,
-            { pinned: () => pinned, detailsLoaded: () => true },
+            { pinned: () => pinned, detailsLoaded: () => true, chatUpdated: () => 1n },
         );
 
         // pinned, then that pin taken back: the second load is the latest
@@ -81,6 +85,7 @@ describe("PinnedMessages", () => {
             {
                 pinned: () => new Set([1]),
                 detailsLoaded: () => loaded,
+                chatUpdated: () => 1n,
             },
         );
 
@@ -105,6 +110,7 @@ describe("PinnedMessages", () => {
             {
                 pinned: () => pinned,
                 detailsLoaded: () => details !== undefined,
+                chatUpdated: () => 1n,
             },
         );
         const sync = vi.spyOn(loader, "sync");
@@ -141,6 +147,7 @@ describe("PinnedMessages", () => {
         const loader = new PinnedMessages(c, () => chatId, () => undefined, {
             pinned: () => pinned,
             detailsLoaded: () => true,
+            chatUpdated: () => 1n,
         });
 
         expect(await loader.sync()).toBe(true);
@@ -161,10 +168,81 @@ describe("PinnedMessages", () => {
         expect(indexes(loader)).toEqual([1, 2, 3]);
     });
 
-    test("keys a chat's pins whatever their order", () => {
-        expect(pinnedKey(chatId, new Set([3, 1]))).toBe(pinnedKey(chatId, new Set([1, 3])));
-        expect(pinnedKey(chatId, new Set([1]))).not.toBe(
-            pinnedKey({ kind: "group_chat", groupId: "g2" }, new Set([1])),
+    test("fetches the same pins again when the chat changes, so an edit to one shows", async () => {
+        let pinned = $state<ReadonlySet<number>>(new Set([1]));
+        // the summary's lastUpdated: an edit moves it on, the pinned set stays as it was
+        let chatUpdated = $state(1n);
+        const edited = deferred();
+        const c = client([Promise.resolve(response([1], "before")), edited.promise]);
+        const loader = new PinnedMessages(c, () => chatId, () => undefined, {
+            pinned: () => pinned,
+            detailsLoaded: () => true,
+            chatUpdated: () => chatUpdated,
+        });
+        const sync = vi.spyOn(loader, "sync");
+        const loads: Promise<boolean>[] = [];
+
+        const stop = $effect.root(() => {
+            $effect(() => {
+                loads.push(loader.sync());
+            });
+        });
+        flushSync();
+        expect(await loads[0]).toBe(true);
+
+        // the details again (members, settings…): the same pins, the same chat
+        pinned = new Set([1]);
+        flushSync();
+        expect(sync).toHaveBeenCalledTimes(2);
+        expect(c.getMessagesByMessageIndex).toHaveBeenCalledTimes(1);
+
+        chatUpdated = 2n;
+        flushSync();
+        expect(c.getMessagesByMessageIndex).toHaveBeenCalledTimes(2);
+        edited.resolve(response([1], "after"));
+        expect(await loads[loads.length - 1]).toBe(true);
+        const messages = loader.messages;
+        expect(
+            messages.kind === "success"
+                ? (messages.data[0][0].event as unknown as { text: string }).text
+                : undefined,
+        ).toBe("after");
+        stop();
+    });
+
+    test("marks the loaded pins read when the pin's date arrives after them, without fetching again", async () => {
+        const pinned = $state<ReadonlySet<number>>(new Set([1, 2]));
+        let dateLastPinned = $state<bigint | undefined>(undefined);
+        const c = client([Promise.resolve(response([1, 2]))]);
+        c.unreadPinned.mockReturnValue(true);
+        const loader = new PinnedMessages(c, () => chatId, () => dateLastPinned, {
+            pinned: () => pinned,
+            detailsLoaded: () => true,
+            chatUpdated: () => 1n,
+        });
+        const loads: Promise<boolean>[] = [];
+
+        const stop = $effect.root(() => {
+            $effect(() => {
+                loads.push(loader.sync());
+            });
+        });
+        flushSync();
+        expect(await loads[0]).toBe(true);
+        expect(c.markPinnedMessagesRead).not.toHaveBeenCalled();
+
+        dateLastPinned = 5n;
+        flushSync();
+        expect(c.markPinnedMessagesRead).toHaveBeenCalledWith(chatId, 5n);
+        expect(c.getMessagesByMessageIndex).toHaveBeenCalledTimes(1);
+        stop();
+    });
+
+    test("keys a chat's pins whatever their order, as of when the chat last changed", () => {
+        expect(pinnedKey(chatId, new Set([3, 1]), 1n)).toBe(pinnedKey(chatId, new Set([1, 3]), 1n));
+        expect(pinnedKey(chatId, new Set([1]), 1n)).not.toBe(
+            pinnedKey({ kind: "group_chat", groupId: "g2" }, new Set([1]), 1n),
         );
+        expect(pinnedKey(chatId, new Set([1]), 1n)).not.toBe(pinnedKey(chatId, new Set([1]), 2n));
     });
 });

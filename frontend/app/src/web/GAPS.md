@@ -480,8 +480,11 @@ design export needs. Each entry says where it came up.
       authors and text), through the loader the web's group panel and the old pinned lists use,
       which marks new pins read; the Pinned messages screen shows the conversation's (through
       `jumpRequests`), not fetching them again. The loader loads again only as the pinned set
-      changes or the chat's details arrive, and keeps the latest load's result (a slower, older
-      one is dropped): the web's group panel and the old lists get both. The strip shows its title
+      changes, the chat's details arrive or the chat changes (its summary's `lastUpdated`, so an
+      edit to a pin shows; the cache serves the pins that didn't change), not on every update to
+      the details, and keeps the latest load's result (a slower, older one is dropped): the web's
+      group panel and the old lists get both. A pin's date that arrives after its pin marks the
+      loaded pins read without fetching them again. The strip shows its title
       until they're in; its line is "Author: first line" as the chat list previews a message
       (restricted content as such, the reader's translation), the author's name escaped
       (`escapeMarkdown`).

@@ -645,8 +645,8 @@
         },
         () => (chat !== undefined && chat.kind !== "direct_chat" ? chat.dateLastPinned : undefined),
     );
-    // loaded again as the pins change and once the chat's details are in (sync follows only
-    // those), not on every update to the chat or its details
+    // loaded again as the pins change, once the chat's details are in and as the chat changes (an
+    // edit to a pin), not on every update to its details (sync follows only those)
     const pinsLoad = $derived(multiUserId !== undefined && selected);
     $effect(() => {
         if (pinsLoad) void pinnedLoader.sync();
