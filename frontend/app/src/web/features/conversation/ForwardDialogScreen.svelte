@@ -4,13 +4,16 @@
      its rules are asked for first; a note written in the picker waits in that chat's draft. -->
 <script lang="ts">
     import {
+        allUsersStore,
         chatListScopeStore,
         localUpdates,
         routeForChatIdentifier,
         selectedChatIdStore,
+        selectedCommunityUserGroupsStore,
         type OpenChat,
     } from "@client";
     import ChatPicker from "@openchat/ui/src/lib/components/ChatPicker.svelte";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { messageToForwardStore } from "@src/stores/messageToForward";
     import { navigate } from "@src/utils/navigation";
     import { getContext } from "svelte";
@@ -25,7 +28,11 @@
     const picker = new SharePicker(client, $_, () => selectedChatIdStore.value);
 
     const item = $derived({
-        title: client.getContentAsText($_, dialog.message.content),
+        // its mentions as the @names typed, the open chat's groups as its rows (conversationContext)
+        title: typedMentions({
+            users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
+        })(client.getContentAsText($_, dialog.message.content)),
         icon: "forward",
     });
 

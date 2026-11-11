@@ -201,7 +201,9 @@ design export needs. Each entry says where it came up.
   (`VirtualList`, pinned first, favourite / muted / pinned icons, the forward icon, live calls),
   the row long-press menu, the FAB and New chat. It lists its own scope (`chatsInScope`), so it
   stays right while another tab's route sets another scope (it's dragged into view by the swipe
-  between tabs). Left, or decided against the prototype:
+  between tabs). The rows' previews show mentions as the `@names` typed (`typedMentions`, the
+  rows shared with the web's chat list), and so does the forward sheet's preview of the message.
+  Left, or decided against the prototype:
   - **Message search**: the backend has no search across chats, and a chat's own search
     (`searchChat`) returns message indexes without their text, so the search has Chats and People
     only ("Search chats and people"). Messages, and a result opening the chat in search mode on it,
@@ -2157,6 +2159,12 @@ design export needs. Each entry says where it came up.
 - **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
   (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
   (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
+  - **mentions in the preview**: as the `@names` typed (`typedMentions` in `logic/conversation`,
+    through `mentionsAsTyped`), where the old rows show the preview through Markdown, which shows
+    them as `@username` too. The same goes for every other text the new UI shows as it is, not
+    through Markdown: the list of threads, the thread's root card, the activity feed, the pinned
+    messages and the forward picker's preview. A mention of a user or group not known yet stays as
+    `@UserId(…)` until it loads (the client loads those a latest message or an activity mentions).
   - **avatars**: a chat's own picture (`chatAvatarUrl`): a DM's user's avatar
     (`ownUserAvatarUrl` in `@client`), a group's or channel's own (`ownGroupAvatarUrl` in
     `@client`, which the client's `groupAvatarUrl` now uses too): its avatar, else a proposals

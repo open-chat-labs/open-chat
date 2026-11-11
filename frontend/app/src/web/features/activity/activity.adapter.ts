@@ -32,6 +32,8 @@ export type ActivityContext = {
     /** The chat an event happened in, as the old feed named it ("Community > channel"). */
     chatName: (context: MessageContext) => string | undefined;
     contentText: (content: MessageContent) => string;
+    /** A text shown as it is with its mentions as the @names typed (`typedMentions`). */
+    mentionsAsTyped: (text: string) => string;
     /** A key in the app's language. */
     text: (key: ResourceKey) => string;
     /** A day heading ("Today", "Yesterday", a date) and a time, as the app formats them. */
@@ -79,7 +81,7 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
         preview:
             message === undefined
                 ? ctx.missing
-                : `${ctx.author(message)}: ${ctx.contentText(message.content)}`,
+                : `${ctx.author(message)}: ${ctx.mentionsAsTyped(ctx.contentText(message.content))}`,
         time: ctx.time(event.timestamp),
         unread: event.timestamp > ctx.readUpTo,
         // their swatch, as everywhere (swatchFor)

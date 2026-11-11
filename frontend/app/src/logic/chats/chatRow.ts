@@ -18,6 +18,7 @@ import {
 } from "@client";
 import { buildDisplayName } from "@src/utils/user";
 import { latestMessagePreview, type PreviewText } from "./latestMessagePreview";
+import { typedMentions, type MentionLookups } from "../conversation/typedMentions";
 import { swatchFor, type Swatch } from "../swatch";
 
 export { swatchFor, type Swatch };
@@ -85,6 +86,11 @@ export type RowContextInputs = Pick<
     "formatter" | "me" | "translations" | "bridgedUsers"
 > & {
     users: UserLookup;
+    /**
+     * The user groups a latest message can mention: every community's (userGroupSummariesStore),
+     * as a list can hold any community's channels. Looked up only for a message that mentions one.
+     */
+    userGroups: MentionLookups["userGroups"];
     /** The list's scope's pinned chats (pinnedChatsStore). */
     pinned: readonly ChatIdentifier[];
     selected?: ChatIdentifier;
@@ -100,9 +106,10 @@ export type RowContextInputs = Pick<
 
 /**
  * The RowContext every chat list builds from the client and the stores: names as the client shows
- * them, the latest message as `latestMessagePreview` has it, the list's dates, unread counts, and,
- * for a list that asks (`withMentionsAndAvatars`), the chats' own pictures (`chatAvatarUrl`) and
- * unread mentions. The counts read `messagesRead`'s state, so a list builds its context again as
+ * them, the latest message as `latestMessagePreview` has it with its mentions as the @names typed
+ * (`typedMentions`; the old trees show it through Markdown instead), the list's dates, unread
+ * counts, and, for a list that asks (`withMentionsAndAvatars`), the chats' own pictures
+ * (`chatAvatarUrl`) and unread mentions. The counts read `messagesRead`'s state, so a list builds its context again as
  * that store changes.
  */
 export function rowContext(
@@ -121,6 +128,7 @@ export function rowContext(
         formatter,
         me,
         users,
+        userGroups,
         translations,
         bridgedUsers,
         pinned,
@@ -130,6 +138,9 @@ export function rowContext(
     }: RowContextInputs,
 ): RowContext {
     const groupAvatars = groupAvatarLookups(client, community);
+    // the preview shows its mentions as the @names typed: the list is built again as the users
+    // load (it follows allUsersStore), so a mention of someone loaded later gets their name then
+    const typed = typedMentions({ users, userGroups });
     const extras: Pick<RowContext, "mentions" | "avatar"> = withMentionsAndAvatars
         ? {
               mentions: (chat) =>
@@ -147,7 +158,7 @@ export function rowContext(
                 me,
                 displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
                 translations,
-                contentText: (content) => client.getContentAsText(formatter, content),
+                contentText: (content) => typed(client.getContentAsText(formatter, content)),
                 bridgedUsers,
                 users,
             }),

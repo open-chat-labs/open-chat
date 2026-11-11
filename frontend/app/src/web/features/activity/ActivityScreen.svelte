@@ -10,6 +10,7 @@
         communitiesStore,
         currentUserIdStore,
         messageActivitySummaryStore,
+        userGroupSummariesStore,
         type MessageActivityEvent,
         type MessageContext,
         type OpenChat,
@@ -19,6 +20,7 @@
     import { interpolate } from "@src/i18n/i18n";
     import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
     import { buildDisplayName } from "@src/utils/user";
@@ -111,6 +113,12 @@
                 }),
             chatName,
             contentText: (content) => client.getContentAsText($_, content),
+            // the feed can be any community's channels': every community's groups, looked up
+            // only for a message that mentions one
+            mentionsAsTyped: typedMentions({
+                users,
+                userGroups: { get: (id) => $userGroupSummariesStore.get(id) },
+            }),
             text: (key) => interpolate($_, key),
             day: (timestamp) => client.formatMessageDate(timestamp, $_("today"), $_("yesterday")),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),

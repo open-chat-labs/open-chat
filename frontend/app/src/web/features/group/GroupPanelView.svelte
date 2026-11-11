@@ -46,6 +46,7 @@
         type MemberActionOutcome,
     } from "@src/logic/members/memberManagement.svelte";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { muteChat } from "@src/logic/chats/muteChat";
     import { signInFirst, signInFirstOrCancel } from "@src/logic/auth/guestPass";
     import {
@@ -261,19 +262,25 @@
     const pinnedEvents = $derived(
         pinned.messages.kind === "success" ? pinned.messages.data.flat() : [],
     );
-    const pins = $derived(
-        pinnedEvents.map((ev) => {
+    const pins = $derived.by(() => {
+        // a pin's mentions as the @names typed, the open chat's groups as the conversation's
+        // own rows (conversationContext)
+        const typed = typedMentions({
+            users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
+        });
+        return pinnedEvents.map((ev) => {
             const sent = new Date(Number(ev.timestamp));
             return pinRow({
                 messageId: ev.event.messageId,
                 senderId: ev.event.sender,
                 author: client.getDisplayName(ev.event.sender, $selectedCommunityMembersStore),
-                text: client.getContentAsText($_, ev.event.content),
+                text: typed(client.getContentAsText($_, ev.event.content)),
                 date: client.formatMessageDate(ev.timestamp, $_("today"), $_("yesterday")),
                 time: client.toShortTimeString(sent),
             });
-        }),
-    );
+        });
+    });
 
     async function act(outcome: Promise<MemberActionOutcome> | undefined): Promise<void> {
         if (outcome === undefined) throw new Error("no members");

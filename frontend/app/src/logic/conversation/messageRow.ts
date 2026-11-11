@@ -6,7 +6,6 @@ import {
     getConvertedBalances,
     i18nKey,
     isDeletedWebhook,
-    mentionsAsTyped,
     ogPreviewCard,
     ownUserAvatarUrl,
     pollView,
@@ -49,6 +48,7 @@ import { getProxyAdjustedBlobUrl } from "@src/utils/media";
 import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
+import { typedMentions } from "./typedMentions";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -749,12 +749,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
                 ? formatter("webhook.deleted")
                 : client.displayName(findUser(userId, users, webhooks)),
         contentText: (content) => client.getContentAsText(formatter, content),
-        mentionsAsTyped: (text) =>
-            mentionsAsTyped(
-                text,
-                (userId) => users.get(userId)?.username,
-                (id) => input.userGroups.get(id)?.name,
-            ),
+        mentionsAsTyped: typedMentions({ users, userGroups: input.userGroups }),
         time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
         date: (timestamp) =>
             client.formatMessageDate(

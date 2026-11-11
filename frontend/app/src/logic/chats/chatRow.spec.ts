@@ -359,6 +359,7 @@ describe("a list's row context", () => {
         formatter: (key) => key,
         me: "me",
         users: new Map<string, UserSummary>(),
+        userGroups: new Map<number, { name: string }>(),
         translations: new Map<bigint, string>(),
         bridgedUsers: { get: () => undefined },
         pinned: [],
@@ -374,5 +375,27 @@ describe("a list's row context", () => {
         const ctx = rowContext(client, { ...inputs, withMentionsAndAvatars: true });
         expect(ctx.mentions).toBeTypeOf("function");
         expect(ctx.avatar).toBeTypeOf("function");
+    });
+
+    test("shows the latest message's mentions as the @names typed, once their users are known", () => {
+        const withText = {
+            ...client,
+            getContentAsText: (_: unknown, content: { kind: string; text?: string }) =>
+                content.text ?? "",
+        } as Parameters<typeof rowContext>[0];
+        const chat = {
+            ...dm("bob", { sender: "bob", text: "ask @UserId(carol) and @UserGroup(7)", at: 2n }),
+            latestMessageIndex: 1,
+        };
+        const userGroups = new Map([[7, { name: "mods" }]]);
+        // carol's profile hasn't loaded yet: her mention stays as it is
+        expect(rowContext(withText, { ...inputs, userGroups }).preview(chat)).toBe(
+            "ask @UserId(carol) and @mods",
+        );
+        // the list builds its context again as the users load, and she's named then
+        const users = new Map([["carol", { userId: "carol", username: "carol" } as UserSummary]]);
+        expect(rowContext(withText, { ...inputs, users, userGroups }).preview(chat)).toBe(
+            "ask @carol and @mods",
+        );
     });
 });

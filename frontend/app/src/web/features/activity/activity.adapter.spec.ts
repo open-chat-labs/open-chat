@@ -10,6 +10,7 @@ const ctx: ActivityContext = {
     author: (message) => (message.sender === "me" ? "you" : `author of ${message.sender}`),
     chatName: () => "Group",
     contentText: (content) => (content as { text: string }).text,
+    mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     text: ({ key, params }) => `${key}${params ? JSON.stringify(params) : ""}`,
     day: (ts) => `day${ts}`,
     time: (ts) => `t${ts}`,
@@ -49,6 +50,13 @@ describe("an activity item", () => {
             chatId: "g1",
             messageId: "42",
         });
+    });
+
+    test("shows its message's mentions as the @names typed", () => {
+        const mention = {
+            content: { kind: "text_content", text: "hi @UserId(me)" },
+        } as Partial<Message>;
+        expect(activityItem(event({}, mention), ctx).preview).toBe("you: hi @me");
     });
 
     test("shows its message after whoever it's shown as from, not its sender", () => {
