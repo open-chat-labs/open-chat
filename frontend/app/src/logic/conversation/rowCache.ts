@@ -2,6 +2,7 @@ import type { EventWrapper, Message } from "@client";
 import {
     messageRow,
     isOpenThread,
+    quoteText,
     type ConversationContext,
     type MessageRow,
     type MessageStatus,
@@ -9,7 +10,7 @@ import {
 
 /**
  * The conversation's rows, kept per event while nothing a row shows changes (the event, its
- * status, the names in it, and its thread link's state: whether it's the thread open and its unread
+ * status, the names in it, its quote's text with the mentions named, and its thread link's state: whether it's the thread open and its unread
  * replies), so a row stays the same object, and its bubble isn't redone, as users and other chat
  * state update. The screen clears it when the wording, the day or the chat changes.
  */
@@ -34,7 +35,9 @@ export class RowCache {
         const msg = evt.event;
         const reply = msg.repliesTo;
         const name = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
-        const names = `${ctx.userName(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
+        // a quote's mentions are named from the users and user groups, which can load after the row is made
+        const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
+        const names = `${ctx.userName(msg.sender)}\n${quoted ? `${name(quoted.senderId)}\n${quoteText(quoted.content, ctx)}` : ""}`;
         // another thread opening, or a thread's replies being read, redoes only the rows it concerns
         const thread =
             msg.thread === undefined || !ctx.threads

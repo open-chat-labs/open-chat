@@ -84,6 +84,23 @@ describe("the rows kept per event", () => {
         expect(second.senderName).toBe("Ivan");
     });
 
+    test("are made again when a quote's mentioned user loads after the row was made", () => {
+        const rows = new RowCache();
+        const evt = message();
+        evt.event.repliesTo = {
+            kind: "rehydrated_reply_context",
+            senderId: "bob",
+            content: { kind: "text_content", text: "ask @UserId(carol)" },
+        } as unknown as Message["repliesTo"];
+        const unknown = { ...ctx, mentionsAsTyped: (text: string) => text };
+        const first = rows.row("k", evt, "sent", unknown);
+        expect(first.message).toMatchObject({ quoteText: "ask @UserId(carol)" });
+        const second = rows.row("k", evt, "sent", ctx);
+        expect(second).not.toBe(first);
+        expect(second.message).toMatchObject({ quoteText: "ask @carol" });
+        expect(rows.row("k", evt, "sent", ctx)).toBe(second);
+    });
+
     test("are made again only where the open thread changes which row's thread is selected", () => {
         const rows = new RowCache();
         const threaded = (messageIndex: number) => {
