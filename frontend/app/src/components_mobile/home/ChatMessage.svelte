@@ -42,6 +42,7 @@
         ScreenWidth,
         selectedChatBlockedUsersStore,
         selectedChatMembersStore,
+        selectedChatSummaryStore,
         selectedServerChatStore,
         type SelectedEmoji,
         type SenderContext,
@@ -190,9 +191,12 @@
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
     let botProfile: BotProfileProps | undefined = $state(undefined);
-    // the chat as the client has it now (read, not followed, as the client's own check did)
+    // follows the selected chat (a DM's rows are always in it), so the ticks change as the server
+    // confirms them; a thread preview's row is in a group, which has none
     let readByThem = $derived.by(() => {
-        const chat = chatSummariesStore.value.get(chatId);
+        const chat = chatIdentifiersEqual($selectedChatSummaryStore?.id, chatId)
+            ? $selectedChatSummaryStore
+            : chatSummariesStore.value.get(chatId);
         return chat !== undefined && messageReadByThem(chat, msg, $unconfirmedReadByThem);
     });
     let contentWidth = $state<number>();

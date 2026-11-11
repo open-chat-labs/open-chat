@@ -685,6 +685,7 @@ import {
     serialiseMessageForRtc,
     startTyping,
     stopTyping,
+    unconfirmedReadReceipt,
     updateExistingMessages,
 } from "./utils/chat";
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
@@ -7352,9 +7353,19 @@ export class OpenChat {
             case "remote_user_sent_message":
                 this.#remoteUserSentMessage(fromChatId, msg, events, threadRootMessageIndex);
                 break;
-            case "remote_user_read_message":
-                unconfirmedReadByThem.add(BigInt(msg.messageId));
+            case "remote_user_read_message": {
+                // receipts come in for the selected chat only, whose messages are the events
+                const chat = selectedChatSummaryStore.value;
+                const messageId = BigInt(msg.messageId);
+                const receipt =
+                    chat?.kind === "direct_chat"
+                        ? unconfirmedReadReceipt(chat, events, messageId)
+                        : undefined;
+                if (receipt !== undefined) {
+                    unconfirmedReadByThem.add(messageId, receipt);
+                }
                 break;
+            }
         }
     }
 
@@ -9876,21 +9887,15 @@ export class OpenChat {
                 }
                 return map;
             });
-            // the read receipts the open DM now confirms are no longer needed (read receipts are
-            // only taken for the selected chat, whose messages are the events)
-            const selectedChatId = selectedChatIdStore.value;
-            const selected = directChatsAddedUpdated.find((chat) =>
-                chatIdentifiersEqual(chat.id, selectedChatId),
+            // the read receipts these DMs now confirm, selected or not, are no longer needed
+            unconfirmedReadByThem.deleteMany(
+                readByThemNowConfirmed(
+                    directChatsAddedUpdated,
+                    directChatsRemoved,
+                    eventsStore.value,
+                    unconfirmedReadByThem.value,
+                ),
             );
-            if (selected !== undefined) {
-                unconfirmedReadByThem.deleteMany(
-                    readByThemNowConfirmed(
-                        selected,
-                        eventsStore.value,
-                        unconfirmedReadByThem.value,
-                    ),
-                );
-            }
         }
         if (groupsAddedUpdated.length > 0 || groupsRemoved.length > 0) {
             serverGroupChatsStore.update((map) => {

@@ -18,6 +18,7 @@ import {
     type ChatIdentifier,
     type CommunitySummary,
     type CreateGroupSuccess,
+    type DirectChatIdentifier,
     type EventWrapper,
     type GroupChatIdentifier,
     type GroupChatSummary,
@@ -46,6 +47,7 @@ import {
     messageReadByThem,
     navigationAfterArchivingOpenChat,
     readByThemNowConfirmed,
+    unconfirmedReadReceipt,
     sameUser,
     sortByTimestampThenEventIndex,
     startTyping,
@@ -873,12 +875,21 @@ describe("what can be sent in a direct chat", () => {
 });
 
 describe("a message read by them", () => {
-    const dm = (readByThemUpTo: number | undefined) => ({
+    const them: DirectChatIdentifier = { kind: "direct_chat", userId: "them" };
+    const other: DirectChatIdentifier = { kind: "direct_chat", userId: "other" };
+    const dm = (readByThemUpTo: number | undefined, id: DirectChatIdentifier = them) => ({
         kind: "direct_chat" as const,
+        id,
         readByThemUpTo,
     });
     const msg = (messageIndex: number) => ({ messageIndex, messageId: BigInt(100 + messageIndex) });
-    const none = new Set<bigint>();
+    const receipt = (messageIndex: number, chatId: DirectChatIdentifier = them) => ({
+        chatId,
+        messageIndex,
+    });
+    const receipts = (...indexes: number[]) =>
+        new Map(indexes.map((i) => [BigInt(100 + i), receipt(i)] as const));
+    const none = receipts();
 
     test("invariant 1: a DM message is read by them when readByThemUpTo covers it or a read receipt for it isn't confirmed yet", () => {
         expect(messageReadByThem(dm(5), msg(5), none)).toBe(true);
@@ -886,14 +897,14 @@ describe("a message read by them", () => {
         expect(messageReadByThem(dm(5), msg(6), none)).toBe(false);
         expect(messageReadByThem(dm(undefined), msg(0), none)).toBe(false);
         // a peer's WebRTC read receipt, before the server says so
-        expect(messageReadByThem(dm(5), msg(6), new Set([106n]))).toBe(true);
-        expect(messageReadByThem(dm(undefined), msg(0), new Set([100n]))).toBe(true);
+        expect(messageReadByThem(dm(5), msg(6), receipts(6))).toBe(true);
+        expect(messageReadByThem(dm(undefined), msg(0), receipts(0))).toBe(true);
     });
 
     test("invariant 1: never in a group or channel", () => {
         for (const kind of ["group_chat", "channel"] as const) {
             expect(messageReadByThem({ kind }, msg(0), none)).toBe(false);
-            expect(messageReadByThem({ kind }, msg(0), new Set([100n]))).toBe(false);
+            expect(messageReadByThem({ kind }, msg(0), receipts(0))).toBe(false);
         }
     });
 
@@ -920,14 +931,44 @@ describe("a message read by them", () => {
         };
     }
 
-    test("invariant 2: the read receipts readByThemUpTo now covers are the ones to drop", () => {
+    test("invariant 2: a receipt is kept only for a loaded message the DM doesn't confirm yet", () => {
         const events = [message(3), message(4), message(5)];
-        const unconfirmed = new Set([103n, 105n, 999n]);
-        expect(readByThemNowConfirmed(dm(4), events, unconfirmed)).toEqual([103n]);
-        expect(readByThemNowConfirmed(dm(5), events, unconfirmed)).toEqual([103n, 105n]);
-        // nothing confirmed yet, nothing waiting, or not a DM
-        expect(readByThemNowConfirmed(dm(undefined), events, unconfirmed)).toEqual([]);
-        expect(readByThemNowConfirmed(dm(5), events, none)).toEqual([]);
-        expect(readByThemNowConfirmed({ kind: "group_chat" }, events, unconfirmed)).toEqual([]);
+        expect(unconfirmedReadReceipt(dm(3), events, 105n)).toEqual(receipt(5));
+        expect(unconfirmedReadReceipt(dm(undefined), events, 103n)).toEqual(receipt(3));
+        // a receipt that arrives after the DM already confirms it
+        expect(unconfirmedReadReceipt(dm(5), events, 105n)).toBeUndefined();
+        // a message that isn't loaded has no ticks to show
+        expect(unconfirmedReadReceipt(dm(undefined), events, 999n)).toBeUndefined();
+    });
+
+    test("invariant 2: the receipts an update makes redundant are dropped, for every updated DM", () => {
+        const unconfirmed = new Map([
+            [103n, receipt(3)],
+            [105n, receipt(5)],
+            [207n, receipt(7, other)],
+        ]);
+        // the events loaded are the selected chat's, which needn't be either DM
+        expect(readByThemNowConfirmed([dm(4)], [], [], unconfirmed)).toEqual([103n]);
+        expect(readByThemNowConfirmed([dm(5), dm(7, other)], [], [], unconfirmed)).toEqual([
+            103n,
+            105n,
+            207n,
+        ]);
+        // another DM's readByThemUpTo doesn't confirm this one's
+        expect(readByThemNowConfirmed([dm(9, other)], [], [], receipts(3))).toEqual([]);
+        // a DM that's gone takes its receipts with it
+        expect(readByThemNowConfirmed([], ["other"], [], unconfirmed)).toEqual([207n]);
+        // nothing confirmed yet, or nothing waiting
+        expect(readByThemNowConfirmed([dm(undefined)], [], [], unconfirmed)).toEqual([]);
+        expect(readByThemNowConfirmed([dm(5)], [], [], none)).toEqual([]);
+    });
+
+    test("invariant 2: a loaded message is checked at its index now, not the provisional one", () => {
+        // the receipt came in while the message was index 3; the server made it 4
+        const unconfirmed = new Map([[104n, receipt(3)]]);
+        expect(readByThemNowConfirmed([dm(3)], [], [message(4)], unconfirmed)).toEqual([]);
+        expect(readByThemNowConfirmed([dm(4)], [], [message(4)], unconfirmed)).toEqual([104n]);
+        // not loaded: the index it had is all there is
+        expect(readByThemNowConfirmed([dm(3)], [], [], unconfirmed)).toEqual([104n]);
     });
 });

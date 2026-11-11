@@ -1225,13 +1225,21 @@ describe("a DM's read receipts", () => {
     });
 
     test("invariant 2: once readByThemUpTo covers a message, its id leaves unconfirmedReadByThem", () => {
-        const messageId = chatMessage().event.messageId;
-        unconfirmedReadByThem.add(messageId);
+        const { messageId, messageIndex } = chatMessage().event;
+        unconfirmedReadByThem.add(messageId, { chatId: them, messageIndex });
 
         applyDirectChat(dm(undefined));
         expect(unconfirmedReadByThem.value.has(messageId)).toBe(true);
 
-        applyDirectChat(dm(0));
+        applyDirectChat(dm(messageIndex));
         expect(unconfirmedReadByThem.value.has(messageId)).toBe(false);
+    });
+
+    test("invariant 2: a DM that isn't selected drops its confirmed receipts too", () => {
+        const other: DirectChatIdentifier = { kind: "direct_chat", userId: "other" };
+        unconfirmedReadByThem.add(999n, { chatId: other, messageIndex: 7 });
+
+        applyDirectChat({ ...dm(7), id: other, them: other });
+        expect(unconfirmedReadByThem.value.has(999n)).toBe(false);
     });
 });
