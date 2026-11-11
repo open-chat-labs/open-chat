@@ -2740,6 +2740,26 @@ pub(crate) mod prize_tests {
         }
     }
 
+    // Invariant: an excluded user receives the prize exactly as any other member does, so nothing
+    // they're sent tells them they were excluded
+    #[test]
+    fn excluded_reader_receives_the_prize_as_any_other_member_does() {
+        let excluded = UserId::from(Principal::from_slice(&[9; 29]));
+        let other = UserId::from(Principal::from_slice(&[8; 29]));
+        let mut prize = prize(principal());
+        prize.excluded_users.insert(excluded);
+
+        let as_read_by = |user: UserId| {
+            candid::encode_one(
+                prize
+                    .clone()
+                    .hydrate(Some(UserIdAndPrincipal::new(user, user.as_principal()))),
+            )
+            .unwrap()
+        };
+        assert_eq!(as_read_by(excluded), as_read_by(other));
+    }
+
     // The owner of the account the prize's unclaimed remainder is refunded to
     fn refunded_to(sender: UserId, principal: Principal) -> Principal {
         let payments = prize(principal).final_payments(sender, 0);

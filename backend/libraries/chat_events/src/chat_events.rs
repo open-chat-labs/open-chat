@@ -3868,7 +3868,7 @@ mod tests {
     // Invariants: an excluded user is refused as not eligible, like any other ineligible claimer,
     // and their refused claim reserves nothing
     #[test]
-    fn excluded_user_is_refused_and_the_prize_stays_claimable() {
+    fn prize_claim_by_an_excluded_user_is_refused_and_the_prize_stays_claimable() {
         let excluded: UserId = Principal::from_slice(&[20]).into();
         let other: UserId = Principal::from_slice(&[21]).into();
         let (mut events, message_id) = setup_prize(0, vec![excluded]);
@@ -3880,7 +3880,7 @@ mod tests {
 
     // Invariant: with a minimum account age, a claim succeeds only from an account at least that old
     #[test]
-    fn account_younger_than_the_minimum_age_is_refused() {
+    fn prize_claim_from_an_account_younger_than_the_minimum_age_is_refused() {
         let user: UserId = Principal::from_slice(&[20]).into();
         let (mut events, message_id) = setup_prize(100, Vec::new());
 
@@ -3890,7 +3890,7 @@ mod tests {
 
     // Invariant: a claim without the claimer's registration date fails only where a minimum age is set
     #[test]
-    fn claim_without_a_registration_date_is_refused_only_when_a_minimum_age_is_set() {
+    fn prize_claim_without_a_registration_date_is_refused_only_when_a_minimum_age_is_set() {
         let user: UserId = Principal::from_slice(&[20]).into();
 
         let (mut events, message_id) = setup_prize(100, Vec::new());
