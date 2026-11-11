@@ -7,6 +7,9 @@ final class ActiveCallTests: XCTestCase {
         let registry = CallRegistry()
         let call = UUID()
         XCTAssertTrue(registry.callStarted(call))
+        // Declining a ring that came in during the call doesn't leave the call
+        XCTAssertFalse(registry.systemEnded(UUID()))
+        XCTAssertEqual(registry.activeCall, call)
 
         XCTAssertTrue(registry.systemEnded(call))
         XCTAssertFalse(registry.systemEnded(call))

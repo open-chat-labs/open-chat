@@ -74,6 +74,9 @@ export function createNativeCall(start: NativeCallStart, hooks: NativeCallHooks)
     let local: NativeParticipant | undefined;
     let present = 0;
     let finished = false;
+    // The shell holds a join until the call it replaces has left (End & Accept), so events before
+    // this call has joined belong to that one
+    let joined = false;
 
     const emit = (name: string, ev?: unknown) => handlers.get(name)?.forEach((h) => h(ev));
     const leave = () => invoke<void>("plugin:oc|native_call_leave").catch(() => undefined);
@@ -83,6 +86,7 @@ export function createNativeCall(start: NativeCallStart, hooks: NativeCallHooks)
     };
 
     function onEvent(event: NativeCallEvent) {
+        if (!joined) return;
         switch (event.kind) {
             case "hangup":
                 hooks.onHangup();
@@ -119,14 +123,15 @@ export function createNativeCall(start: NativeCallStart, hooks: NativeCallHooks)
                 onEvent(parse<NativeCallEvent>(raw)),
             );
             try {
-                const joined = parse<{ local: NativeParticipant; present: number }>(
+                const state = parse<{ local: NativeParticipant; present: number }>(
                     await invoke("plugin:oc|native_call_join", start),
                 );
-                local = joined.local;
-                present = joined.present;
-                emit("joined-meeting", { participants: { local: toDaily(joined.local) } });
+                local = state.local;
+                present = state.present;
+                joined = true;
+                emit("joined-meeting", { participants: { local: toDaily(state.local) } });
                 // the state the frame's first update would give, such as having presence
-                emit("participant-updated", { participant: toDaily(joined.local) });
+                emit("participant-updated", { participant: toDaily(state.local) });
             } catch (e) {
                 stopListening();
                 throw e;

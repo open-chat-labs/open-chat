@@ -280,6 +280,32 @@ describe("a call", () => {
             expect(shell.invoke).not.toHaveBeenCalledWith("plugin:oc|native_call_leave");
         });
 
+        test("invariant 25: the finished call leaving never ends the call still joining after it", async () => {
+            await session.startOrJoin(container, { chatId: direct, callType: "audio", join: true });
+            await session.startOrJoin(container, { chatId: group, callType: "audio", join: true });
+            // Switching: the shell holds the next join until the old call has left
+            let joined: (value: unknown) => void = () => {};
+            shell.invoke.mockClear();
+            shell.invoke.mockImplementation((command: string) =>
+                command === "plugin:oc|native_call_join"
+                    ? new Promise((resolve) => (joined = resolve))
+                    : Promise.resolve(undefined),
+            );
+            const next = session.switchCall(container);
+            await vi.waitFor(() =>
+                expect(shell.invoke).toHaveBeenCalledWith(
+                    "plugin:oc|native_call_join",
+                    expect.anything(),
+                ),
+            );
+
+            shell.onEvent?.({ json: JSON.stringify({ kind: "left" }) });
+            joined({ json: JSON.stringify({ local: me, present: 2 }) });
+            await next;
+
+            expect(activeVideoCall.current()?.chatId).toEqual(group);
+        });
+
         test("invariant 20: the other party leaving a direct call ends it", async () => {
             vi.mocked(client.endVideoCall).mockClear();
             await session.startOrJoin(container, {
