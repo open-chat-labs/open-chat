@@ -6,6 +6,7 @@ import {
     getConvertedBalances,
     i18nKey,
     isDeletedWebhook,
+    mentionsAsTyped,
     ogPreviewCard,
     pollView,
     prizeView,
@@ -35,6 +36,7 @@ import {
     type ResourceKey,
     type TokenExchangeRates,
     type TokenInfo,
+    type UserGroupDetails,
     type UserLookup,
     type VideoContent,
     type WebhookDetails,
@@ -71,6 +73,8 @@ export type ConversationContext = {
     userName: (userId: string) => string;
     /** A message's content as text, in the app's language (for kinds not shown yet, and quotes). */
     contentText: (content: MessageContent) => string;
+    /** A text shown as it is (a quote) with its mentions as the @names typed (`mentionsAsTyped`). */
+    mentionsAsTyped: (text: string) => string;
     /** A message's time, as its bubble shows it. */
     time: (timestamp: bigint) => string;
     /** A date as the list shows it (a time today, else a short date). */
@@ -257,6 +261,26 @@ export function messageText(
 }
 
 /**
+ * A quoted message's text, as a reply's quote and the composer's reply or edit strip show it: as
+ * it is, not as markdown, so its mentions show as the @names typed rather than `@UserId(…)`, as
+ * the old trees' quotes (Markdown) show them.
+ */
+export function quoteText(
+    content: MessageContent,
+    ctx: Pick<ConversationContext, "contentText" | "mentionsAsTyped">,
+): string {
+    return ctx.mentionsAsTyped(messageText(content, ctx));
+}
+
+/**
+ * Whether a run of messages shows its sender's name over it: once, at the run's start, in a group
+ * or channel, the reader's own runs as well as others'; never in a DM.
+ */
+export function showsSenderName(runStart: boolean, direct: boolean): boolean {
+    return runStart && !direct;
+}
+
+/**
  * A message as MessageGroup shows it, with its sender. Every kind shows as a text bubble for now:
  * the rich kinds are phase 5 (GAPS.md).
  */
@@ -283,14 +307,14 @@ export function messageRow(
     if (kind !== undefined) {
         return {
             side: mine ? "sent" : "received",
-            senderName: mine ? ctx.you : ctx.userName(msg.sender),
+            senderName: ctx.userName(msg.sender),
             color: senderColor(msg.sender),
             message: kind,
         };
     }
     return {
         side: mine ? "sent" : "received",
-        senderName: mine ? ctx.you : ctx.userName(msg.sender),
+        senderName: ctx.userName(msg.sender),
         color: senderColor(msg.sender),
         message: {
             id: String(msg.messageId),
@@ -314,7 +338,7 @@ export function messageRow(
                     : quoted.senderId === ctx.me
                       ? ctx.you
                       : ctx.userName(quoted.senderId),
-            quoteText: quoted === undefined ? undefined : messageText(quoted.content, ctx),
+            quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
             ...threadFields(msg, ctx),
             previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
         },
@@ -683,6 +707,8 @@ export type ConversationContextInput = {
     me: string;
     formatter: MessageFormatter;
     users: UserLookup;
+    /** The community's user groups (for their mentions). */
+    userGroups: Pick<ReadonlyMap<number, UserGroupDetails>, "get">;
     /** The chat's webhooks, and the ids of those that have sent messages in it. */
     webhooks: ReadonlyMap<string, WebhookDetails>;
     webhookIds: ReadonlySet<string>;
@@ -715,6 +741,12 @@ export function conversationContext(input: ConversationContextInput): Conversati
                 ? formatter("webhook.deleted")
                 : client.displayName(findUser(userId, users, webhooks)),
         contentText: (content) => client.getContentAsText(formatter, content),
+        mentionsAsTyped: (text) =>
+            mentionsAsTyped(
+                text,
+                (userId) => users.get(userId)?.username,
+                (id) => input.userGroups.get(id)?.name,
+            ),
         time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
         date: (timestamp) =>
             client.formatMessageDate(
@@ -762,21 +794,4 @@ export function conversationContext(input: ConversationContextInput): Conversati
             };
         },
     };
-}
-
-/**
- * Whether the other person in a DM has read one of the user's messages: as the chat says, or as
- * a read receipt not yet confirmed says. Never outside a DM.
- */
-export function readByThem(
-    client: Pick<OpenChat, "messageIsReadByThem">,
-    chat: ChatSummary,
-    msg: Pick<Message, "messageIndex" | "messageId">,
-    unconfirmedReadByThem: { has(messageId: bigint): boolean },
-): boolean {
-    return (
-        chat.kind === "direct_chat" &&
-        (client.messageIsReadByThem(chat.id, msg.messageIndex) ||
-            unconfirmedReadByThem.has(msg.messageId))
-    );
 }

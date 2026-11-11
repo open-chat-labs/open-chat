@@ -13,6 +13,8 @@ import {
     botOwnerCandidates,
     buildUsernameList,
     compareUsername,
+    directChatStatus,
+    directChatSubtitle,
     directChatUsers,
     isDeletedWebhook,
     missingUserIds,
@@ -273,5 +275,58 @@ describe("deleted webhooks", () => {
 
     test("nothing is concluded without the chat's webhooks", () => {
         expect(isDeletedWebhook("gone", undefined, webhookUserIds, true)).toBe(false);
+    });
+});
+
+describe("what a DM's header says about the other person", () => {
+    // the keys and values the line is worded from, so the spec doesn't hang on the copy
+    const formatter = (id: string, options?: { values?: Record<string, unknown> }) =>
+        options?.values === undefined ? id : `${id}(${JSON.stringify(options.values)})`;
+    const person = { kind: "user" as const, suspended: false };
+    const minute = 60 * 1000;
+    const at = 10 * 24 * 60 * minute;
+
+    test("a suspended account says so, a bot nothing, anyone else when they were last online", () => {
+        expect(directChatStatus({ kind: "user", suspended: true })).toBe("suspended");
+        expect(directChatStatus({ kind: "bot", suspended: false })).toBe("bot");
+        expect(directChatStatus(person)).toBe("last_online");
+        // someone not loaded yet
+        expect(directChatStatus(undefined)).toBe("last_online");
+    });
+
+    test("invariant 3: a suspended account shows Account suspended, never a last-seen time", () => {
+        const suspended = { kind: "user" as const, suspended: true };
+        expect(directChatSubtitle(formatter, suspended, at, at - 5 * minute)).toEqual({
+            text: "accountSuspended",
+            online: false,
+        });
+        expect(directChatSubtitle(formatter, suspended, at, at)).toEqual({
+            text: "accountSuspended",
+            online: false,
+        });
+    });
+
+    test("invariant 3: a bot, or a last-online of 0 or none, shows no line", () => {
+        const bot = { kind: "bot" as const, suspended: false };
+        const none = { text: "", online: false };
+        expect(directChatSubtitle(formatter, bot, at, at - 5 * minute)).toEqual(none);
+        expect(directChatSubtitle(formatter, person, at, 0)).toEqual(none);
+        expect(directChatSubtitle(formatter, person, at, undefined)).toEqual(none);
+    });
+
+    test("anyone else: online now under two minutes, else how long ago, as of now", () => {
+        expect(directChatSubtitle(formatter, person, at, at - minute)).toEqual({
+            text: "onlineNow",
+            online: true,
+        });
+        expect(directChatSubtitle(formatter, person, at, at - 5 * minute)).toEqual({
+            text: 'lastOnline({"duration":"durationMins({\\"duration\\":5})"})',
+            online: false,
+        });
+        // the app clock moves on, and the line with it
+        expect(directChatSubtitle(formatter, person, at + 55 * minute, at - 5 * minute)).toEqual({
+            text: 'lastOnline({"duration":"oneHour"})',
+            online: false,
+        });
     });
 });

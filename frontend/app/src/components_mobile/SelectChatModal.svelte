@@ -15,6 +15,7 @@
         allUsersStore,
         communitiesStore,
         favouritesStore,
+        formatLastOnlineDate,
         groupMembersLine,
         selectedChatIdStore,
         serverDirectChatsStore,
@@ -197,7 +198,7 @@
     ): Promise<string> {
         return client.getLastOnlineDate(chat.them.userId, now).then((lastOnline) => {
             if (lastOnline !== undefined && lastOnline !== 0) {
-                return client.formatLastOnlineDate($_, now, lastOnline)[0];
+                return formatLastOnlineDate($_, now, lastOnline)[0];
             } else {
                 return $_("offline");
             }

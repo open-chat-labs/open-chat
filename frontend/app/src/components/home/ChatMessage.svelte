@@ -2,9 +2,8 @@
 <script lang="ts">
     import { navigate } from "@utils/navigation";
     import Typing from "@shared_components/Typing.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, emojiReaction, type EnhancedReplyContext, extractTwitchEmbeds, iconSize, linkedAuthor, localUpdates, type Member, type Message, messageMenu, messageReplyContext, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, threadsFollowedByMeStore, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, chatSummariesStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, emojiReaction, type EnhancedReplyContext, extractTwitchEmbeds, iconSize, linkedAuthor, localUpdates, type Member, type Message, messageMenu, messageReadByThem, messageReplyContext, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, threadsFollowedByMeStore, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -166,13 +165,13 @@
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
     let botProfile: BotProfileProps | undefined = $state(undefined);
-    let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
-    let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
-
-    trackedEffect("read-by-them", () => {
-        if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
-            unconfirmedReadByThem.delete(msg.messageId);
-        }
+    // follows the selected chat (a DM's rows are always in it), so the ticks change as the server
+    // confirms them; a thread preview's row is in a group, which has none
+    let readByThem = $derived.by(() => {
+        const chat = chatIdentifiersEqual($selectedChatSummaryStore?.id, chatId)
+            ? $selectedChatSummaryStore
+            : chatSummariesStore.value.get(chatId);
+        return chat !== undefined && messageReadByThem(chat, msg, $unconfirmedReadByThem);
     });
 
     onMount(() => {

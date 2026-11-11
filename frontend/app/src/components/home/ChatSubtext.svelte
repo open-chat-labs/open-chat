@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "@client";
     import { allUsersStore } from "@client";
-    import { directChatStatus } from "@src/logic/conversation/chatStatus";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
+    import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { now } from "../../stores/time";
     import Translatable from "@shared_components/Translatable.svelte";
     import DisappearLabel from "./DisappearLabel.svelte";
@@ -20,21 +20,13 @@
 
     let { chat, clickableMembers = false, onMembersClick }: Props = $props();
 
-    let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
-    let status = $derived(directChatStatus($allUsersStore.get(userId)));
-    let subtext = $derived(status === "suspended" ? $_("accountSuspended") : "");
-    let checkLastOnline = $derived(status === "last_online" && chat.kind === "direct_chat");
-
-    $effect(() => {
-        if (checkLastOnline && chat.kind === "direct_chat") {
-            client.getLastOnlineDate(chat.them.userId, $now).then((lastOnline) => {
-                if (lastOnline !== undefined && lastOnline !== 0) {
-                    [subtext] = client.formatLastOnlineDate($_, $now, lastOnline);
-                } else {
-                    subtext = "";
-                }
-            });
-        }
+    // a DM's line: when they were last online, or that the account is suspended (LastOnline)
+    const lastOnline = new LastOnline(client, {
+        userId: () => (chat.kind === "direct_chat" ? chat.them.userId : undefined),
+        user: () =>
+            chat.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
+        now: () => $now,
+        formatter: () => $_,
     });
 
     function click() {
@@ -49,7 +41,7 @@
         {#if chat.eventsTTL !== undefined}
             <DisappearLabel ttl={chat.eventsTTL} />
         {/if}
-        {subtext}
+        {lastOnline.text}
     </div>
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
     <div class="wrapper">

@@ -1,10 +1,11 @@
-import type { ChatSummary, EventWrapper, Message } from "@client";
+import type { ChatSummary, EventWrapper, Message, UserGroupDetails, UserSummary } from "@client";
 import {
     conversationContext,
     mediaHeld,
     messageRow,
     messageStatus,
     senderColor,
+    showsSenderName,
     untilNextDay,
     withFields,
     type ConversationContext,
@@ -15,6 +16,7 @@ const ctx: ConversationContext = {
     you: "You",
     userName: (id) => ({ alice: "Alice", bob: "Bob" })[id] ?? id,
     contentText: (content) => `[${content.kind}]`,
+    mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
@@ -85,6 +87,18 @@ describe("a message's status", () => {
     });
 });
 
+describe("a run's sender name", () => {
+    test("shows once, at the run's start, for own runs and others' alike, outside a DM", () => {
+        expect(showsSenderName(true, false)).toBe(true);
+        expect(showsSenderName(false, false)).toBe(false);
+    });
+
+    test("never shows in a DM", () => {
+        expect(showsSenderName(true, true)).toBe(false);
+        expect(showsSenderName(false, true)).toBe(false);
+    });
+});
+
 describe("a message row", () => {
     test("is someone else's text, with its sender, id and time", () => {
         expect(messageRow(message(), "sent", ctx)).toMatchObject({
@@ -95,10 +109,11 @@ describe("a message row", () => {
         });
     });
 
-    test("is the reader's own as sent, by You", () => {
-        expect(messageRow(message({ sender: "me" }), "sending", ctx)).toMatchObject({
+    test("is the reader's own as sent, under their own name", () => {
+        const named = { ...ctx, userName: (id: string) => (id === "me" ? "Ivan" : id) };
+        expect(messageRow(message({ sender: "me" }), "sending", named)).toMatchObject({
             side: "sent",
-            senderName: "You",
+            senderName: "Ivan",
             message: { status: "sending" },
         });
     });
@@ -140,6 +155,17 @@ describe("a message row", () => {
             quoteText: "earlier",
         });
         expect(messageRow(reply("me"), "sent", ctx).message).toMatchObject({ quoteName: "You" });
+    });
+
+    test("a quote shows its mentions as the @names typed, not as @UserId(…)", () => {
+        const reply = message({
+            repliesTo: {
+                kind: "rehydrated_reply_context",
+                senderId: "bob",
+                content: { kind: "text_content", text: "ask @UserId(alice)" },
+            } as Message["repliesTo"],
+        });
+        expect(messageRow(reply, "sent", ctx).message).toMatchObject({ quoteText: "ask @alice" });
     });
 
     test("has its thread's reply count, last reply and the faces of those in it", () => {
@@ -594,6 +620,7 @@ describe("a conversation's context", () => {
             me: "me",
             formatter: (key) => String(key),
             users: new Map(),
+            userGroups: new Map(),
             webhooks: new Map(),
             webhookIds: new Set<string>(),
             detailsLoaded: true,
@@ -616,5 +643,43 @@ describe("a conversation's context", () => {
         expect(asked).toEqual([[4, 6]]);
         // a thread the chat doesn't list as followed
         expect(ctx.unreadInThread(5)).toBe(0);
+    });
+
+    test("shows a quote's mentions as the users' and user groups' @names", () => {
+        const ctx = conversationContext({
+            client: {
+                displayName: () => "",
+                getContentAsText: () => "",
+                toShortTimeString: () => "",
+                formatMessageDate: () => "",
+                isChatReadOnly: () => false,
+                unreadThreadMessageCount: () => 0,
+            },
+            chat: undefined,
+            me: "me",
+            formatter: (key) => String(key),
+            users: new Map([["a1", { userId: "a1", username: "alice" } as UserSummary]]),
+            userGroups: new Map([[7, { id: 7, name: "mods" } as UserGroupDetails]]),
+            webhooks: new Map(),
+            webhookIds: new Set<string>(),
+            detailsLoaded: true,
+            lowBandwidth: false,
+            revealed: () => false,
+            claimant: {
+                previewingOrLapsed: false,
+                diamond: false,
+                lifetimeDiamond: false,
+                streak: 0,
+                chitEarned: 0,
+                accountCreated: 0,
+            },
+            tokens: new Map(),
+            rates: () => new Map(),
+            face: (userId) => userId,
+            threads: true,
+        });
+        expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
+            "hi @alice, @mods and @UserId(zz)",
+        );
     });
 });

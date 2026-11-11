@@ -37,6 +37,7 @@
         isPrivateCommunityPreview,
         localUpdates,
         messageContextsEqual,
+        messageReadByThem,
         maxMediaSizes,
         messageIndexStore,
         messagePermissionsForSelectedChatStore,
@@ -65,6 +66,7 @@
         threadsFollowedByMeStore,
         throttleDeadline,
         TimelineGrouper,
+        toLongDatetimeString,
         translationsStore,
         unconfirmedReadByThem,
         unconfirmedStore,
@@ -155,7 +157,7 @@
         composerTransfer,
         type Translate,
     } from "../builders/builders.adapter";
-    import { messageSwipeLeft } from "@src/utils/messageSwipe";
+    import { webMessageSwipeLeft } from "@src/utils/messageSwipe";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
     import { getProxyAdjustedBlobUrl, microphoneDenied, saveFile } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
@@ -179,8 +181,8 @@
         isMedia,
         mediaHeld,
         messageStatus,
-        readByThem,
         senderColor,
+        showsSenderName,
         untilNextDay,
         withFields,
         type ConversationContext,
@@ -205,6 +207,7 @@
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { askToSignIn, signInFirst } from "@src/logic/auth/guestPass";
     import { observeRead } from "@src/core/observeRead";
+    import { stickyDateTop } from "@src/core/stickyDateTop";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import {
         FirstUnread,
@@ -307,6 +310,7 @@
             openThread,
             formatter: $_,
             users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
             webhooks: $selectedChatWebhooksStore,
             webhookIds: $webhookUserIdsStore,
             detailsLoaded: $selectedServerChatStore !== undefined,
@@ -806,7 +810,7 @@
         return messageStatus({
             failed,
             accepted: args.isAccepted($unconfirmedStore, evt),
-            readByThem: readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+            readByThem: messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
         });
     }
 
@@ -846,6 +850,26 @@
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
     }
 
+    // the day of the messages at the top of the list, pinned there while it scrolls through that
+    // day (the list says which: VirtualChatList's sticky date), as web/05 asks and the old lists
+    // do. Where it sits is core/stickyDateTop's, as native's. The list hands the day back to its
+    // own pill while that pill's row starts less than 32px above where it's told the pinned one
+    // is; a day's pill sits 16px into its row (.date), so it's told 16px lower, and the two swap
+    // just as the day's own pill reaches the pinned one's place. That pill, scrolled on up under
+    // the pinned one, is hidden, so a date never shows twice
+    const STICKY_HANDOFF_OFFSET = 16;
+    let stickyTop = $state<number>();
+    let stickyDate = $state<bigint>();
+
+    // the chat's first mention of the reader they haven't read, which the list goes to, as the old
+    // CurrentChat works it out: again as messages are read, so it goes once that one is. None in
+    // a thread or where the chat is read only, as in the old trees
+    const firstUnreadMention = $derived.by(() => {
+        if (thread !== undefined || readonly) return undefined;
+        void $messagesRead;
+        return client.getFirstUnreadMention(chat);
+    });
+
     function messagesFor(
         row: MessageRow,
         body: Snippet,
@@ -853,7 +877,7 @@
         evt: EventWrapper<Message>,
         offers: RowOffers,
     ): GroupMessage[] {
-        const key = `${offers.menu}|${offers.swipeLeft}|${offers.retry !== undefined}`;
+        const key = `${offers.menu}|${offers.retry !== undefined}`;
         const kept = groupMessages.get(row);
         if (kept?.offers === key) return kept.messages;
         const where = rowContext(evt);
@@ -870,7 +894,6 @@
                 ...threadLink(evt),
                 ...quoteFor(row.message, quoted, goToQuote),
                 menu: offers.menu,
-                swipeLeft: offers.swipeLeft,
             }),
         ];
         groupMessages.set(row, { offers: key, messages });
@@ -903,10 +926,9 @@
 
     type MenuPos = Parameters<NonNullable<ComponentProps<typeof MessageGroup>["onMessageMenu"]>>[1];
 
-    // what a row's message offers that's part of how it shows (its menu, its swipe, Retry)
+    // what a row's message offers that's part of how it shows (its menu, Retry)
     type RowOffers = {
         menu: boolean;
-        swipeLeft: "edit" | "reply" | "forward" | undefined;
         retry: (() => void) | undefined;
     };
 
@@ -943,7 +965,6 @@
     ): RowOffers {
         return {
             menu: offered.menu,
-            swipeLeft: messageSwipeLeft(evt.event.sender === me, offered.actions),
             retry: offered.actions.has("retry") ? () => run(context, "retry", evt, failed) : undefined,
         };
     }
@@ -1300,6 +1321,16 @@
         <div class="state"><Spinner /></div>
     {:else}
         <div class="messages">
+            <!-- web/05: the date of the messages at the top stays pinned there, in the inline
+                 dates' pill -->
+            <div
+                class="sticky-date"
+                use:stickyDateTop={(top) => (stickyTop = top + STICKY_HANDOFF_OFFSET)}
+            >
+                {#if stickyDate !== undefined}
+                    <UnreadDivider tone="neutral" label={dateLabel(stickyDate)} />
+                {/if}
+            </div>
             <ChatEventList
                 bind:this={list}
                 rootSelector={thread === undefined ? "conversation" : "thread"}
@@ -1310,21 +1341,32 @@
                 maintainScroll={thread === undefined}
                 visible
                 bind:initialised
+                stickyDateElTop={stickyTop}
+                bind:stickyDateTimestamp={stickyDate}
                 viewportClass="message-list"
             >
                 {#snippet row(item, args)}
                     {@render eventRow(item, args)}
                 {/snippet}
-                {#snippet fabs({ showGoToBottom, scrollToLast })}
-                    {#if showGoToBottom}
-                        <div class="to-bottom">
+                {#snippet fabs({ showGoToBottom, scrollToLast, scrollToMention })}
+                    <!-- TODO(design): no go-to-mention button in the design or web/05; the old
+                         lists', as go-to-latest -->
+                    <div class="fabs">
+                        {#if firstUnreadMention !== undefined}
+                            <IconButton
+                                icon="at"
+                                label={$_("goToFirstMention")}
+                                onClick={() => scrollToMention(firstUnreadMention)}
+                            />
+                        {/if}
+                        {#if showGoToBottom}
                             <IconButton
                                 icon="arrow-down"
                                 label={$_("goToLatestMessage")}
                                 onClick={scrollToLast}
                             />
-                        </div>
-                    {/if}
+                        {/if}
+                    </div>
                 {/snippet}
             </ChatEventList>
         </div>
@@ -1333,7 +1375,9 @@
 
 {#snippet eventRow(item: FlatChatItem, args: ChatEventListArgs)}
     {#if item.kind === "timeline_date"}
-        <div class="date">
+        <!-- the day pinned at the top is this one's: this one, scrolled up under it, isn't
+             shown too -->
+        <div class="date" class:pinned={stickyDate === item.timestamp}>
             <UnreadDivider tone="neutral" label={dateLabel(item.timestamp)} />
         </div>
     {:else if item.kind === "event"}
@@ -1348,7 +1392,7 @@
             {@const actions = offered.actions}
             {@const where = rowContext(evt)}
             {@const offers = rowOffers(where, evt, failed, offered)}
-            {@const swipeLeft = offers.swipeLeft}
+            {@const swipeLeft = webMessageSwipeLeft(actions)}
             <!-- a text message's text as the old UI renders it: markdown, mentions, links, custom
                  emoji (a lone emoji is the bubble's own, large) -->
             {#snippet body()}
@@ -1376,7 +1420,7 @@
                     senderName={row.senderName}
                     color={row.color}
                     showAvatar={item.first}
-                    showName={item.first && row.side === "received" && chat.kind !== "direct_chat"}
+                    showName={showsSenderName(item.first, chat.kind === "direct_chat")}
                     avatarSpace
                     endsRun={item.last}
                     onSenderClick={(el) => el.dispatchEvent(profileClickedEvent(msg.sender))}
@@ -1451,9 +1495,14 @@
         {:else if isTextEvent(evt.event)}
             {@const text = timelineEventText(evt.event, eventCtx)}
             {#if text !== undefined}
+                <!-- TODO(design): no event line in the design or web/05; the old UI's, with its
+                     date and time under it -->
                 <div class="event">
                     <p class="event-line">
                         <Markdown suppressLinks {text} />
+                    </p>
+                    <p class="event-time">
+                        {toLongDatetimeString(new Date(Number(evt.timestamp)), $locale ?? "en")}
                     </p>
                 </div>
             {/if}
@@ -1672,6 +1721,10 @@
         padding-block-start: var(--space-16);
     }
 
+    .date.pinned {
+        visibility: hidden;
+    }
+
     /* the old UI's markdown, inside the bubble's own text: no outer spacing */
     .row :global(.markdown-wrapper > p:first-child),
     .row :global(.markdown-wrapper > ul:first-child),
@@ -1694,6 +1747,14 @@
         color: var(--ink-3);
     }
 
+    /* when it happened, smaller under it (the old UI's NonMessageEvent) */
+    .event-time {
+        margin: 0;
+        text-align: center;
+        font: var(--weight-regular) var(--text-xs) / 1.5 var(--font-sans);
+        color: var(--ink-3);
+    }
+
     /* the deleted messages' line, which shows them */
     .expand {
         all: unset;
@@ -1704,9 +1765,24 @@
         text-decoration: underline;
     }
 
-    .to-bottom {
+    /* go to the first unread mention, over go to the latest message */
+    .fabs {
         position: absolute;
         inset-block-end: var(--space-16);
         inset-inline-end: var(--message-list-gutter, var(--space-24));
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-8);
+    }
+
+    /* the day of the messages at the top of the list, over them, where a day's own pill sits in
+       its row (16px down); none while that pill is below it (the list hands over to it) */
+    .sticky-date {
+        position: absolute;
+        z-index: 1;
+        inset-block-start: var(--space-16);
+        inset-inline: 0;
+        padding-inline: var(--message-list-gutter, var(--space-24));
+        pointer-events: none;
     }
 </style>

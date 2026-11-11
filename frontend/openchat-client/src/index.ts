@@ -35,6 +35,7 @@ export {
     getMessageText,
     isPreviewing,
     isPreviewingOrLapsed,
+    messageReadByThem,
     subrangesCover,
     TimelineGrouper,
     userCanDeleteMessage,
@@ -55,7 +56,11 @@ export {
 export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
+    directChatStatus,
+    directChatSubtitle,
+    type DirectChatSubtitle,
     directChatUsers,
+    formatLastOnlineDate,
     isDeletedWebhook,
     lastOnlineStatus,
     userBadges,
@@ -285,6 +290,7 @@ export {
     toDateString,
     toDatetimeString,
     toDayString,
+    toLongDatetimeString,
     toMonthString,
     toMonthYearString,
 } from "./utils/date";

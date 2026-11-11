@@ -22,6 +22,8 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
+    DirectChatIdentifier,
+    DirectChatSummary,
     EventWrapper,
     ExpiredEventsRange,
     GroupChatSummary,
@@ -288,9 +290,95 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     return chat.minVisibleMessageIndex;
 }
 
-export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): boolean {
-    if (chat.kind !== "direct_chat") return true;
-    return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
+/** What a message's read-by-them check reads from its chat: a DM's `readByThemUpTo`. */
+export type ReadByThemChat = { kind: ChatSummary["kind"]; readByThemUpTo?: number };
+
+function confirmedReadByThem(chat: ReadByThemChat, messageIndex: number): boolean {
+    return (
+        chat.kind === "direct_chat" &&
+        chat.readByThemUpTo !== undefined &&
+        chat.readByThemUpTo >= messageIndex
+    );
+}
+
+/**
+ * A read receipt from the other person in a DM over WebRTC that the DM's `readByThemUpTo` doesn't
+ * confirm yet: the DM and the index its message had when the receipt came in.
+ */
+export type UnconfirmedReadReceipt = { chatId: DirectChatIdentifier; messageIndex: number };
+
+/**
+ * Whether the other person in a DM has read one of its messages, for its ticks in every tree: as
+ * the chat says (`readByThemUpTo` covers it), or as a read receipt from them over WebRTC says, not
+ * yet confirmed (`unconfirmedReadByThem`). Never in a group or channel.
+ */
+export function messageReadByThem(
+    chat: ReadByThemChat,
+    msg: Pick<Message, "messageIndex" | "messageId">,
+    unconfirmedReadByThem: ReadonlyMap<bigint, UnconfirmedReadReceipt>,
+): boolean {
+    return (
+        chat.kind === "direct_chat" &&
+        (confirmedReadByThem(chat, msg.messageIndex) || unconfirmedReadByThem.has(msg.messageId))
+    );
+}
+
+/**
+ * What to keep of a read receipt that came in over WebRTC for the selected DM, whose loaded
+ * messages are `events`: its message's DM and index, or nothing when there's nothing to wait for.
+ * That's when the message isn't loaded (it has no ticks to show, and the DM's `readByThemUpTo`
+ * covers it by the time it is) or the DM already confirms it (a receipt that arrives late).
+ */
+export function unconfirmedReadReceipt(
+    chat: Pick<DirectChatSummary, "id" | "readByThemUpTo">,
+    events: readonly EventWrapper<ChatEvent>[],
+    messageId: bigint,
+): UnconfirmedReadReceipt | undefined {
+    for (const { event } of events) {
+        if (event.kind !== "message" || event.messageId !== messageId) continue;
+        return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= event.messageIndex
+            ? undefined
+            : { chatId: chat.id, messageIndex: event.messageIndex };
+    }
+    return undefined;
+}
+
+/**
+ * The read receipts not yet confirmed that an update to the DMs makes redundant, which the client
+ * drops as it applies the update: those whose DM's `readByThemUpTo` now covers their message, for
+ * every updated DM (selected or not), and those whose DM is gone. A message still loaded in `events`
+ * (the selected chat's) is checked at its index there, which replaces the provisional index a
+ * message not yet confirmed by the server had when its receipt came in.
+ */
+export function readByThemNowConfirmed(
+    updated: readonly Pick<DirectChatSummary, "id" | "readByThemUpTo">[],
+    removedUserIds: readonly string[],
+    events: readonly EventWrapper<ChatEvent>[],
+    unconfirmedReadByThem: ReadonlyMap<bigint, UnconfirmedReadReceipt>,
+): bigint[] {
+    if (unconfirmedReadByThem.size === 0) return [];
+    const upTo = new Map<string, number>();
+    for (const chat of updated) {
+        if (chat.readByThemUpTo !== undefined) upTo.set(chat.id.userId, chat.readByThemUpTo);
+    }
+    const removed = new Set(removedUserIds);
+    if (upTo.size === 0 && removed.size === 0) return [];
+    const loadedIndex = new Map<bigint, number>();
+    for (const { event } of events) {
+        if (event.kind === "message" && unconfirmedReadByThem.has(event.messageId)) {
+            loadedIndex.set(event.messageId, event.messageIndex);
+        }
+    }
+    const confirmed: bigint[] = [];
+    for (const [messageId, receipt] of unconfirmedReadByThem) {
+        const userId = receipt.chatId.userId;
+        const readUpTo = upTo.get(userId);
+        const messageIndex = loadedIndex.get(messageId) ?? receipt.messageIndex;
+        if (removed.has(userId) || (readUpTo !== undefined && readUpTo >= messageIndex)) {
+            confirmed.push(messageId);
+        }
+    }
+    return confirmed;
 }
 
 export function getMembersString(

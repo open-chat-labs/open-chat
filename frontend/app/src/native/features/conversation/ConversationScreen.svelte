@@ -38,8 +38,8 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
-        lastOnlineStatus,
         messageIndexStore,
+        messageReadByThem,
         messagesRead,
         selectedChatBlockedUsersStore,
         selectedChatDraftMessageStore,
@@ -49,6 +49,7 @@
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
         selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
         selectedServerChatStore,
         TimelineGrouper,
         translationsStore,
@@ -82,6 +83,7 @@
     import Markdown from "@src/core/Markdown.svelte";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
+    import { stickyDateTop } from "@src/core/stickyDateTop";
     import {
         canSetDisappearing,
         ChatDisappearing,
@@ -90,7 +92,6 @@
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
-    import { directChatStatus } from "@src/logic/conversation/chatStatus";
     import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
     import {
         quoteFor,
@@ -101,6 +102,7 @@
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
+    import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
@@ -108,7 +110,6 @@
         isMedia,
         mediaHeld,
         messageStatus,
-        readByThem,
         senderColor,
         untilNextDay,
         withFields,
@@ -234,6 +235,7 @@
             me,
             formatter: $_,
             users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
             webhooks: $selectedChatWebhooksStore,
             webhookIds: $webhookUserIdsStore,
             detailsLoaded: $selectedServerChatStore !== undefined,
@@ -280,22 +282,12 @@
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
 
     // a DM: when they were last online (a suspended account says so; a bot, nothing)
-    const dmStatus = $derived(directChatStatus(them));
-    const dmUserId = $derived(chat?.kind === "direct_chat" ? chat.them.userId : undefined);
-    let lastOnline = $state<number>();
-    $effect(() => {
-        const userId = dmUserId;
-        lastOnline = undefined;
-        if (userId === undefined || dmStatus !== "last_online") return;
-        let current = true;
-        void client.getLastOnlineDate(userId, Date.now()).then((at) => {
-            if (current) lastOnline = at;
-        });
-        return () => {
-            current = false;
-        };
+    const dmLine = new LastOnline(client, {
+        userId: () => (chat?.kind === "direct_chat" ? chat.them.userId : undefined),
+        user: () => them,
+        now: () => $now,
+        formatter: () => $_,
     });
-    const online = $derived(lastOnlineStatus($_, $now, lastOnline));
 
     const sub = $derived.by(() => {
         if (chat === undefined) return "";
@@ -307,8 +299,7 @@
                 },
             });
         }
-        if (dmStatus === "suspended") return $_("accountSuspended");
-        return dmStatus === "last_online" ? online[0] : "";
+        return dmLine.text;
     });
 
     const avatarColor = $derived(
@@ -871,7 +862,8 @@
             failed,
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
-                chat !== undefined && readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+                chat !== undefined &&
+                messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
         });
     }
 
@@ -892,22 +884,10 @@
 
     // the day of the messages at the top of the list, pinned there while it scrolls through that
     // day (the list says which: VirtualChatList's sticky date), as the old app's; the day's own pill
-    // takes over as it passes under it
-    let stickyEl = $state<HTMLElement>();
+    // takes over as it passes under it. Where it sits is core/stickyDateTop's, as the web's: again
+    // whenever what's above the list changes (the search bar, the live call's strip)
     let stickyTop = $state<number>();
     let stickyDate = $state<bigint>();
-    $effect(() => {
-        const el = stickyEl;
-        const area = el?.parentElement;
-        if (el === undefined || area == null) return;
-        // where it is on the screen, again whenever what's above the list changes (the search bar,
-        // the live call's strip)
-        const measure = () => (stickyTop = el.getBoundingClientRect().top);
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(area);
-        return () => observer.disconnect();
-    });
 
     function dateLabel(timestamp: bigint): string {
         void day;
@@ -1135,7 +1115,7 @@
                 <Avatar
                     size={36}
                     color={avatarColor}
-                    online={chat?.kind === "direct_chat" && online[1]}
+                    online={dmLine.online}
                 />
             {/snippet}
         </NativePageHeader>
@@ -1178,7 +1158,11 @@
             style:--group-gap="8px"
             onmousedown={keepFocus}
         >
-            <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
+            <div
+                class="sticky-date"
+                class:shown={stickyDate !== undefined}
+                use:stickyDateTop={(top) => (stickyTop = top)}
+            >
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
                 {/if}

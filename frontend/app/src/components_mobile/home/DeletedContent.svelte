@@ -4,11 +4,12 @@
         OPENCHAT_BOT_USER_ID,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        toLongDatetimeString,
         type DeletedContent,
         type OpenChat,
     } from "@client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@src/core/Markdown.svelte";
@@ -24,9 +25,7 @@
     let { content, undeleting }: Props = $props();
 
     let date = $derived(new Date(Number(content.timestamp)));
-    let timestampStr = $derived(
-        `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
-    );
+    let timestampStr = $derived(toLongDatetimeString(date, $locale ?? "en"));
     let username = $derived(
         client.getDisplayName(
             content.deletedBy,

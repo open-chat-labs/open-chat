@@ -14,11 +14,12 @@
         percentageOfVote,
         pollView,
         publish,
+        toLongDatetimeString,
         totalVotes,
-        type OpenChat,
         type PollContent,
     } from "@client";
-    import { getContext, type Snippet } from "svelte";
+    import { type Snippet } from "svelte";
+    import { locale } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
@@ -26,8 +27,6 @@
     import ChartBoxOutline from "svelte-material-icons/ChartBoxOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircle.svelte";
     import CheckboxBlankCircleOutline from "svelte-material-icons/CheckboxBlankCircleOutline.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         content: PollContent;
@@ -203,9 +202,7 @@
                 {:else if date}
                     <Translatable
                         resourceKey={i18nKey("poll.pollEnds", {
-                            end: `${client.toLongDateString(date)} @ ${client.toShortTimeString(
-                                date,
-                            )}`,
+                            end: toLongDatetimeString(date, $locale ?? "en"),
                         })} />
                 {/if}
             </Caption>

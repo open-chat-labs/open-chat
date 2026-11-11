@@ -675,16 +675,17 @@ import {
     makeRtcConnections,
     mergeSendMessageResponse,
     mergeServerEvents,
-    messageIsReadByThem,
     metricsEqual,
     newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
+    readByThemNowConfirmed,
     rtcMessageRecipients,
     sameUser,
     serialiseMessageForRtc,
     startTyping,
     stopTyping,
+    unconfirmedReadReceipt,
     updateExistingMessages,
 } from "./utils/chat";
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
@@ -829,7 +830,6 @@ import { addQueryStringParam } from "./utils/url";
 import {
     buildReducedProfileDataList,
     buildUsernameList,
-    formatLastOnlineDate,
     isDeletedWebhook,
     missingUserIds,
     shouldRestartForNewUserId,
@@ -4581,7 +4581,6 @@ export class OpenChat {
     nullUser = nullUser;
     toTitleCase = toTitleCase;
     formatTimeRemaining = formatTimeRemaining;
-    formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUserBackgroundUrl = buildUserBackgroundUrl;
     buildUsernameList = buildUsernameList;
@@ -5802,11 +5801,6 @@ export class OpenChat {
             return ranges[0].high;
         }
         return undefined;
-    }
-
-    messageIsReadByThem(chatId: ChatIdentifier, messageIndex: number): boolean {
-        const chat = chatSummariesStore.value.get(chatId);
-        return chat !== undefined && messageIsReadByThem(chat, messageIndex);
     }
 
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
@@ -7359,9 +7353,19 @@ export class OpenChat {
             case "remote_user_sent_message":
                 this.#remoteUserSentMessage(fromChatId, msg, events, threadRootMessageIndex);
                 break;
-            case "remote_user_read_message":
-                unconfirmedReadByThem.add(BigInt(msg.messageId));
+            case "remote_user_read_message": {
+                // receipts come in for the selected chat only, whose messages are the events
+                const chat = selectedChatSummaryStore.value;
+                const messageId = BigInt(msg.messageId);
+                const receipt =
+                    chat?.kind === "direct_chat"
+                        ? unconfirmedReadReceipt(chat, events, messageId)
+                        : undefined;
+                if (receipt !== undefined) {
+                    unconfirmedReadByThem.add(messageId, receipt);
+                }
                 break;
+            }
         }
     }
 
@@ -9883,6 +9887,15 @@ export class OpenChat {
                 }
                 return map;
             });
+            // the read receipts these DMs now confirm, selected or not, are no longer needed
+            unconfirmedReadByThem.deleteMany(
+                readByThemNowConfirmed(
+                    directChatsAddedUpdated,
+                    directChatsRemoved,
+                    eventsStore.value,
+                    unconfirmedReadByThem.value,
+                ),
+            );
         }
         if (groupsAddedUpdated.length > 0 || groupsRemoved.length > 0) {
             serverGroupChatsStore.update((map) => {

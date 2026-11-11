@@ -236,7 +236,7 @@ describe("the text an edit starts from", () => {
         expect(edit("see https://example.com#LINK_REMOVED")).toBe("see https://example.com");
     });
 
-    test("is a captioned message's caption, and nothing for what has no text", () => {
+    test("is a captioned message's caption with its mentions as typed, nothing without text", () => {
         const image = {
             kind: "image_content",
             height: 1,
@@ -245,6 +245,9 @@ describe("the text an edit starts from", () => {
             mimeType: "image/png",
         } as const;
         expect(editStartText({ ...image, caption: "nice" }, users, groups)).toBe("nice");
+        expect(editStartText({ ...image, caption: "for @UserId(u1)" }, users, groups)).toBe(
+            "for @alice",
+        );
         expect(editStartText(image, users, groups)).toBe("");
         expect(
             editStartText(

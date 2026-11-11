@@ -945,10 +945,13 @@ design export needs. Each entry says where it came up.
   has a menu (by default all but a deleted one; the app gives one to a deleted message it can
   reveal or undelete, and none in a read-only chat). The hover bar shows the quick reactions and
   the 🙂 only with `onReact` / `onReactPicker`, and Reply / Edit only with `onReply` / `onEdit`
-  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe (the
-  mobile app's `messageSwipeAction`: right replies, left edits your own or forwards someone
-  else's), where the design's own text messages swiped right to edit. The bar's position still
-  assumes its full width (`BAR_W`).
+  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe; the
+  web no longer sets it (L2): it keeps the group's own mapping, as web/05 says (others' messages:
+  right replies, left forwards; your own text: right edits, left replies), and hands
+  `onSwipeLeft` only a forward, where the message can be forwarded (`webMessageSwipeLeft`). The
+  old mobile tree keeps its rule (`messageSwipeAction`: right replies, left edits your own or
+  forwards someone else's), and native sets `swipeLeft` for its own (left edits your own). The
+  bar's position still assumes its full width (`BAR_W`).
 - **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
   links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
   place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).
@@ -2084,12 +2087,35 @@ design export needs. Each entry says where it came up.
   link previews, translations and tips (phase 5) aren't wired; the message menu, reactions and
   swipes are 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
   (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
-  `TODO(design)`), and "N messages deleted" expands them. The old lines' date and time under each
-  event isn't shown yet (it's duplicated in both old `NonMessageEvent`s, to extract). The header has no back button (`ConversationHeader` has
-  none; narrow layouts don't show the shell yet), no last-seen line for a DM, and its menu does
-  favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
-  old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
-  Own messages show no name (the design's "You" would be the lower-case app string).
+  `TODO(design)`), and "N messages deleted" expands them. Each event's line has its date and time
+  under it, as in the old trees (`toLongDatetimeString` in `@client`, which both old
+  `NonMessageEvent`s use too; L2), smaller in `--ink-3`; the aggregated joins, deletions and role
+  changes have none, as in the old trees. The web plan's conversation (`web/05-conversation.md`)
+  doesn't cover these lines, so they stay the old UI's (`TODO(design)`). The header has no back
+  button (`ConversationHeader` has none; narrow layouts don't show the shell yet), and its menu does
+  favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. A
+  DM's header has the old last-seen line (L2: `LastOnline` in `logic/conversation`, over
+  `directChatSubtitle` in `@client`, shared with the old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
+  under two minutes; web/05's header doesn't say what that line says, so it's the old words
+  (`TODO(design)`). Own runs show the reader's own name over them in groups and channels, as
+  others' runs do (display name, else username; once per run, at its start, in `--ink-3`), and
+  no name in a DM, where neither side has one (`showsSenderName` in `logic/conversation/messageRow`,
+  L2, at the user's request; web/05 doesn't say, and the design's "You" gives way to the name).
+- **Sticky date** (`features/conversation`, L2): as web/05 says ("Date pills stick: the date of
+  the messages at the top of the window stays pinned at the top of the conversation while
+  scrolling"), the list (a thread's too) pins the day of the messages at its top, in the inline
+  dates' pill (`UnreadDivider` neutral), over the messages, as both old lists do: VirtualChatList
+  says which day (`stickyDateTimestamp`), at the height `core/stickyDateTop` measures, which
+  native's conversation uses too. It's the day's own pill until that reaches the pinned one's
+  place, then the pinned one, with the day's own hidden as it scrolls on up under it, so a date
+  never shows twice (the list's hand-off is told the pinned pill's place 16px lower, the 16px a
+  day's pill sits into its row). One "Today" pill; the Unread divider doesn't stick.
+- **Go to first mention** (`features/conversation`, L2; web/05 doesn't cover it: `TODO(design)`).
+  An @ button over go-to-latest goes to the chat's first unread mention (`IconButton` "at", as
+  go-to-latest is drawn; the old ones were round fabs with a bold "@"), and goes once that mention
+  is read; none in a thread or a read-only chat, as in the old trees. Not carried over: the old
+  lists' unread count on go-to-latest (shown even when at the bottom), and the old threads'
+  go-to-top button.
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
   `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
@@ -2330,7 +2356,10 @@ design export needs. Each entry says where it came up.
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
   as the old entries started it (`editStartText`, logic/composer, which both old entries now
   call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
-  out, a caption for a captioned message; 5c). Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  out, a caption for a captioned message, its mentions as typed too; 5c). The quoted text above
+  it, an edit's or a reply's, shows its mentions the same way (`quoteText` in
+  `logic/conversation/messageRow`, through `mentionsAsTyped` in `@shared`, L2), as the bubbles'
+  reply quotes do, where the old trees' Markdown shows them as `@username`. Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
   private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
   saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;

@@ -20,7 +20,9 @@
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
+    import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
+    import { now } from "@src/stores/time";
     import { headerMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
 
@@ -42,6 +44,20 @@
               : chat.name,
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
+
+    // a DM's line under the name: when the other person was last online, following the app clock
+    // ("Online now", "Last online 5 minutes ago"), or that their account is suspended; nothing for
+    // a bot (LastOnline, as the old trees' ChatSubtext). TODO(design): web/05 doesn't say
+    // what the presence line says; the old words
+    const them = $derived(
+        chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
+    );
+    const dmLine = new LastOnline(client, {
+        userId: () => (chat?.kind === "direct_chat" ? chat.them.userId : undefined),
+        user: () => them,
+        now: () => $now,
+        formatter: () => $_,
+    });
 
     const headerKind = $derived(
         chat?.kind === "direct_chat" ? "user" : chat?.kind === "group_chat" ? "group" : "channel",
@@ -104,6 +120,8 @@
                       ? "Public"
                       : "Private"}
                 memberCount={chat.kind === "direct_chat" ? 0 : chat.memberCount}
+                online={dmLine.online}
+                presence={dmLine.text}
                 statusFav={favourite}
                 statusMuted={chat.membership.notificationsMuted}
                 statusEveryone={chat.membership.atEveryoneMuted}
