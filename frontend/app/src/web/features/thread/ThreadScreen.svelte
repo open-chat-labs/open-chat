@@ -10,12 +10,14 @@
         i18nKey,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
+        selectedCommunityUserGroupsStore,
         threadsFollowedByMeStore,
         type OpenChat,
     } from "@client";
     import ThreadPanel from "@openchat/ui/src/features/components/ThreadPanel.svelte";
     import { dialogOpen } from "@openchat/ui/src/lib/behaviours/modal";
     import { followsThread } from "@src/logic/conversation/threadTimeline";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { signInFirstOrCancel } from "@src/logic/auth/guestPass";
     import { toastStore } from "@src/stores/toast";
     import { findUser } from "@src/utils/user";
@@ -51,6 +53,11 @@
             userName: (userId) =>
                 client.displayName(findUser(userId, $allUsersStore, $selectedChatWebhooksStore)),
             contentText: (content) => client.getContentAsText($_, content),
+            // the open chat's groups, as the conversation's own rows (conversationContext)
+            mentionsAsTyped: typedMentions({
+                users: $allUsersStore,
+                userGroups: $selectedCommunityUserGroupsStore,
+            }),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
         }),

@@ -11,6 +11,7 @@
         groupMembersLine,
         serverDirectChatsStore,
         serverGroupChatsStore,
+        selectedCommunityUserGroupsStore,
         type ChatIdentifier,
         type Message,
         type OpenChat,
@@ -21,6 +22,7 @@
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
     import { interpolate } from "@src/i18n/i18n";
     import { chatsToShareTo } from "@src/logic/share/chatsToShareTo";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { softKeyboard } from "../../aboveKeyboard.svelte";
@@ -48,8 +50,14 @@
         untrack(() => picks.show(shown));
     });
 
+    // its mentions as the @names typed, the open chat's groups as its rows (conversationContext)
     const preview = $derived(
-        message === undefined ? "" : client.getContentAsText($_, message.content),
+        message === undefined
+            ? ""
+            : typedMentions({
+                  users: $allUsersStore,
+                  userGroups: $selectedCommunityUserGroupsStore,
+              })(client.getContentAsText($_, message.content)),
     );
 
     const rows = $derived(

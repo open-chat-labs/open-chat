@@ -2509,6 +2509,16 @@ export class OpenChat {
                         if (event.userId !== undefined) {
                             userIds.add(event.userId);
                         }
+                        // and whoever its message mentions, so the feed can name them
+                        if (event.message !== undefined) {
+                            extractUserIdsFromMentions(
+                                getContentAsFormattedText(
+                                    (k) => k,
+                                    event.message.content,
+                                    cryptoLookup.value,
+                                ),
+                            ).forEach((id) => userIds.add(id));
+                        }
                     }
                     this.getMissingUsers(userIds);
                     // So the feed can show who the relayed messages are from
@@ -9560,6 +9570,9 @@ export class OpenChat {
                     userIds.add(sender);
                 }
                 userIds.add(chat.latestMessage.event.sender);
+            }
+            // whoever the latest message mentions, a DM's too, so the lists can name them
+            if (chat.latestMessage?.event !== undefined) {
                 this.extractUserIdsFromMentions(
                     getContentAsFormattedText(
                         (k) => k,

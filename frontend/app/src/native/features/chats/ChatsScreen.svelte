@@ -27,6 +27,7 @@
         pinnedChatsStore,
         routeForChatIdentifier,
         translationsStore,
+        userGroupSummariesStore,
         type ChatSummary,
         type DirectChatIdentifier,
         type LeaveOrDelete,
@@ -108,6 +109,9 @@
             formatter: $_,
             me: $currentUserIdStore,
             users: $allUsersStore,
+            // looked up only for a message that mentions a user group, so other rows don't
+            // follow the store
+            userGroups: { get: (id) => $userGroupSummariesStore.get(id) },
             translations: $translationsStore,
             bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
             pinned: $pinnedChatsStore.get(scope.kind) ?? [],
