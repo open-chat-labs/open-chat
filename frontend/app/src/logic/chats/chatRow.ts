@@ -109,8 +109,8 @@ export type RowContextInputs = Pick<
  * them, the latest message as `latestMessagePreview` has it with its mentions as the @names typed
  * (`typedMentions`; the old trees show it through Markdown instead), the list's dates, unread
  * counts, and, for a list that asks (`withMentionsAndAvatars`), the chats' own pictures
- * (`chatAvatarUrl`) and unread mentions. The counts read `messagesRead`'s state, so a list builds its context again as
- * that store changes.
+ * (`chatAvatarUrl`) and unread mentions. The counts read `messagesRead`'s state, so a list builds
+ * its context again as that store changes.
  */
 export function rowContext(
     client: Pick<

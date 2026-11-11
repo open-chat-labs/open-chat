@@ -66,7 +66,8 @@ const CHAT_RADIUS = "11px";
 /**
  * The followed threads, a group per chat in the order their threads come (`client.threadPreviews`
  * orders them), each thread its root (who wrote it, when, its text with its mentions as the @names
- * typed) with its reply count and unread replies. A thread whose chat isn't in the list (left since) isn't shown.
+ * typed) with its reply count and unread replies. A thread whose chat isn't in the list (left
+ * since) isn't shown.
  */
 export function threadListGroups(
     threads: ThreadPreview[],

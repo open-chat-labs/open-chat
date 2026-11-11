@@ -28,7 +28,8 @@
     const picker = new SharePicker(client, $_, () => selectedChatIdStore.value);
 
     const item = $derived({
-        // its mentions as the @names typed, the open chat's groups as its rows (conversationContext)
+        // its mentions as the @names typed, the open chat's groups as its rows
+        // (conversationContext)
         title: typedMentions({
             users: $allUsersStore,
             userGroups: $selectedCommunityUserGroupsStore,
