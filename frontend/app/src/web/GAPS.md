@@ -409,8 +409,8 @@ design export needs. Each entry says where it came up.
       (the web's toggle turns it off at once, Cancel or not). The native tree has no setting
       screen for it, so once off it stays off on that device. A failed message's Delete just
       removes it.
-    - **Words**: toasts for Copy ("Copied"), Copy link ("Link copied to clipboard"), Pin, Unpin,
-      Undelete, a delete and its Undo, a forward ("Forwarding to 2 chats…", then "Forwarded to 2
+    - **Words**: toasts for Copy ("Copied"), Copy link ("Link copied to clipboard"), Pin and Unpin
+      (each with Undo: Pinned messages, below), Undelete, a delete and its Undo, a forward ("Forwarding to 2 chats…", then "Forwarded to 2
       chats") and a report; the web says nothing for Copy or Pin. Copy link and Share, like every
       action, come back from the shared `messageAction` as an outcome each tree shows its own way
       (the web's toasts are as they were). Translating without Diamond offers it in a `NativeAlert` (Get
@@ -452,6 +452,41 @@ design export needs. Each entry says where it came up.
       opens it scales back up to 1, a small bounce that says the press is taking. The native
       conversation should do the same on its bubbles over `MessageGroup`'s 500ms hold (a release
       or a move before then puts it back), with none under reduced motion.
+  - **Pinned messages** (the native plan's 04 of 2026-11-10): built, the strip under the header,
+    the Pinned messages screen (`pinned_messages`) and Pin / Unpin in a message's menu, on the
+    shared `logic/pinned` loader. Left, or decided where the plan doesn't say:
+    - **Not in DMs** (open question): the plan has anyone in a DM pin, but the backend has no pins
+      in direct chats (pinning is the group and community canisters' `pin_message`; the user
+      canister has none, and `pinMessage` takes a group's or channel's id), so a DM offers no Pin
+      (`canPinMessages` is false for one) and shows no strip. It needs the backend first.
+    - **The order** (TODO(design)): the strip goes newest first and the screen oldest first by
+      the message, not by when it was pinned: the backend keeps the pin's time but sends only the
+      pinned messages' indexes.
+    - **"Pinned by"** under each pin isn't shown: the backend doesn't say who pinned a message (the
+      timeline's "pinned a message" event does, but it's only there for what's loaded). It needs
+      the backend to send it with the pins.
+    - **Undo**: an unpin (the menu's, a pin button's, Unpin all's) isn't sent until its toast has
+      gone (the shell's `PendingRemovals`, as a leave), so its Undo sends nothing; meanwhile the
+      pins are gone from the strip and the screen, and the menu offers Pin again. A pin shows at
+      once; its toast waits for the backend, then offers Undo, which unpins it (an unpin of its
+      own, so others may have seen it).
+    - **Going to a pin** (the strip's tap, the screen's tap or Go to message) puts the message in
+      the middle of the list (ChatEventList's `scrollToMessageIndex`, as the search does), not the
+      upper third, and marks it in the accent for 1.8s. The strip moves on to the next older pin
+      as it's tapped, round to the newest.
+    - **Loading**: the conversation loads its pinned messages as it opens (the strip needs their
+      authors and text), through the loader the web's group panel and the old pinned lists use,
+      which marks new pins read. The strip shows its title until they're in.
+    - **The screen**: its list starts at the bottom (as a chat does), so a few pins sit at the
+      bottom of an otherwise empty screen. Its bubbles are the chat's without their controls (a
+      poll's vote, a photo's viewer): a tap goes to the message. The pin button sits on a bubble's
+      open side (after a received one, before your own). Its empty state has the pin icon over the
+      plan's words (ours: the plan has no picture). Unpin all is a danger item in ⋯, as is the
+      alert's Unpin all.
+    - **Group details** have no way to the pinned messages: the plan's 10 has none (the web's group
+      panel does). Only the strip's list button opens them.
+    - **The live call's strip** (to go with N14, plan 04) still shows, under the pinned strip.
+    - Checked in a desktop browser at a phone's size against the local replica; not on a device.
   - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
     screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
     gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
