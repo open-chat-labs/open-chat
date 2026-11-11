@@ -9,7 +9,6 @@
         anonUserStore,
         AuthProvider,
         askForNotificationPermission,
-        buildUserAvatarUrl,
         buildUserBackgroundUrl,
         chitStateStore,
         currentStreak,
@@ -86,6 +85,7 @@
         type AppChatSettings,
         botConfigProps,
         communitiesProps,
+        profileAvatarUrl,
         linkCodeProps,
         signinMethodsProps,
         storageProps,
@@ -189,7 +189,7 @@
             {
                 avatarUrl:
                     images.preview.avatar ??
-                    buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+                    profileAvatarUrl(blobUrlPattern, userId, profile.avatarId),
                 coverUrl:
                     images.preview.cover ??
                     buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
@@ -308,11 +308,7 @@
     }
 
     // ---- communities ----
-    const communities = $derived(
-        communitiesProps($sortedCommunitiesStore, (c) =>
-            client.communityAvatarUrl(c.id.communityId, c.avatar),
-        ),
-    );
+    const communities = $derived(communitiesProps($sortedCommunitiesStore));
 
     // the dialog shows the name until this settles, and goes back to the saved one if it throws
     async function setCommunityName(communityId: string, name: string | null): Promise<void> {

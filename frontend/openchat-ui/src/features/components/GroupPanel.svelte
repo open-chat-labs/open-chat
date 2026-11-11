@@ -28,6 +28,7 @@
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import TileButtons from '../../lib/components/TileButtons.svelte';
   import { cssUrl } from '../../lib/cssUrl';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   type MemberColor = ComponentProps<typeof MemberRow>['color'];
   type View = 'main' | 'usergroups' | 'usergroup' | 'members' | 'bots' | 'permissions' | 'gates' | 'rules' | 'stats' | 'pinned';
@@ -43,6 +44,8 @@
     /** OWNER, ADMIN, MODERATOR, YOU (your own row), LAPSED, BLOCKED or empty. */
     tag?: string;
     color?: MemberColor;
+    /** Their picture over the colour (MemberRow's `image`); the colour alone without it. */
+    image?: string;
     /** Presence from the host; nobody is shown online without it. */
     online?: boolean;
     /** "typing", "now", "2m", or last seen ("3h") for people who are offline. */
@@ -90,17 +93,15 @@
     date: string;
     author: string;
     authorId?: string;
-    color?: 'violet' | 'amber' | 'teal' | 'blue';
+    color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
     text?: string;
     code?: string;
     time: string;
   }
 
   const GRADIENTS = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
   };
   const grad = (c?: string) => GRADIENTS[c as keyof typeof GRADIENTS] ?? GRADIENTS.violet;
   // cover choices are muted grounds, one per accent family, so the avatar stays the focus (tokens --cover-<key>)
@@ -1152,6 +1153,7 @@
                       subtitle={m.handle}
                       tag={m.tag}
                       color={m.color}
+                      image={m.image}
                       online={m.online}
                       ringColor="var(--surface-2)"
                       hoverBg="var(--overlay-2)"
@@ -1190,7 +1192,7 @@
             {@render sectionHead(t('ui.groupPanel.membersHeading', { scope }), total, () => go('members'))}
             <div class="rows">
               {#each members.slice(0, allBots.length ? 3 : 5) as m}
-                <div class="cell"><MemberRow title={m.title} subtitle={m.handle} tag={m.tag} color={m.color} onClick={openUser(m)} /></div>
+                <div class="cell"><MemberRow title={m.title} subtitle={m.handle} tag={m.tag} color={m.color} image={m.image} onClick={openUser(m)} /></div>
               {/each}
             </div>
           </div>
@@ -1322,6 +1324,7 @@
                     tag={m.tag}
                     isYou={m.isYou}
                     color={m.color}
+                    image={m.image}
                     online={m.online}
                     activity={m.activity}
                     onClick={openUser(m)}

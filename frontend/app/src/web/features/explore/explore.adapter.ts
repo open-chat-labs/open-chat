@@ -4,6 +4,7 @@ import type {
     ExploreLanguage,
 } from "@openchat/ui/src/features/components/ExploreCommunities.svelte";
 import { flattenGateConfig } from "@src/utils/access";
+import { swatchFor } from "@src/logic/swatch";
 
 // ExploreCommunities' props from the client's explore results, the user's communities and the
 // app's languages.
@@ -12,13 +13,14 @@ import { flattenGateConfig } from "@src/utils/access";
 export type AppLanguage = { name: string; code: string };
 
 /**
- * A page of explore results as the component's communities. `avatarUrl`: the client's
- * (`communityAvatarUrl`); the cover is the banner when there is one, the design's colour without.
+ * A page of explore results as the component's communities. `avatarUrl`: the community's own
+ * picture, none (the card's swatch) without one, as everywhere in the new web UI (2026-11-10); the
+ * cover is the banner when there is one, the design's colour without.
  * The language is shown by its name in `languages` (by code), or as the code it has.
  */
 export function exploreCommunities(
     matches: CommunityMatch[],
-    avatarUrl: (match: CommunityMatch) => string,
+    avatarUrl: (match: CommunityMatch) => string | undefined,
     languages: Record<string, AppLanguage>,
 ): ExploreCommunity[] {
     return matches.map((match) => {
@@ -33,6 +35,8 @@ export function exploreCommunities(
             verified: match.verified,
             language: language === "" ? undefined : (languages[language]?.name ?? language),
             avatarUrl: avatarUrl(match),
+            // its swatch without one, as on the rail and in its panel (swatchFor)
+            color: swatchFor(match.id.communityId),
             coverUrl: match.banner.blobUrl,
             gate: gates.length > 0 ? { items: gates } : undefined,
         };

@@ -5,8 +5,9 @@
     import { Container } from "component-lib";
     import {
         chatListScopeStore,
-        emptyCombinedUnreadCounts,
         numberOfThreadsStore,
+        scopeUnreadCounts,
+        unreadCountShown,
         threadsByChatStore,
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
@@ -34,26 +35,14 @@
     $effect(() => () => previews.dispose());
     let spinner = $derived(previews.previews.kind === "loading");
 
-    let unread = $derived.by(() => {
-        switch ($chatListScopeStore.kind) {
-            case "chats": {
-                return $unreadDirectAndGroupCountsStore.threads;
-            }
-            case "favourite": {
-                return $unreadFavouriteCountsStore.threads;
-            }
-            case "community": {
-                return (
-                    $unreadCommunityChannelCountsStore.get($chatListScopeStore.id) ??
-                    emptyCombinedUnreadCounts()
-                ).threads;
-            }
-            default:
-                return emptyCombinedUnreadCounts().threads;
-        }
-    });
-    let muted = $derived(!unread.mentions && unread.unmuted <= 0);
-    let count = $derived(muted ? unread.muted : unread.unmuted);
+    let unread = $derived(
+        scopeUnreadCounts($chatListScopeStore, {
+            directAndGroup: $unreadDirectAndGroupCountsStore,
+            favourite: $unreadFavouriteCountsStore,
+            communityChannels: $unreadCommunityChannelCountsStore,
+        }).threads,
+    );
+    let count = $derived(unreadCountShown(unread).count);
 
     let subtitle = $derived(
         count > 0

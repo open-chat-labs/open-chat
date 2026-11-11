@@ -6,6 +6,12 @@ export class RtcConnectionsManager {
 
     private _peer: Peer | undefined;
 
+    // the peer being made, until it's there: an init while it is (the app's at sign-in and a
+    // chat's connections, as a chat opens) waits for it. Two peers made at once took the same id,
+    // and the second, refused by the signalling server ("ID-TAKEN"), replaced the first, so no
+    // connection was ever made.
+    private _starting: Promise<Peer> | undefined;
+
     private _mobile: boolean;
 
     constructor() {
@@ -39,10 +45,24 @@ export class RtcConnectionsManager {
         });
     }
 
-    private getIceServers(meteredApiKey: string) {
-        return fetch(
-            `https://openchat.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`,
-        ).then((resp) => resp.json());
+    // The TURN servers to relay through, or none (direct connections only) when there are no
+    // credentials: no key configured (a local build has no OC_METERED_APIKEY), or the service
+    // refusing the key or failing. It answers a refusal with `{ "error": … }`, not a list, which
+    // RTCPeerConnection throws on ("Failed to read the 'iceServers' property"), so no peer
+    // connected and typing and read receipts went nowhere.
+    private async getIceServers(meteredApiKey: string): Promise<RTCIceServer[]> {
+        if (!meteredApiKey) return [];
+        try {
+            const resp = await fetch(
+                `https://openchat.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`,
+            );
+            const servers: unknown = await resp.json();
+            if (Array.isArray(servers)) return servers;
+            console.warn("RTC: no TURN credentials, connecting directly only: ", servers);
+        } catch (err) {
+            console.warn("RTC: couldn't fetch TURN credentials, connecting directly only: ", err);
+        }
+        return [];
     }
 
     private isMobileDevice(): boolean {
@@ -54,21 +74,36 @@ export class RtcConnectionsManager {
         return `${prefix}_${userId}`;
     }
 
-    public async init(me: string, meteredApiKey: string): Promise<Peer> {
+    public init(me: string, meteredApiKey: string): Promise<Peer> {
+        // checked before `_peer`, which is set as soon as the peer is made, before it opens
+        if (this._starting) return this._starting;
         if (this._peer?.destroyed) {
             this.resetAfterConnectionClosed();
         } else if (this._peer) {
             return Promise.resolve(this._peer);
         }
+        this._starting = this.startPeer(me, meteredApiKey);
+        return this._starting;
+    }
 
-        // peerjs (and its webrtc-adapter dependency) is only loaded once a peer is needed
-        const [iceServers, { default: PeerCtor }] = await Promise.all([
-            this.getIceServers(meteredApiKey),
-            import("peerjs"),
-        ]);
+    private async startPeer(me: string, meteredApiKey: string): Promise<Peer> {
+        try {
+            // peerjs (and its webrtc-adapter dependency) is only loaded once a peer is needed
+            const [iceServers, { default: PeerCtor }] = await Promise.all([
+                this.getIceServers(meteredApiKey),
+                import("peerjs"),
+            ]);
+            return await this.makePeer(me, iceServers, PeerCtor);
+        } finally {
+            // the peer is open (and `_peer` from now on), or closed before it opened
+            this._starting = undefined;
+        }
+    }
 
-        return new Promise((resolve) => {
+    private makePeer(me: string, iceServers: RTCIceServer[], PeerCtor: typeof Peer): Promise<Peer> {
+        return new Promise((resolve, reject) => {
             const connectionId = this.getMyConnectionId(me);
+            let opened = false;
 
             this._peer = new PeerCtor(connectionId, {
                 // host: "localhost",
@@ -80,6 +115,7 @@ export class RtcConnectionsManager {
             });
 
             this._peer.on("open", (_id) => {
+                opened = true;
                 if (this._peer) {
                     resolve(this._peer);
                 }
@@ -107,6 +143,9 @@ export class RtcConnectionsManager {
             this._peer.on("close", () => {
                 console.debug("RTC: peer connection closed");
                 this.resetAfterConnectionClosed();
+                // a peer that never opened (the signalling server refused it) fails its init, so
+                // the next init makes a new one instead of waiting on this one for ever
+                if (!opened) reject(new Error("RTC: peer closed before it opened"));
             });
 
             this._peer.on("error", (err) => {
@@ -128,13 +167,19 @@ export class RtcConnectionsManager {
     }
 
     public create(me: string, them: string, meteredApiKey: string): void {
-        this.init(me, meteredApiKey).then((peer) => {
-            [`m_${them}`, `d_${them}`]
-                .filter((c) => !this.exists(c))
-                .forEach((c) => {
-                    this.cacheConnection(peer.id, c, peer.connect(c, { serialization: "json" }));
-                });
-        });
+        this.init(me, meteredApiKey)
+            .then((peer) => {
+                [`m_${them}`, `d_${them}`]
+                    .filter((c) => !this.exists(c))
+                    .forEach((c) => {
+                        this.cacheConnection(
+                            peer.id,
+                            c,
+                            peer.connect(c, { serialization: "json" }),
+                        );
+                    });
+            })
+            .catch((err) => console.debug("RTC: no peer to connect to the user from: ", err));
     }
 
     public disconnectFromUser(them: string): void {

@@ -17,7 +17,7 @@
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { searchTerm } from "@src/logic/chats/chatSearch";
-    import { PeopleSearch } from "@src/logic/chats/peopleSearch.svelte";
+    import { TermSearch } from "@src/logic/chats/termSearch.svelte";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
@@ -36,7 +36,7 @@
     let query = $state("");
     const term = $derived(searchTerm(query));
 
-    const people = new PeopleSearch((t) => client.searchUsers(t, 20));
+    const people = new TermSearch((t) => client.searchUsers(t, 20));
     onDestroy(() => people.dispose());
 
     function onInput(next: string) {
@@ -52,7 +52,7 @@
     const found = $derived.by((): UserSummary[] | undefined => {
         const results = people.results;
         if (results.kind !== "found" || results.term !== term) return undefined;
-        return results.people.filter((user) => user.userId !== $currentUserIdStore);
+        return results.found.filter((user) => user.userId !== $currentUserIdStore);
     });
 
     const shown = $derived(term === "" ? frequent : (found ?? []));

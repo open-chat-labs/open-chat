@@ -33,16 +33,14 @@
   import Spinner from '../../lib/components/Spinner.svelte';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   type Swatch = 'sunset' | 'amber' | 'blue' | 'teal' | 'plum' | 'violet' | 'rose';
 
   const GRAD: Record<Swatch, string> = {
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     sunset: 'linear-gradient(140deg,#FFB03D,#FF5672)',
-    amber: 'linear-gradient(140deg,#FFC061,#F58A2E)',
-    blue: 'linear-gradient(140deg,#5CB8FF,#2F6BFF)',
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FA6B8)',
-    plum: 'linear-gradient(140deg,#E27BFF,#9B3FD9)',
-    violet: 'linear-gradient(140deg,#8B7BFF,#5B3FD9)',
     rose: 'linear-gradient(140deg,#FF8FA8,#E0456A)',
   };
   const COVER: Record<Swatch, string> = {

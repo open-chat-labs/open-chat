@@ -56,7 +56,7 @@
         resultSection,
         searchTerm,
     } from "@src/logic/chats/chatSearch";
-    import { PeopleSearch } from "@src/logic/chats/peopleSearch.svelte";
+    import { TermSearch } from "@src/logic/chats/termSearch.svelte";
     import { chitButton } from "@src/logic/chit/chitButton";
     import { chatListFilterStore, disableChit, hideChitIcon } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
@@ -343,7 +343,7 @@
         () => closeSearch(),
     );
 
-    const people = new PeopleSearch((term) => client.searchUsers(term, 20));
+    const people = new TermSearch((term) => client.searchUsers(term, 20));
     onDestroy(() => people.dispose());
 
     const term = $derived(searchTerm(query));
@@ -371,7 +371,7 @@
     const peopleFound = $derived.by(() => {
         const results = people.results;
         return results.kind === "found" && results.term === term
-            ? newPeople(results.people, kept, $currentUserIdStore)
+            ? newPeople(results.found, kept, $currentUserIdStore)
             : [];
     });
 

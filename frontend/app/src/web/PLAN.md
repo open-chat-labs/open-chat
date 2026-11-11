@@ -54,6 +54,9 @@ every workstream.
     first mention, the event lines' date and time, and one read-by-them check
     (`messageReadByThem`) for every tree; GAPS.md ("Conversation, first cut", "Sticky date", "Go
     to first mention").
+  - the chat list's loose ends (L1): avatars, who's typing, presence, unread mentions, the
+    Thread replies count, and the search on OpenChat for people and bots outside the list (no
+    public groups: web/04); GAPS.md ("Chat list").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
   work (5a–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
@@ -260,7 +263,7 @@ Small, any time, good between bigger pieces. Each is its own PR.
 
 | Id | What | Touches |
 |---|---|---|
-| [L1](https://github.com/open-chat-labs/open-chat/issues/10136) | **Chat list** (GAPS "Chat list, first cut"): <ul><li>avatars instead of swatches;</li><li>the typing line, presence, unread mentions;</li><li>the thread count;</li><li>server-side search for users and groups outside the list.</li></ul> Also `Avatar`'s `url` prop, which L3 needs too. | `features/chats` |
+| [L1](https://github.com/open-chat-labs/open-chat/issues/10136) | **Done:** what's left is in GAPS.md ("Chat list"). **Chat list** (GAPS "Chat list, first cut"): <ul><li>avatars over the swatches (a chat with no picture of its own keeps its swatch, the user's decision of 2026-11-10);</li><li>the typing line, presence, unread mentions;</li><li>the thread count;</li><li>server-side search for people and bots outside the list (no public groups, web/04).</li></ul> Also `Avatar`'s `url` prop, which L3 needs too. After the user's testing (2026-11-10): a person, group or community without a picture of its own shows its swatch everywhere in the new web UI (the rail's profile and pins, the profile and user cards, GroupPanel, Manage and the members, the conversation's header and senders, Explore, Landing); the rail's unread dots and counts; presence in the members list; typing and read receipts over WebRTC (two client bugs); the achievement toast at the top of the app, under the panels' headers (web/00). Then: the search's tabs of web/04, built from the plan (2026-11-11, replacing the filters' fold-away): the filters push out and All results / Chats / People push in, each with its count, All capped at 5 chats and 3 people with "+N more" switching tabs (the 2026-11-03 design export is the reference for the exact look; Messages isn't built: GAPS.md says what a search of the messages on the device would need); the Thread replies row hides while searching; no public groups in the search (web/04) (GAPS.md, "Chat list"); and a DM's typing is a bubble with the other person's avatar, the last thing in the message list, never changing its height (web/05; GAPS.md, "Who's typing in a conversation"). | `features/chats` |
 | [L2](https://github.com/open-chat-labs/open-chat/issues/10137) | **Done:** what's left is in GAPS.md ("Conversation, first cut", "Sticky date", "Go to first mention"). **Conversation:** <ul><li>a DM's last-seen line;</li><li>go to first mention, the sticky date (web/05);</li><li>the timeline lines' date and time;</li><li>one read-by-them check for every tree.</li></ul> | `features/conversation` |
 | [L3](https://github.com/open-chat-labs/open-chat/issues/10138) | **Activity:** tips on the message, poll votes' tab. | `features/activity` |
 | [L4](https://github.com/open-chat-labs/open-chat/issues/10139) | **Font size** onto the library's text tokens (GAPS). The accent is done (`theme/accent.ts`); its in-app control is 8c's. | `App.svelte` |

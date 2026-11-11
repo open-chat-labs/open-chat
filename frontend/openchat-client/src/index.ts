@@ -33,12 +33,16 @@ export {
     eventsTTLUpdate,
     getMembersString,
     getMessageText,
+    getTypingString,
     isPreviewing,
     isPreviewingOrLapsed,
     messageReadByThem,
+    ownGroupAvatarUrl,
+    ownUserAvatarUrl,
     subrangesCover,
     TimelineGrouper,
     userCanDeleteMessage,
+    type GroupAvatarLookups,
 } from "./utils/chat";
 export { formatClock, formatDuration } from "./utils/time";
 export { default as formatFileSize } from "./utils/fileSize";
@@ -63,6 +67,7 @@ export {
     formatLastOnlineDate,
     isDeletedWebhook,
     lastOnlineStatus,
+    userAvatarUrl,
     userBadges,
     type UserBadges,
     unsuspendUserMessage,
@@ -116,6 +121,19 @@ export {
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginCreateCommunity, postLoginJoin, postLoginPath } from "./utils/join";
 export { chatListOrder, chatsInScope } from "./utils/chatList";
+export {
+    chatListSearchMatches,
+    noChatListSearchResults,
+    type ChatListSearchResults,
+} from "./utils/chatListSearch";
+export {
+    scopeUnreadCounts,
+    unreadCountShown,
+    unreadMentionCount,
+    type MentionRead,
+    type ScopeUnreadCountsInput,
+    type UnreadCountShown,
+} from "./utils/unread";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export {
     editableGates,

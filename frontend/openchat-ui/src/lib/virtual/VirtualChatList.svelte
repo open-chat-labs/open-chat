@@ -48,6 +48,11 @@
         iOS: boolean;
         // a row threw while rendering; the row is replaced by an empty placeholder
         onRowError: (error: unknown) => void;
+        // after the newest item, at the visual bottom, and not an item (e.g. a DM's typing
+        // bubble): it scrolls with the items but isn't virtualised or counted in their heights.
+        // As its height changes, the reading position holds: at the bottom it comes into view,
+        // scrolled up it grows (or shrinks) out of view below, nothing visible moving
+        footer?: Snippet;
     }
 </script>
 
@@ -149,6 +154,7 @@
         viewportHeight = $bindable(0),
         iOS,
         onRowError,
+        footer,
     }: Props<T> = $props();
 
     // CSS flex gap between items (px). Read from computed style in onMount.
@@ -1469,6 +1475,38 @@
         };
     }
 
+    // ── measureFooter (Svelte action) ──────────────────────────────────────
+    // The footer is the first child (the visual bottom, below the bottom
+    // spacer), so a change in its height moves every item by the same amount.
+    // Compensated as a resized row below the reading point is: at the bottom
+    // (fromBottom ≈ 0) the view stays there, so the footer comes into view and
+    // the items above slide up for it (snapping back where a browser moved
+    // scrollTop as column-reverse content grew); scrolled up, scrollTop takes
+    // the change, so the items stay where they are and the footer is below the
+    // viewport. ResizeObserver reports after layout and before paint, so the
+    // write lands in the frame that changed the height.
+    function measureFooter(node: HTMLElement) {
+        let height = node.offsetHeight;
+        function measure() {
+            const h = node.offsetHeight;
+            const delta = h - height;
+            height = h;
+            if (delta === 0 || !viewport) return;
+            vclDebug.log("footer", { delta: Math.round(delta), fb: Math.round(fromBottom) });
+            if (fromBottom < 10) {
+                if (isTouching || isMomentumScrolling) {
+                    pendingSnapToBottom = true;
+                } else if (viewport.scrollTop !== 0) {
+                    viewport.scrollTo({ top: 0 });
+                    lastProgrammaticScrollTime = Date.now();
+                }
+            } else {
+                adjustScrollTop(delta);
+            }
+        }
+        return { destroy: observeResize(node, measure) };
+    }
+
     // ── Sticky date ───────────────────────────────────────────────────────
     // dateMarkerCache holds each date row's bounding rectangle top at
     // cache-build time, plus the oldest rendered item as a fallback.
@@ -1809,6 +1847,9 @@
     class:interrupt
     {id}
     bind:this={viewport}>
+    {#if footer}
+        <div class="vcl-footer" use:measureFooter>{@render footer()}</div>
+    {/if}
     {#if bottomSpacerHeight > 0}
         <div class="vcl-spacer" style:height="{bottomSpacerHeight}px"></div>
     {/if}
@@ -1859,6 +1900,14 @@
     .vcl-spacer {
         flex-shrink: 0;
         width: 100%;
+    }
+
+    .vcl-footer {
+        width: 100%;
+        flex-shrink: 0;
+        /* as a row: its children's margins count in its height */
+        display: flex;
+        flex-direction: column;
     }
 
     .vcl-row-error {

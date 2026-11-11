@@ -74,7 +74,7 @@ export type GroupMessage = GroupMessageBase &
 export interface MessageGroupItem {
   side?: 'received' | 'sent';
   name?: string;
-  color?: 'violet' | 'amber' | 'teal' | 'blue';
+  color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
   messages: GroupMessage[];
 }
 

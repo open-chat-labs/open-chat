@@ -2,6 +2,7 @@
      each showing its screen (screens.ts), and the rail wired to the routes. -->
 <script lang="ts">
     import {
+        allUsersStore,
         anonUserStore,
         chatsInitialisedStore,
         chitStateStore,
@@ -11,14 +12,18 @@
         identityStateStore,
         lastRightPanelState,
         latestSuccessfulUpdatesLoop,
+        messageActivitySummaryStore,
         OpenChat,
+        ownUserAvatarUrl,
         postLoginCreateCommunity,
         postLoginPath,
         publish,
         routeStore,
         sortedCommunitiesStore,
         subscribe,
-        type CommunitySummary,
+        unreadCommunityChannelCountsStore,
+        unreadDirectAndGroupCountsStore,
+        unreadFavouriteCountsStore,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
@@ -52,7 +57,8 @@
     import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
     import { askToSignIn } from "@src/logic/auth/guestPass";
     import { join } from "../join/join";
-    import { pinsFor } from "../rail/rail.adapter";
+    import { pinsFor, railItemUnread } from "../rail/rail.adapter";
+    import { senderColor } from "@src/logic/conversation/messageRow";
     import { chitRailProps } from "../chit/chit.adapter";
     import AchievementToastHost from "../chit/AchievementToastHost.svelte";
     import { openLinked } from "./linkedDialogs.svelte";
@@ -131,18 +137,29 @@
             ? { item: "notifications" }
             : railSelectionFor($routeStore),
     );
-    const pins = $derived(
-        pinsFor($sortedCommunitiesStore, (c: CommunitySummary) =>
-            client.communityAvatarUrl(c.id.communityId, c.avatar),
-        ),
-    );
+    // the communities, each with its own picture (the swatch without one) and its unread dot
+    const pins = $derived(pinsFor($sortedCommunitiesStore, $unreadCommunityChannelCountsStore));
     const activePin = $derived.by(() => {
         const index = pins.findIndex((p) => p.id === selection.communityId);
         return index < 0 ? null : index;
     });
     const railShown = $derived(railItems($favouritesStore.size > 0, selection));
     // the labels are the app's own strings, translated here (the rail shows other text as it is)
-    const items = $derived(railShown.map((item) => ({ icon: item.icon, label: $_(item.label) })));
+    const railUnread = $derived({
+        directAndGroup: $unreadDirectAndGroupCountsStore,
+        favourite: $unreadFavouriteCountsStore,
+        activity: $messageActivitySummaryStore.unreadCount,
+    });
+    const items = $derived(
+        railShown.map((item) => ({
+            icon: item.icon,
+            label: $_(item.label),
+            ...railItemUnread(item.id, railUnread),
+        })),
+    );
+    // the user's own picture, else their swatch, as everywhere in the new web UI (2026-11-10)
+    const me = $derived($currentUserStore.userId);
+    const profileAvatarUrl = $derived(ownUserAvatarUrl($allUsersStore.get(me)));
     const activeItem = $derived(railShown.findIndex((item) => item.id === selection.item));
     // the rail's CHIT button, which opens ?chit (8d)
     const chit = $derived(
@@ -268,6 +285,8 @@
             homeHref="/"
             profileLabel={$currentUserStore.displayName ?? $currentUserStore.username}
             profileHandle={`@${$currentUserStore.username}`}
+            {profileAvatarUrl}
+            profileColor={senderColor(me)}
             onSelect={(i) => selectRail(i)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
             onExplore={() => navigate("/communities")}

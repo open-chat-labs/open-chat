@@ -5,6 +5,7 @@
      community names, clear cache, log out, delete account); a rejection keeps the user's input with an error. Actions
      whose callback is absent are hidden. The CHIT section's "Claim history" opens the claim calendar (onChitHistory). -->
 <script lang="ts" module>
+  import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
   export type ProfileSection =
     | 'profile'
     | 'stats'
@@ -86,11 +87,8 @@
   const MIX_COLORS = ['#5B8CFF', '#B06BFF', '#FFB03D', '#2EE6A8', '#6E6E7C'];
 
   const GRADS: Record<string, string> = {
-    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
-    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
-    plum: 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
+    // a person's, chat's or community's swatch is Avatar's, as everywhere (one gradient per name)
+    ...AVATAR_GRADIENTS,
     rose: 'linear-gradient(140deg,#FF6B8B,#C13584)',
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
   };

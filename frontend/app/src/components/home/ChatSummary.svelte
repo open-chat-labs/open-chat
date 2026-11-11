@@ -15,6 +15,7 @@
         communitiesStore,
         currentUserIdStore,
         favouritesStore,
+        getTypingString,
         iconSize,
         latestMessageExpired,
         messagesRead,
@@ -28,6 +29,7 @@
         suspendedUserStore,
         translationsStore,
         byContext as typersByContext,
+        unreadMentionCount,
     } from "@client";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -137,7 +139,9 @@
                       chatSummary.id,
                       chatSummary.latestMessage?.event.messageIndex,
                   );
-            unreadMentions = getUnreadMentionCount(chatSummary);
+            unreadMentions = unreadMentionCount(chatSummary, (index, id) =>
+                client.isMessageRead({ chatId: chatSummary.id }, index, id),
+            );
         });
     }
 
@@ -159,12 +163,7 @@
                     hasAchievedMaxStreak: (them?.maxStreak ?? 0) >= 365,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
-                    typing: client.getTypingString(
-                        $_,
-                        $allUsersStore,
-                        { chatId: chatSummary.id },
-                        typing,
-                    ),
+                    typing: getTypingString($_, $allUsersStore, { chatId: chatSummary.id }, typing),
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
                     video,
@@ -182,12 +181,7 @@
                     hasAchievedMaxStreak: false,
                     avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
-                    typing: client.getTypingString(
-                        $_,
-                        $allUsersStore,
-                        { chatId: chatSummary.id },
-                        typing,
-                    ),
+                    typing: getTypingString($_, $allUsersStore, { chatId: chatSummary.id }, typing),
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
                     video,
@@ -196,13 +190,6 @@
                     bot: false,
                 };
         }
-    }
-
-    function getUnreadMentionCount(chat: ChatSummary): number {
-        if (chat.kind === "direct_chat") return 0;
-        return chat.membership.mentions.filter(
-            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId),
-        ).length;
     }
 
 

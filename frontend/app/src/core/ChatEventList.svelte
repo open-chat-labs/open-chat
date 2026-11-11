@@ -80,6 +80,9 @@
         stickyDateTimestamp?: bigint;
         row: Snippet<[FlatChatItem, ChatEventListArgs]>;
         fabs?: Snippet<[ChatEventListFabArgs]>;
+        // after the newest item, scrolling with the items (VirtualChatList's footer): the web's
+        // DM typing bubble
+        footer?: Snippet;
     }
 
     let {
@@ -99,6 +102,7 @@
         stickyDateTimestamp = $bindable(undefined),
         row,
         fabs,
+        footer,
     }: Props = $props();
 
     let virtualList: VirtualChatList<FlatChatItem> | undefined = $state();
@@ -1344,7 +1348,8 @@
     bind:stickyDateTimestamp
     iOS={mobileOperatingSystem === "iOS"}
     onRowError={(e) => recordError("chat-row", e)}
-    row={renderRow} />
+    row={renderRow}
+    {footer} />
 
 {#snippet renderRow(item: FlatChatItem, _absIdx: number)}
     {@render row(item, {

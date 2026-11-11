@@ -58,6 +58,8 @@
         suspendedUserStore,
         swapAcceptCost,
         swapActions,
+        ownGroupAvatarUrl,
+        ownUserAvatarUrl,
         swapFailureMessage,
         swapOfferStep,
         threadEventsStore,
@@ -92,10 +94,12 @@
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
+    import TypingIndicator from "@openchat/ui/src/lib/components/TypingIndicator.svelte";
     import UnreadDivider from "@openchat/ui/src/lib/components/UnreadDivider.svelte";
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
+    import { groupAvatarLookups } from "@src/logic/chats/chatRow";
     import type {
         ComposerAttachKind,
         ComposerAttachment,
@@ -214,6 +218,7 @@
         firstUnreadOnOpen,
         MessageLink,
         othersTyping,
+        typingPlacement,
     } from "@src/logic/conversation/timeline";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
@@ -404,10 +409,11 @@
             origin: $communityPreviewOriginStore,
             meets: (gate) => client.doesUserMeetAccessGate(gate),
         });
+        // its own picture, else its swatch (as everywhere in the new web UI, 2026-11-10)
         const avatarUrl =
             bar.community !== undefined
-                ? client.communityAvatarUrl(bar.community.id.communityId, bar.community.avatar)
-                : client.groupAvatarUrl(chat, community);
+                ? bar.community.avatar.blobUrl
+                : ownGroupAvatarUrl(chat, groupAvatarLookups(client, community));
         return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolate($_, key)) };
     });
 
@@ -425,12 +431,30 @@
         );
     }
 
-    // the others in this chat or thread who are typing
+    // the others in this chat or thread who are typing: a bubble at the end of a DM's messages, a
+    // strip resting on the composer in a group, a channel or a thread (native plan 04's rule)
     const typingNames = $derived(
         othersTyping($typersByContext.get(context), me, (userId) =>
             client.displayName($allUsersStore.get(userId)),
         ),
     );
+    // a DM's bubble goes only after the latest message: at the end of a stretch of history loaded
+    // from further back it'd be out of place, so who's typing shows on the strip until the latest
+    // are loaded (the items are read so it follows them loading)
+    const newerMessagesToLoad = $derived.by(() => {
+        void items;
+        return client.moreNewMessagesAvailable(chat.id, thread);
+    });
+    const typingAt = $derived(typingPlacement(chat.kind, rootIndex, newerMessagesToLoad));
+    // a DM's bubble is the other person's, with their face as their messages have it (web 05,
+    // "Typing": avatar and three dots)
+    const typingBubble = $derived.by(() => {
+        if (typingAt !== "bubble" || typingNames.length === 0 || chat.kind !== "direct_chat") {
+            return undefined;
+        }
+        const them = chat.them.userId;
+        return { avatarUrl: ctx.avatar(them), color: senderColor(them) };
+    });
 
     // too many messages a minute: a countdown until sending resumes (the old ThrottleCountdown);
     // the clock only ticks once there's a deadline
@@ -642,7 +666,7 @@
         // what the lookup reads through `.value`: it changes as members not held are found
         void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
         return mentionsFor(client, mentionQuery, me).map((candidate) =>
-            composerMention(candidate, (user) => client.userAvatarUrl(user)),
+            composerMention(candidate, ownUserAvatarUrl),
         );
     });
 
@@ -1348,6 +1372,21 @@
                 {#snippet row(item, args)}
                     {@render eventRow(item, args)}
                 {/snippet}
+                <!-- the last thing in the list, after the newest message, as a received run of
+                     its own: it comes into view at the bottom and stays out of view below when
+                     scrolled up (the list keeps the reading position as it comes and goes) -->
+                {#snippet footer()}
+                    {#if typingBubble !== undefined}
+                        <div class="typing-bubble">
+                            <TypingIndicator
+                                variant="bubble"
+                                names={typingNames}
+                                showAvatar
+                                avatarUrl={typingBubble.avatarUrl}
+                                avatarColor={typingBubble.color} />
+                        </div>
+                    {/if}
+                {/snippet}
                 {#snippet fabs({ showGoToBottom, scrollToLast, scrollToMention })}
                     <!-- TODO(design): no go-to-mention button in the design or web/05; the old
                          lists', as go-to-latest -->
@@ -1419,6 +1458,7 @@
                     side={row.side}
                     senderName={row.senderName}
                     color={row.color}
+                    avatarUrl={row.avatarUrl}
                     showAvatar={item.first}
                     showName={showsSenderName(item.first, chat.kind === "direct_chat")}
                     avatarSpace
@@ -1529,7 +1569,7 @@
                               : undefined,
                       }}
                 draft={composerStartText(draft)}
-                {typingNames}
+                typingNames={typingAt === "strip" ? typingNames : []}
                 {notice}
                 {placeholder}
                 enterSends={$enterSend}
@@ -1695,6 +1735,12 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
+    }
+
+    // a DM's typing bubble (the library's, with the typer's avatar): a run of its own after the
+    // newest message, standing apart from it as a new sender's run does (.row.starts)
+    .typing-bubble {
+        padding-block-start: var(--space-16);
     }
 
     .no-composer {

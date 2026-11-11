@@ -1,6 +1,8 @@
 import {
     AuthProvider,
+    buildUserAvatarUrl,
     ONE_MB,
+    ownUserAvatarUrl,
     type AccountLinkingCode,
     type BotClientConfigData,
     type LinkedAuthenticationPrincipal,
@@ -16,6 +18,8 @@ import type {
     ProfileCommunity,
     SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
+import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
+import { senderColor } from "@src/logic/conversation/messageRow";
 import { storedRingtoneKey, type RingtoneKey } from "@src/stores/ringtone.svelte";
 
 // ProfileDialog's props from the user's profile, metrics and settings.
@@ -25,8 +29,22 @@ export function cssImage(url: string): string {
     return `url("${url}") center / cover no-repeat`;
 }
 
+/**
+ * Someone's own picture from their profile (`ownUserAvatarUrl`): their avatar, a system user's
+ * fixed picture, or none, where the new web UI shows their swatch (the user's decision,
+ * 2026-11-10) and the old trees a generated identicon.
+ */
+export function profileAvatarUrl(
+    blobUrlPattern: string,
+    userId: string,
+    avatarId: bigint | undefined,
+): string | undefined {
+    return ownUserAvatarUrl({ blobUrl: buildUserAvatarUrl(blobUrlPattern, userId, avatarId) });
+}
+
 export type ProfileImages = {
-    avatarUrl: string;
+    // their own picture; none shows their swatch
+    avatarUrl: string | undefined;
     // the profile background, if the user has set one (the dialog has its own pattern otherwise)
     coverUrl: string | undefined;
 };
@@ -54,7 +72,10 @@ export function profileProps(
         // the unique-person gate and its badge are suspended: userBadges (@client) has no verified
         // badge, whatever the user's isUniquePerson says, and no other screen shows one (#10193)
         isVerified: false,
-        avatar: cssImage(images.avatarUrl),
+        avatar:
+            images.avatarUrl === undefined
+                ? AVATAR_GRADIENTS[senderColor(userId)]
+                : cssImage(images.avatarUrl),
         cover: images.coverUrl === undefined ? undefined : cssImage(images.coverUrl),
     };
 }
@@ -153,10 +174,10 @@ export function changedChatSettings(
 }
 
 /** The communities pane: the user's communities, and the name they go by in each that has one. */
-export function communitiesProps(
-    communities: CommunitySummary[],
-    avatarUrl: (community: CommunitySummary) => string,
-): { communities: ProfileCommunity[]; communityNames: Record<string, string> } {
+export function communitiesProps(communities: CommunitySummary[]): {
+    communities: ProfileCommunity[];
+    communityNames: Record<string, string>;
+} {
     const names: Record<string, string> = {};
     for (const c of communities) {
         if (c.membership.displayName !== undefined)
@@ -166,7 +187,9 @@ export function communitiesProps(
         communities: communities.map((c) => ({
             id: c.id.communityId,
             name: c.name,
-            avatar: cssImage(avatarUrl(c)),
+            // its own picture, else its swatch (2026-11-10)
+            color: senderColor(c.id.communityId),
+            avatar: c.avatar.blobUrl === undefined ? undefined : cssImage(c.avatar.blobUrl),
         })),
         communityNames: names,
     };

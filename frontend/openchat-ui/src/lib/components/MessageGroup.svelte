@@ -46,7 +46,9 @@
   interface Props {
     side?: 'received' | 'sent';
     senderName: string;
-    color?: 'violet' | 'amber' | 'teal' | 'blue';
+    color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+    /** The sender's picture over their colour (Avatar's `url`); the colour alone without it. */
+    avatarUrl?: string;
     showAvatar?: boolean;
     showName?: boolean;
     /** With showAvatar off, keeps the avatar's space, so a sender's run split over several groups lines up. */
@@ -91,6 +93,7 @@
     side = 'received',
     senderName,
     color = 'violet',
+    avatarUrl,
     showAvatar = true,
     showName = true,
     avatarSpace = false,
@@ -466,10 +469,10 @@
   {#if showAvatar}
     {#if onSenderClick}
       <span class="avatar sender" data-group-head onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
-        ><Avatar size={avatarSize} {color} online={false} /></span
+        ><Avatar size={avatarSize} {color} url={avatarUrl} online={false} /></span
       >
     {:else}
-      <span class="avatar" data-group-head><Avatar size={avatarSize} {color} online={false} /></span>
+      <span class="avatar" data-group-head><Avatar size={avatarSize} {color} url={avatarUrl} online={false} /></span>
     {/if}
   {:else if avatarSpace}
     <span class="avatar-space" aria-hidden="true"></span>

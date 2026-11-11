@@ -138,3 +138,24 @@ export function othersTyping(
 ): string[] {
     return [...(typers ?? [])].filter((userId) => userId !== me).map(name);
 }
+
+/**
+ * Where who's typing shows (native plan 04, "Typing", which the web follows too): a received-style
+ * bubble at the end of a DM's messages, or a strip resting on the composer in a group or channel
+ * and in any thread (the old UIs showed it over the composer everywhere). A DM whose loaded
+ * messages stop short of the latest (a reply link or a search hit loaded an older stretch) has no
+ * end for the bubble to follow, so it shows on the strip until the latest are loaded.
+ */
+export type TypingPlacement = "bubble" | "strip";
+
+export function typingPlacement(
+    chatKind: ChatSummary["kind"],
+    threadRootMessageIndex: number | undefined,
+    newerMessagesToLoad: boolean = false,
+): TypingPlacement {
+    return chatKind === "direct_chat" &&
+        threadRootMessageIndex === undefined &&
+        !newerMessagesToLoad
+        ? "bubble"
+        : "strip";
+}

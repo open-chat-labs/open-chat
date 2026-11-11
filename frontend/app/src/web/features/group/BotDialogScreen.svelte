@@ -23,13 +23,11 @@
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { botPermissions, commandNeeds, grantedFromDialog, grantedKeys } from "./bot.adapter";
-    import { pickById } from "@src/utils/pickById";
+    import { swatchFor } from "@src/logic/swatch";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "bot" }>> = $props();
 
     const client = getContext<OpenChat>("client");
-
-    const COLORS = ["violet", "amber", "teal", "blue", "rose", "plum"] as const;
 
     const bot = untrack(() => dialog.bot);
     const location = untrack(() => dialog.location);
@@ -65,7 +63,7 @@
         name: bot.name,
         creator: `@${$allUsersStore.get(bot.ownerId)?.username ?? bot.ownerId}`,
         description: bot.definition.description,
-        color: pickById(bot.id, COLORS),
+        color: swatchFor(bot.id),
         perms: permissions.perms,
         commands: bot.definition.commands.map((c) => ({
             name: `/${c.name}`,

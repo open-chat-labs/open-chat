@@ -27,6 +27,7 @@ import type {
     EventWrapper,
     ExpiredEventsRange,
     GroupChatSummary,
+    GroupSubtype,
     HasMembershipRole,
     Immutable,
     LocalPollVote,
@@ -43,6 +44,7 @@ import type {
     MessagePermissions,
     Metrics,
     MultiUserChat,
+    MultiUserChatIdentifier,
     NewUnconfirmedMessage,
     OptionalChatPermissions,
     OptionalMessagePermissions,
@@ -1722,13 +1724,53 @@ export function buildBridgedUserAvatarUrl(
     );
 }
 
+const IDENTICON_URL_PREFIX = "data:image/svg+xml;base64,";
+
 export function buildIdenticonUrl(id: string): string {
     if (!id) return "";
     const identicon = new Identicon(md5(id), {
         margin: 0,
         format: "svg",
     });
-    return `data:image/svg+xml;base64,${identicon}`;
+    return `${IDENTICON_URL_PREFIX}${identicon}`;
+}
+
+/**
+ * A user's own picture: their avatar, a bot's (its own, else the bot picture the client gives it)
+ * or a system user's. Undefined for a user without an avatar, whom the client gives a generated
+ * identicon (buildUserAvatarUrl), and for a user not loaded. Where the old trees show those
+ * (userAvatarUrl), the new web UI shows Avatar's swatch.
+ */
+export function ownUserAvatarUrl(
+    user: Pick<UserSummary, "blobUrl"> | undefined,
+): string | undefined {
+    const url = user?.blobUrl;
+    return url === undefined || url.startsWith(IDENTICON_URL_PREFIX) ? undefined : url;
+}
+
+/** What a group's or channel's own picture is looked up from (the client's state). */
+export type GroupAvatarLookups = {
+    /** An SNS's logo, by its governance canister. */
+    snsLogo: (governanceCanisterId: string) => string | undefined;
+    /** A channel's community's picture, if it has one. */
+    communityAvatar: (channelId: ChannelIdentifier) => string | undefined;
+};
+
+/**
+ * A group's or channel's own picture: its avatar, else a proposals chat's SNS logo, else a
+ * channel's community's (`lookups`). Undefined when it has none: the old trees' groupAvatarUrl
+ * then shows the default group picture, the new web UI Avatar's swatch.
+ */
+export function ownGroupAvatarUrl(
+    chat: { id: MultiUserChatIdentifier; blobUrl?: string; subtype?: GroupSubtype },
+    lookups: GroupAvatarLookups,
+): string | undefined {
+    if (chat.blobUrl !== undefined) return chat.blobUrl;
+    if (chat.subtype?.kind === "governance_proposals") {
+        return lookups.snsLogo(chat.subtype.governanceCanisterId);
+    }
+    if (chat.id.kind === "channel") return lookups.communityAvatar(chat.id);
+    return undefined;
 }
 
 export function mergeSendMessageResponse(

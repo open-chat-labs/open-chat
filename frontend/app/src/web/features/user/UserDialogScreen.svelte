@@ -6,7 +6,6 @@
 <script lang="ts">
     import {
         anonUserStore,
-        buildUserAvatarUrl,
         buildUserBackgroundUrl,
         lastOnlineStatus,
         chatListScopeStore,
@@ -37,6 +36,7 @@
     import { ttlDurationId } from "@src/logic/chats/disappearingMessages";
     import { favouriteDm, muteDm, setDmDisappearing } from "@src/logic/chats/dmSettings";
     import { userDialogProps } from "./user.adapter";
+    import { profileAvatarUrl } from "../profile/profile.adapter";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "user" }>> = $props();
 
@@ -72,7 +72,8 @@
         return userDialogProps({
             name,
             profile,
-            avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+            userId,
+            avatarUrl: profileAvatarUrl(blobUrlPattern, userId, profile.avatarId),
             coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             online,
             joined: client.toMonthYearString(new Date(Number(profile.created))),

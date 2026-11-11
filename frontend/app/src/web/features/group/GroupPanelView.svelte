@@ -57,7 +57,10 @@
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { profileClickedEvent } from "@src/web-components/profileLink";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import { OnlineUsers } from "@src/logic/chats/onlineUsers.svelte";
+    import { membersWithPresenceShown } from "@src/logic/groupOrCommunity/memberPresence";
+    import { now } from "@src/stores/time";
     import { _ } from "svelte-i18n";
     import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
     import { communityPermissionsValue, permissionsValue } from "./settings.adapter";
@@ -65,9 +68,10 @@
     import type { LocalDialog } from "../app/dialogs";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
     import { gateAssets, gatesState } from "../access/gates.adapter";
-    import { pickById } from "@src/utils/pickById";
+    import { swatchFor } from "@src/logic/swatch";
     import {
         appRole,
+        collectionAvatarUrl,
         memberPerson,
         panelHeader,
         pinRow,
@@ -77,6 +81,7 @@
         userPerson,
     } from "./group.adapter";
     import { leaveOrDeleteFor } from "./manage.adapter";
+    import { groupAvatarLookups } from "@src/logic/chats/chatRow";
 
     // what GroupPanel's user group actions send with onDialog("usergroup")
     type UserGroupDialogRequest = { dialogMode: "create" | "edit" | "delete"; key: string | null };
@@ -120,8 +125,6 @@
         onClose,
     }: Props = $props();
 
-    const PANEL_COLORS = ["violet", "amber", "teal", "blue"] as const;
-
     const client = getContext<OpenChat>("client");
 
     const chat = $derived<MultiUserChat | undefined>(
@@ -143,10 +146,35 @@
             ? []
             : knownMembers($allUsersStore, members.members.values()).sort(compareMembers),
     );
+    // GroupPanel's page, as it reports it (onViewChange): none yet is its main page
+    let view = $state<string>();
+    // who's online among the members held, looked up on the app's clock as the chat list's DMs
+    // are (OnlineUsers): only the look-up follows the clock, and the rows take a new set only when
+    // someone comes online or goes offline, so they aren't built again on every tick
+    const onlineUsers = new OnlineUsers((userId, at) => client.getUserStatus(userId, at));
+    onDestroy(() => onlineUsers.dispose());
+    // only the members the page shows presence for (membersWithPresenceShown): none on the
+    // overview or most pages; a string, so the look-up runs again only when they change, not on
+    // every user update
+    const memberIds = $derived(
+        membersWithPresenceShown(
+            { view, quick },
+            held.map((m) => m.userId),
+        ).join(" "),
+    );
+    $effect(() => {
+        const userIds = memberIds === "" ? [] : memberIds.split(" ");
+        const at = $now;
+        // only the members and the clock: nothing the look-up reads along the way
+        untrack(() => void onlineUsers.refresh(userIds, at));
+    });
     const people = $derived(
         members === undefined
             ? []
-            : held.map((m) => memberPerson(m, me, members.actionsFor(m.role, m.userId === me))),
+            : held.map((m) => ({
+                  ...memberPerson(m, me, members.actionsFor(m.role, m.userId === me)),
+                  online: onlineUsers.online.has(m.userId),
+              })),
     );
     const lapsed = $derived(
         members === undefined
@@ -168,10 +196,8 @@
                   collection.kind === "community"
                       ? collection.description
                       : groupDescription(collection, me),
-                  // uploaded images only: a swatch stands in otherwise, as in the chat list
-                  collection.kind === "community"
-                      ? collection.avatar.blobUrl
-                      : (collection.blobUrl ?? community?.avatar.blobUrl),
+                  // its own picture only: its swatch stands in otherwise, as in the chat list
+                  collectionAvatarUrl(collection, groupAvatarLookups(client, community)),
               ),
     );
 
@@ -218,7 +244,6 @@
     );
 
     // pinned messages load (and are marked read) when the pinned view opens, as the old panel did
-    let view = $state<string>();
     const pinned = new PinnedMessages(
         client,
         () => (chat as MultiUserChat).id,
@@ -461,11 +486,10 @@
               ? "channel"
               : "group"}
         {...header}
-        color={pickById(
+        color={swatchFor(
             collection.kind === "community"
                 ? collection.id.communityId
                 : chatIdentifierToString(collection.id),
-            PANEL_COLORS,
         )}
         ownerHandle={owner?.username ?? ""}
         communityName={collection.kind === "channel" ? community?.name : undefined}

@@ -246,14 +246,17 @@
         const ranking = landingCommunities(
             exploreCommunities(
                 ranked,
-                (m) => client.communityAvatarUrl(m.id.communityId, m.avatar),
+                // own pictures only: a card without one shows its swatch (2026-11-10)
+                (m) => m.avatar.blobUrl,
                 supportedLanguagesByCode,
             ),
             openCommunity,
         );
         if (pinned === undefined) return ranking;
-        const avatar = client.communityAvatarUrl(pinned.id.communityId, pinned.avatar);
-        return [pinnedLandingCommunity(pinned, avatar, openCommunity), ...ranking];
+        return [
+            pinnedLandingCommunity(pinned, pinned.avatar.blobUrl, openCommunity),
+            ...ranking,
+        ];
     });
 
     // The page a sign-in link opens: its query (?auth&m=…&s1=…&s2=…) is kept to go with the

@@ -11,6 +11,7 @@
     import {
         allUsersStore,
         byContext,
+        getTypingString,
         selectedCommunitySummaryStore,
         UserStatus,
     } from "@client";
@@ -36,7 +37,7 @@
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const someoneTyping = client.getTypingString(
+        const someoneTyping = getTypingString(
             $_,
             $allUsersStore,
             { chatId: chatSummary.id, threadRootMessageIndex },

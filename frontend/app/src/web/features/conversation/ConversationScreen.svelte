@@ -23,6 +23,7 @@
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { now } from "@src/stores/time";
+    import { chatAvatarUrl, groupAvatarLookups } from "@src/logic/chats/chatRow";
     import { headerMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
 
@@ -44,6 +45,16 @@
               : chat.name,
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
+    // the chat's own picture, as its chat list row has it: its swatch without one (2026-11-10)
+    const avatarUrl = $derived(
+        chat === undefined
+            ? undefined
+            : chatAvatarUrl(
+                  chat,
+                  $allUsersStore,
+                  groupAvatarLookups(client, $selectedCommunitySummaryStore),
+              ),
+    );
 
     // a DM's line under the name: when the other person was last online, following the app clock
     // ("Online now", "Last online 5 minutes ago"), or that their account is suspended; nothing for
@@ -110,6 +121,7 @@
             <ConversationHeader
                 {title}
                 kind={headerKind}
+                {avatarUrl}
                 color={senderColor(
                     chat.kind === "direct_chat" ? chat.them.userId : chatIdentifierToString(chat.id),
                 )}

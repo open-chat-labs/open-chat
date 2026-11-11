@@ -25,6 +25,7 @@ const ctx: ConversationContext = {
     text: (key) => key.key,
     openThread: undefined,
     face: (userId) => `face:${userId}`,
+    avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
     token: () => undefined,
@@ -99,6 +100,18 @@ describe("the rows kept per event", () => {
         expect(second).not.toBe(first);
         expect(second.message).toMatchObject({ quoteText: "ask @carol" });
         expect(rows.row("k", evt, "sent", ctx)).toBe(second);
+    });
+
+    test("are made again when the sender's picture arrives or changes", () => {
+        const rows = new RowCache();
+        const evt = message();
+        const first = rows.row("k", evt, "sent", ctx);
+        expect(first.avatarUrl).toBeUndefined();
+        const pictured = { ...ctx, avatar: (id: string) => `https://blobs/${id}` };
+        const second = rows.row("k", evt, "sent", pictured);
+        expect(second).not.toBe(first);
+        expect(second.avatarUrl).toBe("https://blobs/alice");
+        expect(rows.row("k", evt, "sent", { ...pictured })).toBe(second);
     });
 
     test("are made again only where the open thread changes which row's thread is selected", () => {
