@@ -2748,6 +2748,9 @@ pub(crate) mod prize_tests {
         let other = UserId::from(Principal::from_slice(&[8; 29]));
         let mut prize = prize(principal());
         prize.excluded_users.insert(excluded);
+        // every optional field filled, so hiding any of them from an excluded reader shows
+        prize.caption = Some("Good luck".to_string());
+        prize.min_account_age = 1;
 
         let as_read_by = |user: UserId| {
             candid::encode_one(
