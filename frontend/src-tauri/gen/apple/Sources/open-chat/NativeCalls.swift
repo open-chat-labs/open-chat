@@ -58,6 +58,16 @@ final class NativeCalls: NSObject {
             return
         }
         if let call, call.isEnding {
+            // End & Accept: the shell's answer and the web layer's join for the same room both wait
+            // for the old call to leave, and share one join. The shell's has the ring's call id.
+            if let pending = pendingJoin, let waiting = pending["reply"] as? ([String: Any]) -> Void,
+               (pending["url"] as? String).flatMap(URL.init(string:)) == url {
+                var shared = pending["callId"] != nil ? pending : info
+                let both: ([String: Any]) -> Void = { waiting($0); reply($0) }
+                shared["reply"] = both
+                pendingJoin = shared
+                return
+            }
             if let replaced = pendingJoin?["reply"] as? ([String: Any]) -> Void {
                 replaced(["error": "Another call was joined"])
             }
