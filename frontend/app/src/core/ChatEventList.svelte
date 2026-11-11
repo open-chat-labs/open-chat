@@ -355,6 +355,12 @@
     // selection announces synchronously; the props follow a flush later), so
     // it is matched against the context at consumption time.
     let pendingWindowFocus = $state<{ context: MessageContext; messageIndex: number }>();
+    // Subscribed at creation, not in onMount: when the chat's view mounts in the same flush
+    // that selects the chat (a community and its chat selected together), the announcement
+    // comes after this script has run but before onMount does.
+    const unsubLoadingMessageWindow = subscribe("loadingMessageWindow", (args) => {
+        pendingWindowFocus = args;
+    });
     let unpositioned = $derived(
         pendingWindowFocus !== undefined &&
             messageContextsEqual(pendingWindowFocus.context, messageContext),
@@ -509,9 +515,7 @@
             subscribe("reactionSelected", afterReaction),
             subscribe("sendingMessage", sendingMessage),
             subscribe("sentMessage", sentMessage),
-            subscribe("loadingMessageWindow", (args) => {
-                pendingWindowFocus = args;
-            }),
+            unsubLoadingMessageWindow,
             subscribe("loadedMessageWindow", onMessageWindowLoaded),
             subscribe(
                 "loadedNewMessages",
