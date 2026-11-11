@@ -1665,6 +1665,12 @@ pub struct PrizeContentInternal {
     pub fee_percent: u8,
     #[serde(rename = "mc", default, skip_serializing_if = "is_default")]
     pub min_chit_earned: u32,
+    // How long a claimer must have been registered for, 0 if there's no minimum
+    #[serde(rename = "ma", default, skip_serializing_if = "is_default")]
+    pub min_account_age: Milliseconds,
+    // Users who can't claim the prize. Never returned to any reader, so `hydrate` leaves it out.
+    #[serde(rename = "x", default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub excluded_users: BTreeSet<UserId>,
     // The sender's principal, which along with their user id determines the wallet any refund is
     // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time it
     // ends. Anonymous for prizes sent before it was recorded, whose senders were then all in their own
@@ -1693,6 +1699,8 @@ impl PrizeContentInternal {
             prizes_paid: 0,
             fee_percent: PRIZE_FEE_PERCENT,
             min_chit_earned: content.min_chit_earned,
+            min_account_age: content.min_account_age.unwrap_or_default(),
+            excluded_users: content.excluded_users.unwrap_or_default().into_iter().collect(),
             // Set by the chat from the sender's member record when the prize is sent
             principal: Principal::anonymous(),
         }
@@ -1768,6 +1776,7 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             streak_only: self.streak_only,
             requires_captcha: false,
             min_chit_earned: self.min_chit_earned,
+            min_account_age: (self.min_account_age > 0).then_some(self.min_account_age),
         }
     }
 }
@@ -2668,14 +2677,15 @@ mod p2p_swap_tests {
 }
 
 #[cfg(test)]
-mod prize_tests {
+pub(crate) mod prize_tests {
     use super::*;
 
     fn principal() -> Principal {
         Principal::from_slice(&[7])
     }
 
-    fn prize(principal: Principal) -> PrizeContentInternal {
+    // One prize of 100, ending at 1_000
+    pub(crate) fn prize(principal: Principal) -> PrizeContentInternal {
         PrizeContentInternal {
             prizes_remaining: vec![100],
             reservations: BTreeSet::new(),
@@ -2703,7 +2713,54 @@ mod prize_tests {
             fee_percent: 0,
             min_chit_earned: 0,
             principal,
+            min_account_age: 0,
+            excluded_users: BTreeSet::new(),
         }
+    }
+
+    // Invariant: a prize's excluded users never leave the chat, whoever reads it
+    #[test]
+    fn hydrated_prize_never_contains_its_excluded_users() {
+        let excluded = UserId::from(Principal::from_slice(&[9; 29]));
+        let mut prize = prize(principal());
+        prize.excluded_users.insert(excluded);
+        prize.min_account_age = 1;
+
+        for reader in [None, Some(UserIdAndPrincipal::new(excluded, excluded.as_principal()))] {
+            let content = prize.clone().hydrate(reader);
+            assert_eq!(content.min_account_age, Some(1));
+            let msgpack = msgpack::serialize_then_unwrap(&content);
+            let candid = candid::encode_one(&content).unwrap();
+            for bytes in [msgpack, candid] {
+                assert!(
+                    !bytes.windows(29).any(|w| w == [9; 29]),
+                    "excluded user found in hydrated prize"
+                );
+            }
+        }
+    }
+
+    // Invariant: an excluded user receives the prize exactly as any other member does, so nothing
+    // they're sent tells them they were excluded
+    #[test]
+    fn excluded_reader_receives_the_prize_as_any_other_member_does() {
+        let excluded = UserId::from(Principal::from_slice(&[9; 29]));
+        let other = UserId::from(Principal::from_slice(&[8; 29]));
+        let mut prize = prize(principal());
+        prize.excluded_users.insert(excluded);
+        // every optional field filled, so hiding any of them from an excluded reader shows
+        prize.caption = Some("Good luck".to_string());
+        prize.min_account_age = 1;
+
+        let as_read_by = |user: UserId| {
+            candid::encode_one(
+                prize
+                    .clone()
+                    .hydrate(Some(UserIdAndPrincipal::new(user, user.as_principal()))),
+            )
+            .unwrap()
+        };
+        assert_eq!(as_read_by(excluded), as_read_by(other));
     }
 
     // The owner of the account the prize's unclaimed remainder is refunded to

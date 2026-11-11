@@ -241,6 +241,9 @@ pub struct UserRegistered {
     pub username: String,
     pub user_type: UserType,
     pub referred_by: Option<UserId>,
+    // 0 from a UserIndex which didn't yet send it
+    #[serde(default)]
+    pub date_created: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -393,6 +396,9 @@ pub struct GlobalUser {
     pub user_type: UserType,
     #[serde(default)]
     pub chit: ChitBalance,
+    // When the user registered, if this LocalUserIndex knows
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date_created: Option<TimestampMillis>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -433,6 +439,8 @@ pub struct UserDetailsFull {
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     #[serde(rename = "u", skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(rename = "dc", default, skip_serializing_if = "is_default")]
+    pub date_created: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

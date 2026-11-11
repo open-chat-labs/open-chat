@@ -382,6 +382,8 @@ fn pending_prizes_transferred_to_community() {
                 unique_person_only: false,
                 streak_only: 0,
                 min_chit_earned: 0,
+                min_account_age: None,
+                excluded_users: None,
             }),
             sender_name: user1.username(),
             sender_display_name: None,

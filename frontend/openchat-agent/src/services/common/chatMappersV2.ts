@@ -1077,6 +1077,7 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         endDate: value.end_date,
         caption: value.caption,
         minChitEarned: value.min_chit_earned,
+        minAccountAgeMs: mapOptional(value.min_account_age, Number),
     };
 }
 
@@ -2311,6 +2312,11 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         unique_person_only: domain.uniquePersonOnly,
         streak_only: domain.streakOnly,
         min_chit_earned: domain.minChitEarned,
+        min_account_age: domain.minAccountAgeMs > 0 ? BigInt(domain.minAccountAgeMs) : undefined,
+        excluded_users:
+            domain.excludedUsers.length > 0
+                ? domain.excludedUsers.map(principalStringToBytes)
+                : undefined,
         prizes_v2: domain.prizes,
     };
 }

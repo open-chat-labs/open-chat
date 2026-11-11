@@ -552,6 +552,7 @@ export function sendingPrize(content: PrizeContentInitial): PrizeContent {
         uniquePersonOnly: content.uniquePersonOnly,
         streakOnly: content.streakOnly,
         minChitEarned: content.minChitEarned,
+        minAccountAgeMs: content.minAccountAgeMs || undefined,
         token: content.transfer.token,
         ledger: content.transfer.ledger,
         endDate: content.endDate,

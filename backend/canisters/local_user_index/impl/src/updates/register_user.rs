@@ -224,7 +224,7 @@ fn commit(
     let now = state.env.now();
 
     state.data.local_users.add(user_id, principal, now);
-    state.data.global_users.add(principal, user_id, UserType::User);
+    state.data.global_users.add(principal, user_id, UserType::User, now);
     let canister_id = user_id.canister_id();
     state.data.local_multi_user_canisters.on_user_added(&canister_id);
     // Indexes aren't reused, so once the last one is given out the canister can take no more users.

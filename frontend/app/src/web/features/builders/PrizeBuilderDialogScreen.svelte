@@ -9,12 +9,15 @@
      (GAPS: no external wallet picker). -->
 <script lang="ts">
     import {
+        allUsersStore,
         cryptoBalanceStore,
         cryptoLookup,
         exchangeRatesLookupStore,
         i18nKey,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        MAX_PRIZE_EXCLUDED_USERS,
+        type OpenChat,
         walletTokensSorted,
     } from "@client";
     import PrizeBuilderDialog, {
@@ -23,7 +26,7 @@
     import type { Prize, PrizeGateKind } from "@openchat/ui/src/lib/types";
     import { PrizeForm } from "@src/logic/prize/prizeForm.svelte";
     import { toastStore } from "@src/stores/toast";
-    import { untrack } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import {
@@ -39,9 +42,24 @@
 
     // a prize can't require signing in again any more (#10425): the dialog's "Authenticated" isn't
     // offered
-    const RESTRICTIONS: PrizeGateKind[] = ["diamond", "lifetime", "chit", "streak"];
+    const RESTRICTIONS: PrizeGateKind[] = ["diamond", "lifetime", "chit", "streak", "age"];
 
+    const client = getContext<OpenChat>("client");
     const form = new PrizeForm();
+    // the users remembered as excluded from the last prize (or the staged one's) are loaded to show
+    // who they are
+    client.getMissingUsers([
+        ...form.excludedUsers,
+        ...(untrack(() => dialog.editing)?.excludedUsers ?? []),
+    ]);
+    const exclusions = {
+        search: (query: string) =>
+            client
+                .searchUsers(query, 20)
+                .then((users) => users.map((u) => ({ id: u.userId, name: u.username }))),
+        nameOf: (id: string) => $allUsersStore.get(id)?.username ?? id,
+        max: MAX_PRIZE_EXCLUDED_USERS,
+    };
     const editing = untrack(() => dialog.editing);
     const editedLedger =
         editing?.transfer.kind === "pending" ? editing.transfer.ledger : undefined;
@@ -100,6 +118,7 @@
         {initial}
         defaults={prizeDefaults(form)}
         restrictions={RESTRICTIONS}
+        {exclusions}
         {pricing}
         onAttach={attach}
         {onClose} />

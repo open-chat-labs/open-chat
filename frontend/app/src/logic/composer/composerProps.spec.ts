@@ -7,7 +7,6 @@ import {
     composerStartText,
 } from "./composerProps";
 
-
 const ctx: ConversationContext = {
     me: "me",
     you: "You",
@@ -25,6 +24,7 @@ const ctx: ConversationContext = {
         lifetimeDiamond: false,
         streak: 0,
         chitEarned: 0,
+        accountCreated: 0,
     },
     text: (key) => key.key,
     openThread: undefined,
@@ -271,4 +271,3 @@ describe("the text the composer starts from", () => {
         expect(composerStartText({ editingEvent: editing, textContent: "old" })).toBe("");
     });
 });
-

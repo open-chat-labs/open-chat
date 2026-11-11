@@ -91,6 +91,8 @@ pub const LIFETIME_DIAMOND_TIMESTAMP: TimestampMillis = 30000000000000; // This 
 pub const PRIZE_FEE_PERCENT: u8 = 5;
 // The most prizes a user can claim in any 24 hours, which the UserIndex enforces
 pub const MAX_PRIZE_CLAIMS_PER_DAY: usize = 10;
+// The most users a prize's sender can exclude from claiming it
+pub const MAX_PRIZE_EXCLUDED_USERS: usize = 50;
 
 // The most members of a chat or community returned by, or looked up in, a single query
 pub const MAX_MEMBERS_PER_QUERY: u32 = 1000;

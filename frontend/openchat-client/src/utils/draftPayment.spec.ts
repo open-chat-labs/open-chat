@@ -65,6 +65,8 @@ describe("a draft's payment from an external wallet", () => {
             uniquePersonOnly: false,
             streakOnly: 0,
             minChitEarned: 0,
+            minAccountAgeMs: 0,
+            excludedUsers: [],
             endDate: 0n,
             transfer: { ...pending, fromWallet: "oisy" },
             prizes: [],

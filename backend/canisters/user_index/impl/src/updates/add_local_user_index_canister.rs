@@ -183,6 +183,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     is_platform_operator: platform_operators.contains(&user.user_id),
                     diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
                     unique_person_proof: user.unique_person_proof.clone(),
+                    date_created: user.date_created,
                 }),
             )
         }

@@ -224,7 +224,13 @@ export {
     type PollReader,
     type PollView,
 } from "./utils/polls";
-export { isTrustedClick, prizeView, type PrizeReader, type PrizeView } from "./utils/prizes";
+export {
+    isTrustedClick,
+    minAccountAgeLabel,
+    prizeView,
+    type PrizeReader,
+    type PrizeView,
+} from "./utils/prizes";
 export {
     emojiReaction,
     messageMenu,
@@ -250,6 +256,7 @@ export {
 export { externalWalletPayment, type ExternalWalletPayment } from "./utils/draftPayment";
 export {
     generatePrizes,
+    MAX_PRIZE_EXCLUDED_USERS,
     MAX_PRIZE_WINNERS,
     newPrizeContent,
     PRIZE_FEE_PERCENT,

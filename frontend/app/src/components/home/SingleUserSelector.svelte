@@ -25,6 +25,8 @@
         invalid?: boolean;
         // Offered instead of the selected chat's members
         users?: UserSummary[];
+        // Users not offered, by id
+        hidden?: string[];
         onUserSelected?: (user: UserSummary) => void;
         onUserRemoved?: () => void;
     }
@@ -39,6 +41,7 @@
         error = [],
         invalid = false,
         users,
+        hidden,
         onUserSelected,
         onUserRemoved,
     }: Props = $props();
@@ -91,6 +94,7 @@
             {border}
             usersOnly
             {users}
+            {hidden}
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
     {#if selectedReceiver !== undefined}

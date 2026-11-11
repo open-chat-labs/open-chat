@@ -3,6 +3,7 @@
         allChatsStore,
         chitBands,
         chitStateStore,
+        currentUserStore,
         communitiesStore,
         cryptoLookup,
         isDiamondStore,
@@ -10,6 +11,7 @@
         isPreviewingOrLapsed,
         isTrustedClick,
         mobileWidth,
+        minAccountAgeLabel,
         prizeView,
         publish,
         type ChatIdentifier,
@@ -82,6 +84,7 @@
             lifetimeDiamond: $isLifetimeDiamondStore,
             streak: $chitStateStore.streak,
             chitEarned: $chitStateStore.totalChitEarned,
+            accountCreated: Number($currentUserStore.dateCreated),
         }),
     );
     let claimedByYou = $derived(view.claimedByYou);
@@ -103,11 +106,13 @@
               ? "active"
               : "inactive") as DiamondMembershipStatus["kind"],
     );
+    let ageLabel = $derived(minAccountAgeLabel(content));
     let restrictedPrize = $derived(
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
             content.streakOnly > 0 ||
-            content.minChitEarned > 0,
+            content.minChitEarned > 0 ||
+            ageLabel !== undefined,
     );
     let spin = $derived(intersecting && !finished && !allClaimed);
     let mirror = $derived(intersecting && !$mobileWidth);
@@ -184,6 +189,12 @@
                                 resourceKey={i18nKey("prizes.streakFull", {
                                     n: content.streakOnly,
                                 })} />
+                        </div>
+                    {/if}
+                    {#if ageLabel !== undefined}
+                        <div>
+                            <div><Clock size={"1.1em"} color={"var(--txt)"} /></div>
+                            <Translatable resourceKey={ageLabel} />
                         </div>
                     {/if}
                 </div>

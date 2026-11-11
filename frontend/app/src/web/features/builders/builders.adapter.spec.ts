@@ -206,6 +206,8 @@ describe("a prize in the builder", () => {
             diamond: "lifetime",
             minStreak: 30,
             minChitEarned: 0,
+            minAccountAgeMs: 90 * 24 * 60 * 60 * 1000,
+            excludedUsers: ["u1"],
         },
         1_000,
     );
@@ -231,8 +233,17 @@ describe("a prize in the builder", () => {
                 diamond: "standard",
                 minStreak: 0,
                 minChitEarned: 5000,
+                minAccountAgeMs: 90 * 24 * 60 * 60 * 1000,
+                excludedUsers: ["u1"],
             }),
-        ).toEqual({ even: true, dur: 4, gates: { diamond: true, chit: true }, chit: 5000 });
+        ).toEqual({
+            even: true,
+            dur: 4,
+            gates: { diamond: true, chit: true, age: true },
+            chit: 5000,
+            age: 90,
+            excluded: ["u1"],
+        });
         expect(prizeDurationIndex(60 * 60 * 1000)).toBe(0);
         // one the dialog doesn't offer: the nearest
         expect(prizeDurationIndex(2 * 24 * 60 * 60 * 1000)).toBe(2);
@@ -253,6 +264,8 @@ describe("a prize in the builder", () => {
                     diamond: "none",
                     minStreak: 0,
                     minChitEarned: 0,
+                    minAccountAgeMs: 0,
+                    excludedUsers: [],
                 },
                 1_000,
                 () => draws.shift() ?? 0.5,
@@ -271,10 +284,10 @@ describe("a prize in the builder", () => {
             winners: 4,
             even: true,
             durationMs: 7 * 24 * 60 * 60 * 1000,
-            rules: [{ kind: "lifetime" }, { kind: "streak", min: 30 }],
+            rules: [{ kind: "lifetime" }, { kind: "streak", min: 30 }, { kind: "age", min: 90 }],
             feeText: `${formatTokens(content.fees, 8)} ICP`,
             summary:
-                'ui.prizeBuilderDialog.summaryWinners{"count":4} · ui.prizeBuilderDialog.durations.sevenDaysShort{} · ui.prizeBuilderDialog.summaryRules{"count":2}',
+                'ui.prizeBuilderDialog.summaryWinners{"count":4} · ui.prizeBuilderDialog.durations.sevenDaysShort{} · ui.prizeBuilderDialog.summaryRules{"count":3}',
         });
     });
 
@@ -287,9 +300,11 @@ describe("a prize in the builder", () => {
             win: "4",
             dur: 3,
             even: true,
-            gates: { lifetime: true, streak: true },
+            gates: { lifetime: true, streak: true, age: true },
             streak: 30,
             chit: 10000,
+            age: 90,
+            excluded: ["u1"],
         });
         expect(validateTokenInput(prize?.draft.amt ?? "", 8).amount).toBe(229_000_000n);
         expect(prize === undefined ? undefined : prizeChoices(prize)).toEqual({
@@ -299,6 +314,8 @@ describe("a prize in the builder", () => {
             diamond: "lifetime",
             minStreak: 30,
             minChitEarned: 0,
+            minAccountAgeMs: 90 * 24 * 60 * 60 * 1000,
+            excludedUsers: ["u1"],
         });
     });
 });

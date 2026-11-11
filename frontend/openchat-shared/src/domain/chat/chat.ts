@@ -268,6 +268,10 @@ export interface PrizeContentInitial {
     uniquePersonOnly: boolean;
     streakOnly: number;
     minChitEarned: number;
+    /** How long a claimer must have been registered for, in ms; 0 for no minimum. */
+    minAccountAgeMs: number;
+    /** Users who can't claim it. Sent to the chat, which never returns it to anyone. */
+    excludedUsers: string[];
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -580,6 +584,8 @@ export const PrizeContentSchema = Type.Object({
     endDate: Type.BigInt(),
     caption: Type.Optional(Type.String()),
     minChitEarned: Type.Number(),
+    // How long a claimer must have been registered for, in ms; none for no minimum
+    minAccountAgeMs: Type.Optional(Type.Number()),
 });
 export type PrizeContent = Static<typeof PrizeContentSchema>;
 

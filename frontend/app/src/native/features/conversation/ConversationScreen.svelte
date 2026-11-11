@@ -24,6 +24,7 @@
         chatIdentifierToString,
         chatsInitialisedStore,
         chitStateStore,
+        currentUserStore,
         communitiesStore,
         cryptoLookup,
         currentUserIdStore,
@@ -210,6 +211,7 @@
         lifetimeDiamond: $isLifetimeDiamondStore,
         streak: $chitStateStore.streak,
         chitEarned: $chitStateStore.totalChitEarned,
+        accountCreated: Number($currentUserStore.dateCreated),
     });
 
     // the exchange rates load after the first rows; once they do, rows are made again

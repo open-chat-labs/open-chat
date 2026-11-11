@@ -17,6 +17,7 @@
         allChatsStore,
         chitBands,
         chitStateStore,
+        currentUserStore,
         communitiesStore,
         cryptoLookup,
         enhancedCryptoLookup,
@@ -24,6 +25,7 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isTrustedClick,
+        minAccountAgeLabel,
         prizeView,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -134,6 +136,7 @@
                   lifetimeDiamond: $isLifetimeDiamondStore,
                   streak: $chitStateStore.streak,
                   chitEarned: $chitStateStore.totalChitEarned,
+                  accountCreated: Number($currentUserStore.dateCreated),
               })
             : undefined,
     );
@@ -156,11 +159,13 @@
               ? "active"
               : "inactive") as DiamondMembershipStatus["kind"],
     );
+    let ageLabel = $derived(minAccountAgeLabel(content));
     let restrictedPrize = $derived(
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
             content.streakOnly > 0 ||
-            content.minChitEarned > 0,
+            content.minChitEarned > 0 ||
+            ageLabel !== undefined,
     );
     let spin = $derived(intersecting && !finished && !allClaimed);
 
@@ -294,6 +299,9 @@
                                 borderColor={me
                                     ? ColourVars.primarySurface
                                     : ColourVars.surface1} />
+                            {#if ageLabel !== undefined}
+                                <Clock size="1.5em" color={ColourVars.textPrimary} />
+                            {/if}
                         </Row>
                     {/if}
                 </Column>
@@ -446,6 +454,15 @@
                                     resourceKey={i18nKey("prizes.minChitEarnedValue", {
                                         n: chitBands.get(content.minChitEarned) ?? "0",
                                     })} />
+                            </Body>
+                        </Row>
+                    {/if}
+
+                    {#if ageLabel !== undefined}
+                        <Row gap="md">
+                            <Clock size="1.5em" color={ColourVars.textPrimary} />
+                            <Body>
+                                <Translatable resourceKey={ageLabel} />
                             </Body>
                         </Row>
                     {/if}
