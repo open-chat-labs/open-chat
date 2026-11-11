@@ -139,7 +139,7 @@ export function toLongDateString(date: Date, locale: string): string {
 
 /**
  * "Tuesday 10th Nov 2026 @ 14:05": when a timeline event (a member joined, the group renamed…)
- * happened, under its line in every tree.
+ * happened, under its line in every tree, and when a message was deleted or a poll ends.
  */
 export function toLongDatetimeString(date: Date, locale: string): string {
     return `${toLongDateString(date, locale)} @ ${toShortTimeString(date, locale)}`;
