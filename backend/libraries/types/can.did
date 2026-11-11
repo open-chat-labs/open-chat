@@ -1307,6 +1307,7 @@ type PrizeContent = record {
     streak_only : nat16;
     requires_captcha : bool;
     min_chit_earned : nat32;
+    min_account_age : opt Milliseconds;
 };
 
 type PrizeWinnerContent = record {
