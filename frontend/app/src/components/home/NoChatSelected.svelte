@@ -4,7 +4,6 @@
         isLocked,
         isPreviewingCommunity,
         selectedCommunitySummaryStore,
-        type ChatListScope,
         type OpenChat,
     } from "@client";
     import { navigate } from "@utils/navigation";
@@ -15,6 +14,7 @@
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import { communityJoin } from "@src/logic/join/joinFlow.svelte";
     import { showJoinStep } from "@src/utils/join";
+    import { noChatSelectedText } from "@src/logic/chats/noChatSelected";
 
     const client = getContext<OpenChat>("client");
 
@@ -33,22 +33,12 @@
         }
     }
 
-    function getMessageForScope(scope: ChatListScope["kind"]): [string, string] {
-        switch (scope) {
-            case "community":
-                return ["noChannelSelected", "selectAChannel"];
-            case "favourite":
-                return ["noChatSelected", "selectAFavourite"];
-            default:
-                return ["noChatSelected", "selectAChat"];
-        }
-    }
     let previewingCommunity = $derived(
         $selectedCommunitySummaryStore !== undefined &&
             isPreviewingCommunity($selectedCommunitySummaryStore),
     );
     let locked = $derived(isLocked($selectedCommunitySummaryStore?.gateConfig?.gate));
-    let [title, message] = $derived(getMessageForScope($chatListScopeStore.kind));
+    let text = $derived(noChatSelectedText($chatListScopeStore.kind));
 </script>
 
 {#if previewingCommunity && $selectedCommunitySummaryStore !== undefined}
@@ -82,8 +72,8 @@
     </div>
 {:else}
     <div class="wrapper">
-        <h2 class="title"><Translatable resourceKey={i18nKey(title)} /></h2>
-        <p class="subtitle"><Translatable resourceKey={i18nKey(message)} /></p>
+        <h2 class="title"><Translatable resourceKey={text.title} /></h2>
+        <p class="subtitle"><Translatable resourceKey={text.body} /></p>
         {#if $chatListScopeStore.kind === "community"}
             <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
         {/if}

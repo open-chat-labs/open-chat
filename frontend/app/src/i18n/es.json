@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Una vez instalada la nueva, desinstale esta. Si están las dos, cada notificación llega por duplicado.",
         "reinstallDownload": "Descargar la versión actual"
     },
+    "fullScreenCalls": {
+        "title": "Llamadas a pantalla completa",
+        "message": "Android necesita su permiso para que OpenChat muestre las llamadas entrantes a pantalla completa cuando el teléfono está bloqueado. Hasta que lo permita, las llamadas llegarán como una notificación normal.",
+        "openSettings": "Abrir ajustes",
+        "notNow": "Ahora no"
+    },
     "appWallet": {
         "header": {
             "asset": "Activo",
@@ -2859,6 +2865,7 @@
     "readOnlyThread": "Este hilo es de solo lectura",
     "reason": "Razón",
     "reasonForSuspension": "motivo de suspensión",
+    "recipientSuspended": "La cuenta de este usuario está suspendida. No puedes enviarle mensajes.",
     "recordAudioMessage": "Grabar mensaje de audio",
     "referralHeader": "Invitar a amigos/familiares",
     "refresh": "Actualizar",

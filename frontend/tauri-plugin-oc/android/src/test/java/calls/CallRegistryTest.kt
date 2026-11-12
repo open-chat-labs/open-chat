@@ -168,12 +168,26 @@ class CallRegistryTest {
     @Test
     fun `invariant 17 the ring notification is posted at most once per call and only while ringing`() {
         val r = CallRegistry()
-        assertFalse(r.shouldPostRing(call().id))
+        assertNull(r.ringToPost(call().id))
         r.started(call(), now)
-        assertTrue(r.shouldPostRing(call().id))
-        assertFalse(r.shouldPostRing(call().id))
+        assertEquals(CallRegistry.RingStyle.FULL_SCREEN, r.ringToPost(call().id))
+        assertNull(r.ringToPost(call().id))
         r.declined(call().id)
-        assertFalse(r.shouldPostRing(call().id))
+        assertNull(r.ringToPost(call().id))
+    }
+
+    @Test
+    fun `call waiting a ring during an active call never uses the full-screen insistent ring`() {
+        val r = CallRegistry()
+        val waiting = r.started(call(messageId = "1"), now, inCall = true) as Started.Ring
+        assertEquals(CallRegistry.RingStyle.WAITING, r.ringToPost(waiting.call.id))
+        assertTrue(r.anyWaiting())
+        // the waiting call still rings out and ends like any other, and the beep goes with it
+        assertEquals(End.MISSED, r.timedOut(waiting.call.id))
+        assertFalse(r.anyWaiting())
+        // outside a call the ring is the full-screen one
+        r.started(call(messageId = "2"), now)
+        assertEquals(CallRegistry.RingStyle.FULL_SCREEN, r.ringToPost(CallId(alice, "2")))
     }
 
     @Test

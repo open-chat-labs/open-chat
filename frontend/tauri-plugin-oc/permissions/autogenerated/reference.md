@@ -46,6 +46,8 @@ Default permissions for the plugin
 - `allow-get-window-insets`
 - `allow-set-system-bars-style`
 - `allow-share`
+- `allow-can-use-full-screen-intent`
+- `allow-open-full-screen-intent-settings`
 - `allow-take-native-exit-reports`
 
 ## Permission Table
@@ -131,6 +133,32 @@ Enables the call_ring_handled command without any pre-configured scope.
 <td>
 
 Denies the call_ring_handled command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-can-use-full-screen-intent`
+
+</td>
+<td>
+
+Enables the can_use_full_screen_intent command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-can-use-full-screen-intent`
+
+</td>
+<td>
+
+Denies the can_use_full_screen_intent command without any pre-configured scope.
 
 </td>
 </tr>
@@ -677,6 +705,32 @@ Enables the native_call_leave command without any pre-configured scope.
 <td>
 
 Denies the native_call_leave command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-open-full-screen-intent-settings`
+
+</td>
+<td>
+
+Enables the open_full_screen_intent_settings command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-open-full-screen-intent-settings`
+
+</td>
+<td>
+
+Denies the open_full_screen_intent_settings command without any pre-configured scope.
 
 </td>
 </tr>

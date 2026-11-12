@@ -70,4 +70,19 @@ final class ShareInboxTests: XCTestCase {
         try copying.commit()
         XCTAssertEqual(inbox.drain(into: cache).map(\.text), ["still copying"])
     }
+
+    func testAFileOverTheSizeCapIsRefusedWithoutBeingCopied() throws {
+        let big = try source("big.mov", "")
+        let handle = try FileHandle(forWritingTo: big)
+        // Sparse, so the test writes nothing
+        try handle.truncate(atOffset: UInt64(ShareInbox.maxFileBytes + 1))
+        try handle.close()
+
+        let share = try inbox.stage()
+        XCTAssertThrowsError(try share.addFile(copying: big, mimeType: "video/quicktime")) { error in
+            XCTAssertEqual(error as? ShareError, .fileTooLarge)
+        }
+        XCTAssertTrue(share.isEmpty)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: share.dir.path), [])
+    }
 }

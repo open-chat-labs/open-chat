@@ -1,4 +1,5 @@
 import { DEFAULT_TOKENS, type WalletConfig } from "@shared";
+import { setsAreEqual } from "./set";
 
 /**
  * A copy of `config` that a settings form can edit without touching the original. The `tokens` Set
@@ -44,14 +45,6 @@ export function walletConfigForMode(
         case "manual_wallet":
             return { kind: "manual_wallet", tokens: new Set(defaultLedgers) };
     }
-}
-
-function setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
-    if (a.size !== b.size) return false;
-    for (const item of a) {
-        if (!b.has(item)) return false;
-    }
-    return true;
 }
 
 /** Whether two wallet configs differ: another mode, minimum or set of hand-picked tokens. */

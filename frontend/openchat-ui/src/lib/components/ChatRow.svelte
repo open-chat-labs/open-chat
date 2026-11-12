@@ -1,5 +1,5 @@
 <!-- One chat in the chat list: avatar, title, last message (or typing dots and who's typing / live call), time, unread
-     mentions (@) and unread count.
+     mentions (@) and unread count. A suspended user (`suspended`) has a dimmed avatar with a ban mark and a Suspended tag.
      Row menu (menuItems): right-click opens at the cursor, the kebab (hover / focus only) anchors under itself,
      a touch long-press anchors to the row at the finger, Shift+F10 / Menu key anchors to the row. All share one ContextMenu. -->
 <script lang="ts">
@@ -8,6 +8,7 @@
   import type { MenuItem } from '../types';
   import Avatar from './Avatar.svelte';
   import ContextMenu from './ContextMenu.svelte';
+  import Pill from './Pill.svelte';
 
   type Rect = { left: number; right: number; top: number; bottom: number };
 
@@ -38,6 +39,8 @@
     verified?: boolean;
     /** Users only. */
     online?: boolean;
+    /** Users only: their account is suspended. The avatar dims with a ban mark (no online dot) and the name gets a Suspended tag. */
+    suspended?: boolean;
     menuItems?: MenuItem[];
     onClick?: () => void;
   }
@@ -61,6 +64,7 @@
     selected = false,
     verified = false,
     online = false,
+    suspended = false,
     menuItems = [],
     onClick,
   }: Props = $props();
@@ -192,7 +196,7 @@
       <div class="selected"></div>
     {/if}
     <div class="avatar">
-      <Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && kind === 'user'} />
+      <Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && kind === 'user'} suspended={suspended && kind === 'user'} />
     </div>
     <div class="body">
       <div class="line">
@@ -200,6 +204,10 @@
         <span class="title">{kind === 'channel' ? '#' : ''}{title}</span>
         {#if verified && kind === 'user'}
           <span class="verified"></span>
+        {/if}
+        {#if suspended && kind === 'user'}
+          <!-- TODO(design): the Suspended tag and the avatar's mark aren't in the design export -->
+          <Pill label="ui.chatRow.suspended" tone="danger" />
         {/if}
         <div class="grow"></div>
         {#if pinned}

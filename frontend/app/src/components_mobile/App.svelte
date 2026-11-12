@@ -184,6 +184,7 @@
         chatId: ChatIdentifier;
         callType: VideoCallType;
         join: boolean;
+        answer?: boolean;
     }) {
         if (payload.join) {
             // Joining from inside the app: the shell's native ring for this call, if any,
@@ -192,7 +193,12 @@
                 ?.messageId;
             if (messageId !== undefined) notifyCallJoined(messageId);
         }
-        videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
+        videoCallElement?.startOrJoinVideoCall(
+            payload.chatId,
+            payload.callType,
+            payload.join,
+            payload.answer,
+        );
     }
 
     function askToSpeak() {

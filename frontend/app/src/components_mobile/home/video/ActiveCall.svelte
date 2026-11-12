@@ -121,9 +121,10 @@
         chatId: ChatIdentifier,
         callType: VideoCallType,
         join: boolean,
+        answer = false,
     ) {
         if (iframeContainer === undefined) return;
-        report(await session.startOrJoin(iframeContainer, { chatId, callType, join }));
+        report(await session.startOrJoin(iframeContainer, { chatId, callType, join, answer }));
     }
 
     function switchCall(confirmed: boolean): Promise<void> {

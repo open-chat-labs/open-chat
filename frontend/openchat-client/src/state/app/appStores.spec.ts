@@ -26,6 +26,7 @@ import {
     type Member,
     type Message,
     type RouteParams,
+    type UserSummary,
 } from "@shared";
 import { get } from "svelte/store";
 import { vi } from "vitest";
@@ -55,7 +56,8 @@ import {
     serverEventsStore,
     startChatVisit,
 } from "../selectedChat";
-import { suspendedUsersStore } from "../users/stores";
+import { userStore } from "../users/state";
+import { allUsersStore, suspendedUsersStore } from "../users/stores";
 import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
@@ -71,6 +73,8 @@ import {
     globalUnreadCountStore,
     getConvertedBalances,
     messageFiltersStore,
+    currentUserStore,
+    messagePermissionsForSelectedChatStore,
     pinnedChatsStore,
     selectedChatIdStore,
     selectedChatBlockedOrSuspendedUsersStore,
@@ -82,6 +86,7 @@ import {
     serverCommunitiesStore,
     serverGroupChatsStore,
     serverPinnedChatsStore,
+    threadPermissionsForSelectedChatStore,
     translationsStore,
     walletTokenBySymbol,
 } from "./stores";
@@ -678,6 +683,16 @@ describe("app state", () => {
             expect(get(communitiesStore).get(id)?.membership.index).toEqual(3);
         });
 
+        test("a community frozen here shows straight away, before the sync brings it", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            expect(get(communitiesStore).get(id)?.frozen).toBe(false);
+            const undo = localUpdates.updateCommunityFrozen(id, true);
+            expect(get(communitiesStore).get(id)?.frozen).toBe(true);
+            expect(get(serverCommunitiesStore).get(id)?.frozen).toBe(false);
+            undo();
+            expect(get(communitiesStore).get(id)?.frozen).toBe(false);
+        });
+
         test("should get the server object if there are no updates", () => {
             const server = get(serverCommunitiesStore).get({
                 kind: "community",
@@ -1241,5 +1256,115 @@ describe("a DM's read receipts", () => {
 
         applyDirectChat({ ...dm(7), id: other, them: other });
         expect(unconfirmedReadByThem.value.has(999n)).toBe(false);
+    });
+});
+
+describe("a DM's composer follows the other user's suspension", () => {
+    const them: DirectChatIdentifier = { kind: "direct_chat", userId: "suspendee" };
+
+    function recipient(userId: string): UserSummary {
+        return {
+            kind: "user",
+            userId,
+            username: userId,
+            displayName: undefined,
+            updated: 0n,
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            hideOnlineStatus: false,
+        };
+    }
+
+    beforeEach(() => {
+        allUsersStore.set(new Map());
+        suspendedUsersStore.set(new Set());
+        userStore.addMany([recipient("suspendee"), recipient("someone_else")]);
+        OpenChat.setGlobalStateStores(
+            [
+                {
+                    kind: "direct_chat",
+                    id: them,
+                    them,
+                    readByThemUpTo: undefined,
+                    dateCreated: 0n,
+                    lastUpdated: 0n,
+                    latestMessage: undefined,
+                    latestEventIndex: 0,
+                    latestMessageIndex: 0,
+                    metrics: emptyChatMetrics(),
+                    membership: { ...nullMembership(), role: ROLE_OWNER },
+                    eventsTTL: undefined,
+                    eventsTtlLastUpdated: 0n,
+                },
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        );
+        setRouteParams(mockContext, {
+            kind: "global_chat_selected_route",
+            chatId: them,
+            chatType: "direct_chat",
+            open: false,
+            scope: { kind: "chats" },
+        });
+        setSelectedChat();
+    });
+
+    test("suspending them stops the selected chat's sending, and un-suspending brings it back", () => {
+        // held open, as the composer holds it, so it doesn't just recompute on each read
+        let canSend = false;
+        const unsub = messagePermissionsForSelectedChatStore.subscribe(
+            (permitted) => (canSend = permitted.has("text")),
+        );
+        expect(canSend).toBe(true);
+
+        userStore.userSuspended("suspendee", true);
+        expect(canSend).toBe(false);
+
+        userStore.userSuspended("suspendee", false);
+        expect(canSend).toBe(true);
+        unsub();
+    });
+
+    test("a change to some other user doesn't republish the selected chat's permissions", () => {
+        let publishes = 0;
+        const unsub = messagePermissionsForSelectedChatStore.subscribe(() => publishes++);
+        userStore.userSuspended("someone_else", true);
+        userStore.addUser({ ...recipient("newcomer"), displayName: "New" });
+        expect(publishes).toBe(1);
+        unsub();
+    });
+
+    test("setting the current user again doesn't republish the selected chat's permissions", () => {
+        let publishes = 0;
+        const unsub = messagePermissionsForSelectedChatStore.subscribe(() => publishes++);
+        const unsubThread = threadPermissionsForSelectedChatStore.subscribe(() => publishes++);
+        currentUserStore.set({ ...currentUserStore.value });
+        expect(publishes).toBe(2);
+        // what may be sent changing still publishes
+        userStore.userSuspended("suspendee", true);
+        expect(publishes).toBe(3);
+        unsub();
+        unsubThread();
     });
 });

@@ -131,7 +131,33 @@ object ShareIntentManager {
             .put("size", size)
     }
 
+    /**
+     * Whether a shared EXTRA_STREAM may be read. We open it with our own uid, so a file:// path or
+     * a URI served by our own FileProvider (which maps the whole cache) would copy OpenChat's
+     * private files into a draft. Only content:// URIs served by another app's provider are read.
+     *
+     * The resolver drops a user id in front of the authority (`0@…`), so the provider must be
+     * looked up without it or it resolves to nothing and slips through.
+     */
+    internal fun acceptsSharedStream(
+        scheme: String?,
+        authority: String?,
+        ownPackage: String,
+        providerPackage: (authority: String) -> String?,
+    ): Boolean {
+        if (scheme != "content") return false
+        val provider = authority?.substringAfterLast('@') ?: return false
+        return providerPackage(provider) != ownPackage
+    }
+
     private fun copyToCache(context: Context, uri: Uri): CachedFile? {
+        val accepted = acceptsSharedStream(uri.scheme, uri.authority, context.packageName) {
+            context.packageManager.resolveContentProvider(it, 0)?.packageName
+        }
+        if (!accepted) {
+            Log.w(LOG_TAG, "Refusing shared URI that is not another app's content provider")
+            return null
+        }
         return try {
             val resolver = context.contentResolver
             val mimeType = resolver.getType(uri)

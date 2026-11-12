@@ -27,6 +27,10 @@ class CallRegistry(
         HUNG_UP(false),
     }
 
+    // How a ring is posted. A call that arrives while this device is in another call waits:
+    // a quiet heads-up and a beep over the call, never the full-screen insistent ring.
+    enum class RingStyle { FULL_SCREEN, WAITING }
+
     sealed class Started {
         // Ring until the deadline, in the same clock as `now`.
         data class Ring(val call: IncomingCall, val deadline: Long) : Started()
@@ -49,10 +53,13 @@ class CallRegistry(
     // update stops the insistent ringtone.
     private val notified = LinkedHashSet<CallId>()
 
+    // Ringing calls that arrived during another call. A subset of `ringing`.
+    private val waiting = LinkedHashSet<CallId>()
+
     // The shell rings natively whether or not the app is on screen; the web layer never
-    // rings in the Android shell.
+    // rings in the Android shell. `inCall`: this device is in another call, so this one waits.
     @Synchronized
-    fun started(call: IncomingCall, now: Long): Started {
+    fun started(call: IncomingCall, now: Long, inCall: Boolean = false): Started {
         if (call.id in ringing || call.id in finished) return Started.Ignore
         val early = earlyDismissals.remove(call.id)
         if (early != null) {
@@ -67,6 +74,7 @@ class CallRegistry(
             return Started.Missed(call)
         }
         ringing[call.id] = call
+        if (inCall) waiting.add(call.id)
         return Started.Ring(call, deadline)
     }
 
@@ -99,14 +107,18 @@ class CallRegistry(
     @Synchronized
     fun timedOut(id: CallId): End? = end(id, End.MISSED)
 
-    // True the first time only, and only while the call is ringing.
+    // The style to post the ring in: the first time only, and only while the call is ringing.
     @Synchronized
-    fun shouldPostRing(id: CallId): Boolean {
-        if (id !in ringing || id in notified) return false
+    fun ringToPost(id: CallId): RingStyle? {
+        if (id !in ringing || id in notified) return null
         notified.add(id)
         while (notified.size > rememberLimit) notified.remove(notified.first())
-        return true
+        return if (id in waiting) RingStyle.WAITING else RingStyle.FULL_SCREEN
     }
+
+    // A call is waiting, so the beep over the current call goes on.
+    @Synchronized
+    fun anyWaiting(): Boolean = waiting.isNotEmpty()
 
     // Joined from inside the app while ringing here: answered on this device.
     @Synchronized
@@ -124,6 +136,7 @@ class CallRegistry(
 
     private fun end(id: CallId, end: End): End? {
         ringing.remove(id) ?: return null
+        waiting.remove(id)
         remember(id)
         return end
     }

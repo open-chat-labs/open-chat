@@ -100,7 +100,6 @@ import {
     confirmedEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
-    currentUserStore,
     eventIndexesLoadedStore,
     eventsStore,
     localUpdates,
@@ -111,7 +110,6 @@ import {
     threadEventsStore,
 } from "../state";
 import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
-import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -1539,13 +1537,18 @@ function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
     }, new Set<MessagePermission>());
 }
 
+/**
+ * What may be sent in the selected chat: to a DM's other user (`recipient`, undefined while they
+ * aren't loaded), or by the current user (`user`) in a group or channel.
+ */
 export function getMessagePermissionsForSelectedChat(
     chat: ChatSummary | undefined,
+    recipient: UserSummary | undefined,
+    user: CreatedUser,
     mode: "thread" | "message",
 ): Set<MessagePermission> {
     if (chat !== undefined) {
         if (chat.kind === "direct_chat") {
-            const recipient = userStore.get(chat.them.userId);
             if (recipient !== undefined) {
                 return toSet(
                     permittedMessagesInDirectChat(
@@ -1556,7 +1559,7 @@ export function getMessagePermissionsForSelectedChat(
                 );
             }
         } else {
-            return toSet(permittedMessagesInGroup(currentUserStore.value, chat, mode));
+            return toSet(permittedMessagesInGroup(user, chat, mode));
         }
     }
     return new Set();

@@ -43,5 +43,7 @@ permissions = [
     "allow-get-window-insets",
     "allow-set-system-bars-style",
     "allow-share",
+    "allow-can-use-full-screen-intent",
+    "allow-open-full-screen-intent-settings",
     "allow-take-native-exit-reports",
 ]

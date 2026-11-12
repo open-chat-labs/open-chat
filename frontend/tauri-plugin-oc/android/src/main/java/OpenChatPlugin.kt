@@ -5,6 +5,9 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.webkit.WebView
@@ -165,6 +168,34 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
                 Log.w(LOG_TAG, "Play update check failed", e)
                 invoke.resolve(JSObject())
             }
+    }
+
+    // Android 14 grants USE_FULL_SCREEN_INTENT by default only to calling and alarm apps.
+    // Without it an incoming call on a locked phone rings as a heads-up notification
+    // instead of the full-screen ring. Always granted below 14.
+    @Command
+    fun canUseFullScreenIntent(invoke: Invoke) {
+        val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+            activity.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
+        invoke.resolve(JSObject().put("granted", granted))
+    }
+
+    // The system page where the user grants it; there is no runtime prompt for it.
+    @Command
+    fun openFullScreenIntentSettings(invoke: Invoke) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                activity.startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                        Uri.parse("package:${activity.packageName}")
+                    )
+                )
+            } catch (e: Exception) {
+                Log.w(LOG_TAG, "Couldn't open the full-screen intent settings", e)
+            }
+        }
+        invoke.resolve()
     }
 
     @Command

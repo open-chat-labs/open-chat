@@ -49,7 +49,7 @@ class MainActivity : TauriActivity() {
         }
 
         super.onCreate(savedInstanceState)
-        WebView.setWebContentsDebuggingEnabled(true)
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
         Log.d(LOG_TAG, "onCreate: action=${intent.action} data=${intent.data}")
 
