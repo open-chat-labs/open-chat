@@ -11,7 +11,7 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
-        selectedCommunityUserGroupsStore,
+        userGroupSummariesStore,
         type ChatIdentifier,
         type Message,
         type MessageMenuAction,
@@ -163,7 +163,7 @@
                 formatter: $_,
                 cryptoLookup: $cryptoLookup,
                 users: $allUsersStore,
-                userGroups: $selectedCommunityUserGroupsStore,
+                userGroups: $userGroupSummariesStore,
             }),
         );
     }

@@ -1,5 +1,6 @@
 import {
     i18nKey,
+    type CryptocurrencyDetails,
     type DirectChatIdentifier,
     type EventWrapper,
     type Message,
@@ -64,6 +65,7 @@ function target(
         me: "me",
         users: new Map(),
         userGroups: new Map(),
+        cryptoLookup: new Map(),
         formatter: (key) => key,
         locale: "en",
         diamond: true,
@@ -248,6 +250,43 @@ describe("a message's actions", () => {
             );
             expect(outcome).toEqual({ kind: "copied", ok: true });
             expect(writeText).toHaveBeenCalledWith("hi @alice @mods");
+        });
+
+        test("copying a transfer names its token from the target's tokens", async () => {
+            const writeText = vi.fn(async () => {});
+            browser({ clipboard: { writeText } as unknown as Clipboard });
+            const transfer: EventWrapper<Message> = {
+                ...evt,
+                event: {
+                    ...evt.event,
+                    content: {
+                        kind: "crypto_content",
+                        caption: "for @UserId(u1)",
+                        transfer: {
+                            kind: "completed",
+                            ledger: "ckbtc-ledger",
+                            recipient: "u1",
+                            sender: "me",
+                            amountE8s: 1n,
+                            feeE8s: 0n,
+                            memo: 0n,
+                            blockIndex: 1n,
+                        },
+                    },
+                },
+            };
+            await messageAction(
+                "copy",
+                target(fakeClient(), {
+                    evt: transfer,
+                    users: new Map([["u1", { userId: "u1", username: "alice" } as UserSummary]]),
+                    cryptoLookup: new Map([
+                        ["ckbtc-ledger", { symbol: "ckBTC" } as CryptocurrencyDetails],
+                    ]),
+                    formatter: (key, opts) => `${key} ${opts?.values?.token ?? ""}`,
+                }),
+            );
+            expect(writeText).toHaveBeenCalledWith("tokenTransfer.transfer ckBTC - for @alice");
         });
 
         test("copying a link says whether the clipboard took it, for the view to show", async () => {

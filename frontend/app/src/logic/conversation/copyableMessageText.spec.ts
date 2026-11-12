@@ -1,4 +1,4 @@
-import type { MessageContent, UserSummary } from "@client";
+import type { CryptocurrencyDetails, MessageContent, UserSummary } from "@client";
 import { describe, expect, test } from "vitest";
 import { copyableMessageText, type CopyableTextLookups } from "./copyableMessageText";
 
@@ -37,5 +37,30 @@ describe("copyableMessageText", () => {
         expect(copyableMessageText(content, lookups)).toBe(
             "@UserId(zz) and @UserGroup(8), @everyone",
         );
+    });
+
+    test("a transfer names its token from the lookups' tokens", () => {
+        const content: MessageContent = {
+            kind: "crypto_content",
+            transfer: {
+                kind: "completed",
+                ledger: "ckbtc-ledger",
+                recipient: "a1",
+                sender: "me",
+                amountE8s: 1n,
+                feeE8s: 0n,
+                memo: 0n,
+                blockIndex: 1n,
+            },
+        };
+        expect(
+            copyableMessageText(content, {
+                ...lookups,
+                formatter: (key, opts) => `${key} ${opts?.values?.token ?? ""}`,
+                cryptoLookup: new Map([
+                    ["ckbtc-ledger", { symbol: "ckBTC" } as CryptocurrencyDetails],
+                ]),
+            }),
+        ).toBe("tokenTransfer.transfer ckBTC");
     });
 });

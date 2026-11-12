@@ -9,7 +9,7 @@
         localUpdates,
         routeForChatIdentifier,
         selectedChatIdStore,
-        selectedCommunityUserGroupsStore,
+        userGroupSummariesStore,
         type OpenChat,
     } from "@client";
     import ChatPicker from "@openchat/ui/src/lib/components/ChatPicker.svelte";
@@ -28,11 +28,11 @@
     const picker = new SharePicker(client, $_, () => selectedChatIdStore.value);
 
     const item = $derived({
-        // its mentions as the @names typed, the open chat's groups as its rows
-        // (conversationContext)
+        // its mentions as the @names typed, every community's groups as its rows
+        // (conversationContext): a forwarded message can name another community's
         title: typedMentions({
             users: $allUsersStore,
-            userGroups: $selectedCommunityUserGroupsStore,
+            userGroups: $userGroupSummariesStore,
         })(client.getContentAsText($_, dialog.message.content)),
         icon: "forward",
     });

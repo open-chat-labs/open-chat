@@ -10,7 +10,7 @@
         i18nKey,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
-        selectedCommunityUserGroupsStore,
+        userGroupSummariesStore,
         threadsFollowedByMeStore,
         type OpenChat,
     } from "@client";
@@ -53,10 +53,10 @@
             userName: (userId) =>
                 client.displayName(findUser(userId, $allUsersStore, $selectedChatWebhooksStore)),
             contentText: (content) => client.getContentAsText($_, content),
-            // the open chat's groups, as the conversation's own rows (conversationContext)
+            // every community's groups, as the conversation's own rows (conversationContext)
             mentionsAsTyped: typedMentions({
                 users: $allUsersStore,
-                userGroups: $selectedCommunityUserGroupsStore,
+                userGroups: $userGroupSummariesStore,
             }),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),

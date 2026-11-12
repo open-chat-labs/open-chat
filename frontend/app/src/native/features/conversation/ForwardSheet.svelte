@@ -11,7 +11,7 @@
         groupMembersLine,
         serverDirectChatsStore,
         serverGroupChatsStore,
-        selectedCommunityUserGroupsStore,
+        userGroupSummariesStore,
         type ChatIdentifier,
         type Message,
         type OpenChat,
@@ -50,13 +50,13 @@
         untrack(() => picks.show(shown));
     });
 
-    // its mentions as the @names typed, the open chat's groups as its rows (conversationContext)
+    // its mentions as the @names typed, every community's groups as its rows (conversationContext)
     const preview = $derived(
         message === undefined
             ? ""
             : typedMentions({
                   users: $allUsersStore,
-                  userGroups: $selectedCommunityUserGroupsStore,
+                  userGroups: $userGroupSummariesStore,
               })(client.getContentAsText($_, message.content)),
     );
 
