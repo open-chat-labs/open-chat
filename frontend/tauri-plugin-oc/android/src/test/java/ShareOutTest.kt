@@ -58,20 +58,32 @@ class ShareOutTest {
         val video = File(root(), "b/clip.mp4")
         val content = { f: File -> "content://com.oclabs.openchat.fileprovider/my_cache_images/${f.name}" }
 
-        val one = ShareOut.send(listOf(photo to "image/jpeg"), content)
+        val one = ShareOut.send(listOf(photo to "image/jpeg"), emptyList(), content)
         assertEquals(Intent.ACTION_SEND, one.action)
         assertEquals("image/jpeg", one.type)
         assertNotEquals(0, one.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-        val two = ShareOut.send(listOf(photo to "image/jpeg", video to "video/mp4"), content)
+        val two = ShareOut.send(listOf(photo to "image/jpeg", video to "video/mp4"), emptyList(), content)
         assertEquals(Intent.ACTION_SEND_MULTIPLE, two.action)
         assertEquals("*/*", two.type)
         assertEquals(2, two.streams.size)
         assertNotEquals(0, two.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         assertThrows(IllegalArgumentException::class.java) {
-            ShareOut.send(listOf(photo to "image/jpeg")) { "file://${it.absolutePath}" }
+            ShareOut.send(listOf(photo to "image/jpeg"), emptyList()) { "file://${it.absolutePath}" }
         }
+    }
+
+    // Invariant: the share sheet leaves OpenChat itself out (its share-in, and so its Direct Share
+    // chat tiles, which open the same activity): share-in refuses streams from OpenChat's own
+    // FileProvider, so media shared there would arrive as its caption alone
+    @Test
+    fun `the share sheet leaves OpenChat itself out`() {
+        val ownTargets = listOf("com.oclabs.openchat/com.oclabs.openchat.MainActivity")
+        val send = ShareOut.send(listOf(File(root(), "a/photo.jpg") to "image/jpeg"), ownTargets) {
+            "content://com.oclabs.openchat.fileprovider/my_cache_images/${it.name}"
+        }
+        assertEquals(ownTargets, send.exclude)
     }
 
     @Test

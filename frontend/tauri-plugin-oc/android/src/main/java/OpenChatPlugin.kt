@@ -3,6 +3,7 @@ package com.ocplugin.app
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.ClipData
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -132,12 +133,21 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         }
         activity.runOnUiThread {
             try {
-                val send = if (files.isEmpty()) {
-                    Intent(Intent.ACTION_SEND).apply { type = "text/plain" }
-                } else {
-                    val spec = ShareOut.send(files) {
+                val spec = if (files.isEmpty()) null else {
+                    // the app's own activities that take a send (share-in)
+                    val ownTargets = activity.packageManager
+                        .queryIntentActivities(
+                            Intent(Intent.ACTION_SEND).setType("*/*").setPackage(activity.packageName),
+                            0,
+                        )
+                        .map { ComponentName(it.activityInfo.packageName, it.activityInfo.name).flattenToString() }
+                    ShareOut.send(files, ownTargets) {
                         FileProvider.getUriForFile(activity, "${activity.packageName}.fileprovider", it).toString()
                     }
+                }
+                val send = if (spec == null) {
+                    Intent(Intent.ACTION_SEND).apply { type = "text/plain" }
+                } else {
                     val uris = spec.streams.map { Uri.parse(it) }
                     Intent(spec.action).apply {
                         type = spec.type
@@ -157,7 +167,11 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
                     text?.let { putExtra(Intent.EXTRA_TEXT, it) }
                     args.title?.let { putExtra(Intent.EXTRA_TITLE, it) }
                 }
-                activity.startActivity(Intent.createChooser(send, args.title))
+                val chooser = Intent.createChooser(send, args.title)
+                spec?.exclude?.mapNotNull { ComponentName.unflattenFromString(it) }
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.let { chooser.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, it.toTypedArray()) }
+                activity.startActivity(chooser)
                 invoke.resolve()
             } catch (e: Exception) {
                 invoke.reject("Couldn't open the share sheet: ${e.message}")

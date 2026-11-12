@@ -38,12 +38,23 @@ object ShareOut {
         return target.takeIf { it.isFile && it.parentFile?.parentFile == base }
     }
 
-    data class Send(val action: String, val type: String, val streams: List<String>, val flags: Int)
+    data class Send(
+        val action: String,
+        val type: String,
+        val streams: List<String>,
+        val flags: Int,
+        // components the share sheet leaves out (ComponentName.flattenToString)
+        val exclude: List<String>,
+    )
 
     // How the staged files go out: ACTION_SEND for one, ACTION_SEND_MULTIPLE for more, each as a
     // content:// URI (`uriFor`, the app's FileProvider) the receiving app is granted read on. Never a
     // file:// path, which another app can't read and Android refuses to send.
-    fun send(files: List<Pair<File, String?>>, uriFor: (File) -> String): Send {
+    //
+    // The sheet leaves out OpenChat's own share targets (`ownTargets`), and with them its Direct
+    // Share chat tiles, which open the same activity: share-in refuses streams from OpenChat's own
+    // FileProvider, so the media wouldn't arrive. Forwarding is how a message goes to another chat.
+    fun send(files: List<Pair<File, String?>>, ownTargets: List<String>, uriFor: (File) -> String): Send {
         val streams = files.map { (file, _) -> uriFor(file) }
         require(streams.all { it.startsWith("content://") }) { "A shared file must go out as a content:// URI" }
         val types = files.map { (_, type) -> type ?: "application/octet-stream" }.distinct()
@@ -52,6 +63,7 @@ object ShareOut {
             type = types.singleOrNull() ?: "*/*",
             streams = streams,
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION,
+            exclude = ownTargets,
         )
     }
 
