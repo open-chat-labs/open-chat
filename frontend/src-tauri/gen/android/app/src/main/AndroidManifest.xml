@@ -92,6 +92,13 @@
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
         </activity>
 
+        <!-- What our own notifications launch (IntentsManager.isNotificationLaunch). Must stay
+             unexported and without intent filters. -->
+        <activity-alias
+            android:name=".NotificationLaunch"
+            android:targetActivity=".MainActivity"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

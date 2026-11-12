@@ -17,6 +17,7 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import app.tauri.plugin.JSObject
+import com.ocplugin.app.IntentsManager
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.NotificationsManager
 import com.ocplugin.app.OCPluginCompanion
@@ -129,6 +130,10 @@ class MainActivity : TauriActivity() {
     // (#9559 invariant 8).
 
     private fun handleNotificationIntent(intent: Intent) {
+        // Only our own notifications come through the unexported alias. Any app can start
+        // this exported activity with a forged payload, so ignore it from anywhere else.
+        if (!IntentsManager.isNotificationLaunch(intent.component?.className, packageName)) return
+
         val notificationPayload = intent.getStringExtra("notificationPayload")
 
         // Payload should be json string
