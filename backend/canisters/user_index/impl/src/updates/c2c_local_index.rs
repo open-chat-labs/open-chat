@@ -231,12 +231,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
         }
         LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),
-        LocalUserIndexEvent::PrizeClaimed(user_id) => {
-            if let Some(blocked_until) = state.data.prize_claims.record(user_id, **now) {
-                state
-                    .push_event_to_all_local_user_indexes(UserIndexEvent::PrizeClaimLimitReached(user_id, blocked_until), None);
-            }
-        }
+        LocalUserIndexEvent::PrizeClaimed(_) => {}
     }
 }
 

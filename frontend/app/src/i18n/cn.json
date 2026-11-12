@@ -2668,8 +2668,6 @@
         "claimed": "已领取！",
         "claimFailed": "抱歉，您未领取成功！祝你下次好运。",
         "claimIneligible": "抱歉，您不符合领取此奖品的条件。",
-        "claimInProgress": "您上一次的领奖仍在处理中。请稍后再试。",
-        "claimLimitReached": "您已达到每日领奖次数上限。您可以从 {time} 起再次领取。",
         "click": "点击下方按钮即有机会赢取礼品。",
         "creatingPrizeMessageFailed": "创建奖品信息失败",
         "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候",

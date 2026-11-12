@@ -66,7 +66,8 @@ pub enum UserIndexEvent {
     SetAlchemyApiKey(SetAlchemyApiKey),
     BridgedUserLinked(BridgedUserLinked),
     SetMiniAppServicePrincipal(Principal),
-    // A user has claimed as many prizes as they can in a day, so can't claim another until the timestamp
+    // No longer sent, now the daily prize claim limit has gone. Kept so that any still queued or in
+    // flight when the canisters are upgraded can be read. Remove once released.
     PrizeClaimLimitReached(UserId, TimestampMillis),
 }
 

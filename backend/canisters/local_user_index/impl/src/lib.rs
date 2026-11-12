@@ -1003,10 +1003,6 @@ struct Data {
     // passed on to the MultiUser canisters, including any created later
     #[serde(default)]
     pub alchemy_api_key: Option<String>,
-    // The users who have claimed as many prizes as they can in a day, and when they can claim again,
-    // synced from the UserIndex, which counts every LocalUserIndex's claims
-    #[serde(default)]
-    pub prize_claims_blocked_until: HashMap<UserId, TimestampMillis>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1137,7 +1133,6 @@ impl Data {
             migrated_user_ids: MigratedUserIds::default(),
             registry_tokens: RegistryTokens::default(),
             alchemy_api_key,
-            prize_claims_blocked_until: HashMap::new(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }

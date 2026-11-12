@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hold every user's registration date, filled in from the UserIndex for users held before, and pass the claimer's to the chat with a prize claim ([#10463](https://github.com/open-chat-labs/open-chat/pull/10463))
 - Report the users without a registration date in the metrics ([#10463](https://github.com/open-chat-labs/open-chat/pull/10463))
 
+### Removed
+
+- Stop limiting each user to 10 prize claims in 24 hours ([#10475](https://github.com/open-chat-labs/open-chat/pull/10475))
+
 ## [[2.0.2222](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2222-local_user_index)] - 2026-11-10
 
 ### Added
