@@ -370,6 +370,10 @@ object NotificationsManager {
                 .build()
 
             Log.d(OC_TAG_NOT, "#### Set summary notification: $summary")
+            // A push can arrive after an update but before the app has run and created the
+            // summary's channel; a post to a missing channel is dropped. Creating it is a no-op
+            // once it exists.
+            NotificationsChannel.createSummaryChannel(context)
             notificationManager.notify(SUMMARY_NOTIFICATION_TAG, SUMMARY_NOTIFICATION_ID, summaryNotification)
         } else {
             Log.d(OC_TAG_NOT, "#### Summary notification CANCELED!")
