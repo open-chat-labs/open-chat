@@ -47,7 +47,7 @@
         if (chat === undefined || userId === undefined || card === undefined) return undefined;
         const { user, profile } = card;
         if (user === undefined || profile === undefined) return undefined;
-        $allUsersStore.get(userId);
+        // the users store, read below for `suspended`, also refreshes the name
         return dmPanelProps({
             name: client.getDisplayName(userId),
             profile,

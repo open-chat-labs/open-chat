@@ -21,6 +21,7 @@
         EventWrapper,
         Message,
         MessageContext,
+        MessagePermission,
         OpenChat,
         SelectedEmoji,
         User,
@@ -32,6 +33,8 @@
         externalWalletPayment,
         localUpdates,
         messageContextsEqual,
+        messagePermissionsForSelectedChatStore,
+        messagePermissionsList,
         screenWidth,
         ScreenWidth,
         selectedChatMembersStore,
@@ -39,6 +42,7 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         SIGNER_WALLETS,
+        threadPermissionsForSelectedChatStore,
         throttleDeadline,
         videoProcessingProgress,
         type CreatedUser,
@@ -572,15 +576,19 @@
     );
     let textboxEmpty = $derived((textContent?.trim() ?? "").length === 0);
     let messageIsEmpty = $derived(textboxEmpty && attachment === undefined);
-    // they read the selected DM's other user, so they follow them being suspended or un-suspended
-    let canSendAny = $derived.by(() => {
-        void $selectedChatRecipientStore;
-        return !$anonUserStore && client.canSendMessage(chat.id, mode);
-    });
-    let permittedMessages = $derived.by(() => {
-        void $selectedChatRecipientStore;
-        return client.permittedMessages(chat.id, mode);
-    });
+    // the selected chat's (or its thread's) permissions: they follow the chat, the current user
+    // and a DM's other user being suspended or un-suspended
+    let permitted = $derived(
+        mode === "thread"
+            ? $threadPermissionsForSelectedChatStore
+            : $messagePermissionsForSelectedChatStore,
+    );
+    let canSendAny = $derived(!$anonUserStore && permitted.size > 0);
+    let permittedMessages = $derived(
+        new Map<MessagePermission, boolean>(
+            messagePermissionsList.map((p) => [p, permitted.has(p)]),
+        ),
+    );
     let canEnterText = $derived(
         (permittedMessages.get("text") ?? false) ||
             editingEvent !== undefined ||

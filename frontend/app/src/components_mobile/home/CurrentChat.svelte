@@ -21,13 +21,13 @@
         type MessageContent,
         type MessageContext,
         messageContextsEqual,
+        messagePermissionsForSelectedChatStore,
         messagesRead,
         type OpenChat,
         publish,
         type ReadonlySet,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
-        selectedChatRecipientStore,
         selectedCommunitySummaryStore,
         subscribe,
         suspendedUserStore,
@@ -304,11 +304,8 @@
     let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
     let blocked = $derived(isBlocked(chat, $blockedUsersStore));
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
-    // reads the selected DM's other user, so it follows them being suspended or un-suspended
-    let canSendAny = $derived.by(() => {
-        void $selectedChatRecipientStore;
-        return client.canSendMessage(chat.id, "message");
-    });
+    // follows the chat, the current user and a DM's other user being suspended or un-suspended
+    let canSendAny = $derived($messagePermissionsForSelectedChatStore.size > 0);
     let preview = $derived(client.isPreviewing(chat.id));
     let lapsed = $derived(client.isLapsed(chat.id));
     let canPin = $derived(client.canPinMessages(chat.id));

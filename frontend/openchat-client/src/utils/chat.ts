@@ -1537,39 +1537,13 @@ function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
     }, new Set<MessagePermission>());
 }
 
-/** What of a DM's other user decides what may be sent to them (`canSendDirectMessage`). */
-export type DirectChatRecipient = Pick<UserSummary, "userId" | "kind" | "suspended">;
-
 /**
- * The selected chat's other user, as far as `canSendDirectMessage` goes: a copy of the fields it
- * reads, so a store holding it can tell when one of them changes (the users are updated in place).
- * Undefined for a group or channel, or while the other user isn't loaded.
- */
-export function directChatRecipient(
-    chat: ChatSummary | undefined,
-    users: ReadonlyMap<string, UserSummary>,
-): DirectChatRecipient | undefined {
-    if (chat?.kind !== "direct_chat") return undefined;
-    const user = users.get(chat.them.userId);
-    return user === undefined
-        ? undefined
-        : { userId: user.userId, kind: user.kind, suspended: user.suspended };
-}
-
-export function sameDirectChatRecipient(
-    a: DirectChatRecipient | undefined,
-    b: DirectChatRecipient | undefined,
-): boolean {
-    return a?.userId === b?.userId && a?.kind === b?.kind && a?.suspended === b?.suspended;
-}
-
-/**
- * What may be sent in the selected chat: to a DM's other user (`recipient`, from
- * `directChatRecipient`), or by the current user (`user`) in a group or channel.
+ * What may be sent in the selected chat: to a DM's other user (`recipient`, undefined while they
+ * aren't loaded), or by the current user (`user`) in a group or channel.
  */
 export function getMessagePermissionsForSelectedChat(
     chat: ChatSummary | undefined,
-    recipient: DirectChatRecipient | undefined,
+    recipient: UserSummary | undefined,
     user: CreatedUser,
     mode: "thread" | "message",
 ): Set<MessagePermission> {
@@ -1592,7 +1566,7 @@ export function getMessagePermissionsForSelectedChat(
 }
 
 export function permittedMessagesInDirectChat(
-    recipient: DirectChatRecipient,
+    recipient: UserSummary,
     mode: "message" | "thread",
     proposalsBotUserId: string,
 ): Map<MessagePermission, boolean> {
@@ -1605,7 +1579,7 @@ export function permittedMessagesInDirectChat(
 }
 
 export function canSendDirectMessage(
-    recipient: DirectChatRecipient,
+    recipient: UserSummary,
     mode: "message" | "thread" | "any",
     proposalsBotUserId: string,
     permission?: MessagePermission,

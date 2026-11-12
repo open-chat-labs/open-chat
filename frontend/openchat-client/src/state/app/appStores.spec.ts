@@ -73,6 +73,7 @@ import {
     globalUnreadCountStore,
     getConvertedBalances,
     messageFiltersStore,
+    currentUserStore,
     messagePermissionsForSelectedChatStore,
     pinnedChatsStore,
     selectedChatIdStore,
@@ -85,6 +86,7 @@ import {
     serverCommunitiesStore,
     serverGroupChatsStore,
     serverPinnedChatsStore,
+    threadPermissionsForSelectedChatStore,
     translationsStore,
     walletTokenBySymbol,
 } from "./stores";
@@ -1351,5 +1353,18 @@ describe("a DM's composer follows the other user's suspension", () => {
         userStore.addUser({ ...recipient("newcomer"), displayName: "New" });
         expect(publishes).toBe(1);
         unsub();
+    });
+
+    test("setting the current user again doesn't republish the selected chat's permissions", () => {
+        let publishes = 0;
+        const unsub = messagePermissionsForSelectedChatStore.subscribe(() => publishes++);
+        const unsubThread = threadPermissionsForSelectedChatStore.subscribe(() => publishes++);
+        currentUserStore.set({ ...currentUserStore.value });
+        expect(publishes).toBe(2);
+        // what may be sent changing still publishes
+        userStore.userSuspended("suspendee", true);
+        expect(publishes).toBe(3);
+        unsub();
+        unsubThread();
     });
 });

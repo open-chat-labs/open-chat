@@ -1393,8 +1393,10 @@ design export needs. Each entry says where it came up.
   send them messages." (`recipientSuspended`, new in all 15 locales: the old trees had no words
   for it and said "This chat is read-only"), the composer back when they're un-suspended. The
   selected chat's permissions (`messagePermissionsForSelectedChatStore`) derive from
-  `selectedChatRecipientStore`, which publishes only when the other user's `suspended` (or kind)
-  changes; `chatEntryState` reads it too, for its own block (`recipient_suspended`). A frozen
+  `selectedChatRecipientStore`, the other user, which publishes only when they're replaced
+  (`userSuspended` replaces the user, so a suspension or un-suspension does; another user's
+  change doesn't), and the permission stores publish only when what may be sent changes;
+  `chatEntryState` reads it too, for its own block (`recipient_suspended`). A frozen
   group or channel, or a channel of a frozen community, shows "This chat has been frozen"
   (`chatFrozen`), and follows a freeze and an unfreeze at once: a group's through
   `localUpdates.updateChatFrozen` (the moderator's) or the next sync (everyone else's); a

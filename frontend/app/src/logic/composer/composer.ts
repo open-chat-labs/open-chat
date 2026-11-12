@@ -11,7 +11,6 @@ import {
     type AttachmentContent,
     type ChatSummary,
     type CommunitySummary,
-    type DirectChatRecipient,
     type MessageContent,
     type MessageContext,
     type MessageFormatter,
@@ -22,6 +21,7 @@ import {
     type UserGroupDetails,
     type UserLookup,
     type UserOrUserGroup,
+    type UserSummary,
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { detectMarkdown } from "@src/utils/detectMarkdown";
@@ -94,6 +94,24 @@ export function entryBlock(state: EntryState): EntryBlock | undefined {
 }
 
 /**
+ * What may be sent in the selected chat and in its threads (`messagePermissionsForSelectedChatStore`,
+ * `threadPermissionsForSelectedChatStore`). Stores, not the client's `canSendMessage`, so the entry
+ * follows a DM's other user being suspended or un-suspended.
+ */
+export type EntryPermissions = {
+    message: ReadonlySet<MessagePermission>;
+    thread: ReadonlySet<MessagePermission>;
+};
+
+/** What may be sent from the entry: in a thread, the thread's (a DM's allow nothing). */
+export function entryPermitted(
+    permissions: EntryPermissions,
+    thread: boolean,
+): ReadonlySet<MessagePermission> {
+    return thread ? permissions.thread : permissions.message;
+}
+
+/**
  * Where the entry is, for `entryBlock`: the chat's own state (frozen, previewed, lapsed) from the
  * client, the reader's (suspended, signed out, who they've blocked, what they may send) from the
  * stores. In a thread (`thread`), a preview and a lapse are the chat's, not the thread's, and what
@@ -113,14 +131,9 @@ export function chatEntryState(
          * A DM's other user (`selectedChatRecipientStore`), for whether they're suspended; it
          * publishes when that changes, so the entry follows a moderator (un)suspending them.
          */
-        recipient: DirectChatRecipient | undefined;
-        /**
-         * What may be sent here: the selected chat's message permissions, or its thread's
-         * (`messagePermissionsForSelectedChatStore`, `threadPermissionsForSelectedChatStore`).
-         * The store, not the client's `canSendMessage`, so the entry follows a DM's other user
-         * being suspended or un-suspended.
-         */
-        permitted: Pick<ReadonlySet<MessagePermission>, "has">;
+        recipient: Pick<UserSummary, "userId" | "suspended"> | undefined;
+        /** What may be sent; the thread's are picked in a thread (`entryPermitted`). */
+        permissions: EntryPermissions;
     },
 ): EntryState {
     return {
@@ -136,7 +149,7 @@ export function chatEntryState(
         direct: chat.kind === "direct_chat",
         externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
         anonymous: reader.anonymous,
-        canSend: reader.permitted.has("text"),
+        canSend: entryPermitted(reader.permissions, thread).has("text"),
         thread,
     };
 }

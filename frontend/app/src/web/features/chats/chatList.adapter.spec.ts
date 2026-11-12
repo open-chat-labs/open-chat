@@ -8,6 +8,7 @@ describe("the search's rows for what isn't in the list", () => {
     const rows = foundRows({
         found: { users: [user], bots: [bot] },
         userName: (u) => u.displayName ?? u.username,
+        userSuspended: (u) => u.suspended,
         userAvatar: (u) => `user:${u.userId}`,
         botAvatar: (b) => `bot:${b.id}`,
     });
@@ -38,6 +39,7 @@ describe("the search's rows for what isn't in the list", () => {
             foundRows({
                 found,
                 userName: (u) => u.username,
+                userSuspended: () => false,
                 // as the chat list has them (ChatsScreen)
                 userAvatar: ownUserAvatarUrl,
                 botAvatar: botAvatarUrl,
@@ -56,14 +58,20 @@ describe("the search's rows for what isn't in the list", () => {
         ]);
     });
 
-    test("mark a suspended person as a DM's row is; others and bots aren't", () => {
+    test("mark a suspended person as a DM's row is, as they are now; others and bots aren't", () => {
+        // u2 was suspended when found and has been un-suspended since; u1 the other way round
+        const now = new Map([
+            ["u1", true],
+            ["u2", false],
+        ]);
         const found = foundRows({
             found: { users: [user, { ...user, userId: "u2", suspended: true }], bots: [bot] },
             userName: (u) => u.username,
+            userSuspended: (u) => now.get(u.userId) ?? u.suspended,
             userAvatar: () => undefined,
             botAvatar: () => "",
         });
-        expect(found.map(({ row }) => row.suspended ?? false)).toEqual([false, true, false]);
+        expect(found.map(({ row }) => row.suspended ?? false)).toEqual([true, false, false]);
     });
 
     test("start a chat with the person or bot", () => {

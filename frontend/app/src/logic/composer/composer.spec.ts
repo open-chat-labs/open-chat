@@ -25,6 +25,7 @@ import {
     entryBlockBanner,
     entryNotice,
     entryNoticeText,
+    entryPermitted,
     entryPlaceholder,
     focusEntryOnOpen,
     MemberFinder,
@@ -538,13 +539,15 @@ describe("where the entry is", () => {
         id: { kind: "direct_chat", userId: "them" },
         them: { userId: "them" },
     } as ChatSummary;
+    const text = new Set<MessagePermission>(["text"]);
+    const nothing = new Set<MessagePermission>();
     const reader = {
         suspended: false,
         anonymous: false,
         blockedUsers: new Set<string>(),
         community: undefined,
         recipient: undefined,
-        permitted: new Set<MessagePermission>(["text"]),
+        permissions: { message: text, thread: text },
     };
 
     function client(previewing = false) {
@@ -557,12 +560,21 @@ describe("where the entry is", () => {
 
     test("can send where text is permitted", () => {
         expect(chatEntryState(client(), group, false, reader).canSend).toBe(true);
-        const none = { ...reader, permitted: new Set<MessagePermission>() };
+        const none = { ...reader, permissions: { message: nothing, thread: nothing } };
         expect(chatEntryState(client(), dm, false, none).canSend).toBe(false);
         expect(entryBlock(chatEntryState(client(), dm, false, none))).toEqual({
             kind: "read_only",
             key: "readOnlyChat",
         });
+    });
+
+    test("what may be sent is the thread's in a thread, else the chat's", () => {
+        // as a DM's: text in the chat, nothing in a thread
+        const dmLike = { ...reader, permissions: { message: text, thread: nothing } };
+        expect(chatEntryState(client(), dm, false, dmLike).canSend).toBe(true);
+        expect(chatEntryState(client(), dm, true, dmLike).canSend).toBe(false);
+        expect(entryPermitted(dmLike.permissions, true)).toBe(nothing);
+        expect(entryPermitted(dmLike.permissions, false)).toBe(text);
     });
 
     test("a preview or a lapse is the chat's, never a thread's", () => {
@@ -589,7 +601,11 @@ describe("where the entry is", () => {
 
     test("a DM's other user suspended is its own block, lifted on un-suspending", () => {
         const them = { userId: "them", kind: "user", suspended: true } as const;
-        const suspended = { ...reader, recipient: them, permitted: new Set<MessagePermission>() };
+        const suspended = {
+            ...reader,
+            recipient: them,
+            permissions: { message: nothing, thread: nothing },
+        };
         expect(entryBlock(chatEntryState(client(), dm, false, suspended))).toEqual({
             kind: "recipient_suspended",
         });
@@ -607,7 +623,7 @@ describe("where the entry is", () => {
             isPreviewing: vi.fn(() => false),
             isLapsed: vi.fn(() => false),
         };
-        const none = { ...reader, permitted: new Set<MessagePermission>() };
+        const none = { ...reader, permissions: { message: nothing, thread: nothing } };
         expect(entryBlock(chatEntryState(frozen, group, false, none))).toEqual({ kind: "frozen" });
     });
 });

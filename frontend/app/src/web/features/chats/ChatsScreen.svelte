@@ -174,6 +174,8 @@
         const term = searchTerm(query);
         const results = found.results;
         if (term === "" || results.kind !== "found" || results.term !== term) return [];
+        // read here, so the rows follow a suspend or un-suspend after the search
+        const users = $allUsersStore;
         return foundRows({
             // the user's DMs in every scope, not just this one's list: someone they already have
             // a DM with isn't new in a community or in Favourites either
@@ -183,6 +185,7 @@
                 $currentUserIdStore,
             ),
             userName: (user) => client.displayName(user),
+            userSuspended: (user) => (users.get(user.userId) ?? user).suspended,
             // their own pictures, else the rows' swatches, as the list's chats
             userAvatar: ownUserAvatarUrl,
             botAvatar: botAvatarUrl,

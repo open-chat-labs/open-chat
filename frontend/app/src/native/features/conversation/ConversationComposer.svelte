@@ -29,6 +29,7 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         suspendedUserStore,
+        threadPermissionsForSelectedChatStore,
         throttleDeadline,
         videoProcessingProgress,
         type AttachmentContent,
@@ -53,6 +54,7 @@
         entryBlockBanner,
         entryNotice,
         entryNoticeText,
+        entryPermitted,
         entryPlaceholder,
         MemberFinder,
         mentionsFor,
@@ -63,6 +65,7 @@
         throttleCountdown,
         TypingNotifier,
         type ComposerBuilder,
+        type EntryPermissions,
     } from "@src/logic/composer/composer";
     import {
         composerAttachment,
@@ -128,20 +131,26 @@
     const client = getContext<OpenChat>("client");
 
     const me = $derived($currentUserIdStore);
-    // where it sends: the chat (a thread's composer, N8a, sends to the thread)
+    // where it sends: the chat (a thread's composer, N8a, sends to the thread, and sets this, so
+    // what it may send and why it can't are the thread's)
+    const inThread = false;
     const context = $derived<MessageContext>({ chatId: chat.id });
-    const permitted = $derived($messagePermissionsForSelectedChatStore);
+    const permissions = $derived<EntryPermissions>({
+        message: $messagePermissionsForSelectedChatStore,
+        thread: $threadPermissionsForSelectedChatStore,
+    });
+    const permitted = $derived(entryPermitted(permissions, inThread));
 
     // why the reader can't send here, in the old footer's words
     const block = $derived(
         entryBlock(
-            chatEntryState(client, chat, false, {
+            chatEntryState(client, chat, inThread, {
                 suspended: $suspendedUserStore,
                 anonymous: $anonUserStore,
                 blockedUsers: $blockedUsersStore,
                 community: $selectedCommunitySummaryStore,
                 recipient: $selectedChatRecipientStore,
-                permitted,
+                permissions,
             }),
         ),
     );

@@ -98,6 +98,11 @@ export type FoundRowsInput = {
     found: ChatListSearchResults;
     /** A user's name as the app shows it. */
     userName: (user: UserSummary) => string;
+    /**
+     * Whether a user is suspended now (`allUsersStore`, else the search's copy), so a person's row
+     * follows a suspend or un-suspend after the search, as their DM's row does.
+     */
+    userSuspended: (user: UserSummary) => boolean;
     /** A person's own picture; none gives the row's swatch (ownUserAvatarUrl). */
     userAvatar: (user: UserSummary) => string | undefined;
     botAvatar: (bot: BotMatch) => string;
@@ -132,7 +137,7 @@ export function foundRows(input: FoundRowsInput): FoundRow[] {
                 kind: "user",
                 color: dmSwatch(user.userId),
                 avatarUrl: input.userAvatar(user),
-                suspended: user.suspended,
+                suspended: input.userSuspended(user),
             }),
             target: { kind: "chat_with", userId: user.userId },
         }),

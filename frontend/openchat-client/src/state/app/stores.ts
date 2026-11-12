@@ -71,16 +71,15 @@ import {
 } from "@shared";
 import { createSetStore } from "../../stores/setStore";
 import {
-    directChatRecipient,
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
     mergeEventsAndLocalUpdatesWithRange,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
-    sameDirectChatRecipient,
 } from "../../utils/chat";
 import { chatListOrder, chatsInScope } from "../../utils/chatList";
 import { enumFromStringValue } from "../../utils/enums";
+import { setsAreEqual } from "../../utils/set";
 import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
@@ -1197,14 +1196,18 @@ export const threadsFollowedByMeStore = derived(threadsByChatStore, (threadsByCh
     }, new ChatMap<Set<number>>());
 });
 
-// The selected DM's other user, as far as what may be sent to them goes (whether they're
-// suspended). It re-runs on every change to the users, but that's one lookup, and it only
-// publishes when what it holds changes, so what derives from it doesn't re-run for other users.
+// The selected DM's other user, for what may be sent to them (whether they're suspended). It re-runs
+// on every change to the users, but that's one lookup, and it only publishes when that user is
+// replaced (`userSuspended` replaces them), so what derives from it doesn't re-run for other users.
 export const selectedChatRecipientStore = derived(
     [selectedChatSummaryStore, allUsersStore],
-    ([selectedChatSummary, users]) => directChatRecipient(selectedChatSummary, users),
-    sameDirectChatRecipient,
+    ([selectedChatSummary, users]) =>
+        selectedChatSummary?.kind === "direct_chat"
+            ? users.get(selectedChatSummary.them.userId)
+            : undefined,
 );
+// Both publish only when what may be sent changes, not on every set of the current user (whose
+// store publishes even an unchanged user), so the composer doesn't re-run for nothing.
 export const messagePermissionsForSelectedChatStore = derived(
     [selectedChatSummaryStore, selectedChatRecipientStore, currentUserStore],
     ([selectedChatSummary, recipient, user]) => {
@@ -1215,12 +1218,14 @@ export const messagePermissionsForSelectedChatStore = derived(
             "message",
         );
     },
+    setsAreEqual,
 );
 export const threadPermissionsForSelectedChatStore = derived(
     [selectedChatSummaryStore, selectedChatRecipientStore, currentUserStore],
     ([selectedChatSummary, recipient, user]) => {
         return getMessagePermissionsForSelectedChat(selectedChatSummary, recipient, user, "thread");
     },
+    setsAreEqual,
 );
 export const selectedChatDraftMessageStore = derived(
     [selectedChatIdStore, localUpdates.draftMessages],
