@@ -1,6 +1,7 @@
 import {
     anonymousUser,
     chatsInitialisedStore,
+    chatsLoadedForUserStore,
     currentUserStore,
     notFoundStore,
     pathContextStore,
@@ -50,12 +51,15 @@ describe("the web UI's router", () => {
         chatsInitialisedStore.set(true);
         // signed in: a guest is sent to sign in for some of these pages (logic/auth/guestPass)
         currentUserStore.set({ ...anonymousUser(), userId: "me" });
+        // and their own chats are in
+        chatsLoadedForUserStore.set("me");
     });
 
     afterEach(() => {
         if (app) unmount(app);
         app = undefined;
         currentUserStore.set(anonymousUser());
+        chatsLoadedForUserStore.set(undefined);
         target.remove();
         vi.unstubAllGlobals();
         history.replaceState(null, "", "/");

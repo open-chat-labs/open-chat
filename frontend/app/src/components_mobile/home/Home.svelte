@@ -30,6 +30,7 @@
         currentUserStore,
         chatListScopeStore,
         chatsInitialisedStore,
+        currentUserChatsLoadedStore,
         identityStateStore,
         offlineStore,
         pinNumberResolverStore,
@@ -399,10 +400,10 @@
     }
 
     trackedEffect("identity-state", () => {
-        // a guest's join, replayed once they've signed in and their chats have loaded (the client
-        // hands it out once)
+        // a guest's join, replayed once they've signed in and their own chats have loaded (the
+        // client hands it out once)
         void $identityStateStore;
-        void $chatsInitialisedStore;
+        void $currentUserChatsLoadedStore;
         const postLogin = client.takePostLoginJoin();
         if (postLogin !== undefined) {
             tick().then(() => join(postLoginTarget(postLogin)));

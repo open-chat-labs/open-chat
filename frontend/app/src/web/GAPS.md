@@ -1426,7 +1426,16 @@ design export needs. Each entry says where it came up.
   client's `DEFAULT_EVENTS_TTL`, which the legacy trees keep).
   By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
   the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
-  has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
+  has no read receipts setting. The OpenChat Bot's DM has no right column at all, nor the header's
+  panel toggle or pinned-messages button (`chatHasRightColumn` in `router/regions`, which the
+  screens read through `ScreenContext.hasRightColumn`): it's the read-only welcome chat a new
+  account lands on, and its panel (a picture, Search, Favourite) only took width from it; its name
+  still opens its profile. It's keyed on that bot's id, not on a kind of DM, since no wider rule
+  is settled and none matches it alone today: `isChatReadOnly` is false for every DM, other bots'
+  DMs are conversations with their commands, and the proposals bot's DM, the other one nobody can
+  write in, isn't a welcome chat. TODO(design): the plan docks `DmPanel` for every DM and says
+  nothing about bots or read-only DMs; whether all bot DMs, or all read-only DMs, lose the panel
+  is an open question, and until it's answered they keep it. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
   old panel's durations other than the eight `DmChatSettings` offers (a TTL set elsewhere shows as
   its own length, "2 hours", and saves unchanged).
   - **TimedToggle's 8 lengths** (web plan 08 of 2026-11-10, by hand, EXPORT-LOG 2026-11-10): 5 min,
@@ -1962,8 +1971,10 @@ design export needs. Each entry says where it came up.
   footers did (the backend joins its community with it), even under the community's bar; a locked
   channel in a community that isn't locked joins the community alone. Join runs
   the shared flow (`logic/join/joinFlow`, the old `utils/preview.svelte.ts`, which both old trees
-  now use too): a guest's join is recorded and opens sign-in, and replays once after it
-  (`takePostLoginJoin`, AppScreen); gates the client can't check open `JoinGateDialog`, a level at
+  now use too): a guest's join is recorded and opens sign-in, and replays once after it, once
+  the account's own chats are in (`takePostLoginJoin` on `currentUserChatsLoadedStore`, AppScreen;
+  after a sign-up the anonymous session's stand in until then, and a join decided against them
+  was undone by the account's initial load); gates the client can't check open `JoinGateDialog`, a level at
   a time; "Pay and join" approves the payments (asking for the PIN) and joins; "You joined …" on
   success (named as the bar named it), the failure's own message otherwise, "Access gate not met"
   for a backend gate check failure. The dialog stays open while the join doesn't go through (the
@@ -2225,6 +2236,16 @@ design export needs. Each entry says where it came up.
 - **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
   (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
   (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
+  - **nothing selected**: the middle with nothing selected (region `empty`) is `NoChatScreen`, in
+    place of the development placeholder ("middle: empty"). Beside a chat list with chats it has
+    the kit's `EmptyState` with the old desktop's words by scope (`noChatSelectedText` in
+    `logic/chats`, which the old `NoChatSelected` uses too); beside an empty list (which says "No
+    conversations yet" itself), the activity feed (/notifications, ?panel=activity) or the threads
+    it's blank (`middleWithoutChatText`, from the region's `chatList`). It keeps the placeholder's
+    toolbar, Back on a narrow screen and the panel toggle where the route has the right column
+    (`MiddleToolbar`). TODO(design): the design doesn't say which words, icon or action, nor what
+    shows beside the activity feed; there's no action (the list's own New message has no handler
+    yet either).
   - **mentions in the preview**: as the `@names` typed (`typedMentions` in `logic/conversation`,
     through `mentionsAsTyped`), where the old rows show the preview through Markdown, which shows
     them as `@username` too. The same goes for every other text the new UI shows as it is, not

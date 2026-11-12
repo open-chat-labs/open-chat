@@ -33,15 +33,16 @@ export function joinGroupFailureMessage(
 }
 
 /**
- * The group or community an anonymous user asked to join, once they have logged in and their
- * chats and communities have loaded. The caller clears the post-login state before joining, so the
- * join is replayed once.
+ * The group or community an anonymous user asked to join, once they have logged in and their own
+ * chats and communities have loaded (`ownChatsLoaded`, not the anonymous session's that stand in
+ * after a sign-up). The caller clears the post-login state before joining, so the join is replayed
+ * once.
  */
 export function postLoginJoin(
     identityState: IdentityState,
-    chatsInitialised: boolean,
+    ownChatsLoaded: boolean,
 ): JoinGroup | JoinCommunity | undefined {
-    if (identityState.kind !== "logged_in" || !chatsInitialised) return undefined;
+    if (identityState.kind !== "logged_in" || !ownChatsLoaded) return undefined;
     switch (identityState.postLogin?.kind) {
         case "join_group":
         case "join_community":

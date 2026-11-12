@@ -1,5 +1,7 @@
 import {
+    OPENCHAT_BOT_USER_ID,
     routeForScope,
+    type ChatIdentifier,
     type ChatListScope,
     type RouteParams,
     type WalletPage,
@@ -10,6 +12,8 @@ import { isLandingPageRoute } from "@src/utils/urls";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
 // each one is a placeholder that says what it will be.
+type MiddleRegion = Extract<Regions, { area: "app" }>["middle"];
+
 export type Regions =
     | { area: "marketing"; route: RouteParams }
     | { area: "not_found" }
@@ -22,7 +26,9 @@ export type Regions =
               | { kind: "activity"; over?: true }
               | { kind: "wallet" };
           middle:
-              | { kind: "empty" }
+              // nothing selected; `chatList`: beside a chat list, by its scope (none beside the
+              // activity feed or the threads)
+              | { kind: "empty"; chatList?: ChatListScope }
               | { kind: "conversation"; route: Extract<RouteParams, { chatId: unknown }> }
               | { kind: "explore" }
               | ({ kind: "wallet" } & WalletPage)
@@ -59,17 +65,28 @@ export function regionsFor(
         query.get("panel") === "activity" &&
         (left?.kind === "chats" || left?.kind === "wallet")
     ) {
-        return { ...regions, left: { kind: "activity", over: true }, narrowView: "left" };
+        return {
+            ...regions,
+            left: { kind: "activity", over: true },
+            middle: withoutChatList(regions.middle),
+            narrowView: "left",
+        };
     }
     if (query.has("threads") && left?.kind === "chats") {
         // a narrow screen still shows a conversation (a thread opened from the list) over the list
         return {
             ...regions,
             left: { kind: "threads", scope: left.scope },
+            middle: withoutChatList(regions.middle),
             narrowView: regions.middle.kind === "empty" ? "left" : regions.narrowView,
         };
     }
     return regions;
+}
+
+// The middle once the list beside it is no longer the chat list
+function withoutChatList(middle: MiddleRegion): MiddleRegion {
+    return middle.kind === "empty" ? { kind: "empty" } : middle;
 }
 
 // Explore: full width, without the details column (joining is a dialog)
@@ -106,6 +123,7 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
                 left: { kind: "chats", scope: route.scope },
                 middle: { kind: "conversation", route },
                 narrowView: "middle",
+                ...(chatHasRightColumn(route.chatId) ? {} : { rightColumn: false }),
             };
         case "notifications_route":
             return {
@@ -134,10 +152,27 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
             return {
                 area: "app",
                 left: { kind: "chats", scope: route.scope },
-                middle: { kind: "empty" },
+                middle: { kind: "empty", chatList: route.scope },
                 narrowView: "left",
             };
     }
+}
+
+/**
+ * Whether a chat's conversation has the right column (its details, its threads). The OpenChat
+ * Bot's DM doesn't: it's the read-only welcome chat a new account lands on, and its details (a
+ * picture, Search and Favourite) would only take width from it. Its name still opens its profile.
+ *
+ * Keyed on that one bot on purpose, not on a kind of DM: no wider rule is settled, and none of the
+ * candidates matches it alone today. `isChatReadOnly` is false for every DM (it's about a
+ * suspension or a preview); a bot's DM in general (user kind `bot`) is a conversation with its
+ * commands, whose panel is useful; and the other DM nobody can write in (`canSendDirectMessage`),
+ * the proposals bot's, is no welcome chat and keeps its panel until someone decides otherwise.
+ * TODO(design): the plan docks `DmPanel` for every DM and doesn't say whether a bot's, or a
+ * read-only DM's, has one (GAPS.md, DmPanel).
+ */
+export function chatHasRightColumn(chatId: ChatIdentifier): boolean {
+    return !(chatId.kind === "direct_chat" && chatId.userId === OPENCHAT_BOT_USER_ID);
 }
 
 // The rail's destinations, in the order NavRail shows them, with their labels: the app's own

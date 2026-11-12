@@ -8,6 +8,7 @@
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
+        currentUserChatsLoadedStore,
         lastSelectedChatByScopeStore,
         exploringStore,
         notFoundStore,
@@ -103,7 +104,8 @@
     // these are the web's own.
 
     // A chat list with nothing selected goes to its default chat (ROUTES.md, decision 7): the one
-    // last opened in its scope, else its first, once there is one, with its thread list
+    // last opened in its scope, else its first, once there is one among the current user's own
+    // chats (not the anonymous session's, standing in after a sign-up), with its thread list
     // (?threads) open too. Only that chat's route is tracked (and whether the screen is narrow,
     // where there's none), so other summary changes don't re-run it. The URL's query (an open
     // overlay, the thread list) is kept.
@@ -118,6 +120,7 @@
     $effect(() => {
         if (
             defaultChatPath !== undefined &&
+            $currentUserChatsLoadedStore &&
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
