@@ -9,7 +9,6 @@ pub use event_recipient::*;
 
 // Queries
 generate_c2c_call!(c2c_lookup_user);
-generate_c2c_call!(c2c_registration_dates);
 generate_c2c_call!(migrated_user_ids);
 generate_c2c_call!(platform_moderators_group);
 generate_c2c_call!(user);

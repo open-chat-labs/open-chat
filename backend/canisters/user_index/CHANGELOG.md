@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Stop counting each user's prize claims, which limited them to 10 in 24 hours ([#10475](https://github.com/open-chat-labs/open-chat/pull/10475))
+- Remove `c2c_registration_dates`, which only the LocalUserIndexes' registration date backfill called ([#10476](https://github.com/open-chat-labs/open-chat/pull/10476))
 
 ## [[2.0.2224](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2224-user_index)] - 2026-11-11
 

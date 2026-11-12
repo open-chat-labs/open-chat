@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Stop limiting each user to 10 prize claims in 24 hours ([#10475](https://github.com/open-chat-labs/open-chat/pull/10475))
+- Remove the one-offs which moved users' principals and backfilled their registration dates, now that they have run ([#10476](https://github.com/open-chat-labs/open-chat/pull/10476))
 
 ## [[2.0.2225](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2225-local_user_index)] - 2026-11-11
 

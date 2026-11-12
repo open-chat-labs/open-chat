@@ -3,7 +3,6 @@ pub mod bot_installation_events;
 mod bot_updates;
 pub mod bridged_users;
 pub mod c2c_lookup_user;
-pub mod c2c_registration_dates;
 pub mod call_push_enabled;
 pub mod check_username;
 pub mod chit_leaderboard;

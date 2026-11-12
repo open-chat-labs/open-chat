@@ -8,10 +8,6 @@ use types::{CanisterId, TimestampMillis, UniquePersonProof, UserId, UserType, is
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GlobalUserMap {
-    // Moved into `users` by `migrate_principals` on the upgrade which added `users`.
-    // TODO remove once every LocalUserIndex has been upgraded with it.
-    #[serde(default, skip_serializing)]
-    user_id_to_principal: HashMap<UserId, Principal>,
     #[serde(default)]
     users: HashMap<UserId, GlobalUserEntry>,
     principal_to_user_id: PrincipalToUserIdMap,
@@ -62,37 +58,12 @@ impl GlobalUserMap {
         }
     }
 
-    pub fn migrate_principals(&mut self) {
-        for (user_id, principal) in std::mem::take(&mut self.user_id_to_principal) {
-            self.users.entry(user_id).or_insert(GlobalUserEntry {
-                principal,
-                date_created: 0,
-            });
-        }
-    }
-
-    // Sets the registration dates of users this map holds, ignoring any it doesn't
-    pub fn set_registration_dates(&mut self, dates: Vec<(UserId, TimestampMillis)>) {
-        for (user_id, date_created) in dates {
-            if let Some(entry) = self.users.get_mut(&user_id) {
-                entry.date_created = date_created;
-            }
-        }
-    }
-
-    // Users other than bots without a registration date
-    pub fn undated_user_ids(&self) -> Vec<UserId> {
-        self.undated_users().map(|(user_id, _)| *user_id).collect()
-    }
-
+    // Users other than bots without a registration date, which should be none
     pub fn undated_user_count(&self) -> usize {
-        self.undated_users().count()
-    }
-
-    fn undated_users(&self) -> impl Iterator<Item = (&UserId, &GlobalUserEntry)> {
         self.users
             .iter()
             .filter(|(user_id, entry)| entry.date_created == 0 && !self.legacy_bots.contains(user_id))
+            .count()
     }
 
     pub fn add_multi_user_canister(&mut self, canister_id: CanisterId) {
@@ -261,54 +232,22 @@ mod tests {
             vec![multi_user_canister]
         );
     }
-    // Invariant: a LocalUserIndex upgraded from the old shape keeps every user's principal, with their
-    // registration date unknown until the backfill sets it
+    // Invariant: a later sync without a date keeps the date a user has, and the date survives an
+    // upgrade
     #[test]
-    fn map_in_the_old_shape_keeps_its_users_with_dates_unknown() {
-        // The map as it was before it held registration dates
-        #[derive(Serialize, Default)]
-        struct OldShape {
-            user_id_to_principal: HashMap<UserId, Principal>,
-            principal_to_user_id: PrincipalToUserIdMap,
-            unique_person_proofs: HashMap<UserId, UniquePersonProof>,
-            platform_operators: HashSet<UserId>,
-            platform_moderators: HashSet<UserId>,
-            legacy_bots: HashSet<UserId>,
-            oc_controlled_bot_users: HashSet<UserId>,
-            diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
-            chit: HashMap<UserId, ChitBalance>,
-            multi_user_canisters: BTreeSet<CanisterId>,
-        }
-
+    fn registration_date_kept_by_a_sync_without_one() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init(memory.get(MemoryId::new(1)));
 
         let user_id: UserId = Principal::from_slice(&[1, 1]).into();
         let principal = Principal::from_slice(&[2]);
-        let mut old_shape = OldShape {
-            user_id_to_principal: HashMap::from([(user_id, principal)]),
-            ..Default::default()
-        };
-        old_shape.principal_to_user_id.insert(principal, user_id);
-        let bytes = msgpack::serialize_then_unwrap(old_shape);
+        let mut map = GlobalUserMap::default();
+        map.add(principal, user_id, UserType::User, 100);
+        assert_eq!(map.undated_user_count(), 0);
 
-        let mut map: GlobalUserMap = msgpack::deserialize_then_unwrap(&bytes);
-        map.migrate_principals();
-
-        let user = map.get_by_user_id(&user_id).unwrap();
-        assert_eq!(user.principal, principal);
-        assert_eq!(map.get_by_principal(&principal).unwrap().user_id, user_id);
-        assert_eq!(user.date_created, None);
-        assert_eq!(map.len(), 1);
-        assert_eq!(map.undated_user_ids(), vec![user_id]);
-
-        map.set_registration_dates(vec![(user_id, 100)]);
-        assert_eq!(map.get_by_user_id(&user_id).unwrap().date_created, Some(100));
-        assert!(map.undated_user_ids().is_empty());
-
-        // A later sync without a date keeps the one it has, and the date survives an upgrade
         map.add(principal, user_id, UserType::User, 0);
         let map: GlobalUserMap = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&map));
         assert_eq!(map.get_by_user_id(&user_id).unwrap().date_created, Some(100));
+        assert_eq!(map.get_by_principal(&principal).unwrap().user_id, user_id);
     }
 }

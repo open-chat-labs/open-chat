@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2227](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2227-community)] - 2026-11-11
+
 ### Added
 
 - A prize can require claimers' accounts to be a minimum age, and can exclude up to 50 users, who are refused as any ineligible claimer is and never shown in the prize ([#10463](https://github.com/open-chat-labs/open-chat/pull/10463))

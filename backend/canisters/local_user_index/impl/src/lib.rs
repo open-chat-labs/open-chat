@@ -1153,7 +1153,7 @@ pub struct Metrics {
     pub local_community_count: u64,
     pub local_multi_user_count: u64,
     pub global_user_count: u64,
-    // Users without a registration date, which every user is once they've been backfilled
+    // Users other than bots without a registration date, which should be none
     pub undated_user_count: u64,
     pub multi_user_canister_count: u64,
     pub bot_user_count: u64,
