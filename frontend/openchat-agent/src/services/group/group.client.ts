@@ -364,6 +364,7 @@ export class GroupClient
         groupId: string,
         senderName: string,
         senderDisplayName: string | undefined,
+        senderAvatarId: bigint | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -396,6 +397,7 @@ export class GroupClient
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
+                sender_avatar_id: senderAvatarId,
                 rules_accepted: rulesAccepted,
                 replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) => ({
                     event_index: replyContext.eventIndex,

@@ -104,6 +104,8 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         channel_name: channel.chat.name.value.clone(),
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         channel_avatar_id,
+        // The video bridge doesn't know the initiator's avatar
+        sender_avatar_id: None,
         // a channel never rings; the facts are still sent so the policy stays in one place
         call: Some(CallFacts {
             message_id: args.message_id,

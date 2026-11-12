@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Message notifications carry the sender's own avatar id when their client sends one ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+
 ## [[2.0.2227](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2227-community)] - 2026-11-11
 
 ### Added

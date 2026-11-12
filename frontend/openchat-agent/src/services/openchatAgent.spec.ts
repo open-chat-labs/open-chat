@@ -38,6 +38,7 @@ const FEE = 10n;
 const CHAT_FEE = 1_000n;
 const ICP: TokenInfo = { ledger: ICP_LEDGER, symbol: "ICP", decimals: 8, fee: FEE };
 const ME = Principal.fromText("2vxsx-fae");
+const AVATAR_ID = 9n;
 const THEM = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 const MULTI_USER_CANISTER = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
 const MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 3);
@@ -196,7 +197,11 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             agent
                 .sendMessage(
                     { chatId, threadRootMessageIndex },
-                    { username: "me", displayName: undefined },
+                    {
+                        username: "me",
+                        displayName: undefined,
+                        blobReference: { blobId: AVATAR_ID, canisterId: "avatar-canister" },
+                    },
                     [],
                     message(content),
                     acceptedRules,
@@ -528,6 +533,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                     GROUP.groupId,
                     "me",
                     undefined,
+                    AVATAR_ID,
                     [],
                     message(crypto()),
                     7,
@@ -546,6 +552,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                     CHANNEL,
                     "me",
                     undefined,
+                    AVATAR_ID,
                     [],
                     message(crypto()),
                     7,
@@ -571,7 +578,18 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
                 expect(approvals).toEqual([]);
                 expect(calls).toEqual(["groupSendMessage"]);
-                expect(callArgs[0].length).toEqual(10);
+                expect(callArgs[0].length).toEqual(11);
+            });
+
+            // So the notification of it shows the sender's own avatar rather than the group's
+            test.each([
+                [GROUP, "groupSendMessage"],
+                [CHANNEL, "communitySendMessage"],
+            ] as const)("a message carries the sender's avatar id (%#)", async (chatId, call) => {
+                await send(chatId, { kind: "text_content", text: "hello" });
+
+                expect(calls).toEqual([call]);
+                expect(callArgs[0][3]).toEqual(AVATAR_ID);
             });
 
             test.each([

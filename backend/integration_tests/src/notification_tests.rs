@@ -199,6 +199,7 @@ fn group_message_notification_muted(case: u32) {
             content: MessageContentInitial::Text(TextContent { text }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned,
             forwarding: false,

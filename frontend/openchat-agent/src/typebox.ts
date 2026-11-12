@@ -6594,6 +6594,7 @@ export const ChannelMessageNotification = /* @__PURE__ */ Type.Object({
     fn: Type.Optional(Type.String()),
     ca: Type.Optional(Type.BigInt()),
     cha: Type.Optional(Type.BigInt()),
+    sa: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
     vc: Type.Optional(CallFacts),
 });
@@ -6720,6 +6721,7 @@ export const GroupMessageNotification = /* @__PURE__ */ Type.Object({
     i: Type.Optional(Type.String()),
     fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
+    sa: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
     vc: Type.Optional(CallFacts),
 });
@@ -9751,6 +9753,7 @@ export const CommunitySendMessageArgs = /* @__PURE__ */ Type.Object({
     content: MessageContentInitial,
     sender_name: Type.String(),
     sender_display_name: Type.Optional(Type.String()),
+    sender_avatar_id: Type.Optional(Type.BigInt()),
     replies_to: Type.Optional(GroupReplyContext),
     mentioned: Type.Array(User),
     forwarding: Type.Boolean(),
@@ -9818,6 +9821,7 @@ export const GroupSendMessageArgs = /* @__PURE__ */ Type.Object({
     content: MessageContentInitial,
     sender_name: Type.String(),
     sender_display_name: Type.Optional(Type.String()),
+    sender_avatar_id: Type.Optional(Type.BigInt()),
     replies_to: Type.Optional(GroupReplyContext),
     mentioned: Type.Array(User),
     forwarding: Type.Boolean(),
