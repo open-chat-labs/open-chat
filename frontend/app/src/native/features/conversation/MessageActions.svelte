@@ -51,6 +51,7 @@
     import { DIAMOND_URL } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
+    import { ChatTurns, outlivesChatSwitch } from "./actionFollowUp";
     import ForwardSheet from "./ForwardSheet.svelte";
     import { pinWithUndo, unpinWithUndo } from "./pinToasts";
     import type { MenuExit } from "./keyboardSlot";
@@ -147,6 +148,9 @@
 
     // an action picked is on its way (what it opens, if anything, isn't known yet)
     let acting = $state(false);
+    // the chats shown: an action finishing once another has taken its place doesn't open what it
+    // would have, lead away or settle the menu (the new chat's composer isn't focused for it)
+    const turns = new ChatTurns();
     // the menu opened, and it (and what it opened) hasn't all closed since: onSettled is owed
     let session = false;
     // where the menu left the reader: "away" once it has gone to another screen (`leave`)
@@ -199,6 +203,8 @@
     $effect.pre(() => {
         void chatKey;
         untrack(() => {
+            turns.switched();
+            acting = false;
             for (const o of opened) o.close();
             removing = undefined;
             if (session) settled("away");
@@ -306,12 +312,16 @@
             return;
         }
         acting = true;
+        const current = turns.start();
         try {
             const outcome = await messageAction(action, target(at, confirmDelete));
-            show(at, action, outcome);
+            if (current() || outlivesChatSwitch(outcome)) show(at, action, outcome);
         } finally {
-            acting = false;
-            settle();
+            // another chat's: its reset has let this go, and an action of its own may be on its way
+            if (current()) {
+                acting = false;
+                settle();
+            }
         }
     }
 

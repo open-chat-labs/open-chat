@@ -74,3 +74,51 @@ describe("the keyboard slot, as a message's menu closes", () => {
         expect(slot.height).toBe(0);
     });
 });
+
+describe("the keyboard slot's one retry", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    // the emoji panel's keyboard glyph: the panel goes, the text box is focused for the keyboard
+    function keyboardGlyph(slot: KeyboardSlot) {
+        slot.toggle("emoji");
+        expect(slot.toggle("emoji")).toBe("focus");
+        slot.inputFocused();
+    }
+
+    test("a menu's refocus that brought no keyboard doesn't use up a later focus's retry", () => {
+        const { slot, retries } = heldForMenu(true);
+        slot.keyboardReported(0);
+        slot.menuClosed("conversation");
+        vi.advanceTimersByTime(2000);
+        expect(retries()).toBe(0);
+        expect(slot.height).toBe(0);
+
+        keyboardGlyph(slot);
+        vi.advanceTimersByTime(2000);
+        expect(retries()).toBe(1);
+    });
+
+    test("each focus asks again once, not on every wait its retry starts", () => {
+        const slot = new KeyboardSlot(true, true);
+        let retries = 0;
+        slot.onMissed = () => {
+            retries++;
+            // focusing the field afresh fires its focus event
+            slot.inputFocused();
+            return true;
+        };
+        keyboardGlyph(slot);
+        vi.advanceTimersByTime(2000);
+        expect(retries).toBe(1);
+        expect(slot.height).toBe(320);
+        vi.advanceTimersByTime(2000);
+        expect(retries).toBe(1);
+        expect(slot.height).toBe(0);
+
+        // the next focus has its own
+        keyboardGlyph(slot);
+        vi.advanceTimersByTime(2000);
+        expect(retries).toBe(2);
+    });
+});

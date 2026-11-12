@@ -209,11 +209,13 @@ export class KeyboardSlot {
         const next = afterMenu(this.#slot, exit);
         if (next === "none") return;
         if (next === "refocus" && this.onRefocus?.() === true) {
-            this.#retried = true;
             this.inputFocused();
+            // after the focus, which starts the wait afresh (so its retry would be owed)
+            this.#retried = true;
             return;
         }
         this.#slot = released(this.#slot);
+        this.#retried = false;
     }
 
     /**
@@ -268,7 +270,9 @@ export class KeyboardSlot {
      */
     onMissed: (() => boolean) | undefined;
 
-    // asked for the keyboard again since it last came
+    // asked for the keyboard again in this wait for it (or a menu's refocus, which isn't asked
+    // again): each wait gets its one retry, so it's let go as the wait ends (the keyboard came,
+    // it's missed, no longer expected) and as a new one starts
     #retried = false;
 
     // the keyboard hasn't come: asked again once (focusing the field holds the slot again), then
@@ -279,6 +283,7 @@ export class KeyboardSlot {
             this.#retried = true;
             if (this.onMissed?.() === true) return;
         }
+        this.#retried = false;
         const before = this.#slot;
         const next = keyboardMissed(before);
         if (next !== before) this.#slot = next;
@@ -289,6 +294,8 @@ export class KeyboardSlot {
         const before = this.#slot;
         this.#slot = slot;
         clearTimeout(this.#expectTimer);
+        // a wait for the keyboard ended, or a new one started (a retry's focus is the same wait)
+        if (!slot.expecting || !before.expecting) this.#retried = false;
         if (slot.expecting) {
             // what to hold for the keyboard: its last height, fixed as it's asked for
             if (!before.expecting) this.#held = this.#last ?? keyboard.height;
