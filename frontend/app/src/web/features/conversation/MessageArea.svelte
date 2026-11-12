@@ -1558,8 +1558,8 @@
 
 {#snippet messageComposer()}
     {#if composerShown}
-        <!-- the chat's own composer is where the achievement toast plays above (bottomAnchors);
-             a thread's isn't -->
+        <!-- the chat's own composer is what the toasts and the achievement toast play above
+             (bottomAnchors); a thread's isn't -->
         <div class="composer" {@attach thread === undefined && bottomAnchorFor("composer")}>
             <!-- one composer per chat or thread: it starts from that one's draft -->
             {#key contextKey}

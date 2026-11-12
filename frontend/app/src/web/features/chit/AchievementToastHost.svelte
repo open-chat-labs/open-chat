@@ -3,8 +3,8 @@
      announced again. One toast for each, in turn, with the CHIT it paid (the longest streak with
      the flame); a click opens the ways to earn, that achievement picked out. It plays just above
      the composer, centred in the middle panel, above the panel's bottom where there's no
-     composer, and above the app's toasts while one shows (web/00 and web/13, updated 2026-11-12:
-     achievementPlacement). -->
+     composer, and above the app's toasts while one shows, on their centre line (web/00 and
+     web/13, updated 2026-11-12: shell/bottomPlacement). -->
 <script lang="ts">
     import { chitEarnedSummary, subscribe, type ChitEvent, type OpenChat } from "@client";
     import AchievementToast from "@openchat/ui/src/features/components/AchievementToast.svelte";
@@ -12,8 +12,14 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { openLinked } from "../app/linkedDialogs.svelte";
-    import { bottomAnchor } from "../../shell/bottomAnchors.svelte";
-    import { achievementSpot, type AchievementSpot, type Box } from "./achievementPlacement";
+    import {
+        bottomAnchor,
+        boxOf,
+        composerPopups,
+        watchBoxes,
+        windowSize,
+    } from "../../shell/bottomAnchors.svelte";
+    import { achievementSpot, type AchievementSpot } from "../../shell/bottomPlacement";
 
     const client = getContext<OpenChat>("client");
 
@@ -48,8 +54,9 @@
     $effect(() => subscribe("chitEarned", earned));
 
     // where it plays, measured only while one shows: again as the middle panel, its composer or
-    // the toasts change size (a composer growing, a right column docking, a second toast) or the
-    // window does, and as any of them comes or goes
+    // the toasts change size (a composer growing, a right column docking, a second toast), the
+    // composer opens a popup (it plays above it), the window changes size or the shell scrolls in
+    // it, and as any of them comes or goes
     const showing = $derived(queue.length > 0);
     let spot = $state<AchievementSpot | undefined>();
     $effect(() => {
@@ -59,29 +66,21 @@
             return;
         }
         const middle = bottomAnchor("middle");
-        // the middle panel's own composer: one in a thread beside it isn't the middle's
         const composer = bottomAnchor("composer");
-        const composerHere = composer !== undefined && middle?.contains(composer) ? composer : undefined;
         const toasts = bottomAnchor("toasts");
-        const box = (el: HTMLElement | undefined): Box | undefined => el?.getBoundingClientRect();
         let last: AchievementSpot | undefined;
-        const measure = () => {
+        return watchBoxes([middle, composer, toasts], composer, () => {
+            // the toasts' height, not their place: they're placed by the same rule (toastSpot), so
+            // this doesn't wait on them having moved
             const next = achievementSpot(
-                { width: window.innerWidth, height: window.innerHeight },
-                box(middle),
-                box(composerHere),
-                box(toasts),
+                windowSize(),
+                boxOf(middle),
+                boxOf(composer),
+                composerPopups(composer),
+                boxOf(toasts)?.height,
             );
             if (last?.x !== next.x || last?.y !== next.y) spot = last = next;
-        };
-        measure();
-        const observer = new ResizeObserver(measure);
-        for (const el of [middle, composerHere, toasts]) if (el !== undefined) observer.observe(el);
-        window.addEventListener("resize", measure);
-        return () => {
-            observer.disconnect();
-            window.removeEventListener("resize", measure);
-        };
+        });
     });
 </script>
 

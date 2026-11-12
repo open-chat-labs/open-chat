@@ -101,7 +101,7 @@
                         {@render left()}
                     </div>
                 {/if}
-                <!-- the achievement toast plays at its bottom (bottomAnchors) -->
+                <!-- the toasts and the achievement toast play at its foot (bottomAnchors) -->
                 <main class="middle" {@attach bottomAnchorFor("middle")}>
                     {@render middle()}
                 </main>

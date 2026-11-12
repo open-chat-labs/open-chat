@@ -43,7 +43,7 @@ component's props. Missing data is listed in `GAPS.md`.
 | Component | Data | Actions |
 |---|---|---|
 | `NavRail` | **Pins:** `sortedCommunitiesStore` (its own avatar, name), an unread dot from `unreadCommunityChannelCountsStore` (`pinsFor`). **Items:** unread dot / count (`railItemUnread`) from `unreadDirectAndGroupCountsStore`, `unreadFavouriteCountsStore`, `messageActivitySummaryStore.unreadCount`. **Profile:** `currentUserStore` (name, handle), the user's own picture `ownUserAvatarUrl(allUsersStore.get(me))`, their swatch `senderColor(me)`. **CHIT:** `chitStateStore` (streak; claimable from `nextDailyChitClaim`), `dailyPuzzleStore` (puzzle due). **Guest:** `anonUserStore`. | Navigation only. `updateCommunityIndexes` if pins become reorderable. Create community: `startCommunityCreation`. |
-| Toasts | `UndoToast` for undoable actions. `AchievementToast` driven by the `chitEarned` event (its `ChitEvent`s), then `markAchievementsSeen`; where it plays comes from the layout, not the data: the middle panel, its composer and the toast layer (`shell/bottomAnchors`, `features/chit/achievementPlacement`; web/00, updated 2026-11-12). | |
+| Toasts | `UndoToast` for undoable actions. `AchievementToast` driven by the `chitEarned` event (its `ChitEvent`s), then `markAchievementsSeen`; where the toasts and it play comes from the layout, not the data: the foot of the middle panel, above its composer and any popup the composer has open, the achievement above the toasts (`shell/bottomAnchors`, `shell/bottomPlacement`; web/00, updated 2026-11-12). | |
 | Calls overlay | `activeVideoCall`, `incomingVideoCall` (`app/src/stores/video.ts`) | see Calls |
 
 ## Chat list and threads (left)
