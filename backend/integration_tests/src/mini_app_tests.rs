@@ -958,6 +958,7 @@ fn a_member_cant_post_a_mini_app() {
             content: MessageContentInitial::MiniApp(card()),
             sender_name: owner.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,

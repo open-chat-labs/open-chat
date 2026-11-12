@@ -138,6 +138,10 @@ design export needs. Each entry says where it came up.
     components_mobile count them (decided in N5a): a favourite DM or group is in it, a favourite
     channel isn't (it counts on its community), and neither are mentions on their own. The design
     doesn't say; confirm with design.
+  - **The full-screen ring prompt** (#10482): on Android 14+ without the full-screen-intent
+    grant, `components_mobile` explains once per launch why a locked phone gets a heads-up instead
+    of the full-screen ring, and opens the settings toggle (`utils/native/fullScreenIntent.ts`
+    decides when, `FullScreenIntentPrompt.svelte` asks). This tree doesn't mount it yet.
 - **Native sign in and onboarding** (native N4, #10367; `src/native/features/start`). Built: Welcome
   (the lockup, the Appearance | language pill, the headline, the proof cards, Create account / I
   already have an account, the terms), Pick a username (the live check, the recovery email, the
@@ -622,6 +626,11 @@ design export needs. Each entry says where it came up.
     And `global.css` shows no scrollbars under the native root (`[data-platform="native"]`), as
     Android's WebView drew the global 8px one whatever a scroller's `scrollbar-width` said.
 
+  - **Opening a chat doesn't clear its notifications.** The old trees' `CurrentChat` calls the
+    shell's `releaseNotifications` for the chat (and thread) when it opens, so its delivered
+    notifications go from the tray. The native conversation screen doesn't yet, so they stay
+    until tapped or swiped. Reading the chat elsewhere still clears them when the app comes back
+    (#10398 follow-up, "clear notifications for chats read elsewhere").
 - **Native composer** (native N5c, #10370; the native plan's 05 composer, 06 attach panel and 07
   emoji and GIF panel, as of 2026-11-09 (b); `src/native/features/conversation`:
   `ConversationComposer`, `keyboardSlot`, `KeyboardPanel` and `PanelHandle` with `panelState` /

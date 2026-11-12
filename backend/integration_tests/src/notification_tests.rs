@@ -1,10 +1,12 @@
+use crate::call_push_tests::Feed;
 use crate::client::INIT_CYCLES_BALANCE;
 use crate::env::ENV;
-use crate::utils::{metrics, now_millis, tick_many};
+use crate::utils::{metrics, now_millis, now_nanos, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
+use constants::{DAY_IN_MS, ICP_SYMBOL, NANOS_PER_MILLISECOND};
 use itertools::Itertools;
+use ledger_utils::create_pending_transaction;
 use pocket_ic::{PocketIc, Time};
 use rand::{Rng, rng};
 use std::collections::VecDeque;
@@ -12,7 +14,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{Empty, FcmToken, MessageContentInitial, NotificationSubscription, TextContent, UnitResult};
+use types::{
+    CryptoContent, CryptoTransaction, Empty, FcmToken, MessageContentInitial, NotificationSubscription, TextContent, UnitResult,
+};
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -86,6 +90,154 @@ fn group_message_notification_succeeds() {
 
     assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
+}
+
+// A group or channel message's push carries the sender's own avatar id as `senderAvatarId`, never
+// the group's, whether or not the message holds a transfer, which takes a separate path through
+// the group or community
+#[test_case(false, false; "group message")]
+#[test_case(false, true; "group message with a transfer")]
+#[test_case(true, false; "channel message")]
+#[test_case(true, true; "channel message with a transfer")]
+fn a_group_or_channel_message_push_carries_the_senders_own_avatar(channel: bool, with_transfer: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user2: recipient, .. } = init_test_data(env, canister_ids);
+    let sender = client::register_diamond_user(env, canister_ids, *controller);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, sender.principal, 1_000_000_000);
+    let sender_avatar_id = 123_456_789u128;
+
+    let content = if with_transfer {
+        MessageContentInitial::Crypto(CryptoContent {
+            recipient: recipient.user_id,
+            transfer: CryptoTransaction::Pending(create_pending_transaction(
+                ICP_SYMBOL.to_string(),
+                canister_ids.icp_ledger,
+                10_000,
+                10_000,
+                types::icrc1::Account::legacy_for_user(recipient.user_id),
+                None,
+                now_nanos(env),
+            )),
+            caption: None,
+        })
+    } else {
+        MessageContentInitial::Text(TextContent { text: random_string() })
+    };
+
+    let feed = Feed::new(canister_ids);
+    let snapshot = if channel {
+        let community_id =
+            client::user::happy_path::create_community(env, &sender, &random_string(), true, vec!["general".to_string()]);
+        client::community::happy_path::join_community(env, recipient.principal, community_id);
+        env.tick();
+        let channel_id = client::community::happy_path::summary(env, recipient.principal, community_id)
+            .channels
+            .iter()
+            .find(|c| c.name == "general")
+            .unwrap()
+            .channel_id;
+        // joining a public channel mutes it by default, and a muted chat never pushes
+        let response = client::community::toggle_mute_notifications(
+            env,
+            recipient.principal,
+            community_id.into(),
+            &community_canister::toggle_mute_notifications::Args {
+                channel_id: Some(channel_id),
+                mute: Some(false),
+                mute_at_everyone: None,
+            },
+        );
+        assert!(matches!(response, UnitResult::Success));
+        tick_many(env, 3);
+
+        let snapshot = feed.snapshot(env, *controller);
+        let args = community_canister::send_message::Args {
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content,
+            sender_name: sender.username(),
+            sender_display_name: None,
+            sender_avatar_id: Some(sender_avatar_id),
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        };
+        let response = if with_transfer {
+            client::community::send_message_with_transfer(env, &sender, community_id, args)
+        } else {
+            client::community::send_message(env, sender.principal, community_id.into(), &args)
+        };
+        assert!(
+            matches!(response, community_canister::send_message::Response::Success(_)),
+            "{response:?}"
+        );
+        snapshot
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &sender, &random_string(), false, false);
+        client::local_user_index::happy_path::add_users_to_group(
+            env,
+            &sender,
+            canister_ids.local_user_index(env, group_id),
+            group_id,
+            vec![(recipient.user_id, recipient.principal)],
+        );
+
+        let snapshot = feed.snapshot(env, *controller);
+        let args = group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content,
+            sender_name: sender.username(),
+            sender_display_name: None,
+            sender_avatar_id: Some(sender_avatar_id),
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        };
+        let response = if with_transfer {
+            client::group::send_message_with_transfer(env, &sender, group_id, args)
+        } else {
+            client::group::send_message_v2(env, sender.principal, group_id.into(), &args)
+        };
+        assert!(
+            matches!(response, group_canister::send_message_v2::Response::Success(_)),
+            "{response:?}"
+        );
+        snapshot
+    };
+
+    let pushes = feed.wait_for_pushes(env, *controller, &snapshot, |pushes| {
+        pushes.iter().any(|p| p.recipients.contains(&recipient.user_id))
+    });
+    let push = pushes
+        .iter()
+        .find(|p| p.recipients.contains(&recipient.user_id))
+        .expect("no push for the recipient");
+    assert_eq!(
+        push.data.get("senderAvatarId"),
+        Some(&sender_avatar_id.to_string()),
+        "{:?}",
+        push.data
+    );
 }
 
 #[test]
@@ -199,6 +351,7 @@ fn group_message_notification_muted(case: u32) {
             content: MessageContentInitial::Text(TextContent { text }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned,
             forwarding: false,

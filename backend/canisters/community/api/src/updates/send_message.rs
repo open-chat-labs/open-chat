@@ -29,6 +29,9 @@ pub struct Args {
     pub content: MessageContentInitial,
     pub sender_name: String,
     pub sender_display_name: Option<String>,
+    // The sender's own avatar, shown with their message's notification
+    #[serde(default)]
+    pub sender_avatar_id: Option<u128>,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
