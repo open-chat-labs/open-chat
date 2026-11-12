@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Deinstallieren Sie diese Version, sobald Sie die neue installiert haben. Wenn beide laufen, kommt jede Benachrichtigung doppelt an.",
         "reinstallDownload": "Aktuelle Version herunterladen"
     },
+    "fullScreenCalls": {
+        "title": "Anrufe im Vollbild",
+        "message": "Android benötigt Ihre Erlaubnis, damit OpenChat eingehende Anrufe bei gesperrtem Telefon im Vollbild anzeigen kann. Bis Sie dies erlauben, erscheinen Anrufe als normale Benachrichtigung.",
+        "openSettings": "Einstellungen öffnen",
+        "notNow": "Nicht jetzt"
+    },
     "appWallet": {
         "header": {
             "asset": "Vermögenswert",

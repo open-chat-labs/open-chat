@@ -61,6 +61,7 @@
     } from "@src/logic/profile/profileCard";
     import { copyPageUrl, removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
+    import FullScreenIntentPrompt from "../FullScreenIntentPrompt.svelte";
     import LegacyInstallBanner from "../LegacyInstallBanner.svelte";
     import NativeUpgradeBanner from "../NativeUpgradeBanner.svelte";
     import NotFound from "../NotFound.svelte";
@@ -469,6 +470,7 @@
         {#if client.isNativeApp()}
             <NativeUpgradeBanner />
             <LegacyInstallBanner />
+            <FullScreenIntentPrompt />
         {/if}
         <LeftPanel />
         <MiddlePanel />

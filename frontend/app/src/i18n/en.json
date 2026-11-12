@@ -2439,6 +2439,12 @@
         "reinstallUninstallOld": "Once you have installed it, uninstall this one. Running both means every notification arrives twice.",
         "reinstallDownload": "Download the current version"
     },
+    "fullScreenCalls": {
+        "title": "Full-screen calls",
+        "message": "Android needs your permission for OpenChat to show incoming calls full screen when your phone is locked. Until you allow it, calls arrive as an ordinary notification.",
+        "openSettings": "Open settings",
+        "notNow": "Not now"
+    },
     "noAccess": "No access",
     "noAccessText": "Sorry, but you do not have access to the community, group or channel that you are trying to access.",
     "noAudio": "You browser does not support embedded audio",
