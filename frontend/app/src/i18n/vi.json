@@ -2668,8 +2668,6 @@
         "claimed": "Sự thành công!",
         "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",
         "claimIneligible": "Rất tiếc, bạn không đáp ứng đủ yêu cầu để nhận giải thưởng này.",
-        "claimInProgress": "Yêu cầu nhận giải trước của bạn vẫn đang được xử lý. Hãy thử lại sau giây lát.",
-        "claimLimitReached": "Bạn đã đạt giới hạn nhận giải thưởng hằng ngày. Bạn có thể nhận lại từ {time}.",
         "click": "Nhấp vào nút bên dưới để có cơ hội giành giải thưởng.",
         "creatingPrizeMessageFailed": "Không thể tạo tin nhắn trúng thưởng của bạn.",
         "creatingYourPrizeMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn giải thưởng của bạn",

@@ -2668,8 +2668,6 @@
         "claimed": "¡Éxito!",
         "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez.",
         "claimIneligible": "Lamentamos que no cumplas con los requisitos para reclamar este premio.",
-        "claimInProgress": "Su último reclamo de premio aún se está procesando. Inténtelo de nuevo en un momento.",
-        "claimLimitReached": "Ha alcanzado el límite diario de reclamos de premios. Podrá reclamar de nuevo a partir de {time}.",
         "click": "Haga clic en el botón de abajo para tener la oportunidad de ganar un premio.",
         "creatingPrizeMessageFailed": "No se pudo crear tu mensaje de premio.",
         "creatingYourPrizeMessage": "Espere mientras creamos su mensaje de premio.",
