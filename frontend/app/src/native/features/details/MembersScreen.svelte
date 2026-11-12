@@ -41,6 +41,7 @@
         type MemberTab,
         type MultiUserChat,
         type OpenChat,
+        type ToastOutcome,
         type UserSummary,
     } from "@client";
     import Field from "@openchat/ui/src/lib/components/Field.svelte";
@@ -53,7 +54,7 @@
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { chatInviteAccess } from "@src/logic/members/invitePeople";
     import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
-    import { toastStore, type ToastOutcome } from "@src/stores/toast";
+    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";

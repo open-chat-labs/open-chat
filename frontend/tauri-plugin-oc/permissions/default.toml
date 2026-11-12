@@ -45,4 +45,6 @@ permissions = [
     "allow-share",
     "allow-can-use-full-screen-intent",
     "allow-open-full-screen-intent-settings",
+    "allow-stage-share-file",
+    "allow-can-share-files",
 ]

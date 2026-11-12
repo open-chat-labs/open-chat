@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">Benachrichtigungen für Nachrichten</string>
+    <string name="notification_channel_messages_description">Benachrichtigungen über neue Nachrichten in OpenChat</string>
+    <string name="notification_channel_message_group">Nachrichtengruppe</string>
+    <string name="notification_channel_summary">Zusammenfassungen</string>
+    <string name="notification_channel_summary_description">Zeigt eine Zusammenfassung aller Benachrichtigungen</string>
+    <string name="notification_channel_calls">Anrufe</string>
+    <string name="notification_channel_calls_description">Eingehende Anrufe</string>
+    <string name="call_ongoing">Laufender Anruf</string>
+    <string name="notification_channel_ongoing_call_description">Ein laufender Anruf</string>
+    <string name="call_in_progress">Anruf läuft</string>
+    <string name="notification_you">Du</string>
+    <string name="notification_thread">%1$s // Thread</string>
+    <string name="notification_reacted">%1$s hat mit %2$s reagiert</string>
+    <string name="notification_tipped">%1$s hat %2$s Trinkgeld gegeben</string>
+    <string name="notification_invited">%1$s hat dich zu %2$s eingeladen</string>
+    <string name="notification_photo">Foto</string>
+    <string name="notification_shared_video">Hat ein Video geteilt</string>
+    <string name="notification_shared_gif">Hat ein GIF geteilt</string>
+    <string name="notification_shared_audio">Hat eine Audiodatei geteilt</string>
+    <string name="notification_shared_file">Hat eine Datei geteilt</string>
+    <string name="call_kind_audio">Audioanruf</string>
+    <string name="call_kind_video">Videoanruf</string>
+    <string name="call_kind_broadcast">Übertragung</string>
+    <string name="call_is_calling">%1$s ruft an · %2$s</string>
+    <string name="call_incoming_audio">Eingehender Audioanruf</string>
+    <string name="call_incoming_video">Eingehender Videoanruf</string>
+    <string name="call_incoming_broadcast">Eingehende Übertragung</string>
+    <string name="call_decline">Ablehnen</string>
+    <string name="call_accept">Annehmen</string>
+    <string name="call_missed">Verpasster Anruf</string>
+    <string name="call_missed_from">Verpasster Anruf von %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d neue Nachricht</item>
+        <item quantity="other">%d neue Nachrichten</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d Nachricht</item>
+        <item quantity="other">%d Nachrichten</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s aus %2$d Chat</item>
+        <item quantity="other">%1$s aus %2$d Chats</item>
+    </plurals>
+    <string name="oc_call_waiting_channel">Anklopfen</string>
+    <string name="oc_call_waiting_decline">Ablehnen</string>
+    <string name="oc_call_waiting_end_and_answer">Beenden und annehmen</string>
+</resources>

@@ -1,9 +1,11 @@
 package com.ocplugin.app.data
 
+import android.content.Context
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
 import app.tauri.plugin.JSObject
+import com.ocplugin.app.R
 
 @JvmInline
 value class SenderId(val value: String)
@@ -97,28 +99,29 @@ object NotificationCompanion {
         notification.messageType == TYPE_IMAGE ||
             (notification.messageType == null && !notification.image.isNullOrBlank())
 
-    // TODO i18n
     // TODO would be cool if we could have a part of the parent message when dealing with threads
-    fun toTitle(notification: Notification): String {
+    fun toTitle(context: Context, notification: Notification): String {
+        fun inThread(name: String) =
+            if (notification.threadIndex != null) context.getString(R.string.notification_thread, name) else name
+
         return when (notification.type) {
             NotificationType.DM ->
                 notification.senderName
 
             NotificationType.GROUP ->
-                "${notification.groupName}${if (notification.threadIndex != null) " // Thread" else ""}"
+                inThread("${notification.groupName}")
 
             NotificationType.CHANNEL ->
-                "${notification.communityName}#${notification.channelName}${if (notification.threadIndex != null) " // Thread" else ""}"
+                inThread("${notification.communityName}#${notification.channelName}")
         }
     }
 
-    // TODO i18n
-    fun toMessage(notification: Notification): String {
+    fun toMessage(context: Context, notification: Notification): String {
         return when (notification.bodyType) {
-            BodyType.REACTION -> "${notification.senderName} reacted with ${notification.body}"
-            BodyType.TIP -> "${notification.senderName} sent a tip of ${notification.body}"
-            BodyType.INVITE -> "${notification.senderName} invited you to ${notification.body}"
-            else -> attachmentLabel(notification)
+            BodyType.REACTION -> context.getString(R.string.notification_reacted, notification.senderName, notification.body)
+            BodyType.TIP -> context.getString(R.string.notification_tipped, notification.senderName, notification.body)
+            BodyType.INVITE -> context.getString(R.string.notification_invited, notification.senderName, notification.body)
+            else -> attachmentLabel(context, notification)
         }
     }
 
@@ -128,18 +131,19 @@ object NotificationCompanion {
     // and otherwise a "📷 Photo" placeholder. Videos, gifs, audio and files are NOT rendered,
     // so we tag them with an emoji + a "shared a …" label (or the caption / file name when
     // available) to make the content type obvious at a glance.
-    // TODO i18n
-    private fun attachmentLabel(notification: Notification): String {
+    private fun attachmentLabel(context: Context, notification: Notification): String {
         val caption = notification.body.takeIf { it.isNotBlank() }
+        val photo = "📷 " + context.getString(R.string.notification_photo)
         return when (notification.messageType) {
-            TYPE_IMAGE -> caption ?: "📷 Photo"
-            TYPE_VIDEO -> "🎥 " + (caption ?: "Shared a video")
-            TYPE_GIPHY -> "🎞️ " + (caption ?: "Shared a GIF")
-            TYPE_AUDIO -> "🎙️ " + (caption ?: "Shared audio")
-            TYPE_FILE -> "📎 " + (notification.fileName?.takeIf { it.isNotBlank() } ?: caption ?: "Shared a file")
+            TYPE_IMAGE -> caption ?: photo
+            TYPE_VIDEO -> "🎥 " + (caption ?: context.getString(R.string.notification_shared_video))
+            TYPE_GIPHY -> "🎞️ " + (caption ?: context.getString(R.string.notification_shared_gif))
+            TYPE_AUDIO -> "🎙️ " + (caption ?: context.getString(R.string.notification_shared_audio))
+            TYPE_FILE -> "📎 " + (notification.fileName?.takeIf { it.isNotBlank() } ?: caption
+                ?: context.getString(R.string.notification_shared_file))
             // Pre-v2 rows have no messageType; an image-only row would otherwise render as
             // empty text, so fall back to the image placeholder when an image URL is present.
-            else -> caption ?: if (!notification.image.isNullOrBlank()) "📷 Photo" else notification.body
+            else -> caption ?: if (!notification.image.isNullOrBlank()) photo else notification.body
         }
     }
 

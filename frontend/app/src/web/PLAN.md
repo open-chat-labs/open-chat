@@ -57,6 +57,12 @@ every workstream.
   - the chat list's loose ends (L1): avatars, who's typing, presence, unread mentions, the
     Thread replies count, and the search on OpenChat for people and bots outside the list (no
     public groups: web/04); GAPS.md ("Chat list").
+  - the native and operator hooks (L6): the console hooks in every App (`logic/moderation`), a
+    platform moderator's freeze and unfreeze (a group's header menu and a group preview's, a
+    community's header menu only), with Undo after a freeze, a DM's suspend and unsuspend,
+    unfreezing and un-suspending in a pending toast, and `/admin`'s refusal or note. Left, and needed
+    before cutover: the operator console and the report review cards; the native half isn't
+    needed; GAPS.md ("Platform operators and moderators").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
   work (5a–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
@@ -268,7 +274,9 @@ Small, any time, good between bigger pieces. Each is its own PR.
 | [L3](https://github.com/open-chat-labs/open-chat/issues/10138) | **Activity:** tips on the message, poll votes' tab. | `features/activity` |
 | [L4](https://github.com/open-chat-labs/open-chat/issues/10139) | **Font size** onto the library's text tokens (GAPS). The accent is done (`theme/accent.ts`); its in-app control is 8c's. | `App.svelte` |
 | [L5](https://github.com/open-chat-labs/open-chat/issues/10140) | **Router's known issues** (ROUTES.md): the legacy `/:chatId` catch-all, `landingPagePaths`, unused route kinds. | `router/` |
-| [L6](https://github.com/open-chat-labs/open-chat/issues/10141) | **Native and operator hooks** (GAPS "Wiring"). The native half isn't needed while native builds keep the old UI. The operator and moderator console hooks are needed on desktop at cutover. | |
+| [L6](https://github.com/open-chat-labs/open-chat/issues/10141) | **Done:** what's left is in GAPS.md ("Platform operators and moderators", "Native apps"). **Native and operator hooks** (GAPS "Wiring"). The native half isn't needed while native builds keep the old UI. The operator and moderator console hooks are needed on desktop at cutover. Built: the console hooks (`window.platformModerator`, `window.platformOperator`) from `logic/moderation/consoleHooks`, installed by this tree's App and the old desktop App; a platform moderator's Freeze / Unfreeze group in the conversation header's menu (the only item on a group preview's) and Freeze / Unfreeze community in the community header menu only, not a channel's (`logic/moderation/freeze`, which the old menus and preview footer use too), a freeze's toast with Undo, Suspend / Unsuspend in a DM's menu, unfreezing and un-suspending in a pending toast (the library's `showPending`); `/admin`'s refusal for a non-operator and a note for an operator (`TODO(design)`). Left, and needed before cutover (big screens with no design, each its own piece of work): the operator console (the old `home/admin`, L6b) and the moderation channel's report cards (verdicts, vault media review, NCA filing, L6c). | `logic/moderation`, `features/admin` |
+| L6b (issue to open) | **The operator console**, ported plainly as an operator-only screen on library parts, without a design (the user's decision, 2026-11-12): the old `home/admin`'s translation corrections, operator functions, pending proposals, authority reports and vault log. Its logic is extracted to `app/src/logic/admin` first (GAPS.md, "Platform operators and moderators"). | `features/admin`, `logic/admin` |
+| L6c (issue to open) | **The moderation report review cards**, ported plainly for platform moderators on library parts, without a design (the user's decision, 2026-11-12): `moderation_report_content` and `reported_message_content`, with the verdicts, vault media review, access log and NCA filing. `MessageGroup` needs a way to render an app's own card first (GAPS.md, "Platform operators and moderators"). | `features/conversation`, `logic/moderation`, `@openchat/ui` `MessageGroup` |
 | [L7](https://github.com/open-chat-labs/open-chat/issues/10142) | **F2's small leftovers:** the client's `mobileWidth` read, and F1's specs left in `components_shared` (`pinNumberForm`, `tipForm`, `cryptoTransferForm`, `group`, `community`) with `prizeClaim.ts`. | `openchat-client/src/openchat.ts`, `features/auth` |
 
 ## Two people: a suggested start

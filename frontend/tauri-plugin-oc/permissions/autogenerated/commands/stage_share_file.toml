@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-stage-share-file"
+description = "Enables the stage_share_file command without any pre-configured scope."
+commands.allow = ["stage_share_file"]
+
+[[permission]]
+identifier = "deny-stage-share-file"
+description = "Denies the stage_share_file command without any pre-configured scope."
+commands.deny = ["stage_share_file"]

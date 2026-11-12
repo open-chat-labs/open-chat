@@ -1,9 +1,5 @@
-import { type ResourceKey, type Toast } from "@client";
+import { type ResourceKey, type Toast, type ToastOutcome } from "@client";
 import { readable, writable, type Readable } from "svelte/store";
-
-export type ToastOutcome =
-    | { kind: "success"; message?: ResourceKey }
-    | { kind: "failed"; message: ResourceKey };
 
 const { subscribe, update } = writable<Toast | undefined>(undefined);
 

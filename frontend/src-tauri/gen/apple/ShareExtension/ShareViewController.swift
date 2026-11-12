@@ -30,7 +30,8 @@ final class ShareViewController: UIViewController {
             self.resolved = true
             self.showResult(
                 symbol: "exclamationmark.triangle.fill", tint: .systemOrange,
-                title: "Couldn't prepare the share", subtitle: "Please try again")
+                title: NSLocalizedString("Couldn't prepare the share", comment: ""),
+                subtitle: NSLocalizedString("Please try again", comment: ""))
         }
     }
 
@@ -80,8 +81,10 @@ final class ShareViewController: UIViewController {
             share.discard()
             return showResult(
                 symbol: "exclamationmark.triangle.fill", tint: .systemOrange,
-                title: "File too large",
-                subtitle: "Files over \(ShareInbox.maxFileBytes / 1024 / 1024) MB can't be shared")
+                title: NSLocalizedString("File too large", comment: ""),
+                subtitle: String(
+                    format: NSLocalizedString("Files over %d MB can't be shared", comment: ""),
+                    Int(ShareInbox.maxFileBytes / 1024 / 1024)))
         }
         do {
             if share.isEmpty { return finish() }
@@ -182,7 +185,8 @@ final class ShareViewController: UIViewController {
     private func showOpenTheApp() {
         showResult(
             symbol: "checkmark.circle.fill", tint: .systemGreen,
-            title: "Shared to OpenChat", subtitle: "Open OpenChat to send it")
+            title: NSLocalizedString("Shared to OpenChat", comment: ""),
+            subtitle: NSLocalizedString("Open OpenChat to send it", comment: ""))
     }
 
     private func showResult(symbol: String, tint: UIColor, title: String, subtitle: String) {
@@ -206,7 +210,7 @@ final class ShareViewController: UIViewController {
         subtitleLabel.numberOfLines = 0
 
         let done = UIButton(type: .system)
-        done.setTitle("Done", for: .normal)
+        done.setTitle(NSLocalizedString("Done", comment: ""), for: .normal)
         done.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         done.addAction(UIAction { [weak self] _ in self?.finish() }, for: .touchUpInside)
 

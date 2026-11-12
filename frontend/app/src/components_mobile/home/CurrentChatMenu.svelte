@@ -20,6 +20,8 @@
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { toastStore } from "../../stores/toast";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { setFrozen } from "@src/logic/moderation/freeze";
+    import { unsuspendUser as unsuspend } from "@src/logic/moderation/chatModeration";
 
     const client = getContext<OpenChat>("client");
 
@@ -113,23 +115,12 @@
         });
     }
 
-    function freezeGroup() {
-        if (selectedChatSummary.id.kind === "group_chat") {
-            client.freezeGroup(selectedChatSummary.id, undefined).then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
-                }
-            });
-        }
-    }
-
-    function unfreezeGroup() {
-        if (selectedChatSummary.id.kind === "group_chat") {
-            client.unfreezeGroup(selectedChatSummary.id).then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
-                }
-            });
+    async function setGroupFrozen(frozen: boolean) {
+        if (selectedChatSummary.kind === "group_chat") {
+            const target = { kind: "group" as const, id: selectedChatSummary.id };
+            const outcome = await setFrozen(client, target, frozen);
+            // this menu says only when it fails (the timeline shows the change)
+            if (outcome.kind === "failed") toastStore.showOutcome(outcome);
         }
     }
 
@@ -137,14 +128,8 @@
         publish("suspendUser", userId);
     }
 
-    function unsuspendUser() {
-        client.unsuspendUser(userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("unsuspendedUser"));
-            } else {
-                toastStore.showFailureToast(i18nKey("failedToUnsuspendUser"));
-            }
-        });
+    async function unsuspendUser() {
+        toastStore.showOutcome(await unsuspend(client, userId));
     }
 
     function makeProposal() {
@@ -206,11 +191,11 @@
 
     {#if $platformModeratorStore && selectedChatSummary.kind === "group_chat"}
         {#if client.isChatFrozen(selectedChatSummary.id)}
-            <MenuItem danger onclick={unfreezeGroup}>
+            <MenuItem danger onclick={() => setGroupFrozen(false)}>
                 <Translatable resourceKey={i18nKey("unfreezeGroup")} />
             </MenuItem>
         {:else}
-            <MenuItem danger onclick={freezeGroup}>
+            <MenuItem danger onclick={() => setGroupFrozen(true)}>
                 <Translatable resourceKey={i18nKey("freezeGroup")} />
             </MenuItem>
         {/if}

@@ -1,0 +1,8 @@
+/* The English text is the key. Every other .lproj has every key this file has
+   (src-tauri/tests/nativeStrings.spec.ts). */
+"Missed call" = "Missed call";
+"Minimise" = "Minimise";
+"Microphone" = "Microphone";
+"Camera" = "Camera";
+"Speaker" = "Speaker";
+"Hang up" = "Hang up";

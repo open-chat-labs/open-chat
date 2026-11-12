@@ -113,9 +113,8 @@ object NotificationsManager {
         val mainAvatar = AvatarHelper.loadBitmapForNotification(context, notification)
         val isGroupConversation = notification.type != NotificationType.DM
 
-        // TODO i18n
         // Build "yourself" as the base persona to initialise the messagingStyle!
-        val you = Person.Builder().setName("You").build()
+        val you = Person.Builder().setName(context.getString(R.string.notification_you)).build()
         val messagingStyle = NotificationCompat.MessagingStyle(you)
 
         // Resolve attachment images up front, in parallel, so the per-message loop
@@ -163,7 +162,7 @@ object NotificationsManager {
 
         notifications.forEachIndexed { index, n ->
             val message = NotificationCompat.MessagingStyle.Message(
-                NotificationCompanion.toMessage(n),
+                NotificationCompanion.toMessage(context, n),
                 n.receivedAt,
                 persons.getValue(n.senderId)
             )
@@ -176,8 +175,8 @@ object NotificationsManager {
         NotificationImageHelper.pruneOldImages(context)
 
         // Get the conversation context type for the new notification
-        val title = NotificationCompanion.toTitle(notification)
-        val message = NotificationCompanion.toMessage(notification)
+        val title = NotificationCompanion.toTitle(context, notification)
+        val message = NotificationCompanion.toMessage(context, notification)
         if (isGroupConversation) {
             messagingStyle.setConversationTitle(title)
             messagingStyle.setGroupConversation(true)
@@ -199,13 +198,12 @@ object NotificationsManager {
         // Redacted version shown on a secure lock screen so message contents don't leak.
         // The aggregate count on the lock screen comes from the group summary's public
         // version (see setSummaryNotification); this only needs to be a safe placeholder.
-        // TODO i18n
         // Shown on the lock screen when there is only one chat with unread messages
         // (single child: Android skips the group summary and renders this child's
         // public version). When >= 2 chats have unread messages, the group summary
         // takes over with its own text.
         val count = notifications.size
-        val publicText = "$count new message${if (count > 1) "s" else ""}"
+        val publicText = context.resources.getQuantityString(R.plurals.notification_new_messages, count, count)
         val publicVersion = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_small)
             .setContentTitle("OpenChat")
@@ -336,10 +334,12 @@ object NotificationsManager {
         val (activeContexts, activeNotifications) = DBManager.getActiveContextsAndNotificationsCount()
 
         if (activeNotifications > 0) {
-            // TODO i18n
             val title = "OpenChat"
-            val messages = "$activeNotifications message${if (activeNotifications > 1) "s" else ""}"
-            val summary = if (activeContexts > 1) "$messages, from $activeContexts chats" else messages
+            val res = context.resources
+            val messages = res.getQuantityString(R.plurals.notification_messages, activeNotifications, activeNotifications)
+            val summary = if (activeContexts > 1) {
+                res.getQuantityString(R.plurals.notification_messages_from_chats, activeContexts, messages, activeContexts)
+            } else messages
 
             val publicSummary = NotificationCompat.Builder(context, SUMMARY_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_small)

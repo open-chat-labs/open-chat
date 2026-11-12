@@ -550,6 +550,7 @@
     "channelAlreadyExists": "کانالی با آن نام از قبل وجود دارد",
     "chatDetails": "جزئیات چت",
     "chatFrozen": "این چت مسدود شده است",
+    "chatUnfrozen": "چت از حالت انجماد خارج شد",
     "chatFrozenBy": "گپ ثابت شده توسط {frozenBy}",
     "chatMenu": "منوی چت",
     "chatNotFound": "متأسفیم - نتوانستیم گپ انتخابی را پیدا کنیم",
@@ -1268,6 +1269,16 @@
     "fontSize": "اندازه فونت",
     "forward": "رو به جلو",
     "freezeCommunity": "جامعه را فریز کنید",
+    "freezeConfirm": {
+        "groupTitle": "گروه فریز شود؟",
+        "groupBody": "اعضا تا زمانی که از حالت فریز خارج نشود، نمی‌توانند پیام بفرستند یا تغییری ایجاد کنند.",
+        "communityTitle": "جامعه فریز شود؟",
+        "communityBody": "همه کانال‌های {name} فریز می‌شوند. اعضا تا زمانی که از حالت فریز خارج نشود، نمی‌توانند پیام بفرستند یا تغییری ایجاد کنند.",
+        "groupReasonHint": "در تاریخچه چت به اعضا نشان داده می‌شود",
+        "communityReasonHint": "ثبت می‌شود اما به اعضا نشان داده نمی‌شود",
+        "reasonLabel": "دلیل (اختیاری)",
+        "confirm": "فریز"
+    },
     "freezeGroup": "گروه فریز",
     "generating": "در حال تولید...",
     "giphyMessage": "پیام گیف",
@@ -1674,6 +1685,16 @@
         "viewMessage": "مشاهده پیام"
     },
     "moderator": "ناظم",
+    "moderationToast": {
+        "frozen": "{name} مسدود شد",
+        "freezeFailed": "مسدود کردن {name} ممکن نشد. دوباره تلاش کنید.",
+        "unfreezing": "در حال رفع انسداد {name}…",
+        "unfrozen": "انسداد {name} رفع شد",
+        "unfreezeFailed": "رفع انسداد {name} ممکن نشد",
+        "unsuspending": "در حال رفع تعلیق {username}…",
+        "unsuspended": "تعلیق {username} رفع شد",
+        "unsuspendFailed": "رفع تعلیق {username} ممکن نشد"
+    },
     "months": "ماه ها",
     "mustBeFutureDateError": "شما باید تاریخ آینده را انتخاب کنید",
     "muteAtEveryone": "بی‌صدا کردن @everyone",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "کاربر تعلیق شده",
     "suspendUser": "تعلیق کاربر",
+    "suspendUserFailed": "تعلیق {username} ممکن نشد. دوباره تلاش کنید.",
     "tapForReferralLink": "برای کپی کردن پیوند ارجاع شخصی خود ضربه بزنید",
     "tellMeMore": "اطلاعات بیشتر",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "کاربران",
     "usersAndBots": "کاربران و ربات ها",
     "userSearchFailed": "در جستجوی کاربران خطایی روی داد",
+    "userSuspended": "{username} تعلیق شد",
     "vaultLog": {
         "button": "گزارش دسترسی",
         "empty": "بدون مورد",

@@ -15,9 +15,11 @@ import type {
     PrizeContentInitial,
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
+import type { FreezeTarget } from "@src/logic/moderation/freeze";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { JoinTarget } from "@src/logic/join/joinFlow.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
+import type { ProfileCardShown } from "@src/logic/profile/profileCardData.svelte";
 import type { Component } from "svelte";
 
 // The app's dialogs, and the screen each one shows: plugged in here as screens are in screens.ts,
@@ -60,14 +62,24 @@ export type LinkedDialog =
 // for a group, channel or community (its settings, or its About page for someone who can't edit it,
 // and inviting people or sharing its link); a new channel; or creating, editing or deleting one of a
 // community's user groups
+export type UserCardDialog = {
+    kind: "user";
+    /** Your DM with them: the Profile / This chat tabs, opened on this one. */
+    dmTab?: "profile" | "chat";
+    /** What it showed before it handed off (Suspend user), shown at once when it's back. */
+    shown?: ProfileCardShown;
+} & ProfileCard;
+
 export type LocalDialog =
-    | ({
-          kind: "user";
-          /** Your DM with them: the Profile / This chat tabs, opened on this one. */
-          dmTab?: "profile" | "chat";
-      } & ProfileCard)
+    | UserCardDialog
+    // a platform moderator suspending a user from their card, in the card's place over the same
+    // backdrop (DialogStack.handOff), its back arrow to `card`. From a DM's menu it's the
+    // `suspendUser` app event's dialog instead (DialogHost)
+    | { kind: "suspend_user"; userId: string; card: UserCardDialog }
     | { kind: "cashtag"; subject: PriceSubject }
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
+    // a platform moderator confirming freezing a group or a community (`name`: the community's)
+    | { kind: "confirm_freeze"; target: FreezeTarget; name: string }
     | {
           kind: "manage";
           target: MultiUserChatIdentifier | CommunityIdentifier;
@@ -184,11 +196,17 @@ export const dialogs: Dialogs = {
     // someone's profile card. A dialog, not anchored to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
 
+    // a platform moderator suspending a user, from their card (L6)
+    suspend_user: () => import("../user/SuspendUserDialogScreen.svelte"),
+
     // a token's or coin's price card, with its last 7 days' prices
     cashtag: () => import("../cashtag/TokenDialogScreen.svelte"),
 
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
+
+    // a platform moderator confirming freezing a group or a community (L6)
+    confirm_freeze: () => import("../chats/FreezeDialogScreen.svelte"),
 
     // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
     manage: () => import("../group/ManageDialogScreen.svelte"),

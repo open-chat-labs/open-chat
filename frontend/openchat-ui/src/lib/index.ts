@@ -94,8 +94,8 @@ export { ICONS, iconSvg, iconMask } from './icons.js';
 export { copyText } from './clipboard';
 export { cssUrl } from './cssUrl';
 export { cleanAmount, parseAmount } from './amount';
-export { ToastLayer, setToastHost, getToastHost } from './toasts.svelte';
-export type { HostedToast, ShownToast, ToastHost, ToastIcon } from './toasts.svelte';
+export { ToastLayer, setToastHost, getToastHost, setPendingToastHost, getPendingToastHost } from './toasts.svelte';
+export type { HostedToast, ShownToast, ToastHost, ToastIcon, PendingToast, PendingToastHost } from './toasts.svelte';
 
 export type * from './types';
 export { setI18n, getI18n, useT, segments, durationText, messages, dictionaryTranslator, fallbackI18n, lookup, interpolate } from './i18n';

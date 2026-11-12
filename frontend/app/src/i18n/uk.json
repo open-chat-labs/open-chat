@@ -550,6 +550,7 @@
     "channelAlreadyExists": "Канал із такою назвою вже існує",
     "chatDetails": "Деталі чату",
     "chatFrozen": "Цей чат заморожено",
+    "chatUnfrozen": "Чат розморожено",
     "chatFrozenBy": "Чат заморожено {frozenBy}",
     "chatMenu": "Меню чату",
     "chatNotFound": "Вибачте, ми не змогли знайти вибраний чат",
@@ -1268,6 +1269,16 @@
     "fontSize": "Розмір шрифту",
     "forward": "вперед",
     "freezeCommunity": "Заморозити спільноту",
+    "freezeConfirm": {
+        "groupTitle": "Заморозити групу?",
+        "groupBody": "Учасники не зможуть надсилати повідомлення чи вносити зміни, доки її не розморозять.",
+        "communityTitle": "Заморозити спільноту?",
+        "communityBody": "Усі канали в {name} буде заморожено. Учасники не зможуть надсилати повідомлення чи вносити зміни, доки її не розморозять.",
+        "groupReasonHint": "Видно учасникам у стрічці чату",
+        "communityReasonHint": "Зберігається, але не показується учасникам",
+        "reasonLabel": "Причина (необов'язково)",
+        "confirm": "Заморозити"
+    },
     "freezeGroup": "Заморозити групу",
     "generating": "Створення...",
     "giphyMessage": "Gif-повідомлення",
@@ -1674,6 +1685,16 @@
         "viewMessage": "Переглянути повідомлення"
     },
     "moderator": "модератор",
+    "moderationToast": {
+        "frozen": "{name} заморожено",
+        "freezeFailed": "Не вдалося заморозити {name}. Спробуйте ще раз.",
+        "unfreezing": "Розморожування {name}…",
+        "unfrozen": "{name} розморожено",
+        "unfreezeFailed": "Не вдалося розморозити {name}",
+        "unsuspending": "Зняття блокування з {username}…",
+        "unsuspended": "Блокування з {username} знято",
+        "unsuspendFailed": "Не вдалося зняти блокування з {username}"
+    },
     "months": "Місяці",
     "mustBeFutureDateError": "Ви повинні вибрати майбутню дату",
     "muteAtEveryone": "Вимкнути звук для всіх",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "Заблокований користувач",
     "suspendUser": "Призупинити користувача",
+    "suspendUserFailed": "Не вдалося призупинити {username}. Спробуйте ще раз.",
     "tapForReferralLink": "Натисніть, щоб скопіювати ваше особисте реферальне посилання",
     "tellMeMore": "Більше інформації",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "Користувачі",
     "usersAndBots": "Користувачі та боти",
     "userSearchFailed": "Під час пошуку користувачів сталася помилка",
+    "userSuspended": "{username} призупинено",
     "vaultLog": {
         "button": "Журнал доступу",
         "empty": "Записів немає",

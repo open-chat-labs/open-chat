@@ -1129,6 +1129,18 @@ design export needs. Each entry says where it came up.
   motion and its 400ms only, not whether the rows fade too), the plate's slide (`--duration-slow`,
   `--ease-out`, on every `SegmentedTabs`; the export's plate doesn't move) and
   the look of "+N more …" (an accent text button, left-aligned under the section).
+- **A busy Button** (by hand, L6, EXPORT-LOG 2026-11-12), to take back to the design export:
+  `Button` takes `busy`: a spinner in the label's colour in place of the icon, the variant's look
+  kept, not pressable (`aria-busy`). The Suspend user and Freeze confirm dialogs' actions use it
+  while they run (see "Platform operators and moderators"). TODO(design): the export's own dialogs
+  swap the label ("Sending…") instead; the design has no busy button.
+- **A pending toast** (by hand, L6, EXPORT-LOG 2026-11-12), to take back to the design export: the
+  library's toast layer takes `showPending` (`ToastLayer`, handed down with `setPendingToastHost`):
+  a toast with `UndoToast`'s loader, no action or ×, no time limit, which `settle` turns into how
+  it went in the same slot (it doesn't play in again). A platform moderator's unfreeze and
+  un-suspend use it (`shell/pendingToast`; see "Platform operators and moderators"). Native's
+  `ToastQueue.showPending` is the same idea. TODO(design): the design has no pending toast on the
+  web, nor a failure tone for a toast.
 - **A DM's typing bubble** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to the design export:
   `TypingIndicator` takes `variant: 'bubble'`, native plan 04's DM bubble (received style, three
   dots, 34px tall, the small corner top-left, fading in), which the native conversation drew
@@ -1396,8 +1408,17 @@ design export needs. Each entry says where it came up.
 - **Suspend and unsuspend** (4a, by hand): platform moderators suspend or unsuspend a user from
   their card. `UserDialog` takes `moderatorAction` (a label and a callback) and shows it in its
   footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending
-  opens a plain dialog on `DialogShell` with the old modal's words and a reason
-  (`SuspendUserDialog`, `TODO(design)`). A DM's composer follows the other user's suspension at
+  opens a plain dialog on `DialogShell` naming the user, with the old modal's words and a reason
+  (`SuspendUserDialog`, `TODO(design)`); a suspension then says so in a toast with Undo, and
+  unsuspending runs in a pending toast (see "Platform operators and moderators"). From the card,
+  the suspend dialog takes the card's place over the same backdrop (`moderatorAction.handOff`, by
+  hand, EXPORT-LOG 2026-11-12; `DialogStack.handOff`, the local dialogs' version of the linked
+  dialogs' hand-off), with a back arrow to the card, which shows again at once as it was
+  (`ProfileCardData`'s `shown`); ×, the backdrop and Esc close it. Unsuspending plays the card's
+  exit and closes it: `UserDialog` used to play the exit without telling the app (`onCancel`), so
+  the card's invisible layer stayed until the next navigation, and a card opened again sat
+  beside it (fixed in the library, EXPORT-LOG 2026-11-12; Message too).
+  A DM's composer follows the other user's suspension at
   once, both ways, with no reload: a warning banner, "This user's account is suspended. You can't
   send them messages." (`recipientSuspended`, new in all 15 locales: the old trees had no words
   for it and said "This chat is read-only"), the composer back when they're un-suspended. The
@@ -1492,8 +1513,9 @@ design export needs. Each entry says where it came up.
     channel menu had neither).
   - GroupPanel's menu shows Leave to everyone; the app opens the dialog only for someone who can
     leave, so for anyone else the item does nothing.
-  - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
-    desktop row's swipe-to-remove (Remove chat is a row menu item instead).
+  - not offered: report, and the desktop row's swipe-to-remove (Remove chat is a row menu item
+    instead). A platform moderator's freeze and suspend are the header's and the community
+    menu's, not the rows' (L6, "Platform operators and moderators").
   - the row menus offer every item with a dialog (pin, archive, leave or delete, remove) on every
     kind of row, by Julian's choice; the design gives DM and group rows only favourite, mute and
     mark read.
@@ -2012,7 +2034,10 @@ design export needs. Each entry says where it came up.
   way once the preview has loaded. Desktop and mobile differed (A4): Back on a lapsed preview is hidden (desktop: a lapsed
   member is still a member), and cancelling a community preview goes back to where it was opened
   (mobile). Not carried over:
-  - the platform moderator's Freeze / Unfreeze on a preview (desktop footer only);
+  - the platform moderator's Freeze / Unfreeze group or community on a preview (the desktop
+    footer's button): a group preview's header menu has Freeze / Unfreeze group instead; a
+    community is frozen from its own header's menu in the chat list, not from a channel (the
+    user's decision, 2026-11-12; L6, "Platform operators and moderators");
   - the gate icons (desktop) and "Access gates enabled" (mobile) in the footer: the bar's gated
     state says how many requirements there are instead;
   - "Get Diamond" in the dialog closes it for the Diamond dialog (a dialog replaces another, never
@@ -2079,9 +2104,9 @@ design export needs. Each entry says where it came up.
       what it shows the signed-in user (ROUTES.md had "blocked"). The user's answer (3) keeps
       that: showing a guest the not-found page in its place was considered and dropped, as the
       code is public (hiding the route gains nothing) and the backend enforces operator access.
-      Signed in, anyone gets the console's placeholder for now (it isn't built, `TODO(design)`;
-      the old trees' Admin told a non-operator "Only platform operators can access the admin
-      area").
+      Signed in, a non-operator gets the old Admin page's refusal ("Only platform operators can
+      access the admin area"), and an operator a note that the console isn't built here yet
+      (L6, "Platform operators and moderators").
     - a preview's messages ask a guest to sign in (the user's answer): they have the hover bar,
       the menu and reactions a member would have (`messageOffer`'s `guest`: what anyone with an
       account could do, nothing a role gives, no tips), and what needs an account asks them to
@@ -2797,11 +2822,118 @@ design export needs. Each entry says where it came up.
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in
   `rollup.extras.mjs`, read by both the rollup and the vite builds). The Android app also takes the
-  web build over the air, so `selectLayout` keeps the native apps off it at runtime too.
+  web build over the air, so `selectLayout` keeps the native apps off it at runtime too. This is
+  L6's native half, left as it is (PLAN L6): the native apps keep the old UI until the native tree
+  (`src/native`, which registers them itself) takes over at N15, so this tree may never need them.
 - **Viewport height**: the existing trees keep `--vh` in step with the visual viewport
   (`calculateHeight`) for mobile browsers. Not needed until the narrow layouts come in.
-- **Platform operator / moderator console hooks** (`window.platformOperator`,
-  `window.platformModerator`) are only installed by the existing App trees.
+- **Platform operators and moderators** (L6 #10141, `logic/moderation`): what the old desktop
+  offers them, and where it is here. Built:
+  - **The console hooks** (`window.platformModerator`, `window.platformOperator`): now
+    `logic/moderation/consoleHooks`, installed by this tree's App and the old desktop App alike
+    (no longer written out in the old App): the moderator's freeze, unfreeze and delete a frozen
+    group, hot group exclusions, delete a message (a group's or a channel's), moderation flags,
+    message filters (which now say in the console whether they went through), the reported
+    messages, unsuspend; the operator's swap providers, upgrade concurrency, a full
+    LocalGroupIndex, missed daily claims, the airdrop, Diamond fees, a token on or off, the
+    proposals neuron, premium item costs, blocked username patterns, pausing the event loop. The
+    mobile and native trees never had them.
+  - **Freeze and unfreeze** (`logic/moderation/freeze`, which the old desktop and mobile menus
+    and the old desktop preview footer now use too): a group from the conversation header's menu
+    (and GroupPanel's ⋯); a community from the chat list's community header menu
+    (`ChatListHeader`'s ⋯ in community mode) only. A group preview's header, which has no menu
+    otherwise, has one with Freeze / Unfreeze group alone (the old footer's button). No channel
+    offers Freeze / Unfreeze community, a member's channel or a preview (the old preview footer
+    did, freezing the channel's community): the user's decision (2026-11-12), the community's
+    header being the community's own menu. This reverses an earlier review fix that had put it
+    back on a channel preview's header. Freezing asks first, from every one of those places
+    (`freezeItem` returns `confirm`; `confirm_freeze`, `chats/FreezeDialogScreen`, on the
+    shared `ConfirmDialog` that Delete message uses): "Freeze group?" or "Freeze community?"
+    (naming the community, whose every channel freezes), saying members can't send messages or
+    make changes until it's unfrozen (the backend refuses both while frozen), an optional
+    reason, then Cancel or Freeze. The reason is trimmed, blank is none, and it's held to 512
+    characters (`freezeReason`; the backend sets no limit, so this is ours, a suspension
+    reason's). Its hint says who sees it: a group's goes into the "Chat frozen by …" timeline
+    event members see ("Reason: …"); a community's is kept with the community's own events,
+    which no screen shows. Unfreezing doesn't ask. The old desktop and mobile menus and the old
+    preview footer still freeze at once with no reason (each tree would need its own dialog;
+    the console hook takes one). Freeze spins (the library `Button`'s `busy`, by hand) and the
+    dialog stays until the backend answers, with nothing dismissing it (Esc, ×, the backdrop,
+    Cancel: `ConfirmDialog`'s optional `busy`, which its other uses don't pass);
+    `logic/moderation/pendingAction`'s `PendingAction` holds that. A failure says so inline,
+    "Couldn't freeze {name}. Try again." (`freeze`), the reason kept, and Freeze works again for
+    another try. A success closes it and says so in a toast, "{name} has been frozen", with Undo
+    for 5 seconds, as a suspension's (the user's decision, 2026-11-12): Undo unfreezes, as the
+    menus' Unfreeze does. Unfreezing doesn't ask and has no dialog, so a toast is all it shows (the
+    user's decision, 2026-11-12): "Unfreezing {name}…" with a loader while it runs, then, in the
+    same toast, "{name} unfrozen" (gone after 2.5 seconds, no Undo) or "Couldn't unfreeze {name}"
+    (which stays until it's closed, as the app's failures do): `unfreeze`, a `PendingToastAction`
+    run by `shell/pendingToast` in the library's pending toast ("A pending toast", by hand). A
+    preview's timeline may not show the change at once, so the toast is what says it. The old
+    trees' menus keep freezing at once (`setFrozen`), the old chat menus toasting only a failure.
+    TODO(design): the design has no moderator items, so they're the menus' last, freezing as a
+    danger item; nor a freeze confirm (its words, the reason field and its 512 limit are ours,
+    `freezeConfirm.*`), nor the freeze, unfreeze or pending toasts (`moderationToast.*`).
+  - **Suspend and unsuspend** from a DM's header menu (not a bot's), as the old desktop menu has
+    them, besides the user card ("Suspend and unsuspend", 4a): Suspend opens `SuspendUserDialog`;
+    Unsuspend, from the menu or the card, lifts it at once, with no dialog, so a toast is all it
+    shows (the user's decision, 2026-11-12): "Un-suspending {username}…" with a loader while it
+    runs, then, in the same toast, "{username} un-suspended" (no Undo) or "Couldn't un-suspend
+    {username}" (`unsuspend` in `logic/moderation/chatModeration`, a `PendingToastAction`, as
+    unfreezing's). The old desktop and mobile menus and profile modals keep `unsuspendUser` and
+    its old words. The dialog ("Suspend user") names who: their picture over their
+    swatch, display name and @username, or their username once without a display name
+    (`suspendee`; their user id alone while they're not loaded), then the reason. From the user
+    card it takes the card's place over the same backdrop, with a back arrow to it ("Suspend and
+    unsuspend", 4a); from the DM's menu it opens on its own. Suspend spins (the library `Button`'s `busy`, by hand) and the
+    dialog stays until the backend answers, with nothing dismissing it (Esc, ×, the backdrop,
+    Cancel; `PendingAction`, as the freeze confirm). A failure says so inline, "Couldn't suspend
+    {username}. Try again." (`suspendUserFailed`), the reason kept, for another try; no toast. A
+    suspension goes out as soon as it's confirmed (as in the old trees, which don't defer it
+    either); the dialog then closes and says so in a toast, "{username} has been suspended"
+    (`suspendUser` in `logic/moderation/chatModeration`, `userSuspended`), with Undo for 5
+    seconds (native's undo toasts' time): Undo lifts it in the pending toast above
+    (`unsuspend`). The toast is the library's undo toast through the app's toast host
+    (`getToastHost`, `getPendingToastHost`), which outlasts the dialog. The old desktop and mobile trees still
+    close their dialog with no toast. The DM header's "Account suspended" now follows a
+    suspension or its Undo at once: the client's `userStore.userSuspended` replaces the user's
+    summary instead of changing it in place, which the header's `$derived` user didn't see.
+    TODO(design): no suspend dialog, busy button, suspend or pending toast in the design; naming
+    the user in a member row under the title is ours.
+  - **`/admin`** (`features/admin/AdminScreen`): someone who isn't a platform operator gets the
+    old page's refusal ("Unauthorised", Back to safety); an operator gets a note that the console
+    isn't built here yet, pointing at the console hooks (English only, as the old console).
+
+  Not yet, and both needed before cutover (the old desktop has the only ones; both are big
+  screens with no design):
+  - **The operator console** (the old `home/admin`, about 2,300 lines): Translation corrections
+    (review, approve, reject), Operator functions (upgrade concurrency, MultiUser canisters,
+    Diamond fees, tokens, the proposals neuron, the OpenAI and Alchemy keys, the MiniApp
+    principal, bridge bots, the moderation config: the internal channel, referral thresholds,
+    vault reviewers, media scanning, the authority reporter, legal holds and destroy requests;
+    native call push; the daily puzzle; the dual-authorized actions), Pending operator proposals
+    (confirming another operator's), Authority reports and the Vault log. Mounting the old
+    component in this tree as a stop-gap was considered and dropped: `src/web` would depend on
+    `components/`, which goes at cutover, and the desktop theme's variables (`--accent`, `--bg`
+    …) clash with the library's tokens, so it would need a themed island of its own, its menus
+    and dialogs (portalled to `<body>`) outside it. Its logic is in the components, so a port
+    first extracts it to `app/src/logic/admin`, as the rules say. With it comes the old main
+    menu's Admin item (operators only), whose place would be the profile dialog's rail foot,
+    above Log out (a new `ProfileDialog` prop).
+  - **Report review**: the moderation channel's report cards (`moderation_report_content`; the
+    old `ModerationReportContent`, `FileAuthorityReport`, `VaultMediaViewer`, `VaultAccessLog`)
+    show as the text "Moderation report": no verdicts (uphold, uphold as CSAM with urgent,
+    dismiss), no media review through the vault (`MediaReviewGate` is already shared), access
+    log, NCA filing (or recording one), copying the hashes, link to the checklist
+    (`/csea-reporting`, built in 9a) or clearing a stale filing attempt. Nor the older reported
+    message card (`reported_message_content`). `MessageGroup` has no kind for an app's own card,
+    so the library needs one first.
+  Both are to be ported plainly, as operator- or moderator-only screens on library parts,
+  without a design (the user's decision, 2026-11-12): the console is PLAN L6b, the report review
+  cards L6c.
+  - **The native half**: `src/native` has none of the above (nor did components_mobile have
+    the console hooks or the console); not needed while native builds keep the old UI (PLAN L6).
+    The native apps' event listeners and `svelteReady` are "Native apps" (above).
 - **Right column host** (`features/app/DetailsColumn.svelte`, S1): the invites and proposal
   filters entries are still placeholders; the user profile, explore's filters and the call participants entries wait on
   8c, 8a and 7b. With nothing in `rightPanelHistory` the column shows the selected chat's details

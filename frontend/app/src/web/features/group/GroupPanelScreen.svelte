@@ -9,6 +9,7 @@
         anonUserStore,
         blockedUsersStore,
         favouritesStore,
+        platformModeratorStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         type OpenChat,
@@ -16,11 +17,13 @@
     import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import { interpolate } from "@src/i18n/i18n";
     import { closeRightColumn } from "../app/rightPanel";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "../conversation/chatMenu";
     import { panelMenuItems } from "../conversation/conversation.adapter";
     import GroupPanelView from "./GroupPanelView.svelte";
+    import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
 
     type GroupRegion = Extract<
         RightRegion,
@@ -39,6 +42,7 @@
     let { region, context }: ScreenProps<GroupRegion> = $props();
 
     const client = getContext<OpenChat>("client");
+    const pendingToasts = getPendingToastHost();
 
     // a channel's community tab, the community's details and its members are the community's
     const communityScope = $derived(
@@ -105,6 +109,8 @@
                       community: $selectedCommunitySummaryStore,
                       anon: $anonUserStore,
                       unblockLabel: $_("unblockUser"),
+                      platformModerator: $platformModeratorStore,
+                      translate: (key) => interpolate($_, key),
                   }),
               ).map((item) => ({
                   ...item,
@@ -115,6 +121,7 @@
                           title: chat.name,
                           dialogs: context.dialogs,
                           formatter: $_,
+                          pendingToasts,
                       }),
               })),
     );

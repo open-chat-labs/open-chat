@@ -8,7 +8,7 @@
     import Button from "../Button.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
-    import { unfreezeTarget } from "./unfreezeTarget";
+    import { freezeLabel, freezeTarget, setFrozen } from "@src/logic/moderation/freeze";
 
     const client = getContext<OpenChat>("client");
 
@@ -42,65 +42,14 @@
         }
     }
 
-    function freeze() {
+    // freezing a channel freezes its community (logic/moderation/freeze)
+    async function setChatFrozen(frozen: boolean) {
+        const target = freezeTarget(chat.id);
         freezingInProgress = true;
-        switch (chat.kind) {
-            case "group_chat":
-                client
-                    .freezeGroup(chat.id, undefined)
-                    .then((success) => {
-                        if (!success) {
-                            toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
-                        } else {
-                            toastStore.showSuccessToast(i18nKey("chatFrozen"));
-                        }
-                    })
-                    .finally(() => (freezingInProgress = false));
-                break;
-
-            case "channel":
-                if ($selectedCommunitySummaryStore) {
-                    client
-                        .freezeCommunity($selectedCommunitySummaryStore.id, undefined)
-                        .then((success) => {
-                            if (!success) {
-                                toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
-                            } else {
-                                toastStore.showSuccessToast(i18nKey("communityFrozen"));
-                            }
-                        })
-                        .finally(() => (freezingInProgress = false));
-                }
-                break;
-        }
-    }
-
-    function unfreeze() {
-        freezingInProgress = true;
-
-        const target = unfreezeTarget(chat, $selectedCommunitySummaryStore?.id);
-        if (target?.kind === "group") {
-            client
-                .unfreezeGroup(target.id)
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
-                    } else {
-                        toastStore.showSuccessToast(i18nKey("Chat unfrozen"));
-                    }
-                })
-                .finally(() => (freezingInProgress = false));
-        } else if (target?.kind === "community") {
-            client
-                .unfreezeCommunity(target.id)
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
-                    } else {
-                        toastStore.showSuccessToast(i18nKey("communityUnfrozen"));
-                    }
-                })
-                .finally(() => (freezingInProgress = false));
+        try {
+            toastStore.showOutcome(await setFrozen(client, target, frozen));
+        } finally {
+            freezingInProgress = false;
         }
     }
 </script>
@@ -116,18 +65,12 @@
     {/if}
     {#if $platformModeratorStore}
         {#if isFrozen}
-            <Button loading={freezingInProgress} secondary small onClick={unfreeze}>
-                <Translatable
-                    resourceKey={chat.kind === "group_chat"
-                        ? i18nKey("unfreezeGroup")
-                        : i18nKey("unfreezeCommunity")} />
+            <Button loading={freezingInProgress} secondary small onClick={() => setChatFrozen(false)}>
+                <Translatable resourceKey={freezeLabel(freezeTarget(chat.id).kind, true)} />
             </Button>
         {:else}
-            <Button loading={freezingInProgress} secondary small onClick={freeze}>
-                <Translatable
-                    resourceKey={chat.kind === "group_chat"
-                        ? i18nKey("freezeGroup")
-                        : i18nKey("freezeCommunity")} />
+            <Button loading={freezingInProgress} secondary small onClick={() => setChatFrozen(true)}>
+                <Translatable resourceKey={freezeLabel(freezeTarget(chat.id).kind, false)} />
             </Button>
         {/if}
     {/if}

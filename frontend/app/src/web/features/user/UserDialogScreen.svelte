@@ -19,7 +19,6 @@
         publish,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        unsuspendUserMessage,
         userBadges,
     } from "@client";
     import UserDialog from "@openchat/ui/src/features/components/UserDialog.svelte";
@@ -27,9 +26,11 @@
     import { profileCardChat } from "@src/logic/profile/profileCard";
     import { askToSignIn } from "@src/logic/auth/guestPass";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
+    import { unsuspend as unsuspendAction } from "@src/logic/moderation/chatModeration";
+    import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
+    import { runInPendingToast } from "../../shell/pendingToast";
     import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
-    import { toastStore } from "@src/stores/toast";
     import { blobUrlPattern } from "@src/utils/openchatClient";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -39,12 +40,13 @@
     import { userDialogProps } from "./user.adapter";
     import { profileAvatarUrl } from "../profile/profile.adapter";
 
-    let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "user" }>> = $props();
+    let { dialog, onClose, dialogs }: DialogProps<Extract<LocalDialog, { kind: "user" }>> =
+        $props();
 
     const client = getContext<OpenChat>("client");
     // the card's user is fixed for its life: another name opens another card
     const userId = dialog.userId;
-    const card = new ProfileCardData(client, userId, onClose);
+    const card = new ProfileCardData(client, userId, onClose, dialog.shown);
 
     const online = $derived(lastOnlineStatus($_, Date.now(), card.lastOnline)[1]);
 
@@ -132,14 +134,22 @@
         }
     }
 
-    async function unsuspend() {
-        const success = await client.unsuspendUser(userId);
-        const message = unsuspendUserMessage(success);
-        if (success) {
-            toastStore.showSuccessToast(message);
-        } else {
-            toastStore.showFailureToast(message);
-        }
+    // the app's pending toast, which outlasts the card: "Un-suspending …", then how it went
+    const pendingToasts = getPendingToastHost();
+
+    function unsuspend() {
+        void runInPendingToast(
+            pendingToasts,
+            unsuspendAction(client, userId, allUsersStore.value),
+            $_,
+        );
+    }
+
+    // the suspend dialog takes the card's place over the same backdrop, with a back arrow to it,
+    // which shows the card again at once, as it was (`shown`)
+    function suspend() {
+        const back = { ...dialog, shown: card.shown };
+        dialogs.handOff(dialog, { kind: "suspend_user", userId, card: back });
     }
 
     // TODO(design): the design has no place for a moderator's suspend / unsuspend
@@ -148,7 +158,7 @@
             ? undefined
             : suspended
               ? { label: $_("unsuspendUser"), onAction: unsuspend }
-              : { label: $_("suspendUser"), onAction: () => publish("suspendUser", userId) },
+              : { label: $_("suspendUser"), onAction: suspend, handOff: true },
     );
 </script>
 

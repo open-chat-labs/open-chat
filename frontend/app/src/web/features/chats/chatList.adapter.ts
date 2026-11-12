@@ -8,6 +8,7 @@ import type ChatListPanel from "@openchat/ui/src/features/components/ChatListPan
 import type { MenuItem } from "@openchat/ui/src/lib/types";
 import { swatchFor } from "@src/logic/chats/chatRow";
 import type { CommunityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
+import { freezeLabel } from "@src/logic/moderation/freeze";
 import type { ComponentProps } from "svelte";
 
 // The chat list's community header menu and its search's rows for what isn't in the list. The
@@ -20,6 +21,11 @@ const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
 
 export type CommunityHeaderMenuState = CommunityMenuPermissions & {
     canManageUserGroups: boolean;
+    /**
+     * A platform moderator's Freeze or Unfreeze community (the old desktop menu's), with whether
+     * it's frozen now; undefined for anyone else.
+     */
+    moderation: { frozen: boolean } | undefined;
     /** The app's words for a key. */
     label: (key: string) => string;
 };
@@ -27,7 +33,8 @@ export type CommunityHeaderMenuState = CommunityMenuPermissions & {
 /**
  * ChatListHeader's community menu, as the design's (`_commMenuAll`): members, invite, edit, new
  * channel, embedded channel, new user group, mark all read, then leave and delete, where the app's rules allow them. Members,
- * invite and edit open Manage. Picking one reports its id (`onMenu`).
+ * invite and edit open Manage. Last, a platform moderator's Freeze or Unfreeze community
+ * (TODO(design): the design has no moderator items). Picking one reports its id (`onMenu`).
  */
 export function communityHeaderMenu(
     state: CommunityHeaderMenuState,
@@ -82,6 +89,15 @@ export function communityHeaderMenu(
             label: label("communities.delete"),
             mask: icon("trash"),
             variant: "danger",
+        });
+    }
+    if (state.moderation !== undefined) {
+        const { frozen } = state.moderation;
+        items.push({
+            id: frozen ? "unfreezeCommunity" : "freezeCommunity",
+            label: label(freezeLabel("community", frozen).key),
+            mask: icon(frozen ? "lock-open" : "lock"),
+            variant: frozen ? "regular" : "danger",
         });
     }
     return items;

@@ -550,6 +550,7 @@
     "channelAlreadyExists": "その名前のチャンネルはすでに存在します",
     "chatDetails": "チャットの詳細",
     "chatFrozen": "このチャットは凍結されました",
+    "chatUnfrozen": "チャットの凍結を解除しました",
     "chatFrozenBy": "{frozenBy} によってチャットが凍結されました",
     "chatMenu": "チャットメニュー",
     "chatNotFound": "申し訳ございません - 選択されたチャットが見つかりませんでした",
@@ -1268,6 +1269,16 @@
     "fontSize": "フォントサイズ",
     "forward": "転送",
     "freezeCommunity": "コミュニティを凍結する",
+    "freezeConfirm": {
+        "groupTitle": "グループを凍結しますか？",
+        "groupBody": "凍結が解除されるまで、メンバーはメッセージの送信や変更ができなくなります。",
+        "communityTitle": "コミュニティを凍結しますか？",
+        "communityBody": "{name} のすべてのチャンネルが凍結されます。凍結が解除されるまで、メンバーはメッセージの送信や変更ができなくなります。",
+        "groupReasonHint": "チャットのタイムラインでメンバーに表示されます",
+        "communityReasonHint": "記録として残りますが、メンバーには表示されません",
+        "reasonLabel": "理由（任意）",
+        "confirm": "凍結"
+    },
     "freezeGroup": "グループを凍結",
     "generating": "生成中...",
     "giphyMessage": "GIFメッセージ",
@@ -1674,6 +1685,16 @@
         "viewMessage": "メッセージを表示"
     },
     "moderator": "モデレータ",
+    "moderationToast": {
+        "frozen": "{name} を凍結しました",
+        "freezeFailed": "{name} を凍結できませんでした。もう一度お試しください。",
+        "unfreezing": "{name} の凍結を解除しています…",
+        "unfrozen": "{name} の凍結を解除しました",
+        "unfreezeFailed": "{name} の凍結を解除できませんでした",
+        "unsuspending": "{username} の停止を解除しています…",
+        "unsuspended": "{username} の停止を解除しました",
+        "unsuspendFailed": "{username} の停止を解除できませんでした"
+    },
     "months": "月",
     "mustBeFutureDateError": "将来の日付を選択する必要があります",
     "muteAtEveryone": "@全員をミュート",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "停止中のユーザー",
     "suspendUser": "ユーザーの停止",
+    "suspendUserFailed": "{username} を停止できませんでした。もう一度お試しください。",
     "tapForReferralLink": "タップして個人紹介リンクをコピーします",
     "tellMeMore": "詳しくは",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "ユーザー",
     "usersAndBots": "ユーザーとボット",
     "userSearchFailed": "ユーザーの検索にエラーが発生しました",
+    "userSuspended": "{username} は停止されました",
     "vaultLog": {
         "button": "アクセスログ",
         "empty": "エントリがありません",
