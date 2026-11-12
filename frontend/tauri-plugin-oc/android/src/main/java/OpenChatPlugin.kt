@@ -2,15 +2,19 @@ package com.ocplugin.app
 
 import android.app.Activity
 import android.app.NotificationManager
+import android.content.ClipData
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Base64
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.webkit.WebView
+import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -34,6 +38,9 @@ import com.ocplugin.app.calls.CallRinger
 import com.ocplugin.app.calls.CallTelecom
 import com.ocplugin.app.calls.IncomingCallNotifications
 import com.ocplugin.app.commands.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Suppress("UNUSED")
 @TauriPlugin
@@ -60,6 +67,9 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         // Sweep shared files older than 24h out of the app cache. Runs on a
         // background thread, so this doesn't block the activity launch.
         ShareIntentManager.cleanupStaleShares(activity)
+        CoroutineScope(Dispatchers.IO).launch {
+            ShareOut.prune(ShareOut.root(activity.cacheDir), System.currentTimeMillis())
+        }
     }
 
     @Command
@@ -103,29 +113,105 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
-    // The system share sheet for a link or some text (the WebView has no Web Share API). Resolves
-    // once the sheet is up; what the user picks there isn't reported.
+    // The system share sheet for a link, some text, or a message's media staged by
+    // stageShareFile (the WebView has no Web Share API). Resolves once the sheet is up; what the
+    // user picks there isn't reported.
     @Command
     fun share(invoke: Invoke) {
         val args = invoke.parseArgs(ShareArgs::class.java)
-        val text = args.text
-        if (text.isNullOrEmpty()) {
+        val text = args.text?.takeIf { it.isNotEmpty() }
+        val root = ShareOut.root(activity.cacheDir)
+        val files = args.files.map { f ->
+            val file = f.file?.let { ShareOut.resolve(root, it) }
+            if (file == null) {
+                invoke.reject("Unknown staged file")
+                return
+            }
+            file to f.mimeType
+        }
+        if (text == null && files.isEmpty()) {
             invoke.reject("Nothing to share")
             return
         }
         activity.runOnUiThread {
             try {
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, text)
+                val spec = if (files.isEmpty()) null else {
+                    // the app's own activities that take a send (share-in)
+                    val ownTargets = activity.packageManager
+                        .queryIntentActivities(
+                            Intent(Intent.ACTION_SEND).setType("*/*").setPackage(activity.packageName),
+                            0,
+                        )
+                        .map { ComponentName(it.activityInfo.packageName, it.activityInfo.name).flattenToString() }
+                    ShareOut.send(files, ownTargets) {
+                        FileProvider.getUriForFile(activity, "${activity.packageName}.fileprovider", it).toString()
+                    }
+                }
+                val send = if (spec == null) {
+                    Intent(Intent.ACTION_SEND).apply { type = "text/plain" }
+                } else {
+                    val uris = spec.streams.map { Uri.parse(it) }
+                    Intent(spec.action).apply {
+                        type = spec.type
+                        if (uris.size == 1) {
+                            putExtra(Intent.EXTRA_STREAM, uris[0])
+                        } else {
+                            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                        }
+                        // The grant goes with the ClipData, which the chooser passes on
+                        clipData = ClipData.newRawUri(null, uris[0]).apply {
+                            uris.drop(1).forEach { addItem(ClipData.Item(it)) }
+                        }
+                        addFlags(spec.flags)
+                    }
+                }
+                send.apply {
+                    text?.let { putExtra(Intent.EXTRA_TEXT, it) }
                     args.title?.let { putExtra(Intent.EXTRA_TITLE, it) }
                 }
-                activity.startActivity(Intent.createChooser(send, args.title))
+                val chooser = Intent.createChooser(send, args.title)
+                spec?.exclude?.mapNotNull { ComponentName.unflattenFromString(it) }
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.let { chooser.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, it.toTypedArray()) }
+                activity.startActivity(chooser)
                 invoke.resolve()
             } catch (e: Exception) {
                 invoke.reject("Couldn't open the share sheet: ${e.message}")
             }
         }
+    }
+
+    // A chunk (base64) of a message's media the web layer is about to share: the first starts a
+    // new staged file, the rest (`file`) are appended to it. Resolves with the staged file's
+    // name, for the next chunk and for share.
+    @Command
+    fun stageShareFile(invoke: Invoke) {
+        val args = invoke.parseArgs(StageShareFileArgs::class.java)
+        val data = args.data
+        if (data == null) {
+            invoke.reject("No data")
+            return
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val bytes = Base64.decode(data, Base64.DEFAULT)
+                val file = ShareOut.stage(ShareOut.root(activity.cacheDir), args.file, args.name, bytes)
+                if (file == null) {
+                    invoke.reject("Unknown staged file")
+                } else {
+                    invoke.resolve(JSObject().put("file", file))
+                }
+            } catch (e: Exception) {
+                invoke.reject("Couldn't stage the file: ${e.message}")
+            }
+        }
+    }
+
+    // Resolves, which a shell older than it doesn't: the web layer asks once, to know whether the
+    // message menu can offer Share for media (stageShareFile, and share with files).
+    @Command
+    fun canShareFiles(invoke: Invoke) {
+        invoke.resolve()
     }
 
     // The window insets as last reported (MainActivity), for a WebView that starts listening after
@@ -385,6 +471,22 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 class ShareArgs {
     var text: String? = null
     var title: String? = null
+    var files: List<ShareFileArg> = emptyList()
+}
+
+@InvokeArg
+class ShareFileArg {
+    // a staged file's name, as stageShareFile resolved with
+    var file: String? = null
+    var mimeType: String? = null
+}
+
+@InvokeArg
+class StageShareFileArgs {
+    // the staged file to append to; none for a file's first chunk
+    var file: String? = null
+    var name: String? = null
+    var data: String? = null
 }
 
 @InvokeArg

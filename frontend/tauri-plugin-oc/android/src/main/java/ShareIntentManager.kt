@@ -214,7 +214,7 @@ object ShareIntentManager {
         return name to size
     }
 
-    private fun sanitiseName(name: String): String {
+    fun sanitiseName(name: String): String {
         val cleaned = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim()
         return cleaned.ifEmpty { "shared" }
     }

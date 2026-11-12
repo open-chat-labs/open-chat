@@ -38,7 +38,12 @@ vi.mock("@stores/chatShortcuts", () => ({
     startChatShortcutPusher: vi.fn(),
 }));
 vi.mock("@stores/video", () => ({ activeVideoCall: { applyNativeControl: vi.fn() } }));
-vi.mock("@client", () => ({ currentUserStore: { value: { username: "me" } } }));
+vi.mock("./read_elsewhere", () => ({ releaseNotificationsReadElsewhere: vi.fn() }));
+// The real module, so a new import in nativeApp doesn't break this spec
+vi.mock("@client", async (original) => ({
+    ...(await original<typeof import("@client")>()),
+    currentUserStore: { value: { username: "me" } },
+}));
 
 test("sign-out clears the tray and chat shortcuts without waiting for the push token's removal", async () => {
     const tasks: (() => Promise<unknown>)[] = [];
