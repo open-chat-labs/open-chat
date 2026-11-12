@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "安装新版本后，请卸载此版本。同时保留两个版本会导致每条通知重复出现。",
         "reinstallDownload": "下载当前版本"
     },
+    "fullScreenCalls": {
+        "title": "全屏来电",
+        "message": "Android 需要你的许可，OpenChat 才能在手机锁定时全屏显示来电。在你允许之前，来电只会以普通通知的形式出现。",
+        "openSettings": "打开设置",
+        "notNow": "以后再说"
+    },
     "appWallet": {
         "header": {
             "asset": "资产",

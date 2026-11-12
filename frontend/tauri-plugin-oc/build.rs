@@ -42,6 +42,8 @@ const COMMANDS: &[&str] = &[
     "share",
     "get_window_insets",
     "set_system_bars_style",
+    "can_use_full_screen_intent",
+    "open_full_screen_intent_settings",
 ];
 
 fn main() {

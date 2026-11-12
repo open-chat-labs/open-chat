@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Une fois la nouvelle installée, désinstallez celle-ci. Si les deux sont installées, chaque notification arrive en double.",
         "reinstallDownload": "Télécharger la version actuelle"
     },
+    "fullScreenCalls": {
+        "title": "Appels en plein écran",
+        "message": "Android a besoin de votre autorisation pour qu'OpenChat affiche les appels entrants en plein écran lorsque votre téléphone est verrouillé. Tant que vous ne l'autorisez pas, les appels arrivent sous forme de notification ordinaire.",
+        "openSettings": "Ouvrir les paramètres",
+        "notNow": "Plus tard"
+    },
     "appWallet": {
         "header": {
             "asset": "Actif",
