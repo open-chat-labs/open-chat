@@ -2859,6 +2859,7 @@
     "readOnlyThread": "此线程是只读的",
     "reason": "原因",
     "reasonForSuspension": "暂停原因",
+    "recipientSuspended": "该用户的账户已被暂停。您无法向其发送消息。",
     "recordAudioMessage": "录制音频消息",
     "referralHeader": "邀请朋友/家人",
     "refresh": "刷新",

@@ -611,11 +611,16 @@ export const communitiesStore = derived(
             const anyChanges =
                 updates?.index !== undefined ||
                 updates?.displayName !== undefined ||
-                updates?.rulesAccepted !== undefined;
+                updates?.rulesAccepted !== undefined ||
+                updates?.frozen !== undefined;
 
             if (anyChanges) {
-                // only membership is modified below so that is all we need to copy
-                const clone = { ...community, membership: { ...community.membership } };
+                // only membership (and frozen) is modified below so that is all we need to copy
+                const clone = {
+                    ...community,
+                    frozen: updates?.frozen ?? community.frozen,
+                    membership: { ...community.membership },
+                };
                 const index = updates?.index;
                 if (index !== undefined) {
                     clone.membership.index = index;

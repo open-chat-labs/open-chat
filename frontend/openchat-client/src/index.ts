@@ -42,6 +42,7 @@ export {
     subrangesCover,
     TimelineGrouper,
     userCanDeleteMessage,
+    type DirectChatRecipient,
     type GroupAvatarLookups,
 } from "./utils/chat";
 export { formatClock, formatDuration } from "./utils/time";

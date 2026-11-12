@@ -1389,11 +1389,22 @@ design export needs. Each entry says where it came up.
   footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending
   opens a plain dialog on `DialogShell` with the old modal's words and a reason
   (`SuspendUserDialog`, `TODO(design)`). A DM's composer follows the other user's suspension at
-  once, both ways, with no reload: "This chat is read-only" while they're suspended (as the old
-  composer, `canSendDirectMessage`), the composer back when they're un-suspended. The selected
-  chat's permissions (`messagePermissionsForSelectedChatStore`) derive from
+  once, both ways, with no reload: a warning banner, "This user's account is suspended. You can't
+  send them messages." (`recipientSuspended`, new in all 15 locales: the old trees had no words
+  for it and said "This chat is read-only"), the composer back when they're un-suspended. The
+  selected chat's permissions (`messagePermissionsForSelectedChatStore`) derive from
   `selectedChatRecipientStore`, which publishes only when the other user's `suspended` (or kind)
-  changes; every tree's composer reads it (2026-11-12).
+  changes; `chatEntryState` reads it too, for its own block (`recipient_suspended`). A frozen
+  group or channel, or a channel of a frozen community, shows "This chat has been frozen"
+  (`chatFrozen`), and follows a freeze and an unfreeze at once: a group's through
+  `localUpdates.updateChatFrozen` (the moderator's) or the next sync (everyone else's); a
+  community's (its channels' `isChatOrCommunityFrozen`) now through
+  `localUpdates.updateCommunityFrozen` on the moderator's `freezeCommunity` / `unfreezeCommunity`,
+  where it used to wait for the sync. Where several apply (`entryBlock`), a moderator's doing comes
+  first, as the reader can't undo it: the reader's own suspension, then frozen, then the DM's
+  other user suspended, then blocked (unblocking wouldn't help), then the rest. Every tree's
+  composer, the old ones' and native's included, shows these (2026-11-12). The banner doesn't name
+  the user (the header does); the design has no words for it (`TODO(design)`).
 - **Gates editor** (4a, `features/access/gates.adapter.ts`, for 4b and 8b): `AccessGates` takes
   `types` (by hand), and the app doesn't offer the unique-person gate (suspended) or the
   credential gate. A credential gate already set still shows and saves unchanged, but adding one

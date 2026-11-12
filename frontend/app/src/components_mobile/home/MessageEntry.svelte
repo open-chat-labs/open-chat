@@ -597,6 +597,10 @@
             suspended: false,
             frozen,
             blocked,
+            recipientSuspended:
+                chat.kind === "direct_chat" &&
+                $selectedChatRecipientStore?.userId === chat.them.userId &&
+                $selectedChatRecipientStore.suspended,
             previewing: preview,
             lapsed,
             direct: chat.kind === "direct_chat",
@@ -714,6 +718,10 @@
                     <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
                 </BodySmall>
             </Row>
+        {:else if block?.kind === "recipient_suspended"}
+            <div class="disabled">
+                <Translatable resourceKey={i18nKey("recipientSuspended")} />
+            </div>
         {:else if block?.kind === "anonymous" || block?.kind === "read_only"}
             <div class="disabled">
                 <Translatable resourceKey={i18nKey(entryBlockBanner(block).key)} />

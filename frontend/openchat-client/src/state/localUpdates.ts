@@ -579,6 +579,20 @@ export class GlobalLocalState {
         }
     }
 
+    updateCommunityFrozen(id: CommunityIdentifier, frozen: boolean): UndoLocalUpdate {
+        return this.#modifyCommunitySummaryUpdates(
+            id,
+            (upd) => {
+                upd.frozen = frozen;
+                return (upd) => {
+                    upd.frozen = undefined;
+                    return upd;
+                };
+            },
+            "updateCommunityFrozen",
+        );
+    }
+
     updateCommunityIndex(id: CommunityIdentifier, index: number): UndoLocalUpdate {
         return this.#modifyCommunitySummaryUpdates(
             id,

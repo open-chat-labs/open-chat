@@ -681,6 +681,16 @@ describe("app state", () => {
             expect(get(communitiesStore).get(id)?.membership.index).toEqual(3);
         });
 
+        test("a community frozen here shows straight away, before the sync brings it", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            expect(get(communitiesStore).get(id)?.frozen).toBe(false);
+            const undo = localUpdates.updateCommunityFrozen(id, true);
+            expect(get(communitiesStore).get(id)?.frozen).toBe(true);
+            expect(get(serverCommunitiesStore).get(id)?.frozen).toBe(false);
+            undo();
+            expect(get(communitiesStore).get(id)?.frozen).toBe(false);
+        });
+
         test("should get the server object if there are no updates", () => {
             const server = get(serverCommunitiesStore).get({
                 kind: "community",

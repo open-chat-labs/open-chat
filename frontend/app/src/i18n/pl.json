@@ -2859,6 +2859,7 @@
     "readOnlyThread": "Ten wątek jest tylko do odczytu",
     "reason": "Powód",
     "reasonForSuspension": "powód zawieszenia",
+    "recipientSuspended": "Konto tego użytkownika jest zawieszone. Nie możesz wysyłać mu wiadomości.",
     "recordAudioMessage": "Nagraj wiadomość dźwiękową",
     "referralHeader": "Zaproś znajomych/rodzinę",
     "refresh": "Odświeżać",

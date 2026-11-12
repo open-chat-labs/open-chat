@@ -2859,6 +2859,7 @@
     "readOnlyThread": "Ce fil est en lecture seule",
     "reason": "Raison",
     "reasonForSuspension": "motif de suspension",
+    "recipientSuspended": "Le compte de cet utilisateur est suspendu. Vous ne pouvez pas lui envoyer de messages.",
     "recordAudioMessage": "Enregistrer un message audio",
     "referralHeader": "Inviter des amis/famille",
     "refresh": "Rafraîchir",

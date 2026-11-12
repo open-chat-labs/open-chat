@@ -2859,6 +2859,7 @@
     "readOnlyThread": "השרשור הזה הוא לקריאה בלבד",
     "reason": "סיבה",
     "reasonForSuspension": "סיבה להשעיה",
+    "recipientSuspended": "החשבון של משתמש זה מושעה. אי אפשר לשלוח לו הודעות.",
     "recordAudioMessage": "הקלט הודעת שמע",
     "referralHeader": "הזמן חברים/משפחה",
     "refresh": "לְרַעֲנֵן",

@@ -2859,6 +2859,7 @@
     "readOnlyThread": "هذا الموضوع للقراءة فقط",
     "reason": "سبب",
     "reasonForSuspension": "سبب الإيقاف",
+    "recipientSuspended": "تم تعليق حساب هذا المستخدم. لا يمكنك إرسال رسائل إليه.",
     "recordAudioMessage": "تسجيل رسالة صوتية",
     "referralHeader": "دعوة الأصدقاء/العائلة",
     "refresh": "ينعش",

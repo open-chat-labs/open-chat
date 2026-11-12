@@ -2859,6 +2859,7 @@
     "readOnlyThread": "Dieser Thread ist schreibgeschützt",
     "reason": "Grund",
     "reasonForSuspension": "Grund der Suspendierung",
+    "recipientSuspended": "Das Konto dieses Benutzers ist gesperrt. Sie können ihm keine Nachrichten senden.",
     "recordAudioMessage": "Nehmen Sie eine Audionachricht auf",
     "referralHeader": "Freunde/Familie einladen",
     "refresh": "Aktualisierung",
