@@ -1886,6 +1886,24 @@
                 "read": "Lu",
                 "failed": "Non envoyé",
                 "you": "Vous"
+            },
+            "pinned": {
+                "strip": "Message épinglé",
+                "stripOf": "Message épinglé · {current} sur {total}",
+                "all": "Tous les messages épinglés",
+                "title": "{count, plural, one {# message épinglé} other {# messages épinglés}}",
+                "options": "Options des messages épinglés",
+                "unpinAll": "Désépingler les {count} messages",
+                "unpinAllTitle": "Désépingler les {count} messages ?",
+                "unpinAllBody": "Les messages restent dans la discussion. Seuls les épinglages sont retirés, pour tout le monde.",
+                "unpinAllConfirm": "Tout désépingler",
+                "unpinnedAll": "{count} messages désépinglés",
+                "unpin": "Désépingler le message",
+                "goTo": "Aller au message",
+                "unpinning": "Désépinglage du message…",
+                "emptyTitle": "Aucun message épinglé",
+                "emptyBody": "Appuyez longuement sur un message de la discussion et choisissez Épingler pour le garder en haut.",
+                "loadFailed": "Impossible de charger les messages épinglés"
             }
         },
         "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",

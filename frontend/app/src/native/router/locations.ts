@@ -87,6 +87,8 @@ export type LocalScreen =
     | { kind: "chat_details"; chatId: ChatIdentifier }
     // a message's info, from its long-press menu (N5d)
     | { kind: "message_info"; chatId: ChatIdentifier; messageId: bigint }
+    // a group's or channel's pinned messages, from the conversation's pinned strip (plan 04)
+    | { kind: "pinned_messages"; chatId: MultiUserChatIdentifier }
     // a group's or channel's members, from its details (N6)
     | { kind: "chat_members"; chatId: MultiUserChatIdentifier }
     // Invite people (plan 10), from a group's or channel's details and its Members screen

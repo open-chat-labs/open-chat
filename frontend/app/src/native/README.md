@@ -63,7 +63,13 @@ native/
                      message's long-press menu and what it opens (N5d: MessageActions, the
                      reaction sheet (ReactionPicker), the forward and report sheets,
                      MessageInfoScreen, pushed locally); the rules sheet when sending needs the
-                     chat's rules accepted (RulesSheet, on logic/composer/sendPrompts)
+                     chat's rules accepted (RulesSheet, on logic/composer/sendPrompts); the
+                     pinned messages: the strip under the header (PinnedStrip), the Pinned
+                     messages screen (PinnedMessagesScreen, pinned_messages, pushed locally; it
+                     shows the conversation's loaded pins, and a pin tapped there sends the
+                     conversation to it: jumpRequests), and a pin's or an
+                     unpin's toast with Undo (pinToasts; an unpin waits out its Undo in the
+                     shell's PendingRemovals)
     details/         a chat's details (N6), pushed from the conversation without a URL: a DM's
                      (DmDetails) or a group's or channel's (GroupDetails) on ChatDetailsScreen,
                      the Members screen with its tabs (MembersScreen, chat_members), Invite
@@ -95,7 +101,8 @@ offers and what each of its actions does (`messageAction`, which the web's menu 
 controls, removing a link's preview, the unread divider and the route's message, search in a chat,
 call items;
 `core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
-and calls, the old UIs), the composer (`logic/composer`: where it is, what it offers, sending,
+and calls, the old UIs; a chat's pinned messages loaded as `logic/pinned/pinnedMessages` loads them
+for the web's group panel and the old UIs' pinned lists), the composer (`logic/composer`: where it is, what it offers, sending,
 mentions, voice, the props it takes, GIFs, the prompts a send waits on (`sendPrompts`: the rules
 to accept, the PIN); `logic/conversation/draftActions`: the reply or edit; shared with `src/web`,
 and the GIFs' content with the old UIs; the emoji by category in

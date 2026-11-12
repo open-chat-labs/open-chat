@@ -1801,6 +1801,24 @@
                 "read": "Read",
                 "failed": "Not sent",
                 "you": "You"
+            },
+            "pinned": {
+                "strip": "Pinned message",
+                "stripOf": "Pinned message · {current} of {total}",
+                "all": "All pinned messages",
+                "title": "{count, plural, one {# pinned message} other {# pinned messages}}",
+                "options": "Pinned messages options",
+                "unpinAll": "Unpin all {count} messages",
+                "unpinAllTitle": "Unpin all {count} messages?",
+                "unpinAllBody": "The messages stay in the chat. Only the pins are removed, for everyone.",
+                "unpinAllConfirm": "Unpin all",
+                "unpinnedAll": "{count} messages unpinned",
+                "unpin": "Unpin message",
+                "goTo": "Go to message",
+                "unpinning": "Unpinning message…",
+                "emptyTitle": "No pinned messages",
+                "emptyBody": "Long-press a message in the chat and choose Pin to keep it at the top.",
+                "loadFailed": "Couldn't load the pinned messages"
             }
         },
         "shareUnavailable": "Sharing to OpenChat from other apps isn't available in this version yet.",

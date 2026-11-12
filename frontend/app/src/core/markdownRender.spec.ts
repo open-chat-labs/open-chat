@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
     escapeHtml,
+    escapeMarkdown,
     extractMentionedUserGroupIds,
     extractMentionedUserIds,
     renderMarkdown,
@@ -36,6 +37,36 @@ function input(text: string, extra: Partial<RenderMarkdownInput> = {}): RenderMa
         ...extra,
     };
 }
+
+describe("escapeMarkdown", () => {
+    function shown(text: string): string {
+        const div = document.createElement("div");
+        div.innerHTML = renderMarkdown(input(text, { oneLine: true, suppressLinks: true }), noop);
+        return div.textContent ?? "";
+    }
+
+    test("shows a name as it is, with nothing in it read as markdown, a mention or HTML", () => {
+        for (const name of [
+            "*bold* _it_ ~~gone~~ `code`",
+            "[link](https://x.com) # not a heading",
+            "<b>hi</b> & 'co' \\ back",
+            "||spoiler|| @everyone @UserGroup(7) @UserId(abc-1) !emoji(abc) $ICP",
+        ]) {
+            expect(shown(escapeMarkdown(name))).toBe(name);
+        }
+    });
+
+    test("leaves the text after it to markdown", () => {
+        const div = document.createElement("div");
+        div.innerHTML = renderMarkdown(input(`${escapeMarkdown("*ann*")}: **hi**`), noop);
+        expect(div.querySelector("strong")?.textContent).toBe("hi");
+        expect(div.textContent).toBe("*ann*: hi");
+    });
+
+    test("leaves letters, digits, spaces and other scripts alone", () => {
+        expect(escapeMarkdown("Ann Lee 2 Ñandú 东京")).toBe("Ann Lee 2 Ñandú 东京");
+    });
+});
 
 describe("escapeHtml", () => {
     test("escapes & < > \" '", () => {
@@ -76,9 +107,9 @@ describe("mention extraction", () => {
             "b-1",
             "a-2",
         ]);
-        expect(extractMentionedUserGroupIds("@UserGroup(9) @UserGroup(3) @UserGroup(9)")).toEqual(
-            [9, 3],
-        );
+        expect(extractMentionedUserGroupIds("@UserGroup(9) @UserGroup(3) @UserGroup(9)")).toEqual([
+            9, 3,
+        ]);
     });
 
     test("does not leave the shared global regex in a stale state", () => {
@@ -90,8 +121,18 @@ describe("mention extraction", () => {
 
 describe("same* comparators", () => {
     test("equal by value", () => {
-        expect(sameMentionedUsers(users, users.map((u) => ({ ...u })))).toBe(true);
-        expect(sameMentionedUserGroups(groups, groups.map((g) => ({ ...g })))).toBe(true);
+        expect(
+            sameMentionedUsers(
+                users,
+                users.map((u) => ({ ...u })),
+            ),
+        ).toBe(true);
+        expect(
+            sameMentionedUserGroups(
+                groups,
+                groups.map((g) => ({ ...g })),
+            ),
+        ).toBe(true);
     });
     test("differ on name, length or order", () => {
         expect(sameMentionedUsers(users, [users[0], { ...users[1], username: "z" }])).toBe(false);

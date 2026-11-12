@@ -1886,6 +1886,24 @@
                 "read": "已读",
                 "failed": "未发送",
                 "you": "你"
+            },
+            "pinned": {
+                "strip": "置顶消息",
+                "stripOf": "置顶消息 · 第 {current} 条，共 {total} 条",
+                "all": "所有置顶消息",
+                "title": "{count} 条置顶消息",
+                "options": "置顶消息选项",
+                "unpinAll": "取消置顶全部 {count} 条消息",
+                "unpinAllTitle": "取消置顶全部 {count} 条消息？",
+                "unpinAllBody": "消息仍保留在聊天中。只会为所有人移除置顶。",
+                "unpinAllConfirm": "全部取消置顶",
+                "unpinnedAll": "已取消置顶 {count} 条消息",
+                "unpin": "取消置顶消息",
+                "goTo": "转到消息",
+                "unpinning": "正在取消置顶…",
+                "emptyTitle": "没有置顶消息",
+                "emptyBody": "在聊天中长按一条消息并选择“固定”，即可将其保持在顶部。",
+                "loadFailed": "无法加载置顶消息"
             }
         },
         "shareUnavailable": "此版本暂不支持从其他应用分享到 OpenChat。",

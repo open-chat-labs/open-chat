@@ -2,8 +2,9 @@
      whole window. The header (back, the avatar, name and status, video and voice, the kebab: Search
      in chat, details, Mute, Favourite, Disappearing messages (a submenu, for those who may set
      them, one setting with the details' switch), Leave group / Block / Delete),
-     which turns into the in-chat search bar; the live call strip while the live call's item is off
-     screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
+     which turns into the in-chat search bar; the pinned strip under it while something is pinned
+     (PinnedStrip: a tap goes to the pin, its list button pushes the Pinned messages screen); the
+     live call strip while the live call's item is off screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
      in DMs, a strip resting on the composer in groups); the media viewer; a message's long-press menu
@@ -64,6 +65,7 @@
         type LeaveOrDelete,
         type Message,
         type MessageMenu,
+        type MultiUserChatIdentifier,
         type OpenChat,
         type PollContent,
         type VideoCallContent,
@@ -105,6 +107,7 @@
     } from "@src/logic/conversation/messageHandlers";
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
+    import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
         conversationContext,
@@ -167,6 +170,16 @@
     import RulesSheet from "./RulesSheet.svelte";
     import SearchBar from "./SearchBar.svelte";
     import { onSearchRequest } from "./searchRequests";
+    import { onJumpRequest } from "./jumpRequests";
+    import {
+        nextPin,
+        stripBar,
+        stripCurrent,
+        stripLine,
+        stripOrder,
+        unpinKey,
+    } from "./pinned.adapter";
+    import PinnedStrip from "./PinnedStrip.svelte";
     import ConversationComposer from "./ConversationComposer.svelte";
     import { KeyboardSlot } from "./keyboardSlot.svelte";
     import { softKeyboard } from "../../aboveKeyboard.svelte";
@@ -616,6 +629,105 @@
               });
     });
 
+    // ---- the pinned messages (native plan 04): the strip under the header while something is
+    // pinned, going through them newest first (pinned.adapter), and the Pinned messages screen. The
+    // pinned messages load as the shared PinnedMessages loads them (the web's and the old panels'),
+    // marking new pins read: the strip shows them. Pins waiting out an unpin's Undo are left out
+
+    const multiUserId = $derived(
+        chat !== undefined && chat.kind !== "direct_chat" ? chat.id : undefined,
+    );
+    const pinnedLoader = new PinnedMessages(
+        client,
+        (): MultiUserChatIdentifier => {
+            if (multiUserId === undefined) throw new Error("pinned messages are a group's");
+            return multiUserId;
+        },
+        () => (chat !== undefined && chat.kind !== "direct_chat" ? chat.dateLastPinned : undefined),
+    );
+    // loaded again as the pins change, once the chat's details are in and as the chat changes (an
+    // edit to a pin), not on every update to its details (sync follows only those)
+    const pinsLoad = $derived(multiUserId !== undefined && selected);
+    $effect(() => {
+        if (pinsLoad) void pinnedLoader.sync();
+    });
+    const pinHidden = (messageIndex: number) =>
+        chatKey !== undefined && context.removals.has(unpinKey(chatKey, messageIndex));
+    // held while the screen slides out, as the chat is, so the strip doesn't go from under the header
+    const heldPins = new HeldWhileLeaving<number[]>([]);
+    const pinOrder = $derived(
+        heldPins.of(
+            selected,
+            multiUserId === undefined
+                ? []
+                : stripOrder($selectedChatPinnedMessagesStore, pinHidden),
+        ),
+    );
+    // the pinned messages loaded, by index
+    const pinnedEvents = $derived(
+        new Map(
+            pinnedLoader.messages.kind === "success"
+                ? pinnedLoader.messages.data.flat().map((evt) => [evt.event.messageIndex, evt])
+                : [],
+        ),
+    );
+    // the pin the strip shows: the newest, until a tap moves it on
+    let pinShown = $state<number>();
+    const pinCurrent = $derived(stripCurrent(pinOrder, pinShown));
+    const pinStrip = $derived.by(() => {
+        if (pinCurrent === undefined) return undefined;
+        const position = pinOrder.indexOf(pinCurrent);
+        const total = pinOrder.length;
+        const evt = pinnedEvents.get(pinCurrent);
+        const users = $allUsersStore;
+        // as the chat list previews a message: restricted content as such, the reader's translation
+        const line =
+            evt === undefined
+                ? undefined
+                : stripLine(evt.event, {
+                      formatter: $_,
+                      me,
+                      displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
+                      translations: $translationsStore,
+                      contentText: (content) => client.getContentAsText($_, content),
+                      bridgedUsers: $bridgedUsersStore,
+                      users,
+                  });
+        return {
+            bar: stripBar(total, position),
+            title:
+                total === 1
+                    ? $_("native.conversation.pinned.strip")
+                    : $_("native.conversation.pinned.stripOf", {
+                          values: { current: position + 1, total },
+                      }),
+            line,
+        };
+    });
+
+    // a tap on the strip: to its pin, marked a moment, and the strip moves on to the next older
+    function tapStrip() {
+        const at = pinCurrent;
+        if (at === undefined) return;
+        pinShown = nextPin(pinOrder, at);
+        void goToMarked(at, PIN_MARK_MS);
+    }
+
+    function openPinned() {
+        if (multiUserId !== undefined) {
+            context.push({ kind: "pinned_messages", chatId: multiUserId });
+        }
+    }
+
+    // a pin tapped on the Pinned messages screen comes back here, to its message; and the screen
+    // shows the pinned messages loaded here, not fetching (and marking read) them again
+    onDestroy(
+        onJumpRequest(untrack(() => chatIdentifierToString(screen.route.chatId)), {
+            jump: (index) => void goToMarked(index, PIN_MARK_MS),
+            pinned: pinnedLoader,
+        }),
+    );
+
     // ---- the live call: its item in the timeline, and the header's strip while that's off screen
 
     const liveCall = $derived(chat?.videoCallInProgress);
@@ -913,7 +1025,8 @@
             readonly,
             // the native tree has no guest pass yet (10a is the web's)
             guest: false,
-            pinned: $selectedChatPinnedMessagesStore,
+            // a pin waiting out its unpin's Undo offers Pin again (rather than an Unpin twice)
+            pinned: { has: (index) => $selectedChatPinnedMessagesStore.has(index) && !pinHidden(index) },
             translated: $translationsStore,
             undeleting: $undeletingMessagesStore,
             blocked: $selectedChatBlockedUsersStore,
@@ -984,24 +1097,30 @@
     }
 
     const QUOTED_MARK_MS = 1600;
+    // a pin gone to, from the strip or the Pinned messages screen (04: "~1.8s")
+    const PIN_MARK_MS = 1800;
 
-    // a reply's quote, tapped: its message in this chat (loaded first if it's outside what's
-    // loaded), tinted in the accent for a moment once it's there, or the chat or thread it's quoted
-    // from
+    // a message gone to (a reply's quote, a pin): loaded first if it's outside what's loaded, then
+    // tinted in the accent for a moment once it's there
     let quotedIndex = $state<number>();
     let quotedTimer: ReturnType<typeof setTimeout> | undefined;
     onDestroy(() => clearTimeout(quotedTimer));
 
+    async function goToMarked(messageIndex: number, markMs: number) {
+        if (chat === undefined || list === undefined) return;
+        await list.scrollToMessageIndex({ chatId: chat.id }, messageIndex, false);
+        clearTimeout(quotedTimer);
+        quotedIndex = messageIndex;
+        quotedTimer = setTimeout(() => (quotedIndex = undefined), markMs);
+    }
+
+    // a reply's quote, tapped: its message in this chat, or the chat or thread it's quoted from
     async function goToQuote(target: QuoteTarget) {
         if (target.kind === "elsewhere") {
             navigate(target.url);
             return;
         }
-        if (chat === undefined || list === undefined) return;
-        await list.scrollToMessageIndex({ chatId: chat.id }, target.messageIndex, false);
-        clearTimeout(quotedTimer);
-        quotedIndex = target.messageIndex;
-        quotedTimer = setTimeout(() => (quotedIndex = undefined), QUOTED_MARK_MS);
+        await goToMarked(target.messageIndex, QUOTED_MARK_MS);
     }
 
     function reply(evt: EventWrapper<Message>) {
@@ -1123,6 +1242,20 @@
                 />
             {/snippet}
         </NativePageHeader>
+    {/if}
+
+    {#snippet pinLine()}
+        <Markdown oneLine suppressLinks text={pinStrip?.line ?? ""} />
+    {/snippet}
+    {#if !searchOpen && !privatePreview && pinStrip !== undefined}
+        <PinnedStrip
+            bar={pinStrip.bar}
+            title={pinStrip.title}
+            line={pinStrip.line === undefined ? undefined : pinLine}
+            listLabel={$_("native.conversation.pinned.all")}
+            onTap={tapStrip}
+            onList={openPinned}
+        />
     {/if}
 
     {#if chat !== undefined && liveCall !== undefined && !liveItemShown}
