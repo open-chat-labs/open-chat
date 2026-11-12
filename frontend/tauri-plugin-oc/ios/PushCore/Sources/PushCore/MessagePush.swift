@@ -28,6 +28,8 @@ public struct MessagePush: Equatable {
     public let bodyType: BodyType
     public let messageType: String?
     public let fileName: String?
+    // The attachment's URL: the photo, or a video's thumbnail
+    public let image: String?
 
     // Nil for anything that isn't a message push, such as a payload with no chat
     public init?(userInfo: [AnyHashable: Any]) {
@@ -65,6 +67,14 @@ public struct MessagePush: Equatable {
         bodyType = string("bodyType").flatMap(BodyType.init(rawValue:)) ?? .message
         messageType = string("messageType")
         fileName = string("fileName")
+        image = string("image")
+    }
+
+    // The photo a notification shows. A video's thumbnail isn't shown, its label says what it is,
+    // as on Android (NotificationCompanion.isRenderableImage).
+    public var imageUrl: URL? {
+        guard messageType == nil || messageType == "Image" else { return nil }
+        return image.flatMap(URL.init(string:))
     }
 
     // What the web layer's "push-notification" and "notification-tap" listeners read, the same

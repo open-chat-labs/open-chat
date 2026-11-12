@@ -51,6 +51,43 @@ final class NotificationRendererTests: XCTestCase {
         XCTAssertEqual(rendered.body, "B")
     }
 
+    // #10398 invariant 14: the photo is best effort too, and has its own deadline
+    func testInvariant14ASlowPhotoDownloadNeitherDelaysDeliveryNorCostsTheAvatars() async {
+        var photo = groupMessage
+        photo["messageType"] = "Image"
+        photo["image"] = "https://bucket.raw.icp0.io/files/99"
+
+        let start = ContinuousClock.now
+        let rendered = await NotificationRenderer.render(
+            userInfo: photo, serverTitle: "Rust", serverBody: "alice: hello",
+            avatarBaseUrl: base, timeout: .milliseconds(200),
+            fetch: { _ in Data([1]) },
+            fetchImage: { _ in
+                while true { usleep(10_000) }
+            })
+        XCTAssertLessThan(ContinuousClock.now - start, .seconds(2))
+        XCTAssertNil(rendered.image)
+        XCTAssertEqual(rendered.senderAvatar, Data([1]))
+    }
+
+    // As on Android, a photo is shown and a video's thumbnail isn't
+    func testAPhotoIsDownloadedButAVideoThumbnailIsNot() async {
+        let file = URL(fileURLWithPath: "/tmp/photo.jpg")
+        func render(_ messageType: String) async -> RenderedNotification {
+            var push = groupMessage
+            push["messageType"] = messageType
+            push["image"] = "https://bucket.raw.icp0.io/files/99"
+            return await NotificationRenderer.render(
+                userInfo: push, serverTitle: "", serverBody: "", avatarBaseUrl: base,
+                timeout: .seconds(5), fetch: { _ in nil },
+                fetchImage: { url in url.absoluteString == "https://bucket.raw.icp0.io/files/99" ? file : nil })
+        }
+        let image = await render("Image")
+        let video = await render("Video")
+        XCTAssertEqual(image.image, file)
+        XCTAssertNil(video.image)
+    }
+
     func testAGroupMessageNamesTheSenderAndFetchesBothAvatars() async {
         let rendered = await NotificationRenderer.render(
             userInfo: groupMessage, serverTitle: "", serverBody: "", avatarBaseUrl: base,
@@ -90,6 +127,75 @@ final class MessagePushTests: XCTestCase {
         XCTAssertFalse(push.isReleased(by: ["groupId": "other"]))
         // A thread of the chat is released on its own
         XCTAssertFalse(push.isReleased(by: ["groupId": group, "threadIndex": "1"]))
+    }
+}
+
+// Serves every request with `body`, without a Content-Length, so only the running total can hold a
+// download to its cap
+private final class StubServer: URLProtocol {
+    static var body = Data()
+    static var requests: [URL] = []
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func stopLoading() {}
+
+    override func startLoading() {
+        Self.requests.append(request.url!)
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: [:])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Self.body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+}
+
+final class AvatarCacheTests: XCTestCase {
+    private var dir: URL!
+
+    override func setUp() {
+        dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        StubServer.body = Data("avatar".utf8)
+        StubServer.requests = []
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    private func cache(maxEntries: Int = AvatarCache.maxEntries) -> AvatarCache {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubServer.self]
+        return AvatarCache(directory: dir, maxEntries: maxEntries, configuration: configuration)
+    }
+
+    private func url(_ id: Int) -> URL {
+        URL(string: "https://\(alice).raw.icp0.io/avatar/\(id)")!
+    }
+
+    func testACachedAvatarIsServedWithoutFetchingIt() async {
+        let first = await cache().avatar(at: url(1))
+        // A later push runs in a new extension process
+        let second = await cache().avatar(at: url(1))
+        XCTAssertEqual(first, Data("avatar".utf8))
+        XCTAssertEqual(second, first)
+        XCTAssertEqual(StubServer.requests, [url(1)])
+    }
+
+    func testTheCacheKeepsOnlyTheMostRecentlyUsedAvatars() async {
+        let cache = cache(maxEntries: 2)
+        for id in [1, 2, 3] {
+            _ = await cache.avatar(at: url(id))
+        }
+        _ = await cache.avatar(at: url(3))
+        _ = await cache.avatar(at: url(1))
+        XCTAssertEqual(StubServer.requests, [url(1), url(2), url(3), url(1)])
+    }
+
+    func testAnAvatarOverTheSizeCapIsRefusedAndNotCached() async {
+        StubServer.body = Data(count: AvatarCache.maxBytes + 1)
+        let avatar = await cache().avatar(at: url(1))
+        XCTAssertNil(avatar)
+        XCTAssertEqual((try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? [], [])
     }
 }
 

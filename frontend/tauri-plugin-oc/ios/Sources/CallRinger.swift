@@ -69,13 +69,10 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         let start = call.map { self.registry.started($0, now: now) } ?? .reportAndEnd(missed: false)
 
         let uuid = UUID()
-        let update = CXCallUpdate()
+        let update = Self.noHold()
         update.remoteHandle = CXHandle(type: .generic, value: call?.id.chat ?? "OpenChat")
         update.localizedCallerName = call?.callerName ?? "OpenChat"
         update.hasVideo = !(call?.audioOnly ?? true)
-        update.supportsGrouping = false
-        update.supportsUngrouping = false
-        update.supportsHolding = false
         update.supportsDTMF = false
 
         if case .ring = start, let call {
@@ -194,6 +191,16 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         }
     }
 
+    // A call can't be held or merged, so a second call coming in offers End & Accept, not Hold &
+    // Accept. All three flags are needed: supportsHolding alone doesn't reliably remove Hold.
+    private static func noHold() -> CXCallUpdate {
+        let update = CXCallUpdate()
+        update.supportsHolding = false
+        update.supportsGrouping = false
+        update.supportsUngrouping = false
+        return update
+    }
+
     private static func configureAudioSession() {
         try? AVAudioSession.sharedInstance().setCategory(
             .playAndRecord, mode: .voiceChat, options: [.allowBluetoothHFP])
@@ -212,6 +219,8 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         Self.configureAudioSession()
         action.fulfill()
         provider.reportOutgoingCall(with: action.callUUID, startedConnectingAt: nil)
+        // A call started in the app is first reported here, without the ring's update
+        provider.reportCall(with: action.callUUID, updated: Self.noHold())
     }
 
     func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
@@ -228,6 +237,8 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         shownMuted = false
         Self.configureAudioSession()
         action.fulfill()
+        // Again once answered, as big-chat found the ring's flags alone don't always hold
+        provider.reportCall(with: action.callUUID, updated: Self.noHold())
 
         let uuid = action.callUUID
         NativeCallBridge.shared.answer(call, callId: uuid) { [weak self] joined in
