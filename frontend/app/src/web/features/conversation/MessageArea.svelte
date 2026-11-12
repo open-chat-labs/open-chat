@@ -237,6 +237,7 @@
     import { previewBar, type PreviewBar } from "@src/logic/join/previewBar";
     import { join } from "../join/join";
     import { previewBarProps } from "../join/previewBar.adapter";
+    import { bottomAnchorFor } from "../../shell/bottomAnchors.svelte";
 
     type Props = {
         /** The chat (the selected one). */
@@ -1557,55 +1558,59 @@
 
 {#snippet messageComposer()}
     {#if composerShown}
-        <!-- one composer per chat or thread: it starts from that one's draft -->
-        {#key contextKey}
-            <Composer
-                {block}
-                onSignIn={() => askToSignIn(client)}
-                preview={preview === undefined
-                    ? undefined
-                    : {
-                          ...preview.props,
-                          busy: isJoining(preview.bar.target),
-                          onJoin: () => joinPreviewed(preview.bar),
-                          // the bar shows Back whenever there's an onBack
-                          onBack: preview.props.showBack
-                              ? () => leavePreview(preview.bar.target)
-                              : undefined,
-                      }}
-                draft={composerStartText(draft)}
-                typingNames={typingAt === "strip" ? typingNames : []}
-                {notice}
-                {placeholder}
-                enterSends={$enterSend}
-                autofocus={focusEntryOnOpen($screenWidth, isTouchOnlyDevice)}
-                onDraft={(text) => localUpdates.draftMessages.setTextContent(context, text)}
-                onStartTyping={() => client.startTyping(chat.id, me, rootIndex)}
-                onStopTyping={() => client.stopTyping(chat.id, me, rootIndex)}
-                onSend={(text) => send(context, text)}
-                context={composing}
-                onCancelContext={() => cancelComposing(context, draft)}
-                onSubmitEdit={(text) => saveEdit(context, text)}
-                onJumpContext={composingIndex === undefined
-                    ? undefined
-                    : () => jumpToComposing(context, composingIndex)}
-                attachment={staged}
-                {attachKinds}
-                onFile={attachable ? (file) => attachFile(context, file) : undefined}
-                onBuild={(builder) => build(context, builder)}
-                onEditAttachment={() => editStaged(context)}
-                onRemoveAttachment={() =>
-                    localUpdates.draftMessages.setAttachment(context, undefined)}
-                onVoice={canRecord && voiceMimeType !== undefined
-                    ? (recording) => sendVoice(context, recording, voiceMimeType)
-                    : undefined}
-                {voiceMimeType}
-                {voiceMaxBytes}
-                onMentionQuery={mentionQueried}
-                onVoiceActive={(active) => (voiceActive = active)}
-                {mentions}
-            />
-        {/key}
+        <!-- the chat's own composer is what the toasts and the achievement toast play above
+             (bottomAnchors); a thread's isn't -->
+        <div class="composer" {@attach thread === undefined && bottomAnchorFor("composer")}>
+            <!-- one composer per chat or thread: it starts from that one's draft -->
+            {#key contextKey}
+                <Composer
+                    {block}
+                    onSignIn={() => askToSignIn(client)}
+                    preview={preview === undefined
+                        ? undefined
+                        : {
+                              ...preview.props,
+                              busy: isJoining(preview.bar.target),
+                              onJoin: () => joinPreviewed(preview.bar),
+                              // the bar shows Back whenever there's an onBack
+                              onBack: preview.props.showBack
+                                  ? () => leavePreview(preview.bar.target)
+                                  : undefined,
+                          }}
+                    draft={composerStartText(draft)}
+                    typingNames={typingAt === "strip" ? typingNames : []}
+                    {notice}
+                    {placeholder}
+                    enterSends={$enterSend}
+                    autofocus={focusEntryOnOpen($screenWidth, isTouchOnlyDevice)}
+                    onDraft={(text) => localUpdates.draftMessages.setTextContent(context, text)}
+                    onStartTyping={() => client.startTyping(chat.id, me, rootIndex)}
+                    onStopTyping={() => client.stopTyping(chat.id, me, rootIndex)}
+                    onSend={(text) => send(context, text)}
+                    context={composing}
+                    onCancelContext={() => cancelComposing(context, draft)}
+                    onSubmitEdit={(text) => saveEdit(context, text)}
+                    onJumpContext={composingIndex === undefined
+                        ? undefined
+                        : () => jumpToComposing(context, composingIndex)}
+                    attachment={staged}
+                    {attachKinds}
+                    onFile={attachable ? (file) => attachFile(context, file) : undefined}
+                    onBuild={(builder) => build(context, builder)}
+                    onEditAttachment={() => editStaged(context)}
+                    onRemoveAttachment={() =>
+                        localUpdates.draftMessages.setAttachment(context, undefined)}
+                    onVoice={canRecord && voiceMimeType !== undefined
+                        ? (recording) => sendVoice(context, recording, voiceMimeType)
+                        : undefined}
+                    {voiceMimeType}
+                    {voiceMaxBytes}
+                    onMentionQuery={mentionQueried}
+                    onVoiceActive={(active) => (voiceActive = active)}
+                    {mentions}
+                />
+            {/key}
+        </div>
     {:else}
         <!-- a thread with no composer (a preview, a guest's included, or read only): the room
              under its last reply that the composer leaves above it (ComposerBar's padding) -->
@@ -1746,6 +1751,10 @@
     // newest message, standing apart from it as a new sender's run does (.row.starts)
     .typing-bubble {
         padding-block-start: var(--space-16);
+    }
+
+    .composer {
+        flex: none;
     }
 
     .no-composer {
