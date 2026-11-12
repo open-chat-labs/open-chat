@@ -24,9 +24,16 @@ export type Slot = {
     expecting: boolean;
     /** The emoji panel's search field has the keyboard, and how the panel shows it. */
     search: Search;
+    /**
+     * The keyboard went down for a message's long-press menu (the menu takes the focus), and its
+     * space is kept, at its height, so the composer and the chat don't move under the menu's copy
+     * of the message. Kept until the keyboard is back up (the composer's text box focused again as
+     * the menu closes), or let go (the menu led to another screen).
+     */
+    held: boolean;
 };
 
-export const CLOSED: Slot = { panel: undefined, expecting: false, search: "none" };
+export const CLOSED: Slot = { panel: undefined, expecting: false, search: "none", held: false };
 
 /**
  * A panel's resting height where the keyboard's isn't known (06 "Layout and size", the prototype's
@@ -79,8 +86,8 @@ export type KeyboardHeights = {
 /**
  * How tall the slot is: the spacer under the composer. With a panel: its resting height; searching,
  * the keyboard (or the height it's coming up to), the sheet over it (06 "Sizes": the spacer is the
- * rest height, which is the keyboard's). With none: the keyboard, or the height it's coming up to;
- * nothing otherwise.
+ * rest height, which is the keyboard's). With none: the keyboard, or the height it's coming up to,
+ * or the height it had while it's held for a message's menu; nothing otherwise.
  */
 export function slotHeight(slot: Slot, keyboard: KeyboardHeights): number {
     const coming = keyboard.up > 0 ? keyboard.up : keyboard.known;
@@ -90,7 +97,7 @@ export function slotHeight(slot: Slot, keyboard: KeyboardHeights): number {
         return keyboard.panel;
     }
     if (keyboard.up > 0) return keyboard.up;
-    return slot.expecting ? keyboard.known : 0;
+    return slot.expecting || slot.held ? keyboard.known : 0;
 }
 
 /** What the composer's text box does as a panel's button is pressed. */
@@ -108,7 +115,7 @@ export function togglePanel(
     reported: boolean,
 ): { slot: Slot; input: InputMove } {
     if (slot.panel !== panel) {
-        return { slot: { panel, expecting: false, search: "none" }, input: "blur" };
+        return { slot: { ...CLOSED, panel }, input: "blur" };
     }
     if (panel === "emoji") {
         return { slot: { ...CLOSED, expecting: reported }, input: "focus" };
@@ -116,9 +123,13 @@ export function togglePanel(
     return { slot: CLOSED, input: "none" };
 }
 
-/** The composer's text box took focus: the keyboard takes the panel's place. */
-export function inputFocused(reported: boolean, keyboardUp: boolean): Slot {
-    return { panel: undefined, expecting: reported && !keyboardUp, search: "none" };
+/**
+ * The composer's text box took focus: the keyboard takes the panel's place. Its space held for a
+ * message's menu stays held until it's up.
+ */
+export function inputFocused(slot: Slot, reported: boolean, keyboardUp: boolean): Slot {
+    const expecting = reported && !keyboardUp;
+    return { ...CLOSED, expecting, held: expecting && slot.held };
 }
 
 /** The emoji panel's search field took the keyboard (`search`), or gave it up ("none"). */
@@ -154,7 +165,7 @@ export function keyboardReport(slot: Slot, settled: number, reported: number): K
  * stays, at rest).
  */
 export function keyboardMoved(slot: Slot, up: boolean): Slot {
-    if (up) return slot.expecting ? { ...slot, expecting: false } : slot;
+    if (up) return slot.expecting ? { ...slot, expecting: false, held: false } : slot;
     if (slot.search === "none" && !slot.expecting) return slot;
     return { ...slot, search: "none", expecting: false };
 }
@@ -164,7 +175,7 @@ export function keyboardMoved(slot: Slot, up: boolean): Slot {
  * report): no longer held for. A search goes on while its field has the focus.
  */
 export function keyboardMissed(slot: Slot): Slot {
-    return slot.expecting ? { ...slot, expecting: false } : slot;
+    return slot.expecting ? { ...slot, expecting: false, held: false } : slot;
 }
 
 /**
@@ -187,6 +198,46 @@ export function reportToReplay(
  */
 export function keyboardIsUp(settled: number, latest: number): boolean {
     return settled > 0 && latest > 0;
+}
+
+/**
+ * A message's long-press menu is opening. The keyboard goes down (Android's long-press takes the
+ * focus off the text box, and the menu takes it): where it's up for the composer (`composer`: the
+ * composer shows, which it doesn't while searching the chat) with no panel, and its height is
+ * reported (the Android app), its space is kept while the menu is open, so nothing under the
+ * menu's copy of the message moves. Else (no keyboard, a panel, the search's keyboard, the iOS
+ * app and phones' browsers) nothing changes.
+ */
+export function holdForMenu(
+    slot: Slot,
+    reported: boolean,
+    keyboardUp: boolean,
+    composer: boolean,
+): Slot {
+    if (slot.held || !reported || !keyboardUp || !composer || slot.panel !== undefined) return slot;
+    return { ...slot, held: true };
+}
+
+/**
+ * Where the reader is once a message's menu, and whatever it opened (a sheet, a confirm), has
+ * closed: still in the conversation, or on another screen (Message info, another chat, Diamond).
+ */
+export type MenuExit = "conversation" | "away";
+
+/**
+ * What the slot does as a message's menu (and what it opened) closes, its space held for it:
+ * back in the conversation, the composer's text box is focused again, so the keyboard comes back
+ * up into the space kept for it (which is let go once it's up); gone to another screen, the space
+ * is let go. Nothing held, nothing to do.
+ */
+export function afterMenu(slot: Slot, exit: MenuExit): "refocus" | "release" | "none" {
+    if (!slot.held) return "none";
+    return exit === "conversation" ? "refocus" : "release";
+}
+
+/** The space held for a message's menu, let go. */
+export function released(slot: Slot): Slot {
+    return slot.held ? { ...slot, held: false } : slot;
 }
 
 /** Which way the composer's buttons go (notes §2): + · text · emoji on iOS, the other way on Android. */

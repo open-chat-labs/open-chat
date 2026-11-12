@@ -8,7 +8,9 @@
      with Undo: pinToasts), the sheets, Info pushed
      over the conversation. Opening the menu plays the one haptic a long-press gives (medium; the
      chat's MessageGroup plays none of its own). Reply and Edit set the chat's draft, which the
-     composer shows. The conversation opens it with `open`. -->
+     composer shows. The conversation opens it with `open`, and hears from `onSettled` once the
+     menu and whatever it opened have closed, and whether that left the conversation (the keyboard's
+     space it kept for the menu: KeyboardSlot's `menuClosed`). -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -51,7 +53,9 @@
     import type { ScreenContext } from "../app/screens";
     import ForwardSheet from "./ForwardSheet.svelte";
     import { pinWithUndo, unpinWithUndo } from "./pinToasts";
+    import type { MenuExit } from "./keyboardSlot";
     import {
+        menuExit,
         messageMenuItems,
         myReactions,
         nativeMessageAction,
@@ -64,9 +68,14 @@
         /** The conversation's chat. */
         chat: ChatSummary | undefined;
         context: ScreenContext;
+        /**
+         * The menu, and whatever it opened (a sheet, a confirm, an action on its way), has closed:
+         * the reader is still in the conversation, or has gone to another screen.
+         */
+        onSettled?: (exit: MenuExit) => void;
     };
 
-    let { chat, context }: Props = $props();
+    let { chat, context, onSettled }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     // the shell's, the same for the screen's life
@@ -98,14 +107,17 @@
     // a link's preview the sender asked to take off, waiting on their confirm
     let removing = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message>; url: string }>();
 
-    /** Opens the message's menu over it (`el`, its row), offering what `offered` says. */
+    /**
+     * Opens the message's menu over it (`el`, its row), offering what `offered` says. True if it's
+     * open.
+     */
     export function open(
         evt: EventWrapper<Message>,
         el: HTMLElement | undefined,
         offered: MessageOffer,
         failed: boolean,
-    ): void {
-        if (chat === undefined || el === undefined || !offered.menu) return;
+    ): boolean {
+        if (chat === undefined || el === undefined || !offered.menu) return false;
         // the long-press's one haptic (the chat's MessageGroup plays none); once, should a press
         // open the menu twice (Android's own long-press, then the group's)
         if (!menuOpen) haptic("medium");
@@ -119,7 +131,35 @@
             side: evt.event.sender === me ? "sent" : "received",
         };
         menuOpen = true;
+        return true;
     }
+
+    // an action picked is on its way (what it opens, if anything, isn't known yet)
+    let acting = $state(false);
+    // where the menu left the reader (menuExit), for onSettled
+    let exit: MenuExit = "conversation";
+    // the menu, or anything it opened, still open
+    const busy = $derived(
+        menuOpen ||
+            acting ||
+            picking !== undefined ||
+            forwarding !== undefined ||
+            reporting !== undefined ||
+            upgrading ||
+            deleting !== undefined,
+    );
+    let wasBusy = false;
+    $effect(() => {
+        const now = busy;
+        untrack(() => {
+            const settled = wasBusy && !now;
+            wasBusy = now;
+            if (!settled) return;
+            const was = exit;
+            exit = "conversation";
+            onSettled?.(was);
+        });
+    });
 
     // the messages can't be selected (ConversationScreen's styles), but should a selection have
     // started in this one anyway (the platform's long-press), it goes: the menu has Copy
@@ -228,6 +268,7 @@
         const action = nativeMessageAction(id);
         if (at === undefined || action === undefined) return;
         if (action === "info") {
+            exit = menuExit(action, undefined);
             context.push({
                 kind: "message_info",
                 chatId: at.chatId,
@@ -271,7 +312,14 @@
             await deleteWithUndo(at, action);
             return;
         }
-        show(at, action, await messageAction(action, target(at, confirmDelete)));
+        acting = true;
+        try {
+            const outcome = await messageAction(action, target(at, confirmDelete));
+            exit = menuExit(action, outcome.kind);
+            show(at, action, outcome);
+        } finally {
+            acting = false;
+        }
     }
 
     function isDelete(action: MessageMenuAction): action is DeleteAction {
@@ -481,6 +529,8 @@
     message={$_("native.conversation.message.translateDiamond")}
     confirmLabel={$_("native.conversation.message.getDiamond")}
     onConfirm={() => {
+        // Diamond's screen: the conversation is left
+        exit = "away";
         upgrading = false;
         navigate(DIAMOND_URL);
     }}

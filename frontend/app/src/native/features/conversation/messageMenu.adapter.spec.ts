@@ -1,5 +1,6 @@
 import type { MessageMenuAction } from "@client";
 import {
+    menuExit,
     messageMenuItems,
     myReactions,
     nativeMessageAction,
@@ -80,5 +81,24 @@ describe("the reactions bar", () => {
             { reaction: "😂", userIds: new Set(["them"]) },
         ];
         expect(myReactions(reactions, "me")).toEqual(["👍"]);
+    });
+});
+
+describe("where a picked row leaves the reader", () => {
+    test("Info, and a private reply's DM, are other screens", () => {
+        expect(menuExit("info", undefined)).toBe("away");
+        expect(menuExit("reply_privately", "open_chat")).toBe("away");
+    });
+
+    test("everything else stays in the conversation, a sheet or a confirm over it included", () => {
+        expect(menuExit("reply", "done")).toBe("conversation");
+        expect(menuExit("edit", "done")).toBe("conversation");
+        expect(menuExit("copy", "copied")).toBe("conversation");
+        expect(menuExit("forward", "ask")).toBe("conversation");
+        expect(menuExit("report", "ask")).toBe("conversation");
+        expect(menuExit("delete", "ask")).toBe("conversation");
+        expect(menuExit("translate", "upgrade")).toBe("conversation");
+        expect(menuExit("pin", undefined)).toBe("conversation");
+        expect(menuExit("reply_privately", "not_found")).toBe("conversation");
     });
 });

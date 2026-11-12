@@ -1,6 +1,8 @@
 import {
+    afterMenu,
     CLOSED,
     composerPlacement,
+    holdForMenu,
     inputFocused,
     keyboardIsUp,
     keyboardMissed,
@@ -8,6 +10,7 @@ import {
     keyboardReport,
     PANEL_REST,
     PANEL_REST_WEB,
+    released,
     reportToReplay,
     restingHeight,
     searchChanged,
@@ -144,9 +147,9 @@ describe("a keyboard report", () => {
 
 describe("the keyboard", () => {
     test("takes a panel's place when the text box is focused", () => {
-        expect(inputFocused(true, false)).toEqual({ ...CLOSED, expecting: true });
-        expect(inputFocused(true, true)).toEqual(CLOSED);
-        expect(inputFocused(false, false)).toEqual(CLOSED);
+        expect(inputFocused(emoji, true, false)).toEqual({ ...CLOSED, expecting: true });
+        expect(inputFocused(emoji, true, true)).toEqual(CLOSED);
+        expect(inputFocused(emoji, false, false)).toEqual(CLOSED);
     });
 
     test("up, is no longer expected", () => {
@@ -208,5 +211,60 @@ describe("the composer's buttons", () => {
     test("are + · text · emoji on iOS, emoji · text · + on Android (notes §2)", () => {
         expect(composerPlacement("ios")).toEqual({ plus: "start", emoji: "end" });
         expect(composerPlacement("android")).toEqual({ plus: "end", emoji: "start" });
+    });
+});
+
+describe("the keyboard's space, for a message's menu", () => {
+    const held: Slot = { ...CLOSED, held: true };
+
+    test("is kept as the menu opens over the composer's keyboard", () => {
+        expect(holdForMenu(CLOSED, true, true, true)).toEqual(held);
+        expect(holdForMenu(held, true, true, true)).toBe(held);
+    });
+
+    test("isn't, with the keyboard down, a panel, the search's keyboard, or one not reported", () => {
+        expect(holdForMenu(CLOSED, true, false, true)).toBe(CLOSED);
+        expect(holdForMenu(emoji, true, true, true)).toBe(emoji);
+        expect(holdForMenu(CLOSED, true, true, false)).toBe(CLOSED);
+        expect(holdForMenu(CLOSED, false, true, true)).toBe(CLOSED);
+    });
+
+    test("stays at the keyboard's height as it goes down, so nothing moves", () => {
+        expect(slotHeight(held, up)).toBe(320);
+        expect(keyboardReport(held, 336, 0)).toBe("apply");
+        expect(keyboardMoved(held, false)).toBe(held);
+        expect(slotHeight(held, down)).toBe(300);
+        // a sheet's field (the forward sheet's search) raising the keyboard meanwhile
+        expect(keyboardMoved(held, true)).toBe(held);
+    });
+
+    test("back in the conversation, the text box is focused again: held until the keyboard's up", () => {
+        expect(afterMenu(held, "conversation")).toBe("refocus");
+        const coming = inputFocused(held, true, false);
+        expect(coming).toEqual({ ...CLOSED, expecting: true, held: true });
+        expect(slotHeight(coming, down)).toBe(300);
+        // a down from the keyboard leaving for the menu, late: ignored
+        expect(keyboardReport(coming, 0, 0)).toBe("ignore");
+        expect(keyboardMoved(coming, true)).toEqual(CLOSED);
+    });
+
+    test("is let go if the keyboard doesn't come after all", () => {
+        expect(keyboardMissed({ ...CLOSED, expecting: true, held: true })).toEqual(CLOSED);
+    });
+
+    test("is let go on another screen", () => {
+        expect(afterMenu(held, "away")).toBe("release");
+        expect(released(held)).toEqual(CLOSED);
+        expect(released(CLOSED)).toBe(CLOSED);
+    });
+
+    test("with nothing held, the menu closing changes nothing", () => {
+        expect(afterMenu(CLOSED, "conversation")).toBe("none");
+        expect(afterMenu(CLOSED, "away")).toBe("none");
+    });
+
+    test("isn't kept past a panel's button or a focus with the keyboard up", () => {
+        expect(togglePanel(held, "emoji", true).slot.held).toBe(false);
+        expect(inputFocused(held, true, true)).toEqual(CLOSED);
     });
 });

@@ -1084,6 +1084,23 @@
     // its long-press menu (MessageActions), and what that opens
     let messageActions: MessageActions | undefined = $state();
 
+    // the keyboard goes down as the menu opens (Android's long-press takes the focus off the text
+    // box, and the menu takes it): with the composer's keyboard up, its space is kept
+    // (KeyboardSlot's holdForMenu), so the chat doesn't move under the menu's copy of the message;
+    // once the menu (and what it opened) has closed, the text box is focused again and the
+    // keyboard comes back up into it, or, on another screen, it's let go. The search in the chat
+    // has no composer: its field's keyboard isn't held
+    function openMessageMenu(
+        evt: EventWrapper<Message>,
+        el: HTMLElement | undefined,
+        offered: MessageMenu,
+        failed: boolean,
+    ) {
+        if (messageActions?.open(evt, el, offered, failed) === true) {
+            slot.holdForMenu(!searchOpen);
+        }
+    }
+
     // the sender takes a link's preview off their own text message, once they've confirmed it
     function previewRemoval(evt: EventWrapper<Message>) {
         const msg = evt.event;
@@ -1455,7 +1472,7 @@
                                             : -1}
                                         onMessageMenu={offered.menu
                                             ? (_, pos) =>
-                                                  messageActions?.open(evt, pos.el, offered, failed)
+                                                  openMessageMenu(evt, pos.el, offered, failed)
                                             : undefined}
                                         onReact={offered.react
                                             ? (_, emoji) => react(evt, emoji)
@@ -1590,7 +1607,12 @@
     onClose={() => (menuAnchor = null)}
 />
 
-<MessageActions bind:this={messageActions} {chat} {context} />
+<MessageActions
+    bind:this={messageActions}
+    {chat}
+    {context}
+    onSettled={(exit) => slot.menuClosed(exit)}
+/>
 
 <!-- sending here needs the chat's rules accepted first: the client waits for the answer -->
 <RulesSheet shown={selected} {overlays} />

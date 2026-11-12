@@ -1,11 +1,14 @@
 import { keyboard } from "@stores/keyboard.svelte";
 import {
+    afterMenu,
     CLOSED,
+    holdForMenu,
     inputFocused,
     keyboardIsUp,
     keyboardMissed,
     keyboardMoved,
     keyboardReport,
+    released,
     reportToReplay,
     restingHeight,
     SEARCH_STRIP,
@@ -14,6 +17,7 @@ import {
     slotHeight,
     togglePanel,
     type InputMove,
+    type MenuExit,
     type Panel,
     type Search,
     type Slot,
@@ -71,6 +75,11 @@ export class KeyboardSlot {
     /** The emoji panel's search, and how it shows. */
     get search(): Search {
         return this.#slot.search;
+    }
+
+    /** The keyboard's space is kept for a message's menu (an empty surface shows in it). */
+    get held(): boolean {
+        return this.#slot.held;
     }
 
     /** How tall the open panel rests, in CSS pixels (0 with none open). */
@@ -161,7 +170,7 @@ export class KeyboardSlot {
     inputFocused(): void {
         // a screen over this one may have put the viewport resize back on (aboveKeyboard's)
         if (this.#reported && keyboard.viewportResizeEnabled) keyboard.disableViewportResize();
-        this.#set(inputFocused(this.#reported, keyboardIsUp(this.#up, this.#latest)));
+        this.#set(inputFocused(this.#slot, this.#reported, keyboardIsUp(this.#up, this.#latest)));
     }
 
     /** The emoji panel's search field took the keyboard (as `search`), or gave it up ("none"). */
@@ -170,6 +179,38 @@ export class KeyboardSlot {
             searchChanged(this.#slot, search, this.#reported, keyboardIsUp(this.#up, this.#latest)),
         );
     }
+
+    /**
+     * A message's long-press menu is opening, `composer` if the composer shows: the keyboard's
+     * space is kept while the keyboard is down for the menu (`holdForMenu`).
+     */
+    holdForMenu(composer: boolean): void {
+        this.#slot = holdForMenu(
+            this.#slot,
+            this.#reported,
+            keyboardIsUp(this.#up, this.#latest),
+            composer,
+        );
+    }
+
+    /**
+     * A message's menu, and whatever it opened, has closed (`afterMenu`): the composer's text box
+     * is focused again (`onRefocus`) for the keyboard to come back up into the space kept, which is
+     * let go once it's up; or, gone to another screen (or the text box couldn't be focused), the
+     * space is let go now.
+     */
+    menuClosed(exit: MenuExit): void {
+        const next = afterMenu(this.#slot, exit);
+        if (next === "none") return;
+        if (next === "refocus" && this.onRefocus?.() === true) return;
+        this.#slot = released(this.#slot);
+    }
+
+    /**
+     * Focuses the composer's text box again after a message's menu; true if it has the focus (the
+     * composer's, while it shows).
+     */
+    onRefocus: (() => boolean) | undefined;
 
     /** Closes the panel (Android's back, a builder's done). */
     close(): void {
