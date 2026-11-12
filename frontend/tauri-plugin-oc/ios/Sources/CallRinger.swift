@@ -138,7 +138,8 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
     private func postMissedCall(_ call: IncomingCall) {
         let content = UNMutableNotificationContent()
         content.title = call.callerName
-        content.body = "Missed call"
+        // The app's open-chat_iOS/*.lproj
+        content.body = NSLocalizedString("Missed call", comment: "")
         content.sound = .default
         switch call.chat {
         case .direct(let userId): content.userInfo = ["type": "direct", "senderId": userId]

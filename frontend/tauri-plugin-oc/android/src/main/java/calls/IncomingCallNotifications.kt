@@ -37,8 +37,10 @@ object IncomingCallNotifications {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = OCPluginCompanion.getNotificationsManager(context)
         nm.deleteNotificationChannel("oc_calls")
-        val channel = NotificationChannel(CHANNEL_ID, "Calls", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Incoming calls"
+        val channel = NotificationChannel(
+            CHANNEL_ID, context.getString(R.string.notification_channel_calls), NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = context.getString(R.string.notification_channel_calls_description)
             setSound(
                 Settings.System.DEFAULT_RINGTONE_URI,
                 AudioAttributes.Builder()
@@ -73,7 +75,7 @@ object IncomingCallNotifications {
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_small)
                 .setContentTitle(call.title)
-                .setContentText(subtitle(call))
+                .setContentText(subtitle(context, call))
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setOngoing(true)
@@ -106,14 +108,24 @@ object IncomingCallNotifications {
         OCPluginCompanion.getNotificationsManager(context).cancel(TAG, notificationId(id))
     }
 
-    // TODO i18n
-    fun subtitle(call: IncomingCall): String {
-        val kind = when (call.kind) {
-            CallKind.AUDIO -> "audio call"
-            CallKind.VIDEO -> "video call"
-            CallKind.BROADCAST -> "broadcast"
+    fun subtitle(context: Context, call: IncomingCall): String {
+        if (call.callerName == null) {
+            return context.getString(
+                when (call.kind) {
+                    CallKind.AUDIO -> R.string.call_incoming_audio
+                    CallKind.VIDEO -> R.string.call_incoming_video
+                    CallKind.BROADCAST -> R.string.call_incoming_broadcast
+                }
+            )
         }
-        return if (call.callerName != null) "${call.callerName} is calling · $kind" else "Incoming $kind"
+        val kind = context.getString(
+            when (call.kind) {
+                CallKind.AUDIO -> R.string.call_kind_audio
+                CallKind.VIDEO -> R.string.call_kind_video
+                CallKind.BROADCAST -> R.string.call_kind_broadcast
+            }
+        )
+        return context.getString(R.string.call_is_calling, call.callerName, kind)
     }
 
     private fun activityIntent(context: Context, call: IncomingCall, action: String): PendingIntent {

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">メッセージ通知</string>
+    <string name="notification_channel_messages_description">OpenChat の新着メッセージの通知</string>
+    <string name="notification_channel_message_group">メッセージグループ</string>
+    <string name="notification_channel_summary">概要通知</string>
+    <string name="notification_channel_summary_description">すべての通知の概要を表示します</string>
+    <string name="notification_channel_calls">通話</string>
+    <string name="notification_channel_calls_description">着信</string>
+    <string name="call_ongoing">通話中</string>
+    <string name="notification_channel_ongoing_call_description">進行中の通話</string>
+    <string name="call_in_progress">通話中</string>
+    <string name="notification_you">あなた</string>
+    <string name="notification_thread">%1$s // スレッド</string>
+    <string name="notification_reacted">%1$s さんが %2$s でリアクションしました</string>
+    <string name="notification_tipped">%1$s さんが %2$s のチップを送りました</string>
+    <string name="notification_invited">%1$s さんが %2$s に招待しました</string>
+    <string name="notification_photo">写真</string>
+    <string name="notification_shared_video">動画を共有しました</string>
+    <string name="notification_shared_gif">GIF を共有しました</string>
+    <string name="notification_shared_audio">音声を共有しました</string>
+    <string name="notification_shared_file">ファイルを共有しました</string>
+    <string name="call_kind_audio">音声通話</string>
+    <string name="call_kind_video">ビデオ通話</string>
+    <string name="call_kind_broadcast">ブロードキャスト</string>
+    <string name="call_is_calling">%1$s さんから着信 · %2$s</string>
+    <string name="call_incoming_audio">音声通話の着信</string>
+    <string name="call_incoming_video">ビデオ通話の着信</string>
+    <string name="call_incoming_broadcast">ブロードキャストの着信</string>
+    <string name="call_decline">拒否</string>
+    <string name="call_accept">応答</string>
+    <string name="call_missed">不在着信</string>
+    <string name="call_missed_from">%1$s さんからの不在着信</string>
+    <plurals name="notification_new_messages">
+        <item quantity="other">%d 件の新着メッセージ</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="other">%d 件のメッセージ</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="other">%2$d 件のチャットから %1$s</item>
+    </plurals>
+</resources>

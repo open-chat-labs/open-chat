@@ -12,6 +12,7 @@ import com.ocplugin.app.AvatarHelper
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.NotificationsManager
 import com.ocplugin.app.OCPluginCompanion
+import com.ocplugin.app.R
 import com.ocplugin.app.data.AppDb
 import com.ocplugin.app.data.BodyType
 import com.ocplugin.app.data.Notification
@@ -145,14 +146,14 @@ object CallRinger {
 
     // The ordinary message notification for the chat, reading "Missed call", so the tap
     // opens the chat through the path every notification tap takes.
-    // TODO i18n
     private fun postMissed(context: Context, call: IncomingCall) {
         val n = call.notification ?: return
         scope.launch {
             try {
                 val missed = n.copy(
                     id = 0L,
-                    body = if (call.callerName != null) "Missed call from ${call.callerName}" else "Missed call",
+                    body = call.callerName?.let { context.getString(R.string.call_missed_from, it) }
+                        ?: context.getString(R.string.call_missed),
                     bodyType = BodyType.MESSAGE,
                     messageType = null,
                     image = null,

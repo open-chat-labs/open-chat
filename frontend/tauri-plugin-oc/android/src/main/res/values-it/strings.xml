@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">Notifiche dei messaggi</string>
+    <string name="notification_channel_messages_description">Notifiche dei nuovi messaggi in OpenChat</string>
+    <string name="notification_channel_message_group">Gruppo messaggi</string>
+    <string name="notification_channel_summary">Notifiche di riepilogo</string>
+    <string name="notification_channel_summary_description">Mostra un riepilogo di tutte le notifiche</string>
+    <string name="notification_channel_calls">Chiamate</string>
+    <string name="notification_channel_calls_description">Chiamate in arrivo</string>
+    <string name="call_ongoing">Chiamata in corso</string>
+    <string name="notification_channel_ongoing_call_description">Una chiamata in corso</string>
+    <string name="call_in_progress">Chiamata in corso</string>
+    <string name="notification_you">Tu</string>
+    <string name="notification_thread">%1$s // Thread</string>
+    <string name="notification_reacted">%1$s ha reagito con %2$s</string>
+    <string name="notification_tipped">%1$s ha inviato una mancia di %2$s</string>
+    <string name="notification_invited">%1$s ti ha invitato in %2$s</string>
+    <string name="notification_photo">Foto</string>
+    <string name="notification_shared_video">Ha condiviso un video</string>
+    <string name="notification_shared_gif">Ha condiviso una GIF</string>
+    <string name="notification_shared_audio">Ha condiviso un audio</string>
+    <string name="notification_shared_file">Ha condiviso un file</string>
+    <string name="call_kind_audio">chiamata audio</string>
+    <string name="call_kind_video">videochiamata</string>
+    <string name="call_kind_broadcast">trasmissione</string>
+    <string name="call_is_calling">%1$s sta chiamando · %2$s</string>
+    <string name="call_incoming_audio">Chiamata audio in arrivo</string>
+    <string name="call_incoming_video">Videochiamata in arrivo</string>
+    <string name="call_incoming_broadcast">Trasmissione in arrivo</string>
+    <string name="call_decline">Rifiuta</string>
+    <string name="call_accept">Accetta</string>
+    <string name="call_missed">Chiamata persa</string>
+    <string name="call_missed_from">Chiamata persa da %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d nuovo messaggio</item>
+        <item quantity="other">%d nuovi messaggi</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d messaggio</item>
+        <item quantity="other">%d messaggi</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s da %2$d chat</item>
+        <item quantity="other">%1$s da %2$d chat</item>
+    </plurals>
+</resources>

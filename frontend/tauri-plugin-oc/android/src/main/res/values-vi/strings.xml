@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">Thông báo tin nhắn</string>
+    <string name="notification_channel_messages_description">Thông báo tin nhắn mới trong OpenChat</string>
+    <string name="notification_channel_message_group">Nhóm tin nhắn</string>
+    <string name="notification_channel_summary">Thông báo tóm tắt</string>
+    <string name="notification_channel_summary_description">Hiển thị tóm tắt tất cả thông báo</string>
+    <string name="notification_channel_calls">Cuộc gọi</string>
+    <string name="notification_channel_calls_description">Cuộc gọi đến</string>
+    <string name="call_ongoing">Cuộc gọi đang diễn ra</string>
+    <string name="notification_channel_ongoing_call_description">Một cuộc gọi đang diễn ra</string>
+    <string name="call_in_progress">Đang trong cuộc gọi</string>
+    <string name="notification_you">Bạn</string>
+    <string name="notification_thread">%1$s // Chuỗi</string>
+    <string name="notification_reacted">%1$s đã bày tỏ cảm xúc %2$s</string>
+    <string name="notification_tipped">%1$s đã gửi tiền boa %2$s</string>
+    <string name="notification_invited">%1$s đã mời bạn vào %2$s</string>
+    <string name="notification_photo">Ảnh</string>
+    <string name="notification_shared_video">Đã chia sẻ một video</string>
+    <string name="notification_shared_gif">Đã chia sẻ một GIF</string>
+    <string name="notification_shared_audio">Đã chia sẻ âm thanh</string>
+    <string name="notification_shared_file">Đã chia sẻ một tệp</string>
+    <string name="call_kind_audio">cuộc gọi thoại</string>
+    <string name="call_kind_video">cuộc gọi video</string>
+    <string name="call_kind_broadcast">phát sóng</string>
+    <string name="call_is_calling">%1$s đang gọi · %2$s</string>
+    <string name="call_incoming_audio">Cuộc gọi thoại đến</string>
+    <string name="call_incoming_video">Cuộc gọi video đến</string>
+    <string name="call_incoming_broadcast">Cuộc phát sóng đến</string>
+    <string name="call_decline">Từ chối</string>
+    <string name="call_accept">Chấp nhận</string>
+    <string name="call_missed">Cuộc gọi nhỡ</string>
+    <string name="call_missed_from">Cuộc gọi nhỡ từ %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="other">%d tin nhắn mới</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="other">%d tin nhắn</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="other">%1$s từ %2$d cuộc trò chuyện</item>
+    </plurals>
+</resources>

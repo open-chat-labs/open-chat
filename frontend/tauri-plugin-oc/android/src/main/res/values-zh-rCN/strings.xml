@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">消息通知</string>
+    <string name="notification_channel_messages_description">OpenChat 新消息通知</string>
+    <string name="notification_channel_message_group">消息组</string>
+    <string name="notification_channel_summary">摘要通知</string>
+    <string name="notification_channel_summary_description">显示所有通知的摘要</string>
+    <string name="notification_channel_calls">通话</string>
+    <string name="notification_channel_calls_description">来电</string>
+    <string name="call_ongoing">进行中的通话</string>
+    <string name="notification_channel_ongoing_call_description">正在进行的通话</string>
+    <string name="call_in_progress">通话进行中</string>
+    <string name="notification_you">我</string>
+    <string name="notification_thread">%1$s // 话题</string>
+    <string name="notification_reacted">%1$s 回应了 %2$s</string>
+    <string name="notification_tipped">%1$s 打赏了 %2$s</string>
+    <string name="notification_invited">%1$s 邀请你加入 %2$s</string>
+    <string name="notification_photo">照片</string>
+    <string name="notification_shared_video">分享了视频</string>
+    <string name="notification_shared_gif">分享了 GIF</string>
+    <string name="notification_shared_audio">分享了音频</string>
+    <string name="notification_shared_file">分享了文件</string>
+    <string name="call_kind_audio">语音通话</string>
+    <string name="call_kind_video">视频通话</string>
+    <string name="call_kind_broadcast">直播</string>
+    <string name="call_is_calling">%1$s 来电 · %2$s</string>
+    <string name="call_incoming_audio">语音通话来电</string>
+    <string name="call_incoming_video">视频通话来电</string>
+    <string name="call_incoming_broadcast">直播来电</string>
+    <string name="call_decline">拒绝</string>
+    <string name="call_accept">接听</string>
+    <string name="call_missed">未接来电</string>
+    <string name="call_missed_from">来自 %1$s 的未接来电</string>
+    <plurals name="notification_new_messages">
+        <item quantity="other">%d 条新消息</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="other">%d 条消息</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="other">%1$s，来自 %2$d 个聊天</item>
+    </plurals>
+</resources>

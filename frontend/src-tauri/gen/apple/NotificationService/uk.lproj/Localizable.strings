@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // Гілка";
+"%1$@ reacted with %2$@" = "%1$@ відреагував(ла): %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ надіслав(ла) чайові: %2$@";
+"%1$@ invited you to %2$@" = "%1$@ запросив(ла) вас до %2$@";
+"Photo" = "Фото";
+"Shared a video" = "Відео";
+"Shared a GIF" = "GIF";
+"Shared audio" = "Аудіо";
+"Shared a file" = "Файл";

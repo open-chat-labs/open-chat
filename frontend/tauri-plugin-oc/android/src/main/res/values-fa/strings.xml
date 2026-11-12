@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">اعلان‌های پیام</string>
+    <string name="notification_channel_messages_description">اعلان‌های پیام‌های جدید در OpenChat</string>
+    <string name="notification_channel_message_group">گروه پیام‌ها</string>
+    <string name="notification_channel_summary">اعلان‌های خلاصه</string>
+    <string name="notification_channel_summary_description">خلاصه‌ای از همه اعلان‌ها را نشان می‌دهد</string>
+    <string name="notification_channel_calls">تماس‌ها</string>
+    <string name="notification_channel_calls_description">تماس‌های ورودی</string>
+    <string name="call_ongoing">تماس در جریان</string>
+    <string name="notification_channel_ongoing_call_description">یک تماس در حال انجام</string>
+    <string name="call_in_progress">تماس در حال انجام است</string>
+    <string name="notification_you">شما</string>
+    <string name="notification_thread">%1$s // رشته</string>
+    <string name="notification_reacted">%1$s با %2$s واکنش نشان داد</string>
+    <string name="notification_tipped">%1$s انعامی به مبلغ %2$s فرستاد</string>
+    <string name="notification_invited">%1$s شما را به %2$s دعوت کرد</string>
+    <string name="notification_photo">عکس</string>
+    <string name="notification_shared_video">یک ویدیو به اشتراک گذاشت</string>
+    <string name="notification_shared_gif">یک GIF به اشتراک گذاشت</string>
+    <string name="notification_shared_audio">یک فایل صوتی به اشتراک گذاشت</string>
+    <string name="notification_shared_file">یک فایل به اشتراک گذاشت</string>
+    <string name="call_kind_audio">تماس صوتی</string>
+    <string name="call_kind_video">تماس تصویری</string>
+    <string name="call_kind_broadcast">پخش زنده</string>
+    <string name="call_is_calling">%1$s در حال تماس است · %2$s</string>
+    <string name="call_incoming_audio">تماس صوتی ورودی</string>
+    <string name="call_incoming_video">تماس تصویری ورودی</string>
+    <string name="call_incoming_broadcast">پخش زنده ورودی</string>
+    <string name="call_decline">رد کردن</string>
+    <string name="call_accept">پذیرفتن</string>
+    <string name="call_missed">تماس از دست رفته</string>
+    <string name="call_missed_from">تماس از دست رفته از %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d پیام جدید</item>
+        <item quantity="other">%d پیام جدید</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d پیام</item>
+        <item quantity="other">%d پیام</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s از %2$d گفتگو</item>
+        <item quantity="other">%1$s از %2$d گفتگو</item>
+    </plurals>
+</resources>

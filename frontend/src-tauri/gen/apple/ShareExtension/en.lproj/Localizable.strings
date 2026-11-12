@@ -1,0 +1,7 @@
+/* The English text is the key. Every other .lproj has every key this file has
+   (src-tauri/tests/nativeStrings.spec.ts). */
+"Shared to OpenChat" = "Shared to OpenChat";
+"Open OpenChat to send it" = "Open OpenChat to send it";
+"Couldn't prepare the share" = "Couldn't prepare the share";
+"Please try again" = "Please try again";
+"Done" = "Done";

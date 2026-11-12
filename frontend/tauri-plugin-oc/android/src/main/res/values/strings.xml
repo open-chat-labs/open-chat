@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the native shell shows outside the web layer: notifications, notification channels and
+     the incoming call screen. Each values-*/strings.xml has every key this file has
+     (src-tauri/tests/nativeStrings.spec.ts). Rendered in the system language, not the app's. -->
+<resources>
+    <string name="notification_channel_messages">Message Notifications</string>
+    <string name="notification_channel_messages_description">Message notifications channel for OC</string>
+    <string name="notification_channel_message_group">Message Group</string>
+    <string name="notification_channel_summary">Summary Notifications</string>
+    <string name="notification_channel_summary_description">Shows a summary of all notifications</string>
+    <string name="notification_channel_calls">Calls</string>
+    <string name="notification_channel_calls_description">Incoming calls</string>
+    <string name="call_ongoing">Ongoing call</string>
+    <string name="notification_channel_ongoing_call_description">A call in progress</string>
+    <string name="call_in_progress">Call in progress</string>
+    <string name="notification_you">You</string>
+    <string name="notification_thread">%1$s // Thread</string>
+    <string name="notification_reacted">%1$s reacted with %2$s</string>
+    <string name="notification_tipped">%1$s sent a tip of %2$s</string>
+    <string name="notification_invited">%1$s invited you to %2$s</string>
+    <string name="notification_photo">Photo</string>
+    <string name="notification_shared_video">Shared a video</string>
+    <string name="notification_shared_gif">Shared a GIF</string>
+    <string name="notification_shared_audio">Shared audio</string>
+    <string name="notification_shared_file">Shared a file</string>
+    <string name="call_kind_audio">audio call</string>
+    <string name="call_kind_video">video call</string>
+    <string name="call_kind_broadcast">broadcast</string>
+    <string name="call_is_calling">%1$s is calling · %2$s</string>
+    <string name="call_incoming_audio">Incoming audio call</string>
+    <string name="call_incoming_video">Incoming video call</string>
+    <string name="call_incoming_broadcast">Incoming broadcast</string>
+    <string name="call_decline">Decline</string>
+    <string name="call_accept">Accept</string>
+    <string name="call_missed">Missed call</string>
+    <string name="call_missed_from">Missed call from %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d new message</item>
+        <item quantity="other">%d new messages</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d message</item>
+        <item quantity="other">%d messages</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s, from %2$d chat</item>
+        <item quantity="other">%1$s, from %2$d chats</item>
+    </plurals>
+</resources>

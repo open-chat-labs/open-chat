@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">Notificaciones de mensajes</string>
+    <string name="notification_channel_messages_description">Notificaciones de mensajes nuevos en OpenChat</string>
+    <string name="notification_channel_message_group">Grupo de mensajes</string>
+    <string name="notification_channel_summary">Notificaciones de resumen</string>
+    <string name="notification_channel_summary_description">Muestra un resumen de todas las notificaciones</string>
+    <string name="notification_channel_calls">Llamadas</string>
+    <string name="notification_channel_calls_description">Llamadas entrantes</string>
+    <string name="call_ongoing">Llamada en curso</string>
+    <string name="notification_channel_ongoing_call_description">Una llamada en curso</string>
+    <string name="call_in_progress">Llamada en curso</string>
+    <string name="notification_you">Tú</string>
+    <string name="notification_thread">%1$s // Hilo</string>
+    <string name="notification_reacted">%1$s reaccionó con %2$s</string>
+    <string name="notification_tipped">%1$s envió una propina de %2$s</string>
+    <string name="notification_invited">%1$s te invitó a %2$s</string>
+    <string name="notification_photo">Foto</string>
+    <string name="notification_shared_video">Compartió un vídeo</string>
+    <string name="notification_shared_gif">Compartió un GIF</string>
+    <string name="notification_shared_audio">Compartió un audio</string>
+    <string name="notification_shared_file">Compartió un archivo</string>
+    <string name="call_kind_audio">llamada de audio</string>
+    <string name="call_kind_video">videollamada</string>
+    <string name="call_kind_broadcast">transmisión</string>
+    <string name="call_is_calling">%1$s está llamando · %2$s</string>
+    <string name="call_incoming_audio">Llamada de audio entrante</string>
+    <string name="call_incoming_video">Videollamada entrante</string>
+    <string name="call_incoming_broadcast">Transmisión entrante</string>
+    <string name="call_decline">Rechazar</string>
+    <string name="call_accept">Aceptar</string>
+    <string name="call_missed">Llamada perdida</string>
+    <string name="call_missed_from">Llamada perdida de %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d mensaje nuevo</item>
+        <item quantity="other">%d mensajes nuevos</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d mensaje</item>
+        <item quantity="other">%d mensajes</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s de %2$d chat</item>
+        <item quantity="other">%1$s de %2$d chats</item>
+    </plurals>
+</resources>
