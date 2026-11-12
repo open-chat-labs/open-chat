@@ -58,6 +58,7 @@ function group(
 
 const ctx: RowContext = {
     userName: (id) => ({ alice: "Alice", bob: "Bob" })[id] ?? id,
+    userSuspended: (id) => id === "mallory",
     // the preview line itself is latestMessagePreview's (app/src/logic/chats)
     preview: (chat) =>
         (chat.latestMessage?.event.content as { text: string } | undefined)?.text ?? "",
@@ -171,6 +172,17 @@ describe("a chat list row", () => {
             mentions: 0,
             unreadCount: 3,
         });
+    });
+
+    test("is suspended for a DM whose other user's account is suspended, not anyone else's", () => {
+        expect(chatRow(dm("mallory"), ctx).suspended).toBe(true);
+        expect(chatRow(dm("bob"), ctx).suspended).toBe(false);
+    });
+
+    test("is never suspended for a group or channel, whoever wrote in it", () => {
+        // a group's id that a suspended user's would be, and a message from them
+        const g = group("mallory", "Hikers", { sender: "mallory", text: "hi" });
+        expect(chatRow(g, ctx).suspended).toBe(false);
     });
 
     test("gets the same swatch for the same chat, from the design's", () => {
@@ -375,6 +387,18 @@ describe("a list's row context", () => {
         const ctx = rowContext(client, { ...inputs, withMentionsAndAvatars: true });
         expect(ctx.mentions).toBeTypeOf("function");
         expect(ctx.avatar).toBeTypeOf("function");
+    });
+
+    test("says a user is suspended as their summary has it, and not before it has loaded", () => {
+        const users = new Map([
+            ["mallory", { userId: "mallory", suspended: true } as UserSummary],
+            ["bob", { userId: "bob", suspended: false } as UserSummary],
+        ]);
+        const ctx = rowContext(client, { ...inputs, users });
+        expect(ctx.userSuspended("mallory")).toBe(true);
+        expect(ctx.userSuspended("bob")).toBe(false);
+        expect(ctx.userSuspended("carol")).toBe(false);
+        expect(chatRow(dm("mallory"), ctx).suspended).toBe(true);
     });
 
     test("shows the latest message's mentions as the @names typed, once their users are known", () => {

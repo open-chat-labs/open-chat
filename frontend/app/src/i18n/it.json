@@ -2859,6 +2859,7 @@
     "readOnlyThread": "Questo thread è di sola lettura",
     "reason": "Motivo",
     "reasonForSuspension": "motivo della sospensione",
+    "recipientSuspended": "L'account di questo utente è sospeso. Non puoi inviargli messaggi.",
     "recordAudioMessage": "Registra messaggio audio",
     "referralHeader": "Invita amici/familiari",
     "refresh": "ricarica",

@@ -2859,6 +2859,7 @@
     "readOnlyThread": "Este hilo es de solo lectura",
     "reason": "Razón",
     "reasonForSuspension": "motivo de suspensión",
+    "recipientSuspended": "La cuenta de este usuario está suspendida. No puedes enviarle mensajes.",
     "recordAudioMessage": "Grabar mensaje de audio",
     "referralHeader": "Invitar a amigos/familiares",
     "refresh": "Actualizar",

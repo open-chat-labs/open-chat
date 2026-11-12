@@ -2859,6 +2859,7 @@
     "readOnlyThread": "このスレッドは読み取り専用です",
     "reason": "理由",
     "reasonForSuspension": "停止の理由",
+    "recipientSuspended": "このユーザーのアカウントは停止されています。メッセージを送ることはできません。",
     "recordAudioMessage": "音声メッセージを録音する",
     "referralHeader": "友達や家族を招待する",
     "refresh": "リフレッシュ",

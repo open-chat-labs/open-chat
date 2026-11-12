@@ -6,6 +6,8 @@ export class CommunitySummaryUpdates {
     displayName: OptionUpdate<string> = undefined;
     rulesAccepted?: boolean;
     index?: number;
+    /** Frozen or unfrozen by a platform moderator here, until the next sync brings it. */
+    frozen?: boolean;
 
     isEmpty(): boolean {
         return Object.values(this).every((v) => v === undefined);

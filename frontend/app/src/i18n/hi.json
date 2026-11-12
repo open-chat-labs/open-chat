@@ -2859,6 +2859,7 @@
     "readOnlyThread": "यह थ्रेड केवल पढ़ने के लिए है",
     "reason": "कारण",
     "reasonForSuspension": "निलंबन का कारण",
+    "recipientSuspended": "इस उपयोगकर्ता का खाता निलंबित है। आप उन्हें संदेश नहीं भेज सकते।",
     "recordAudioMessage": "ऑडियो संदेश रिकॉर्ड करें",
     "referralHeader": "मित्रों/परिवार को आमंत्रित करें",
     "refresh": "रिफ्रेश करें",

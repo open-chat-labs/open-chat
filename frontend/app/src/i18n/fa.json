@@ -2859,6 +2859,7 @@
     "readOnlyThread": "این موضوع فقط خواندنی است",
     "reason": "دلیل",
     "reasonForSuspension": "دلیل تعلیق",
+    "recipientSuspended": "حساب این کاربر معلق شده است. نمی‌توانید به او پیام بفرستید.",
     "recordAudioMessage": "ضبط پیام صوتی",
     "referralHeader": "دعوت از دوستان / خانواده",
     "refresh": "تازه کردن",

@@ -2922,6 +2922,7 @@
     "readOnlyThread": "This thread is read-only",
     "reason": "Reason",
     "reasonForSuspension": "reason for suspension",
+    "recipientSuspended": "This user's account is suspended. You can't send them messages.",
     "recordAudioMessage": "Record audio message",
     "referralHeader": "Invite friends/family",
     "refresh": "Refresh",

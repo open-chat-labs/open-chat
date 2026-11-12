@@ -2859,6 +2859,7 @@
     "readOnlyThread": "Chủ đề này ở chế độ chỉ đọc",
     "reason": "Lý do",
     "reasonForSuspension": "lý do đình chỉ",
+    "recipientSuspended": "Tài khoản của người dùng này đã bị tạm ngưng. Bạn không thể gửi tin nhắn cho họ.",
     "recordAudioMessage": "Ghi lại tin nhắn âm thanh",
     "referralHeader": "Mời bạn bè / gia đình",
     "refresh": "Tải lại",

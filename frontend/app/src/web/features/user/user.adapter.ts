@@ -15,6 +15,8 @@ export type UserDialogInput = {
     // their profile background, if they've set one
     coverUrl: string | undefined;
     online: boolean;
+    // their account is suspended (by a platform moderator)
+    suspended: boolean;
     joined: string;
     // their CHIT badges, which userBadges leaves out when the viewer has turned CHIT off
     chit: UserBadges["chit"];
@@ -29,6 +31,7 @@ export function userDialogProps(input: UserDialogInput) {
         color: senderColor(input.userId),
         cover: input.coverUrl === undefined ? "" : cssImage(input.coverUrl),
         online: input.online,
+        suspended: input.suspended,
         // the unique-person badge is suspended (userBadges has none)
         verified: false,
         facts: [
