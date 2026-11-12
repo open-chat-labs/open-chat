@@ -691,6 +691,15 @@ selectedThreadIdStore.subscribe((thread) => startThreadVisit(thread));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
+// The user whose chats' initial load has folded in, cleared whenever the chats start afresh. A new
+// account's chats count as loaded (chatsInitialisedStore) all along, the anonymous session's
+// standing in until its own come in; what has to act on the account's own chats (a guest's join
+// replayed after sign-up, the default list and chat) waits on currentUserChatsLoadedStore instead.
+export const chatsLoadedForUserStore = writable<string | undefined>(undefined);
+export const currentUserChatsLoadedStore = derived(
+    [chatsLoadedForUserStore, currentUserIdStore],
+    ([loadedFor, userId]) => loadedFor === userId,
+);
 export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(
     undefined,
     undefined,

@@ -22,10 +22,15 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: async () => ({}) },
 }));
 
-import { IdentityStorage } from "@shared";
+import { IdentityStorage, type JoinGroup, type MultiUserChat } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { chatsInitialisedStore, identityStateStore } from "./state";
+import {
+    chatsInitialisedStore,
+    chatsLoadedForUserStore,
+    currentUserChatsLoadedStore,
+    identityStateStore,
+} from "./state";
 import { createdUser } from "./utils/signUp";
 
 // What the client asks the worker for, by kind
@@ -43,13 +48,16 @@ const anonymousSnapshot = {
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
+    constructor() {
+        answer = (msg, response) => this.answer(msg, response);
+    }
     postMessage(msg: Request) {
         posted.push(msg);
         // the anonymous identity, set (nothing to say about it), and its chats
-        if (msg.kind === "setAuthIdentity") this.#answer(msg, undefined);
-        if (msg.kind === "getUpdates" && answering) this.#answer(msg, anonymousSnapshot);
+        if (msg.kind === "setAuthIdentity") this.answer(msg, undefined);
+        if (msg.kind === "getUpdates" && answering) this.answer(msg, anonymousSnapshot);
     }
-    #answer(msg: Request, response: unknown) {
+    answer(msg: Request, response: unknown) {
         const data = {
             kind: "worker_response",
             requestKind: msg.kind,
@@ -62,8 +70,10 @@ class FakeWorker {
     addEventListener() {}
 }
 
-// whether the worker answers getUpdates: only the anonymous session's
+// whether the worker answers getUpdates by itself: only the anonymous session's
 let answering = true;
+// the worker's answer to a request it left unanswered
+let answer: ((msg: Request, response: unknown) => void) | undefined;
 
 function config(): OpenChatConfig {
     return {
@@ -101,6 +111,7 @@ describe("a new account", () => {
         vi.restoreAllMocks();
         identityStateStore.set({ kind: "anon" });
         chatsInitialisedStore.set(false);
+        chatsLoadedForUserStore.set(undefined);
     });
 
     /** An identity without an account runs as the anonymous user, whose chats loaded as such.
@@ -127,5 +138,41 @@ describe("a new account", () => {
         expect(identityStateStore.value.kind).toBe("logged_in");
         expect(updates().length).toBeGreaterThan(0);
         expect(updates().every((m) => m.initialLoad === true)).toBe(true);
+    });
+
+    /** A guest who asked to join a group and then made an account joins it once the account's own
+     * chats are in. Decided against the anonymous session's, which stand in until then, the join
+     * would be undone by the account's initial load folding in after it. */
+    test("hands out a guest's join only once the account's own chats have loaded", async () => {
+        const join: JoinGroup = {
+            kind: "join_group",
+            group: { id: { kind: "group_chat", groupId: "g1" } } as unknown as MultiUserChat,
+        };
+        chatsInitialisedStore.set(true);
+        identityStateStore.set({ kind: "registering", postLogin: join });
+        answering = false;
+
+        client.onRegisteredUser(
+            createdUser("newperson", { kind: "success", userId: "u1", icpAccount: "acc" }),
+        );
+        await vi.advanceTimersByTimeAsync(0);
+
+        // signed in, the anonymous session's chats still standing in: not yet
+        expect(identityStateStore.value.kind).toBe("logged_in");
+        expect(chatsInitialisedStore.value).toBe(true);
+        expect(currentUserChatsLoadedStore.value).toBe(false);
+        expect(client.takePostLoginJoin()).toBeUndefined();
+        expect(identityStateStore.value.postLogin).toEqual(join);
+
+        // the account's initial load folds in
+        const load = updates().find((m) => m.initialLoad === true);
+        if (load === undefined || answer === undefined) throw new Error("no initial load asked");
+        answer(load, { ...anonymousSnapshot, userId: "u1" });
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(currentUserChatsLoadedStore.value).toBe(true);
+        expect(client.takePostLoginJoin()).toEqual(join);
+        // handed out once
+        expect(client.takePostLoginJoin()).toBeUndefined();
     });
 });

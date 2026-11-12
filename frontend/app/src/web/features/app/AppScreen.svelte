@@ -4,7 +4,7 @@
     import {
         allUsersStore,
         anonUserStore,
-        chatsInitialisedStore,
+        currentUserChatsLoadedStore,
         chitStateStore,
         currentUserStore,
         dailyPuzzleStore,
@@ -118,10 +118,11 @@
     });
 
     // a guest who chose to join a group, channel or community joins it once signed in and their
-    // chats have loaded; the client hands the join out once (8b)
+    // own chats have loaded (not the anonymous session's, after a sign-up); the client hands the
+    // join out once (8b)
     $effect(() => {
         void $identityStateStore;
-        void $chatsInitialisedStore;
+        void $currentUserChatsLoadedStore;
         const postLogin = client.takePostLoginJoin();
         if (postLogin !== undefined) void resumeJoining(postLoginTarget(postLogin));
     });

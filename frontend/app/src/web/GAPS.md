@@ -1905,8 +1905,10 @@ design export needs. Each entry says where it came up.
   footers did (the backend joins its community with it), even under the community's bar; a locked
   channel in a community that isn't locked joins the community alone. Join runs
   the shared flow (`logic/join/joinFlow`, the old `utils/preview.svelte.ts`, which both old trees
-  now use too): a guest's join is recorded and opens sign-in, and replays once after it
-  (`takePostLoginJoin`, AppScreen); gates the client can't check open `JoinGateDialog`, a level at
+  now use too): a guest's join is recorded and opens sign-in, and replays once after it, once
+  the account's own chats are in (`takePostLoginJoin` on `currentUserChatsLoadedStore`, AppScreen;
+  after a sign-up the anonymous session's stand in until then, and a join decided against them
+  was undone by the account's initial load); gates the client can't check open `JoinGateDialog`, a level at
   a time; "Pay and join" approves the payments (asking for the PIN) and joins; "You joined …" on
   success (named as the bar named it), the failure's own message otherwise, "Access gate not met"
   for a backend gate check failure. The dialog stays open while the join doesn't go through (the

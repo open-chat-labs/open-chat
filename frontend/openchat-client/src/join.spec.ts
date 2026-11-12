@@ -27,6 +27,7 @@ import {
     CommunityMap,
     ROLE_MEMBER,
     ROLE_NONE,
+    ANON_USER_ID,
     anonymousUser,
     type AccessGate,
     type CommunitySummary,
@@ -37,6 +38,7 @@ import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
     chatsInitialisedStore,
+    chatsLoadedForUserStore,
     currentUserStore,
     identityStateStore,
     serverCommunitiesStore,
@@ -395,22 +397,28 @@ describe("joining a group or community", () => {
 
     // 8b invariant 1: a guest's Join sends no join request, and after sign-in the recorded join is
     // sent exactly once, in every tree
-    test("a guest's join is handed out once, after sign-in and once chats have loaded", async () => {
+    test("a guest's join is handed out once, after sign-in and once their chats have loaded", async () => {
         currentUserStore.set(anonymousUser());
         const g = group(ROLE_NONE);
         await client.joinGroup(g);
         expect(sent).toEqual([]);
+        chatsLoadedForUserStore.set(ANON_USER_ID);
 
         expect(client.takePostLoginJoin()).toBeUndefined();
         identityStateStore.update((s) => ({ ...s, kind: "logged_in" }));
-        chatsInitialisedStore.set(false);
+        currentUserStore.set({ ...anonymousUser(), userId: "me" });
         expect(client.takePostLoginJoin()).toBeUndefined();
 
+        // the anonymous session's chats, standing in after a sign-up, don't count
         chatsInitialisedStore.set(true);
+        expect(client.takePostLoginJoin()).toBeUndefined();
+
+        chatsLoadedForUserStore.set("me");
         expect(client.takePostLoginJoin()).toEqual({ kind: "join_group", group: g });
         expect(client.takePostLoginJoin()).toBeUndefined();
         expect(identityStateStore.value.postLogin).toBeUndefined();
         chatsInitialisedStore.set(false);
+        chatsLoadedForUserStore.set(undefined);
     });
 });
 

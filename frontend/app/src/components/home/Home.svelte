@@ -35,6 +35,7 @@
         anonUserStore,
         chatListScopeStore,
         chatsInitialisedStore,
+        currentUserChatsLoadedStore,
         ANON_USER_ID,
         CURRENT_TERMS_VERSION,
         currentUserStore,
@@ -697,9 +698,9 @@
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
         }
-        // a guest's join, replayed once they've signed in and their chats have loaded (the client
-        // hands it out once)
-        void $chatsInitialisedStore;
+        // a guest's join, replayed once they've signed in and their own chats have loaded (the
+        // client hands it out once)
+        void $currentUserChatsLoadedStore;
         const postLogin = client.takePostLoginJoin();
         if (postLogin !== undefined) {
             tick().then(() => join(postLoginTarget(postLogin)));
