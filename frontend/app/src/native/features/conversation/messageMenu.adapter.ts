@@ -1,7 +1,5 @@
 import type { MessageMenuAction } from "@client";
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
-import type { MessageActionOutcome } from "@src/logic/conversation/messageAction";
-import type { MenuExit } from "./keyboardSlot";
 
 // A message's long-press menu (native design notes §3.3): what its menu offers (`messageMenu`,
 // through `messageOffer`), in the design's order, with the design's icons, and Info, which every
@@ -70,22 +68,6 @@ export function messageMenuItems(
 /** What a picked row (by its id) does: one of the actions listed here, or nothing for another id. */
 export function nativeMessageAction(id: string): NativeMessageAction | undefined {
     return [...ITEMS, ...DANGER].find((e) => e.id === id)?.id;
-}
-
-/**
- * Where a picked row leaves the reader once it's done, by what came of it (`outcome`, for an action
- * `messageAction` carries out): Info pushes Message info, and a private reply opens the sender's
- * DM, both away from the conversation; everything else stays in it, whether it's done at once
- * (Copy, Pin, a delete with its Undo, Reply and Edit, which put the draft in the composer) or
- * asks over the conversation first (Forward's and Report's sheets, Delete's confirm, translating's
- * Diamond alert, whose Get Diamond is the one way on from there that leaves).
- */
-export function menuExit(
-    action: NativeMessageAction,
-    outcome: MessageActionOutcome["kind"] | undefined,
-): MenuExit {
-    if (action === "info" || outcome === "open_chat" || outcome === "open_thread") return "away";
-    return "conversation";
 }
 
 /** The quick reactions the bar offers: the user's most used first, then the usual ones, six in all. */

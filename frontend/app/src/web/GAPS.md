@@ -456,8 +456,12 @@ design export needs. Each entry says where it came up.
       bar's, or the emoji sheet's once it closes), Copy, Copy link, Pin / Unpin, Translate, Share, a
       delete (after its confirm, or Cancel), the forward and report sheets once they close, and
       Reply and Edit (which focus it themselves). Info (Message info pushed), a private reply (the
-      DM opens) and Get Diamond let the space go (`menuExit`); Back to the conversation then finds
-      the keyboard down. Measured per frame on the emulator: the message's top stays where it was
+      DM opens), Get Diamond and another chat opening meanwhile (a notification) let the space go
+      (`MessageActions`' `leave`); Back to the conversation then finds the keyboard down. The
+      space stays held as the text box is focused again, even where the keyboard's "down" for the
+      menu hasn't been reported yet (a menu closed at once), until the keyboard's back up; that
+      focus isn't the reader's tap, so where the platform shows no keyboard for it, the space is
+      let go after the slot's wait (2s), without asking again. Measured per frame on the emulator: the message's top stays where it was
       from the long-press until the keyboard is back. Only where the keyboard's height is reported
       (the Android app): in the iOS app and phones' browsers the platform lifts the page, so the
       chat still moves down as the menu opens there, and the keyboard isn't put back.

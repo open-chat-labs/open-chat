@@ -55,7 +55,6 @@
     import { pinWithUndo, unpinWithUndo } from "./pinToasts";
     import type { MenuExit } from "./keyboardSlot";
     import {
-        menuExit,
         messageMenuItems,
         myReactions,
         nativeMessageAction,
@@ -131,35 +130,52 @@
             side: evt.event.sender === me ? "sent" : "received",
         };
         menuOpen = true;
+        session = true;
         return true;
     }
 
+    // the menu and what it opens over the conversation, each with its close: registered for
+    // Android's back while open, and the menu hasn't settled while any is (`busy`)
+    const opened: { isOpen: () => boolean; close: () => void }[] = [
+        { isOpen: () => menuOpen, close: () => (menuOpen = false) },
+        { isOpen: () => picking !== undefined, close: () => (picking = undefined) },
+        { isOpen: () => forwarding !== undefined, close: () => (forwarding = undefined) },
+        { isOpen: () => reporting !== undefined, close: () => (reporting = undefined) },
+        { isOpen: () => upgrading, close: () => (upgrading = false) },
+        { isOpen: () => deleting !== undefined, close: () => (deleting = undefined) },
+    ];
+
     // an action picked is on its way (what it opens, if anything, isn't known yet)
     let acting = $state(false);
-    // where the menu left the reader (menuExit), for onSettled
+    // the menu opened, and it (and what it opened) hasn't all closed since: onSettled is owed
+    let session = false;
+    // where the menu left the reader: "away" once it has gone to another screen (`leave`)
     let exit: MenuExit = "conversation";
-    // the menu, or anything it opened, still open
-    const busy = $derived(
-        menuOpen ||
-            acting ||
-            picking !== undefined ||
-            forwarding !== undefined ||
-            reporting !== undefined ||
-            upgrading ||
-            deleting !== undefined,
-    );
-    let wasBusy = false;
-    $effect(() => {
-        const now = busy;
-        untrack(() => {
-            const settled = wasBusy && !now;
-            wasBusy = now;
-            if (!settled) return;
-            const was = exit;
-            exit = "conversation";
-            onSettled?.(was);
+
+    function busy(): boolean {
+        return acting || opened.some((o) => o.isOpen());
+    }
+
+    // something the menu opened has closed (or an action has finished): once nothing is open, the
+    // conversation hears where the reader is. A microtask on, as a row picked closes the menu just
+    // before its own handler runs (MessageLongPressMenu's onClose, then onSelect)
+    function settle() {
+        queueMicrotask(() => {
+            if (session && !busy()) settled(exit);
         });
-    });
+    }
+
+    function settled(where: MenuExit) {
+        session = false;
+        exit = "conversation";
+        onSettled?.(where);
+    }
+
+    // every way the menu leads to another screen (Info, a private reply's DM, Diamond) goes here
+    function leave(go: () => void) {
+        exit = "away";
+        go();
+    }
 
     // the messages can't be selected (ConversationScreen's styles), but should a selection have
     // started in this one anyway (the platform's long-press), it goes: the menu has Copy
@@ -175,51 +191,27 @@
         if (chat !== undefined) removing = { chatId: chat.id, evt, url };
     }
 
-    // another chat takes this one's place: what was open on its messages closes. Keyed on the
-    // chat's id as a string: the summary is a new object on every update to it (a message in, an
-    // unread count), which isn't another chat
+    // another chat takes this one's place (a notification tapped, a link): what was open on its
+    // messages closes, and the menu has left the conversation, so the new one's composer isn't
+    // focused for it. Keyed on the chat's id as a string: the summary is a new object on every
+    // update to it (a message in, an unread count), which isn't another chat
     const chatKey = $derived(chat && chatIdentifierToString(chat.id));
     $effect.pre(() => {
         void chatKey;
         untrack(() => {
-            menuOpen = false;
-            picking = undefined;
-            reporting = undefined;
-            deleting = undefined;
+            for (const o of opened) o.close();
             removing = undefined;
+            if (session) settled("away");
         });
     });
 
-    useOverlay(
-        overlays,
-        () => menuOpen,
-        () => (menuOpen = false),
-    );
-    useOverlay(
-        overlays,
-        () => picking !== undefined,
-        () => (picking = undefined),
-    );
-    useOverlay(
-        overlays,
-        () => forwarding !== undefined,
-        () => (forwarding = undefined),
-    );
-    useOverlay(
-        overlays,
-        () => reporting !== undefined,
-        () => (reporting = undefined),
-    );
-    useOverlay(
-        overlays,
-        () => upgrading,
-        () => (upgrading = false),
-    );
-    useOverlay(
-        overlays,
-        () => deleting !== undefined,
-        () => (deleting = undefined),
-    );
+    for (const o of opened) {
+        useOverlay(overlays, o.isOpen, () => {
+            o.close();
+            settle();
+        });
+    }
+    // a link preview's confirm: opened from the message's row, not the menu
     useOverlay(
         overlays,
         () => removing !== undefined,
@@ -268,12 +260,13 @@
         const action = nativeMessageAction(id);
         if (at === undefined || action === undefined) return;
         if (action === "info") {
-            exit = menuExit(action, undefined);
-            context.push({
-                kind: "message_info",
-                chatId: at.chatId,
-                messageId: at.evt.event.messageId,
-            });
+            leave(() =>
+                context.push({
+                    kind: "message_info",
+                    chatId: at.chatId,
+                    messageId: at.evt.event.messageId,
+                }),
+            );
             return;
         }
         // a pin and an unpin offer Undo (plan 04): an unpin is only sent once its Undo has gone
@@ -315,10 +308,10 @@
         acting = true;
         try {
             const outcome = await messageAction(action, target(at, confirmDelete));
-            exit = menuExit(action, outcome.kind);
             show(at, action, outcome);
         } finally {
             acting = false;
+            settle();
         }
     }
 
@@ -361,7 +354,7 @@
                 if (!outcome.ok) toastStore.showFailureToast(i18nKey("failedToShareMessage"));
                 return;
             case "open_chat":
-                navigate(routeForChatIdentifier("chats", outcome.chatId));
+                leave(() => navigate(routeForChatIdentifier("chats", outcome.chatId)));
                 return;
             case "not_found":
                 toastStore.showFailureToast(
@@ -463,11 +456,17 @@
     onReact={(emoji) => pressed !== undefined && react(pressed, emoji)}
     onMoreReactions={() => (picking = pressed)}
     onSelect={(id) => void select(id)}
-    onClose={() => (menuOpen = false)} />
+    onClose={() => {
+        menuOpen = false;
+        settle();
+    }} />
 
 <BottomSheet
     open={picking !== undefined}
-    onClose={() => (picking = undefined)}
+    onClose={() => {
+        picking = undefined;
+        settle();
+    }}
     label={$_("native.conversation.message.react")}
     height="72%"
     keyboard={softKeyboard.covering}>
@@ -477,6 +476,7 @@
         onPick={(emoji) => {
             const at = picking;
             picking = undefined;
+            settle();
             if (at !== undefined) react(at, emoji);
         }} />
 </BottomSheet>
@@ -484,7 +484,10 @@
 <ForwardSheet
     message={forwarding?.message}
     from={forwarding?.chatId}
-    onClose={() => (forwarding = undefined)}
+    onClose={() => {
+        forwarding = undefined;
+        settle();
+    }}
     onForward={(chatIds, note) => {
         const message = forwarding?.message;
         if (message !== undefined) void forward(message, chatIds, note);
@@ -493,7 +496,10 @@
 <ReportSheet
     open={reporting !== undefined}
     canDelete={reporting !== undefined && client.canDeleteOtherUsersMessages(reporting.chatId)}
-    onClose={() => (reporting = undefined)}
+    onClose={() => {
+        reporting = undefined;
+        settle();
+    }}
     onReport={(reason, deleteToo) => {
         const at = reporting;
         if (at !== undefined) void report(at, reason, deleteToo);
@@ -510,10 +516,14 @@
     onConfirm={() => {
         const confirmed = deleting;
         deleting = undefined;
+        settle();
         if (dontAskAgain) confirmMessageDeletion.set(false);
         if (confirmed !== undefined) void deleteWithUndo(confirmed.at, confirmed.action);
     }}
-    onClose={() => (deleting = undefined)} />
+    onClose={() => {
+        deleting = undefined;
+        settle();
+    }} />
 
 <NativeAlert
     open={removing !== undefined}
@@ -529,9 +539,11 @@
     message={$_("native.conversation.message.translateDiamond")}
     confirmLabel={$_("native.conversation.message.getDiamond")}
     onConfirm={() => {
-        // Diamond's screen: the conversation is left
-        exit = "away";
         upgrading = false;
-        navigate(DIAMOND_URL);
+        settle();
+        leave(() => navigate(DIAMOND_URL));
     }}
-    onClose={() => (upgrading = false)} />
+    onClose={() => {
+        upgrading = false;
+        settle();
+    }} />

@@ -125,11 +125,13 @@ export function togglePanel(
 
 /**
  * The composer's text box took focus: the keyboard takes the panel's place. Its space held for a
- * message's menu stays held until it's up.
+ * message's menu (focused again as the menu closes) stays held, the keyboard expected, even where
+ * it's still reported up: its "down" for the menu may not have been reported yet (a menu closed at
+ * once), and is ignored when it is. Held until the keyboard's up again, or it's missed.
  */
 export function inputFocused(slot: Slot, reported: boolean, keyboardUp: boolean): Slot {
-    const expecting = reported && !keyboardUp;
-    return { ...CLOSED, expecting, held: expecting && slot.held };
+    if (slot.held && reported) return { ...CLOSED, expecting: true, held: true };
+    return { ...CLOSED, expecting: reported && !keyboardUp };
 }
 
 /** The emoji panel's search field took the keyboard (`search`), or gave it up ("none"). */

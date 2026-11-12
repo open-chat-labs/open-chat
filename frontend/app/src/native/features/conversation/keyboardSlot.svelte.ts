@@ -198,11 +198,21 @@ export class KeyboardSlot {
      * is focused again (`onRefocus`) for the keyboard to come back up into the space kept, which is
      * let go once it's up; or, gone to another screen (or the text box couldn't be focused), the
      * space is let go now.
+     *
+     * The focus is the slot's own move (`inputFocused`), not left to the text box's focus event,
+     * which doesn't fire where it has the focus already. It isn't the reader's tap, so the platform
+     * may show no keyboard for it (Android's WebView, after a sheet or an alert): the space is let
+     * go once the keyboard's wait runs out, without asking again (`onMissed`), which wouldn't be a
+     * tap either.
      */
     menuClosed(exit: MenuExit): void {
         const next = afterMenu(this.#slot, exit);
         if (next === "none") return;
-        if (next === "refocus" && this.onRefocus?.() === true) return;
+        if (next === "refocus" && this.onRefocus?.() === true) {
+            this.#retried = true;
+            this.inputFocused();
+            return;
+        }
         this.#slot = released(this.#slot);
     }
 

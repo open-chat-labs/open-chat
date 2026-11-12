@@ -263,8 +263,18 @@ describe("the keyboard's space, for a message's menu", () => {
         expect(afterMenu(CLOSED, "away")).toBe("none");
     });
 
-    test("isn't kept past a panel's button or a focus with the keyboard up", () => {
+    test("closed at once, before the keyboard's down is reported: held until it's up again", () => {
+        const coming = inputFocused(held, true, true);
+        expect(coming).toEqual({ ...CLOSED, expecting: true, held: true });
+        expect(slotHeight(coming, up)).toBe(320);
+        // the late down for the menu: ignored, so the composer doesn't drop and come back
+        expect(keyboardReport(coming, 320, 0)).toBe("ignore");
+        // the keyboard back at the height the slot has
+        expect(keyboardReport(coming, 320, 320)).toBe("apply");
+        expect(keyboardMoved(coming, true)).toEqual(CLOSED);
+    });
+
+    test("isn't kept past a panel's button", () => {
         expect(togglePanel(held, "emoji", true).slot.held).toBe(false);
-        expect(inputFocused(held, true, true)).toEqual(CLOSED);
     });
 });
