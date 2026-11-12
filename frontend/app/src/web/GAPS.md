@@ -1148,8 +1148,10 @@ design export needs. Each entry says where it came up.
   `people`'s); `lib/searchTabs` has the Groups tab and cap; strings
   `ui.chatListPanel.searchTabs.groups`, `moreGroups` and `groupMembers` (a found group's line).
   `SegmentedTabs`' labels no longer wrap: a label too long for an equal share widens its tab, the
-  others giving way ("All results" took two lines at a 349px panel once there were four tabs).
-  TODO(design): web/04 has no groups: the tab, the section and its rows (the chat list's
+  others giving way ("All results" took two lines at a 349px panel once there were four tabs);
+  a bar too narrow for every label at its full width is tight, its tabs shrinking with their
+  content and a label ending in an ellipsis, so no bar spills out (`lib/tabsFit`, review of
+  #10477). TODO(design): the tight bar; web/04 has no groups: the tab, the section and its rows (the chat list's
   `ChatRow`: avatar or swatch, name, member count in the preview's place).
 - **A DM's typing bubble** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to the design export:
   `TypingIndicator` takes `variant: 'bubble'`, native plan 04's DM bubble (received style, three
@@ -2408,7 +2410,9 @@ design export needs. Each entry says where it came up.
     accent either way (the library has no muted count, see "Chat row avatars…").
   - **search on OpenChat**: as the user types (300ms after the text settles; `TermSearch`), the
     client's `searchChatList` looks up people and bots that take direct chats, and public groups
-    (`searchGroups`), in every scope. **Public groups are back at the user's request
+    (`searchGroups`), in every scope, each kind arriving on its own (`chatListSearchResults` hands
+    `TermSearch` what has come so far: the people show while the group index is still answering,
+    and a failed call finds nothing of its kind). **Public groups are back at the user's request
     (2026-11-12)**, as the old search had them (web/04's search has chats, people and messages
     only; L1 had added groups, the old mobile search's, then dropped them on 2026-11-10): they're
     the search's **Groups** tab and All's Groups section (up to 3, "+N more groups"), each row the
@@ -2417,18 +2421,20 @@ design export needs. Each entry says where it came up.
     one opens its page (`/chats/group/:id`, the same route as `/group/:id`), which previews it as
     a link to it does; it then shows under Chats, as any previewed chat. TODO(design): web/04 has
     no groups section (see "The chat list search's Groups" under Design / library). What's
-    already in the list (a DM's user or bot, a group the user is in or previewing, in any scope)
-    and the user are left out (`outsideList`). Communities aren't searched: the old trees' chat
+    already in the list (a DM's user or bot, a group the user is in or previewing, in any scope:
+    the list's chats with `allServerChatsStore`, which has the group previews) and the user are
+    left out (`outsideList`). Communities aren't searched: the old trees' chat
     list search never had them (Explore finds them). They're the search's People (the search's tabs
     below; until 2026-11-11 they followed the list's own matches under "Users and bots", the old
     desktop list's heading); a person's line is their @username, a bot's its description. Their avatars follow the rows' rule (above): a person with no picture of their
     own shows their swatch, and a bot with no avatar the app's bot picture. Picking one starts a
     chat (`chatWith`). A leading "@" is dropped, an empty term asks the backend nothing, and the
     search starts again empty in another scope. The old trees search as they did before L1, but
-    through `searchChatList`: the old desktop people and bots in the Chats scope (no groups,
-    `{ groups: false }`), people and public groups in the "none" scope (nobody reaches it, still
+    through `searchChatList`: the old desktop people and bots in the Chats scope (no groups, the
+    default), people and public groups in the "none" scope (nobody reaches it, still
     `searchGroups` and `searchUsers`); the old mobile (New message) people, bots and public groups
-    (`{ groups: true }`, one search where it called `searchGroups` beside it).
+    (`{ groups: true }`, one search where it called `searchGroups` beside it; the groups and the
+    people still arrive apart, as before).
   - not carried over: the old desktop avatar's blocked overlay and max-streak ring (the old mobile
     row had neither, nor has the design), the community scope's channels the user hasn't joined
     (the old desktop's `BrowseChannels`, mobile's `OtherChannels`: browsing channels needs a

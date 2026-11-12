@@ -30,27 +30,53 @@ export function noChatListSearchResults(): ChatListSearchResults {
     return { users: [], bots: [], groups: [] };
 }
 
+/**
+ * A chat list search under way: each kind of result arrives on its own, so a slow or failed call
+ * (the group index's, say) holds back none of the others. None rejects: a failed call finds
+ * nothing.
+ */
+export type ChatListSearch = {
+    [K in keyof ChatListSearchResults]: Promise<ChatListSearchResults[K]>;
+};
+
 /** What a search found as one list, as the old trees' chat list search shows it: people, then bots. */
-export function chatListSearchMatches(results: ChatListSearchResults): (UserSummary | BotMatch)[] {
+export function chatListSearchMatches(
+    results: Pick<ChatListSearchResults, "users" | "bots">,
+): (UserSummary | BotMatch)[] {
     return [...results.users, ...results.bots];
 }
 
 /**
- * The people, bots and (with a `groups` call) public groups found for a search term (one with any
- * leading "@" dropped), all asked for at once. An empty term asks the backend nothing and finds
- * nothing.
+ * The search for a term (one with any leading "@" dropped): the people, the bots and (with a
+ * `groups` call) the public groups, all asked for at once, each arriving on its own. An empty term
+ * asks the backend nothing and finds nothing.
  */
-export async function runChatListSearch(
-    term: string,
-    calls: ChatListSearchCalls,
+export function runChatListSearch(term: string, calls: ChatListSearchCalls): ChatListSearch {
+    const ask = <T>(call: ((term: string) => Promise<T[]>) | undefined): Promise<T[]> =>
+        term === "" || call === undefined ? Promise.resolve([]) : orNothing(call(term));
+    return { users: ask(calls.users), bots: ask(calls.bots), groups: ask(calls.groups) };
+}
+
+/**
+ * Everything a search found, once every kind has arrived. `soFar` hears what has arrived each time
+ * a kind does (the kinds still on their way find nothing yet), so the people can show before the
+ * groups.
+ */
+export async function chatListSearchResults(
+    search: ChatListSearch,
+    soFar?: (found: ChatListSearchResults) => void,
 ): Promise<ChatListSearchResults> {
-    if (term === "") return noChatListSearchResults();
-    const [users, bots, groups] = await Promise.all([
-        orNothing(calls.users(term)),
-        orNothing(calls.bots(term)),
-        calls.groups === undefined ? Promise.resolve([]) : orNothing(calls.groups(term)),
+    let found = noChatListSearchResults();
+    const arrived = (part: Partial<ChatListSearchResults>) => {
+        found = { ...found, ...part };
+        soFar?.(found);
+    };
+    await Promise.all([
+        search.users.then((users) => arrived({ users })),
+        search.bots.then((bots) => arrived({ bots })),
+        search.groups.then((groups) => arrived({ groups })),
     ]);
-    return { users, bots, groups };
+    return found;
 }
 
 async function orNothing<T>(found: Promise<T[]>): Promise<T[]> {

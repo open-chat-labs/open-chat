@@ -19,6 +19,8 @@
         canRemoveFromList,
         chatIdentifierToString,
         chatsInitialisedStore,
+        allServerChatsStore,
+        chatListSearchResults,
         chatSummariesListStore,
         currentUserIdStore,
         favouritesStore,
@@ -35,7 +37,6 @@
         translationsStore,
         userGroupSummariesStore,
         selectedCommunitySummaryStore,
-        serverDirectChatsStore,
         byContext as typersByContext,
         unreadCommunityChannelCountsStore,
         unreadCountShown,
@@ -43,7 +44,6 @@
         unreadFavouriteCountsStore,
         ownGroupAvatarUrl,
         ownUserAvatarUrl,
-        serverGroupChatsStore,
         type ChatListSearchResults,
         type ChatSummary,
         type OpenChat,
@@ -104,8 +104,9 @@
     });
     // people, bots and public groups on OpenChat, outside the list (the client's searchChatList;
     // the groups at the user's request of 2026-11-12, web/04 has none)
-    const found = new TermSearch<ChatListSearchResults>((term) =>
-        client.searchChatList(term, { groups: true }),
+    // each kind of result shows as it arrives: the people don't wait for the group index
+    const found = new TermSearch<ChatListSearchResults>((term, soFar) =>
+        chatListSearchResults(client.searchChatList(term, { groups: true }), soFar),
     );
     onDestroy(() => found.dispose());
     // and the people found go with it: a new scope starts with nothing looked up
@@ -185,19 +186,26 @@
     const searchRows = $derived.by((): FoundRows => {
         const term = searchTerm(query);
         const results = found.results;
-        if (term === "" || results.kind !== "found" || results.term !== term) {
+        // what has arrived: all of it, or the kinds in so far while the rest is on its way
+        const arrived =
+            results.kind === "found"
+                ? results.found
+                : results.kind === "searching"
+                  ? results.soFar
+                  : undefined;
+        if (term === "" || results.kind === "idle" || results.term !== term || !arrived) {
             return { people: [], groups: [] };
         }
         // read here, so the rows follow a suspend or un-suspend after the search
         const users = $allUsersStore;
         const lookups = groupAvatarLookups(client);
         return foundRows({
-            // the user's DMs and groups in every scope, not just this one's list: someone they
-            // already have a DM with, or a group they're in, isn't new in a community or in
-            // Favourites either
+            // the user's DMs, groups and group previews in every scope, not just this one's list:
+            // someone they already have a DM with, or a group they're in or previewing, isn't new
+            // in a community or in Favourites either
             found: outsideList(
-                results.found,
-                [...chats, ...$serverDirectChatsStore.values(), ...$serverGroupChatsStore.values()],
+                arrived,
+                [...chats, ...$allServerChatsStore.values()],
                 $currentUserIdStore,
             ),
             userName: (user) => client.displayName(user),

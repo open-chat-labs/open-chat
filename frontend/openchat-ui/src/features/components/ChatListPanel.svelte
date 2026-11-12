@@ -94,7 +94,7 @@
   let {
     rows,
     people = [],
-    groups: foundGroups = [],
+    groups = [],
     showLabels = true,
     onSelect,
     headerKind,
@@ -157,7 +157,8 @@
   });
   const hasUnread = $derived(all.some((r) => (r.unreadCount ?? 0) > 0));
 
-  const groups = $derived.by(() => {
+  // the list's sections (Pinned, Chats …), each with its rows
+  const listSections = $derived.by(() => {
     const order: { label: string; rows: typeof shown }[] = [];
     for (const r of shown) {
       const key = showLabels ? (r.section ?? 'Chats') : '';
@@ -175,12 +176,12 @@
 
   // a search's results: the chats in the list's section order (pinned first), then the people and the groups found
   const found = $derived({
-    chats: groups.flatMap((g) => g.rows),
+    chats: listSections.flatMap((s) => s.rows),
     people: searching ? people.map(withDefaults).filter(matches) : [],
-    groups: searching ? foundGroups.map(withDefaults).filter(matches) : [],
+    groups: searching ? groups.map(withDefaults).filter(matches) : [],
   });
   const badges = $derived(searchTabBadges(found));
-  const sections = $derived(searchSections(SEARCH_TABS[searchTab] ?? 'all', found));
+  const resultSections = $derived(searchSections(SEARCH_TABS[searchTab] ?? 'all', found));
 </script>
 
 {#snippet chatRow(row: (typeof all)[number])}
@@ -265,9 +266,9 @@
   {#if searching}
     <!-- a search's tab: its results fade in as the search starts and as another tab is picked -->
     {#key searchTab}
-      {#if sections.length > 0}
+      {#if resultSections.length > 0}
         <div class="list searching">
-          {#each sections as section, i (section.tab)}
+          {#each resultSections as section, i (section.tab)}
             <div class="section" class:first={i === 0}>
               {#if section.labelled}
                 <div class="section-label">{t(SEARCH_TAB_KEYS[SEARCH_TABS.indexOf(section.tab)]).toUpperCase()} <span class="section-count">{section.total}</span></div>
@@ -292,12 +293,12 @@
       {#if loading}
         <Skeleton variant="chat" count={7} />
       {:else}
-        {#each groups as group, i}
+        {#each listSections as section, i}
           <div class="section" class:first={i === 0}>
-            {#if group.label}
-              <div class="section-label">{t(SECTION_KEYS[group.label] ?? group.label).toUpperCase()} <span class="section-count">{group.rows.length}</span></div>
+            {#if section.label}
+              <div class="section-label">{t(SECTION_KEYS[section.label] ?? section.label).toUpperCase()} <span class="section-count">{section.rows.length}</span></div>
             {/if}
-            {#each group.rows as row (row.id)}
+            {#each section.rows as row (row.id)}
               {@render chatRow(row)}
             {/each}
           </div>

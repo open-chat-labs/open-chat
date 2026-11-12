@@ -123,7 +123,9 @@ export { postLoginCreateCommunity, postLoginJoin, postLoginPath } from "./utils/
 export { chatListOrder, chatsInScope } from "./utils/chatList";
 export {
     chatListSearchMatches,
+    chatListSearchResults,
     noChatListSearchResults,
+    type ChatListSearch,
     type ChatListSearchResults,
 } from "./utils/chatListSearch";
 export {

@@ -75,6 +75,17 @@ describe("outsideList", () => {
             groups: [publicGroup("g2")],
         });
     });
+
+    // review of #10477: a group the user is previewing (no membership, from allServerChatsStore's
+    // previews) isn't a new group in any scope
+    test("leaves out a group the user is previewing", () => {
+        const previewed = {
+            ...group("g3", "Book club"),
+            membership: undefined,
+        } as unknown as ChatSummary;
+        const found = { users: [], bots: [], groups: [publicGroup("g3"), publicGroup("g4")] };
+        expect(outsideList(found, [previewed], "me").groups).toEqual([publicGroup("g4")]);
+    });
 });
 
 describe("botAvatarUrl", () => {
