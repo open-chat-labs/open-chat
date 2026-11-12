@@ -56,13 +56,15 @@
         }
         const middle = bottomAnchor("middle");
         const composer = bottomAnchor("composer");
+        const toasts = bottomAnchor("toasts");
         let last: ToastSpot | undefined;
-        return watchBoxes([middle, composer], composer, () => {
+        return watchBoxes([middle, composer, toasts], composer, () => {
             const next = toastSpot(
                 windowSize(),
                 boxOf(middle),
                 boxOf(composer),
                 composerPopups(composer),
+                boxOf(toasts)?.height,
             );
             if (last?.left !== next.left || last?.width !== next.width || last?.y !== next.y) {
                 spot = last = next;

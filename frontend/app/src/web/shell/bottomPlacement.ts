@@ -36,6 +36,17 @@ export const BOTTOM_GAP = 12;
 /** With no middle panel showing, how far over the window's bottom (its safe area) they sit. */
 export const WINDOW_INSET = 24;
 
+/** The achievement toast's card (the library's `AchievementToast`, a fixed 64px; its confetti
+ * spills over the window freely). */
+export const ACHIEVEMENT_HEIGHT = 64;
+
+/** Keeps something `height` tall whose bottom edge is at `y` from going over the window's top: in
+ * a short window with a tall popup open there may be no room above, and then it's better whole
+ * and over what's under it than cut off. */
+function belowTop(y: number, height: number): number {
+    return Math.max(y, height + BOTTOM_GAP);
+}
+
 function shown(box: Box | undefined): box is Box {
     return box !== undefined && box.width > 0 && box.height > 0;
 }
@@ -47,24 +58,26 @@ function shown(box: Box | undefined): box is Box {
  *   view, the toasts sit centred on the window, `WINDOW_INSET` over its bottom safe area.
  * - `composer`: the middle panel's own composer, if it has one showing.
  * - `popups`: what the composer has open above it, which they sit above too.
+ * - `height`: how tall the toasts are (their layer), so they're kept below the window's top.
  */
 export function toastSpot(
     window: WindowSize,
     middle: Box | undefined,
     composer: Box | undefined,
     popups: Box[] = [],
+    height = 0,
 ): ToastSpot {
     const bottom = window.height - window.safeBottom;
     // the part of the panel across the window
     const left = shown(middle) ? Math.max(middle.left, 0) : 0;
     const right = shown(middle) ? Math.min(middle.left + middle.width, window.width) : 0;
     if (!shown(middle) || right <= left) {
-        return { left: 0, width: window.width, y: bottom - WINDOW_INSET };
+        return { left: 0, width: window.width, y: belowTop(bottom - WINDOW_INSET, height) };
     }
     const floor = shown(composer)
         ? Math.min(composer.top, ...popups.filter(shown).map((p) => p.top))
         : middle.top + middle.height;
-    return { left, width: right - left, y: Math.min(floor, bottom) - BOTTOM_GAP };
+    return { left, width: right - left, y: belowTop(Math.min(floor, bottom) - BOTTOM_GAP, height) };
 }
 
 /**
@@ -81,7 +94,7 @@ export function achievementSpot(
     popups: Box[],
     toasts: number | undefined,
 ): AchievementSpot {
-    const spot = toastSpot(window, middle, composer, popups);
+    const spot = toastSpot(window, middle, composer, popups, toasts ?? 0);
     const y = toasts !== undefined && toasts > 0 ? spot.y - toasts - BOTTOM_GAP : spot.y;
-    return { x: spot.left + spot.width / 2, y };
+    return { x: spot.left + spot.width / 2, y: belowTop(y, ACHIEVEMENT_HEIGHT) };
 }

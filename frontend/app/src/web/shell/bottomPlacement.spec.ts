@@ -1,4 +1,11 @@
-import { achievementSpot, BOTTOM_GAP, toastSpot, WINDOW_INSET, type Box } from "./bottomPlacement";
+import {
+    ACHIEVEMENT_HEIGHT,
+    achievementSpot,
+    BOTTOM_GAP,
+    toastSpot,
+    WINDOW_INSET,
+    type Box,
+} from "./bottomPlacement";
 
 const window = { width: 1400, height: 900, safeBottom: 0 };
 // the middle panel beside a 350px list: 456px to 1388px across, 12px to 888px down
@@ -185,5 +192,28 @@ describe("where the achievement toast plays", () => {
         expect(
             achievementSpot({ ...window, safeBottom: 34 }, undefined, undefined, [], undefined).y,
         ).toBe(900 - 34 - WINDOW_INSET);
+    });
+});
+
+describe("in a short window with a tall popup open", () => {
+    // a 600px window: the composer at 530, the emoji picker's top at 130 above it
+    const short = { width: 1400, height: 600, safeBottom: 0 };
+    const shortMiddle: Box = { left: 456, top: 12, width: 932, height: 576 };
+    const shortComposer: Box = { left: 456, top: 530, width: 932, height: 58 };
+    const tallPicker: Box = { left: 472, top: 130, width: 360, height: 392 };
+
+    test("the achievement stays whole below the window's top, over the toast if it must", () => {
+        // above a 56px toast it would end at 130 - 12 - 56 - 12 = 50, its 64px card cut off
+        const spot = achievementSpot(short, shortMiddle, shortComposer, [tallPicker], 56);
+        expect(spot.y).toBe(ACHIEVEMENT_HEIGHT + BOTTOM_GAP);
+    });
+
+    test("the toasts stay whole below the window's top", () => {
+        const higher: Box = { ...tallPicker, top: 40 };
+        expect(toastSpot(short, shortMiddle, shortComposer, [higher], 56).y).toBe(56 + BOTTOM_GAP);
+        // with room, the height changes nothing
+        expect(toastSpot(short, shortMiddle, shortComposer, [tallPicker], 56).y).toBe(
+            130 - BOTTOM_GAP,
+        );
     });
 });
