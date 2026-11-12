@@ -32,6 +32,7 @@ vi.mock("./share_target", () => ({
     expectShareTarget: vi.fn(async () => undefined),
     handleShareTarget: vi.fn(),
 }));
+vi.mock("./read_elsewhere", () => ({ releaseNotificationsReadElsewhere: vi.fn() }));
 vi.mock("@stores/chatShortcuts", () => ({
     clearChatShortcuts: vi.fn(),
     startChatShortcutPusher: vi.fn(),
