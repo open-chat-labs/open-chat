@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">התראות על הודעות</string>
+    <string name="notification_channel_messages_description">התראות על הודעות חדשות ב-OpenChat</string>
+    <string name="notification_channel_message_group">קבוצת הודעות</string>
+    <string name="notification_channel_summary">התראות סיכום</string>
+    <string name="notification_channel_summary_description">מציג סיכום של כל ההתראות</string>
+    <string name="notification_channel_calls">שיחות</string>
+    <string name="notification_channel_calls_description">שיחות נכנסות</string>
+    <string name="call_ongoing">שיחה פעילה</string>
+    <string name="notification_channel_ongoing_call_description">שיחה שמתבצעת כעת</string>
+    <string name="call_in_progress">שיחה מתבצעת</string>
+    <string name="notification_you">את/ה</string>
+    <string name="notification_thread">%1$s // שרשור</string>
+    <string name="notification_reacted">%1$s הגיב/ה עם %2$s</string>
+    <string name="notification_tipped">%1$s שלח/ה טיפ של %2$s</string>
+    <string name="notification_invited">%1$s הזמין/ה אותך אל %2$s</string>
+    <string name="notification_photo">תמונה</string>
+    <string name="notification_shared_video">סרטון</string>
+    <string name="notification_shared_gif">GIF</string>
+    <string name="notification_shared_audio">הקלטת שמע</string>
+    <string name="notification_shared_file">קובץ</string>
+    <string name="call_kind_audio">שיחה קולית</string>
+    <string name="call_kind_video">שיחת וידאו</string>
+    <string name="call_kind_broadcast">שידור</string>
+    <string name="call_is_calling">%1$s מתקשר/ת · %2$s</string>
+    <string name="call_incoming_audio">שיחה קולית נכנסת</string>
+    <string name="call_incoming_video">שיחת וידאו נכנסת</string>
+    <string name="call_incoming_broadcast">שידור נכנס</string>
+    <string name="call_decline">דחייה</string>
+    <string name="call_accept">מענה</string>
+    <string name="call_missed">שיחה שלא נענתה</string>
+    <string name="call_missed_from">שיחה שלא נענתה מ-%1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">הודעה חדשה אחת</item>
+        <item quantity="two">שתי הודעות חדשות</item>
+        <item quantity="many">%d הודעות חדשות</item>
+        <item quantity="other">%d הודעות חדשות</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">הודעה אחת</item>
+        <item quantity="two">שתי הודעות</item>
+        <item quantity="many">%d הודעות</item>
+        <item quantity="other">%d הודעות</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s מצ\'אט אחד</item>
+        <item quantity="two">%1$s משני צ\'אטים</item>
+        <item quantity="many">%1$s מ-%2$d צ\'אטים</item>
+        <item quantity="other">%1$s מ-%2$d צ\'אטים</item>
+    </plurals>
+    <string name="oc_call_waiting_channel">שיחה ממתינה</string>
+    <string name="oc_call_waiting_decline">דחייה</string>
+    <string name="oc_call_waiting_end_and_answer">סיים וענה</string>
+</resources>

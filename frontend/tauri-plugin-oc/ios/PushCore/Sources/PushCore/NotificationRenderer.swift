@@ -96,11 +96,13 @@ public enum NotificationRenderer {
 
     // The same wording as the pusher's fallback and the Android shell
     static func title(_ push: MessagePush) -> String {
-        let thread = push.threadIndex != nil ? " // Thread" : ""
+        func inThread(_ name: String) -> String {
+            push.threadIndex != nil ? localized("%1$@ // Thread", name) : name
+        }
         switch push.chat {
         case .direct: return push.senderName ?? "OpenChat"
-        case .group: return "\(push.groupName ?? "")\(thread)"
-        case .channel: return "\(push.communityName ?? "")#\(push.channelName ?? "")\(thread)"
+        case .group: return inThread(push.groupName ?? "")
+        case .channel: return inThread("\(push.communityName ?? "")#\(push.channelName ?? "")")
         }
     }
 
@@ -116,21 +118,21 @@ public enum NotificationRenderer {
     static func messageText(_ push: MessagePush) -> String {
         let sender = push.senderName ?? ""
         switch push.bodyType {
-        case .reaction: return "\(sender) reacted with \(push.body)"
-        case .tip: return "\(sender) sent a tip of \(push.body)"
-        case .invite: return "\(sender) invited you to \(push.body)"
+        case .reaction: return localized("%1$@ reacted with %2$@", sender, push.body)
+        case .tip: return localized("%1$@ sent a tip of %2$@", sender, push.body)
+        case .invite: return localized("%1$@ invited you to %2$@", sender, push.body)
         case .message: break
         }
 
         let caption = push.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : push.body
         switch push.messageType {
-        case "Image": return caption ?? "📷 Photo"
-        case "Video": return "🎥 " + (caption ?? "Shared a video")
-        case "Giphy": return "🎞️ " + (caption ?? "Shared a GIF")
-        case "Audio": return "🎙️ " + (caption ?? "Shared audio")
+        case "Image": return caption ?? "📷 " + localized("Photo")
+        case "Video": return "🎥 " + (caption ?? localized("Shared a video"))
+        case "Giphy": return "🎞️ " + (caption ?? localized("Shared a GIF"))
+        case "Audio": return "🎙️ " + (caption ?? localized("Shared audio"))
         case "File":
             let fileName = push.fileName.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
-            return "📎 " + (fileName ?? caption ?? "Shared a file")
+            return "📎 " + (fileName ?? caption ?? localized("Shared a file"))
         default: return caption ?? push.body
         }
     }
@@ -142,6 +144,13 @@ public enum NotificationRenderer {
         case .channel: return "\(push.communityName ?? "")#\(push.channelName ?? "")"
         }
     }
+}
+
+// The text in the system language. The translations are the Notification Service Extension's
+// (NotificationService/*.lproj), so `swift test`, which has none, gets the English key back.
+private func localized(_ key: String, _ args: CVarArg...) -> String {
+    let format = NSLocalizedString(key, bundle: .main, comment: "")
+    return args.isEmpty ? format : String(format: format, arguments: args)
 }
 
 // Runs `work`, giving up with nil once `timeout` passes. Returns at the deadline even when `work`

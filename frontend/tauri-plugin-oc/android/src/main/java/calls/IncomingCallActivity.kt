@@ -17,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.ocplugin.app.AvatarHelper
+import com.ocplugin.app.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -118,7 +119,7 @@ class IncomingCallActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
         }
         val subtitle = TextView(this).apply {
-            text = IncomingCallNotifications.subtitle(call)
+            text = IncomingCallNotifications.subtitle(this@IncomingCallActivity, call)
             textSize = 16f
             setTextColor(Color.parseColor("#BBBBBB"))
             gravity = Gravity.CENTER
@@ -149,9 +150,8 @@ class IncomingCallActivity : AppCompatActivity() {
             }
             setOnClickListener { onClick() }
         }
-        // TODO i18n
-        buttons.addView(button("Decline", "#D32F2F") { decline() })
-        buttons.addView(button("Accept", "#2E7D32") { accept() })
+        buttons.addView(button(getString(R.string.call_decline), "#D32F2F") { decline() })
+        buttons.addView(button(getString(R.string.call_accept), "#2E7D32") { accept() })
         root.addView(avatar)
         root.addView(title)
         root.addView(subtitle)

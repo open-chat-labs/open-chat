@@ -1,0 +1,11 @@
+/* The English text is the key. Every other .lproj has every key this file has
+   (src-tauri/tests/nativeStrings.spec.ts). */
+"%1$@ // Thread" = "%1$@ // Thread";
+"%1$@ reacted with %2$@" = "%1$@ reacted with %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ sent a tip of %2$@";
+"%1$@ invited you to %2$@" = "%1$@ invited you to %2$@";
+"Photo" = "Photo";
+"Shared a video" = "Shared a video";
+"Shared a GIF" = "Shared a GIF";
+"Shared audio" = "Shared audio";
+"Shared a file" = "Shared a file";

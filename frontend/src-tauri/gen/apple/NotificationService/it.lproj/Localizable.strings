@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // Thread";
+"%1$@ reacted with %2$@" = "%1$@ ha reagito con %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ ha inviato una mancia di %2$@";
+"%1$@ invited you to %2$@" = "%1$@ ti ha invitato in %2$@";
+"Photo" = "Foto";
+"Shared a video" = "Ha condiviso un video";
+"Shared a GIF" = "Ha condiviso una GIF";
+"Shared audio" = "Ha condiviso un audio";
+"Shared a file" = "Ha condiviso un file";

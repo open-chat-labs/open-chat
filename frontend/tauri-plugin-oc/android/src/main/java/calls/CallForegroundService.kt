@@ -51,7 +51,7 @@ class CallForegroundService : Service() {
                     stopNow()
                     return START_NOT_STICKY
                 }
-                val title = intent.getStringExtra(EXTRA_TITLE) ?: "Call in progress"
+                val title = intent.getStringExtra(EXTRA_TITLE) ?: getString(R.string.call_in_progress)
                 val startedAt = intent.getLongExtra(EXTRA_STARTED_AT, System.currentTimeMillis())
                 val sharing = intent.getBooleanExtra(EXTRA_SHARING, false)
                 startForegroundCompat(title, startedAt, sharing, intent.getBundleExtra(EXTRA_CALL))
@@ -124,7 +124,7 @@ class CallForegroundService : Service() {
     }
 
     private fun buildNotification(title: String, startedAt: Long, callBundle: android.os.Bundle?): Notification {
-        val person = Person.Builder().setName(title.ifBlank { "Ongoing call" }).setImportant(true).build()
+        val person = Person.Builder().setName(title.ifBlank { getString(R.string.call_ongoing) }).setImportant(true).build()
         val hangUp = PendingIntent.getBroadcast(
             this,
             NOTIFICATION_ID,
@@ -139,7 +139,7 @@ class CallForegroundService : Service() {
             .setUsesChronometer(true)
             .setShowWhen(true)
             .setSmallIcon(R.drawable.ic_notification_small)
-            .setContentText("Call in progress")
+            .setContentText(getString(R.string.call_in_progress))
             .setStyle(NotificationCompat.CallStyle.forOngoingCall(person, hangUp))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_CALL)
@@ -200,8 +200,10 @@ class CallForegroundService : Service() {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (nm.getNotificationChannel(CHANNEL_ID) != null) return
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Ongoing call", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                    description = "A call in progress"
+                NotificationChannel(
+                    CHANNEL_ID, context.getString(R.string.call_ongoing), NotificationManager.IMPORTANCE_DEFAULT,
+                ).apply {
+                    description = context.getString(R.string.notification_channel_ongoing_call_description)
                     setSound(null, null)
                     enableVibration(false)
                     setShowBadge(false)

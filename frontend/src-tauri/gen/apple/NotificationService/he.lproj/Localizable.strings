@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // שרשור";
+"%1$@ reacted with %2$@" = "%1$@ הגיב/ה עם %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ שלח/ה טיפ של %2$@";
+"%1$@ invited you to %2$@" = "%1$@ הזמין/ה אותך אל %2$@";
+"Photo" = "תמונה";
+"Shared a video" = "סרטון";
+"Shared a GIF" = "GIF";
+"Shared audio" = "הקלטת שמע";
+"Shared a file" = "קובץ";
