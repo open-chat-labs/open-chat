@@ -53,10 +53,17 @@ export type ChatListRow = {
     section: "Pinned" | "Chats";
     liveCall: "" | "video";
     selected: boolean;
+    /**
+     * A DM whose other user's account is suspended (by a platform moderator): ChatRow dims the
+     * avatar, marks it and tags the name. Never a group or channel (they're frozen, not suspended).
+     */
+    suspended: boolean;
 };
 
 export type RowContext = {
     userName: (userId: string) => string;
+    /** Whether a user's account is suspended (their UserSummary's `suspended`). */
+    userSuspended: (userId: string) => boolean;
     /** The latest message as the row shows it (app/src/logic/chats/latestMessagePreview). */
     preview: (chat: ChatSummary) => string;
     /** A chat's display date as the list shows it (a time today, else a short date). */
@@ -152,6 +159,8 @@ export function rowContext(
         : {};
     return {
         userName: (userId) => client.displayName(users.get(userId)),
+        // the list is built again as allUsersStore changes, so a suspension shows as it loads
+        userSuspended: (userId) => users.get(userId)?.suspended ?? false,
         preview: (chat) =>
             latestMessagePreview(chat, {
                 formatter,
@@ -275,6 +284,7 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
         section: pinned ? "Pinned" : "Chats",
         liveCall: chat.videoCallInProgress !== undefined ? "video" : "",
         selected: ctx.selected === id,
+        suspended: chat.kind === "direct_chat" && ctx.userSuspended(chat.them.userId),
     };
 }
 

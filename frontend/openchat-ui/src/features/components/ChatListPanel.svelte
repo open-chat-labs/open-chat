@@ -189,6 +189,7 @@
       color={row.color}
       avatarUrl={row.avatarUrl}
       online={row.online}
+      suspended={row.suspended}
       verified={row.verified}
       locked={row.locked}
       pinned={row.pinned}

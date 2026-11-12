@@ -10,6 +10,7 @@
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import PanelCover from '../../lib/components/PanelCover.svelte';
+  import Pill from '../../lib/components/Pill.svelte';
   import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
 
   type MuteKey = '8h' | '1w' | 'always';
@@ -38,6 +39,8 @@
     /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
     avatar?: string;
     online?: boolean;
+    /** Their account is suspended: a Suspended tag under the name, and no online dot. */
+    suspended?: boolean;
     memberSince: string;
     /** CHIT earned; its card is left out without it (the viewer has turned CHIT off). */
     chit?: string;
@@ -71,6 +74,7 @@
     color = 'violet',
     avatar,
     online = false,
+    suspended = false,
     memberSince,
     chit,
     fav = false,
@@ -186,13 +190,17 @@
     <div class="body">
       <div class="identity">
         <div class="avatar" style:background={avatar || (GRADIENTS[color] ?? GRADIENTS.violet)} onclick={() => onOpenProfile?.('profile')} aria-label={t('ui.dmPanel.viewProfile')} role="button" tabindex="0" title={t('ui.dmPanel.viewProfile')}>
-          {#if online}
+          {#if online && !suspended}
             <span class="online"></span>
           {/if}
         </div>
         <span class="name" onclick={() => onOpenProfile?.('profile')} aria-label={t('ui.dmPanel.viewProfile')} role="button" tabindex="0" title={t('ui.dmPanel.viewProfile')}>{title}</span>
         {#if handle}
           <span class="handle">{handle}</span>
+        {/if}
+        {#if suspended}
+          <!-- TODO(design): the Suspended tag isn't in the design export (ChatRow's) -->
+          <Pill label="ui.chatRow.suspended" tone="danger" />
         {/if}
         <div class="pills">
           <span class="pill mute" class:on={!!isMuted} onclick={openMuteMenu} aria-label={t(isMuted ? 'ui.mute.change' : 'ui.mute.muteNotifications')} role="button" tabindex="0" title={t(isMuted ? 'ui.mute.change' : 'ui.mute.muteNotifications')}>

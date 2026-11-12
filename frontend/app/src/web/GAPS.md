@@ -2285,6 +2285,18 @@ design export needs. Each entry says where it came up.
     them up follows the clock, and the rows take a new set only when someone comes online or goes
     offline, so the rows aren't built again on every tick (as `ec9b75ac59` did for the old list).
     No dot for groups, bots or the user, as the old row.
+  - **a suspended user** (their whole account, by a platform moderator; the user's decision,
+    2026-11-12): a DM whose other user is suspended (`allUsersStore`'s `suspended`, `chatRow`'s
+    `suspended`, direct chats only) shows the avatar dimmed with a small red ban mark where the
+    online dot sits (no online dot), and a "Suspended" tag after the name (the library's `Pill`,
+    danger tone). Everyone sees it, not only moderators, as the old DM header's "Account
+    suspended" (which the new header keeps). The preview line stays as it is. A person the search
+    finds is marked the same way (`foundRows`); `UserDialog` and `DmPanel` show the tag (after the
+    name, under it in the panel) and no online dot, their avatars undimmed. Groups and communities
+    are frozen, not suspended, so they're never marked. The native Chats tab's rows show it too
+    (`nativeChatRow`, the same `ChatRow`). It follows a moderator's suspend or unsuspend at once
+    (the client updates `allUsersStore`). Not in the design export: TODO(design) for the dimming,
+    the mark and the tag (`Avatar`, `ChatRow`, `UserDialog`, `DmPanel`; EXPORT-LOG 2026-11-12).
   - **unread mentions**: an "@" before the count, groups and channels only (`unreadMentionCount`
     in `@client`, the old rows' rule), following `messagesRead` as the unread count does, and none
     for a chat whose latest message has expired.

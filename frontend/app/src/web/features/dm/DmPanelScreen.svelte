@@ -54,6 +54,8 @@
             userId,
             avatarUrl: profileAvatarUrl(blobUrlPattern, userId, profile.avatarId),
             online: lastOnlineStatus($_, Date.now(), card.lastOnline)[1],
+            // the users store's, so a moderator's suspend or unsuspend shows at once
+            suspended: $allUsersStore.get(userId)?.suspended ?? user.suspended,
             joined: client.toMonthYearString(new Date(Number(profile.created))),
             chit: userBadges(
                 {

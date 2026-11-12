@@ -20,6 +20,7 @@ const row: ChatListRow = {
     section: "Pinned",
     liveCall: "",
     selected: false,
+    suspended: false,
 };
 
 describe("a row's long-press menu", () => {
@@ -50,8 +51,14 @@ describe("a native chat row", () => {
             muted: true,
             pinned: true,
             liveCall: "",
+            suspended: false,
             fav: true,
         });
+    });
+
+    test("marks a DM whose other user is suspended, as the web's row", () => {
+        const dm: ChatListRow = { ...row, kind: "user", locked: false, suspended: true };
+        expect(nativeChatRow(dm, false).suspended).toBe(true);
     });
 });
 

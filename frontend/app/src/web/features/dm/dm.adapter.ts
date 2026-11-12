@@ -14,6 +14,8 @@ export type DmPanelInput = {
     // their own picture (profileAvatarUrl); none shows their swatch
     avatarUrl: string | undefined;
     online: boolean;
+    // their account is suspended (by a platform moderator)
+    suspended: boolean;
     joined: string;
     // their CHIT badges, which userBadges leaves out when the viewer has turned CHIT off
     chit: UserBadges["chit"];
@@ -31,6 +33,7 @@ export function dmPanelProps(input: DmPanelInput) {
         avatar: input.avatarUrl === undefined ? undefined : cssImage(input.avatarUrl),
         color: senderColor(input.userId),
         online: input.online,
+        suspended: input.suspended,
         memberSince: input.joined,
         chit: input.chit?.earned.toLocaleString(),
         fav: input.favourite,

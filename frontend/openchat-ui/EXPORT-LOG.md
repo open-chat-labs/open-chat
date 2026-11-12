@@ -937,3 +937,10 @@
 - The props that took four of the names take all five (plum added): `ConversationHeader.color`, `ChatListHeader.color`, `MessageGroup.color` (and `MessageGroupItem.color` in `lib/types.ts`), `TypingIndicator.avatarColor`; `GroupPanel`'s `color` and `InfoPanel`'s follow their maps. `meta.json` (those props' types and options, `TypingIndicator.colors`' doc, and the options of `MemberRow`, `UserChip`, `DmPanel`, `UserDialog`, `ActivityRow` and `InfoPanel`'s `color`).
 - The app picks every swatch with one function (`app/src/logic/swatch.ts`, over these five names), so an id gets the same one on every screen.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-12 — a suspended user in the chat list (web L6), by hand
+- `Avatar`: `suspended`, the face dimmed (0.45) with a small red ban mark (`--icon-ban` in `--status-danger` on a `--card` disc) where the online dot sits, outside the face so it isn't dimmed; no online dot while it's set. The mark grows with the dot on a big avatar.
+- `ChatRow`: `suspended` (users only), the avatar's suspended look and a "Suspended" tag after the name (`Pill`, danger tone, sm), so no online dot either. `ChatListPanel` passes its rows' `suspended` on, for the list's DMs and for the search's people.
+- `UserDialog` and `DmPanel`: `suspended`, the same tag after the name (`UserDialog`) or under it (`DmPanel`), and no online dot. Their avatars aren't dimmed.
+- String `ui.chatRow.suspended` ("Suspended"), used by all three. `meta.json` (`Avatar`, `ChatRow`, `UserDialog`, `DmPanel`: `suspended`).
+- Not in the design export: the user's decision (2026-11-12), to go back to it (the app's `GAPS.md` lists it). TODO(design): the dimming, the mark and the tag.

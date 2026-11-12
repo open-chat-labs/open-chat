@@ -56,6 +56,16 @@ describe("the search's rows for what isn't in the list", () => {
         ]);
     });
 
+    test("mark a suspended person as a DM's row is; others and bots aren't", () => {
+        const found = foundRows({
+            found: { users: [user, { ...user, userId: "u2", suspended: true }], bots: [bot] },
+            userName: (u) => u.username,
+            userAvatar: () => undefined,
+            botAvatar: () => "",
+        });
+        expect(found.map(({ row }) => row.suspended ?? false)).toEqual([false, true, false]);
+    });
+
     test("start a chat with the person or bot", () => {
         expect(rows.map(({ target }) => target)).toEqual([
             { kind: "chat_with", userId: "u1" },
