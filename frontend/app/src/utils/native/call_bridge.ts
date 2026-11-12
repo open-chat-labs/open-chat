@@ -112,13 +112,16 @@ export async function expectCallActions(
     return listener;
 }
 
-// Opens the chat and joins or starts the call.
+// Opens the chat and joins or starts the call. An accept is the user's answer on the ring
+// (End & answer, End & Accept), so it replaces a call in progress without asking.
 export function runCallAction(action: NativeCallAction): void {
     navigate(routeForChatIdentifier("none", action.chatId), "notification");
+    const accept = action.kind === "accept";
     publish("startVideoCall", {
         chatId: action.chatId,
         callType: action.callType,
-        join: action.kind === "accept",
+        join: accept,
+        ...(accept ? { answer: true } : {}),
     });
 }
 

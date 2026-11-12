@@ -356,6 +356,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "An image over the gradient (an uploaded avatar); the gradient shows while it loads and if it fails to."
+      },
+      {
+        "name": "suspended",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A suspended account: the face dimmed and a red ban mark in the online dot's place; no online dot."
       }
     ],
     "group": "library"
@@ -1314,6 +1325,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Users only."
+      },
+      {
+        "name": "suspended",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Users only: their account is suspended. The avatar dims with a ban mark (no online dot) and the name gets a Suspended tag."
       },
       {
         "name": "menuItems",
@@ -10195,6 +10217,17 @@
         "doc": ""
       },
       {
+        "name": "suspended",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Their account is suspended: a Suspended tag under the name, and no online dot."
+      },
+      {
         "name": "memberSince",
         "type": "string",
         "default": "Nov 2021",
@@ -18604,6 +18637,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "suspended",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Their account is suspended: a Suspended tag after the name, and no online dot."
       },
       {
         "name": "cover",

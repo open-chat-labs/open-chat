@@ -9,6 +9,7 @@ const input: DmPanelInput = {
     profile: { username: "alice", bio: "", created: 0n } as PublicProfile,
     avatarUrl: "/a.png",
     online: false,
+    suspended: false,
     joined: "Oct 2026",
     chit: { streak: 1, earned: 500 },
     eventsTTL: undefined,
@@ -31,6 +32,11 @@ describe("the DM panel adapter", () => {
             disappearOn: true,
             disappearAfter: "1 hour",
         });
+    });
+
+    test("says when their account is suspended", () => {
+        expect(dmPanelProps(input).suspended).toBe(false);
+        expect(dmPanelProps({ ...input, suspended: true }).suspended).toBe(true);
     });
 
     test("shows their own picture, else their swatch", () => {

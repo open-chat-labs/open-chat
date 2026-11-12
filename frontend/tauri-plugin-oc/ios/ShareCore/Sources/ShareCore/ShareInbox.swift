@@ -10,6 +10,8 @@ import Foundation
 // without reading file dates.
 public struct ShareInbox {
     public static let appGroup = "group.com.oclabs.openchat"
+    // The biggest file a share may hold, as big-chat's share extension
+    public static let maxFileBytes = 50 * 1024 * 1024
     // A share the app never picked up, or the user never sent, goes after a day
     static let maxAge: TimeInterval = 24 * 60 * 60
     static let manifestName = "share.json"
@@ -92,6 +94,11 @@ struct Manifest: Codable {
     var files: [Entry]
 }
 
+public enum ShareError: Error {
+    // Bigger than ShareInbox.maxFileBytes
+    case fileTooLarge
+}
+
 // One share the extension is copying into the inbox
 public final class StagedShare {
     let dir: URL
@@ -115,8 +122,12 @@ public final class StagedShare {
     }
 
     // Copies a shared file in. The source is often only readable until the callback that
-    // handed it over returns, so this copies straight away.
+    // handed it over returns, so this copies straight away. A file bigger than `maxFileBytes`
+    // is refused before it is copied.
     public func addFile(copying source: URL, mimeType: String?) throws {
+        if let size = try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize, size > ShareInbox.maxFileBytes {
+            throw ShareError.fileTooLarge
+        }
         let name = uniqueName(source.lastPathComponent.isEmpty ? "shared" : source.lastPathComponent)
         try FileManager.default.copyItem(at: source, to: dir.appendingPathComponent(name))
         manifest.files.append(.init(name: name, mimeType: mimeType))

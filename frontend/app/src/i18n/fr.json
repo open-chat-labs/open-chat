@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Une fois la nouvelle installée, désinstallez celle-ci. Si les deux sont installées, chaque notification arrive en double.",
         "reinstallDownload": "Télécharger la version actuelle"
     },
+    "fullScreenCalls": {
+        "title": "Appels en plein écran",
+        "message": "Android a besoin de votre autorisation pour qu'OpenChat affiche les appels entrants en plein écran lorsque votre téléphone est verrouillé. Tant que vous ne l'autorisez pas, les appels arrivent sous forme de notification ordinaire.",
+        "openSettings": "Ouvrir les paramètres",
+        "notNow": "Plus tard"
+    },
     "appWallet": {
         "header": {
             "asset": "Actif",
@@ -2859,6 +2865,7 @@
     "readOnlyThread": "Ce fil est en lecture seule",
     "reason": "Raison",
     "reasonForSuspension": "motif de suspension",
+    "recipientSuspended": "Le compte de cet utilisateur est suspendu. Vous ne pouvez pas lui envoyer de messages.",
     "recordAudioMessage": "Enregistrer un message audio",
     "referralHeader": "Inviter des amis/famille",
     "refresh": "Rafraîchir",

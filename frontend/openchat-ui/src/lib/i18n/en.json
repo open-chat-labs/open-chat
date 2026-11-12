@@ -545,6 +545,7 @@
       "mentions": "{count, plural, one {# unread mention} other {# unread mentions}}",
       "muted": "Notifications muted",
       "private": "Private",
+      "suspended": "Suspended",
       "videoCallLive": "Video call in progress",
       "voiceCallLive": "Voice call in progress"
     },

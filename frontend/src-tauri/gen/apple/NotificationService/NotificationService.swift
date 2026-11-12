@@ -1,13 +1,17 @@
 import Intents
 import PushCore
+import UniformTypeIdentifiers
 import UserNotifications
 
 // Renders a message push before iOS shows it (#10398 M1): the sender's and the group's avatars,
-// and a communication notification so iOS shows the sender like a messaging app. Whatever goes
+// the message's photo, and a communication notification so iOS shows the sender like a messaging app. Whatever goes
 // wrong, a notification is delivered, with the server's text if nothing better is ready.
 final class NotificationService: UNNotificationServiceExtension {
-    // The extension has about 30 seconds. Avatars get most of it, rendering the rest.
+    // The extension has about 30 seconds. Avatars and the photo get most of it, rendering the rest.
     private static let avatarTimeout: Duration = .seconds(20)
+    private static let avatars = AvatarCache(
+        directory: FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("avatars", isDirectory: true))
 
     private let lock = NSLock()
     private var contentHandler: ((UNNotificationContent) -> Void)?
@@ -32,7 +36,8 @@ final class NotificationService: UNNotificationServiceExtension {
                 serverBody: content.body,
                 avatarBaseUrl: avatarBaseUrl,
                 timeout: Self.avatarTimeout,
-                fetch: Self.fetch)
+                fetch: { await Self.avatars.avatar(at: $0) },
+                fetchImage: { await Self.downloadImage($0) })
             deliver(Self.notification(rendered, from: content))
         }
     }
@@ -52,11 +57,20 @@ final class NotificationService: UNNotificationServiceExtension {
         }
     }
 
-    private static func fetch(_ url: URL) async -> Data? {
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
-            (response as? HTTPURLResponse)?.statusCode == 200
-        else { return nil }
-        return data
+    // To a file, so a big photo doesn't use up the extension's memory. The attachment's type comes
+    // from the file's extension, which a blob's URL doesn't have.
+    private static func downloadImage(_ url: URL) async -> URL? {
+        guard let (file, response) = try? await URLSession.shared.download(from: url) else { return nil }
+        let ext = response.mimeType.flatMap { UTType(mimeType: $0)?.preferredFilenameExtension } ?? "jpg"
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
+        guard (response as? HTTPURLResponse)?.statusCode == 200,
+            (try? FileManager.default.moveItem(at: file, to: destination)) != nil
+        else {
+            try? FileManager.default.removeItem(at: file)
+            return nil
+        }
+        return destination
     }
 
     private static func notification(
@@ -67,6 +81,14 @@ final class NotificationService: UNNotificationServiceExtension {
         fallback.body = rendered.body
         if !rendered.threadId.isEmpty {
             fallback.threadIdentifier = rendered.threadId
+        }
+        if let image = rendered.image {
+            // iOS moves the file into its own store, or refuses it, such as when it's too big
+            if let attachment = try? UNNotificationAttachment(identifier: "image", url: image) {
+                fallback.attachments = [attachment]
+            } else {
+                try? FileManager.default.removeItem(at: image)
+            }
         }
 
         guard let senderName = rendered.senderName,

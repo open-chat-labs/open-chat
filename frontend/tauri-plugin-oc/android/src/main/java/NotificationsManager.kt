@@ -9,6 +9,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.calls.CallRinger
+import com.ocplugin.app.calls.DefaultAvatar
 import com.ocplugin.app.calls.PushRoute
 import com.ocplugin.app.calls.PushRouting
 import com.ocplugin.app.data.*
@@ -107,8 +108,10 @@ object NotificationsManager {
         val notifications = DBManager.loadConversationForContext(notification.contextId)
         if (notifications.isEmpty()) return
 
-        // Main avatar for notification
+        // The conversation's avatar: the sender's for a DM, else the group's, channel's or
+        // community's.
         val mainAvatar = AvatarHelper.loadBitmapForNotification(context, notification)
+        val isGroupConversation = notification.type != NotificationType.DM
 
         // TODO i18n
         // Build "yourself" as the base persona to initialise the messagingStyle!
@@ -132,23 +135,37 @@ object NotificationsManager {
             }.awaitAll()
         }
 
-        // Build personas list
-        val persons = mutableListOf<Person>()
-        notifications.forEachIndexed { index, n ->
-            val personBuilder = Person.Builder()
+        // One person per sender, keyed by user id, named and pictured as in their latest row.
+        // In a DM the sender is the conversation, so they get its avatar. In a group or
+        // channel each sender gets their own; one without a loadable avatar gets the
+        // system's initial-letter one, never the group's. Older pushes carry the group's
+        // avatar id as the sender's (fcm_data.rs); it names no user avatar, so it isn't
+        // fetched.
+        val latestBySender = notifications.associateBy { it.senderId }
+        val senderAvatars = if (isGroupConversation) coroutineScope {
+            latestBySender.values.map { n ->
+                async {
+                    n.senderId to n.senderAvatarId
+                        ?.takeIf { it != n.groupAvatarId }
+                        ?.let { AvatarHelper.loadBitmapForUser(context, n.senderId, it) }
+                }
+            }.awaitAll().toMap()
+        } else emptyMap()
+        val persons = latestBySender.mapValues { (senderId, n) ->
+            val avatar = if (isGroupConversation) senderAvatars[senderId] else mainAvatar
+            Person.Builder()
                 .setName(n.senderName)
+                .setKey(senderId.value)
                 .setImportant(true)
+                .apply { avatar?.let { setIcon(IconCompat.createWithBitmap(it)) } }
+                .build()
+        }
 
-            if (mainAvatar != null) {
-                personBuilder.setIcon(IconCompat.createWithBitmap(mainAvatar))
-            }
-
-            persons.add(personBuilder.build())
-
+        notifications.forEachIndexed { index, n ->
             val message = NotificationCompat.MessagingStyle.Message(
                 NotificationCompanion.toMessage(n),
                 n.receivedAt,
-                persons.last()
+                persons.getValue(n.senderId)
             )
             imageUris[index]?.let { uri ->
                 message.setData("image/jpeg", uri)
@@ -161,15 +178,18 @@ object NotificationsManager {
         // Get the conversation context type for the new notification
         val title = NotificationCompanion.toTitle(notification)
         val message = NotificationCompanion.toMessage(notification)
-        if (notification.type != NotificationType.DM) {
+        if (isGroupConversation) {
             messagingStyle.setConversationTitle(title)
+            messagingStyle.setGroupConversation(true)
         }
 
         val shortcutContext = "shortcut_${notification.contextId.value}"
         val shortcut = ShortcutInfoCompat.Builder(context, shortcutContext)
             .setShortLabel(title)
             .setLongLived(true)
-            .setPersons(persons.toTypedArray())
+            .setPersons(persons.values.toTypedArray())
+            .setIcon(IconCompat.createWithBitmap(mainAvatar ?: DefaultAvatar.forName(title)))
+            .setRank(NOTIFICATION_SHORTCUT_RANK)
             .setIntent(
                 IntentsManager.buildNotificationShortcutIntent(context, notification)
             )
@@ -350,6 +370,10 @@ object NotificationsManager {
                 .build()
 
             Log.d(OC_TAG_NOT, "#### Set summary notification: $summary")
+            // A push can arrive after an update but before the app has run and created the
+            // summary's channel; a post to a missing channel is dropped. Creating it is a no-op
+            // once it exists.
+            NotificationsChannel.createSummaryChannel(context)
             notificationManager.notify(SUMMARY_NOTIFICATION_TAG, SUMMARY_NOTIFICATION_ID, summaryNotification)
         } else {
             Log.d(OC_TAG_NOT, "#### Summary notification CANCELED!")

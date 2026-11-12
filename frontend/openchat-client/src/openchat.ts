@@ -447,6 +447,7 @@ import {
     chatSummariesListStore,
     chatSummariesStore,
     chatsInitialisedStore,
+    chatsLoadedForUserStore,
     chitStateStore,
     dailyPuzzleStore,
     communitiesStore,
@@ -454,6 +455,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
+    currentUserChatsLoadedStore,
     currentUserIdStore,
     currentUserProfileStore,
     currentUserStore,
@@ -1214,13 +1216,15 @@ export class OpenChat {
     }
 
     /**
-     * The group or community a guest asked to join, once they've signed in and their chats have
-     * loaded; handed out once, as the post-login state is cleared with it, so the join is replayed
-     * once whichever tree asks. Call it again whenever the identity state or `chatsInitialisedStore`
+     * The group or community a guest asked to join, once they've signed in and their own chats have
+     * loaded (`currentUserChatsLoadedStore`: after a sign-up the anonymous session's stand in until
+     * then, and a join decided against them would be undone by the account's initial load); handed
+     * out once, as the post-login state is cleared with it, so the join is replayed once whichever
+     * tree asks. Call it again whenever the identity state or `currentUserChatsLoadedStore`
      * changes, and join what it returns.
      */
     takePostLoginJoin(): JoinGroup | JoinCommunity | undefined {
-        const join = postLoginJoin(identityStateStore.value, chatsInitialisedStore.value);
+        const join = postLoginJoin(identityStateStore.value, currentUserChatsLoadedStore.value);
         if (join !== undefined) this.clearPostLoginState();
         return join;
     }
@@ -1253,8 +1257,7 @@ export class OpenChat {
         this.#dailyPuzzlePoller?.stop();
         if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
-        chatsInitialisedStore.set(false);
-        this.#syncPuller.clear();
+        this.#resetChatsSession(true);
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.#ocIdentityPrincipal = undefined;
@@ -1658,6 +1661,14 @@ export class OpenChat {
             user.userId,
             user.blobReference?.blobId,
         );
+        // Until now the session was the anonymous user's (an identity without an account runs as
+        // one), and its chats loaded as such. The new account's start afresh, as after a sign-in:
+        // an initial load, and a sync session of its own. Otherwise its first load counts as a
+        // later one (no snapshot), and the puller, still on the anonymous user, ignores its heads,
+        // so its chats (the OpenChat Bot's welcome DM) never reach the UI until a reload. The
+        // chats count as loaded meanwhile: the trees' loader would take down the sign-up still
+        // finishing under it (the old trees' Home), and the new chats fold in when they come.
+        this.#resetChatsSession(false);
         this.onCreatedUser(user);
         userStore.addUser({
             kind: user.isBot ? "bot" : "user",
@@ -1678,6 +1689,21 @@ export class OpenChat {
             hideOnlineStatus: user.hideOnlineStatus,
         });
         this.#loadCurrentUserProfile(user.userId);
+    }
+
+    /**
+     * Starts the chats afresh for whoever the session is now: the next pass is an initial load
+     * (`#loadChats`), with a sync session of its own, and whatever the session before still has
+     * in flight (a snapshot, a pull) is dropped. `unloaded`: the chats no longer count as loaded
+     * (`chatsInitialisedStore`) until the initial load is in, which puts up the trees' loader, as
+     * for another identity; a new account carries on from its anonymous session without it. Either
+     * way they no longer count as the current user's own (`currentUserChatsLoadedStore`) until
+     * then.
+     */
+    #resetChatsSession(unloaded: boolean): void {
+        if (unloaded) chatsInitialisedStore.set(false);
+        chatsLoadedForUserStore.set(undefined);
+        this.#syncPuller.clear();
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -9311,18 +9337,28 @@ export class OpenChat {
         localUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
     }
 
-    freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
-        return this.#worker
-            .send({ kind: "freezeCommunity", id, reason })
-            .then((resp) => resp === "success")
-            .catch(() => false);
+    // frozen or unfrozen, the community (and so its channels' composers) shows it straight away,
+    // not at the next sync, as a group's freeze does
+    async freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
+        try {
+            const resp = await this.#worker.send({ kind: "freezeCommunity", id, reason });
+            if (resp !== "success") return false;
+            localUpdates.updateCommunityFrozen(id, true);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
-    unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
-        return this.#worker
-            .send({ kind: "unfreezeCommunity", id })
-            .then((resp) => resp === "success")
-            .catch(() => false);
+    async unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
+        try {
+            const resp = await this.#worker.send({ kind: "unfreezeCommunity", id });
+            if (resp !== "success") return false;
+            localUpdates.updateCommunityFrozen(id, false);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {
@@ -10042,11 +10078,22 @@ export class OpenChat {
         });
     }
 
+    // The user whose initial load has just folded in, once the stores derived from it have settled
+    // (as for `chatsInitialisedStore`), unless the chats have started afresh meanwhile. Only a
+    // snapshot of the current session gets this far (`SyncPuller.seed`).
+    #chatsLoadedFor(userId: string, generation: number): void {
+        tick().then(() => {
+            if (generation === this.#syncPuller.generation) chatsLoadedForUserStore.set(userId);
+        });
+    }
+
     // Runs one pass of the updates loop in the worker. On an initial load the worker answers
     // with a snapshot of its cache which seeds the sync cursor; everything after that reaches
     // the UI by pulling (see SyncPuller), so the pass itself resolves nothing.
     async #loadChats() {
-        const initialLoad = !chatsInitialisedStore.value;
+        // Without a cursor (a new session, or one `#resetChatsSession` started) the puller ignores
+        // every head, so only an initial load's snapshot can bring the chats in
+        const initialLoad = !chatsInitialisedStore.value || this.#syncPuller.cursor === undefined;
 
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
         // Taken before the load starts: if the identity changes while it is in flight, the
@@ -10071,12 +10118,16 @@ export class OpenChat {
                                 if (snapshot !== undefined) {
                                     await this.#syncPuller.seed(
                                         snapshot,
-                                        (updates) =>
-                                            this.#handleChatsResponse(
+                                        async (updates) => {
+                                            await this.#handleChatsResponse(
                                                 updateRegistryTask,
                                                 initialLoad,
                                                 updates,
-                                            ),
+                                            );
+                                            if (initialLoad) {
+                                                this.#chatsLoadedFor(snapshot.userId, generation);
+                                            }
+                                        },
                                         generation,
                                     );
                                 }

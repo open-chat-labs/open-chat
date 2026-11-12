@@ -6,6 +6,7 @@
 <script lang="ts">
   import { onDestroy, untrack, type ComponentProps, type Snippet } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
+  import Pill from '../../lib/components/Pill.svelte';
   import DetailSection from '../../lib/components/DetailSection.svelte';
   import DmChatSettings from './DmChatSettings.svelte';
   import PanelCover from '../../lib/components/PanelCover.svelte';
@@ -44,6 +45,8 @@
     avatar?: string;
     online?: boolean;
     verified?: boolean;
+    /** Their account is suspended: a Suspended tag after the name, and no online dot. */
+    suspended?: boolean;
     cover?: string;
     /** The same fields the DM panel shows (member since, CHIT, status), one column each. Labels: resource keys (or literal text). */
     facts: { label: string; value: string; dot?: boolean; highlight?: boolean }[];
@@ -81,6 +84,7 @@
     avatar,
     online = false,
     verified = false,
+    suspended = false,
     cover = '',
     facts,
     isSelf = false,
@@ -199,7 +203,7 @@
 
     <div class="scroll" onscroll={() => (muteMenu = null)}>
       <span class="avatar" style:background={avatar || (GRADIENTS[color] ?? GRADIENTS.violet)}>
-        {#if online}
+        {#if online && !suspended}
           <span class="online"></span>
         {/if}
       </span>
@@ -208,6 +212,10 @@
           <span class="title">{title}</span>
           {#if verified}
             <span class="badge"><Badge variant="verified" /></span>
+          {/if}
+          {#if suspended}
+            <!-- TODO(design): the Suspended tag isn't in the design export (ChatRow's) -->
+            <Pill label="ui.chatRow.suspended" tone="danger" />
           {/if}
         </div>
         {#if handle}

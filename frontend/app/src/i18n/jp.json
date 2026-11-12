@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "新しいバージョンをインストールしたら、こちらはアンインストールしてください。両方を残すと通知が二重に届きます。",
         "reinstallDownload": "現在のバージョンをダウンロード"
     },
+    "fullScreenCalls": {
+        "title": "全画面での着信",
+        "message": "スマートフォンがロックされているときに OpenChat が着信を全画面で表示するには、Android での許可が必要です。許可するまでは、着信は通常の通知として届きます。",
+        "openSettings": "設定を開く",
+        "notNow": "後で"
+    },
     "appWallet": {
         "header": {
             "asset": "資産",
@@ -2859,6 +2865,7 @@
     "readOnlyThread": "このスレッドは読み取り専用です",
     "reason": "理由",
     "reasonForSuspension": "停止の理由",
+    "recipientSuspended": "このユーザーのアカウントは停止されています。メッセージを送ることはできません。",
     "recordAudioMessage": "音声メッセージを録音する",
     "referralHeader": "友達や家族を招待する",
     "refresh": "リフレッシュ",

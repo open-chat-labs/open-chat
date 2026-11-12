@@ -98,12 +98,20 @@ export type FoundRowsInput = {
     found: ChatListSearchResults;
     /** A user's name as the app shows it. */
     userName: (user: UserSummary) => string;
+    /**
+     * Whether a user is suspended now (`allUsersStore`, else the search's copy), so a person's row
+     * follows a suspend or un-suspend after the search, as their DM's row does.
+     */
+    userSuspended: (user: UserSummary) => boolean;
     /** A person's own picture; none gives the row's swatch (ownUserAvatarUrl). */
     userAvatar: (user: UserSummary) => string | undefined;
     botAvatar: (bot: BotMatch) => string;
 };
 
-type FoundFields = Pick<ChatListPanelRow, "title" | "preview" | "kind" | "color" | "avatarUrl">;
+type FoundFields = Pick<
+    ChatListPanelRow,
+    "title" | "preview" | "kind" | "color" | "avatarUrl" | "suspended"
+>;
 
 function foundRow(id: string, fields: FoundFields): ChatListPanelRow {
     return { id: `found:${id}`, ...fields, time: "", menu: [] };
@@ -116,8 +124,8 @@ const dmSwatch = (userId: string) =>
 /**
  * The search's people as ChatListPanel's `people` rows, its People tab and All's People section:
  * people, then bots (web plan 04's search has chats, people and messages: no public groups). A
- * person's line is their @username, a bot's its description. Their ids can't be a chat's
- * (`found:…`), and they have no menu.
+ * person's line is their @username, a bot's its description; a suspended person is marked as a
+ * DM's row is (`suspended`). Their ids can't be a chat's (`found:…`), and they have no menu.
  */
 export function foundRows(input: FoundRowsInput): FoundRow[] {
     const { found } = input;
@@ -129,6 +137,7 @@ export function foundRows(input: FoundRowsInput): FoundRow[] {
                 kind: "user",
                 color: dmSwatch(user.userId),
                 avatarUrl: input.userAvatar(user),
+                suspended: input.userSuspended(user),
             }),
             target: { kind: "chat_with", userId: user.userId },
         }),

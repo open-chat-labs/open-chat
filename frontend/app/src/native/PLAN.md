@@ -66,7 +66,9 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   Delete with Undo, Report …, on the shared `logic/conversation/messageAction`, which the web's
   menu now runs too), Message info (a pushed screen), the forward sheet (several chats at once,
   with a note: the client's `forwardMessageToChats`), the report sheet, and removing a link's
-  preview after a native confirm. What it left is in GAPS.md ("Native conversation").
+  preview after a native confirm. With the composer's keyboard up, its space is kept while the
+  menu shows and the keyboard comes back as it closes, so nothing moves (the Android app). What
+  it left is in GAPS.md ("Native conversation").
 - **Built:** N6 DM and group details, members and roles
   ([#10372](https://github.com/open-chat-labs/open-chat/issues/10372)), to the plan's 10: a DM's
   details (Call / Search / Mute, About, disappearing messages as a switch, Block) and a group's or

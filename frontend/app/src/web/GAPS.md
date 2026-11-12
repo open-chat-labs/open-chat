@@ -445,6 +445,26 @@ design export needs. Each entry says where it came up.
       plays no vibration of its own (`pressVibration={false}`). A shell built before the style
       plays its light tap. Not checked on a device. The swipe's armed haptic is still
       `MessageGroup`'s `navigator.vibrate(10)`.
+    - **The keyboard under the menu** (the user's decision, 2026-11-12): a long-press with the
+      composer's keyboard up takes the keyboard down (Android's long-press takes the focus off the
+      text box, and the menu takes it), but its space stays kept at its height, an empty panel
+      (the keyboard-area panels' `--surface-1`, corners and line) under the veil, so the chat and
+      the composer don't move under the menu's copy of the message (`KeyboardSlot`'s
+      `holdForMenu`, `held`). Once the menu, and whatever it opened, has closed (`MessageActions`'
+      `onSettled`), the text box is focused again and the keyboard comes back up into the space,
+      which is let go once it's up (`afterMenu`): after Esc, back or a tap outside, a reaction (the
+      bar's, or the emoji sheet's once it closes), Copy, Copy link, Pin / Unpin, Translate, Share, a
+      delete (after its confirm, or Cancel), the forward and report sheets once they close, and
+      Reply and Edit (which focus it themselves). Info (Message info pushed), a private reply (the
+      DM opens), Get Diamond and another chat opening meanwhile (a notification) let the space go
+      (`MessageActions`' `leave`); Back to the conversation then finds the keyboard down. The
+      space stays held as the text box is focused again, even where the keyboard's "down" for the
+      menu hasn't been reported yet (a menu closed at once), until the keyboard's back up; that
+      focus isn't the reader's tap, so where the platform shows no keyboard for it, the space is
+      let go after the slot's wait (2s), without asking again. Measured per frame on the emulator: the message's top stays where it was
+      from the long-press until the keyboard is back. Only where the keyboard's height is reported
+      (the Android app): in the iOS app and phones' browsers the platform lifts the page, so the
+      chat still moves down as the menu opens there, and the keyboard isn't put back.
     - **No press feedback yet** (to do): holding a message shows nothing until the menu opens.
       The current mobile app scales the bubble while it's held (component-lib's `longpress`
       action, `animation: "scale"`, as `ChatMessage` uses it): halfway through the hold (300ms of
@@ -1368,7 +1388,25 @@ design export needs. Each entry says where it came up.
   their card. `UserDialog` takes `moderatorAction` (a label and a callback) and shows it in its
   footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending
   opens a plain dialog on `DialogShell` with the old modal's words and a reason
-  (`SuspendUserDialog`, `TODO(design)`).
+  (`SuspendUserDialog`, `TODO(design)`). A DM's composer follows the other user's suspension at
+  once, both ways, with no reload: a warning banner, "This user's account is suspended. You can't
+  send them messages." (`recipientSuspended`, new in all 15 locales: the old trees had no words
+  for it and said "This chat is read-only"), the composer back when they're un-suspended. The
+  selected chat's permissions (`messagePermissionsForSelectedChatStore`) derive from
+  `selectedChatRecipientStore`, the other user, which publishes only when they're replaced
+  (`userSuspended` replaces the user, so a suspension or un-suspension does; another user's
+  change doesn't), and the permission stores publish only when what may be sent changes;
+  `chatEntryState` reads it too, for its own block (`recipient_suspended`). A frozen
+  group or channel, or a channel of a frozen community, shows "This chat has been frozen"
+  (`chatFrozen`), and follows a freeze and an unfreeze at once: a group's through
+  `localUpdates.updateChatFrozen` (the moderator's) or the next sync (everyone else's); a
+  community's (its channels' `isChatOrCommunityFrozen`) now through
+  `localUpdates.updateCommunityFrozen` on the moderator's `freezeCommunity` / `unfreezeCommunity`,
+  where it used to wait for the sync. Where several apply (`entryBlock`), a moderator's doing comes
+  first, as the reader can't undo it: the reader's own suspension, then frozen, then the DM's
+  other user suspended, then blocked (unblocking wouldn't help), then the rest. Every tree's
+  composer, the old ones' and native's included, shows these (2026-11-12). The banner doesn't name
+  the user (the header does); the design has no words for it (`TODO(design)`).
 - **Gates editor** (4a, `features/access/gates.adapter.ts`, for 4b and 8b): `AccessGates` takes
   `types` (by hand), and the app doesn't offer the unique-person gate (suspended) or the
   credential gate. A credential gate already set still shows and saves unchanged, but adding one
@@ -1406,7 +1444,16 @@ design export needs. Each entry says where it came up.
   client's `DEFAULT_EVENTS_TTL`, which the legacy trees keep).
   By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
   the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
-  has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
+  has no read receipts setting. The OpenChat Bot's DM has no right column at all, nor the header's
+  panel toggle or pinned-messages button (`chatHasRightColumn` in `router/regions`, which the
+  screens read through `ScreenContext.hasRightColumn`): it's the read-only welcome chat a new
+  account lands on, and its panel (a picture, Search, Favourite) only took width from it; its name
+  still opens its profile. It's keyed on that bot's id, not on a kind of DM, since no wider rule
+  is settled and none matches it alone today: `isChatReadOnly` is false for every DM, other bots'
+  DMs are conversations with their commands, and the proposals bot's DM, the other one nobody can
+  write in, isn't a welcome chat. TODO(design): the plan docks `DmPanel` for every DM and says
+  nothing about bots or read-only DMs; whether all bot DMs, or all read-only DMs, lose the panel
+  is an open question, and until it's answered they keep it. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
   old panel's durations other than the eight `DmChatSettings` offers (a TTL set elsewhere shows as
   its own length, "2 hours", and saves unchanged).
   - **TimedToggle's 8 lengths** (web plan 08 of 2026-11-10, by hand, EXPORT-LOG 2026-11-10): 5 min,
@@ -1942,8 +1989,10 @@ design export needs. Each entry says where it came up.
   footers did (the backend joins its community with it), even under the community's bar; a locked
   channel in a community that isn't locked joins the community alone. Join runs
   the shared flow (`logic/join/joinFlow`, the old `utils/preview.svelte.ts`, which both old trees
-  now use too): a guest's join is recorded and opens sign-in, and replays once after it
-  (`takePostLoginJoin`, AppScreen); gates the client can't check open `JoinGateDialog`, a level at
+  now use too): a guest's join is recorded and opens sign-in, and replays once after it, once
+  the account's own chats are in (`takePostLoginJoin` on `currentUserChatsLoadedStore`, AppScreen;
+  after a sign-up the anonymous session's stand in until then, and a join decided against them
+  was undone by the account's initial load); gates the client can't check open `JoinGateDialog`, a level at
   a time; "Pay and join" approves the payments (asking for the PIN) and joins; "You joined …" on
   success (named as the bar named it), the failure's own message otherwise, "Access gate not met"
   for a backend gate check failure. The dialog stays open while the join doesn't go through (the
@@ -2205,6 +2254,16 @@ design export needs. Each entry says where it came up.
 - **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
   (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
   (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
+  - **nothing selected**: the middle with nothing selected (region `empty`) is `NoChatScreen`, in
+    place of the development placeholder ("middle: empty"). Beside a chat list with chats it has
+    the kit's `EmptyState` with the old desktop's words by scope (`noChatSelectedText` in
+    `logic/chats`, which the old `NoChatSelected` uses too); beside an empty list (which says "No
+    conversations yet" itself), the activity feed (/notifications, ?panel=activity) or the threads
+    it's blank (`middleWithoutChatText`, from the region's `chatList`). It keeps the placeholder's
+    toolbar, Back on a narrow screen and the panel toggle where the route has the right column
+    (`MiddleToolbar`). TODO(design): the design doesn't say which words, icon or action, nor what
+    shows beside the activity feed; there's no action (the list's own New message has no handler
+    yet either).
   - **mentions in the preview**: as the `@names` typed (`typedMentions` in `logic/conversation`,
     through `mentionsAsTyped`), where the old rows show the preview through Markdown, which shows
     them as `@username` too. The same goes for every other text the new UI shows as it is, not
@@ -2244,6 +2303,18 @@ design export needs. Each entry says where it came up.
     them up follows the clock, and the rows take a new set only when someone comes online or goes
     offline, so the rows aren't built again on every tick (as `ec9b75ac59` did for the old list).
     No dot for groups, bots or the user, as the old row.
+  - **a suspended user** (their whole account, by a platform moderator; the user's decision,
+    2026-11-12): a DM whose other user is suspended (`allUsersStore`'s `suspended`, `chatRow`'s
+    `suspended`, direct chats only) shows the avatar dimmed with a small red ban mark where the
+    online dot sits (no online dot), and a "Suspended" tag after the name (the library's `Pill`,
+    danger tone). Everyone sees it, not only moderators, as the old DM header's "Account
+    suspended" (which the new header keeps). The preview line stays as it is. A person the search
+    finds is marked the same way (`foundRows`); `UserDialog` and `DmPanel` show the tag (after the
+    name, under it in the panel) and no online dot, their avatars undimmed. Groups and communities
+    are frozen, not suspended, so they're never marked. The native Chats tab's rows show it too
+    (`nativeChatRow`, the same `ChatRow`). It follows a moderator's suspend or unsuspend at once
+    (the client updates `allUsersStore`). Not in the design export: TODO(design) for the dimming,
+    the mark and the tag (`Avatar`, `ChatRow`, `UserDialog`, `DmPanel`; EXPORT-LOG 2026-11-12).
   - **unread mentions**: an "@" before the count, groups and channels only (`unreadMentionCount`
     in `@client`, the old rows' rule), following `messagesRead` as the unread count does, and none
     for a chat whose latest message has expired.

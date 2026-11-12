@@ -150,6 +150,7 @@ describe("native call bridge", () => {
             chatId,
             callType: "audio",
             join: true,
+            answer: true,
         });
     });
 

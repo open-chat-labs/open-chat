@@ -1,5 +1,12 @@
-import type { RouteParams } from "@client";
-import { activityOverPage, narrowBack, railItems, railSelectionFor, regionsFor } from "./regions";
+import { OPENCHAT_BOT_USER_ID, type RouteParams } from "@client";
+import {
+    activityOverPage,
+    chatHasRightColumn,
+    narrowBack,
+    railItems,
+    railSelectionFor,
+    regionsFor,
+} from "./regions";
 
 const none = { kind: "none" } as const;
 const chats = { kind: "chats" } as const;
@@ -33,8 +40,23 @@ describe("what a route shows", () => {
     test("a chat list on its own starts on the list", () => {
         expect(regionsFor(route({ kind: "chat_list_route", scope: chats }), false)).toMatchObject({
             left: { kind: "chats", scope: chats },
-            middle: { kind: "empty" },
+            middle: { kind: "empty", chatList: chats },
             narrowView: "left",
+        });
+    });
+
+    test("the middle with nothing selected knows the chat list beside it, and only that", () => {
+        const middle = (r: RouteParams, query?: string) => {
+            const regions = regionsFor(r, false, new URLSearchParams(query));
+            return regions.area === "app" ? regions.middle : undefined;
+        };
+        const favourites = route({ kind: "chat_list_route", scope: { kind: "favourite" } });
+        expect(middle(favourites)).toEqual({ kind: "empty", chatList: { kind: "favourite" } });
+        // the activity feed over the list, the list's threads, and /notifications
+        expect(middle(favourites, "panel=activity")).toEqual({ kind: "empty" });
+        expect(middle(favourites, "threads")).toEqual({ kind: "empty" });
+        expect(middle(route({ kind: "notifications_route", scope: none }))).toEqual({
+            kind: "empty",
         });
     });
 
@@ -139,6 +161,27 @@ describe("what a route shows", () => {
         expect(
             regionsFor(route({ kind: "notifications_route", scope: none }), false),
         ).not.toHaveProperty("rightColumn");
+    });
+
+    test("the OpenChat Bot's DM has no right column; someone else's DM has", () => {
+        const dm = (userId: string) =>
+            route({
+                kind: "global_chat_selected_route",
+                chatId: { kind: "direct_chat", userId },
+                chatType: "direct_chat",
+                open: false,
+                scope: chats,
+            });
+        expect(regionsFor(dm(OPENCHAT_BOT_USER_ID), false)).toMatchObject({
+            middle: { kind: "conversation" },
+            rightColumn: false,
+        });
+        expect(regionsFor(dm("u1"), false)).not.toHaveProperty("rightColumn");
+        expect(chatHasRightColumn({ kind: "direct_chat", userId: OPENCHAT_BOT_USER_ID })).toBe(
+            false,
+        );
+        expect(chatHasRightColumn({ kind: "direct_chat", userId: "u1" })).toBe(true);
+        expect(chatHasRightColumn({ kind: "group_chat", groupId: "g1" })).toBe(true);
     });
 
     test("mobile's profile path has no page of its own (the router redirects it)", () => {

@@ -79,6 +79,7 @@ import {
 } from "../../utils/chat";
 import { chatListOrder, chatsInScope } from "../../utils/chatList";
 import { enumFromStringValue } from "../../utils/enums";
+import { setsAreEqual } from "../../utils/set";
 import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
@@ -100,7 +101,7 @@ import {
 } from "../selectedChat";
 import { SnsFunctions } from "../snsFunctions.svelte";
 import { messagesRead } from "../unread/markRead";
-import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
+import { allUsersStore, blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { notEq } from "../utils";
 
 export const ONE_MB = 1024 * 1024;
@@ -609,11 +610,16 @@ export const communitiesStore = derived(
             const anyChanges =
                 updates?.index !== undefined ||
                 updates?.displayName !== undefined ||
-                updates?.rulesAccepted !== undefined;
+                updates?.rulesAccepted !== undefined ||
+                updates?.frozen !== undefined;
 
             if (anyChanges) {
-                // only membership is modified below so that is all we need to copy
-                const clone = { ...community, membership: { ...community.membership } };
+                // only membership (and frozen) is modified below so that is all we need to copy
+                const clone = {
+                    ...community,
+                    frozen: updates?.frozen ?? community.frozen,
+                    membership: { ...community.membership },
+                };
                 const index = updates?.index;
                 if (index !== undefined) {
                     clone.membership.index = index;
@@ -691,6 +697,15 @@ selectedThreadIdStore.subscribe((thread) => startThreadVisit(thread));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
+// The user whose chats' initial load has folded in, cleared whenever the chats start afresh. A new
+// account's chats count as loaded (chatsInitialisedStore) all along, the anonymous session's
+// standing in until its own come in; what has to act on the account's own chats (a guest's join
+// replayed after sign-up, the default list and chat) waits on currentUserChatsLoadedStore instead.
+export const chatsLoadedForUserStore = writable<string | undefined>(undefined);
+export const currentUserChatsLoadedStore = derived(
+    [chatsLoadedForUserStore, currentUserIdStore],
+    ([loadedFor, userId]) => loadedFor === userId,
+);
 export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(
     undefined,
     undefined,
@@ -1181,17 +1196,36 @@ export const threadsFollowedByMeStore = derived(threadsByChatStore, (threadsByCh
     }, new ChatMap<Set<number>>());
 });
 
+// The selected DM's other user, for what may be sent to them (whether they're suspended). It re-runs
+// on every change to the users, but that's one lookup, and it only publishes when that user is
+// replaced (`userSuspended` replaces them), so what derives from it doesn't re-run for other users.
+export const selectedChatRecipientStore = derived(
+    [selectedChatSummaryStore, allUsersStore],
+    ([selectedChatSummary, users]) =>
+        selectedChatSummary?.kind === "direct_chat"
+            ? users.get(selectedChatSummary.them.userId)
+            : undefined,
+);
+// Both publish only when what may be sent changes, not on every set of the current user (whose
+// store publishes even an unchanged user), so the composer doesn't re-run for nothing.
 export const messagePermissionsForSelectedChatStore = derived(
-    selectedChatSummaryStore,
-    (selectedChatSummary) => {
-        return getMessagePermissionsForSelectedChat(selectedChatSummary, "message");
+    [selectedChatSummaryStore, selectedChatRecipientStore, currentUserStore],
+    ([selectedChatSummary, recipient, user]) => {
+        return getMessagePermissionsForSelectedChat(
+            selectedChatSummary,
+            recipient,
+            user,
+            "message",
+        );
     },
+    setsAreEqual,
 );
 export const threadPermissionsForSelectedChatStore = derived(
-    selectedChatSummaryStore,
-    (selectedChatSummary) => {
-        return getMessagePermissionsForSelectedChat(selectedChatSummary, "thread");
+    [selectedChatSummaryStore, selectedChatRecipientStore, currentUserStore],
+    ([selectedChatSummary, recipient, user]) => {
+        return getMessagePermissionsForSelectedChat(selectedChatSummary, recipient, user, "thread");
     },
+    setsAreEqual,
 );
 export const selectedChatDraftMessageStore = derived(
     [selectedChatIdStore, localUpdates.draftMessages],

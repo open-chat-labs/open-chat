@@ -5,6 +5,7 @@
      disappearing messages, as the design's DM profile. -->
 <script lang="ts">
     import {
+        allUsersStore,
         anonUserStore,
         buildUserBackgroundUrl,
         lastOnlineStatus,
@@ -49,6 +50,12 @@
 
     const isMe = $derived(userId === $currentUserIdStore);
 
+    // as the users store has it, so a moderator's suspend or unsuspend shows at once; the card's
+    // own copy of the user is loaded once
+    const suspended = $derived(
+        $allUsersStore.get(userId)?.suspended ?? card.user?.suspended ?? false,
+    );
+
     // their name where the card was opened: a community display name in a community
     const name = $derived(
         client.getDisplayName(
@@ -76,6 +83,7 @@
             avatarUrl: profileAvatarUrl(blobUrlPattern, userId, profile.avatarId),
             coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             online,
+            suspended,
             joined: client.toMonthYearString(new Date(Number(profile.created))),
             chit: badges.chit,
         });
@@ -138,7 +146,7 @@
     const moderatorAction = $derived(
         !$platformModeratorStore || card.user === undefined
             ? undefined
-            : card.user.suspended
+            : suspended
               ? { label: $_("unsuspendUser"), onAction: unsuspend }
               : { label: $_("suspendUser"), onAction: () => publish("suspendUser", userId) },
     );

@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Sau khi cài bản mới, hãy gỡ bản này. Nếu giữ cả hai, mỗi thông báo sẽ đến hai lần.",
         "reinstallDownload": "Tải phiên bản hiện tại"
     },
+    "fullScreenCalls": {
+        "title": "Cuộc gọi toàn màn hình",
+        "message": "Android cần bạn cho phép để OpenChat hiển thị cuộc gọi đến ở chế độ toàn màn hình khi điện thoại đang khóa. Cho đến khi bạn cho phép, cuộc gọi sẽ chỉ đến dưới dạng thông báo thông thường.",
+        "openSettings": "Mở cài đặt",
+        "notNow": "Để sau"
+    },
     "appWallet": {
         "header": {
             "asset": "Tài sản",
@@ -2859,6 +2865,7 @@
     "readOnlyThread": "Chủ đề này ở chế độ chỉ đọc",
     "reason": "Lý do",
     "reasonForSuspension": "lý do đình chỉ",
+    "recipientSuspended": "Tài khoản của người dùng này đã bị tạm ngưng. Bạn không thể gửi tin nhắn cho họ.",
     "recordAudioMessage": "Ghi lại tin nhắn âm thanh",
     "referralHeader": "Mời bạn bè / gia đình",
     "refresh": "Tải lại",

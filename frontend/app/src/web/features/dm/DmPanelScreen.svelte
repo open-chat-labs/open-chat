@@ -47,13 +47,15 @@
         if (chat === undefined || userId === undefined || card === undefined) return undefined;
         const { user, profile } = card;
         if (user === undefined || profile === undefined) return undefined;
-        $allUsersStore.get(userId);
+        // the users store, read below for `suspended`, also refreshes the name
         return dmPanelProps({
             name: client.getDisplayName(userId),
             profile,
             userId,
             avatarUrl: profileAvatarUrl(blobUrlPattern, userId, profile.avatarId),
             online: lastOnlineStatus($_, Date.now(), card.lastOnline)[1],
+            // the users store's, so a moderator's suspend or unsuspend shows at once
+            suspended: $allUsersStore.get(userId)?.suspended ?? user.suspended,
             joined: client.toMonthYearString(new Date(Number(profile.created))),
             chit: userBadges(
                 {
