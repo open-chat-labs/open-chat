@@ -14,8 +14,8 @@ object IntentsManager {
     // request code, so a negative constant here can never collide with them.
     private const val SUMMARY_DELETE_REQUEST_CODE = -1
 
-    // Our own notification taps launch MainActivity through this alias. It is not exported
-    // (AndroidManifest.xml), so only this app can start it. MainActivity is exported (launcher,
+    // Our own notification taps launch the main activity through this alias. It is not exported
+    // (AndroidManifest.xml), so only this app can start it. The main activity is exported (launcher,
     // share target, deep links), so any app can start it with a forged notificationPayload; it
     // honours the payload only when the intent came through the alias.
     private const val NOTIFICATION_LAUNCH_ALIAS = "NotificationLaunch"
