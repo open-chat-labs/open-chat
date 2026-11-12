@@ -221,11 +221,11 @@
         // still valid: unbind this device's token from the account,
         // delete the device token (pushes to it then dead-end at FCM,
         // and the next login mints + registers a fresh one), and empty
-        // the tray so nothing from this account lingers.
-        client.onLogout(async () => {
-            await unregisterPushDevice(client);
-            await clearAllNotifications().catch(console.error);
-        });
+        // the tray and chat shortcuts so nothing from this account lingers.
+        // Separate tasks, which logout runs side by side under one time cap:
+        // the clear is local and must not wait on the token's network calls.
+        client.onLogout(() => clearAllNotifications().catch(console.error));
+        client.onLogout(() => unregisterPushDevice(client));
     }
 
     if ($identityStateStore.kind === "logged_in") {
