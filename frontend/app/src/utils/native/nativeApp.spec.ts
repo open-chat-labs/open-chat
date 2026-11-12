@@ -38,7 +38,6 @@ vi.mock("@stores/chatShortcuts", () => ({
     startChatShortcutPusher: vi.fn(),
 }));
 vi.mock("@stores/video", () => ({ activeVideoCall: { applyNativeControl: vi.fn() } }));
-vi.mock("./read_elsewhere", () => ({ releaseNotificationsReadElsewhere: vi.fn() }));
 // The real module, so a new import in nativeApp doesn't break this spec
 vi.mock("@client", async (original) => ({
     ...(await original<typeof import("@client")>()),
