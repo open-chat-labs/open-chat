@@ -33,6 +33,13 @@ describe("opening a deep link", () => {
         expect(nav.navigate).toHaveBeenCalledWith("/group/abc?x=1", "notification");
         expect(oc.openUrl).not.toHaveBeenCalled();
     });
+
+    // #10403 invariant D: navigating would close the chat picker the share just opened
+    test("invariant D: the share extension's wake link goes nowhere", () => {
+        expect(openDeepLink("openchat://oc.app/share-inbox")).toBe(false);
+        expect(nav.navigate).not.toHaveBeenCalled();
+        expect(oc.openUrl).not.toHaveBeenCalled();
+    });
 });
 
 const insets = (statusBarHeightDp: number) => ({
