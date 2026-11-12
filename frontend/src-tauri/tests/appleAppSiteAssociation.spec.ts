@@ -11,8 +11,8 @@ function settings(pbxproj: string, key: string): string[] {
     return [...pbxproj.matchAll(new RegExp(`^\\s*${key} = "?([^";]+)"?;`, "gm"))].map((m) => m[1]);
 }
 
-const aasaApps = (): string[] =>
-    JSON.parse(read("../app/apple-app-site-association")).webcredentials.apps;
+const aasa = () => JSON.parse(read("../app/apple-app-site-association"));
+const aasaApps = (): string[] => aasa().webcredentials.apps;
 
 describe("apple-app-site-association", () => {
     test("lists the app id of every iOS build configuration", () => {
@@ -37,5 +37,18 @@ describe("apple-app-site-association", () => {
         const iosConf = JSON.parse(read("tauri.ios.conf.json"));
         const identifier = iosConf.identifier ?? conf.identifier;
         expect(aasaApps()).toContain(`${conf.bundle.iOS.developmentTeam}.${identifier}`);
+    });
+
+    // #10403 invariant B: oc.app links open in the iOS app
+    test("lets the app the tauri config signs open oc.app links", () => {
+        const conf = JSON.parse(read("tauri.conf.json"));
+        const iosConf = JSON.parse(read("tauri.ios.conf.json"));
+        const identifier = iosConf.identifier ?? conf.identifier;
+        const details: { appIDs: string[]; components: Record<string, string>[] }[] =
+            aasa().applinks.details;
+        const app = details.find((d) =>
+            d.appIDs.includes(`${conf.bundle.iOS.developmentTeam}.${identifier}`),
+        );
+        expect(app?.components).toContainEqual({ "/": "*" });
     });
 });

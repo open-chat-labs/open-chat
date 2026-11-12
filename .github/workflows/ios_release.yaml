@@ -59,6 +59,12 @@ jobs:
               timeout-minutes: 10
               run: swift test
 
+            # The share extension's inbox (#10403 invariants A and C)
+            - name: Test ShareCore
+              working-directory: frontend/tauri-plugin-oc/ios/ShareCore
+              timeout-minutes: 10
+              run: swift test
+
             - name: Setup Rust
               uses: ./.github/workflows/setup-rust
               with:
@@ -208,6 +214,12 @@ jobs:
                   if ! echo "$ENT" | grep -q '<string>webcredentials:oc.app</string>'; then
                     echo "::error::Associated domains lack webcredentials:oc.app"; FAIL=1
                   fi
+                  if ! echo "$ENT" | grep -q '<string>applinks:oc.app</string>'; then
+                    echo "::error::Associated domains lack applinks:oc.app"; FAIL=1
+                  fi
+                  if ! echo "$ENT" | grep -q '<string>group.com.oclabs.openchat</string>'; then
+                    echo "::error::The share extension's App Group is missing"; FAIL=1
+                  fi
                   if echo "$ENT" | grep -q 'mode=developer'; then
                     echo "::error::Associated domains use ?mode=developer"; FAIL=1
                   fi
@@ -225,6 +237,8 @@ jobs:
                   fi
                   [ -d "$APP/PlugIns/OpenChatNotificationService.appex" ] \
                     || { echo "::error::The Notification Service Extension is missing"; FAIL=1; }
+                  [ -d "$APP/PlugIns/OpenChatShare.appex" ] \
+                    || { echo "::error::The share extension is missing"; FAIL=1; }
                   exit $FAIL
 
             - name: Upload build artifact

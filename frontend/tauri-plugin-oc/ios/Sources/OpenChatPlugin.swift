@@ -87,6 +87,7 @@ class OpenChatPlugin: Plugin {
         OCCompanion.shared.plugin = self
         Push.shared.install()
         NativeCallBridge.shared.install()
+        ShareTarget.install()
 
         hideKeyboardAccessoryBar(webview)
 

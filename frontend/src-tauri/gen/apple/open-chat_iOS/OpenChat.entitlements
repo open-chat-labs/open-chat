@@ -7,8 +7,13 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>webcredentials:oc.app</string>
+		<string>applinks:oc.app</string>
 	</array>
 	<key>com.apple.developer.usernotifications.communication</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.oclabs.openchat</string>
+	</array>
 </dict>
 </plist>
