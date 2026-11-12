@@ -47,4 +47,5 @@ permissions = [
     "allow-open-full-screen-intent-settings",
     "allow-stage-share-file",
     "allow-can-share-files",
+    "allow-take-native-exit-reports",
 ]

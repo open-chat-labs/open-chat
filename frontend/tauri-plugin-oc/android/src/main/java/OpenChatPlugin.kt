@@ -41,6 +41,7 @@ import com.ocplugin.app.commands.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.concurrent.thread
 
 @Suppress("UNUSED")
 @TauriPlugin
@@ -356,6 +357,17 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.resolve(JSObject().put("url", url))
         } else {
             invoke.resolve(JSObject())
+        }
+    }
+
+    // Crashes, ANRs and kills since the last call (NativeExitReports), for the web layer to send to
+    // Rollbar. Each is handed out once.
+    @Command
+    fun takeNativeExitReports(invoke: Invoke) {
+        thread {
+            val reports = JSArray()
+            NativeExitReports.take(activity).forEach { reports.put(it) }
+            invoke.resolve(JSObject().put("reports", reports))
         }
     }
 

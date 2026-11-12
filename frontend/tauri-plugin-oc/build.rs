@@ -46,6 +46,7 @@ const COMMANDS: &[&str] = &[
     "set_system_bars_style",
     "can_use_full_screen_intent",
     "open_full_screen_intent_settings",
+    "take_native_exit_reports",
 ];
 
 fn main() {

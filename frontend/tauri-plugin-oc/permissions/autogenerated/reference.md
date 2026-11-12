@@ -50,6 +50,7 @@ Default permissions for the plugin
 - `allow-open-full-screen-intent-settings`
 - `allow-stage-share-file`
 - `allow-can-share-files`
+- `allow-take-native-exit-reports`
 
 ## Permission Table
 
@@ -1226,6 +1227,32 @@ Enables the svelte_ready command without any pre-configured scope.
 <td>
 
 Denies the svelte_ready command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-take-native-exit-reports`
+
+</td>
+<td>
+
+Enables the take_native_exit_reports command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-take-native-exit-reports`
+
+</td>
+<td>
+
+Denies the take_native_exit_reports command without any pre-configured scope.
 
 </td>
 </tr>
