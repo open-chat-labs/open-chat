@@ -6,7 +6,7 @@
   import { features, sec } from '../sections';
   import {
     samples, callPeople, coinSizes as coins, dividerThread, headerMenu, infoDetails, joinGate, messageActionItems,
-    patternPeople, patternRows, receivedGroup, sentGroup, threadFaces, threadGroups, threadReplies, threadRoot, tiles,
+    patternGroups, patternPeople, patternRows, receivedGroup, sentGroup, threadFaces, threadGroups, threadReplies, threadRoot, tiles,
   } from '../samples';
   import * as S from '../samples';
   import {
@@ -363,7 +363,7 @@
 <Section {...sec(features, 'pattern-chat-list')}>
   <Frame cols={300}>
     <div class="panel" style:height="560px">
-      <ChatListPanel rows={[...patternRows]} people={[...patternPeople]} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
+      <ChatListPanel rows={[...patternRows]} people={[...patternPeople]} groups={[...patternGroups]} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
     </div>
     <div class="panel" style:height="560px">
       <ChatListPanel rows={[...patternRows]} headerKind="community" headerTitle="OpenChat Devs" headerMembers={2481} headerColor="amber" loading showThreads={false} />

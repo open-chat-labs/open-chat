@@ -355,6 +355,7 @@ function groupMatch(value: TGroupMatch): GroupMatch {
         chatId: { kind: "group_chat", groupId: principalBytesToString(value.id) },
         name: value.name,
         description: value.description,
+        memberCount: value.member_count,
         subtype: mapOptional(value.subtype, groupSubtype),
         blobReference: mapOptional(value.avatar_id, (blobId) => ({
             blobId,

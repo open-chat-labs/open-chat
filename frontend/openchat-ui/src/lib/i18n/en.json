@@ -515,14 +515,17 @@
         "groups": "Groups",
         "unread": "Unread"
       },
+      "groupMembers": "{count, plural, one {# member} other {# members}}",
       "moreChats": "{count, plural, one {+# more chat} other {+# more chats}}",
+      "moreGroups": "{count, plural, one {+# more group} other {+# more groups}}",
       "morePeople": "{count, plural, one {+# more person} other {+# more people}}",
       "pinned": "Pinned",
       "searchPlaceholder": "Search conversations",
       "searchTabs": {
         "all": "All results",
         "chats": "Chats",
-        "people": "People"
+        "people": "People",
+        "groups": "Groups"
       },
       "threadReplies": "Thread replies"
     },

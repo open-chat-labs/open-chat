@@ -2,6 +2,8 @@ import {
     chatIdentifierToString,
     type BotMatch,
     type ChatListSearchResults,
+    type GroupChatIdentifier,
+    type GroupMatch,
     type UserSummary,
 } from "@client";
 import type ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
@@ -103,11 +105,19 @@ export function communityHeaderMenu(
     return items;
 }
 
-/** What picking a search result does: a chat with the user or bot. */
-export type FoundTarget = { kind: "chat_with"; userId: string };
+/**
+ * What picking a search result does: a chat with the user or bot, or a public group's preview (its
+ * page, as a link to it opens).
+ */
+export type FoundTarget =
+    | { kind: "chat_with"; userId: string }
+    | { kind: "group"; chatId: GroupChatIdentifier };
 
 /** A search result's row and what picking it does. */
 export type FoundRow = { row: ChatListPanelRow; target: FoundTarget };
+
+/** The search's rows for what isn't in the list: ChatListPanel's `people` and `groups`. */
+export type FoundRows = { people: FoundRow[]; groups: FoundRow[] };
 
 export type FoundRowsInput = {
     /** What the search found outside the list (`outsideList`). */
@@ -122,6 +132,10 @@ export type FoundRowsInput = {
     /** A person's own picture; none gives the row's swatch (ownUserAvatarUrl). */
     userAvatar: (user: UserSummary) => string | undefined;
     botAvatar: (bot: BotMatch) => string;
+    /** A group's own picture; none gives the row's swatch (ownGroupAvatarUrl). */
+    groupAvatar: (group: GroupMatch) => string | undefined;
+    /** A group's line: its member count, in the app's words. */
+    members: (count: number) => string;
 };
 
 type FoundFields = Pick<
@@ -133,17 +147,19 @@ function foundRow(id: string, fields: FoundFields): ChatListPanelRow {
     return { id: `found:${id}`, ...fields, time: "", menu: [] };
 }
 
-// a user's or bot's swatch is their DM's
+// a user's or bot's swatch is their DM's, a group's its chat's
 const dmSwatch = (userId: string) =>
     swatchFor(chatIdentifierToString({ kind: "direct_chat", userId }));
 
 /**
- * The search's people as ChatListPanel's `people` rows, its People tab and All's People section:
- * people, then bots (web plan 04's search has chats, people and messages: no public groups). A
- * person's line is their @username, a bot's its description; a suspended person is marked as a
- * DM's row is (`suspended`). Their ids can't be a chat's (`found:…`), and they have no menu.
+ * The search's rows for what isn't in the list. People, ChatListPanel's `people` (its People tab
+ * and All's People section): people, then bots, a person's line their @username, a bot's its
+ * description; a suspended person is marked as a DM's row is (`suspended`). Groups, its `groups`
+ * (the Groups tab and All's Groups section, the user's decision of 2026-11-12; web plan 04 has
+ * none): the public groups found, each with its member count. Their ids can't be a chat's
+ * (`found:…`), and they have no menu.
  */
-export function foundRows(input: FoundRowsInput): FoundRow[] {
+export function foundRows(input: FoundRowsInput): FoundRows {
     const { found } = input;
     const users = found.users.map(
         (user): FoundRow => ({
@@ -170,5 +186,17 @@ export function foundRows(input: FoundRowsInput): FoundRow[] {
             target: { kind: "chat_with", userId: bot.id },
         }),
     );
-    return [...users, ...bots];
+    const groups = found.groups.map(
+        (group): FoundRow => ({
+            row: foundRow(`group:${group.chatId.groupId}`, {
+                title: group.name,
+                preview: input.members(group.memberCount),
+                kind: "group",
+                color: swatchFor(chatIdentifierToString(group.chatId)),
+                avatarUrl: input.groupAvatar(group),
+            }),
+            target: { kind: "group", chatId: group.chatId },
+        }),
+    );
+    return { people: [...users, ...bots], groups };
 }

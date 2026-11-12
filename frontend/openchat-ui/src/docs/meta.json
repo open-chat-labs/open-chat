@@ -8183,6 +8183,17 @@
         "doc": "People (and bots) a search found: its People tab and All's People section; unused with no search. With onSearch the host finds them for the query; without, they're filtered by title as rows are."
       },
       {
+        "name": "groups",
+        "type": "Row[]",
+        "default": [],
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Groups a search found (public groups not in the list): its Groups tab and All's Groups section; unused with no search. With onSearch the host finds them for the query; without, they're filtered by title as rows are."
+      },
+      {
         "name": "showLabels",
         "type": "boolean",
         "default": true,

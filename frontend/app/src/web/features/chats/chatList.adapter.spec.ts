@@ -1,17 +1,35 @@
-import { buildUserAvatarUrl, ownUserAvatarUrl, type BotMatch, type UserSummary } from "@client";
+import {
+    buildUserAvatarUrl,
+    chatIdentifierToString,
+    ownUserAvatarUrl,
+    type BotMatch,
+    type GroupMatch,
+    type UserSummary,
+} from "@client";
+import { swatchFor } from "@src/logic/swatch";
 import { botAvatarUrl } from "@src/logic/chats/chatSearch";
 import { communityHeaderMenu, foundRows } from "./chatList.adapter";
 
 describe("the search's rows for what isn't in the list", () => {
     const user = { userId: "u1", username: "lucy", displayName: "Lucy" } as UserSummary;
     const bot = { id: "b1", name: "Helper", definition: { description: "Helps" } } as BotMatch;
-    const rows = foundRows({
-        found: { users: [user], bots: [bot] },
-        userName: (u) => u.displayName ?? u.username,
-        userSuspended: (u) => u.suspended,
-        userAvatar: (u) => `user:${u.userId}`,
-        botAvatar: (b) => `bot:${b.id}`,
-    });
+    const hikers = {
+        kind: "group_match",
+        chatId: { kind: "group_chat", groupId: "g1" },
+        name: "Hikers",
+        memberCount: 42,
+        blobUrl: "hikers.png",
+    } as GroupMatch;
+    const input = {
+        userName: (u: UserSummary) => u.displayName ?? u.username,
+        userSuspended: (u: UserSummary) => u.suspended,
+        userAvatar: (u: UserSummary) => `user:${u.userId}`,
+        botAvatar: (b: BotMatch) => `bot:${b.id}`,
+        groupAvatar: (g: GroupMatch) => g.blobUrl,
+        members: (count: number) => `${count} members`,
+    };
+    const found = foundRows({ ...input, found: { users: [user], bots: [bot], groups: [hikers] } });
+    const rows = found.people;
 
     test("are people, then bots, in no section of the list's (they're the panel's People)", () => {
         expect(rows.map(({ row }) => [row.title, row.preview, row.section, row.avatarUrl])).toEqual(
@@ -37,18 +55,20 @@ describe("the search's rows for what isn't in the list", () => {
             }) as UserSummary;
         const avatars = (found: Parameters<typeof foundRows>[0]["found"]) =>
             foundRows({
+                ...input,
                 found,
                 userName: (u) => u.username,
                 userSuspended: () => false,
                 // as the chat list has them (ChatsScreen)
                 userAvatar: ownUserAvatarUrl,
                 botAvatar: botAvatarUrl,
-            }).map(({ row }) => row.avatarUrl);
+            }).people.map(({ row }) => row.avatarUrl);
 
         expect(
             avatars({
                 users: [person("lucy", 3n), person("tom")],
                 bots: [bot, { ...bot, id: "b2", avatarUrl: "b2.png" }],
+                groups: [],
             }),
         ).toEqual([
             buildUserAvatarUrl(pattern, "lucy", 3n),
@@ -64,20 +84,51 @@ describe("the search's rows for what isn't in the list", () => {
             ["u1", true],
             ["u2", false],
         ]);
-        const found = foundRows({
-            found: { users: [user, { ...user, userId: "u2", suspended: true }], bots: [bot] },
+        const marked = foundRows({
+            ...input,
+            found: {
+                users: [user, { ...user, userId: "u2", suspended: true }],
+                bots: [bot],
+                groups: [],
+            },
             userName: (u) => u.username,
             userSuspended: (u) => now.get(u.userId) ?? u.suspended,
             userAvatar: () => undefined,
             botAvatar: () => "",
         });
-        expect(found.map(({ row }) => row.suspended ?? false)).toEqual([true, false, false]);
+        expect(marked.people.map(({ row }) => row.suspended ?? false)).toEqual([
+            true,
+            false,
+            false,
+        ]);
     });
 
     test("start a chat with the person or bot", () => {
         expect(rows.map(({ target }) => target)).toEqual([
             { kind: "chat_with", userId: "u1" },
             { kind: "chat_with", userId: "b1" },
+        ]);
+    });
+
+    // the user's decision of 2026-11-12: the search lists public groups, apart from the people
+    test("have the public groups apart: their picture, name and member count, no menu", () => {
+        expect(found.groups.map(({ row }) => row)).toEqual([
+            {
+                id: "found:group:g1",
+                title: "Hikers",
+                preview: "42 members",
+                kind: "group",
+                color: swatchFor(chatIdentifierToString(hikers.chatId)),
+                avatarUrl: "hikers.png",
+                time: "",
+                menu: [],
+            },
+        ]);
+    });
+
+    test("open a group's preview", () => {
+        expect(found.groups.map(({ target }) => target)).toEqual([
+            { kind: "group", chatId: { kind: "group_chat", groupId: "g1" } },
         ]);
     });
 });

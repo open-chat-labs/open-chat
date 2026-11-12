@@ -4,17 +4,21 @@
 
 export const TERM_SEARCH_DEBOUNCE_MS = 300;
 
-/** What a search shows: nothing asked, an answer on its way, or what was found for `term`. */
+/**
+ * What a search shows: nothing asked, an answer on its way (with what has come so far, for a search
+ * whose parts arrive on their own), or what was found for `term`.
+ */
 export type TermResults<T> =
     | { kind: "idle" }
-    | { kind: "searching"; term: string }
+    | { kind: "searching"; term: string; soFar?: T }
     | { kind: "found"; term: string; found: T };
 
 /**
  * How a term is looked up (client.searchUsers, client.searchChatList), which never rejects: a
- * failure finds nothing.
+ * failure finds nothing. One whose parts arrive on their own may tell `soFar` what has come before
+ * it's done (the chat list search's people before its groups).
  */
-export type SearchTerm<T> = (term: string) => Promise<T>;
+export type SearchTerm<T> = (term: string, soFar: (found: T) => void) => Promise<T>;
 
 export class TermSearch<T> {
     #search: SearchTerm<T>;
@@ -52,7 +56,9 @@ export class TermSearch<T> {
     }
 
     async #run(term: string, asked: number): Promise<void> {
-        const found = await this.#search(term);
+        const found = await this.#search(term, (soFar) => {
+            if (asked === this.#asked) this.results = { kind: "searching", term, soFar };
+        });
         if (asked === this.#asked) this.results = { kind: "found", term, found };
     }
 }

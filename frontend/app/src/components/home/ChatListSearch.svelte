@@ -2,6 +2,7 @@
     import {
         chatListScopeStore,
         chatListSearchMatches,
+        chatListSearchResults,
         type BotMatch,
         type ChatListScope,
         type GroupSearchResponse,
@@ -92,10 +93,11 @@
 
     // people, then bots that take direct chats (the client's searchChatList)
     async function userAndBotSearch(term: string) {
-        userAndBotsSearchResults = client.searchChatList(term).then(chatListSearchMatches);
+        userAndBotsSearchResults = chatListSearchResults(client.searchChatList(term)).then(
+            chatListSearchMatches,
+        );
         await userAndBotsSearchResults.then(postSearch);
     }
-
 
     async function legacySearch(term: string) {
         groupSearchResults = client.searchGroups(term, 10);

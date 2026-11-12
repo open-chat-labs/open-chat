@@ -1141,6 +1141,18 @@ design export needs. Each entry says where it came up.
   un-suspend use it (`shell/pendingToast`; see "Platform operators and moderators"). Native's
   `ToastQueue.showPending` is the same idea. TODO(design): the design has no pending toast on the
   web, nor a failure tone for a toast.
+- **The chat list search's Groups** (by hand, the user's decision of 2026-11-12, EXPORT-LOG
+  2026-11-12), to take back to the design export: a fourth search tab, **Groups** (All results /
+  Chats / People / Groups), with its badge, and All's Groups section after People (its first 3,
+  then "+N more groups"). New `ChatListPanel` prop `groups` (the public groups found, rows like
+  `people`'s); `lib/searchTabs` has the Groups tab and cap; strings
+  `ui.chatListPanel.searchTabs.groups`, `moreGroups` and `groupMembers` (a found group's line).
+  `SegmentedTabs`' labels no longer wrap: a label too long for an equal share widens its tab, the
+  others giving way ("All results" took two lines at a 349px panel once there were four tabs);
+  a bar too narrow for every label at its full width is tight, its tabs shrinking with their
+  content and a label ending in an ellipsis, so no bar spills out (`lib/tabsFit`, review of
+  #10477). TODO(design): the tight bar; web/04 has no groups: the tab, the section and its rows (the chat list's
+  `ChatRow`: avatar or swatch, name, member count in the preview's place).
 - **A DM's typing bubble** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to the design export:
   `TypingIndicator` takes `variant: 'bubble'`, native plan 04's DM bubble (received style, three
   dots, 34px tall, the small corner top-left, fading in), which the native conversation drew
@@ -2397,18 +2409,32 @@ design export needs. Each entry says where it came up.
     in `@client`, as the old mobile list's and the old desktop unread pill). It shows in the
     accent either way (the library has no muted count, see "Chat row avatars…").
   - **search on OpenChat**: as the user types (300ms after the text settles; `TermSearch`), the
-    client's `searchChatList` looks up people and bots that take direct chats, in every scope.
-    No public groups: web/04's search has chats, people and messages only (L1 had added groups,
-    the old mobile search's; dropped 2026-11-10). What's already in the list (a DM's user or bot)
-    and the user are left out (`outsideList`). They're the search's People (the search's tabs
+    client's `searchChatList` looks up people and bots that take direct chats, and public groups
+    (`searchGroups`), in every scope, each kind arriving on its own (`chatListSearchResults` hands
+    `TermSearch` what has come so far: the people show while the group index is still answering,
+    and a failed call finds nothing of its kind). **Public groups are back at the user's request
+    (2026-11-12)**, as the old search had them (web/04's search has chats, people and messages
+    only; L1 had added groups, the old mobile search's, then dropped them on 2026-11-10): they're
+    the search's **Groups** tab and All's Groups section (up to 3, "+N more groups"), each row the
+    group's own picture or its swatch (`ownGroupAvatarUrl`, the chat's swatch), its name and its
+    member count (`GroupMatch.memberCount`, the group index's `member_count`, now mapped). Picking
+    one opens its page (`/chats/group/:id`, the same route as `/group/:id`), which previews it as
+    a link to it does; it then shows under Chats, as any previewed chat. TODO(design): web/04 has
+    no groups section (see "The chat list search's Groups" under Design / library). What's
+    already in the list (a DM's user or bot, a group the user is in or previewing, in any scope:
+    the list's chats with `allServerChatsStore`, which has the group previews) and the user are
+    left out (`outsideList`). Communities aren't searched: the old trees' chat
+    list search never had them (Explore finds them). They're the search's People (the search's tabs
     below; until 2026-11-11 they followed the list's own matches under "Users and bots", the old
     desktop list's heading); a person's line is their @username, a bot's its description. Their avatars follow the rows' rule (above): a person with no picture of their
     own shows their swatch, and a bot with no avatar the app's bot picture. Picking one starts a
     chat (`chatWith`). A leading "@" is dropped, an empty term asks the backend nothing, and the
     search starts again empty in another scope. The old trees search as they did before L1, but
-    for people and bots through `searchChatList`: the old desktop people and bots in the Chats
-    scope, people and public groups in the "none" scope (nobody reaches it); the old mobile
-    (New message) people, bots and public groups (`searchGroups` itself, as before).
+    through `searchChatList`: the old desktop people and bots in the Chats scope (no groups, the
+    default), people and public groups in the "none" scope (nobody reaches it, still
+    `searchGroups` and `searchUsers`); the old mobile (New message) people, bots and public groups
+    (`{ groups: true }`, one search where it called `searchGroups` beside it; the groups and the
+    people still arrive apart, as before).
   - not carried over: the old desktop avatar's blocked overlay and max-streak ring (the old mobile
     row had neither, nor has the design), the community scope's channels the user hasn't joined
     (the old desktop's `BrowseChannels`, mobile's `OtherChannels`: browsing channels needs a
@@ -2420,22 +2446,24 @@ design export needs. Each entry says where it came up.
     list's search tabs" under Design / library; the user's decision, replacing the fold-away of
     2026-11-10): while there's a query the filter tabs push out, the old tabs sliding up and away
     and the search tabs sliding in after them over 400ms, reversed on clear (none of it moves
-    under reduced motion). The search tabs are **All / Chats / People**, in the filters'
+    under reduced motion). The search tabs are **All / Chats / People** (and **Groups**, the
+    user's decision of 2026-11-12, see "search on OpenChat" above), in the filters'
     segmented style, each with a badge of its results; the selected one's plate slides as it
-    changes. All's badge is every result (Chats' and People's added up), not the rows All shows:
-    its sections' "+N more" add up to it. All shows its first 5 chats and 3 people, each section
-    headed (label and total) and ending in "+N more chats / people", which switches to that tab;
-    Chats lists every matching chat (the list's own search, archived chats included, pinned
-    first), People every person and bot found (`searchChatList`, less the user and anyone
-    already a DM: `outsideList` and `foundRows`, the panel's `people`). The caps and each tab's
+    changes. All's badge is every result (Chats', People's and Groups' added up), not the rows All
+    shows: its sections' "+N more" add up to it. All shows its first 5 chats, 3 people and 3
+    groups, each section headed (label and total) and ending in "+N more chats / people /
+    groups", which switches to that tab; Chats lists every matching chat (the list's own search,
+    archived chats included, pinned first), People every person and bot found (`searchChatList`,
+    less the user and anyone already a DM: `outsideList` and `foundRows`, the panel's `people`),
+    Groups every public group found that isn't a chat already (the panel's `groups`). The caps and each tab's
     list are `lib/searchTabs` (`searchSections`, `searchTabCounts`) in `@openchat/ui`, with
     specs. A new search after the field is cleared starts on All; clearing it brings the
     filters back with the user's filter, and the filter doesn't narrow a search. The app passes
     the panel its `query`; a new scope starts the panel again (`{#key scopeKey}`). The Thread
-    replies row hides while a search is on. People's badge reads 0 until the directory search
+    replies row hides while a search is on. People's and Groups' badges read 0 until the search
     answers (300ms after typing stops, then the call), then the count lands: no "searching"
     state on the tab yet.
-    **Not built: Messages.** Web/04 has a fourth tab, **Messages** (All: up to 5 messages with
+    **Not built: Messages.** Web/04 has another tab, **Messages** (All: up to 5 messages with
     "+N more …"), and "picking a message opens the chat already searching for that text"; its
     backend line is a message-index search, the panel capping and paginating. There's no search
     for messages across chats, and a chat's own search (`searchChat`, backend `search_messages`

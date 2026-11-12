@@ -432,7 +432,7 @@ import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./util
 import {
     CHAT_LIST_SEARCH_MAX,
     runChatListSearch,
-    type ChatListSearchResults,
+    type ChatListSearch,
 } from "./utils/chatListSearch";
 import {
     FilteredProposals,
@@ -8291,11 +8291,18 @@ export class OpenChat {
 
     /**
      * The chat list's search on OpenChat for a term (any leading "@" dropped by the caller): up to
-     * ten people and ten bots that take direct chats. An empty term asks the backend nothing; a
-     * search that fails finds nothing of its kind.
+     * ten people, ten bots that take direct chats and, with `groups`, ten public groups
+     * (`searchGroups`), each kind arriving on its own (`chatListSearchResults` waits for them all).
+     * An empty term asks the backend nothing; a search that fails finds nothing of its kind.
      */
-    searchChatList(term: string): Promise<ChatListSearchResults> {
+    searchChatList(term: string, { groups = false }: { groups?: boolean } = {}): ChatListSearch {
         return runChatListSearch(term, {
+            groups: groups
+                ? async (t) => {
+                      const response = await this.searchGroups(t, CHAT_LIST_SEARCH_MAX);
+                      return response.kind === "success" ? response.matches : [];
+                  }
+                : undefined,
             users: (t) => this.searchUsers(t, CHAT_LIST_SEARCH_MAX),
             bots: async (t) => {
                 // the user's own direct chat as the location asks for the bots that take direct

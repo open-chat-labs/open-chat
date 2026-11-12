@@ -16,7 +16,7 @@ describe("TermSearch", () => {
         expect(people.results).toEqual({ kind: "searching", term: "luc" });
         await vi.advanceTimersByTimeAsync(300);
         expect(search).toHaveBeenCalledTimes(1);
-        expect(search).toHaveBeenCalledWith("luc");
+        expect(search).toHaveBeenCalledWith("luc", expect.any(Function));
         expect(people.results).toEqual({ kind: "found", term: "luc", found: [user("luc")] });
     });
 
@@ -58,5 +58,45 @@ describe("TermSearch", () => {
         people.dispose();
         await vi.advanceTimersByTimeAsync(10);
         expect(search).not.toHaveBeenCalled();
+    });
+
+    // the chat list search's people show before its groups arrive (review of #10477)
+    test("shows what a search has found so far, while it's still searching", async () => {
+        let finish: (users: UserSummary[]) => void = () => {};
+        const search = vi.fn(
+            (_term: string, soFar: (found: UserSummary[]) => void) =>
+                new Promise<UserSummary[]>((resolve) => {
+                    soFar([user("lucy")]);
+                    finish = resolve;
+                }),
+        );
+        const people = new TermSearch(search, 10);
+        people.set("lu");
+        await vi.advanceTimersByTimeAsync(10);
+        expect(people.results).toEqual({ kind: "searching", term: "lu", soFar: [user("lucy")] });
+        finish([user("lucy"), user("luke")]);
+        await Promise.resolve();
+        expect(people.results).toEqual({
+            kind: "found",
+            term: "lu",
+            found: [user("lucy"), user("luke")],
+        });
+    });
+
+    test("an older search's early part never lands", async () => {
+        let early: (found: UserSummary[]) => void = () => {};
+        const search = vi.fn((term: string, soFar: (found: UserSummary[]) => void) => {
+            if (term === "a") {
+                early = soFar;
+                return new Promise<UserSummary[]>(() => {});
+            }
+            return Promise.resolve([user(term)]);
+        });
+        const people = new TermSearch(search, 10);
+        people.set("a");
+        await vi.advanceTimersByTimeAsync(10);
+        people.set("ab");
+        early([user("a")]);
+        expect(people.results).toEqual({ kind: "searching", term: "ab" });
     });
 });

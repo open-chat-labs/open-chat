@@ -15,7 +15,6 @@
         type BotMatch,
         type GroupChatSummary,
         type GroupMatch,
-        type GroupSearchResponse,
         type UserSummary,
     } from "@client";
     import { navigate } from "@utils/navigation";
@@ -32,7 +31,7 @@
 
     let userAndBotsSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined =
         $state(undefined);
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
+    let groupSearchResults: Promise<GroupMatch[]> | undefined = $state(undefined);
     let searchTerm: string = $state("");
     let searchTermLower = $derived(searchTerm.toLocaleLowerCase());
     let searchResultsAvailable: boolean = $state(false);
@@ -156,20 +155,18 @@
         {/if}
 
         {#if groupSearchResults !== undefined}
-            {#await groupSearchResults then resp}
-                {#if resp.kind === "success"}
-                    {#if resp.matches.length > 0}
-                        <Column padding={["zero", "md"]} gap={"lg"}>
-                            <Body fontWeight={"bold"}>
-                                <Translatable resourceKey={i18nKey("Matching public groups")} />
-                            </Body>
-                            <Column gap={"sm"}>
-                                {#each resp.matches as match (match.chatId.groupId)}
-                                    {@render matched_group(match)}
-                                {/each}
-                            </Column>
+            {#await groupSearchResults then matches}
+                {#if matches.length > 0}
+                    <Column padding={["zero", "md"]} gap={"lg"}>
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Matching public groups")} />
+                        </Body>
+                        <Column gap={"sm"}>
+                            {#each matches as match (match.chatId.groupId)}
+                                {@render matched_group(match)}
+                            {/each}
                         </Column>
-                    {/if}
+                    </Column>
                 {/if}
             {/await}
         {/if}

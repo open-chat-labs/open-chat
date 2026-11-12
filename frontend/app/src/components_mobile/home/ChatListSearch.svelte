@@ -5,7 +5,7 @@
         chatListSearchMatches,
         type BotMatch,
         type ChatListScope,
-        type GroupSearchResponse,
+        type GroupMatch,
         type OpenChat,
         type UserSummary,
     } from "@client";
@@ -19,7 +19,7 @@
     interface Props {
         searchTerm?: string;
         searchResultsAvailable: boolean;
-        groupSearchResults?: Promise<GroupSearchResponse> | undefined;
+        groupSearchResults?: Promise<GroupMatch[]> | undefined;
         userAndBotsSearchResults?: Promise<(UserSummary | BotMatch)[]> | undefined;
     }
 
@@ -86,12 +86,13 @@
     }
 
     async function searchQuery(term: string) {
-        groupSearchResults = client.searchGroups(term, 10).then((res) => {
-            console.log(res);
-            return res;
-        });
-        // people, then bots that take direct chats (the client's searchChatList)
-        userAndBotsSearchResults = client.searchChatList(term).then(chatListSearchMatches);
+        // people, then bots that take direct chats, and the public groups (the client's
+        // searchChatList): the groups arrive on their own, as the people and bots do
+        const found = client.searchChatList(term, { groups: true });
+        groupSearchResults = found.groups;
+        userAndBotsSearchResults = Promise.all([found.users, found.bots]).then(([users, bots]) =>
+            chatListSearchMatches({ users, bots }),
+        );
         Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
 

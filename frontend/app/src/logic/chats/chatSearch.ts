@@ -45,8 +45,11 @@ export function newPeople(
 
 /**
  * What a chat list search found (the client's searchChatList) that isn't a chat already: the
- * people not the user and not already a DM (`newPeople`), and the bots not already a DM. `chats`
- * are the ones to leave out: a scope's list, with the user's DMs from every scope for the people.
+ * people not the user and not already a DM (`newPeople`), the bots not already a DM, and the
+ * public groups not already a chat (the user's, or one they're previewing). `chats` are the ones
+ * to leave out: a scope's list, with every chat the user has or is previewing in any scope (the
+ * client's allServerChatsStore: its DMs, groups and group previews), so a group previewed from
+ * the Chats list isn't new in a community or in Favourites either.
  */
 export function outsideList(
     found: ChatListSearchResults,
@@ -56,9 +59,13 @@ export function outsideList(
     const dms = new Set(
         chats.flatMap((chat) => (chat.kind === "direct_chat" ? [chat.them.userId] : [])),
     );
+    const groups = new Set(
+        chats.flatMap((chat) => (chat.kind === "group_chat" ? [chat.id.groupId] : [])),
+    );
     return {
         users: newPeople(found.users, chats, me),
         bots: found.bots.filter((bot) => !dms.has(bot.id)),
+        groups: found.groups.filter((match) => !groups.has(match.chatId.groupId)),
     };
 }
 
