@@ -27,6 +27,18 @@ class NativeExitReportsTest {
         assertTrue(report.stack.contains("\tat com.ocplugin.app.NativeExitReportsTest"))
     }
 
+    // Invariant 1 for an exit: the system's description of it never goes, since for a crash it can
+    // quote the exception's message.
+    @Test
+    fun `invariant 1 an exit report carries no description`() {
+        val record = ExitRecord(100, 1, ApplicationExitInfo.REASON_CRASH, 0, 100, "secret message")
+
+        val report = exitReport(record, null)
+
+        assertEquals("crash", report?.reason)
+        assertFalse(report.toString().contains("secret"))
+    }
+
     // Invariant 1 for an ANR: only the main thread's block leaves the device.
     @Test
     fun `invariant 1 an ANR report carries only the main thread`() {
@@ -67,10 +79,11 @@ class NativeExitReportsTest {
             ExitRecord(100, 1, ApplicationExitInfo.REASON_USER_REQUESTED, 0),
             ExitRecord(200, 2, ApplicationExitInfo.REASON_EXIT_SELF, 0),
             ExitRecord(300, 3, ApplicationExitInfo.REASON_SIGNALED, 9),
+            ExitRecord(400, 4, ApplicationExitInfo.REASON_OTHER, 0),
         )
         val selection = exitsToReport(exits, 0)
         assertEquals(emptyList<ExitRecord>(), selection.toReport)
-        assertEquals(300L, selection.watermark)
+        assertEquals(400L, selection.watermark)
         assertNull(exitReasonName(ApplicationExitInfo.REASON_USER_REQUESTED, 0))
         assertEquals("crash_native", exitReasonName(ApplicationExitInfo.REASON_CRASH_NATIVE, 0))
     }

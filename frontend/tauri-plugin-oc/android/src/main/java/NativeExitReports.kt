@@ -43,7 +43,16 @@ sealed class NativeExitReport {
     ) : NativeExitReport()
 }
 
-internal data class ExitRecord(val timestamp: Long, val pid: Int, val reason: Int, val status: Int)
+// An exit as ApplicationExitInfo recorded it. `description` is the system's free text, which for a
+// crash can quote the exception's message, so it never goes into a report (exitReport).
+internal data class ExitRecord(
+    val timestamp: Long,
+    val pid: Int,
+    val reason: Int,
+    val status: Int,
+    val importance: Int = 0,
+    val description: String? = null,
+)
 
 internal class ExitSelection(val toReport: List<ExitRecord>, val watermark: Long)
 
@@ -68,6 +77,19 @@ internal fun exitsToReport(exits: List<ExitRecord>, lastReported: Long): ExitSel
     return ExitSelection(
         toReport = fresh.filter { exitReasonName(it.reason, it.status) != null }.sortedBy { it.timestamp },
         watermark = fresh.maxOfOrNull { it.timestamp } ?: lastReported,
+    )
+}
+
+// The report for an exit exitsToReport chose: its reason, importance and status, and for an ANR
+// the main thread's block of [anrTrace]. Null for an exit that isn't a fault.
+internal fun exitReport(record: ExitRecord, anrTrace: String?): NativeExitReport.Exit? {
+    val reason = exitReasonName(record.reason, record.status) ?: return null
+    return NativeExitReport.Exit(
+        timestamp = record.timestamp,
+        reason = reason,
+        importance = record.importance,
+        status = record.status,
+        stack = anrTrace?.let(::anrMainThread),
     )
 }
 
@@ -180,21 +202,20 @@ object NativeExitReports {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val infos = am.getHistoricalProcessExitReasons(context.packageName, 0, MAX_EXITS_READ)
             val selection = exitsToReport(
-                infos.map { ExitRecord(it.timestamp, it.pid, it.reason, it.status) },
+                infos.map {
+                    ExitRecord(it.timestamp, it.pid, it.reason, it.status, it.importance, it.description)
+                },
                 prefs.getLong(LAST_REPORTED_EXIT, 0L),
             )
             prefs.edit().putLong(LAST_REPORTED_EXIT, selection.watermark).apply()
             val shellVersion = shellVersion(context)
-            selection.toReport.map { record ->
-                val info = infos.first { it.timestamp == record.timestamp && it.pid == record.pid }
-                val report = NativeExitReport.Exit(
-                    timestamp = record.timestamp,
-                    reason = exitReasonName(record.reason, record.status)!!,
-                    importance = info.importance,
-                    status = record.status,
-                    stack = if (record.reason == ApplicationExitInfo.REASON_ANR) anrStack(info) else null,
-                )
-                toJson(report, shellVersion)
+            selection.toReport.mapNotNull { record ->
+                val trace = if (record.reason == ApplicationExitInfo.REASON_ANR) {
+                    anrTrace(infos.first { it.timestamp == record.timestamp && it.pid == record.pid })
+                } else {
+                    null
+                }
+                exitReport(record, trace)?.let { toJson(it, shellVersion) }
             }
         } catch (e: Throwable) {
             Log.w(TAG, "Reading exit reasons failed", e)
@@ -203,9 +224,9 @@ object NativeExitReports {
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
-    private fun anrStack(info: ApplicationExitInfo): String? = try {
+    private fun anrTrace(info: ApplicationExitInfo): String? = try {
         info.traceInputStream?.use { stream ->
-            anrMainThread(String(stream.readNBytesCompat(MAX_ANR_TRACE_BYTES), Charsets.UTF_8))
+            String(stream.readNBytesCompat(MAX_ANR_TRACE_BYTES), Charsets.UTF_8)
         }
     } catch (_: Throwable) {
         null
