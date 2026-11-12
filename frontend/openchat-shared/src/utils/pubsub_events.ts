@@ -39,7 +39,14 @@ import type {
 } from "..";
 
 export type PubSubEvents = {
-    startVideoCall: { chatId: ChatIdentifier; callType: VideoCallType; join: boolean };
+    // `answer`: the user answered on the native ring, which already chose this call over any
+    // call in progress
+    startVideoCall: {
+        chatId: ChatIdentifier;
+        callType: VideoCallType;
+        join: boolean;
+        answer?: boolean;
+    };
     hangup: undefined;
     askToSpeak: undefined;
     chatWith: DirectChatIdentifier;

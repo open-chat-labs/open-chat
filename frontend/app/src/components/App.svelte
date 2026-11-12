@@ -545,8 +545,14 @@
         chatId: ChatIdentifier;
         callType: VideoCallType;
         join: boolean;
+        answer?: boolean;
     }) {
-        videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
+        videoCallElement?.startOrJoinVideoCall(
+            payload.chatId,
+            payload.callType,
+            payload.join,
+            payload.answer,
+        );
     }
 
     function askToSpeak() {

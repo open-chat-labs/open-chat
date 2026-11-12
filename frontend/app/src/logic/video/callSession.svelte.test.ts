@@ -126,6 +126,29 @@ describe("a call", () => {
         expect(session.confirmSwitchTo?.chatId).toEqual(direct);
     });
 
+    // Invariant: an answer on the native ring (End & answer, End & Accept) is the user's choice,
+    // so it replaces the call in progress without asking. The shell has already hung that call
+    // up, so the answer waits for it to go instead of leaving it a second time.
+    test("an answer from the native ring during a call switches without asking", async () => {
+        await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+
+        const answering = session.startOrJoin(container, {
+            chatId: direct,
+            callType: "default",
+            join: true,
+            answer: true,
+        });
+        await Promise.resolve();
+        expect(session.confirmSwitchTo).toBeUndefined();
+        expect(activeVideoCall.current()?.chatId).toEqual(group);
+        expect(client.startOrJoinVideoCall).toHaveBeenCalledTimes(1);
+
+        // the shell's hang-up lands: the old call leaves, which ends it
+        activeVideoCall.endCall();
+        expect(await answering).toEqual({ kind: "joined" });
+        expect(activeVideoCall.current()?.chatId).toEqual(direct);
+    });
+
     // Invariant: a call joins as the type it was started as, whatever the button asked for
     test("joining a call joins it as the type it was started as", async () => {
         inProgress = { group_chat: "broadcast" };
