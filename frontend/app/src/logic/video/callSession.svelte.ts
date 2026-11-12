@@ -32,7 +32,16 @@ import {
 } from "@utils/callRingOut";
 import type { Theme } from "@src/theme/types";
 
-export type CallRequest = { chatId: ChatIdentifier; callType: VideoCallType; join: boolean };
+// `answer`: the user answered on the native ring, so a call in progress is replaced without asking
+export type CallRequest = {
+    chatId: ChatIdentifier;
+    callType: VideoCallType;
+    join: boolean;
+    answer?: boolean;
+};
+
+// How long an answer from the native ring waits for the shell's hang-up of the call in progress
+export const ANSWER_HANGUP_WAIT_MS = 3_000;
 
 export type StartCallOutcome = VideoCallOutcome | { kind: "confirm_switch" };
 
@@ -102,8 +111,14 @@ export class CallSession {
             : request.callType;
 
         if (activeVideoCall.current() !== undefined) {
-            this.confirmSwitchTo = { chatId, callType, join };
-            return { kind: "confirm_switch" };
+            if (!request.answer) {
+                this.confirmSwitchTo = { chatId, callType, join };
+                return { kind: "confirm_switch" };
+            }
+            // The shell hung up the call in progress before it answered (Android End & answer,
+            // iOS End & Accept), so this waits for that call to go rather than leave it a second
+            // time. Ending it here is the fallback.
+            if (!(await noActiveCall(ANSWER_HANGUP_WAIT_MS))) await this.#endForSwitch();
         }
 
         // close any threads we have open in the right panel
@@ -125,9 +140,13 @@ export class CallSession {
         const request = this.confirmSwitchTo;
         this.confirmSwitchTo = undefined;
         if (request === undefined) return;
+        await this.#endForSwitch();
+        return this.startOrJoin(container, request);
+    }
+
+    async #endForSwitch() {
         activeVideoCall.endCall();
         await new Promise((resolve) => window.setTimeout(resolve, 100));
-        return this.startOrJoin(container, request);
     }
 
     cancelSwitch() {
@@ -327,4 +346,22 @@ export class CallSession {
             );
         }
     }
+}
+
+// True once no call is active, false if one still is after `ms`
+function noActiveCall(ms: number): Promise<boolean> {
+    return new Promise((resolve) => {
+        if (activeVideoCall.current() === undefined) return resolve(true);
+        const timer = window.setTimeout(() => {
+            unsubscribe();
+            resolve(false);
+        }, ms);
+        // The first call, made at once, sees the active call, so `unsubscribe` is set by any later one
+        const unsubscribe = activeVideoCall.subscribe((current) => {
+            if (current !== undefined) return;
+            window.clearTimeout(timer);
+            unsubscribe();
+            resolve(true);
+        });
+    });
 }
