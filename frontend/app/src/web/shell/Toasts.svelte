@@ -12,6 +12,7 @@
     import { toastStore } from "@src/stores/toast";
     import type { ResourceKey } from "@client";
     import { onDestroy } from "svelte";
+    import { bottomAnchorFor } from "./bottomAnchors.svelte";
     import { _ } from "svelte-i18n";
 
     let { library }: { library: ToastLayer } = $props();
@@ -31,7 +32,8 @@
 </script>
 
 {#if library.current !== null || (toast !== undefined && resourceKey !== undefined)}
-    <div class="toasts">
+    <!-- the achievement toast stacks above it while it shows (bottomAnchors) -->
+    <div class="toasts" {@attach bottomAnchorFor("toasts")}>
         {#if library.current !== null}
             {@const shown = library.current}
             <div class="library">

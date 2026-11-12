@@ -7,6 +7,7 @@
     import { modal } from "@openchat/ui/src/lib/behaviours/modal";
     import { useT } from "@openchat/ui/src/lib/i18n";
     import { untrack, type Snippet } from "svelte";
+    import { bottomAnchorFor } from "./bottomAnchors.svelte";
     import { ColumnMotion } from "./columnMotion.svelte";
     import { narrowColumn } from "./layout";
     import { clearShellWidth, currentShellLayout, setShellWidth } from "./viewport.svelte";
@@ -100,7 +101,8 @@
                         {@render left()}
                     </div>
                 {/if}
-                <main class="middle">
+                <!-- the achievement toast plays at its bottom (bottomAnchors) -->
+                <main class="middle" {@attach bottomAnchorFor("middle")}>
                     {@render middle()}
                 </main>
             </div>

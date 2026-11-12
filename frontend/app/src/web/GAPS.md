@@ -2235,12 +2235,22 @@ design export needs. Each entry says where it came up.
   in turn, with the CHIT it paid (the old popup listed them all in one, with the total), and the
   longest streak gets the flame icon, where the old popup shook the page and played longer. A
   batch is marked seen as it comes, as the old popup did, so with the popup off it isn't. It plays
-  at the top of the app, centred, 12px under the panels' headers (`AchievementToastHost`: the
-  shell's 12px page and the headers' 67px, fixed numbers), as web/00 has it ("global, top of the
-  app, with confetti"), so it covers none of the headers' names or buttons; it plays over the top
-  of the list or conversation under it (above dialogs, under their menus). The app's toasts are
-  at the bottom, so a toast showing with it (joining a group says so as its achievement plays) no
-  longer meets it. The narrow layouts (their own headers) aren't checked.
+  just above the composer, centred in the middle panel, or 12px above the middle panel's bottom
+  where it has no composer (Explore, the wallet, a list with nothing selected), as web/00 and
+  web/13 have it since 2026-11-12 (replacing L1's "top of the app"). It never overlaps the app's
+  toasts: while one shows (`toastStore`'s or a library component's, `shell/Toasts`), it sits 12px
+  above the higher of the composer's top and the toasts' (`features/chit/achievementPlacement`),
+  and when the toast goes it settles back down over 280ms (the duration token; none with reduced
+  motion) rather than staying up. The places come from the elements themselves
+  (`shell/bottomAnchors`: the middle panel, the chat's own composer in it, not a thread's beside
+  it, and the toast layer), measured only while it plays, again as they resize or come and go.
+  Its confetti is the library's layer, which takes no clicks, so a toast's Undo or × under a
+  falling piece still works. Notes: the app's toasts are centred on the window, not the middle
+  panel (web/00 docks a toast at the foot of the panel whose content changed; not done yet), so
+  the two are stacked but not on one line; and a toast at the bottom sits over the composer's
+  lower part, under its top, so with a composer the achievement stays where it was. With the
+  middle panel hidden (the narrow layout showing the list; 10b) it plays centred at the window's
+  bottom instead; that isn't checked.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
