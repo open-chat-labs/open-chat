@@ -43,4 +43,6 @@ permissions = [
     "allow-get-window-insets",
     "allow-set-system-bars-style",
     "allow-share",
+    "allow-stage-share-file",
+    "allow-can-share-files",
 ]

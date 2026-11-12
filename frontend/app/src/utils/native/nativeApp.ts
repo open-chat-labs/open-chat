@@ -17,6 +17,7 @@ import {
 } from "./notification_channels";
 import { expectPushDeviceRefresh, registerPushDevice, unregisterPushDevice } from "./push_device";
 import { expectShareTarget, handleShareTarget, type PickShareChat } from "./share_target";
+import { detectShellFileSharing } from "./shellShare.svelte";
 
 // The native apps' (Tauri) setup, shared by the App trees that run in them (components_mobile
 // and src/native): the push device, the native event listeners and svelteReady. What the
@@ -111,6 +112,9 @@ export function setupNativeApp(
     // so they appear directly in the system share sheet (like
     // WhatsApp's per-chat tiles).
     startChatShortcutPusher(client);
+
+    // Whether the message menu can offer Share for media, which an older shell can't
+    detectShellFileSharing();
 
     // Inform the native android app that svelte code is ready — but only
     // once all the listeners above are registered, so the native event

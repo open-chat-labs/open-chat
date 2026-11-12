@@ -8,11 +8,12 @@ import type {
 } from "@client";
 import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "@client";
 import { isTauriApp } from "@shared";
-import { share as shareSheet } from "tauri-plugin-oc-api";
+import { share as shareSheet, shareFiles } from "tauri-plugin-oc-api";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
+import { canShellShareFiles } from "./native/shellShare.svelte";
 import { copyToClipboard } from "./urls";
 
 export type Share = {
@@ -67,8 +68,12 @@ export function canShare(): boolean {
     return navigator.share !== undefined;
 }
 
+/**
+ * Whether a message can be shared to another app: through the Web Share API, or the Android app's
+ * share sheet where its shell can share files (its WebView has no Web Share API).
+ */
 export function canShareMessage(content: MessageContent): boolean {
-    if (!canShare()) {
+    if (!canShare() && !canShellShareFiles()) {
         return false;
     }
 
@@ -114,8 +119,8 @@ export async function shareMessage(
 }
 
 /**
- * Shares a message through the Web Share API, and says whether it could: false if it couldn't be
- * shared, true once it's shared or the user dismissed the share sheet.
+ * Shares a message through the Web Share API, or the Android app's share sheet, and says whether it
+ * could: false if it couldn't be shared, true once it's shared or the user dismissed the share sheet.
  */
 export async function shareMessageOrFail(
     formatter: MessageFormatter,
@@ -131,7 +136,11 @@ export async function shareMessageOrFail(
         return false;
     }
     try {
-        await navigator.share(share);
+        if (canShare()) {
+            await navigator.share(share);
+        } else {
+            await shareFiles(share.files, share.text || undefined, share.title);
+        }
         return true;
     } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return true;
