@@ -51,23 +51,32 @@ final class NotificationRendererTests: XCTestCase {
         XCTAssertEqual(rendered.body, "B")
     }
 
-    // #10398 invariant 14: the photo is best effort too, and has its own deadline
+    // #10398 invariant 14: the photo is best effort too. It has its own deadline, so a slow one
+    // costs neither the avatars nor time: the photo and the avatars run at once, and the extension
+    // couldn't wait out one deadline after the other.
     func testInvariant14ASlowPhotoDownloadNeitherDelaysDeliveryNorCostsTheAvatars() async {
         var photo = groupMessage
         photo["messageType"] = "Image"
         photo["image"] = "https://bucket.raw.icp0.io/files/99"
+        // Never returns, and ignores being cancelled, without holding a thread
+        let hang: @Sendable (URL) async -> URL? = { _ in await withUnsafeContinuation { _ in } }
 
-        let start = ContinuousClock.now
         let rendered = await NotificationRenderer.render(
             userInfo: photo, serverTitle: "Rust", serverBody: "alice: hello",
             avatarBaseUrl: base, timeout: .milliseconds(200),
-            fetch: { _ in Data([1]) },
-            fetchImage: { _ in
-                while true { usleep(10_000) }
-            })
-        XCTAssertLessThan(ContinuousClock.now - start, .seconds(2))
+            fetch: { _ in Data([1]) }, fetchImage: hang)
         XCTAssertNil(rendered.image)
         XCTAssertEqual(rendered.senderAvatar, Data([1]))
+
+        // Both slow: one deadline, not two (1s) in a row
+        let timeout = Duration.milliseconds(500)
+        let start = ContinuousClock.now
+        let slow = await NotificationRenderer.render(
+            userInfo: photo, serverTitle: "Rust", serverBody: "alice: hello",
+            avatarBaseUrl: base, timeout: timeout,
+            fetch: { _ in await withUnsafeContinuation { _ in } }, fetchImage: hang)
+        XCTAssertLessThan(ContinuousClock.now - start, timeout * 1.5)
+        XCTAssertEqual(slow.body, "alice: hello")
     }
 
     // As on Android, a photo is shown and a video's thumbnail isn't
