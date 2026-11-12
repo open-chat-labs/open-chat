@@ -170,6 +170,7 @@ fn send_message_with_transfer_to_group_succeeds(from_approved_account: bool) {
             }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,

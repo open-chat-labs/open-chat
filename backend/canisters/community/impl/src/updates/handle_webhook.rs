@@ -31,6 +31,7 @@ fn handle_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Success
         content: MessageContentInitial::Text(TextContent { text: args.message }),
         sender_name: webhook.name.clone(),
         sender_display_name: None,
+        sender_avatar_id: None,
         replies_to: None,
         mentioned: vec![],
         forwarding: false,
