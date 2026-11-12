@@ -12,6 +12,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { setFrozen } from "@src/logic/moderation/freeze";
     import { updateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -78,24 +79,9 @@
         client.muteAllChannels(community.id, muteAtEveryone);
     }
 
-    function freezeCommunity() {
-        client.freezeCommunity(community.id, undefined).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
-            } else {
-                toastStore.showSuccessToast(i18nKey("communityFrozen"));
-            }
-        });
-    }
-
-    function unfreezeCommunity() {
-        client.unfreezeCommunity(community.id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
-            } else {
-                toastStore.showSuccessToast(i18nKey("communityUnfrozen"));
-            }
-        });
+    async function setCommunityFrozen(frozen: boolean) {
+        const target = { kind: "community" as const, id: community.id };
+        toastStore.showOutcome(await setFrozen(client, target, frozen));
     }
 </script>
 
@@ -145,11 +131,11 @@
 {/if}
 {#if $platformModeratorStore}
     {#if client.isCommunityFrozen(community.id)}
-        <MenuItem danger onclick={unfreezeCommunity}>
+        <MenuItem danger onclick={() => setCommunityFrozen(false)}>
             <Translatable resourceKey={i18nKey("unfreezeCommunity")} />
         </MenuItem>
     {:else}
-        <MenuItem danger onclick={freezeCommunity}>
+        <MenuItem danger onclick={() => setCommunityFrozen(true)}>
             <Translatable resourceKey={i18nKey("freezeCommunity")} />
         </MenuItem>
     {/if}

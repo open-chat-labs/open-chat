@@ -1,6 +1,12 @@
-import { i18nKey, type ChatIdentifier, type MessageFormatter, type OpenChat } from "@client";
+import {
+    i18nKey,
+    type ChatIdentifier,
+    type MessageFormatter,
+    type OpenChat,
+    type ToastOutcome,
+} from "@client";
 import { muteChat } from "@src/logic/chats/muteChat";
-import { toastStore, type ToastOutcome } from "@src/stores/toast";
+import { toastStore } from "@src/stores/toast";
 import type { ScreenContext } from "../app/screens";
 
 // A chat's toggles from its menus (the Chats tab's rows, a conversation's header), each saying so

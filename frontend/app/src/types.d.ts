@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "remount/es5";
 
 declare module "svelte-qr";
@@ -7,11 +6,6 @@ declare module "svelte-qr";
 declare module "svelte-confetti";
 
 declare global {
-    interface Window {
-        platformModerator: any;
-        platformOperator: any;
-    }
-
     interface Document {
         startViewTransition?: (callback: () => void | Promise<void>) => {
             finished: Promise<void>;

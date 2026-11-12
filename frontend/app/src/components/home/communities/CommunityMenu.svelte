@@ -32,6 +32,7 @@
     import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { setFrozen } from "@src/logic/moderation/freeze";
 
     const client = getContext<OpenChat>("client");
 
@@ -114,24 +115,9 @@
         client.muteAllChannels(community.id, muteAtEveryone);
     }
 
-    function freezeCommunity() {
-        client.freezeCommunity(community.id, undefined).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
-            } else {
-                toastStore.showSuccessToast(i18nKey("communityFrozen"));
-            }
-        });
-    }
-
-    function unfreezeCommunity() {
-        client.unfreezeCommunity(community.id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
-            } else {
-                toastStore.showSuccessToast(i18nKey("communityUnfrozen"));
-            }
-        });
+    async function setCommunityFrozen(frozen: boolean) {
+        const target = { kind: "community" as const, id: community.id };
+        toastStore.showOutcome(await setFrozen(client, target, frozen));
     }
 </script>
 
@@ -280,7 +266,7 @@
             {/if}
             {#if $platformModeratorStore}
                 {#if client.isCommunityFrozen(community.id)}
-                    <MenuItem warning onclick={unfreezeCommunity}>
+                    <MenuItem warning onclick={() => setCommunityFrozen(false)}>
                         {#snippet icon()}
                             <TickIcon size={$iconSize} color={"var(--menu-warn"} />
                         {/snippet}
@@ -291,7 +277,7 @@
                         {/snippet}
                     </MenuItem>
                 {:else}
-                    <MenuItem warning onclick={freezeCommunity}>
+                    <MenuItem warning onclick={() => setCommunityFrozen(true)}>
                         {#snippet icon()}
                             <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
                         {/snippet}

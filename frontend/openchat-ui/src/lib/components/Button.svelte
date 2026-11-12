@@ -2,7 +2,9 @@
      `state` forces a look (hover / focus / active) for specimens; leave it at default in real use.
      size: md (40px) | lg (52px). An optional icon shows before the label; with an empty label the button is icon-only.
      Labels never wrap: a long one truncates with an ellipsis, and then (only then) the full text is its tooltip.
-     An icon-only button needs `ariaLabel`, its accessible name and tooltip. -->
+     An icon-only button needs `ariaLabel`, its accessible name and tooltip.
+     busy: a call it started is under way: a spinner (in the label's colour) takes the icon's place, the variant's look stays,
+     and it can't be pressed (aria-busy). -->
 <script lang="ts">
   import { useT } from '../i18n';
 
@@ -18,10 +20,12 @@
     ariaLabel?: string;
     fullWidth?: boolean;
     disabled?: boolean;
+    /** A call it started is under way: a spinner in place of the icon, not pressable. */
+    busy?: boolean;
     onClick?: () => void;
   }
 
-  let { label, variant = 'primary', state: look = 'default', size = 'md', icon, ariaLabel, fullWidth = false, disabled = false, onClick }: Props = $props();
+  let { label, variant = 'primary', state: look = 'default', size = 'md', icon, ariaLabel, fullWidth = false, disabled = false, busy = false, onClick }: Props = $props();
   const t = useT();
 
   const text = $derived(label ? t(label) : '');
@@ -36,12 +40,30 @@
 </script>
 
 {#snippet content()}
-  {#if icon}<span class="icon" style:mask="var(--icon-{icon}) center/contain no-repeat" aria-hidden="true"></span>{/if}
+  {#if busy}
+    <svg class="spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25" />
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="17.6 62.8" />
+    </svg>
+  {:else if icon}<span class="icon" style:mask="var(--icon-{icon}) center/contain no-repeat" aria-hidden="true"></span>{/if}
   {#if text}<span class="label" bind:this={labelEl}>{text}</span>{/if}
 {/snippet}
 
 <div class="wrap" class:full={fullWidth}>
-  {#if disabled}
+  {#if busy && !disabled}
+    <div
+      class="button {variant} busy"
+      class:lg={size === 'lg'}
+      class:icon-only={iconOnly}
+      role="button"
+      aria-disabled="true"
+      aria-busy="true"
+      {title}
+      aria-label={name}
+    >
+      {@render content()}
+    </div>
+  {:else if disabled}
     <div
       class="button disabled"
       class:lg={size === 'lg'}
@@ -119,6 +141,17 @@
     width: var(--icon-size);
     height: var(--icon-size);
     background: currentColor;
+  }
+
+  .spin {
+    flex: none;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    animation: oc-spin 0.9s linear infinite;
+  }
+
+  .busy {
+    cursor: progress;
   }
 
   .label {

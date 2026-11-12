@@ -1,8 +1,8 @@
 <!-- One of the app's dialogs (dialogs.ts): its screen, loaded the first time it opens and kept (a
      spinner only if that takes a moment: DialogHost loads them ahead, once the app is idle), an
      error with a retry if it doesn't load, or a placeholder for a dialog that isn't built yet. One
-     another has handed off to (Diamond from the profile) keeps the backdrop that one showed: only
-     the dialog animates in. -->
+     another has handed off to (Diamond from the profile, Suspend user from someone's card:
+     DialogStack.handOff) keeps the backdrop that one showed: only the dialog animates in. -->
 <script lang="ts" generics="D extends AppDialog">
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";

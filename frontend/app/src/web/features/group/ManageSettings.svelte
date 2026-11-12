@@ -297,7 +297,7 @@
     {@const answer = confirming.answer}
     <!-- TODO(design): GroupSettingsDialog has no confirm step for a verified rename or a change of
          who can see the chat -->
-    <DialogShell title={$_("areYouSure")} z={90} onClose={() => answer(false)}>
+    <DialogShell title={$_("areYouSure")} width={400} height="auto" z={90} onClose={() => answer(false)}>
         <p class="confirm-text">{interpolate($_, confirmText)}</p>
         <div class="actions">
             <Button variant="secondary" label={$_("noThanks")} onClick={() => answer(false)} />

@@ -1,6 +1,7 @@
 import type { MessageMenuAction } from "@client";
 import type { MenuItem } from "@openchat/ui/src/lib/types";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
+import type { ModeratorChatAction } from "@src/logic/moderation/chatModeration";
 
 // The web conversation's own props: its header's menu and a message's menu. Its messages are
 // logic/conversation/messageRow's and its composer's props logic/composer/composerProps', which
@@ -28,13 +29,19 @@ export type HeaderMenuState = {
     unblockLabel: string;
     /** Someone who can edit the group or channel: "Manage", else its details. */
     canEdit: boolean;
+    /**
+     * A platform moderator's items (logic/moderation/chatModeration), with the app's words:
+     * freeze or unfreeze a group, suspend or unsuspend the person in a DM (none on a channel).
+     */
+    moderation: { action: ModeratorChatAction; label: string }[];
 };
 
 /**
  * ConversationHeader's menu, as the design's (`_chatMenu`): for a group or channel, Manage (or its
  * details), favourite, mute, @everyone, mark as read and copy link, then leave; for a DM,
  * favourite, mute, chat settings, then block and delete. Leave, delete, block and unblock show only where the
- * app allows them. Picking one reports its id (`onMenu`, or `onLeave`).
+ * app allows them. Last, a platform moderator's items (`moderationMenuItems`). Picking one reports its id
+ * (`onMenu`, or `onLeave`).
  */
 export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
     const group = state.kind !== "user";
@@ -76,7 +83,31 @@ export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
     for (const action of state.actions) {
         items.push(actionItem(action, state));
     }
+    items.push(...moderationMenuItems(state));
     return items;
+}
+
+const MODERATION_ICONS: Record<ModeratorChatAction, string> = {
+    freeze: "lock",
+    unfreeze: "lock-open",
+    suspend: "user-minus",
+    unsuspend: "user",
+};
+
+/**
+ * A platform moderator's items, the old desktop menu's (freeze or unfreeze a group, suspend or
+ * unsuspend the person in a DM), and all the header offers on a group preview, whose menu is
+ * otherwise hidden (the old preview footer's Freeze button; a channel's community is frozen from
+ * the community's header menu instead). TODO(design): the design has no moderator
+ * items; they go at the end of the menu, freezing and suspending as danger items.
+ */
+export function moderationMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
+    return state.moderation.map(({ action, label }) => ({
+        id: action,
+        label,
+        mask: icon(MODERATION_ICONS[action]),
+        variant: action === "freeze" || action === "suspend" ? "danger" : "regular",
+    }));
 }
 
 /** The quick panel's menu: the header's without what the panel shows as buttons (favourite,

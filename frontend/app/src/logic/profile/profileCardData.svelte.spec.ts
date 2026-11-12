@@ -47,6 +47,35 @@ describe("a profile card's data", () => {
         expect(c.getPublicProfile).toHaveBeenCalledWith("u");
         expect(gone).not.toHaveBeenCalled();
     });
+
+    test("says what it shows once both have loaded", async () => {
+        const user = { userId: "u" } as UserSummary;
+        const card = new ProfileCardData(
+            client(async () => user, profile),
+            "u",
+            () => undefined,
+        );
+        expect(card.shown).toBeUndefined();
+        await card.loaded;
+        expect(card.shown).toEqual({ user, profile, lastOnline: undefined });
+    });
+
+    test("opened again, shows what it showed at once, then loads them again over it", async () => {
+        const before = { userId: "u", username: "before" } as UserSummary;
+        const after = { userId: "u", username: "after" } as UserSummary;
+        const c = client(async () => after, profile);
+        const card = new ProfileCardData(c, "u", () => undefined, {
+            user: before,
+            profile,
+            lastOnline: 5,
+        });
+        expect(card.user).toEqual(before);
+        expect(card.profile).toEqual(profile);
+        expect(card.lastOnline).toBe(5);
+        await card.loaded;
+        expect(card.user).toEqual(after);
+        expect(c.getUser).toHaveBeenCalledWith("u");
+    });
 });
 
 describe("a profile sheet's card for one person after another", () => {

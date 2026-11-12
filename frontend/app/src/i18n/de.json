@@ -550,6 +550,7 @@
     "channelAlreadyExists": "Ein Kanal mit diesem Namen existiert bereits",
     "chatDetails": "Chatdetails",
     "chatFrozen": "Dieser Chat wurde eingefroren",
+    "chatUnfrozen": "Chat freigegeben",
     "chatFrozenBy": "Chat eingefroren von {frozenBy}",
     "chatMenu": "Chat-Menü",
     "chatNotFound": "Entschuldigung - wir konnten den ausgewählten Chat nicht finden",
@@ -1268,6 +1269,16 @@
     "fontSize": "Schriftgröße",
     "forward": "Nach vorne",
     "freezeCommunity": "Gemeinschaft einfrieren",
+    "freezeConfirm": {
+        "groupTitle": "Gruppe einfrieren?",
+        "groupBody": "Mitglieder können keine Nachrichten senden oder Änderungen vornehmen, bis sie wieder aufgetaut ist.",
+        "communityTitle": "Gemeinschaft einfrieren?",
+        "communityBody": "Alle Kanäle in {name} werden eingefroren. Mitglieder können keine Nachrichten senden oder Änderungen vornehmen, bis sie wieder aufgetaut ist.",
+        "groupReasonHint": "Wird Mitgliedern im Chatverlauf angezeigt",
+        "communityReasonHint": "Wird gespeichert, aber Mitgliedern nicht angezeigt",
+        "reasonLabel": "Grund (optional)",
+        "confirm": "Einfrieren"
+    },
     "freezeGroup": "Gruppe einfrieren",
     "generating": "Generieren...",
     "giphyMessage": "Gif-Nachricht",
@@ -1674,6 +1685,16 @@
         "viewMessage": "Nachricht anzeigen"
     },
     "moderator": "Moderator",
+    "moderationToast": {
+        "frozen": "{name} wurde eingefroren",
+        "freezeFailed": "{name} konnte nicht eingefroren werden. Versuche es erneut.",
+        "unfreezing": "{name} wird freigegeben…",
+        "unfrozen": "{name} freigegeben",
+        "unfreezeFailed": "{name} konnte nicht freigegeben werden",
+        "unsuspending": "Sperre von {username} wird aufgehoben…",
+        "unsuspended": "Sperre von {username} aufgehoben",
+        "unsuspendFailed": "Sperre von {username} konnte nicht aufgehoben werden"
+    },
     "months": "Monate",
     "mustBeFutureDateError": "Sie müssen ein zukünftiges Datum auswählen",
     "muteAtEveryone": "@alle stummschalten",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "Gesperrter Benutzer",
     "suspendUser": "Benutzer sperren",
+    "suspendUserFailed": "{username} konnte nicht gesperrt werden. Versuche es erneut.",
     "tapForReferralLink": "Tippen Sie hier, um Ihren persönlichen Empfehlungslink zu kopieren",
     "tellMeMore": "Mehr Informationen",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "Benutzer",
     "usersAndBots": "Benutzer und Bots",
     "userSearchFailed": "Bei der Suche nach Benutzern ist ein Fehler aufgetreten",
+    "userSuspended": "{username} wurde gesperrt",
     "vaultLog": {
         "button": "Zugriffsprotokoll",
         "empty": "Keine Einträge",
