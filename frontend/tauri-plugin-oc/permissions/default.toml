@@ -43,4 +43,5 @@ permissions = [
     "allow-get-window-insets",
     "allow-set-system-bars-style",
     "allow-share",
+    "allow-take-native-exit-reports",
 ]

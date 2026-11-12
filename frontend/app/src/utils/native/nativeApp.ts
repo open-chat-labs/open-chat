@@ -1,4 +1,4 @@
-import { currentUserStore, type OpenChat } from "@client";
+import { currentUserStore, isAndroidTauriApp, type OpenChat } from "@client";
 import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcuts";
 import { activeVideoCall } from "@stores/video";
 import { invoke } from "@tauri-apps/api/core";
@@ -10,6 +10,7 @@ import {
     runCallAction,
     setCallConfig,
 } from "./call_bridge";
+import { reportNativeExits } from "./nativeExits";
 import {
     expectDeepLinks,
     expectNotificationTap,
@@ -106,6 +107,12 @@ export function setupNativeApp(
         await unregisterPushDevice(client);
         await clearAllNotifications().catch(console.error);
     });
+
+    // The Android shell's own crashes, ANRs and kills since the last start, which Rollbar can't
+    // see otherwise
+    if (isAndroidTauriApp()) {
+        reportNativeExits(client);
+    }
 
     // Push the top recent chats to the Android Sharing Shortcuts API
     // so they appear directly in the system share sheet (like

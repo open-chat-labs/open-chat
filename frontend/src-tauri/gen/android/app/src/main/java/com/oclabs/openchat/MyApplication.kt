@@ -7,6 +7,7 @@ import android.util.Log
 import com.ocplugin.app.data.AppDb
 import com.google.firebase.FirebaseApp
 import com.ocplugin.app.LOG_TAG
+import com.ocplugin.app.NativeExitReports
 
 class MyApplication: Application() {
     
@@ -19,6 +20,10 @@ class MyApplication: Application() {
     
     override fun onCreate() {
         super.onCreate()
+
+        // First, so a crash anywhere after it is kept for Rollbar. The Application starts before
+        // any activity or service, so this covers the FCM service and Telecom too.
+        NativeExitReports.installCrashHandler(this)
 
         // Manually init Firebase, allows us to make sure init was fine!
         FirebaseApp.initializeApp(this)?.let {

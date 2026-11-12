@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-take-native-exit-reports"
+description = "Enables the take_native_exit_reports command without any pre-configured scope."
+commands.allow = ["take_native_exit_reports"]
+
+[[permission]]
+identifier = "deny-take-native-exit-reports"
+description = "Denies the take_native_exit_reports command without any pre-configured scope."
+commands.deny = ["take_native_exit_reports"]

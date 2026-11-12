@@ -42,6 +42,7 @@ const COMMANDS: &[&str] = &[
     "share",
     "get_window_insets",
     "set_system_bars_style",
+    "take_native_exit_reports",
 ];
 
 fn main() {
