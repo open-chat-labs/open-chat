@@ -10243,10 +10243,7 @@ export class OpenChat {
         try {
             const resp = await this.#worker.send({ kind: "claimPrize", chatId, messageId });
             if (resp.kind !== "success") {
-                return {
-                    kind: "failed",
-                    message: claimPrizeFailedMessage(resp, (date) => this.toDatetimeString(date)),
-                };
+                return { kind: "failed", message: claimPrizeFailedMessage(resp) };
             }
             localUpdates.markPrizeClaimed(messageId);
             return { kind: "success" };

@@ -2668,8 +2668,6 @@
         "claimed": "成功！",
         "claimFailed": "申し訳ありませんが、あなたの請求は失敗しました!次回は頑張ってください。",
         "claimIneligible": "申し訳ありませんが、この賞品を受け取るための要件を満たしていません。",
-        "claimInProgress": "前回の賞品の受け取りがまだ処理中です。少し待ってからもう一度お試しください。",
-        "claimLimitReached": "賞品を受け取れる1日の上限に達しました。{time} から再び受け取れます。",
         "click": "下のボタンをクリックして、賞品を獲得するチャンスを手に入れましょう。",
         "creatingPrizeMessageFailed": "賞品メッセージの作成に失敗しました",
         "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください",

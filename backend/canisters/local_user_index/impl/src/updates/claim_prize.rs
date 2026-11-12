@@ -1,22 +1,13 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{guards::caller_is_openchat_user, mutate_state, read_state};
+use crate::{guards::caller_is_openchat_user, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
-use oc_error_codes::OCErrorCode;
-use std::cell::RefCell;
-use std::collections::HashSet;
 use types::{
     CanisterId, DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
-    UserId,
 };
-use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
-
-thread_local! {
-    static CLAIMS_IN_PROGRESS: RefCell<HashSet<UserId>> = RefCell::default();
-}
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -31,23 +22,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             ..
         },
         now,
-        blocked_until,
-    ) = read_state(|state| {
-        let user = state.calling_user();
-        let blocked_until = state.data.prize_claims_blocked_until.get(&user.user_id).copied();
-        (user, state.env.now(), blocked_until)
-    });
-
-    // The user has claimed as many prizes as they can in a day. The message is when they can claim again.
-    if let Some(blocked_until) = blocked_until.filter(|ts| *ts > now) {
-        return Error(OCErrorCode::LimitReached.with_message(blocked_until));
-    }
-
-    // One claim at a time for each user, so that a burst of claims can't all be paid out before any
-    // of them counts towards the limit
-    let Some(_guard) = ClaimInProgressGuard::new(user_id) else {
-        return Error(OCErrorCode::AlreadyInProgress.into());
-    };
+    ) = read_state(|state| (state.calling_user(), state.env.now()));
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {
@@ -96,36 +71,8 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
         }
     };
 
-    let response = match response {
+    match response {
         Ok(response) => response,
         Err(error) => Error(error.into()),
-    };
-
-    // Each prize paid out counts towards the user's limit, which the UserIndex keeps
-    if matches!(response, Success | FailedAfterTransfer(..)) {
-        mutate_state(|state| {
-            let now = state.env.now();
-            state.push_event_to_user_index(UserIndexEvent::PrizeClaimed(user_id), now);
-        });
-    }
-
-    response
-}
-
-// Removes the user from `CLAIMS_IN_PROGRESS` when dropped, which also happens if the callback
-// following the claim traps
-struct ClaimInProgressGuard(UserId);
-
-impl ClaimInProgressGuard {
-    fn new(user_id: UserId) -> Option<ClaimInProgressGuard> {
-        CLAIMS_IN_PROGRESS
-            .with_borrow_mut(|c| c.insert(user_id))
-            .then_some(ClaimInProgressGuard(user_id))
-    }
-}
-
-impl Drop for ClaimInProgressGuard {
-    fn drop(&mut self) {
-        CLAIMS_IN_PROGRESS.with_borrow_mut(|c| c.remove(&self.0));
     }
 }

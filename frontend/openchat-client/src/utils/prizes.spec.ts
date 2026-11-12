@@ -72,36 +72,14 @@ describe("a prize with a minimum account age", () => {
 });
 
 describe("a claim which didn't succeed", () => {
-    const formatTime = (date: Date) => date.toISOString();
-
-    test("says when you can claim again once you've reached the daily limit", () => {
-        expect(
-            claimPrizeFailedMessage(
-                { kind: "error", code: ErrorCode.LimitReached, message: "1700000000000" },
-                formatTime,
-            ),
-        ).toMatchObject({
-            key: "prizes.claimLimitReached",
-            params: { time: "2023-11-14T22:13:20.000Z" },
-        });
-    });
-
-    test("says to try again in a moment while another of your claims is going through", () => {
-        expect(
-            claimPrizeFailedMessage(
-                { kind: "error", code: ErrorCode.AlreadyInProgress, message: undefined },
-                formatTime,
-            ),
-        ).toMatchObject({ key: "prizes.claimInProgress" });
-    });
-
     // Invariant: a claim refused as not eligible says so, and nothing about which requirement failed
     test("says you aren't eligible when a requirement isn't met, whichever it was", () => {
         expect(
-            claimPrizeFailedMessage(
-                { kind: "error", code: ErrorCode.PrizeUserNotElligible, message: undefined },
-                formatTime,
-            ),
+            claimPrizeFailedMessage({
+                kind: "error",
+                code: ErrorCode.PrizeUserNotElligible,
+                message: undefined,
+            }),
         ).toEqual(i18nKey("prizes.claimIneligible"));
     });
 
@@ -110,9 +88,8 @@ describe("a claim which didn't succeed", () => {
             { kind: "failure" } as const,
             { kind: "offline" } as const,
             { kind: "error", code: ErrorCode.PrizeEnded, message: undefined } as const,
-            { kind: "error", code: ErrorCode.LimitReached, message: undefined } as const,
         ]) {
-            expect(claimPrizeFailedMessage(resp, formatTime)).toMatchObject({
+            expect(claimPrizeFailedMessage(resp)).toMatchObject({
                 key: "prizes.claimFailed",
             });
         }

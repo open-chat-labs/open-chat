@@ -1,10 +1,7 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{TestEnv, User, client};
-use candid::Principal;
-use constants::{
-    DAY_IN_MS, HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MAX_PRIZE_CLAIMS_PER_DAY, MINUTE_IN_MS, PRIZE_FEE_PERCENT,
-};
+use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -13,7 +10,7 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     CanisterId, ChatEvent, ChatId, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MessageId,
-    Milliseconds, MultiUserChat, OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, TimestampMillis, UserId, icrc1,
+    Milliseconds, MultiUserChat, OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, UserId, icrc1,
 };
 
 #[test]
@@ -330,75 +327,6 @@ fn old_transactions_fixed_by_updating_created_date() {
     assert_eq!(user_balance, starting_balance + 180_000 - ICP_TRANSFER_FEE);
 }
 
-#[test]
-fn prize_claims_are_limited_per_day() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::register_user(env, canister_ids);
-    let user3 = client::register_user(env, canister_ids);
-    let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
-    client::group::happy_path::join_group(env, user2.principal, group_id);
-    client::group::happy_path::join_group(env, user3.principal, group_id);
-
-    // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
-
-    let local_user_index = canister_ids.local_user_index(env, group_id);
-    let chat_id = MultiUserChat::Group(group_id);
-    let first_claim_at = now_millis(env);
-    for _ in 0..MAX_PRIZE_CLAIMS_PER_DAY {
-        let message_id = send_prize_message(env, canister_ids.icp_ledger, &user1, group_id, None, None);
-        client::local_user_index::happy_path::claim_prize(env, user2.principal, local_user_index, chat_id, message_id);
-    }
-
-    // The LocalUserIndex reports the claims to the UserIndex, which tells every LocalUserIndex that
-    // user2 has reached the limit
-    tick_many(env, 10);
-
-    let message_id = send_prize_message(env, canister_ids.icp_ledger, &user1, group_id, None, None);
-    let claimable_from = claim_refused_until(env, user2.principal, local_user_index, chat_id, message_id);
-
-    // The error says when user2 can claim again, which is a day after their first claim
-    assert!(claimable_from >= first_claim_at + DAY_IN_MS, "{claimable_from}");
-    assert!(claimable_from <= now_millis(env) + DAY_IN_MS, "{claimable_from}");
-
-    // Claims in chats on the other LocalUserIndex are refused too
-    let other_group_id = loop {
-        let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
-        if canister_ids.local_user_index(env, group_id) != local_user_index {
-            break group_id;
-        }
-    };
-    client::group::happy_path::join_group(env, user2.principal, other_group_id);
-    let other_local_user_index = canister_ids.local_user_index(env, other_group_id);
-    let other_message_id = send_prize_message(env, canister_ids.icp_ledger, &user1, other_group_id, None, None);
-    assert_eq!(
-        claim_refused_until(
-            env,
-            user2.principal,
-            other_local_user_index,
-            MultiUserChat::Group(other_group_id),
-            other_message_id
-        ),
-        claimable_from
-    );
-
-    // The prize wasn't taken, and other users can still claim
-    client::local_user_index::happy_path::claim_prize(env, user3.principal, local_user_index, chat_id, message_id);
-
-    // Once the first claim is a day old, user2 can claim again
-    env.advance_time(Duration::from_millis(claimable_from - now_millis(env)));
-    env.tick();
-    client::local_user_index::happy_path::claim_prize(env, user2.principal, local_user_index, chat_id, message_id);
-}
-
 // Invariants: a claim on a prize with a minimum account age succeeds only from an account at least
 // that old, whose registration date reaches the chat's LocalUserIndex from another subnet's; an
 // excluded user is refused as not eligible, like any other ineligible claimer, and the prize stays
@@ -465,27 +393,6 @@ fn prize_claims_respect_minimum_account_age_and_exclusions() {
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &old_user),
         10_000
     );
-}
-
-// Claims a prize which the LocalUserIndex refuses, returning when it says the user can claim again
-fn claim_refused_until(
-    env: &mut PocketIc,
-    sender: Principal,
-    local_user_index: CanisterId,
-    chat_id: MultiUserChat,
-    message_id: MessageId,
-) -> TimestampMillis {
-    let response = client::local_user_index::claim_prize(
-        env,
-        sender,
-        local_user_index,
-        &local_user_index_canister::claim_prize::Args { chat_id, message_id },
-    );
-    let local_user_index_canister::claim_prize::Response::Error(error) = response else {
-        panic!("{response:?}");
-    };
-    assert!(error.matches_code(OCErrorCode::LimitReached), "{error:?}");
-    error.message().unwrap().parse().unwrap()
 }
 
 // Sends a prize message with two prizes, which can be claimed for two days

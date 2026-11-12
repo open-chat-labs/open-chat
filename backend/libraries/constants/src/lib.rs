@@ -89,8 +89,6 @@ pub const MEMO_SOL_DEPOSIT_FEE: [u8; 9] = [0x4f, 0x43, 0x5f, 0x53, 0x4f, 0x4c, 0
 pub const LIFETIME_DIAMOND_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
 pub const PRIZE_FEE_PERCENT: u8 = 5;
-// The most prizes a user can claim in any 24 hours, which the UserIndex enforces
-pub const MAX_PRIZE_CLAIMS_PER_DAY: usize = 10;
 // The most users a prize's sender can exclude from claiming it
 pub const MAX_PRIZE_EXCLUDED_USERS: usize = 50;
 
