@@ -192,7 +192,11 @@
 {#each stack.items as dialog (dialog)}
     <!-- a bot has no card, checked as its user loads (as the old Home did) -->
     {#if dialog.kind !== "user" || profileCardShows($allUsersStore.get(dialog.userId))}
-        <DialogScreen {dialog} onClose={() => stack.close(dialog)} dialogs={stack} />
+        <DialogScreen
+            {dialog}
+            claimInPlace={() => stack.claimHandOff(dialog)}
+            onClose={() => stack.close(dialog)}
+            dialogs={stack} />
     {/if}
 {/each}
 

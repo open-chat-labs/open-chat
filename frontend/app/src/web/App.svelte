@@ -7,7 +7,11 @@
     import { installBehaviours } from "@openchat/ui/src/lib/behaviours";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import { setI18n } from "@openchat/ui/src/lib/i18n";
-    import { setToastHost, ToastLayer } from "@openchat/ui/src/lib/toasts.svelte";
+    import {
+        setPendingToastHost,
+        setToastHost,
+        ToastLayer,
+    } from "@openchat/ui/src/lib/toasts.svelte";
     import { currentThemeMode } from "@theme/themes";
     import {
         boundaryErrorHandler,
@@ -17,6 +21,7 @@
     } from "@utils/appRoot.svelte";
     import { createOpenChatClient } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
+    import { installConsoleHooks } from "@src/logic/moderation/consoleHooks";
     import { botState, OpenChat } from "@client";
     import { onMount, setContext } from "svelte";
     import { accentStore } from "@theme/accent";
@@ -45,6 +50,7 @@
     // every dialog and its veil (shell/Toasts)
     const libraryToasts = new ToastLayer();
     setToastHost(libraryToasts.show);
+    setPendingToastHost(libraryToasts.showPending);
 
     // The theme goes on <html> rather than a wrapper so that anything mounted outside the
     // app's own tree (dialogs, menus, tooltips) is themed too. The accent is the one picked on
@@ -63,9 +69,12 @@
     onMount(() => {
         const unsubscribe = subscribeToSessionEvents(client);
         window.addEventListener("unhandledrejection", unhandledError);
+        // the platform moderators' and operators' console hooks, as the old App has them
+        const uninstallConsoleHooks = installConsoleHooks(client);
         return () => {
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubscribe();
+            uninstallConsoleHooks();
         };
     });
 

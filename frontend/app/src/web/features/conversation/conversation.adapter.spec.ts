@@ -1,5 +1,10 @@
 import type { MessageMenuAction } from "@client";
-import { messageMenuItems } from "./conversation.adapter";
+import {
+    headerMenuItems,
+    messageMenuItems,
+    moderationMenuItems,
+    type HeaderMenuState,
+} from "./conversation.adapter";
 
 describe("a message's menu", () => {
     const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
@@ -52,3 +57,39 @@ describe("a message's menu", () => {
 });
 
 // a row's messages are kept between renders: a voice message's playback must stay live in them
+
+describe("the header menu's moderator items", () => {
+    const state = (moderation: HeaderMenuState["moderation"]): HeaderMenuState => ({
+        kind: "group",
+        favourite: false,
+        muted: false,
+        everyoneMuted: false,
+        isBot: false,
+        unread: false,
+        actions: ["leave"],
+        unblockLabel: "Unblock user",
+        canEdit: false,
+        moderation,
+    });
+
+    test("come last, after leave, with the app's words; freezing is a danger item", () => {
+        const items = headerMenuItems(state([{ action: "freeze", label: "Freeze group" }]));
+        expect(items.slice(-2).map((i) => i.id)).toEqual(["leave", "freeze"]);
+        expect(items.at(-1)).toEqual({
+            id: "freeze",
+            label: "Freeze group",
+            mask: "var(--icon-lock) center/contain no-repeat",
+            variant: "danger",
+        });
+    });
+
+    test("are all a preview's menu has, and none for anyone else", () => {
+        expect(
+            moderationMenuItems(state([{ action: "unfreeze", label: "Unfreeze group" }])).map(
+                (i) => [i.id, i.variant],
+            ),
+        ).toEqual([["unfreeze", "regular"]]);
+        expect(moderationMenuItems(state([]))).toEqual([]);
+        expect(headerMenuItems(state([])).some((i) => i.id.includes("reeze"))).toBe(false);
+    });
+});

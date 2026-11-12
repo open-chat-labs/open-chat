@@ -13,10 +13,19 @@ import {
 } from "@client";
 import { reactiveValue } from "@src/utils/reactiveValue";
 
+/** What a card showed, for a card that shows the same person again (going back to it). */
+export type ProfileCardShown = {
+    user: UserSummary;
+    profile: PublicProfile;
+    lastOnline: number | undefined;
+};
+
 /**
  * A profile card's user and public profile, loaded as the card opens. `onGone` is called when
  * either can't be loaded, and the card closes. The user id is the one the card opened with, so a
- * card closed while loading never loads another user.
+ * card closed while loading never loads another user. A card opened again (back from the dialog
+ * it handed off to) starts from what it showed (`shown`), so it shows at once, and loads them
+ * again over it.
  */
 export class ProfileCardData {
     #user = $state<UserSummary>();
@@ -26,7 +35,10 @@ export class ProfileCardData {
     /** Resolves once the public profile has loaded. */
     readonly loaded: Promise<void>;
 
-    constructor(client: OpenChat, userId: string, onGone: () => void) {
+    constructor(client: OpenChat, userId: string, onGone: () => void, shown?: ProfileCardShown) {
+        this.#user = shown?.user;
+        this.#profile = shown?.profile;
+        this.#lastOnline = shown?.lastOnline;
         let resolveLoaded: () => void = () => undefined;
         this.loaded = new Promise((resolve) => (resolveLoaded = resolve));
         void this.#load(client, userId, onGone, resolveLoaded);
@@ -42,6 +54,12 @@ export class ProfileCardData {
 
     get lastOnline(): number | undefined {
         return this.#lastOnline;
+    }
+
+    /** What it shows, once the user and their profile have loaded. */
+    get shown(): ProfileCardShown | undefined {
+        if (this.#user === undefined || this.#profile === undefined) return undefined;
+        return { user: this.#user, profile: this.#profile, lastOnline: this.#lastOnline };
     }
 
     async #loadLastOnline(client: OpenChat, userId: string) {

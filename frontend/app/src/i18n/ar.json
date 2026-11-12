@@ -550,6 +550,7 @@
     "channelAlreadyExists": "توجد قناة بهذا الاسم بالفعل",
     "chatDetails": "تفاصيل الدردشة",
     "chatFrozen": "لقد تم تجميد هذه الدردشة",
+    "chatUnfrozen": "تم إلغاء تجميد الدردشة",
     "chatFrozenBy": "تم تجميد الدردشة بواسطة {frozenBy}",
     "chatMenu": "قائمة الدردشة",
     "chatNotFound": "عذرا - لم نتمكن من العثور على الدردشة المحددة",
@@ -1268,6 +1269,16 @@
     "fontSize": "حجم الخط",
     "forward": "إلى الأمام",
     "freezeCommunity": "تجميد المجتمع",
+    "freezeConfirm": {
+        "groupTitle": "تجميد المجموعة؟",
+        "groupBody": "لن يتمكن الأعضاء من إرسال الرسائل أو إجراء تغييرات حتى يتم إلغاء تجميدها.",
+        "communityTitle": "تجميد المجتمع؟",
+        "communityBody": "سيتم تجميد كل قناة في {name}. لن يتمكن الأعضاء من إرسال الرسائل أو إجراء تغييرات حتى يتم إلغاء تجميده.",
+        "groupReasonHint": "يظهر للأعضاء في سجل الدردشة",
+        "communityReasonHint": "يُحفظ في السجل ولا يظهر للأعضاء",
+        "reasonLabel": "السبب (اختياري)",
+        "confirm": "تجميد"
+    },
     "freezeGroup": "مجموعة التجميد",
     "generating": "جاري التوليد...",
     "giphyMessage": "رسالة جيف",
@@ -1674,6 +1685,16 @@
         "viewMessage": "عرض الرسالة"
     },
     "moderator": "المشرف",
+    "moderationToast": {
+        "frozen": "تم تجميد {name}",
+        "freezeFailed": "تعذّر تجميد {name}. حاول مرة أخرى.",
+        "unfreezing": "جارٍ إلغاء تجميد {name}…",
+        "unfrozen": "تم إلغاء تجميد {name}",
+        "unfreezeFailed": "تعذّر إلغاء تجميد {name}",
+        "unsuspending": "جارٍ رفع إيقاف {username}…",
+        "unsuspended": "تم رفع إيقاف {username}",
+        "unsuspendFailed": "تعذّر رفع إيقاف {username}"
+    },
     "months": "شهور",
     "mustBeFutureDateError": "يجب عليك تحديد تاريخ مستقبلي",
     "muteAtEveryone": "كتم صوت الجميع",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "المستخدم الموقوف",
     "suspendUser": "تعليق المستخدم",
+    "suspendUserFailed": "تعذّر تعليق {username}. حاول مرة أخرى.",
     "tapForReferralLink": "انقر هنا لنسخ رابط الإحالة الشخصي الخاص بك",
     "tellMeMore": "مزيد من المعلومات",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "المستخدمون",
     "usersAndBots": "المستخدمون والروبوتات",
     "userSearchFailed": "حدث خطأ أثناء البحث عن المستخدمين",
+    "userSuspended": "تم تعليق {username}",
     "vaultLog": {
         "button": "سجل الوصول",
         "empty": "لا توجد إدخالات",

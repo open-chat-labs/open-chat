@@ -562,6 +562,17 @@
         "doc": ""
       },
       {
+        "name": "busy",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A call it started is under way: a spinner (in the label's colour) in place of the icon, the variant's look kept, not pressable (aria-busy)."
+      },
+      {
         "name": "onClick",
         "type": "() => void",
         "default": null,
@@ -5964,7 +5975,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "What it says is still on its way: a small loader in place of the action and the dismiss."
+        "doc": "What it says is still on its way: a small loader in place of the action and the dismiss. A host's pending toast (`ToastLayer.showPending`) is busy until it settles."
       }
     ],
     "group": "library"
@@ -18607,14 +18618,14 @@
       },
       {
         "name": "moderatorAction",
-        "type": "{ label: string; onAction: () => void }",
+        "type": "{ label: string; onAction: () => void; handOff?: boolean }",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden without it."
+        "doc": "A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden without it. It plays the exit, then calls onAction and onCancel; with `handOff` (an action that opens another dialog in this one's place) it calls onAction at once, with no exit, and the host replaces the dialog."
       },
       {
         "name": "online",
@@ -18812,7 +18823,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Message action; hidden without it."
+        "doc": "Message action; hidden without it. It plays the exit, then calls onMessage and onCancel."
       },
       {
         "name": "onBlock",

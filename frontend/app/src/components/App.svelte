@@ -22,10 +22,7 @@
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
-        type DexId,
-        type DiamondMembershipFees,
         OpenChat,
-        PremiumItem,
         type VideoCallType,
         anonUserStore,
         botState,
@@ -48,6 +45,7 @@
     } from "@utils/appRoot.svelte";
     import { createOpenChatClient } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
+    import { installConsoleHooks } from "@src/logic/moderation/consoleHooks";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading, locale } from "svelte-i18n";
@@ -126,41 +124,7 @@
 
         redirectLandingPageLinksIfNecessary();
 
-        // @ts-expect-error debug hooks attached to window for the console
-        window.platformModerator = {
-            addHotGroupExclusion,
-            deleteFrozenGroup,
-            deleteMessage,
-            deleteChannelMessage,
-            freezeGroup,
-            removeHotGroupExclusion,
-            setCommunityModerationFlags,
-            setGroupModerationFlags,
-            unfreezeGroup,
-            addMessageFilter,
-            removeMessageFilter,
-            reportedMessages,
-            unsuspendUser,
-        };
-
-        // @ts-expect-error debug hooks attached to window for the console
-        window.platformOperator = {
-            addRemoveSwapProvider,
-            setGroupUpgradeConcurrency,
-            setCommunityUpgradeConcurrency,
-            markLocalGroupIndexFull,
-            reinstateMissedDailyClaims,
-            setAirdropConfig,
-            setDiamondMembershipFees,
-            setTokenEnabled,
-            stakeNeuronForSubmittingProposals,
-            topUpNeuronForSubmittingProposals,
-            setPremiumItemCost,
-            updateBlockedUsernamePatterns,
-            pauseEventLoop: () => client.pauseEventLoop(),
-            resumeEventLoop: () => client.resumeEventLoop(),
-        };
-
+        const uninstallConsoleHooks = installConsoleHooks(client);
 
         if (client.isNativeApp()) {
             // Inform the native app that svelte code is ready! SetTimeout
@@ -181,6 +145,7 @@
             }
             unsubs.forEach((u) => u());
             unsubKeyboard();
+            uninstallConsoleHooks();
         };
     });
 
@@ -236,271 +201,6 @@
     function onUserLoggedIn() {
         setupNativeApp();
         warmRichTextEditor();
-    }
-
-    function addHotGroupExclusion(chatId: string): void {
-        client.addHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
-            if (success) {
-                console.log("Hot group exclusion added", chatId);
-            } else {
-                console.log("Failed to add hot group exclusion", chatId);
-            }
-        });
-    }
-
-    function deleteFrozenGroup(chatId: string): void {
-        client.deleteFrozenGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
-            if (success) {
-                console.log("Group deleted", chatId);
-            } else {
-                console.log("Failed to delete frozen group", chatId);
-            }
-        });
-    }
-
-    function freezeGroup(chatId: string, reason: string | undefined): void {
-        client.freezeGroup({ kind: "group_chat", groupId: chatId }, reason).then((success) => {
-            if (success) {
-                console.log("Group frozen", chatId);
-            } else {
-                console.log("Failed to freeze group", chatId);
-            }
-        });
-    }
-
-    function removeHotGroupExclusion(chatId: string): void {
-        client.removeHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
-            if (success) {
-                console.log("Hot group exclusion removed", chatId);
-            } else {
-                console.log("Failed to remove hot group exclusion", chatId);
-            }
-        });
-    }
-
-    function setCommunityModerationFlags(communityId: string, flags: number): void {
-        client.setCommunityModerationFlags(communityId, flags).then((success) => {
-            if (success) {
-                console.log("Community moderation flags updated", communityId);
-            } else {
-                console.log("Failed to set community moderation flags", communityId);
-            }
-        });
-    }
-
-    function setGroupModerationFlags(chatId: string, flags: number): void {
-        client.setGroupModerationFlags(chatId, flags).then((success) => {
-            if (success) {
-                console.log("Group moderation flags updated", chatId);
-            } else {
-                console.log("Failed to set group moderation flags", chatId);
-            }
-        });
-    }
-
-    function unfreezeGroup(chatId: string): void {
-        client.unfreezeGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
-            if (success) {
-                console.log("Group unfrozen", chatId);
-            } else {
-                console.log("Failed to unfreeze group", chatId);
-            }
-        });
-    }
-
-    function addMessageFilter(regex: string): void {
-        client.addMessageFilter(regex);
-    }
-
-    function removeMessageFilter(id: bigint): void {
-        client.removeMessageFilter(id);
-    }
-
-    function reportedMessages(userId?: string): void {
-        client.reportedMessages(userId).then((json) => console.log(JSON.parse(json)));
-    }
-
-    function unsuspendUser(userId: string): void {
-        client.unsuspendUser(userId).then((success) => {
-            console.log(success ? "User unsuspended" : "Failed to unsuspend user", userId);
-        });
-    }
-
-    function deleteChannelMessage(
-        communityId: string,
-        channelId: number,
-        messageId: bigint,
-        threadRootMessageIndex?: number | undefined,
-    ): void {
-        client
-            .deleteMessage(
-                { kind: "channel", communityId, channelId },
-                threadRootMessageIndex,
-                messageId,
-                true,
-            )
-            .then((success) => {
-                if (success) {
-                    console.log(
-                        "Message deleted",
-                        communityId,
-                        channelId,
-                        messageId,
-                        threadRootMessageIndex,
-                    );
-                } else {
-                    console.log(
-                        "Failed to delete message",
-                        communityId,
-                        channelId,
-                        messageId,
-                        threadRootMessageIndex,
-                    );
-                }
-            });
-    }
-
-    function deleteMessage(
-        chatId: string,
-        messageId: bigint,
-        threadRootMessageIndex?: number | undefined,
-    ): void {
-        client
-            .deleteMessage(
-                { kind: "group_chat", groupId: chatId },
-                threadRootMessageIndex,
-                messageId,
-                true,
-            )
-            .then((success) => {
-                if (success) {
-                    console.log("Message deleted", chatId, messageId, threadRootMessageIndex);
-                } else {
-                    console.log(
-                        "Failed to delete message",
-                        chatId,
-                        messageId,
-                        threadRootMessageIndex,
-                    );
-                }
-            });
-    }
-
-    function addRemoveSwapProvider(swapProvider: DexId, add: boolean): void {
-        client.addRemoveSwapProvider(swapProvider, add).then((success) => {
-            if (success) {
-                const action = add ? "Added" : "Removed";
-                console.log(`${action} swap provider`, swapProvider);
-            } else {
-                console.error("Failed to add/remove swap provider");
-            }
-        });
-    }
-
-    function setGroupUpgradeConcurrency(value: number): void {
-        client.setGroupUpgradeConcurrency(value).then((success) => {
-            if (success) {
-                console.log("Group upgrade concurrency set", value);
-            } else {
-                console.error("Failed to set group upgrade concurrency", value);
-            }
-        });
-    }
-
-    function setCommunityUpgradeConcurrency(value: number): void {
-        client.setCommunityUpgradeConcurrency(value).then((success) => {
-            if (success) {
-                console.log("Community upgrade concurrency set", value);
-            } else {
-                console.error("Failed to set community upgrade concurrency", value);
-            }
-        });
-    }
-
-    function markLocalGroupIndexFull(canisterId: string, full: boolean): void {
-        client.markLocalGroupIndexFull(canisterId, full).then((success) => {
-            if (success) {
-                console.log("LocalGroupIndex marked as full", full);
-            } else {
-                console.error("Failed to mark LocalGroupIndex as full", full);
-            }
-        });
-    }
-
-    function reinstateMissedDailyClaims(userId: string, days: number[]): void {
-        client.reinstateMissedDailyClaims(userId, days).then((success) => {
-            if (success) {
-                console.log("Reinstated missed daily claims");
-            } else {
-                console.error("Failed to reinstate missed daily claims");
-            }
-        });
-    }
-
-    function setAirdropConfig(
-        channelId: number,
-        channelName: string,
-        communityId?: string,
-        communityName?: string,
-    ): void {
-        client
-            .setAirdropConfig(channelId, channelName, communityId, communityName)
-            .then((success) => {
-                if (success) {
-                    console.log("Airdrop config set");
-                } else {
-                    console.error("Failed to set airdrop config");
-                }
-            });
-    }
-
-    function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {
-        client.setDiamondMembershipFees(fees).then((success) => {
-            if (success) {
-                console.log("Diamond membership fees set", fees);
-            } else {
-                console.error("Failed to set diamond membership fees", fees);
-            }
-        });
-    }
-
-    function setTokenEnabled(ledger: string, enabled: boolean): void {
-        client.setTokenEnabled(ledger, enabled).then((success) => {
-            const status = enabled ? "enabled" : "disabled";
-            if (success) {
-                console.log(`Token ${status}`);
-            } else {
-                console.error(`Failed to set token ${status}`);
-            }
-        });
-    }
-
-    function stakeNeuronForSubmittingProposals(governanceCanisterId: string, stake: bigint): void {
-        client.stakeNeuronForSubmittingProposals(governanceCanisterId, stake).then((success) => {
-            if (success) {
-                console.log("Neuron staked successfully");
-            } else {
-                console.error("Failed to stake neuron");
-            }
-        });
-    }
-
-    function topUpNeuronForSubmittingProposals(governanceCanisterId: string, amount: bigint): void {
-        client.topUpNeuronForSubmittingProposals(governanceCanisterId, amount).then((success) => {
-            if (success) {
-                console.log("Neuron topped up successfully");
-            } else {
-                console.error("Failed to top up neuron");
-            }
-        });
-    }
-
-    function setPremiumItemCost(item: PremiumItem, chitCost: number): void {
-        client.setPremiumItemCost(item, chitCost);
-    }
-
-    function updateBlockedUsernamePatterns(pattern: string, add: boolean) {
-        client.updateBlockedUsernamePatterns(pattern, add);
     }
 
     function calculateHeight() {

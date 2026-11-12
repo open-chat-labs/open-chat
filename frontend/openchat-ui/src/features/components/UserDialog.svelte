@@ -63,15 +63,19 @@
     onToggleFavourite?: (fav: boolean) => Promise<unknown> | void;
     onDisappearChange?: Settings['onDisappearChange'];
     onReadReceiptsChange?: Settings['onReadReceiptsChange'];
-    /** Hidden without it. */
+    /** Hidden without it. It plays the exit, then calls onMessage and onCancel. */
     onMessage?: () => void;
     /** You have blocked this person (shows Unblock instead of Block). */
     blocked?: boolean;
     /** Block after the user confirms; the dialog closes once it resolves. Hidden without it. */
     onBlock?: () => Promise<unknown> | void;
     onUnblock?: () => Promise<unknown> | void;
-    /** A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden without it. */
-    moderatorAction?: { label: string; onAction: () => void };
+    /**
+     * A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden
+     * without it. It plays the exit, then calls onAction and onCancel; with `handOff` (an action that opens another dialog
+     * in this one's place) it calls onAction at once, with no exit, and the host replaces the dialog.
+     */
+    moderatorAction?: { label: string; onAction: () => void; handOff?: boolean };
     onCancel?: () => void;
   }
 
@@ -143,6 +147,16 @@
 
   // Esc, the veil and the cover's close: never while a block / unblock is in flight (it closes itself when done)
   const dismiss = () => flow.dismiss(onCancel);
+  // once its exit has played the dialog has gone, so the host hears it (onCancel) after the action, or it would
+  // stay mounted, invisible
+  const left = (action: () => void) => () => {
+    action();
+    onCancel?.();
+  };
+  function moderate(action: NonNullable<Props['moderatorAction']>) {
+    if (action.handOff) flow.handOff(action.onAction);
+    else flow.dismiss(left(action.onAction));
+  }
 
   function setMute(key: MuteKey | null) {
     muteMenu = null;
@@ -271,11 +285,11 @@
           <span class="block" onclick={() => (blockStep = 'confirm')} role="button" tabindex="0">{t(blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span>
         {/if}
         {#if moderatorAction}
-          <span class="block" onclick={() => flow.dismiss(moderatorAction.onAction)} role="button" tabindex="0">{t(moderatorAction.label)}</span>
+          <span class="block" onclick={() => moderate(moderatorAction)} role="button" tabindex="0">{t(moderatorAction.label)}</span>
         {/if}
         <span class="grow"></span>
         {#if !dm && onMessage && !blocked}
-          <div class="message" onclick={() => flow.dismiss(onMessage)} role="button" tabindex="0">
+          <div class="message" onclick={() => flow.dismiss(left(onMessage))} role="button" tabindex="0">
             <span>{t('ui.userDialog.message')}</span>
             <span class="message-icon"></span>
           </div>

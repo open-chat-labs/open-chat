@@ -6,11 +6,11 @@
         currentUserIdStore,
         mobileWidth,
         platformModeratorStore,
-        unsuspendUserMessage,
         publish,
         setRightPanelHistory,
     } from "@client";
 
+    import { unsuspendUser as unsuspend } from "@src/logic/moderation/chatModeration";
     import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -102,9 +102,9 @@
     }
 
     async function unsuspendUser() {
-        const success = await client.unsuspendUser(userId);
-        afterBlock(success, unsuspendUserMessage(true), unsuspendUserMessage(false));
-        if (success) onClose();
+        const outcome = await unsuspend(client, userId);
+        toastStore.showOutcome(outcome);
+        if (outcome.kind === "success") onClose();
     }
 
     function suspendUser() {

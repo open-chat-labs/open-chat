@@ -550,6 +550,7 @@
     "channelAlreadyExists": "इस नाम का एक चैनल पहले से मौजूद है",
     "chatDetails": "चैट विवरण",
     "chatFrozen": "इस चैट को फ़्रीज़ कर दिया गया है",
+    "chatUnfrozen": "चैट अनफ़्रीज़ कर दी गई",
     "chatFrozenBy": "{frozenBy} द्वारा चैट फ़्रीज़ की गई",
     "chatMenu": "चैट मेनू",
     "chatNotFound": "क्षमा करें - हम चयनित चैट नहीं ढूंढ सके",
@@ -1268,6 +1269,16 @@
     "fontSize": "फ़ॉन्ट आकार",
     "forward": "आगे",
     "freezeCommunity": "फ़्रीज़ समुदाय",
+    "freezeConfirm": {
+        "groupTitle": "समूह फ़्रीज़ करें?",
+        "groupBody": "जब तक इसे अनफ़्रीज़ नहीं किया जाता, सदस्य संदेश नहीं भेज पाएंगे या बदलाव नहीं कर पाएंगे।",
+        "communityTitle": "समुदाय फ़्रीज़ करें?",
+        "communityBody": "{name} का हर चैनल फ़्रीज़ हो जाएगा। जब तक इसे अनफ़्रीज़ नहीं किया जाता, सदस्य संदेश नहीं भेज पाएंगे या बदलाव नहीं कर पाएंगे।",
+        "groupReasonHint": "चैट की टाइमलाइन में सदस्यों को दिखता है",
+        "communityReasonHint": "रिकॉर्ड में रखा जाता है; सदस्यों को नहीं दिखता",
+        "reasonLabel": "कारण (वैकल्पिक)",
+        "confirm": "फ़्रीज़ करें"
+    },
     "freezeGroup": "फ़्रीज़ समूह",
     "generating": "उत्पन्न...",
     "giphyMessage": "जीआईएफ संदेश",
@@ -1674,6 +1685,16 @@
         "viewMessage": "संदेश देखें"
     },
     "moderator": "मध्यस्थ",
+    "moderationToast": {
+        "frozen": "{name} को फ़्रीज़ कर दिया गया है",
+        "freezeFailed": "{name} को फ़्रीज़ नहीं किया जा सका। फिर से कोशिश करें।",
+        "unfreezing": "{name} को अनफ़्रीज़ किया जा रहा है…",
+        "unfrozen": "{name} अनफ़्रीज़ हो गया",
+        "unfreezeFailed": "{name} को अनफ़्रीज़ नहीं किया जा सका",
+        "unsuspending": "{username} का निलंबन हटाया जा रहा है…",
+        "unsuspended": "{username} का निलंबन हटा दिया गया",
+        "unsuspendFailed": "{username} का निलंबन नहीं हटाया जा सका"
+    },
     "months": "महीने",
     "mustBeFutureDateError": "आपको भविष्य की कोई तिथि चुननी होगी",
     "muteAtEveryone": "सभी को म्यूट करें",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "निलंबित उपयोगकर्ता",
     "suspendUser": "उपयोगकर्ता को निलंबित करें",
+    "suspendUserFailed": "{username} को निलंबित नहीं किया जा सका। फिर से कोशिश करें।",
     "tapForReferralLink": "अपना व्यक्तिगत रेफरल लिंक कॉपी करने के लिए टैप करें",
     "tellMeMore": "अधिक जानकारी",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "उपयोगकर्ताओं",
     "usersAndBots": "उपयोगकर्ता और बॉट",
     "userSearchFailed": "उपयोगकर्ताओं को खोजने में त्रुटि हुई",
+    "userSuspended": "{username} को निलंबित कर दिया गया है",
     "vaultLog": {
         "button": "पहुँच लॉग",
         "empty": "कोई प्रविष्टि नहीं",

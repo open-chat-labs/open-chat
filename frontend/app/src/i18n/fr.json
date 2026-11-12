@@ -550,6 +550,7 @@
     "channelAlreadyExists": "Une chaîne portant ce nom existe déjà",
     "chatDetails": "Détails du chat",
     "chatFrozen": "Ce chat a été gelé",
+    "chatUnfrozen": "Chat dégelé",
     "chatFrozenBy": "Chat gelé par {frozenBy}",
     "chatMenu": "Menu de discussion",
     "chatNotFound": "Désolé - nous n'avons pas pu trouver le chat sélectionné",
@@ -1268,6 +1269,16 @@
     "fontSize": "Taille de police",
     "forward": "Vers l'avant",
     "freezeCommunity": "Geler la communauté",
+    "freezeConfirm": {
+        "groupTitle": "Geler le groupe ?",
+        "groupBody": "Les membres ne pourront plus envoyer de messages ni faire de modifications tant qu'il ne sera pas dégelé.",
+        "communityTitle": "Geler la communauté ?",
+        "communityBody": "Tous les canaux de {name} seront gelés. Les membres ne pourront plus envoyer de messages ni faire de modifications tant qu'elle ne sera pas dégelée.",
+        "groupReasonHint": "Affichée aux membres dans l'historique du chat",
+        "communityReasonHint": "Conservée, mais pas affichée aux membres",
+        "reasonLabel": "Raison (facultatif)",
+        "confirm": "Geler"
+    },
     "freezeGroup": "Groupe Geler",
     "generating": "Générateur...",
     "giphyMessage": "Message GIF",
@@ -1674,6 +1685,16 @@
         "viewMessage": "Voir le message"
     },
     "moderator": "modérateur",
+    "moderationToast": {
+        "frozen": "{name} a été gelé",
+        "freezeFailed": "Impossible de geler {name}. Réessayez.",
+        "unfreezing": "Dégel de {name}…",
+        "unfrozen": "{name} dégelé",
+        "unfreezeFailed": "Impossible de dégeler {name}",
+        "unsuspending": "Levée de la suspension de {username}…",
+        "unsuspended": "Suspension de {username} levée",
+        "unsuspendFailed": "Impossible de lever la suspension de {username}"
+    },
     "months": "Mois",
     "mustBeFutureDateError": "Vous devez sélectionner une date future",
     "muteAtEveryone": "Couper le son @tout le monde",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "Utilisateur suspendu",
     "suspendUser": "Suspendre l'utilisateur",
+    "suspendUserFailed": "Impossible de suspendre {username}. Réessayez.",
     "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel",
     "tellMeMore": "Plus d'information",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "Utilisateurs",
     "usersAndBots": "Utilisateurs et robots",
     "userSearchFailed": "Une erreur s'est produite lors de la recherche d'utilisateurs",
+    "userSuspended": "{username} a été suspendu",
     "vaultLog": {
         "button": "Journal d'accès",
         "empty": "Aucune entrée",

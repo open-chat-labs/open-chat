@@ -83,13 +83,17 @@ describe("the search's rows for what isn't in the list", () => {
 });
 
 describe("a community's header menu", () => {
-    const ids = (can: { canCreateChannel: boolean; canManageUserGroups: boolean }) =>
+    const ids = (
+        can: { canCreateChannel: boolean; canManageUserGroups: boolean },
+        moderation?: { frozen: boolean },
+    ) =>
         communityHeaderMenu({
             canLeave: true,
             canDelete: false,
             canEdit: true,
             canInvite: true,
             ...can,
+            moderation,
             label: (key) => key,
         }).map((item) => item.id);
 
@@ -111,5 +115,14 @@ describe("a community's header menu", () => {
         expect(ids({ canCreateChannel: true, canManageUserGroups: true })).toEqual(
             expect.arrayContaining(["newChannel", "embedChannel"]),
         );
+    });
+
+    // the old desktop community menu: Freeze or Unfreeze community for platform moderators only,
+    // as the community is now
+    test("offers a platform moderator Freeze or Unfreeze community, last", () => {
+        const can = { canCreateChannel: false, canManageUserGroups: false };
+        expect(ids(can).some((id) => id.includes("reeze"))).toBe(false);
+        expect(ids(can, { frozen: false }).at(-1)).toBe("freezeCommunity");
+        expect(ids(can, { frozen: true }).at(-1)).toBe("unfreezeCommunity");
     });
 });
