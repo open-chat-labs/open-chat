@@ -46,6 +46,7 @@
         screenWidth,
         selectedChatBlockedUsersStore,
         selectedChatMembersStore,
+        selectedChatRecipientStore,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
@@ -116,6 +117,7 @@
         entryBlock,
         entryNotice,
         entryNoticeText,
+        entryPermitted,
         entryPlaceholder,
         focusEntryOnOpen,
         MemberFinder,
@@ -126,6 +128,7 @@
         sendVoiceRecording,
         throttleCountdown,
         type ComposerBuilder,
+        type EntryPermissions,
     } from "@src/logic/composer/composer";
     import {
         composerAttachment,
@@ -365,11 +368,11 @@
     // ── the composer ──
 
     // what the reader may send here: a thread has its own permissions
-    const permitted = $derived(
-        thread === undefined
-            ? $messagePermissionsForSelectedChatStore
-            : $threadPermissionsForSelectedChatStore,
-    );
+    const permissions = $derived<EntryPermissions>({
+        message: $messagePermissionsForSelectedChatStore,
+        thread: $threadPermissionsForSelectedChatStore,
+    });
+    const permitted = $derived(entryPermitted(permissions, thread !== undefined));
 
     // read only: suspended, or previewing the chat
     const readonly = $derived(client.isChatReadOnly(chat.id));
@@ -385,6 +388,8 @@
                 anonymous: $anonUserStore,
                 blockedUsers: $blockedUsersStore,
                 community: $selectedCommunitySummaryStore,
+                recipient: $selectedChatRecipientStore,
+                permissions,
             }),
         ),
     );

@@ -43,7 +43,8 @@ object CallRinger {
     // the push back to the ordinary notification path.
     suspend fun onStarted(context: Context, notification: Notification, facts: CallFacts): Boolean {
         val call = IncomingCall.of(notification, facts) ?: return false
-        return when (val decision = registry.started(call, System.currentTimeMillis())) {
+        val inCall = CallSession.state.active != null
+        return when (val decision = registry.started(call, System.currentTimeMillis(), inCall)) {
             is CallRegistry.Started.Ring -> {
                 // The ring notification is posted once and never updated, so the avatar
                 // is fetched first, briefly.
@@ -71,15 +72,18 @@ object CallRinger {
     // layer whether or not the call is still ringing here: a tap on a stale notification
     // (answered elsewhere, ended, or a fresh process after a reap) still means "open the
     // call", and the web layer finds out from the canister whether it is still on.
+    // A call this device is already in is hung up first (End & answer).
     fun accept(context: Context, call: IncomingCall) {
-        val known = registry.ringing(call.id)
-        val end = registry.accepted(call.id)
-        if (end == null) {
-            IncomingCallNotifications.cancelRing(context, call.id)
-        } else {
-            finish(context, call.id, end, known ?: call)
+        CallSession.state.answering(call.id, hangUp = { CallSession.hangUp(context, it, "answer") }) {
+            val known = registry.ringing(call.id)
+            val end = registry.accepted(call.id)
+            if (end == null) {
+                IncomingCallNotifications.cancelRing(context, call.id)
+            } else {
+                finish(context, call.id, end, known ?: call)
+            }
+            deliver(context, CallAction.Accept(call.id, call.kind))
         }
-        deliver(context, CallAction.Accept(call.id, call.kind))
     }
 
     // The ring ends here first, whatever the bridge then says. Returns the report to the
@@ -103,9 +107,17 @@ object CallRinger {
         finish(context, id, CallRegistry.End.ANSWERED_HERE, null)
     }
 
-    // The one way the ring notification gets posted. At most once per call.
+    // The one way the ring notification gets posted. At most once per call, in the style
+    // the registry decided when the call arrived.
     fun showRing(context: Context, call: IncomingCall) {
-        if (registry.shouldPostRing(call.id)) IncomingCallNotifications.postRing(context, call, avatars[call.id])
+        when (registry.ringToPost(call.id)) {
+            CallRegistry.RingStyle.FULL_SCREEN -> IncomingCallNotifications.postRing(context, call, avatars[call.id])
+            CallRegistry.RingStyle.WAITING -> {
+                IncomingCallNotifications.postWaiting(context, call, avatars[call.id])
+                CallWaitingTone.update()
+            }
+            null -> Unit
+        }
     }
 
     // The ringing call for a Telecom address, for a connection request whose extras
@@ -138,6 +150,7 @@ object CallRinger {
     private fun finish(context: Context, id: CallId, end: CallRegistry.End, call: IncomingCall?) {
         main.post { timeouts.remove(id)?.let { main.removeCallbacks(it) } }
         IncomingCallNotifications.cancelRing(context, id)
+        CallWaitingTone.update()
         avatars.remove(id)
         CallTelecom.end(id, end)
         listeners.forEach { it(id, end) }

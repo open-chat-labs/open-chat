@@ -46,7 +46,7 @@ class UpdateChatShortcuts(private val activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // Load avatars in parallel.
-                val withIcons = chats.map { (id, name, avatarUrl) ->
+                val withIcons = chats.mapIndexed { index, (id, name, avatarUrl) ->
                     async {
                         val icon = avatarUrl?.let { AvatarHelper.loadBitmap(activity, it) }
                             ?.let { IconCompat.createWithBitmap(it) }
@@ -56,6 +56,8 @@ class UpdateChatShortcuts(private val activity: Activity) {
                             .setLongLived(true)
                             .setCategories(setOf(SHARE_TARGET_CATEGORY))
                             .setIntent(buildShareIntent(id))
+                            // Ahead of every notification's shortcut (NOTIFICATION_SHORTCUT_RANK).
+                            .setRank(index)
                             .apply { if (icon != null) setIcon(icon) }
                             .build()
                     }

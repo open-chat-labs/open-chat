@@ -21,6 +21,7 @@ import {
     type UserGroupDetails,
     type UserLookup,
     type UserOrUserGroup,
+    type UserSummary,
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { detectMarkdown } from "@src/utils/detectMarkdown";
@@ -38,6 +39,8 @@ export type EntryState = {
     frozen: boolean;
     /** A DM with someone the reader has blocked. */
     blocked: boolean;
+    /** A DM whose other user's account is suspended (by a platform moderator). */
+    recipientSuspended: boolean;
     /** Not a member of the group or channel (a preview), or a lapsed one. */
     previewing: boolean;
     lapsed: boolean;
@@ -57,6 +60,8 @@ export type EntryState = {
 export type EntryBlock =
     | { kind: "suspended" }
     | { kind: "frozen" }
+    // a DM's other user is suspended: nothing can be sent to them
+    | { kind: "recipient_suspended" }
     | { kind: "blocked" }
     // the preview's Join (or, lapsed, re-join) footer
     | { kind: "preview"; lapsed: boolean }
@@ -67,11 +72,15 @@ export type EntryBlock =
 
 /**
  * Why the reader can't send here, in the order the old footers checked; none when they can. Every
- * tree's entry shows this, each in its own way.
+ * tree's entry shows this, each in its own way. A platform moderator's doing comes first, as the
+ * reader can't undo it: their own suspension (it holds everywhere), then the chat frozen (a group's
+ * or channel's), then a DM's other user suspended (unblocking them wouldn't help), and only then
+ * what the reader can change (whom they've blocked, joining).
  */
 export function entryBlock(state: EntryState): EntryBlock | undefined {
     if (state.suspended) return { kind: "suspended" };
     if (state.frozen) return { kind: "frozen" };
+    if (state.recipientSuspended) return { kind: "recipient_suspended" };
     if (state.blocked) return { kind: "blocked" };
     if ((state.previewing || state.lapsed) && !state.direct) {
         return { kind: "preview", lapsed: state.lapsed };
@@ -85,16 +94,31 @@ export function entryBlock(state: EntryState): EntryBlock | undefined {
 }
 
 /**
- * Where the entry is, for `entryBlock`: the chat's own state (frozen, previewed, lapsed, what the
- * reader's role lets them send) from the client, the reader's (suspended, signed out, who they've
- * blocked) from the stores. In a thread (`thread`), a preview and a lapse are the chat's, not the
- * thread's, and what may be sent is the thread's.
+ * What may be sent in the selected chat and in its threads (`messagePermissionsForSelectedChatStore`,
+ * `threadPermissionsForSelectedChatStore`). Stores, not the client's `canSendMessage`, so the entry
+ * follows a DM's other user being suspended or un-suspended.
+ */
+export type EntryPermissions = {
+    message: ReadonlySet<MessagePermission>;
+    thread: ReadonlySet<MessagePermission>;
+};
+
+/** What may be sent from the entry: in a thread, the thread's (a DM's allow nothing). */
+export function entryPermitted(
+    permissions: EntryPermissions,
+    thread: boolean,
+): ReadonlySet<MessagePermission> {
+    return thread ? permissions.thread : permissions.message;
+}
+
+/**
+ * Where the entry is, for `entryBlock`: the chat's own state (frozen, previewed, lapsed) from the
+ * client, the reader's (suspended, signed out, who they've blocked, what they may send) from the
+ * stores. In a thread (`thread`), a preview and a lapse are the chat's, not the thread's, and what
+ * may be sent is the thread's.
  */
 export function chatEntryState(
-    client: Pick<
-        OpenChat,
-        "isChatOrCommunityFrozen" | "isPreviewing" | "isLapsed" | "canSendMessage"
-    >,
+    client: Pick<OpenChat, "isChatOrCommunityFrozen" | "isPreviewing" | "isLapsed">,
     chat: ChatSummary,
     thread: boolean,
     reader: {
@@ -103,18 +127,29 @@ export function chatEntryState(
         blockedUsers: Pick<ReadonlySet<string>, "has">;
         /** The chat's community (the selected one), for whether it's frozen. */
         community: CommunitySummary | undefined;
+        /**
+         * A DM's other user (`selectedChatRecipientStore`), for whether they're suspended; it
+         * publishes when that changes, so the entry follows a moderator (un)suspending them.
+         */
+        recipient: Pick<UserSummary, "userId" | "suspended"> | undefined;
+        /** What may be sent; the thread's are picked in a thread (`entryPermitted`). */
+        permissions: EntryPermissions;
     },
 ): EntryState {
     return {
         suspended: reader.suspended,
         frozen: client.isChatOrCommunityFrozen(chat, reader.community),
         blocked: chat.kind === "direct_chat" && reader.blockedUsers.has(chat.them.userId),
+        recipientSuspended:
+            chat.kind === "direct_chat" &&
+            reader.recipient?.userId === chat.them.userId &&
+            reader.recipient.suspended,
         previewing: !thread && chat.kind !== "direct_chat" && client.isPreviewing(chat.id),
         lapsed: !thread && client.isLapsed(chat.id),
         direct: chat.kind === "direct_chat",
         externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
         anonymous: reader.anonymous,
-        canSend: client.canSendMessage(chat.id, thread ? "thread" : "message", "text"),
+        canSend: entryPermitted(reader.permissions, thread).has("text"),
         thread,
     };
 }
@@ -134,6 +169,9 @@ export function entryBlockBanner(block: EntryBlock): {
             return { key: "accountSuspended", tone: "warning" };
         case "frozen":
             return { key: "chatFrozen", tone: "warning" };
+        // TODO(design): no words for it in the design or the old trees (they said read-only)
+        case "recipient_suspended":
+            return { key: "recipientSuspended", tone: "warning" };
         case "blocked":
             return { key: "userIsBlocked", tone: "info" };
         case "preview":

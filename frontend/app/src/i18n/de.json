@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Deinstallieren Sie diese Version, sobald Sie die neue installiert haben. Wenn beide laufen, kommt jede Benachrichtigung doppelt an.",
         "reinstallDownload": "Aktuelle Version herunterladen"
     },
+    "fullScreenCalls": {
+        "title": "Anrufe im Vollbild",
+        "message": "Android benötigt Ihre Erlaubnis, damit OpenChat eingehende Anrufe bei gesperrtem Telefon im Vollbild anzeigen kann. Bis Sie dies erlauben, erscheinen Anrufe als normale Benachrichtigung.",
+        "openSettings": "Einstellungen öffnen",
+        "notNow": "Nicht jetzt"
+    },
     "appWallet": {
         "header": {
             "asset": "Vermögenswert",
@@ -2859,6 +2865,7 @@
     "readOnlyThread": "Dieser Thread ist schreibgeschützt",
     "reason": "Grund",
     "reasonForSuspension": "Grund der Suspendierung",
+    "recipientSuspended": "Das Konto dieses Benutzers ist gesperrt. Sie können ihm keine Nachrichten senden.",
     "recordAudioMessage": "Nehmen Sie eine Audionachricht auf",
     "referralHeader": "Freunde/Familie einladen",
     "refresh": "Aktualisierung",

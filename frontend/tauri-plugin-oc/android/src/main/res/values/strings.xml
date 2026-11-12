@@ -46,4 +46,7 @@
         <item quantity="one">%1$s, from %2$d chat</item>
         <item quantity="other">%1$s, from %2$d chats</item>
     </plurals>
+    <string name="oc_call_waiting_channel">Call waiting</string>
+    <string name="oc_call_waiting_decline">Decline</string>
+    <string name="oc_call_waiting_end_and_answer">End &amp; answer</string>
 </resources>

@@ -31,6 +31,7 @@ export function nativeChatRow(row: ChatListRow, favourite: boolean): NativeChatR
         muted: row.muted,
         pinned: row.pinned,
         liveCall: row.liveCall,
+        suspended: row.suspended,
         fav: favourite,
     };
 }

@@ -89,6 +89,13 @@ describe("user store no-op publishes", () => {
             expect(userStore.suspendedUsers.has("a")).toBe(true);
         });
 
+        test("replaces the user rather than changing the one views hold", () => {
+            const before = userStore.get("a");
+            userStore.userSuspended("a", true);
+            expect(userStore.get("a")).not.toBe(before);
+            expect(before?.suspended).toBe(false);
+        });
+
         test("unknown user does not publish", () => {
             userStore.userSuspended("x", true);
             expect(publishes).toBe(0);

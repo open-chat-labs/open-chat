@@ -53,11 +53,14 @@ final class ShareViewController: UIViewController {
         // One attachment at a time, off the main thread, which keeps the extension's memory down
         // when several videos are shared
         DispatchQueue.global(qos: .userInitiated).async {
+            var tooLarge = false
             for provider in providers {
                 self.load(provider) { file, text in
                     if let file {
                         do {
                             try share.addFile(copying: file.url, mimeType: file.mimeType)
+                        } catch ShareError.fileTooLarge {
+                            tooLarge = true
                         } catch {
                             NSLog("[Share] couldn't copy a shared file: %@", error.localizedDescription)
                         }
@@ -65,13 +68,22 @@ final class ShareViewController: UIViewController {
                     if let text { share.addText(text) }
                 }
             }
-            DispatchQueue.main.async { self.handOver(share) }
+            let refused = tooLarge
+            DispatchQueue.main.async { self.handOver(share, tooLarge: refused) }
         }
     }
 
-    private func handOver(_ share: StagedShare) {
+    private func handOver(_ share: StagedShare, tooLarge: Bool) {
         guard !resolved else { return share.discard() }
         resolved = true
+        // Said here, and nothing is shared, rather than the app opening without the file
+        if tooLarge {
+            share.discard()
+            return showResult(
+                symbol: "exclamationmark.triangle.fill", tint: .systemOrange,
+                title: "File too large",
+                subtitle: "Files over \(ShareInbox.maxFileBytes / 1024 / 1024) MB can't be shared")
+        }
         do {
             if share.isEmpty { return finish() }
             try share.commit()

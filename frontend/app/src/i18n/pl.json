@@ -232,6 +232,12 @@
         "reinstallUninstallOld": "Po zainstalowaniu nowej odinstaluj tę. Jeśli obie są zainstalowane, każde powiadomienie przychodzi dwa razy.",
         "reinstallDownload": "Pobierz aktualną wersję"
     },
+    "fullScreenCalls": {
+        "title": "Połączenia na pełnym ekranie",
+        "message": "Android potrzebuje Twojej zgody, aby OpenChat mógł wyświetlać połączenia przychodzące na pełnym ekranie, gdy telefon jest zablokowany. Dopóki jej nie udzielisz, połączenia będą przychodzić jako zwykłe powiadomienie.",
+        "openSettings": "Otwórz ustawienia",
+        "notNow": "Nie teraz"
+    },
     "appWallet": {
         "header": {
             "asset": "Zaleta",
@@ -2859,6 +2865,7 @@
     "readOnlyThread": "Ten wątek jest tylko do odczytu",
     "reason": "Powód",
     "reasonForSuspension": "powód zawieszenia",
+    "recipientSuspended": "Konto tego użytkownika jest zawieszone. Nie możesz wysyłać mu wiadomości.",
     "recordAudioMessage": "Nagraj wiadomość dźwiękową",
     "referralHeader": "Zaproś znajomych/rodzinę",
     "refresh": "Odświeżać",

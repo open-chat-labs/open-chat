@@ -9337,18 +9337,28 @@ export class OpenChat {
         localUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
     }
 
-    freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
-        return this.#worker
-            .send({ kind: "freezeCommunity", id, reason })
-            .then((resp) => resp === "success")
-            .catch(() => false);
+    // frozen or unfrozen, the community (and so its channels' composers) shows it straight away,
+    // not at the next sync, as a group's freeze does
+    async freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
+        try {
+            const resp = await this.#worker.send({ kind: "freezeCommunity", id, reason });
+            if (resp !== "success") return false;
+            localUpdates.updateCommunityFrozen(id, true);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
-    unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
-        return this.#worker
-            .send({ kind: "unfreezeCommunity", id })
-            .then((resp) => resp === "success")
-            .catch(() => false);
+    async unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
+        try {
+            const resp = await this.#worker.send({ kind: "unfreezeCommunity", id });
+            if (resp !== "success") return false;
+            localUpdates.updateCommunityFrozen(id, false);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {

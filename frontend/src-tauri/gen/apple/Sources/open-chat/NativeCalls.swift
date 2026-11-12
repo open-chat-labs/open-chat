@@ -44,6 +44,20 @@ final class NativeCalls: NSObject {
         center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
             Task { @MainActor in self.call?.applicationBecameActive() }
         }
+        center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in self.updateProximity() }
+        }
+    }
+
+    // A voice call held to the ear turns the screen off, so a cheek can't press anything. Not for a
+    // video call, the speaker or a headset, where the phone is held away, nor once the call screen
+    // is minimised or the call is over.
+    private func updateProximity() {
+        let earpiece = AVAudioSession.sharedInstance().currentRoute.outputs.first?.portType == .builtInReceiver
+        let wanted = call.map { !$0.settings.video } == true && screen != nil && earpiece
+        if UIDevice.current.isProximityMonitoringEnabled != wanted {
+            UIDevice.current.isProximityMonitoringEnabled = wanted
+        }
     }
 
     private func join(_ info: [AnyHashable: Any]) {
@@ -127,6 +141,7 @@ final class NativeCalls: NSObject {
         guard let screen, let call else { return }
         self.screen = nil
         screen.dismiss(animated: true)
+        updateProximity()
         call.minimised()
     }
 
@@ -144,6 +159,7 @@ final class NativeCalls: NSObject {
         var top = root
         while let presented = top?.presentedViewController { top = presented }
         top?.present(host, animated: true)
+        updateProximity()
     }
 
     private func finish() {
@@ -151,6 +167,7 @@ final class NativeCalls: NSObject {
         UIApplication.shared.isIdleTimerDisabled = false
         screen?.dismiss(animated: true)
         screen = nil
+        updateProximity()
         if let next = pendingJoin {
             pendingJoin = nil
             join(next)

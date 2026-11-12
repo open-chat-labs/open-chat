@@ -25,6 +25,7 @@ import {
     entryBlockBanner,
     entryNotice,
     entryNoticeText,
+    entryPermitted,
     entryPlaceholder,
     focusEntryOnOpen,
     MemberFinder,
@@ -44,6 +45,7 @@ describe("why a message can't be sent", () => {
         suspended: false,
         frozen: false,
         blocked: false,
+        recipientSuspended: false,
         previewing: false,
         lapsed: false,
         direct: false,
@@ -95,6 +97,30 @@ describe("why a message can't be sent", () => {
 
     test("a DM is never a preview", () => {
         expect(entryBlock({ ...can, direct: true, previewing: true })).toBeUndefined();
+    });
+
+    // a moderator's doing first: the reader's suspension, a freeze, then a DM's other user's
+    test("a moderator's doing comes first, then what the reader can change", () => {
+        const all: EntryState = {
+            ...can,
+            suspended: true,
+            frozen: true,
+            recipientSuspended: true,
+            blocked: true,
+            direct: true,
+            canSend: false,
+        };
+        expect(entryBlock(all)?.kind).toBe("suspended");
+        expect(entryBlock({ ...all, suspended: false })?.kind).toBe("frozen");
+        // not the generic read only it also is (nothing may be sent to them), and before blocked,
+        // as unblocking them wouldn't help
+        expect(entryBlock({ ...all, suspended: false, frozen: false })?.kind).toBe(
+            "recipient_suspended",
+        );
+        expect(
+            entryBlock({ ...all, suspended: false, frozen: false, recipientSuspended: false })
+                ?.kind,
+        ).toBe("blocked");
     });
 });
 
@@ -513,11 +539,15 @@ describe("where the entry is", () => {
         id: { kind: "direct_chat", userId: "them" },
         them: { userId: "them" },
     } as ChatSummary;
+    const text = new Set<MessagePermission>(["text"]);
+    const nothing = new Set<MessagePermission>();
     const reader = {
         suspended: false,
         anonymous: false,
         blockedUsers: new Set<string>(),
         community: undefined,
+        recipient: undefined,
+        permissions: { message: text, thread: text },
     };
 
     function client(previewing = false) {
@@ -525,16 +555,26 @@ describe("where the entry is", () => {
             isChatOrCommunityFrozen: vi.fn(() => false),
             isPreviewing: vi.fn(() => previewing),
             isLapsed: vi.fn(() => previewing),
-            canSendMessage: vi.fn(() => true),
         };
     }
 
-    test("asks what may be sent in the chat, or in a thread there", () => {
-        const c = client();
-        expect(chatEntryState(c, group, false, reader).canSend).toBe(true);
-        expect(c.canSendMessage).toHaveBeenCalledWith(group.id, "message", "text");
-        chatEntryState(c, group, true, reader);
-        expect(c.canSendMessage).toHaveBeenCalledWith(group.id, "thread", "text");
+    test("can send where text is permitted", () => {
+        expect(chatEntryState(client(), group, false, reader).canSend).toBe(true);
+        const none = { ...reader, permissions: { message: nothing, thread: nothing } };
+        expect(chatEntryState(client(), dm, false, none).canSend).toBe(false);
+        expect(entryBlock(chatEntryState(client(), dm, false, none))).toEqual({
+            kind: "read_only",
+            key: "readOnlyChat",
+        });
+    });
+
+    test("what may be sent is the thread's in a thread, else the chat's", () => {
+        // as a DM's: text in the chat, nothing in a thread
+        const dmLike = { ...reader, permissions: { message: text, thread: nothing } };
+        expect(chatEntryState(client(), dm, false, dmLike).canSend).toBe(true);
+        expect(chatEntryState(client(), dm, true, dmLike).canSend).toBe(false);
+        expect(entryPermitted(dmLike.permissions, true)).toBe(nothing);
+        expect(entryPermitted(dmLike.permissions, false)).toBe(text);
     });
 
     test("a preview or a lapse is the chat's, never a thread's", () => {
@@ -558,6 +598,34 @@ describe("where the entry is", () => {
         });
         expect(chatEntryState(client(), group, false, blocked).blocked).toBe(false);
     });
+
+    test("a DM's other user suspended is its own block, lifted on un-suspending", () => {
+        const them = { userId: "them", kind: "user", suspended: true } as const;
+        const suspended = {
+            ...reader,
+            recipient: them,
+            permissions: { message: nothing, thread: nothing },
+        };
+        expect(entryBlock(chatEntryState(client(), dm, false, suspended))).toEqual({
+            kind: "recipient_suspended",
+        });
+        const back = { ...reader, recipient: { ...them, suspended: false } };
+        expect(entryBlock(chatEntryState(client(), dm, false, back))).toBeUndefined();
+        // someone else's (the selected DM's changing under it), or a group's, is never it
+        const other = { ...suspended, recipient: { ...them, userId: "other" } };
+        expect(chatEntryState(client(), dm, false, other).recipientSuspended).toBe(false);
+        expect(chatEntryState(client(), group, false, suspended).recipientSuspended).toBe(false);
+    });
+
+    test("a frozen chat, or a channel of a frozen community, is frozen, not read only", () => {
+        const frozen = {
+            isChatOrCommunityFrozen: vi.fn(() => true),
+            isPreviewing: vi.fn(() => false),
+            isLapsed: vi.fn(() => false),
+        };
+        const none = { ...reader, permissions: { message: nothing, thread: nothing } };
+        expect(entryBlock(chatEntryState(frozen, group, false, none))).toEqual({ kind: "frozen" });
+    });
 });
 
 describe("what stands in for the entry", () => {
@@ -569,6 +637,14 @@ describe("what stands in for the entry", () => {
         expect(entryBlockBanner({ kind: "blocked" })).toEqual({
             key: "userIsBlocked",
             tone: "info",
+        });
+        expect(entryBlockBanner({ kind: "frozen" })).toEqual({
+            key: "chatFrozen",
+            tone: "warning",
+        });
+        expect(entryBlockBanner({ kind: "recipient_suspended" })).toEqual({
+            key: "recipientSuspended",
+            tone: "warning",
         });
         expect(entryBlockBanner({ kind: "preview", lapsed: true }).key).toBe(
             "access.lapsed.label",

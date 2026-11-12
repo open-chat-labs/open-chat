@@ -9,7 +9,13 @@ import android.util.Log
 
 const val MESSAGES_CHANNEL_ID = "oc_messages"
 const val MESSAGES_GROUP_ID = "oc_messages_group"
-const val SUMMARY_CHANNEL_ID = "summary_notifications"
+const val SUMMARY_CHANNEL_ID = "oc_summary"
+
+// The summary's first channel, created at IMPORTANCE_LOW. Android counts a LOW channel as
+// silent, and recent versions hide silent notifications from the lock screen by default, so
+// the summary vanished there and each chat showed its own card. An app can't raise an
+// existing channel's importance, hence the new id.
+private const val OLD_SUMMARY_CHANNEL_ID = "summary_notifications"
 
 object NotificationsChannel {
     // Create notifications channel
@@ -54,10 +60,13 @@ object NotificationsChannel {
         val channelDescription = context.getString(R.string.notification_channel_summary_description)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // DEFAULT, not LOW, so the summary isn't classed as silent and shows on the lock
+            // screen. It stays quiet: no sound, vibration or lights here, and the summary
+            // itself is setSilent with GROUP_ALERT_CHILDREN.
             val channel = NotificationChannel(
                 SUMMARY_CHANNEL_ID,
                 channelName, // User-visible name
-                NotificationManager.IMPORTANCE_LOW // No sound, no vibration
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = channelDescription
                 setSound(null, null) // Explicitly disable sound
@@ -65,9 +74,9 @@ object NotificationsChannel {
                 enableLights(false)    // Optional
             }
 
-            OCPluginCompanion
-                .getNotificationsManager(context)
-                .createNotificationChannel(channel)
+            val notificationManager = OCPluginCompanion.getNotificationsManager(context)
+            notificationManager.deleteNotificationChannel(OLD_SUMMARY_CHANNEL_ID)
+            notificationManager.createNotificationChannel(channel)
 
             Log.d(LOG_TAG, "Summary notification channel created: $SUMMARY_CHANNEL_ID")
         }

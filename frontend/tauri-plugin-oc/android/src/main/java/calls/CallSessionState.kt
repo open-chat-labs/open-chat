@@ -56,6 +56,15 @@ class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
         return true
     }
 
+    // Answering `id` while another call is active (End & answer on a waiting call, or any
+    // other answer path): the active call is hung up first, then `id` is answered. An
+    // OpenChat call cannot be held, so Telecom must not find two active calls, and the web
+    // layer has to leave the old call before it joins the new one.
+    fun answering(id: CallId, hangUp: (CallId) -> Unit, answer: () -> Unit) {
+        active?.id?.takeIf { it != id }?.let(hangUp)
+        answer()
+    }
+
     // Everything ends, whatever was active. For the paths where the web layer is gone.
     @Synchronized
     fun endAll(now: Long): Active? {

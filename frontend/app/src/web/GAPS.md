@@ -1388,7 +1388,25 @@ design export needs. Each entry says where it came up.
   their card. `UserDialog` takes `moderatorAction` (a label and a callback) and shows it in its
   footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending
   opens a plain dialog on `DialogShell` with the old modal's words and a reason
-  (`SuspendUserDialog`, `TODO(design)`).
+  (`SuspendUserDialog`, `TODO(design)`). A DM's composer follows the other user's suspension at
+  once, both ways, with no reload: a warning banner, "This user's account is suspended. You can't
+  send them messages." (`recipientSuspended`, new in all 15 locales: the old trees had no words
+  for it and said "This chat is read-only"), the composer back when they're un-suspended. The
+  selected chat's permissions (`messagePermissionsForSelectedChatStore`) derive from
+  `selectedChatRecipientStore`, the other user, which publishes only when they're replaced
+  (`userSuspended` replaces the user, so a suspension or un-suspension does; another user's
+  change doesn't), and the permission stores publish only when what may be sent changes;
+  `chatEntryState` reads it too, for its own block (`recipient_suspended`). A frozen
+  group or channel, or a channel of a frozen community, shows "This chat has been frozen"
+  (`chatFrozen`), and follows a freeze and an unfreeze at once: a group's through
+  `localUpdates.updateChatFrozen` (the moderator's) or the next sync (everyone else's); a
+  community's (its channels' `isChatOrCommunityFrozen`) now through
+  `localUpdates.updateCommunityFrozen` on the moderator's `freezeCommunity` / `unfreezeCommunity`,
+  where it used to wait for the sync. Where several apply (`entryBlock`), a moderator's doing comes
+  first, as the reader can't undo it: the reader's own suspension, then frozen, then the DM's
+  other user suspended, then blocked (unblocking wouldn't help), then the rest. Every tree's
+  composer, the old ones' and native's included, shows these (2026-11-12). The banner doesn't name
+  the user (the header does); the design has no words for it (`TODO(design)`).
 - **Gates editor** (4a, `features/access/gates.adapter.ts`, for 4b and 8b): `AccessGates` takes
   `types` (by hand), and the app doesn't offer the unique-person gate (suspended) or the
   credential gate. A credential gate already set still shows and saves unchanged, but adding one
@@ -2285,6 +2303,18 @@ design export needs. Each entry says where it came up.
     them up follows the clock, and the rows take a new set only when someone comes online or goes
     offline, so the rows aren't built again on every tick (as `ec9b75ac59` did for the old list).
     No dot for groups, bots or the user, as the old row.
+  - **a suspended user** (their whole account, by a platform moderator; the user's decision,
+    2026-11-12): a DM whose other user is suspended (`allUsersStore`'s `suspended`, `chatRow`'s
+    `suspended`, direct chats only) shows the avatar dimmed with a small red ban mark where the
+    online dot sits (no online dot), and a "Suspended" tag after the name (the library's `Pill`,
+    danger tone). Everyone sees it, not only moderators, as the old DM header's "Account
+    suspended" (which the new header keeps). The preview line stays as it is. A person the search
+    finds is marked the same way (`foundRows`); `UserDialog` and `DmPanel` show the tag (after the
+    name, under it in the panel) and no online dot, their avatars undimmed. Groups and communities
+    are frozen, not suspended, so they're never marked. The native Chats tab's rows show it too
+    (`nativeChatRow`, the same `ChatRow`). It follows a moderator's suspend or unsuspend at once
+    (the client updates `allUsersStore`). Not in the design export: TODO(design) for the dimming,
+    the mark and the tag (`Avatar`, `ChatRow`, `UserDialog`, `DmPanel`; EXPORT-LOG 2026-11-12).
   - **unread mentions**: an "@" before the count, groups and channels only (`unreadMentionCount`
     in `@client`, the old rows' rule), following `messagesRead` as the unread count does, and none
     for a chat whose latest message has expired.

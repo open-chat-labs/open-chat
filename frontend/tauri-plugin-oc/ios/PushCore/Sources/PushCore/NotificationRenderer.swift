@@ -16,27 +16,33 @@ public struct RenderedNotification: Equatable {
     public let conversationName: String?
     public let senderAvatar: Data?
     public let conversationAvatar: Data?
+    // The message's photo, downloaded to a local file for the notification to attach
+    public let image: URL?
 }
 
 public enum NotificationRenderer {
-    // Renders `userInfo` within `timeout`, fetching avatars with `fetch`. Always returns: a payload
-    // it can't read keeps the server's text, and an avatar that fails or doesn't arrive in time is
-    // left out.
+    // Renders `userInfo` within `timeout`, fetching avatars with `fetch` and the message's photo
+    // with `fetchImage`. Always returns: a payload it can't read keeps the server's text, and an
+    // avatar or photo that fails or doesn't arrive in time is left out. The photo has its own
+    // deadline, so a slow one doesn't cost the avatars.
     public static func render(
         userInfo: [AnyHashable: Any],
         serverTitle: String,
         serverBody: String,
         avatarBaseUrl: String,
         timeout: Duration,
-        fetch: @escaping @Sendable (URL) async -> Data?
+        fetch: @escaping @Sendable (URL) async -> Data?,
+        fetchImage: @escaping @Sendable (URL) async -> URL? = { _ in nil }
     ) async -> RenderedNotification {
         guard let push = MessagePush(userInfo: userInfo) else {
             return RenderedNotification(
                 title: serverTitle, body: serverBody, messageText: serverBody, threadId: "",
                 senderId: nil, senderName: nil, conversationName: nil, senderAvatar: nil,
-                conversationAvatar: nil)
+                conversationAvatar: nil, image: nil)
         }
 
+        let imageUrl = push.imageUrl
+        async let image = withDeadline(timeout) { await imageUrl.asyncMap(fetchImage) ?? nil }
         let urls = avatarUrls(push, base: avatarBaseUrl)
         let avatars = await withDeadline(timeout) {
             async let sender = urls.sender.asyncMap(fetch)
@@ -53,7 +59,8 @@ public enum NotificationRenderer {
             senderName: push.senderName,
             conversationName: conversationName(push),
             senderAvatar: avatars?.0,
-            conversationAvatar: avatars?.1)
+            conversationAvatar: avatars?.1,
+            image: await image ?? nil)
     }
 
     // Notifications are grouped per chat, the same ids the pusher sets as `thread-id`
@@ -179,7 +186,7 @@ private final class ResumeOnce<T: Sendable>: @unchecked Sendable {
 }
 
 extension Optional where Wrapped == URL {
-    fileprivate func asyncMap(_ f: @Sendable (URL) async -> Data?) async -> Data?? {
+    fileprivate func asyncMap<T>(_ f: @Sendable (URL) async -> T?) async -> T?? {
         guard let url = self else { return nil }
         return await f(url)
     }

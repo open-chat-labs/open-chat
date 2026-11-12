@@ -95,8 +95,9 @@ export class UsersState {
         allUsersStore.update((users) => {
             const u = users.get(userId);
             if (u) {
-                u.suspended = suspended;
-                users.set(userId, u);
+                // a new summary, not the old one changed: a view that holds the user (a DM's
+                // header) sees the change only if the user it reads is a different object
+                users.set(userId, { ...u, suspended });
                 suspendedUsersStore.update((s) => {
                     if (suspended) {
                         s.add(userId);

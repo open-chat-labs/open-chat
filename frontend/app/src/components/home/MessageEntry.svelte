@@ -14,6 +14,7 @@
         Message,
         MessageAction,
         MessageContext,
+        MessagePermission,
         MultiUserChat,
         OpenChat,
         SelectedEmoji,
@@ -26,11 +27,15 @@
         chatIdentifiersEqual,
         iconSize,
         messageContextsEqual,
+        messagePermissionsForSelectedChatStore,
+        messagePermissionsList,
         messageContextToString,
         screenWidth,
         selectedChatMembersStore,
+        selectedChatRecipientStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
+        threadPermissionsForSelectedChatStore,
         throttleDeadline,
         type SendMessageOutcome,
     } from "@client";
@@ -311,8 +316,19 @@
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );
-    let canSendAny = $derived(!$anonUserStore && client.canSendMessage(chat.id, mode));
-    let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
+    // the selected chat's (or its thread's) permissions: they follow the chat, the current user
+    // and a DM's other user being suspended or un-suspended
+    let permitted = $derived(
+        mode === "thread"
+            ? $threadPermissionsForSelectedChatStore
+            : $messagePermissionsForSelectedChatStore,
+    );
+    let canSendAny = $derived(!$anonUserStore && permitted.size > 0);
+    let permittedMessages = $derived(
+        new Map<MessagePermission, boolean>(
+            messagePermissionsList.map((p) => [p, permitted.has(p)]),
+        ),
+    );
     let canEnterText = $derived(
         (permittedMessages.get("text") ?? false) ||
             editingEvent !== undefined ||
@@ -328,6 +344,10 @@
             suspended: false,
             frozen,
             blocked,
+            recipientSuspended:
+                chat.kind === "direct_chat" &&
+                $selectedChatRecipientStore?.userId === chat.them.userId &&
+                $selectedChatRecipientStore.suspended,
             previewing: preview,
             lapsed,
             direct: chat.kind === "direct_chat",
@@ -456,6 +476,10 @@
         <div class="disclaimer">
             <Alert size={$iconSize} color={"var(--warn"} />
             <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
+        </div>
+    {:else if block?.kind === "recipient_suspended"}
+        <div class="disabled">
+            <Translatable resourceKey={i18nKey("recipientSuspended")} />
         </div>
     {:else if block?.kind === "anonymous" || block?.kind === "read_only"}
         <div class="disabled">

@@ -10,6 +10,7 @@ const input: UserDialogInput = {
     avatarUrl: "/a.png",
     coverUrl: undefined,
     online: false,
+    suspended: false,
     joined: "1 Nov 2021",
     chit: { streak: 3, earned: 1000 },
 };
@@ -22,6 +23,11 @@ describe("userDialogProps", () => {
         expect(
             userDialogProps({ ...input, chit: undefined }).facts.map((f) => f.label),
         ).not.toContain("ui.dmPanel.chitEarned");
+    });
+
+    test("says when their account is suspended", () => {
+        expect(userDialogProps(input).suspended).toBe(false);
+        expect(userDialogProps({ ...input, suspended: true }).suspended).toBe(true);
     });
 
     test("shows their own picture, else their swatch", () => {
