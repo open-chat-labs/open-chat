@@ -321,4 +321,18 @@ class CallSessionTest {
         val session = File("src/main/java/calls/CallSession.kt").readText()
         assertTrue("CallDeclineReporter.reportLeave(bridge, teardown.token, teardown.sessionId, END_REPORT_WAIT_MS)" in session)
     }
+
+    @Test
+    fun `call waiting End and answer ends the current call before answering`() {
+        val state = CallSessionState()
+        state.started(alice, video = true, title = "Alice", now = now)
+        val steps = mutableListOf<String>()
+        state.answering(bob, hangUp = { steps.add("hang up ${it.messageId}") }) { steps.add("answer") }
+        assertEquals(listOf("hang up 1", "answer"), steps)
+
+        // no other call: answered with nothing hung up
+        steps.clear()
+        CallSessionState().answering(bob, hangUp = { steps.add("hang up") }) { steps.add("answer") }
+        assertEquals(listOf("answer"), steps)
+    }
 }

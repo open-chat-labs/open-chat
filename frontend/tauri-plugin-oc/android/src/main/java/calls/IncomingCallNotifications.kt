@@ -27,6 +27,9 @@ import com.ocplugin.app.R
 object IncomingCallNotifications {
     // Channel settings are fixed at creation, so a change means a new id.
     const val CHANNEL_ID = "oc_calls_ring"
+    // A call that arrives during another: heads-up, no sound of its own (CallWaitingTone
+    // beeps over the call), one short vibration.
+    const val WAITING_CHANNEL_ID = "oc_calls_waiting"
     private const val TAG = "oc_call"
 
     const val ACTION_ACCEPT = "com.ocplugin.app.calls.ACCEPT"
@@ -51,6 +54,21 @@ object IncomingCallNotifications {
             lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
         }
         nm.createNotificationChannel(channel)
+    }
+
+    private fun createWaitingChannel(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val channel = NotificationChannel(
+            WAITING_CHANNEL_ID,
+            context.getString(R.string.oc_call_waiting_channel),
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            setSound(null, null)
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 300)
+            lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+        }
+        OCPluginCompanion.getNotificationsManager(context).createNotificationChannel(channel)
     }
 
     fun notificationId(id: CallId): Int = "${id.chat.chatType}:${id.chat.chatId}:${id.messageId}".hashCode()
@@ -99,6 +117,37 @@ object IncomingCallNotifications {
         } catch (e: Exception) {
             // POST_NOTIFICATIONS revoked must not take the FCM service down.
             Log.e(LOG_TAG, "Failed to post the ring notification", e)
+        }
+    }
+
+    // The ring for a call that arrives while this device is in another call: a heads-up with
+    // Decline and End & answer, on the quiet channel. No full-screen intent and not insistent,
+    // so it never takes over the screen or loops a ringtone over the call. Same id as the
+    // ring, so every path that cancels a ring cancels this.
+    fun postWaiting(context: Context, call: IncomingCall, avatar: Bitmap?) {
+        try {
+            createWaitingChannel(context)
+            val remaining = (call.started + CallRegistry.RING_WINDOW_MS - System.currentTimeMillis())
+                .coerceIn(1_000L, CallRegistry.RING_WINDOW_MS)
+            val notification = NotificationCompat.Builder(context, WAITING_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification_small)
+                .setContentTitle(call.title)
+                .setContentText(subtitle(call))
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setOnlyAlertOnce(true)
+                .setTimeoutAfter(remaining)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setLargeIcon(avatar)
+                .addAction(0, context.getString(R.string.oc_call_waiting_decline), receiverIntent(context, call))
+                // The answer path, which hangs up the current call first (CallRinger.accept).
+                .addAction(0, context.getString(R.string.oc_call_waiting_end_and_answer), activityIntent(context, call, ACTION_ACCEPT))
+                .build()
+            OCPluginCompanion.getNotificationsManager(context).notify(TAG, notificationId(call.id), notification)
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Failed to post the call waiting notification", e)
         }
     }
 

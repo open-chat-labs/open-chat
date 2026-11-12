@@ -95,11 +95,14 @@ class KeyguardBoundaryTest {
     fun `invariant 17 every ring notification is posted through the registry's once-only gate`() {
         val ringer = File(plugin, "java/calls/CallRinger.kt").readText()
         val showRing = ringer.substring(ringer.indexOf("fun showRing("), ringer.indexOf("fun redial("))
-        assertTrue(showRing.contains("registry.shouldPostRing("))
-        // postRing has exactly one caller: showRing.
-        val callers = kotlinSources(plugin).filter { it.readText().contains("IncomingCallNotifications.postRing(") }
-        assertEquals(listOf("CallRinger.kt"), callers.map { it.name })
-        assertEquals(1, ringer.split("IncomingCallNotifications.postRing(").size - 1)
+        assertTrue(showRing.contains("registry.ringToPost("))
+        // postRing and postWaiting have exactly one caller each: showRing.
+        for (post in listOf("IncomingCallNotifications.postRing(", "IncomingCallNotifications.postWaiting(")) {
+            val callers = kotlinSources(plugin).filter { it.readText().contains(post) }
+            assertEquals(listOf("CallRinger.kt"), callers.map { it.name })
+            assertEquals(1, ringer.split(post).size - 1)
+            assertTrue(showRing.contains(post))
+        }
     }
 
     @Test
