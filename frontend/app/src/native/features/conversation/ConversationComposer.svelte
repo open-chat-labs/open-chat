@@ -1,6 +1,7 @@
 <!-- A conversation's composer (native plan 05): the library's MessageComposer as a pill, its + and
      emoji buttons in the platform's order, opening the attach and emoji panels (06, 07) in the
-     keyboard's place (the slot under it, KeyboardSlot, the panel's surface KeyboardPanel), with the
+     keyboard's place (the slot under it, KeyboardSlot, the panel's surface KeyboardPanel; the
+     keyboard's space kept, as an empty panel, while it's down for a message's menu), with the
      chat's draft (its text, the reply or edit a swipe set, a file attached), the photos and videos
      picked (MediaPicks: the attach panel's selection, live in the composer), @mentions, a voice
      message, and the
@@ -487,6 +488,17 @@
         return () => (slot.onMissed = undefined);
     });
 
+    // a message's menu has closed, the keyboard's space held for it: the text box is focused
+    // again, so the keyboard comes back up into it
+    $effect(() => {
+        slot.onRefocus = () => {
+            composer?.focus();
+            const field = document.activeElement;
+            return field instanceof HTMLTextAreaElement && field.closest(".pill") !== null;
+        };
+        return () => (slot.onRefocus = undefined);
+    });
+
     // the sheet knows the emoji panel's search (its backdrop, its handle's rules)
     $effect(() => {
         panel?.setSearch(slot.search);
@@ -601,6 +613,10 @@
 <div class="end" class:raised={slot.height > 0} class:voice={voiceActive}></div>
 <span class="safe-bottom" bind:clientHeight={safeBottom} aria-hidden="true"></span>
 <div class="slot" style:height="{slot.height}px">
+    {#if slot.held}
+        <!-- the keyboard's space, kept while it's down for a message's menu: an empty panel -->
+        <div class="held" aria-hidden="true"></div>
+    {/if}
     {#if panel !== undefined}
         <KeyboardPanel
             {panel}
@@ -682,6 +698,16 @@
         position: relative;
         flex: none;
         transition: height 0.25s var(--ease-out);
+    }
+
+    // the keyboard's space held for a message's menu, as an empty keyboard-area panel at rest
+    // (KeyboardPanel's surface, top corners and line)
+    .held {
+        position: absolute;
+        inset: 0;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        background: var(--surface-1);
+        box-shadow: inset 0 1px 0 var(--sheet-edge);
     }
 
     .safe-bottom {

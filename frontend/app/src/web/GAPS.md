@@ -445,6 +445,26 @@ design export needs. Each entry says where it came up.
       plays no vibration of its own (`pressVibration={false}`). A shell built before the style
       plays its light tap. Not checked on a device. The swipe's armed haptic is still
       `MessageGroup`'s `navigator.vibrate(10)`.
+    - **The keyboard under the menu** (the user's decision, 2026-11-12): a long-press with the
+      composer's keyboard up takes the keyboard down (Android's long-press takes the focus off the
+      text box, and the menu takes it), but its space stays kept at its height, an empty panel
+      (the keyboard-area panels' `--surface-1`, corners and line) under the veil, so the chat and
+      the composer don't move under the menu's copy of the message (`KeyboardSlot`'s
+      `holdForMenu`, `held`). Once the menu, and whatever it opened, has closed (`MessageActions`'
+      `onSettled`), the text box is focused again and the keyboard comes back up into the space,
+      which is let go once it's up (`afterMenu`): after Esc, back or a tap outside, a reaction (the
+      bar's, or the emoji sheet's once it closes), Copy, Copy link, Pin / Unpin, Translate, Share, a
+      delete (after its confirm, or Cancel), the forward and report sheets once they close, and
+      Reply and Edit (which focus it themselves). Info (Message info pushed), a private reply (the
+      DM opens), Get Diamond and another chat opening meanwhile (a notification) let the space go
+      (`MessageActions`' `leave`); Back to the conversation then finds the keyboard down. The
+      space stays held as the text box is focused again, even where the keyboard's "down" for the
+      menu hasn't been reported yet (a menu closed at once), until the keyboard's back up; that
+      focus isn't the reader's tap, so where the platform shows no keyboard for it, the space is
+      let go after the slot's wait (2s), without asking again. Measured per frame on the emulator: the message's top stays where it was
+      from the long-press until the keyboard is back. Only where the keyboard's height is reported
+      (the Android app): in the iOS app and phones' browsers the platform lifts the page, so the
+      chat still moves down as the menu opens there, and the keyboard isn't put back.
     - **No press feedback yet** (to do): holding a message shows nothing until the menu opens.
       The current mobile app scales the bubble while it's held (component-lib's `longpress`
       action, `animation: "scale"`, as `ChatMessage` uses it): halfway through the hold (300ms of
