@@ -20,6 +20,7 @@ let package = Package(
         .package(name: "Tauri", path: "../.tauri/tauri-api"),
         .package(name: "PushCore", path: "PushCore"),
         .package(name: "CallCore", path: "CallCore"),
+        .package(name: "ShareCore", path: "ShareCore"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -30,6 +31,7 @@ let package = Package(
                 .byName(name: "Tauri"),
                 .product(name: "PushCore", package: "PushCore"),
                 .product(name: "CallCore", package: "CallCore"),
+                .product(name: "ShareCore", package: "ShareCore"),
             ],
             path: "Sources")
     ]

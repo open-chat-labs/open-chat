@@ -1,4 +1,12 @@
 {
+    "applinks": {
+        "details": [
+            {
+                "appIDs": ["N59KSS69AU.com.oclabs.openchat"],
+                "components": [{ "/": "*" }]
+            }
+        ]
+    },
     "webcredentials": {
         "apps": ["N59KSS69AU.com.oclabs.openchat"]
     }

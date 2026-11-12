@@ -15,14 +15,18 @@
 		4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */; };
 		420EEDDE4D7B1AD1575A8B62 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CED8921299308465DD42F19 /* libapp.a */; };
 		4A31C5977ABF9C43067645CE /* Daily in Frameworks */ = {isa = PBXBuildFile; productRef = F6EDDEA97A0629F705B41CC2 /* Daily */; };
+		4A88B3CA033D0BFE67A08332 /* ShareCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4CF21605C7C10B9C1392BDD4 /* ShareCore */; };
 		5E38202CCEDA3FA4A8C55530 /* NativeCallScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */; };
+		647D19ED04E79A997E4C3071 /* OpenChatShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AEB3E325CAE45600FFDCE784 /* OpenChatShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		66B26C12906CAD814B1028D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */; };
 		6712A73BF80908BC5B6103A5 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62D4FBF6929DC4DBE2564C09 /* Security.framework */; };
 		6C68F46ADB8840E2F4853638 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72A37ADB07A0BB20592A4855 /* Metal.framework */; };
+		7DF34243276A66C93A5894F4 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E73A765B258D20B6F20904 /* ShareViewController.swift */; };
 		8FC117455A54F8B946B815DA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29D76D5D46F7055F81CB2842 /* NotificationService.swift */; };
 		B6D4D3E52790D5E4158C3F18 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AA8BEBA73EAD66C0011F051 /* CoreGraphics.framework */; };
 		BEA22C7D99672A1A86D992B6 /* PushCore in Frameworks */ = {isa = PBXBuildFile; productRef = BC2AF3EBF9E211DA709E9F4F /* PushCore */; };
 		D085E5D7EE3645A8224D74E5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */; };
+		EDB5B105B484317A1E9FD8D1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D9D04096787FB8FBA16833EB /* PrivacyInfo.xcprivacy */; };
 		F1F4FE185940D6F3F497C416 /* OpenChatNotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F3D245EACD514A1EF9C6282C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D92B8DD2AA1394245FB960A /* Assets.xcassets */; };
 		F4A18A187F4AA227A29B96CE /* assets in Resources */ = {isa = PBXBuildFile; fileRef = F131D4B434CEDC3FB5E08244 /* assets */; };
@@ -37,6 +41,13 @@
 			remoteGlobalIDString = 3B3EEDEFC0EAA0F91F2D3098;
 			remoteInfo = OpenChatNotificationService;
 		};
+		EEA2BA119F5B2206DE6E2F2B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 07923A346893A10779FCB9EC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4A52B539447EDC77C65D3F0C;
+			remoteInfo = OpenChatShare;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,6 +58,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				F1F4FE185940D6F3F497C416 /* OpenChatNotificationService.appex in Embed Foundation Extensions */,
+				647D19ED04E79A997E4C3071 /* OpenChatShare.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -54,6 +66,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0683B3B350151EFBA8388710 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCallScreen.swift; sourceTree = "<group>"; };
 		160E4D624C0A31D73CA143E7 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		1AE857753D46B3772C2BF7CF /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -72,13 +85,18 @@
 		62D4FBF6929DC4DBE2564C09 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		6AA8BEBA73EAD66C0011F051 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		72A37ADB07A0BB20592A4855 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		84E73A765B258D20B6F20904 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		8C998F2F19550A405797239B /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		A619DD738199AEAC42094B69 /* PushCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PushCore; path = "../../../tauri-plugin-oc/ios/PushCore"; sourceTree = SOURCE_ROOT; };
+		ABE5A59E20A302EA8370CE9D /* ShareCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ShareCore; path = "../../../tauri-plugin-oc/ios/ShareCore"; sourceTree = SOURCE_ROOT; };
 		AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		AEB3E325CAE45600FFDCE784 /* OpenChatShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OpenChatShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD4233E8B378ECF31E4D688A /* OpenChatShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChatShare.entitlements; sourceTree = "<group>"; };
 		C481738E47826B0400924994 /* OpenChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChat.entitlements; sourceTree = "<group>"; };
 		CEBEF42C76BC4563962C64E7 /* navigation.rs */ = {isa = PBXFileReference; path = navigation.rs; sourceTree = "<group>"; };
 		D23C0E057AF1F8158C05DFB6 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		D8AB4FFBEA5597A029FDCC3D /* NativeCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCalls.swift; sourceTree = "<group>"; };
+		D9D04096787FB8FBA16833EB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "open-chat_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OpenChatNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,6 +109,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				BEA22C7D99672A1A86D992B6 /* PushCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CDAA773B7751E26DF125632E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A88B3CA033D0BFE67A08332 /* ShareCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,8 +167,20 @@
 			children = (
 				E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */,
 				EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */,
+				AEB3E325CAE45600FFDCE784 /* OpenChatShare.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		65AD71144943013260EE8F19 /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				0683B3B350151EFBA8388710 /* Info.plist */,
+				BD4233E8B378ECF31E4D688A /* OpenChatShare.entitlements */,
+				D9D04096787FB8FBA16833EB /* PrivacyInfo.xcprivacy */,
+				84E73A765B258D20B6F20904 /* ShareViewController.swift */,
+			);
+			path = ShareExtension;
 			sourceTree = "<group>";
 		};
 		66F605227182E16F3C3D14D7 /* bindings */ = {
@@ -202,6 +240,7 @@
 				8862B9024BDF910368015FBF /* NotificationService */,
 				ABDFB6459EC88F3D66DC5352 /* open-chat_iOS */,
 				93663503E93E316EC2301611 /* Packages */,
+				65AD71144943013260EE8F19 /* ShareExtension */,
 				91516C999DAF29F0FA3EF3D7 /* Sources */,
 				676D53D5AEF7B83BE9263E46 /* src */,
 				56E581CDBD02C2EDA7AA323B /* Frameworks */,
@@ -229,6 +268,7 @@
 			isa = PBXGroup;
 			children = (
 				A619DD738199AEAC42094B69 /* PushCore */,
+				ABE5A59E20A302EA8370CE9D /* ShareCore */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -277,6 +317,27 @@
 			productReference = EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		4A52B539447EDC77C65D3F0C /* OpenChatShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA792420C679853C284C20C8 /* Build configuration list for PBXNativeTarget "OpenChatShare" */;
+			buildPhases = (
+				2A2D1E64170CCB0BB0FB1B7C /* Sources */,
+				A025B7C725C080034694B21D /* Resources */,
+				CDAA773B7751E26DF125632E /* Frameworks */,
+				47A18625A5395E3F95637F77 /* Set the app's version */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenChatShare;
+			packageProductDependencies = (
+				4CF21605C7C10B9C1392BDD4 /* ShareCore */,
+			);
+			productName = OpenChatShare;
+			productReference = AEB3E325CAE45600FFDCE784 /* OpenChatShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		BF2067611E7328B686E5CA73 /* open-chat_iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2B4DEFC9589C88FC890303C3 /* Build configuration list for PBXNativeTarget "open-chat_iOS" */;
@@ -293,6 +354,7 @@
 			);
 			dependencies = (
 				6CE8A4E536384B410124FB47 /* PBXTargetDependency */,
+				D70ED0F1B39968608A3028ED /* PBXTargetDependency */,
 			);
 			name = "open-chat_iOS";
 			packageProductDependencies = (
@@ -315,6 +377,10 @@
 						DevelopmentTeam = N59KSS69AU;
 						ProvisioningStyle = Automatic;
 					};
+					4A52B539447EDC77C65D3F0C = {
+						DevelopmentTeam = N59KSS69AU;
+						ProvisioningStyle = Automatic;
+					};
 					BF2067611E7328B686E5CA73 = {
 						DevelopmentTeam = N59KSS69AU;
 						ProvisioningStyle = Automatic;
@@ -333,6 +399,7 @@
 			packageReferences = (
 				0B03C5FECE4E9B418F89A494 /* XCRemoteSwiftPackageReference "daily-client-ios" */,
 				86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */,
+				C701720CE957C4798D23A8A4 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/ShareCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5C7D63DB39FACAF1203C6C45 /* Products */;
@@ -340,6 +407,7 @@
 			projectRoot = "";
 			targets = (
 				3B3EEDEFC0EAA0F91F2D3098 /* OpenChatNotificationService */,
+				4A52B539447EDC77C65D3F0C /* OpenChatShare */,
 				BF2067611E7328B686E5CA73 /* open-chat_iOS */,
 			);
 		};
@@ -362,6 +430,14 @@
 				4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */,
 				24C1D01D42F7C40FE2C3AED2 /* PrivacyInfo.xcprivacy in Resources */,
 				F4A18A187F4AA227A29B96CE /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A025B7C725C080034694B21D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EDB5B105B484317A1E9FD8D1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -388,6 +464,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cp \"${SRCROOT}/open-chat_iOS/OpenChat.entitlements\" \"${SRCROOT}/open-chat_iOS/open-chat_iOS.entitlements\"";
+		};
+		47A18625A5395E3F95637F77 /* Set the app's version */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/open-chat_iOS/Info.plist",
+			);
+			name = "Set the app's version";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "for KEY in CFBundleShortVersionString CFBundleVersion; do\n  VALUE=$(/usr/libexec/PlistBuddy -c \"Print :$KEY\" \"${SRCROOT}/open-chat_iOS/Info.plist\")\n  /usr/libexec/PlistBuddy -c \"Set :$KEY $VALUE\" \"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\ndone\n";
 		};
 		4D88D18DBA64CB1C00C996FB /* Set the app's version */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -452,6 +548,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2A2D1E64170CCB0BB0FB1B7C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DF34243276A66C93A5894F4 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EBF011291B42231A0FADF59A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -477,6 +581,11 @@
 			isa = PBXTargetDependency;
 			target = 3B3EEDEFC0EAA0F91F2D3098 /* OpenChatNotificationService */;
 			targetProxy = 68842D4ACD1FC142C88D4FDC /* PBXContainerItemProxy */;
+		};
+		D70ED0F1B39968608A3028ED /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4A52B539447EDC77C65D3F0C /* OpenChatShare */;
+			targetProxy = EEA2BA119F5B2206DE6E2F2B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -544,6 +653,28 @@
 			};
 			name = debug;
 		};
+		28C9DCB8F2992B4153E9988B /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/OpenChatShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = N59KSS69AU;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.oclabs.openchat.Share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = debug;
+		};
 		385CC46FEFC9162ADBDBC840 /* debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -576,6 +707,28 @@
 				VALID_ARCHS = arm64;
 			};
 			name = debug;
+		};
+		775109CDD357A8C98EF6074C /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/OpenChatShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = N59KSS69AU;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.oclabs.openchat.Share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = release;
 		};
 		88EF8E16D37ECDD57F8F29DE /* release */ = {
 			isa = XCBuildConfiguration;
@@ -738,12 +891,25 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = debug;
 		};
+		FA792420C679853C284C20C8 /* Build configuration list for PBXNativeTarget "OpenChatShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				28C9DCB8F2992B4153E9988B /* debug */,
+				775109CDD357A8C98EF6074C /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../../tauri-plugin-oc/ios/PushCore";
+		};
+		C701720CE957C4798D23A8A4 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/ShareCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../tauri-plugin-oc/ios/ShareCore";
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -759,6 +925,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4CF21605C7C10B9C1392BDD4 /* ShareCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ShareCore;
+		};
 		BC2AF3EBF9E211DA709E9F4F /* PushCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PushCore;

@@ -8,6 +8,9 @@ packages:
   # Push logic the app's plugin and the Notification Service Extension share
   PushCore:
     path: ../../../tauri-plugin-oc/ios/PushCore
+  # The inbox the share extension hands shared items to the app through (#10403)
+  ShareCore:
+    path: ../../../tauri-plugin-oc/ios/ShareCore
   # Native call media (#10445)
   Daily:
     url: https://github.com/daily-co/daily-client-ios
@@ -101,12 +104,17 @@ targets:
         # apple-app-site-association file listing this app id, so devices and
         # simulators fetch it through Apple's CDN. No ?mode=developer suffix:
         # store builds ignore developer-mode entries.
+        # Universal links: oc.app links open in the app (#10403).
         com.apple.developer.associated-domains:
           - webcredentials:oc.app
+          - applinks:oc.app
         # APNs. Exporting for App Store Connect switches it to production.
         aps-environment: development
         # Message notifications show the sender like a messaging app
         com.apple.developer.usernotifications.communication: true
+        # The share extension's inbox
+        com.apple.security.application-groups:
+          - group.com.oclabs.openchat
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -125,6 +133,8 @@ targets:
       groups: [app]
     dependencies:
       - target: OpenChatNotificationService
+        embed: true
+      - target: OpenChatShare
         embed: true
       # Xcode embeds the package's binary framework itself. Embedding it here as well fails the build.
       - package: Daily
@@ -203,6 +213,56 @@ targets:
     postBuildScripts:
       # Sets the version and build number from the app's Info.plist, which the tauri CLI writes
       # before building. Done to the built Info.plist, before the extension is signed.
+      - script: |
+          for KEY in CFBundleShortVersionString CFBundleVersion; do
+            VALUE=$(/usr/libexec/PlistBuddy -c "Print :$KEY" "${SRCROOT}/open-chat_iOS/Info.plist")
+            /usr/libexec/PlistBuddy -c "Set :$KEY $VALUE" "${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+          done
+        name: Set the app's version
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(SRCROOT)/open-chat_iOS/Info.plist
+  # OpenChat in the share sheet (#10403)
+  OpenChatShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: OpenChat
+        # Replaced with the app's at build time, see the post-build script
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "0.1.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            # What Android's share target takes: text, links, images, videos and files,
+            # several at once
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 10
+              NSExtensionActivationSupportsMovieWithMaxCount: 10
+              NSExtensionActivationSupportsFileWithMaxCount: 10
+    entitlements:
+      path: ShareExtension/OpenChatShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.oclabs.openchat
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat.Share
+        DEVELOPMENT_TEAM: N59KSS69AU
+        CODE_SIGN_STYLE: Automatic
+        ARCHS: [arm64]
+        SKIP_INSTALL: true
+    dependencies:
+      - package: ShareCore
+    postBuildScripts:
+      # As the Notification Service Extension's
       - script: |
           for KEY in CFBundleShortVersionString CFBundleVersion; do
             VALUE=$(/usr/libexec/PlistBuddy -c "Print :$KEY" "${SRCROOT}/open-chat_iOS/Info.plist")

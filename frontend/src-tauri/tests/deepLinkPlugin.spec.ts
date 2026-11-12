@@ -30,10 +30,14 @@ describe("deep-link plugin config", () => {
         expect(paths.length).toBeGreaterThan(0);
         for (const path of paths) {
             expect(path).not.toBe("open-chat_iOS/open-chat_iOS.entitlements");
-            expect(read(`gen/apple/${path}`)).toMatch(
-                /<string>webcredentials:oc\.app(\?mode=developer)?<\/string>/,
-            );
+            // the app's, not an extension's
+            if (path.startsWith("open-chat_iOS/")) {
+                expect(read(`gen/apple/${path}`)).toMatch(
+                    /<string>webcredentials:oc\.app(\?mode=developer)?<\/string>/,
+                );
+            }
         }
+        expect(paths.some((path) => path.startsWith("open-chat_iOS/"))).toBe(true);
     });
 
     test("registers the openchat scheme on iOS", () => {

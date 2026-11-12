@@ -225,6 +225,9 @@ export async function followWindowInsets(
 }
 
 const DEEP_LINK_EVENT = "deep-link";
+// The iOS share extension opens the app with this link, to hand over a share rather than to go
+// anywhere (#10403). The share arrives as a share-target event.
+const SHARE_INBOX_PATH = "/share-inbox";
 
 /**
  * Call once on native app startup (inside isNativeApp() guard).
@@ -241,6 +244,7 @@ const DEEP_LINK_EVENT = "deep-link";
 export function openDeepLink(url: string): boolean {
     try {
         const { pathname, search } = new URL(url);
+        if (pathname === SHARE_INBOX_PATH) return false;
         // Landing / marketing pages (blog, whitepaper, etc.) are not real
         // in-app destinations. The OS delivers these oc.app links to us as
         // deep links because oc.app is a verified associated domain - open
@@ -274,11 +278,16 @@ export async function expectDeepLinks(): Promise<PluginListener> {
     // On Android deep links are intercepted natively (see the tao crash note
     // above) and re-fired as the plugin event handled just here. On iOS the
     // standard Tauri deep-link plugin works, so listen to it directly for
-    // openchat:// custom-scheme links.
+    // openchat:// custom-scheme links and oc.app universal links.
     if (isIosTauriApp()) {
         try {
-            const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
+            const { getCurrent, onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
             await onOpenUrl((urls) => urls.forEach(handleDeepLink));
+            // The link the app was started with, such as an oc.app link tapped in Messages.
+            // The plugin keeps the last link the app was opened with, so a reload of the web
+            // layer opens it again.
+            const [cold] = (await getCurrent()) ?? [];
+            if (cold) coldStartIntents.parkDeepLink(cold);
         } catch (e) {
             console.error("Deep link: failed to register iOS onOpenUrl listener", e);
         }

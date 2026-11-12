@@ -581,9 +581,12 @@
     // Android share-target events use a store (rather than pubsub) so cold-start shares that
     // arrive before this component mounts aren't dropped. Consume and clear so opening the modal
     // a second time requires a fresh share.
+    // A cold start opens on "/" and redirects to the chat list through navigate(), which closes
+    // every modal, so the picker waits for that. iOS hands a cold-start share over that early.
     $effect(() => {
         const share = $pendingShareStore;
         if (share === undefined) return;
+        if ($chatListScopeStore.kind === "none" || $routeStore.kind === "home_route") return;
         untrack(() => {
             push({ kind: "share_message", share });
             pendingShareStore.set(undefined);

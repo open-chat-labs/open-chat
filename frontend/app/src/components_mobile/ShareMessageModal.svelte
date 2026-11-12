@@ -45,4 +45,5 @@
     }
 </script>
 
-<SelectChatModal {onClose} onSelect={shareMessage} />
+<!-- A share from another app is for any chat, the one that happens to be open included -->
+<SelectChatModal {onClose} onSelect={shareMessage} excludeCurrent={false} />
