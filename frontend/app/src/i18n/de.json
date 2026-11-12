@@ -1886,6 +1886,24 @@
                 "read": "Gelesen",
                 "failed": "Nicht gesendet",
                 "you": "Du"
+            },
+            "pinned": {
+                "strip": "Angeheftete Nachricht",
+                "stripOf": "Angeheftete Nachricht · {current} von {total}",
+                "all": "Alle angehefteten Nachrichten",
+                "title": "{count, plural, one {# angeheftete Nachricht} other {# angeheftete Nachrichten}}",
+                "options": "Optionen für angeheftete Nachrichten",
+                "unpinAll": "Alle {count} Nachrichten lösen",
+                "unpinAllTitle": "Alle {count} Nachrichten lösen?",
+                "unpinAllBody": "Die Nachrichten bleiben im Chat. Nur die Anheftungen werden entfernt, für alle.",
+                "unpinAllConfirm": "Alle lösen",
+                "unpinnedAll": "{count} Nachrichten losgelöst",
+                "unpin": "Nachricht lösen",
+                "goTo": "Zur Nachricht",
+                "unpinning": "Nachricht wird gelöst…",
+                "emptyTitle": "Keine angehefteten Nachrichten",
+                "emptyBody": "Halte eine Nachricht im Chat gedrückt und wähle Anheften, damit sie oben bleibt.",
+                "loadFailed": "Die angehefteten Nachrichten konnten nicht geladen werden"
             }
         },
         "shareUnavailable": "Das Teilen aus anderen Apps in OpenChat ist in dieser Version noch nicht verfügbar.",

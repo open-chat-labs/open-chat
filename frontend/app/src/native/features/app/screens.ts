@@ -134,6 +134,9 @@ export const screens: Screens = {
 
     // a message's info, from its long-press menu (N5d)
     message_info: () => import("../conversation/MessageInfoScreen.svelte"),
+
+    // a group's or channel's pinned messages, from the conversation's pinned strip (plan 04)
+    pinned_messages: () => import("../conversation/PinnedMessagesScreen.svelte"),
 };
 
 /**

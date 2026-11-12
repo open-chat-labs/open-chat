@@ -1886,6 +1886,24 @@
                 "read": "Leído",
                 "failed": "No enviado",
                 "you": "Tú"
+            },
+            "pinned": {
+                "strip": "Mensaje fijado",
+                "stripOf": "Mensaje fijado · {current} de {total}",
+                "all": "Todos los mensajes fijados",
+                "title": "{count, plural, one {# mensaje fijado} other {# mensajes fijados}}",
+                "options": "Opciones de mensajes fijados",
+                "unpinAll": "Desfijar los {count} mensajes",
+                "unpinAllTitle": "¿Desfijar los {count} mensajes?",
+                "unpinAllBody": "Los mensajes se quedan en el chat. Solo se quitan los fijados, para todos.",
+                "unpinAllConfirm": "Desfijar todos",
+                "unpinnedAll": "{count} mensajes desfijados",
+                "unpin": "Desfijar mensaje",
+                "goTo": "Ir al mensaje",
+                "unpinning": "Desfijando mensaje…",
+                "emptyTitle": "No hay mensajes fijados",
+                "emptyBody": "Mantén pulsado un mensaje del chat y elige Fijar para tenerlo arriba.",
+                "loadFailed": "No se pudieron cargar los mensajes fijados"
             }
         },
         "shareUnavailable": "Compartir en OpenChat desde otras aplicaciones aún no está disponible en esta versión.",

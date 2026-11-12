@@ -1886,6 +1886,24 @@
                 "read": "Đã đọc",
                 "failed": "Chưa gửi",
                 "you": "Bạn"
+            },
+            "pinned": {
+                "strip": "Tin nhắn đã ghim",
+                "stripOf": "Tin nhắn đã ghim · {current} / {total}",
+                "all": "Tất cả tin nhắn đã ghim",
+                "title": "{count} tin nhắn đã ghim",
+                "options": "Tùy chọn tin nhắn đã ghim",
+                "unpinAll": "Bỏ ghim tất cả {count} tin nhắn",
+                "unpinAllTitle": "Bỏ ghim tất cả {count} tin nhắn?",
+                "unpinAllBody": "Các tin nhắn vẫn ở trong cuộc trò chuyện. Chỉ các ghim bị gỡ, cho mọi người.",
+                "unpinAllConfirm": "Bỏ ghim tất cả",
+                "unpinnedAll": "Đã bỏ ghim {count} tin nhắn",
+                "unpin": "Bỏ ghim tin nhắn",
+                "goTo": "Đi đến tin nhắn",
+                "unpinning": "Đang bỏ ghim tin nhắn…",
+                "emptyTitle": "Không có tin nhắn đã ghim",
+                "emptyBody": "Nhấn giữ một tin nhắn trong cuộc trò chuyện và chọn Ghim để giữ nó ở trên cùng.",
+                "loadFailed": "Không thể tải các tin nhắn đã ghim"
             }
         },
         "shareUnavailable": "Chia sẻ vào OpenChat từ ứng dụng khác chưa có trong phiên bản này.",

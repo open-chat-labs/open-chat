@@ -4,7 +4,8 @@
      composer's emoji panel's emoji), the forward sheet, the report sheet, and the alert offering
      Diamond for a translation. What each action does is the shared `messageAction`
      (logic/conversation, the web's too); here is how it's shown: toasts (a delete with Undo, which
-     restores it, after a native confirm while "ask before deleting" is on), the sheets, Info pushed
+     restores it, after a native confirm while "ask before deleting" is on; a pin's and an unpin's
+     with Undo: pinToasts), the sheets, Info pushed
      over the conversation. Opening the menu plays the one haptic a long-press gives (medium; the
      chat's MessageGroup plays none of its own). Reply and Edit set the chat's draft, which the
      composer shows. The conversation opens it with `open`. -->
@@ -49,6 +50,7 @@
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
     import ForwardSheet from "./ForwardSheet.svelte";
+    import { pinWithUndo, unpinWithUndo } from "./pinToasts";
     import {
         messageMenuItems,
         myReactions,
@@ -233,6 +235,35 @@
             });
             return;
         }
+        // a pin and an unpin offer Undo (plan 04): an unpin is only sent once its Undo has gone
+        if ((action === "pin" || action === "unpin") && at.chatId.kind !== "direct_chat") {
+            const index = at.evt.event.messageIndex;
+            if (action === "pin") {
+                // on a pin whose unpin waits out its Undo, this takes the unpin back (pinToasts)
+                void pinWithUndo(
+                    client,
+                    context,
+                    at.chatId,
+                    chatIdentifierToString(at.chatId),
+                    index,
+                    {
+                        pinned: $_("native.conversation.message.pinned"),
+                        unpinning: $_("native.conversation.pinned.unpinning"),
+                        unpinned: $_("native.conversation.message.unpinned"),
+                    },
+                );
+            } else {
+                unpinWithUndo(
+                    client,
+                    context,
+                    at.chatId,
+                    chatIdentifierToString(at.chatId),
+                    [index],
+                    $_("native.conversation.message.unpinned"),
+                );
+            }
+            return;
+        }
         // a sent message's delete puts its toast up before the backend has it (deleteWithUndo),
         // unless it asks first: then messageAction says so and show() asks
         const confirmDelete = $confirmMessageDeletion;
@@ -293,8 +324,6 @@
                 upgrading = true;
                 return;
             case "done":
-                if (action === "pin") context.toast($_("native.conversation.message.pinned"));
-                if (action === "unpin") context.toast($_("native.conversation.message.unpinned"));
                 if (action === "undelete") {
                     context.toast($_("native.conversation.message.restored"));
                 }

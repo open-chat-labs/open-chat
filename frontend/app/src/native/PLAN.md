@@ -79,7 +79,7 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   web panel's logic (`logic/members`, `logic/groupOrCommunity/detailsPermissions`,
   `logic/profile`'s profile card), the DM settings moved to `logic/chats`, and the send prompts
   moved to `logic/composer/sendPrompts`. Manage's pages and Edit group are N7's, pushed as
-  placeholders. A design brief to come, as its own PR: pinned messages. The disappearing messages'
+  placeholders. The disappearing messages'
   brief (the plan's 10 and 04 of 2026-11-10) is in: the library's TimedToggle in This chat (8
   lengths, 4 × 2, starting at a day), one setting with a Disappearing messages submenu in the
   conversation's menu (`logic/chats/chatDisappearing`). What it left is in GAPS.md ("Native details").
@@ -89,6 +89,16 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   each with Undo; Invite people (People | Invite link), from the Invite tile and the Members tab,
   on MemberManagement and the web's invite search (`logic/members/invitePeople` decides who gets
   which tab and how each person joins). What it left is in GAPS.md ("Native details").
+- **Built:** N6's pinned messages (the plan's 04 of 2026-11-10, "Pinned messages"): the strip
+  under the conversation's header (a bar segment per pin, "Pinned message · 1 of 3", the pin's
+  author and first line; a tap goes to the pin, marks it and moves on to the next older one), the
+  Pinned messages screen (`pinned_messages`, pushed from the strip's list button: the pins as the
+  chat draws them, oldest first by day, the pin button and a long-press's Go to message and
+  Unpin, Unpin all in ⋯ after a confirmation, the empty state), and Pin / Unpin in a message's
+  long-press menu, each with Undo; on the shared `logic/pinned` loader (the web's and the old
+  panels'). Not built: pinning in DMs (the backend has no pins in direct chats), "Pinned by" and
+  the pins' order by when they were pinned (the backend sends neither). What it left is in
+  GAPS.md ("Native conversation", Pinned messages).
 - **Next:** the screens. N10a, N11 and N13 need only N3; N7 (group settings) and N8a
   (communities) can start now that N6 is in; N9 (the builders) needs N10b too.
 

@@ -1886,6 +1886,24 @@
                 "read": "Przeczytana",
                 "failed": "Niewysłana",
                 "you": "Ty"
+            },
+            "pinned": {
+                "strip": "Przypięta wiadomość",
+                "stripOf": "Przypięta wiadomość · {current} z {total}",
+                "all": "Wszystkie przypięte wiadomości",
+                "title": "{count, plural, one {# przypięta wiadomość} few {# przypięte wiadomości} many {# przypiętych wiadomości} other {# przypiętej wiadomości}}",
+                "options": "Opcje przypiętych wiadomości",
+                "unpinAll": "{count, plural, few {Odepnij wszystkie # wiadomości} other {Odepnij wszystkie # wiadomości}}",
+                "unpinAllTitle": "{count, plural, few {Odpiąć wszystkie # wiadomości?} other {Odpiąć wszystkie # wiadomości?}}",
+                "unpinAllBody": "Wiadomości zostają w czacie. Usuwane są tylko przypięcia, dla wszystkich.",
+                "unpinAllConfirm": "Odepnij wszystkie",
+                "unpinnedAll": "{count, plural, few {Odpięto # wiadomości} other {Odpięto # wiadomości}}",
+                "unpin": "Odepnij wiadomość",
+                "goTo": "Przejdź do wiadomości",
+                "unpinning": "Odpinanie wiadomości…",
+                "emptyTitle": "Brak przypiętych wiadomości",
+                "emptyBody": "Przytrzymaj wiadomość w czacie i wybierz Przypnij, aby została na górze.",
+                "loadFailed": "Nie udało się wczytać przypiętych wiadomości"
             }
         },
         "shareUnavailable": "Udostępnianie do OpenChat z innych aplikacji nie jest jeszcze dostępne w tej wersji.",

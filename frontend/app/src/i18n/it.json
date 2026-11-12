@@ -1886,6 +1886,24 @@
                 "read": "Letto",
                 "failed": "Non inviato",
                 "you": "Tu"
+            },
+            "pinned": {
+                "strip": "Messaggio fissato",
+                "stripOf": "Messaggio fissato · {current} di {total}",
+                "all": "Tutti i messaggi fissati",
+                "title": "{count, plural, one {# messaggio fissato} other {# messaggi fissati}}",
+                "options": "Opzioni dei messaggi fissati",
+                "unpinAll": "Sblocca tutti i {count} messaggi",
+                "unpinAllTitle": "Sbloccare tutti i {count} messaggi?",
+                "unpinAllBody": "I messaggi restano nella chat. Vengono tolti solo i fissaggi, per tutti.",
+                "unpinAllConfirm": "Sblocca tutti",
+                "unpinnedAll": "{count} messaggi non più fissati",
+                "unpin": "Sblocca messaggio",
+                "goTo": "Vai al messaggio",
+                "unpinning": "Sblocco del messaggio…",
+                "emptyTitle": "Nessun messaggio fissato",
+                "emptyBody": "Tieni premuto un messaggio nella chat e scegli Fissa per tenerlo in alto.",
+                "loadFailed": "Impossibile caricare i messaggi fissati"
             }
         },
         "shareUnavailable": "La condivisione su OpenChat da altre app non è ancora disponibile in questa versione.",

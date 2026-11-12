@@ -1886,6 +1886,24 @@
                 "read": "既読",
                 "failed": "未送信",
                 "you": "あなた"
+            },
+            "pinned": {
+                "strip": "固定されたメッセージ",
+                "stripOf": "固定されたメッセージ · {current}/{total}",
+                "all": "固定されたメッセージをすべて表示",
+                "title": "固定されたメッセージ {count} 件",
+                "options": "固定されたメッセージのオプション",
+                "unpinAll": "{count} 件すべての固定を解除",
+                "unpinAllTitle": "{count} 件すべての固定を解除しますか？",
+                "unpinAllBody": "メッセージはチャットに残ります。固定だけが全員から外されます。",
+                "unpinAllConfirm": "すべて解除",
+                "unpinnedAll": "{count} 件の固定を解除しました",
+                "unpin": "固定を解除",
+                "goTo": "メッセージへ移動",
+                "unpinning": "固定を解除しています…",
+                "emptyTitle": "固定されたメッセージはありません",
+                "emptyBody": "チャットのメッセージを長押しして「ピン」を選ぶと、上部に固定できます。",
+                "loadFailed": "固定されたメッセージを読み込めませんでした"
             }
         },
         "shareUnavailable": "他のアプリから OpenChat への共有は、このバージョンではまだご利用いただけません。",
