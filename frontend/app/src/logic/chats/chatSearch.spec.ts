@@ -1,4 +1,4 @@
-import type { BotMatch, ChatSummary, UserLookup, UserSummary } from "@client";
+import type { BotMatch, ChatSummary, GroupMatch, UserLookup, UserSummary } from "@client";
 import { describe, expect, test } from "vitest";
 import {
     botAvatarUrl,
@@ -51,17 +51,29 @@ describe("searchTerm", () => {
 describe("outsideList", () => {
     const bot = (id: string) => ({ kind: "bot_match", id, name: id }) as BotMatch;
 
-    test("leaves out the user, and the people and bots already in the list", () => {
+    const publicGroup = (groupId: string) =>
+        ({
+            kind: "group_match",
+            chatId: { kind: "group_chat", groupId },
+            name: groupId,
+        }) as GroupMatch;
+
+    test("leaves out the user, and the people, bots and groups already in the list", () => {
         const chats = [dm("lucy"), dm("bot1"), group("g1", "Hikers")];
         const result = outsideList(
             {
                 users: [user("me", "me"), user("lucy", "lucy"), user("matt", "matt")],
                 bots: [bot("bot1"), bot("bot2")],
+                groups: [publicGroup("g1"), publicGroup("g2")],
             },
             chats,
             "me",
         );
-        expect(result).toEqual({ users: [user("matt", "matt")], bots: [bot("bot2")] });
+        expect(result).toEqual({
+            users: [user("matt", "matt")],
+            bots: [bot("bot2")],
+            groups: [publicGroup("g2")],
+        });
     });
 });
 

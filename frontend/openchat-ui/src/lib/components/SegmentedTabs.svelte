@@ -160,8 +160,11 @@
     }
   }
 
+  // one line: a label too long for an equal share widens its tab (its min-content), the others giving way, rather
+  // than breaking onto a second line inside the plate (the chat list's four search tabs at a narrow panel)
   .label {
     position: relative;
+    white-space: nowrap;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
     color: var(--ink-3);
 

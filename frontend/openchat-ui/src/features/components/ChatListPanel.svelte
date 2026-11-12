@@ -2,9 +2,10 @@
      entry, then rows grouped into sections (Pinned, Chats). Section order is fixed, never inherited from row order.
      Rows are identified by `id` (titles repeat: two DMs with "Alex"). Search filters `rows` (and `people`) by title; with
      onSearch the host searches instead (users and groups not loaded yet) and supplies the rows. While a search is on, the
-     filter tabs push out (sliding up and away) and the search tabs push in, All / Chats / People with a badge of each
-     one's results (web plan 04); clearing the search pushes the filters back, their pick kept. All shows up to 5 chats
-     and 3 people, each section ending in "+N more …" that switches to its tab (lib/searchTabs). -->
+     filter tabs push out (sliding up and away) and the search tabs push in, All / Chats / People / Groups with a badge
+     of each one's results (web plan 04; Groups, the public groups found, the user's decision of 2026-11-12); clearing
+     the search pushes the filters back, their pick kept. All shows up to 5 chats, 3 people and 3 groups, each section
+     ending in "+N more …" that switches to its tab (lib/searchTabs). TODO(design): Groups; web/04 has no groups. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import type { ComponentProps } from 'svelte';
@@ -28,7 +29,7 @@
     Unread: 'ui.chatListPanel.filters.unread',
   };
   const SEARCH_TAB_KEYS = SEARCH_TABS.map((tab) => `ui.chatListPanel.searchTabs.${tab}`);
-  const MORE_KEYS = { chats: 'ui.chatListPanel.moreChats', people: 'ui.chatListPanel.morePeople' } as const;
+  const MORE_KEYS = { chats: 'ui.chatListPanel.moreChats', people: 'ui.chatListPanel.morePeople', groups: 'ui.chatListPanel.moreGroups' } as const;
 
   type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems'>;
 
@@ -48,6 +49,9 @@
     /** People (and bots) a search found, for its People tab and All's People section; unused with no search. With
         onSearch the host has found them for the query; without, they're filtered by title as `rows` are. */
     people?: Row[];
+    /** Groups a search found (public groups not in the list), for its Groups tab and All's Groups section; unused with
+        no search. With onSearch the host has found them for the query; without, they're filtered by title. */
+    groups?: Row[];
     /** Section headings with counts; off = one flat list. */
     showLabels?: boolean;
     onSelect?: (id: string, row: Row) => void;
@@ -90,6 +94,7 @@
   let {
     rows,
     people = [],
+    groups: foundGroups = [],
     showLabels = true,
     onSelect,
     headerKind,
@@ -168,8 +173,12 @@
     return order.sort((a, b) => rank(a.label) - rank(b.label));
   });
 
-  // a search's results: the chats in the list's section order (pinned first), then the people found
-  const found = $derived({ chats: groups.flatMap((g) => g.rows), people: searching ? people.map(withDefaults).filter(matches) : [] });
+  // a search's results: the chats in the list's section order (pinned first), then the people and the groups found
+  const found = $derived({
+    chats: groups.flatMap((g) => g.rows),
+    people: searching ? people.map(withDefaults).filter(matches) : [],
+    groups: searching ? foundGroups.map(withDefaults).filter(matches) : [],
+  });
   const badges = $derived(searchTabBadges(found));
   const sections = $derived(searchSections(SEARCH_TABS[searchTab] ?? 'all', found));
 </script>

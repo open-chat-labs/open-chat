@@ -1092,6 +1092,14 @@ export const patternPeople = [
   { id: 'found:lux', title: 'Lux Okafor', preview: '@lux', time: '', color: 'violet' },
 ] as const;
 
+// public groups a search found (the chat list's Groups tab)
+export const patternGroups = [
+  { id: 'found:group:lunar', title: 'Lunar Lounge', preview: '1,204 members', time: '', kind: 'group', color: 'blue' },
+  { id: 'found:group:lute', title: 'Lute & Lyre', preview: '87 members', time: '', kind: 'group', color: 'amber' },
+  { id: 'found:group:lumen', title: 'Lumen Photography', preview: '3,512 members', time: '', kind: 'group', color: 'teal' },
+  { id: 'found:group:lux', title: 'Lux Builders', preview: '42 members', time: '', kind: 'group', color: 'plum' },
+] as const;
+
 export const infoDetails = [
   { label: 'docs.features.info.username', value: '@alice_anderson' },
   { label: 'docs.features.info.memberSince', value: 'Nov 2021' },

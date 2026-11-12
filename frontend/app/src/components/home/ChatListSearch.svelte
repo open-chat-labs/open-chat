@@ -92,10 +92,11 @@
 
     // people, then bots that take direct chats (the client's searchChatList)
     async function userAndBotSearch(term: string) {
-        userAndBotsSearchResults = client.searchChatList(term).then(chatListSearchMatches);
+        userAndBotsSearchResults = client
+            .searchChatList(term, { groups: false })
+            .then(chatListSearchMatches);
         await userAndBotsSearchResults.then(postSearch);
     }
-
 
     async function legacySearch(term: string) {
         groupSearchResults = client.searchGroups(term, 10);

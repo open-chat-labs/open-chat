@@ -11,6 +11,7 @@ export type GroupMatch = DataContent & {
     chatId: GroupChatIdentifier;
     name: string;
     description: string;
+    memberCount: number;
     subtype: GroupSubtype | undefined;
     verified: boolean;
 };

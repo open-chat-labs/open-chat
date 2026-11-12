@@ -41,7 +41,9 @@
         unreadCountShown,
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
+        ownGroupAvatarUrl,
         ownUserAvatarUrl,
+        serverGroupChatsStore,
         type ChatListSearchResults,
         type ChatSummary,
         type OpenChat,
@@ -63,10 +65,12 @@
         communityHeaderMenu,
         foundRows,
         type ChatListPanelRow,
+        type FoundRows,
         type FoundTarget,
     } from "./chatList.adapter";
     import {
         chatRow,
+        groupAvatarLookups,
         listed,
         liveRow,
         rowContext,
@@ -98,8 +102,11 @@
         void scopeKey;
         return "";
     });
-    // people and bots on OpenChat, outside the list (the client's searchChatList)
-    const found = new TermSearch<ChatListSearchResults>((term) => client.searchChatList(term));
+    // people, bots and public groups on OpenChat, outside the list (the client's searchChatList;
+    // the groups at the user's request of 2026-11-12, web/04 has none)
+    const found = new TermSearch<ChatListSearchResults>((term) =>
+        client.searchChatList(term, { groups: true }),
+    );
     onDestroy(() => found.dispose());
     // and the people found go with it: a new scope starts with nothing looked up
     $effect(() => {
@@ -173,19 +180,24 @@
         ),
     );
 
-    // the people and bots the search found that aren't in the list: the panel's People
-    const searchRows = $derived.by(() => {
+    // the people, bots and public groups the search found that aren't in the list: the panel's
+    // People and Groups
+    const searchRows = $derived.by((): FoundRows => {
         const term = searchTerm(query);
         const results = found.results;
-        if (term === "" || results.kind !== "found" || results.term !== term) return [];
+        if (term === "" || results.kind !== "found" || results.term !== term) {
+            return { people: [], groups: [] };
+        }
         // read here, so the rows follow a suspend or un-suspend after the search
         const users = $allUsersStore;
+        const lookups = groupAvatarLookups(client);
         return foundRows({
-            // the user's DMs in every scope, not just this one's list: someone they already have
-            // a DM with isn't new in a community or in Favourites either
+            // the user's DMs and groups in every scope, not just this one's list: someone they
+            // already have a DM with, or a group they're in, isn't new in a community or in
+            // Favourites either
             found: outsideList(
                 results.found,
-                [...chats, ...$serverDirectChatsStore.values()],
+                [...chats, ...$serverDirectChatsStore.values(), ...$serverGroupChatsStore.values()],
                 $currentUserIdStore,
             ),
             userName: (user) => client.displayName(user),
@@ -193,10 +205,21 @@
             // their own pictures, else the rows' swatches, as the list's chats
             userAvatar: ownUserAvatarUrl,
             botAvatar: botAvatarUrl,
+            groupAvatar: (group) =>
+                ownGroupAvatarUrl(
+                    { id: group.chatId, blobUrl: group.blobUrl, subtype: group.subtype },
+                    lookups,
+                ),
+            members: (count) => $_("ui.chatListPanel.groupMembers", { values: { count } }),
         });
     });
-    const foundTargets = $derived(new Map(searchRows.map(({ row, target }) => [row.id, target])));
-    const people = $derived(searchRows.map(({ row }) => row));
+    const foundTargets = $derived(
+        new Map(
+            [...searchRows.people, ...searchRows.groups].map(({ row, target }) => [row.id, target]),
+        ),
+    );
+    const people = $derived(searchRows.people.map(({ row }) => row));
+    const groups = $derived(searchRows.groups.map(({ row }) => row));
 
     // the route scope's thread replies: the unmuted count, else the muted one (unreadCountShown)
     const threadCount = $derived(
@@ -290,9 +313,17 @@
         if (chat !== undefined) navigate(routeForChatIdentifier(scope.kind, chat.id));
     }
 
-    // a person or bot: a chat with them (appEvents' chatWith opens it, or the DM there is)
+    // a person or bot: a chat with them (appEvents' chatWith opens it, or the DM there is); a
+    // public group: its page, which previews it, as a link to it does
     function pickFound(target: FoundTarget) {
-        publish("chatWith", { kind: "direct_chat", userId: target.userId });
+        switch (target.kind) {
+            case "chat_with":
+                publish("chatWith", { kind: "direct_chat", userId: target.userId });
+                break;
+            case "group":
+                navigate(routeForChatIdentifier("chats", target.chatId));
+                break;
+        }
     }
 
     const communityMenu = $derived(
@@ -390,6 +421,7 @@
     <ChatListPanel
         rows={chatRows}
         {people}
+        {groups}
         onSelect={select}
         headerKind={community ? "community" : "dms"}
         headerTitle={community?.name ??
