@@ -7,7 +7,7 @@ import {
 } from "@client";
 import { activeVideoCall, hasPresence } from "@stores/video";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CallSession, type CallFrameOptions } from "./callSession.svelte";
+import { ANSWER_HANGUP_WAIT_MS, CallSession, type CallFrameOptions } from "./callSession.svelte";
 
 // The call's frame. `present` is how many are in the call.
 const frame = vi.hoisted(() => ({
@@ -130,23 +130,58 @@ describe("a call", () => {
     // so it replaces the call in progress without asking. The shell has already hung that call
     // up, so the answer waits for it to go instead of leaving it a second time.
     test("an answer from the native ring during a call switches without asking", async () => {
-        await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+        vi.useFakeTimers();
+        try {
+            await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
 
-        const answering = session.startOrJoin(container, {
-            chatId: direct,
-            callType: "default",
-            join: true,
-            answer: true,
-        });
-        await Promise.resolve();
-        expect(session.confirmSwitchTo).toBeUndefined();
-        expect(activeVideoCall.current()?.chatId).toEqual(group);
-        expect(client.startOrJoinVideoCall).toHaveBeenCalledTimes(1);
+            const answering = session.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: true,
+                answer: true,
+            });
+            await vi.advanceTimersByTimeAsync(0);
+            expect(session.confirmSwitchTo).toBeUndefined();
+            expect(activeVideoCall.current()?.chatId).toEqual(group);
+            expect(client.startOrJoinVideoCall).toHaveBeenCalledTimes(1);
 
-        // the shell's hang-up lands: the old call leaves, which ends it
-        activeVideoCall.endCall();
-        expect(await answering).toEqual({ kind: "joined" });
-        expect(activeVideoCall.current()?.chatId).toEqual(direct);
+            // the shell's hang-up lands: the old call leaves, which ends it, and the answer
+            // joins at once rather than at the end of the wait
+            activeVideoCall.endCall();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(client.startOrJoinVideoCall).toHaveBeenCalledTimes(2);
+            expect(await answering).toEqual({ kind: "joined" });
+            expect(activeVideoCall.current()?.chatId).toEqual(direct);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    // Invariant: a shell that answers without hanging up first (every APK before call waiting)
+    // still gets the switch, with the old call ended before the new one joins, so its teardown
+    // can't end the new call (#10398 invariant 25)
+    test("an answer from the native ring ends the old call itself when no hang-up comes", async () => {
+        vi.useFakeTimers();
+        const endCall = vi.spyOn(activeVideoCall, "endCall");
+        try {
+            await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+            vi.mocked(client.startOrJoinVideoCall).mockClear();
+
+            const answering = session.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: true,
+                answer: true,
+            });
+            await vi.advanceTimersByTimeAsync(ANSWER_HANGUP_WAIT_MS + 100);
+
+            expect(await answering).toEqual({ kind: "joined" });
+            expect(endCall).toHaveBeenCalledBefore(vi.mocked(client.startOrJoinVideoCall));
+            expect(activeVideoCall.current()?.chatId).toEqual(direct);
+        } finally {
+            endCall.mockRestore();
+            vi.useRealTimers();
+        }
     });
 
     // Invariant: a call joins as the type it was started as, whatever the button asked for
