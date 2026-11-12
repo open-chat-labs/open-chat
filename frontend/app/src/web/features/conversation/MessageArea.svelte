@@ -1081,6 +1081,7 @@
             failed,
             me,
             users: $allUsersStore,
+            userGroups: $selectedCommunityUserGroupsStore,
             formatter: $_,
             locale: $locale,
             diamond: $isDiamondStore,

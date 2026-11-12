@@ -1,4 +1,10 @@
-import { i18nKey, type DirectChatIdentifier, type EventWrapper, type Message } from "@client";
+import {
+    i18nKey,
+    type DirectChatIdentifier,
+    type EventWrapper,
+    type Message,
+    type UserSummary,
+} from "@client";
 import { vi } from "vitest";
 import { rowMessageContext } from "./threadTimeline";
 import { toastStore } from "@src/stores/toast";
@@ -34,7 +40,6 @@ function fakeClient() {
         deleteFailedMessage: vi.fn(async () => {}),
         deleteMessage: vi.fn(async () => true),
         followThread: vi.fn(async () => true),
-        getContentAsText: vi.fn(() => "hi"),
         pinMessage: vi.fn(async () => true),
         replyPrivately: vi.fn(async (): Promise<DirectChatIdentifier | undefined> => undefined),
         retrySendMessage: vi.fn(async () => ({ kind: "failure" as const })),
@@ -58,6 +63,7 @@ function target(
         failed: false,
         me: "me",
         users: new Map(),
+        userGroups: new Map(),
         formatter: (key) => key,
         locale: "en",
         diamond: true,
@@ -220,6 +226,28 @@ describe("a message's actions", () => {
         afterEach(() => {
             browser({ clipboard: undefined, share: undefined });
             vi.restoreAllMocks();
+        });
+
+        test("copying a message copies its mentions as typed", async () => {
+            const writeText = vi.fn(async () => {});
+            browser({ clipboard: { writeText } as unknown as Clipboard });
+            const mentioning: EventWrapper<Message> = {
+                ...evt,
+                event: {
+                    ...evt.event,
+                    content: { kind: "text_content", text: "hi @UserId(u1) @UserGroup(5)" },
+                },
+            };
+            const outcome = await messageAction(
+                "copy",
+                target(fakeClient(), {
+                    evt: mentioning,
+                    users: new Map([["u1", { userId: "u1", username: "alice" } as UserSummary]]),
+                    userGroups: new Map([[5, { name: "mods" }]]),
+                }),
+            );
+            expect(outcome).toEqual({ kind: "copied", ok: true });
+            expect(writeText).toHaveBeenCalledWith("hi @alice @mods");
         });
 
         test("copying a link says whether the clipboard took it, for the view to show", async () => {

@@ -14,7 +14,9 @@ import {
 } from "@client";
 import { buildMessageUrl, shareMessageOrFail } from "@src/utils/share";
 import { copyToClipboard } from "@src/utils/urls";
+import { copyableMessageText } from "./copyableMessageText";
 import { editMessage, replyToMessage } from "./draftActions";
+import type { MentionLookups } from "./typedMentions";
 import { translateMessage } from "./translateMessage";
 
 // What each of a message's actions does (its menu, the hover bar, the swipes), as the old message
@@ -29,7 +31,6 @@ export type MessageActionClient = Pick<
     | "deleteFailedMessage"
     | "deleteMessage"
     | "followThread"
-    | "getContentAsText"
     | "pinMessage"
     | "replyPrivately"
     | "retrySendMessage"
@@ -52,6 +53,8 @@ export type MessageActionTarget = {
     /** The signed-in user. */
     me: string;
     users: UserLookup;
+    /** The user groups the message's mentions can name: the open chat's community's. */
+    userGroups: MentionLookups["userGroups"];
     formatter: MessageFormatter;
     locale: string | null | undefined;
     diamond: boolean;
@@ -139,11 +142,16 @@ export async function messageAction(
             if (await client.followThread(chatId, target.threadRoot ?? msg, follow)) return DONE;
             return failed(follow ? "followThreadFailed" : "unfollowThreadFailed");
         }
-        case "copy":
-            return {
-                kind: "copied",
-                ok: await copyToClipboard(client.getContentAsText(target.formatter, msg.content)),
-            };
+        case "copy": {
+            // mentions as typed (@name), not as stored (@UserId(…))
+            const text = copyableMessageText(msg.content, {
+                formatter: target.formatter,
+                cryptoLookup: cryptoLookup.value,
+                users: target.users,
+                userGroups: target.userGroups,
+            });
+            return { kind: "copied", ok: await copyToClipboard(text) };
+        }
         case "copy_url": {
             const url = buildMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
             return { kind: "link_copied", ok: await copyToClipboard(url), url };
