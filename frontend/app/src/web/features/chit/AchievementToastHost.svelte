@@ -1,7 +1,10 @@
 <!-- Achievements just earned (the client's chitEarned), as the old UI's earned popup shows them:
      only with the popup on (chitPopup) and CHIT on, marked seen as they come so they aren't
      announced again. One toast for each, in turn, with the CHIT it paid (the longest streak with
-     the flame); a click opens the ways to earn, that achievement picked out. -->
+     the flame); a click opens the ways to earn, that achievement picked out. It plays just above
+     the composer, centred in the middle panel, above the panel's bottom where there's no
+     composer, and above the app's toasts while one shows, on their centre line (web/00 and
+     web/13, updated 2026-11-12: shell/bottomPlacement). -->
 <script lang="ts">
     import { chitEarnedSummary, subscribe, type ChitEvent, type OpenChat } from "@client";
     import AchievementToast from "@openchat/ui/src/features/components/AchievementToast.svelte";
@@ -9,6 +12,14 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { openLinked } from "../app/linkedDialogs.svelte";
+    import {
+        bottomAnchor,
+        boxOf,
+        composerPopups,
+        watchBoxes,
+        windowSize,
+    } from "../../shell/bottomAnchors.svelte";
+    import { achievementSpot, type AchievementSpot } from "../../shell/bottomPlacement";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,13 +52,42 @@
     }
 
     $effect(() => subscribe("chitEarned", earned));
+
+    // where it plays, measured only while one shows: again as the middle panel, its composer or
+    // the toasts change size (a composer growing, a right column docking, a second toast), the
+    // composer opens a popup (it plays above it), the window changes size or the shell scrolls in
+    // it, and as any of them comes or goes
+    const showing = $derived(queue.length > 0);
+    let spot = $state<AchievementSpot | undefined>();
+    $effect(() => {
+        if (!showing) {
+            // the next one starts where it is then, not from where this one was
+            spot = undefined;
+            return;
+        }
+        const middle = bottomAnchor("middle");
+        const composer = bottomAnchor("composer");
+        const toasts = bottomAnchor("toasts");
+        let last: AchievementSpot | undefined;
+        return watchBoxes([middle, composer, toasts], composer, () => {
+            // the toasts' height, not their place: they're placed by the same rule (toastSpot), so
+            // this doesn't wait on them having moved
+            const next = achievementSpot(
+                windowSize(),
+                boxOf(middle),
+                boxOf(composer),
+                composerPopups(composer),
+                boxOf(toasts)?.height,
+            );
+            if (last?.x !== next.x || last?.y !== next.y) spot = last = next;
+        });
+    });
 </script>
 
-{#if queue[0] !== undefined}
+{#if queue[0] !== undefined && spot !== undefined}
     {@const toast = queue[0]}
-    <!-- the toast's anchor: centred at the top of the app (web plan 00: "global, top of the
-         app, with confetti"), just under the panels' headers -->
-    <div class="anchor">
+    <!-- the toast's anchor: its bottom edge, centred (the toast grows up from it) -->
+    <div class="anchor" style:left="{spot.x}px" style:top="{spot.y}px">
         {#key toast.key}
             <AchievementToast
                 title={toast.title}
@@ -62,15 +102,13 @@
 <style lang="scss">
     .anchor {
         position: fixed;
-        left: 50%;
-        /* the toast hangs from here (it's 64px tall, its bottom on the anchor), its top 12px under
-           the panels' headers (the shell's 12px page, then the headers' 67px: ConversationHeader's
-           42px avatar, 12px padding either side and its line), so it covers none of their names
-           or buttons, and its confetti has room to fly up and fall back in view. The app's toasts
-           are at the bottom, so the two never meet */
-        top: calc(var(--safe-top) + var(--space-12) + 67px + var(--space-12) + 64px);
         width: 0;
         height: 0;
         z-index: 80;
+        /* a toast coming or going under it, it rises or settles back smoothly (none with reduced
+           motion, the tokens' rule); its confetti is the library's, which never takes a click */
+        transition:
+            top var(--duration-slow) var(--ease-out),
+            left var(--duration-slow) var(--ease-out);
     }
 </style>

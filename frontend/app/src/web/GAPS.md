@@ -2235,12 +2235,23 @@ design export needs. Each entry says where it came up.
   in turn, with the CHIT it paid (the old popup listed them all in one, with the total), and the
   longest streak gets the flame icon, where the old popup shook the page and played longer. A
   batch is marked seen as it comes, as the old popup did, so with the popup off it isn't. It plays
-  at the top of the app, centred, 12px under the panels' headers (`AchievementToastHost`: the
-  shell's 12px page and the headers' 67px, fixed numbers), as web/00 has it ("global, top of the
-  app, with confetti"), so it covers none of the headers' names or buttons; it plays over the top
-  of the list or conversation under it (above dialogs, under their menus). The app's toasts are
-  at the bottom, so a toast showing with it (joining a group says so as its achievement plays) no
-  longer meets it. The narrow layouts (their own headers) aren't checked.
+  just above the composer, centred in the middle panel, or 12px above the middle panel's bottom
+  where it has no composer (Explore, the wallet, a list with nothing selected), as web/00 and
+  web/13 have it since 2026-11-12 (replacing L1's "top of the app"). It never overlaps the app's
+  toasts, which sit at the same foot (see "Toasts"): while one shows (`toastStore`'s or a library
+  component's, `shell/Toasts`), it sits 12px above them on their centre line
+  (`shell/bottomPlacement`'s `achievementSpot`, from the toasts' height: they're placed by the
+  same rule, so it doesn't wait on them moving), and when they go it settles back down over 280ms
+  (the duration token; none with reduced motion) rather than staying up. Like them, it moves up
+  above a popup the composer opens (its + menu, mention list or emoji picker, which it would
+  otherwise cover: it's over the whole frame, so a lower z-index can't put it under them), and
+  stays on screen on a window smaller than the shell. The places come from the elements
+  themselves (`shell/bottomAnchors`: the middle panel, the chat's own composer in it, not a
+  thread's beside it, and the toast layer), measured only while it plays, at most once a frame,
+  again as they resize, come or go, the window resizes or the shell scrolls. Its confetti is the
+  library's layer, which takes no clicks, so a toast's Undo or × under a falling piece still
+  works. With the middle panel hidden (the narrow layout showing the list; 10b) it plays centred
+  at the window's bottom, over its safe area and any toast; that isn't checked.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
@@ -2251,6 +2262,32 @@ design export needs. Each entry says where it came up.
   wallet send's, an invite's, a sign-in method's) show in the same layer (`setToastHost`, App),
   over every dialog and veil (design pass 7), above the app's when both show (a failed invite: the
   dialog's "That didn't go through" and the app's reason).
+  - **Where** (web/00, "dock it at the foot of the panel whose content changed"; since
+    2026-11-12): the layer sits 12px above the middle panel's composer, or 12px above the middle
+    panel's bottom where it has none (the wallet, Explore, a list with nothing selected), centred
+    on the panel and as wide as it, the library's toasts and the app's together. While the
+    composer has a popup open (its + menu, mention list, emoji and GIF picker: the library's
+    `data-composer-popup`) it sits 12px above that instead, and goes back down when it closes. It
+    follows the panel and the composer as they change (a composer growing, a right column docking,
+    the window resizing, the shell scrolling in a window smaller than its 919x720 minimum), moving
+    with the duration token (none with reduced motion), and stays on screen: on a short window
+    with the composer below its bottom it sits 12px over the window's bottom (its safe area) and
+    across the part of the panel that shows (`shell/bottomPlacement`'s `toastSpot`, measured from
+    `shell/bottomAnchors`). Before, it was centred on the window, 24px over its bottom, partly over
+    the composer.
+  - **No middle panel** (the narrow layout showing the list; 10b): centred on the window, 24px over
+    its bottom safe area, as before. Not seen yet (the shell's minimum width keeps it from
+    showing until the narrow pass).
+  - **The right column's foot** (TODO(design)): web/00 docks a toast at the foot of the panel whose
+    content changed, so a toast about a thread's or a details panel's action belongs at the right
+    column's foot. They all go to the middle panel's: the app's toasts (`toastStore`'s
+    `showFailureToast` / `showSuccessToast`, called from dozens of places) don't say which panel
+    raised them, and telling them would mean changing every caller. The library's toasts could
+    (a host per column through `setToastHost`'s context), but only them, so the two kinds would
+    split; left until the app's toasts carry their panel.
+  - **A thread open as a modal** (below the docking width): the toasts stay at the middle panel's
+    foot, over the sheet, where they can cover the bottom of the thread's composer, as they could
+    before (the sheet's composer isn't measured).
 - **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
   (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
   (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
