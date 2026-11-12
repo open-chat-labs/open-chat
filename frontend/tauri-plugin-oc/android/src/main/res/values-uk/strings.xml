@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">Сповіщення про повідомлення</string>
+    <string name="notification_channel_messages_description">Сповіщення про нові повідомлення в OpenChat</string>
+    <string name="notification_channel_message_group">Група повідомлень</string>
+    <string name="notification_channel_summary">Зведені сповіщення</string>
+    <string name="notification_channel_summary_description">Показує зведення всіх сповіщень</string>
+    <string name="notification_channel_calls">Дзвінки</string>
+    <string name="notification_channel_calls_description">Вхідні дзвінки</string>
+    <string name="call_ongoing">Поточний дзвінок</string>
+    <string name="notification_channel_ongoing_call_description">Дзвінок, що триває</string>
+    <string name="call_in_progress">Триває дзвінок</string>
+    <string name="notification_you">Ви</string>
+    <string name="notification_thread">%1$s // Гілка</string>
+    <string name="notification_reacted">%1$s відреагував(ла): %2$s</string>
+    <string name="notification_tipped">%1$s надіслав(ла) чайові: %2$s</string>
+    <string name="notification_invited">%1$s запросив(ла) вас до %2$s</string>
+    <string name="notification_photo">Фото</string>
+    <string name="notification_shared_video">Відео</string>
+    <string name="notification_shared_gif">GIF</string>
+    <string name="notification_shared_audio">Аудіо</string>
+    <string name="notification_shared_file">Файл</string>
+    <string name="call_kind_audio">аудіодзвінок</string>
+    <string name="call_kind_video">відеодзвінок</string>
+    <string name="call_kind_broadcast">трансляція</string>
+    <string name="call_is_calling">%1$s телефонує · %2$s</string>
+    <string name="call_incoming_audio">Вхідний аудіодзвінок</string>
+    <string name="call_incoming_video">Вхідний відеодзвінок</string>
+    <string name="call_incoming_broadcast">Вхідна трансляція</string>
+    <string name="call_decline">Відхилити</string>
+    <string name="call_accept">Прийняти</string>
+    <string name="call_missed">Пропущений дзвінок</string>
+    <string name="call_missed_from">Пропущений дзвінок від %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d нове повідомлення</item>
+        <item quantity="few">%d нові повідомлення</item>
+        <item quantity="many">%d нових повідомлень</item>
+        <item quantity="other">%d нового повідомлення</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d повідомлення</item>
+        <item quantity="few">%d повідомлення</item>
+        <item quantity="many">%d повідомлень</item>
+        <item quantity="other">%d повідомлення</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%1$s з %2$d чату</item>
+        <item quantity="few">%1$s з %2$d чатів</item>
+        <item quantity="many">%1$s з %2$d чатів</item>
+        <item quantity="other">%1$s з %2$d чату</item>
+    </plurals>
+    <string name="oc_call_waiting_channel">Очікування виклику</string>
+    <string name="oc_call_waiting_decline">Відхилити</string>
+    <string name="oc_call_waiting_end_and_answer">Завершити й відповісти</string>
+</resources>

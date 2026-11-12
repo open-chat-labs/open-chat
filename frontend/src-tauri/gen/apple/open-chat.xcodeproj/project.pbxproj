@@ -16,6 +16,8 @@
 		420EEDDE4D7B1AD1575A8B62 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CED8921299308465DD42F19 /* libapp.a */; };
 		4A31C5977ABF9C43067645CE /* Daily in Frameworks */ = {isa = PBXBuildFile; productRef = F6EDDEA97A0629F705B41CC2 /* Daily */; };
 		4A88B3CA033D0BFE67A08332 /* ShareCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4CF21605C7C10B9C1392BDD4 /* ShareCore */; };
+		4D981B5CC75E17FF09E80163 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 50F41C416CDA503CEE724A78 /* Localizable.strings */; };
+		5978717073AE816477A22B0C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B819FD25DD19675C57164E08 /* Localizable.strings */; };
 		5E38202CCEDA3FA4A8C55530 /* NativeCallScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */; };
 		647D19ED04E79A997E4C3071 /* OpenChatShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AEB3E325CAE45600FFDCE784 /* OpenChatShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		66B26C12906CAD814B1028D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */; };
@@ -26,6 +28,7 @@
 		B6D4D3E52790D5E4158C3F18 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AA8BEBA73EAD66C0011F051 /* CoreGraphics.framework */; };
 		BEA22C7D99672A1A86D992B6 /* PushCore in Frameworks */ = {isa = PBXBuildFile; productRef = BC2AF3EBF9E211DA709E9F4F /* PushCore */; };
 		D085E5D7EE3645A8224D74E5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */; };
+		DE0F728F1C782CF47DA29E94 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E5048923A4CA28D9280E327F /* Localizable.strings */; };
 		EDB5B105B484317A1E9FD8D1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D9D04096787FB8FBA16833EB /* PrivacyInfo.xcprivacy */; };
 		F1F4FE185940D6F3F497C416 /* OpenChatNotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F3D245EACD514A1EF9C6282C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D92B8DD2AA1394245FB960A /* Assets.xcassets */; };
@@ -66,39 +69,84 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0525AAAD7148EAA17DDCD179 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		0683B3B350151EFBA8388710 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCallScreen.swift; sourceTree = "<group>"; };
+		0F34CC226BE1955D7ABEF1EE /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		160E4D624C0A31D73CA143E7 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		1AE857753D46B3772C2BF7CF /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		1BF1C077855D8A113A972974 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		1C25E47D2D37FB7DC23D5D2A /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		1FF9B0737EBAD275A8D6D4CE /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		24DEDD57D1B3A43C924DDC93 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		29D76D5D46F7055F81CB2842 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		2D92B8DD2AA1394245FB960A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		384A3E0AA4FBC0F91F07108F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
+		3E43991959F79EC044991304 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		3E98ABD390D63EC208EB7682 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		432AFFBA8DB597CA29B5282A /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		43A6EE623FE01410E4928748 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		487E9A92F8F8DDC50557DB7F /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4B18BA153B601D70E13E9072 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
 		4B6B1E39C65E95078C66A009 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		4C12709AB26A2A83B4272D91 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4DA1E4FB25E07EDAA38E6AFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4EF9C2115213B7CCC11D575E /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		508BF430C8BD11347D1F1926 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		51A0BF87DDE56F08B9259A6B /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		5247F56FDAC79B2AE6EBC6E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5C587610A2DF92B55D48C524 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		5CED8921299308465DD42F19 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		5DB90E82963ABD9572701DE0 /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5F33C0DC2BE87C87486C33D4 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		60C1FF51565C4AC521C6F513 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		6185DAA1EDA6F6886818CE4E /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		62D4FBF6929DC4DBE2564C09 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		653A2A50B1C7B4C6E0106C1A /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6AA8BEBA73EAD66C0011F051 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		6F0D10207239607177B0A5A7 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		72A37ADB07A0BB20592A4855 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		72F57D63ECA2281A8E33103F /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		7B5465D38123E67CA54CF109 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		800ACAE721E139A214A462DB /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		80F3BDE1AFADD325DEA8B1BC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		80FD08E1B5202F3AB350EB3B /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/Localizable.strings; sourceTree = "<group>"; };
+		83DC5F1A15EBAC036E49C44F /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		842E15240C8A398A09E2EABC /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		84E73A765B258D20B6F20904 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		8AA256DA878B1CB6290075A7 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		8C998F2F19550A405797239B /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		8EAA8D2C0FEB30F23A3DE3E5 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		9848941D7346A5FA8DA1CE6E /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		9D4F28449E6E51138B8BD71E /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A619DD738199AEAC42094B69 /* PushCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PushCore; path = "../../../tauri-plugin-oc/ios/PushCore"; sourceTree = SOURCE_ROOT; };
 		ABE5A59E20A302EA8370CE9D /* ShareCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ShareCore; path = "../../../tauri-plugin-oc/ios/ShareCore"; sourceTree = SOURCE_ROOT; };
 		AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		AEB3E325CAE45600FFDCE784 /* OpenChatShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OpenChatShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0865129CE9EEB9754213BAA /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		B6841733008E13D18302C60D /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		BD4233E8B378ECF31E4D688A /* OpenChatShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChatShare.entitlements; sourceTree = "<group>"; };
+		BED48E84A74D59EDCB4AB769 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C481738E47826B0400924994 /* OpenChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChat.entitlements; sourceTree = "<group>"; };
+		C605735361C88ECCA7E9F8CD /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C7C628BFAE9ECF6EBFDB164D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C8837A22FBACE149FA752609 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		CA185E1C879B2389A6DCC5D2 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CEBEF42C76BC4563962C64E7 /* navigation.rs */ = {isa = PBXFileReference; path = navigation.rs; sourceTree = "<group>"; };
 		D23C0E057AF1F8158C05DFB6 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		D8AB4FFBEA5597A029FDCC3D /* NativeCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCalls.swift; sourceTree = "<group>"; };
+		D91B86753EA6184E05B66EEB /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		D9D04096787FB8FBA16833EB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DF9EFA5A2BB54644ACE0395C /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E56DCC9F98C6AA9B67234AFC /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "open-chat_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9634E0465D25F72C1E81FBA /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EB053EC303DD5CAF7569D0D6 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EDAAC916D3D172CA23CADA31 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EDB54D90A595A23F4D75B4BD /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OpenChatNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F131D4B434CEDC3FB5E08244 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -179,6 +227,7 @@
 				BD4233E8B378ECF31E4D688A /* OpenChatShare.entitlements */,
 				D9D04096787FB8FBA16833EB /* PrivacyInfo.xcprivacy */,
 				84E73A765B258D20B6F20904 /* ShareViewController.swift */,
+				E5048923A4CA28D9280E327F /* Localizable.strings */,
 			);
 			path = ShareExtension;
 			sourceTree = "<group>";
@@ -225,6 +274,7 @@
 				1BF1C077855D8A113A972974 /* Info.plist */,
 				29D76D5D46F7055F81CB2842 /* NotificationService.swift */,
 				E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */,
+				50F41C416CDA503CEE724A78 /* Localizable.strings */,
 			);
 			path = NotificationService;
 			sourceTree = "<group>";
@@ -289,6 +339,7 @@
 			children = (
 				4DA1E4FB25E07EDAA38E6AFE /* Info.plist */,
 				C481738E47826B0400924994 /* OpenChat.entitlements */,
+				B819FD25DD19675C57164E08 /* Localizable.strings */,
 			);
 			path = "open-chat_iOS";
 			sourceTree = "<group>";
@@ -392,7 +443,21 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
+				ar,
+				de,
 				en,
+				es,
+				fa,
+				fr,
+				he,
+				hi,
+				it,
+				ja,
+				pl,
+				ru,
+				uk,
+				vi,
+				"zh-Hans",
 			);
 			mainGroup = 8F50D6D7B1D9C1E8F62C915C;
 			minimizedProjectReferenceProxies = 1;
@@ -418,6 +483,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D981B5CC75E17FF09E80163 /* Localizable.strings in Resources */,
 				66B26C12906CAD814B1028D2 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -428,6 +494,7 @@
 			files = (
 				F3D245EACD514A1EF9C6282C /* Assets.xcassets in Resources */,
 				4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */,
+				5978717073AE816477A22B0C /* Localizable.strings in Resources */,
 				24C1D01D42F7C40FE2C3AED2 /* PrivacyInfo.xcprivacy in Resources */,
 				F4A18A187F4AA227A29B96CE /* assets in Resources */,
 			);
@@ -437,6 +504,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DE0F728F1C782CF47DA29E94 /* Localizable.strings in Resources */,
 				EDB5B105B484317A1E9FD8D1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -588,6 +656,75 @@
 			targetProxy = EEA2BA119F5B2206DE6E2F2B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		50F41C416CDA503CEE724A78 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9D4F28449E6E51138B8BD71E /* ar */,
+				C8837A22FBACE149FA752609 /* de */,
+				0525AAAD7148EAA17DDCD179 /* en */,
+				5F33C0DC2BE87C87486C33D4 /* es */,
+				E56DCC9F98C6AA9B67234AFC /* fa */,
+				6F0D10207239607177B0A5A7 /* fr */,
+				1C25E47D2D37FB7DC23D5D2A /* he */,
+				CA185E1C879B2389A6DCC5D2 /* hi */,
+				842E15240C8A398A09E2EABC /* it */,
+				432AFFBA8DB597CA29B5282A /* ja */,
+				5247F56FDAC79B2AE6EBC6E9 /* pl */,
+				7B5465D38123E67CA54CF109 /* ru */,
+				8EAA8D2C0FEB30F23A3DE3E5 /* uk */,
+				72F57D63ECA2281A8E33103F /* vi */,
+				B0865129CE9EEB9754213BAA /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		B819FD25DD19675C57164E08 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				508BF430C8BD11347D1F1926 /* ar */,
+				0F34CC226BE1955D7ABEF1EE /* de */,
+				80F3BDE1AFADD325DEA8B1BC /* en */,
+				9848941D7346A5FA8DA1CE6E /* es */,
+				5DB90E82963ABD9572701DE0 /* fa */,
+				EB053EC303DD5CAF7569D0D6 /* fr */,
+				487E9A92F8F8DDC50557DB7F /* he */,
+				43A6EE623FE01410E4928748 /* hi */,
+				BED48E84A74D59EDCB4AB769 /* it */,
+				C605735361C88ECCA7E9F8CD /* ja */,
+				653A2A50B1C7B4C6E0106C1A /* pl */,
+				DF9EFA5A2BB54644ACE0395C /* ru */,
+				4C12709AB26A2A83B4272D91 /* uk */,
+				4EF9C2115213B7CCC11D575E /* vi */,
+				EDB54D90A595A23F4D75B4BD /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		E5048923A4CA28D9280E327F /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				384A3E0AA4FBC0F91F07108F /* ar */,
+				83DC5F1A15EBAC036E49C44F /* de */,
+				C7C628BFAE9ECF6EBFDB164D /* en */,
+				EDAAC916D3D172CA23CADA31 /* es */,
+				80FD08E1B5202F3AB350EB3B /* fa */,
+				800ACAE721E139A214A462DB /* fr */,
+				E9634E0465D25F72C1E81FBA /* he */,
+				6185DAA1EDA6F6886818CE4E /* hi */,
+				D91B86753EA6184E05B66EEB /* it */,
+				B6841733008E13D18302C60D /* ja */,
+				3E98ABD390D63EC208EB7682 /* pl */,
+				60C1FF51565C4AC521C6F513 /* ru */,
+				1FF9B0737EBAD275A8D6D4CE /* uk */,
+				8AA256DA878B1CB6290075A7 /* vi */,
+				3E43991959F79EC044991304 /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		0A1C5E79CDED06992FE06ECB /* debug */ = {

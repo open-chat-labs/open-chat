@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">إشعارات الرسائل</string>
+    <string name="notification_channel_messages_description">إشعارات الرسائل الجديدة في OpenChat</string>
+    <string name="notification_channel_message_group">مجموعة الرسائل</string>
+    <string name="notification_channel_summary">إشعارات الملخص</string>
+    <string name="notification_channel_summary_description">يعرض ملخصًا لكل الإشعارات</string>
+    <string name="notification_channel_calls">المكالمات</string>
+    <string name="notification_channel_calls_description">المكالمات الواردة</string>
+    <string name="call_ongoing">مكالمة جارية</string>
+    <string name="notification_channel_ongoing_call_description">مكالمة جارية الآن</string>
+    <string name="call_in_progress">المكالمة جارية</string>
+    <string name="notification_you">أنت</string>
+    <string name="notification_thread">%1$s // سلسلة</string>
+    <string name="notification_reacted">تفاعل %1$s بـ %2$s</string>
+    <string name="notification_tipped">أرسل %1$s إكرامية بقيمة %2$s</string>
+    <string name="notification_invited">دعاك %1$s إلى %2$s</string>
+    <string name="notification_photo">صورة</string>
+    <string name="notification_shared_video">فيديو</string>
+    <string name="notification_shared_gif">صورة GIF</string>
+    <string name="notification_shared_audio">مقطع صوتي</string>
+    <string name="notification_shared_file">ملف</string>
+    <string name="call_kind_audio">مكالمة صوتية</string>
+    <string name="call_kind_video">مكالمة فيديو</string>
+    <string name="call_kind_broadcast">بث</string>
+    <string name="call_is_calling">%1$s يتصل · %2$s</string>
+    <string name="call_incoming_audio">مكالمة صوتية واردة</string>
+    <string name="call_incoming_video">مكالمة فيديو واردة</string>
+    <string name="call_incoming_broadcast">بث وارد</string>
+    <string name="call_decline">رفض</string>
+    <string name="call_accept">قبول</string>
+    <string name="call_missed">مكالمة فائتة</string>
+    <string name="call_missed_from">مكالمة فائتة من %1$s</string>
+    <plurals name="notification_new_messages">
+        <item quantity="zero">%d رسالة جديدة</item>
+        <item quantity="one">رسالة جديدة واحدة</item>
+        <item quantity="two">رسالتان جديدتان</item>
+        <item quantity="few">%d رسائل جديدة</item>
+        <item quantity="many">%d رسالة جديدة</item>
+        <item quantity="other">%d رسالة جديدة</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="zero">%d رسالة</item>
+        <item quantity="one">رسالة واحدة</item>
+        <item quantity="two">رسالتان</item>
+        <item quantity="few">%d رسائل</item>
+        <item quantity="many">%d رسالة</item>
+        <item quantity="other">%d رسالة</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="zero">%1$s، من %2$d محادثة</item>
+        <item quantity="one">%1$s، من محادثة واحدة</item>
+        <item quantity="two">%1$s، من محادثتين</item>
+        <item quantity="few">%1$s، من %2$d محادثات</item>
+        <item quantity="many">%1$s، من %2$d محادثة</item>
+        <item quantity="other">%1$s، من %2$d محادثة</item>
+    </plurals>
+    <string name="oc_call_waiting_channel">مكالمة في الانتظار</string>
+    <string name="oc_call_waiting_decline">رفض</string>
+    <string name="oc_call_waiting_end_and_answer">إنهاء والرد</string>
+</resources>

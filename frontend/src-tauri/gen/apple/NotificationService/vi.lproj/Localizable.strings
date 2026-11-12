@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // Chuỗi";
+"%1$@ reacted with %2$@" = "%1$@ đã bày tỏ cảm xúc %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ đã gửi tiền boa %2$@";
+"%1$@ invited you to %2$@" = "%1$@ đã mời bạn vào %2$@";
+"Photo" = "Ảnh";
+"Shared a video" = "Đã chia sẻ một video";
+"Shared a GIF" = "Đã chia sẻ một GIF";
+"Shared audio" = "Đã chia sẻ âm thanh";
+"Shared a file" = "Đã chia sẻ một tệp";

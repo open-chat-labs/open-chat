@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // سلسلة";
+"%1$@ reacted with %2$@" = "تفاعل %1$@ بـ %2$@";
+"%1$@ sent a tip of %2$@" = "أرسل %1$@ إكرامية بقيمة %2$@";
+"%1$@ invited you to %2$@" = "دعاك %1$@ إلى %2$@";
+"Photo" = "صورة";
+"Shared a video" = "فيديو";
+"Shared a GIF" = "صورة GIF";
+"Shared audio" = "مقطع صوتي";
+"Shared a file" = "ملف";

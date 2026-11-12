@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // 话题";
+"%1$@ reacted with %2$@" = "%1$@ 回应了 %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ 打赏了 %2$@";
+"%1$@ invited you to %2$@" = "%1$@ 邀请你加入 %2$@";
+"Photo" = "照片";
+"Shared a video" = "分享了视频";
+"Shared a GIF" = "分享了 GIF";
+"Shared audio" = "分享了音频";
+"Shared a file" = "分享了文件";

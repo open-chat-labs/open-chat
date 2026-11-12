@@ -114,7 +114,7 @@ struct NativeCallScreen: View {
         .padding(.bottom, 16)
     }
 
-    private func control(_ icon: String, _ label: String, on: Bool, action: @escaping () -> Void) -> some View {
+    private func control(_ icon: String, _ label: LocalizedStringKey, on: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.title2)

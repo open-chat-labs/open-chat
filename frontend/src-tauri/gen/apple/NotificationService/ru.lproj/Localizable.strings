@@ -1,0 +1,9 @@
+"%1$@ // Thread" = "%1$@ // Ветка";
+"%1$@ reacted with %2$@" = "%1$@ отреагировал(а): %2$@";
+"%1$@ sent a tip of %2$@" = "%1$@ отправил(а) чаевые: %2$@";
+"%1$@ invited you to %2$@" = "%1$@ пригласил(а) вас в %2$@";
+"Photo" = "Фото";
+"Shared a video" = "Видео";
+"Shared a GIF" = "GIF";
+"Shared audio" = "Аудио";
+"Shared a file" = "Файл";

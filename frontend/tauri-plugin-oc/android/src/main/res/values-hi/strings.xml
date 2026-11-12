@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_messages">संदेश सूचनाएँ</string>
+    <string name="notification_channel_messages_description">OpenChat में नए संदेशों की सूचनाएँ</string>
+    <string name="notification_channel_message_group">संदेश समूह</string>
+    <string name="notification_channel_summary">सारांश सूचनाएँ</string>
+    <string name="notification_channel_summary_description">सभी सूचनाओं का सारांश दिखाता है</string>
+    <string name="notification_channel_calls">कॉल</string>
+    <string name="notification_channel_calls_description">आने वाली कॉल</string>
+    <string name="call_ongoing">चल रही कॉल</string>
+    <string name="notification_channel_ongoing_call_description">जारी कॉल</string>
+    <string name="call_in_progress">कॉल जारी है</string>
+    <string name="notification_you">आप</string>
+    <string name="notification_thread">%1$s // थ्रेड</string>
+    <string name="notification_reacted">%1$s ने %2$s से प्रतिक्रिया दी</string>
+    <string name="notification_tipped">%1$s ने %2$s की टिप भेजी</string>
+    <string name="notification_invited">%1$s ने आपको %2$s में आमंत्रित किया</string>
+    <string name="notification_photo">फ़ोटो</string>
+    <string name="notification_shared_video">एक वीडियो शेयर किया</string>
+    <string name="notification_shared_gif">एक GIF शेयर किया</string>
+    <string name="notification_shared_audio">एक ऑडियो शेयर किया</string>
+    <string name="notification_shared_file">एक फ़ाइल शेयर की</string>
+    <string name="call_kind_audio">ऑडियो कॉल</string>
+    <string name="call_kind_video">वीडियो कॉल</string>
+    <string name="call_kind_broadcast">प्रसारण</string>
+    <string name="call_is_calling">%1$s कॉल कर रहे हैं · %2$s</string>
+    <string name="call_incoming_audio">इनकमिंग ऑडियो कॉल</string>
+    <string name="call_incoming_video">इनकमिंग वीडियो कॉल</string>
+    <string name="call_incoming_broadcast">इनकमिंग प्रसारण</string>
+    <string name="call_decline">अस्वीकार करें</string>
+    <string name="call_accept">स्वीकार करें</string>
+    <string name="call_missed">मिस्ड कॉल</string>
+    <string name="call_missed_from">%1$s से मिस्ड कॉल</string>
+    <plurals name="notification_new_messages">
+        <item quantity="one">%d नया संदेश</item>
+        <item quantity="other">%d नए संदेश</item>
+    </plurals>
+    <plurals name="notification_messages">
+        <item quantity="one">%d संदेश</item>
+        <item quantity="other">%d संदेश</item>
+    </plurals>
+    <plurals name="notification_messages_from_chats">
+        <item quantity="one">%2$d चैट से %1$s</item>
+        <item quantity="other">%2$d चैट से %1$s</item>
+    </plurals>
+    <string name="oc_call_waiting_channel">कॉल वेटिंग</string>
+    <string name="oc_call_waiting_decline">अस्वीकार करें</string>
+    <string name="oc_call_waiting_end_and_answer">समाप्त करें और उत्तर दें</string>
+</resources>
