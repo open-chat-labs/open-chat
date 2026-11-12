@@ -119,6 +119,7 @@ fn a_member_can_forward_a_price_chart_but_not_post_one() {
                 content: MessageContentInitial::PriceChart(chart()),
                 sender_name: owner.username(),
                 sender_display_name: None,
+                sender_avatar_id: None,
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding,

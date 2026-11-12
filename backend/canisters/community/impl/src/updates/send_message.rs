@@ -139,6 +139,7 @@ pub(crate) fn send_message_impl(
         &caller,
         args.sender_name,
         display_name.or(args.sender_display_name),
+        args.sender_avatar_id,
         channel.id,
         channel.chat.name.value.clone(),
         channel.chat.avatar.as_ref().map(|d| d.id),
@@ -159,7 +160,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    send_message_with_completed_transfer(&caller, args, false, state)
+    send_message_with_completed_transfer(&caller, args, None, false, state)
 }
 
 // Sends a message whose content has been validated already, and whose transfer, if it holds one,
@@ -167,6 +168,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
 pub(crate) fn send_message_with_completed_transfer(
     caller: &Caller,
     args: C2CArgs,
+    sender_avatar_id: Option<u128>,
     new_achievement: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
@@ -211,6 +213,7 @@ pub(crate) fn send_message_with_completed_transfer(
             caller,
             args.sender_name,
             display_name.or(args.sender_display_name),
+            sender_avatar_id,
             channel.id,
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
@@ -266,6 +269,7 @@ fn process_send_message_result(
     caller: &Caller,
     sender_username: String,
     sender_display_name: Option<String>,
+    sender_avatar_id: Option<u128>,
     channel_id: ChannelId,
     channel_name: String,
     channel_avatar_id: Option<u128>,
@@ -323,6 +327,7 @@ fn process_send_message_result(
             file_name: content.notification_file_name(),
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id,
+            sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
             call: None,
         });
@@ -845,7 +850,13 @@ fn send_message_holding_transfer(
         message_filter_failed: args.message_filter_failed,
     };
 
-    let result = send_message_with_completed_transfer(&Caller::User(user), c2c_args, args.new_achievement, state)?;
+    let result = send_message_with_completed_transfer(
+        &Caller::User(user),
+        c2c_args,
+        args.sender_avatar_id,
+        args.new_achievement,
+        state,
+    )?;
 
     Ok(SuccessResult {
         transfer: Some(transfer),

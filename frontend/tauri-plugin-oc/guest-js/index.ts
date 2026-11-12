@@ -9,7 +9,7 @@ export { setSystemBarsStyle } from "./commands/setSystemBarsStyle";
 export { canShareFiles, share, shareFiles } from "./commands/share";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";
-export { releaseNotifications } from "./commands/releaseNotifications";
+export { releaseNotifications, type NotificationIdentifier } from "./commands/releaseNotifications";
 export { showNotification } from "./commands/showNotification";
 export { signIn } from "./commands/signIn";
 export { signUp } from "./commands/signUp";

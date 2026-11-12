@@ -980,6 +980,7 @@ export class CommunityClient
         chatId: ChannelIdentifier,
         senderName: string,
         senderDisplayName: string | undefined,
+        senderAvatarId: bigint | undefined,
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -1012,6 +1013,7 @@ export class CommunityClient
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
+                sender_avatar_id: senderAvatarId,
                 community_rules_accepted: communityRulesAccepted,
                 channel_rules_accepted: channelRulesAccepted,
                 replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) => ({

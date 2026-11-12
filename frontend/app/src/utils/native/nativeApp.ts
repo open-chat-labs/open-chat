@@ -16,6 +16,7 @@ import {
     expectPushNotifications,
 } from "./notification_channels";
 import { expectPushDeviceRefresh, registerPushDevice, unregisterPushDevice } from "./push_device";
+import { releaseNotificationsReadElsewhere } from "./read_elsewhere";
 import { expectShareTarget, handleShareTarget, type PickShareChat } from "./share_target";
 import { detectShellFileSharing } from "./shellShare.svelte";
 
@@ -113,6 +114,9 @@ export function setupNativeApp(
     // WhatsApp's per-chat tiles).
     startChatShortcutPusher(client);
 
+    // Chats read on another device lose their notifications once the chats catch up after the
+    // app starts or comes back to the foreground
+    releaseNotificationsReadElsewhere();
     // Whether the message menu can offer Share for media, which an older shell can't
     detectShellFileSharing();
 

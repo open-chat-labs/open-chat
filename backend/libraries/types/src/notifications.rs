@@ -447,6 +447,10 @@ pub struct GroupMessageNotification {
     pub file_name: Option<String>,
     #[serde(rename = "a")]
     pub group_avatar_id: Option<u128>,
+    // The sender's own avatar, as their client supplied it (like the sender's name). None when
+    // the client sent none, which every client did before this field existed.
+    #[serde(rename = "sa", default)]
+    pub sender_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
     // Present when the message is a call start. What the local user index needs to decide
@@ -491,6 +495,10 @@ pub struct ChannelMessageNotification {
     pub community_avatar_id: Option<u128>,
     #[serde(rename = "cha")]
     pub channel_avatar_id: Option<u128>,
+    // The sender's own avatar, as their client supplied it (like the sender's name). None when
+    // the client sent none, which every client did before this field existed.
+    #[serde(rename = "sa", default)]
+    pub sender_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
     // Present when the message is a call start. What the local user index needs to decide

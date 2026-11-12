@@ -816,14 +816,15 @@
   }}
   role="group"
 >
+  <!-- the popups say they're open (data-composer-popup), so a host can keep its own layers (its toasts) clear of them -->
   {#if menu === 'plus'}
-    <div class="popup">
+    <div class="popup" data-composer-popup>
       <Menu heading={t('ui.messageComposer.addHeading')} minWidth="232px" items={plusItems} />
     </div>
   {/if}
   {#if mentionOpen}
     <!-- TODO(design): no mention list in the design; drawn as the composer's other popups -->
-    <div class="popup mentions" id={mentionListId} role="listbox" aria-label={t('ui.messageComposer.mentions')}>
+    <div class="popup mentions" data-composer-popup id={mentionListId} role="listbox" aria-label={t('ui.messageComposer.mentions')}>
       {#each mentions as m, i (m.key)}
         <!-- the text box keeps the focus (and the keys: aria-activedescendant) -->
         <div
@@ -847,7 +848,7 @@
     </div>
   {/if}
   {#if menu === 'picker'}
-    <div class="popup picker" role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
+    <div class="popup picker" data-composer-popup role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
       <!-- GIFs only for a host that takes them -->
       {#if onGif || demo !== 'interactive'}
         <SegmentedTabs

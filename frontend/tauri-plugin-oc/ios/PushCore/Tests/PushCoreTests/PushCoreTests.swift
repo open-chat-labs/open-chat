@@ -112,6 +112,20 @@ final class NotificationRendererTests: XCTestCase {
         XCTAssertEqual(
             rendered.conversationAvatar, Data("https://\(group).raw.icp0.io/avatar/11".utf8))
     }
+
+    // A push from a client or canister that sends no sender avatar fetches none, rather than
+    // putting the group's picture on the sender
+    func testAGroupMessageWithoutASenderAvatarFetchesOnlyTheGroups() async {
+        var push = groupMessage
+        push.removeValue(forKey: "senderAvatarId")
+        let rendered = await NotificationRenderer.render(
+            userInfo: push, serverTitle: "", serverBody: "", avatarBaseUrl: base,
+            timeout: .seconds(5), fetch: { url in Data(url.absoluteString.utf8) })
+
+        XCTAssertNil(rendered.senderAvatar)
+        XCTAssertEqual(
+            rendered.conversationAvatar, Data("https://\(group).raw.icp0.io/avatar/11".utf8))
+    }
 }
 
 final class MessagePushTests: XCTestCase {
