@@ -12,7 +12,7 @@
 </script>
 
 <!-- TODO(design): no rules dialog in the design; the old modal's words and choices -->
-<DialogShell title={$_("rules.acceptTitle")} onClose={() => answer(false)}>
+<DialogShell title={$_("rules.acceptTitle")} height="auto" onClose={() => answer(false)}>
     <div class="rules">
         <Markdown text={rules} inline={false} />
     </div>

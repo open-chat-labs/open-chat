@@ -9,6 +9,7 @@
         blockedUsersStore,
         chatIdentifierToString,
         favouritesStore,
+        platformModeratorStore,
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
@@ -18,19 +19,22 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import { interpolate } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { now } from "@src/stores/time";
     import { chatAvatarUrl, groupAvatarLookups } from "@src/logic/chats/chatRow";
-    import { headerMenuItems } from "./conversation.adapter";
+    import { headerMenuItems, moderationMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
+    import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
 
     const client = getContext<OpenChat>("client");
+    const pendingToasts = getPendingToastHost();
 
     // the route's chat, once the client has selected it (Router: setSelectedChat)
     const chat = $derived($selectedChatSummaryStore);
@@ -83,16 +87,33 @@
                   community: $selectedCommunitySummaryStore,
                   anon: $anonUserStore,
                   unblockLabel: $_("unblockUser"),
+                  platformModerator: $platformModeratorStore,
+                  translate: (key) => interpolate($_, key),
               }),
     );
-    const menuItems = $derived(menuState === undefined ? [] : headerMenuItems(menuState));
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
+    // a preview (read only) has no menu, but a platform moderator's items (freeze), as the old
+    // preview footer's button
+    const menuItems = $derived(
+        menuState === undefined
+            ? []
+            : readonly
+              ? moderationMenuItems(menuState)
+              : headerMenuItems(menuState),
+    );
 
     // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action; calls are
     // phase 7
     function onMenu(id: string) {
         if (chat === undefined) return;
-        runChatMenuItem(id, { client, chat, title, dialogs: screen.dialogs, formatter: $_ });
+        runChatMenuItem(id, {
+            client,
+            chat,
+            title,
+            dialogs: screen.dialogs,
+            formatter: $_,
+            pendingToasts,
+        });
     }
 
     // a group's or channel's name opens Manage (the About page for someone who can't edit it), a
@@ -138,7 +159,7 @@
                 statusMuted={chat.membership.notificationsMuted}
                 statusEveryone={chat.membership.atEveryoneMuted}
                 isFavourite={favourite}
-                showMenu={!readonly}
+                showMenu={menuItems.length > 0}
                 showCall={false}
                 actions={screen.hasRightColumn && $selectedChatPinnedMessagesStore.size > 0
                     ? [

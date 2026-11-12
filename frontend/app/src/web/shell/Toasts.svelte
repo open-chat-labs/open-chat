@@ -6,7 +6,8 @@
      the host: setToastHost), and under them the app's toast (toastStore: showFailureToast,
      showSuccessToast), as the library's UndoToast without its action. Both can show at once, as
      they did when a component showed its own: a dialog's "That didn't go through" and the app's
-     reason. The app's failure stays until it's closed, as the old UI's; its success goes by itself
+     reason. A library toast for an operation on its way (`showPending`: a moderator's unfreeze or
+     un-suspend) shows a loader until it settles, then how it went in its place. The app's failure stays until it's closed, as the old UI's; its success goes by itself
      (toastStore), and a library toast after its own time (ToastLayer). -->
 <script lang="ts">
     import { interpolate } from "@i18n/i18n";
@@ -92,6 +93,7 @@
                         size={shown.size}
                         icon={shown.icon}
                         actionLabel={shown.actionLabel}
+                        busy={shown.busy}
                         onAction={shown.onAction && (() => library.action())}
                         onClose={() => library.close()} />
                 {/key}

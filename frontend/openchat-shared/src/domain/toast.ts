@@ -13,3 +13,11 @@ export type SuccessToast = {
 };
 
 export type Toast = SuccessToast | FailureToast;
+
+/**
+ * What an action came to, for the app to show (`toastStore.showOutcome`): its failure, or its
+ * success when it has something to say. Logic modules return it; they never show a toast.
+ */
+export type ToastOutcome =
+    | { kind: "success"; message?: ResourceKey }
+    | { kind: "failed"; message: ResourceKey };

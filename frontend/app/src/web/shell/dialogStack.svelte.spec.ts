@@ -42,6 +42,53 @@ describe("the app's own dialogs", () => {
         expect(stack.items).toEqual([other, next]);
     });
 
+    test("one hands off to another, which takes its place on top and keeps its backdrop, once", () => {
+        const stack = new DialogStack<{ name: string }>();
+        const under = { name: "under" };
+        const card = { name: "card" };
+        const suspend = { name: "suspend" };
+        stack.open(card);
+        stack.open(under);
+        stack.handOff(card, suspend);
+        expect(stack.items).toEqual([under, suspend]);
+        expect(stack.claimHandOff(under)).toBe(false);
+        expect(stack.claimHandOff(suspend)).toBe(true);
+        expect(stack.claimHandOff(suspend)).toBe(false);
+    });
+
+    test("and back again, as its back arrow does", () => {
+        const stack = new DialogStack<{ name: string }>();
+        const card = { name: "card" };
+        const suspend = { name: "suspend" };
+        stack.open(card);
+        stack.handOff(card, suspend);
+        stack.claimHandOff(suspend);
+        stack.handOff(suspend, card);
+        expect(stack.items).toEqual([card]);
+        expect(stack.claimHandOff(card)).toBe(true);
+    });
+
+    test("a hand-off from a dialog already closed has no backdrop to keep", () => {
+        const stack = new DialogStack<{ name: string }>();
+        const card = { name: "card" };
+        const suspend = { name: "suspend" };
+        stack.handOff(card, suspend);
+        expect(stack.items).toEqual([suspend]);
+        expect(stack.claimHandOff(suspend)).toBe(false);
+    });
+
+    test("one opened as any other after a hand-off doesn't keep its backdrop", () => {
+        const stack = new DialogStack<{ name: string }>();
+        const card = { name: "card" };
+        const suspend = { name: "suspend" };
+        const other = { name: "other" };
+        stack.open(card);
+        stack.handOff(card, suspend);
+        stack.open(other);
+        expect(stack.claimHandOff(other)).toBe(false);
+        expect(stack.claimHandOff(suspend)).toBe(true);
+    });
+
     test("all close together before a navigation", () => {
         const stack = new DialogStack<{ name: string }>();
         stack.open({ name: "first" });

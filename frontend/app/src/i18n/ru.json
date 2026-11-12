@@ -550,6 +550,7 @@
     "channelAlreadyExists": "Канал с таким названием уже существует",
     "chatDetails": "Подробности чата",
     "chatFrozen": "Этот чат был заморожен",
+    "chatUnfrozen": "Чат разморожен",
     "chatFrozenBy": "Чат заморожен пользователем {frozenBy}",
     "chatMenu": "Меню чата",
     "chatNotFound": "Извините, мы не смогли найти выбранный чат",
@@ -1268,6 +1269,16 @@
     "fontSize": "Размер шрифта",
     "forward": "Переслать",
     "freezeCommunity": "Заморозить сообщество",
+    "freezeConfirm": {
+        "groupTitle": "Заморозить группу?",
+        "groupBody": "Участники не смогут отправлять сообщения или вносить изменения, пока её не разморозят.",
+        "communityTitle": "Заморозить сообщество?",
+        "communityBody": "Все каналы в {name} будут заморожены. Участники не смогут отправлять сообщения или вносить изменения, пока его не разморозят.",
+        "groupReasonHint": "Видна участникам в ленте чата",
+        "communityReasonHint": "Сохраняется, но не показывается участникам",
+        "reasonLabel": "Причина (необязательно)",
+        "confirm": "Заморозить"
+    },
     "freezeGroup": "Заморозить группу",
     "generating": "Генерация...",
     "giphyMessage": "GIF-сообщение",
@@ -1674,6 +1685,16 @@
         "viewMessage": "Посмотреть сообщение"
     },
     "moderator": "Модератор",
+    "moderationToast": {
+        "frozen": "{name} заморожен",
+        "freezeFailed": "Не удалось заморозить {name}. Попробуйте ещё раз.",
+        "unfreezing": "Размораживание {name}…",
+        "unfrozen": "{name} разморожен",
+        "unfreezeFailed": "Не удалось разморозить {name}",
+        "unsuspending": "Снятие блокировки с {username}…",
+        "unsuspended": "Блокировка с {username} снята",
+        "unsuspendFailed": "Не удалось снять блокировку с {username}"
+    },
     "months": "Месяцы",
     "mustBeFutureDateError": "Вам необходимо выбрать будущую дату",
     "muteAtEveryone": "Отключить @everyone",
@@ -3108,6 +3129,7 @@
     },
     "suspendedUser": "Заблокированный пользователь",
     "suspendUser": "Заблокировать пользователя",
+    "suspendUserFailed": "Не удалось заблокировать {username}. Попробуйте ещё раз.",
     "tapForReferralLink": "Нажмите, чтобы скопировать личную реферальную ссылку",
     "tellMeMore": "Дополнительная информация",
     "termsUpdated": {
@@ -3359,6 +3381,7 @@
     "users": "Пользователи",
     "usersAndBots": "Пользователи и боты",
     "userSearchFailed": "Произошла ошибка при поиске пользователей",
+    "userSuspended": "{username} заблокирован",
     "vaultLog": {
         "button": "Журнал доступа",
         "empty": "Записей нет",

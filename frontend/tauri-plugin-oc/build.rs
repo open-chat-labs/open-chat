@@ -40,6 +40,8 @@ const COMMANDS: &[&str] = &[
     "get_store_update",
     "haptic",
     "share",
+    "stage_share_file",
+    "can_share_files",
     "get_window_insets",
     "set_system_bars_style",
     "can_use_full_screen_intent",

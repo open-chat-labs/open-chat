@@ -48,6 +48,8 @@ Default permissions for the plugin
 - `allow-share`
 - `allow-can-use-full-screen-intent`
 - `allow-open-full-screen-intent-settings`
+- `allow-stage-share-file`
+- `allow-can-share-files`
 - `allow-take-native-exit-reports`
 
 ## Permission Table
@@ -133,6 +135,32 @@ Enables the call_ring_handled command without any pre-configured scope.
 <td>
 
 Denies the call_ring_handled command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-can-share-files`
+
+</td>
+<td>
+
+Enables the can_share_files command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-can-share-files`
+
+</td>
+<td>
+
+Denies the can_share_files command without any pre-configured scope.
 
 </td>
 </tr>
@@ -1147,6 +1175,32 @@ Enables the sign_up command without any pre-configured scope.
 <td>
 
 Denies the sign_up command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-stage-share-file`
+
+</td>
+<td>
+
+Enables the stage_share_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-stage-share-file`
+
+</td>
+<td>
+
+Denies the stage_share_file command without any pre-configured scope.
 
 </td>
 </tr>

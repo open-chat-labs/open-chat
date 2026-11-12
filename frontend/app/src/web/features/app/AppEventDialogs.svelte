@@ -32,7 +32,7 @@
 </script>
 
 <!-- TODO(design): no not-found, no-access or not-available dialog in the design -->
-<DialogShell title={copy.title} {onClose}>
+<DialogShell title={copy.title} width={400} height="auto" {onClose}>
     {#if copy.text !== undefined}
         <div class="text">
             <Markdown text={copy.text} inline={false} />

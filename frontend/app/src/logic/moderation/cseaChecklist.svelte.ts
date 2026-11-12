@@ -81,7 +81,9 @@ export class CseaChecklist {
 
     constructor(
         readonly report: string | undefined,
-        private readonly storage: Pick<Storage, "getItem" | "setItem"> | undefined = safeLocalStorage(),
+        private readonly storage:
+            | Pick<Storage, "getItem" | "setItem">
+            | undefined = safeLocalStorage(),
     ) {
         this.#key = cseaStorageKey(report);
         const saved = parseSaved(this.#read());

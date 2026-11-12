@@ -81,7 +81,10 @@ describe("a report's checklist progress", () => {
         expect(again.isTicked("prep-reviewer")).toBe(true);
         expect(again.tickedCount).toBe(2);
 
-        for (const other of [new CseaChecklist("2", storage), new CseaChecklist(undefined, storage)]) {
+        for (const other of [
+            new CseaChecklist("2", storage),
+            new CseaChecklist(undefined, storage),
+        ]) {
             expect(other.origin).toBeUndefined();
             expect(other.priority).toBeUndefined();
             expect(other.tickedCount).toBe(0);

@@ -25,6 +25,7 @@
         i18nKey,
         messagesRead,
         numberOfThreadsStore,
+        platformModeratorStore,
         pinChatFailureMessage,
         pinnedChatsStore,
         publish,
@@ -56,6 +57,8 @@
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
+    import { freezeItem } from "../conversation/chatMenu";
+    import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
     import {
         communityHeaderMenu,
         foundRows,
@@ -77,6 +80,7 @@
     let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
     const client = getContext<OpenChat>("client");
+    const pendingToasts = getPendingToastHost();
 
     const scope = $derived(region.scope);
     const chats = $derived($chatSummariesListStore);
@@ -304,6 +308,9 @@
                       community,
                       $anonUserStore,
                   ).canManageUserGroups,
+                  moderation: $platformModeratorStore
+                      ? { frozen: community.frozen }
+                      : undefined,
                   label: $_,
               }),
     );
@@ -344,6 +351,21 @@
                 break;
             case "invite":
                 screen.dialogs.open({ kind: "manage", target: community.id, section: "invite" });
+                break;
+            // a platform moderator's (TODO(design): no place for it in the design), here only: a
+            // channel's menu doesn't offer it (the user's decision, 2026-11-12). Freezing asks
+            // first; unfreezing runs in a pending toast
+            case "freezeCommunity":
+            case "unfreezeCommunity":
+                freezeItem(
+                    client,
+                    { kind: "community", id: community.id },
+                    community.name,
+                    item === "freezeCommunity",
+                    screen.dialogs,
+                    pendingToasts,
+                    $_,
+                );
                 break;
             case "editCommunity":
                 screen.dialogs.open({ kind: "manage", target: community.id, section: "main" });
