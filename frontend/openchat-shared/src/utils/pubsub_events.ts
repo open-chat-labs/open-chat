@@ -116,6 +116,8 @@ export type PubSubEvents = {
     userLoggedIn: string;
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
+    // The chats have caught up after the app started or came back to the foreground
+    chatsCaughtUp: undefined;
     // The current user has a new user id, their account having been deleted and a new one created on
     // the same principal
     currentUserIdChanged: undefined;

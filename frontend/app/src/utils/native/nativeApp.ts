@@ -16,6 +16,7 @@ import {
     expectPushNotifications,
 } from "./notification_channels";
 import { expectPushDeviceRefresh, registerPushDevice, unregisterPushDevice } from "./push_device";
+import { releaseNotificationsReadElsewhere } from "./read_elsewhere";
 import { expectShareTarget, handleShareTarget, type PickShareChat } from "./share_target";
 
 // The native apps' (Tauri) setup, shared by the App trees that run in them (components_mobile
@@ -111,6 +112,10 @@ export function setupNativeApp(
     // so they appear directly in the system share sheet (like
     // WhatsApp's per-chat tiles).
     startChatShortcutPusher(client);
+
+    // Chats read on another device lose their notifications once the chats catch up after the
+    // app starts or comes back to the foreground
+    releaseNotificationsReadElsewhere();
 
     // Inform the native android app that svelte code is ready — but only
     // once all the listeners above are registered, so the native event

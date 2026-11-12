@@ -1012,6 +1012,8 @@ export class OpenChat {
         };
     #chatsPoller: Poller | undefined = undefined;
     #stopWatchingForResume: (() => void) | undefined = undefined;
+    // The app came back, so the next chats pass to start announces `chatsCaughtUp`
+    #catchUpOwed = false;
     readonly #syncPuller: SyncPuller;
     #botsPoller: Poller | undefined = undefined;
     #dailyPuzzlePoller: Poller | undefined = undefined;
@@ -1791,6 +1793,7 @@ export class OpenChat {
         this.#worker
             .send({ kind: "abortInFlightQueries" })
             .catch((err) => console.warn("Unable to abort in-flight queries", err));
+        this.#catchUpOwed = true;
         // Deferred so that the poller has seen the visibility change first. A hidden app
         // ignores triggers.
         window.setTimeout(() => this.#chatsPoller?.triggerNow(), 0);
@@ -10052,13 +10055,26 @@ export class OpenChat {
         // Taken before the load starts: if the identity changes while it is in flight, the
         // snapshot it delivers belongs to the old session and the puller drops it
         const generation = this.#syncPuller.generation;
+        // The session's first pass, or the first to start since the app came back, catches up
+        // with what happened while it was away. Taken at the start: a pass already in flight
+        // when the app came back may have read the chats before the change it is waiting for.
+        const catchingUp = initialLoad || this.#catchUpOwed;
+        this.#catchUpOwed = false;
 
         return new Promise<void>((resolve) => {
             // The stream ends without waiting for an async onResult, so the pass is only done
             // once the snapshot it delivered has been folded. Otherwise the poller would count
             // it finished, and could start the next, while the fold is still running.
             let folding: Promise<void> = Promise.resolve();
-            const done = () => folding.then(resolve);
+            const done = () =>
+                folding.then(() => {
+                    resolve();
+                    // The pass announced its head before it ended, so what it changed is
+                    // folded once the puller settles
+                    if (catchingUp) {
+                        this.#syncPuller.settled().then(() => publish("chatsCaughtUp"));
+                    }
+                });
             this.#worker
                 .stream({
                     kind: "getUpdates",
