@@ -40,4 +40,7 @@
     <plurals name="notification_messages_from_chats">
         <item quantity="other">%1$s，来自 %2$d 个聊天</item>
     </plurals>
+    <string name="oc_call_waiting_channel">呼叫等待</string>
+    <string name="oc_call_waiting_decline">拒绝</string>
+    <string name="oc_call_waiting_end_and_answer">挂断并接听</string>
 </resources>

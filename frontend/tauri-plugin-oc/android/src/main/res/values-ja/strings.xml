@@ -40,4 +40,7 @@
     <plurals name="notification_messages_from_chats">
         <item quantity="other">%2$d 件のチャットから %1$s</item>
     </plurals>
+    <string name="oc_call_waiting_channel">割込通話</string>
+    <string name="oc_call_waiting_decline">拒否</string>
+    <string name="oc_call_waiting_end_and_answer">終了して応答</string>
 </resources>

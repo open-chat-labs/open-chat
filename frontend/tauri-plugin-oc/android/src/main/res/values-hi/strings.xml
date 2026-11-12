@@ -43,4 +43,7 @@
         <item quantity="one">%2$d चैट से %1$s</item>
         <item quantity="other">%2$d चैट से %1$s</item>
     </plurals>
+    <string name="oc_call_waiting_channel">कॉल वेटिंग</string>
+    <string name="oc_call_waiting_decline">अस्वीकार करें</string>
+    <string name="oc_call_waiting_end_and_answer">समाप्त करें और उत्तर दें</string>
 </resources>

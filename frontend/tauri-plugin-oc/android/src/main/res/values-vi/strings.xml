@@ -40,4 +40,7 @@
     <plurals name="notification_messages_from_chats">
         <item quantity="other">%1$s từ %2$d cuộc trò chuyện</item>
     </plurals>
+    <string name="oc_call_waiting_channel">Cuộc gọi chờ</string>
+    <string name="oc_call_waiting_decline">Từ chối</string>
+    <string name="oc_call_waiting_end_and_answer">Kết thúc và trả lời</string>
 </resources>

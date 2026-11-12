@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "לא ניתן היה להכין את השיתוף";
 "Please try again" = "נא לנסות שוב";
 "Done" = "סיום";
+"File too large" = "הקובץ גדול מדי";
+"Files over %d MB can't be shared" = "לא ניתן לשתף קבצים מעל %d MB";

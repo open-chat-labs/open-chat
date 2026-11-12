@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "Teilen konnte nicht vorbereitet werden";
 "Please try again" = "Bitte versuche es erneut";
 "Done" = "Fertig";
+"File too large" = "Datei zu groß";
+"Files over %d MB can't be shared" = "Dateien über %d MB können nicht geteilt werden";

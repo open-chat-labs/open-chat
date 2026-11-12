@@ -81,8 +81,10 @@ final class ShareViewController: UIViewController {
             share.discard()
             return showResult(
                 symbol: "exclamationmark.triangle.fill", tint: .systemOrange,
-                title: "File too large",
-                subtitle: "Files over \(ShareInbox.maxFileBytes / 1024 / 1024) MB can't be shared")
+                title: NSLocalizedString("File too large", comment: ""),
+                subtitle: String(
+                    format: NSLocalizedString("Files over %d MB can't be shared", comment: ""),
+                    Int(ShareInbox.maxFileBytes / 1024 / 1024)))
         }
         do {
             if share.isEmpty { return finish() }

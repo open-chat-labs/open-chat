@@ -55,4 +55,7 @@
         <item quantity="many">%1$s، من %2$d محادثة</item>
         <item quantity="other">%1$s، من %2$d محادثة</item>
     </plurals>
+    <string name="oc_call_waiting_channel">مكالمة في الانتظار</string>
+    <string name="oc_call_waiting_decline">رفض</string>
+    <string name="oc_call_waiting_end_and_answer">إنهاء والرد</string>
 </resources>

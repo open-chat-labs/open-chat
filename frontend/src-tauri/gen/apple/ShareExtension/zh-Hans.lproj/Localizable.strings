@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "无法准备分享内容";
 "Please try again" = "请重试";
 "Done" = "完成";
+"File too large" = "文件过大";
+"Files over %d MB can't be shared" = "无法分享超过 %d MB 的文件";

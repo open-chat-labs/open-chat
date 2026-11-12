@@ -43,4 +43,7 @@
         <item quantity="one">%1$s dans %2$d discussion</item>
         <item quantity="other">%1$s dans %2$d discussions</item>
     </plurals>
+    <string name="oc_call_waiting_channel">Double appel</string>
+    <string name="oc_call_waiting_decline">Refuser</string>
+    <string name="oc_call_waiting_end_and_answer">Raccrocher et répondre</string>
 </resources>

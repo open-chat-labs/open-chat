@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "共有の準備ができませんでした";
 "Please try again" = "もう一度お試しください";
 "Done" = "完了";
+"File too large" = "ファイルが大きすぎます";
+"Files over %d MB can't be shared" = "%d MB を超えるファイルは共有できません";

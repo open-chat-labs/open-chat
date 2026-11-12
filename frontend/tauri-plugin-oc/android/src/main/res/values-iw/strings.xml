@@ -49,4 +49,7 @@
         <item quantity="many">%1$s מ-%2$d צ\'אטים</item>
         <item quantity="other">%1$s מ-%2$d צ\'אטים</item>
     </plurals>
+    <string name="oc_call_waiting_channel">שיחה ממתינה</string>
+    <string name="oc_call_waiting_decline">דחייה</string>
+    <string name="oc_call_waiting_end_and_answer">סיים וענה</string>
 </resources>

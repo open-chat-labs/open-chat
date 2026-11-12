@@ -5,3 +5,5 @@
 "Couldn't prepare the share" = "Couldn't prepare the share";
 "Please try again" = "Please try again";
 "Done" = "Done";
+"File too large" = "File too large";
+"Files over %d MB can't be shared" = "Files over %d MB can't be shared";

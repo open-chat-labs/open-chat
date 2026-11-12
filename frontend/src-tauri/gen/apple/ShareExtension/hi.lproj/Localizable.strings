@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "शेयर तैयार नहीं हो सका";
 "Please try again" = "कृपया फिर से कोशिश करें";
 "Done" = "हो गया";
+"File too large" = "फ़ाइल बहुत बड़ी है";
+"Files over %d MB can't be shared" = "%d MB से बड़ी फ़ाइलें साझा नहीं की जा सकतीं";

@@ -49,4 +49,7 @@
         <item quantity="many">%1$s z %2$d czatów</item>
         <item quantity="other">%1$s z %2$d czatu</item>
     </plurals>
+    <string name="oc_call_waiting_channel">Połączenie oczekujące</string>
+    <string name="oc_call_waiting_decline">Odrzuć</string>
+    <string name="oc_call_waiting_end_and_answer">Zakończ i odbierz</string>
 </resources>

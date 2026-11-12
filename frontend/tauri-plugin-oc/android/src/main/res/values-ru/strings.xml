@@ -49,4 +49,7 @@
         <item quantity="many">%1$s из %2$d чатов</item>
         <item quantity="other">%1$s из %2$d чата</item>
     </plurals>
+    <string name="oc_call_waiting_channel">Ожидание вызова</string>
+    <string name="oc_call_waiting_decline">Отклонить</string>
+    <string name="oc_call_waiting_end_and_answer">Завершить и ответить</string>
 </resources>

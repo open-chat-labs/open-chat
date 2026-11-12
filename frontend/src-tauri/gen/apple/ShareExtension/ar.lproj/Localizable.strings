@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "تعذّر تجهيز المشاركة";
 "Please try again" = "يُرجى المحاولة مرة أخرى";
 "Done" = "تم";
+"File too large" = "الملف كبير جدًا";
+"Files over %d MB can't be shared" = "لا يمكن مشاركة الملفات التي يزيد حجمها عن %d ميغابايت";

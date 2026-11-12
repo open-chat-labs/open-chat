@@ -43,4 +43,7 @@
         <item quantity="one">%1$s de %2$d chat</item>
         <item quantity="other">%1$s de %2$d chats</item>
     </plurals>
+    <string name="oc_call_waiting_channel">Llamada en espera</string>
+    <string name="oc_call_waiting_decline">Rechazar</string>
+    <string name="oc_call_waiting_end_and_answer">Colgar y responder</string>
 </resources>

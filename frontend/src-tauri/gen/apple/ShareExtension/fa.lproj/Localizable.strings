@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "آماده‌سازی اشتراک‌گذاری ممکن نشد";
 "Please try again" = "لطفاً دوباره تلاش کنید";
 "Done" = "تمام";
+"File too large" = "فایل خیلی بزرگ است";
+"Files over %d MB can't be shared" = "فایل‌های بزرگ‌تر از %d مگابایت قابل اشتراک‌گذاری نیستند";

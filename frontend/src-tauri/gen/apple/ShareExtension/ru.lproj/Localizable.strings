@@ -3,3 +3,5 @@
 "Couldn't prepare the share" = "Не удалось подготовить отправку";
 "Please try again" = "Попробуйте ещё раз";
 "Done" = "Готово";
+"File too large" = "Файл слишком большой";
+"Files over %d MB can't be shared" = "Нельзя поделиться файлами больше %d МБ";

@@ -43,4 +43,7 @@
         <item quantity="one">%1$s از %2$d گفتگو</item>
         <item quantity="other">%1$s از %2$d گفتگو</item>
     </plurals>
+    <string name="oc_call_waiting_channel">انتظار تماس</string>
+    <string name="oc_call_waiting_decline">رد کردن</string>
+    <string name="oc_call_waiting_end_and_answer">پایان و پاسخ</string>
 </resources>
