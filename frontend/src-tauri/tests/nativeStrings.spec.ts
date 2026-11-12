@@ -98,13 +98,75 @@ describe("Android native strings", () => {
 
 // --- iOS ---
 
-// One table per target that shows text: the app (CallRinger, the call screen), the Notification
-// Service Extension (PushCore's renderer) and the share extension
-const IOS_TARGETS = [
-    "src-tauri/gen/apple/open-chat_iOS",
-    "src-tauri/gen/apple/NotificationService",
-    "src-tauri/gen/apple/ShareExtension",
+// One table per target that shows text, and the Swift that looks its text up: the app
+// (CallRinger, the call screen), the Notification Service Extension (PushCore's renderer) and
+// the share extension
+const APPLE = "src-tauri/gen/apple";
+const IOS_SOURCES: Record<string, string[]> = {
+    [`${APPLE}/open-chat_iOS`]: [`${APPLE}/Sources/open-chat`, "tauri-plugin-oc/ios/Sources"],
+    [`${APPLE}/NotificationService`]: [
+        `${APPLE}/NotificationService`,
+        "tauri-plugin-oc/ios/PushCore/Sources",
+    ],
+    [`${APPLE}/ShareExtension`]: [`${APPLE}/ShareExtension`],
+};
+const IOS_TARGETS = Object.keys(IOS_SOURCES);
+
+const swiftFiles = (dir: string): string[] =>
+    readdirSync(join(frontend, dir), { withFileTypes: true }).flatMap((d) =>
+        d.isDirectory()
+            ? swiftFiles(`${dir}/${d.name}`)
+            : d.name.endsWith(".swift")
+              ? [`${dir}/${d.name}`]
+              : [],
+    );
+
+// The literals the Swift looks up: NSLocalizedString, PushCore's localized(), and SwiftUI's
+// LocalizedStringKey labels (accessibilityLabel, and the call screen's control(), whose label is its
+// second argument; NativeCallBridge has an unrelated control(kind, on:))
+const LOOKUPS = [
+    /NSLocalizedString\("((?:[^"\\]|\\.)*)"/g,
+    /\blocalized\("((?:[^"\\]|\\.)*)"/g,
+    /\.accessibilityLabel\("((?:[^"\\]|\\.)*)"\)/g,
+    /\bcontrol\(.*, "((?:[^"\\]|\\.)*)", on:/g,
 ];
+const lookedUp = (target: string) =>
+    IOS_SOURCES[target]
+        .flatMap(swiftFiles)
+        .flatMap((f) => LOOKUPS.flatMap((re) => [...read(f).matchAll(re)].map((m) => m[1])));
+
+// The release builds from the committed project, so an .lproj xcodegen hasn't added to its
+// target's Localizable.strings variant group never ships
+const pbxproj = read(`${APPLE}/open-chat.xcodeproj/project.pbxproj`);
+const pbxObjects = new Map(
+    [
+        ...pbxproj.matchAll(
+            /^\t\t([0-9A-F]{24}) \/\*[^\n]*?\*\/ = \{(.*\};$|\n[\s\S]*?\n\t\t\};)/gm,
+        ),
+    ].map((m) => [m[1], m[2]]),
+);
+const pbxChildren = (body: string) =>
+    [...(body.match(/children = \(([\s\S]*?)\);/)?.[1] ?? "").matchAll(/[0-9A-F]{24}/g)].map(
+        (m) => m[0],
+    );
+
+function projectLprojs(target: string): string[] {
+    const folder = target.split("/").pop()!;
+    const group = [...pbxObjects.values()].find(
+        (o) => o.includes("isa = PBXGroup;") && new RegExp(`path = "?${folder}"?;`).test(o),
+    );
+    expect(group, folder).toBeDefined();
+    const variantId = pbxChildren(group!).find((id) =>
+        /isa = PBXVariantGroup;[\s\S]*name = Localizable\.strings;/.test(pbxObjects.get(id) ?? ""),
+    );
+    expect(variantId, `${folder} Localizable.strings`).toBeDefined();
+    expect(pbxproj, `${folder} Localizable.strings in Resources`).toMatch(
+        new RegExp(`isa = PBXBuildFile; fileRef = ${variantId} `),
+    );
+    return pbxChildren(pbxObjects.get(variantId!)!)
+        .map((id) => pbxObjects.get(id)?.match(/path = "?([^";]+)"?;/)?.[1] ?? id)
+        .sort();
+}
 // zh-Hans → zh
 const iosLanguage = (lproj: string) => lproj.replace(".lproj", "").replace(/-.*$/, "");
 
@@ -123,6 +185,18 @@ describe.each(IOS_TARGETS)("iOS native strings in %s", (target) => {
 
     test("cover every language the app has", () => {
         expect(lprojs.map(iosLanguage).sort()).toEqual(appLanguages);
+    });
+
+    test("every .lproj is in the Xcode project for this target", () => {
+        expect(projectLprojs(target)).toEqual(lprojs.map((l) => `${l}/Localizable.strings`).sort());
+    });
+
+    test("every literal the target's Swift looks up is an English key", () => {
+        const keys = lookedUp(target);
+        expect(keys.length).toBeGreaterThan(0);
+        for (const key of keys) {
+            expect(base.has(key), key).toBe(true);
+        }
     });
 
     test.each(lprojs)("%s has every key, with the same placeholders", (lproj) => {
