@@ -85,16 +85,13 @@ export function entryBlock(state: EntryState): EntryBlock | undefined {
 }
 
 /**
- * Where the entry is, for `entryBlock`: the chat's own state (frozen, previewed, lapsed, what the
- * reader's role lets them send) from the client, the reader's (suspended, signed out, who they've
- * blocked) from the stores. In a thread (`thread`), a preview and a lapse are the chat's, not the
- * thread's, and what may be sent is the thread's.
+ * Where the entry is, for `entryBlock`: the chat's own state (frozen, previewed, lapsed) from the
+ * client, the reader's (suspended, signed out, who they've blocked, what they may send) from the
+ * stores. In a thread (`thread`), a preview and a lapse are the chat's, not the thread's, and what
+ * may be sent is the thread's.
  */
 export function chatEntryState(
-    client: Pick<
-        OpenChat,
-        "isChatOrCommunityFrozen" | "isPreviewing" | "isLapsed" | "canSendMessage"
-    >,
+    client: Pick<OpenChat, "isChatOrCommunityFrozen" | "isPreviewing" | "isLapsed">,
     chat: ChatSummary,
     thread: boolean,
     reader: {
@@ -103,6 +100,13 @@ export function chatEntryState(
         blockedUsers: Pick<ReadonlySet<string>, "has">;
         /** The chat's community (the selected one), for whether it's frozen. */
         community: CommunitySummary | undefined;
+        /**
+         * What may be sent here: the selected chat's message permissions, or its thread's
+         * (`messagePermissionsForSelectedChatStore`, `threadPermissionsForSelectedChatStore`).
+         * The store, not the client's `canSendMessage`, so the entry follows a DM's other user
+         * being suspended or un-suspended.
+         */
+        permitted: Pick<ReadonlySet<MessagePermission>, "has">;
     },
 ): EntryState {
     return {
@@ -114,7 +118,7 @@ export function chatEntryState(
         direct: chat.kind === "direct_chat",
         externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
         anonymous: reader.anonymous,
-        canSend: client.canSendMessage(chat.id, thread ? "thread" : "message", "text"),
+        canSend: reader.permitted.has("text"),
         thread,
     };
 }

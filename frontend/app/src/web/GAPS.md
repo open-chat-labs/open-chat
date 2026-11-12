@@ -1388,7 +1388,12 @@ design export needs. Each entry says where it came up.
   their card. `UserDialog` takes `moderatorAction` (a label and a callback) and shows it in its
   footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending
   opens a plain dialog on `DialogShell` with the old modal's words and a reason
-  (`SuspendUserDialog`, `TODO(design)`).
+  (`SuspendUserDialog`, `TODO(design)`). A DM's composer follows the other user's suspension at
+  once, both ways, with no reload: "This chat is read-only" while they're suspended (as the old
+  composer, `canSendDirectMessage`), the composer back when they're un-suspended. The selected
+  chat's permissions (`messagePermissionsForSelectedChatStore`) derive from
+  `selectedChatRecipientStore`, which publishes only when the other user's `suspended` (or kind)
+  changes; every tree's composer reads it (2026-11-12).
 - **Gates editor** (4a, `features/access/gates.adapter.ts`, for 4b and 8b): `AccessGates` takes
   `types` (by hand), and the app doesn't offer the unique-person gate (suspended) or the
   credential gate. A credential gate already set still shows and saves unchanged, but adding one

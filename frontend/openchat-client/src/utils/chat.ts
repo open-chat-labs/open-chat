@@ -100,7 +100,6 @@ import {
     confirmedEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
-    currentUserStore,
     eventIndexesLoadedStore,
     eventsStore,
     localUpdates,
@@ -111,7 +110,6 @@ import {
     threadEventsStore,
 } from "../state";
 import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
-import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -1539,13 +1537,44 @@ function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
     }, new Set<MessagePermission>());
 }
 
+/** What of a DM's other user decides what may be sent to them (`canSendDirectMessage`). */
+export type DirectChatRecipient = Pick<UserSummary, "userId" | "kind" | "suspended">;
+
+/**
+ * The selected chat's other user, as far as `canSendDirectMessage` goes: a copy of the fields it
+ * reads, so a store holding it can tell when one of them changes (the users are updated in place).
+ * Undefined for a group or channel, or while the other user isn't loaded.
+ */
+export function directChatRecipient(
+    chat: ChatSummary | undefined,
+    users: ReadonlyMap<string, UserSummary>,
+): DirectChatRecipient | undefined {
+    if (chat?.kind !== "direct_chat") return undefined;
+    const user = users.get(chat.them.userId);
+    return user === undefined
+        ? undefined
+        : { userId: user.userId, kind: user.kind, suspended: user.suspended };
+}
+
+export function sameDirectChatRecipient(
+    a: DirectChatRecipient | undefined,
+    b: DirectChatRecipient | undefined,
+): boolean {
+    return a?.userId === b?.userId && a?.kind === b?.kind && a?.suspended === b?.suspended;
+}
+
+/**
+ * What may be sent in the selected chat: to a DM's other user (`recipient`, from
+ * `directChatRecipient`), or by the current user (`user`) in a group or channel.
+ */
 export function getMessagePermissionsForSelectedChat(
     chat: ChatSummary | undefined,
+    recipient: DirectChatRecipient | undefined,
+    user: CreatedUser,
     mode: "thread" | "message",
 ): Set<MessagePermission> {
     if (chat !== undefined) {
         if (chat.kind === "direct_chat") {
-            const recipient = userStore.get(chat.them.userId);
             if (recipient !== undefined) {
                 return toSet(
                     permittedMessagesInDirectChat(
@@ -1556,14 +1585,14 @@ export function getMessagePermissionsForSelectedChat(
                 );
             }
         } else {
-            return toSet(permittedMessagesInGroup(currentUserStore.value, chat, mode));
+            return toSet(permittedMessagesInGroup(user, chat, mode));
         }
     }
     return new Set();
 }
 
 export function permittedMessagesInDirectChat(
-    recipient: UserSummary,
+    recipient: DirectChatRecipient,
     mode: "message" | "thread",
     proposalsBotUserId: string,
 ): Map<MessagePermission, boolean> {
@@ -1576,7 +1605,7 @@ export function permittedMessagesInDirectChat(
 }
 
 export function canSendDirectMessage(
-    recipient: UserSummary,
+    recipient: DirectChatRecipient,
     mode: "message" | "thread" | "any",
     proposalsBotUserId: string,
     permission?: MessagePermission,

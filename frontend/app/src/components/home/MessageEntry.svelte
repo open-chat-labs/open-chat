@@ -29,6 +29,7 @@
         messageContextToString,
         screenWidth,
         selectedChatMembersStore,
+        selectedChatRecipientStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
@@ -311,8 +312,15 @@
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );
-    let canSendAny = $derived(!$anonUserStore && client.canSendMessage(chat.id, mode));
-    let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
+    // they read the selected DM's other user, so they follow them being suspended or un-suspended
+    let canSendAny = $derived.by(() => {
+        void $selectedChatRecipientStore;
+        return !$anonUserStore && client.canSendMessage(chat.id, mode);
+    });
+    let permittedMessages = $derived.by(() => {
+        void $selectedChatRecipientStore;
+        return client.permittedMessages(chat.id, mode);
+    });
     let canEnterText = $derived(
         (permittedMessages.get("text") ?? false) ||
             editingEvent !== undefined ||

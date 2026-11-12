@@ -385,6 +385,7 @@
                 anonymous: $anonUserStore,
                 blockedUsers: $blockedUsersStore,
                 community: $selectedCommunitySummaryStore,
+                permitted,
             }),
         ),
     );

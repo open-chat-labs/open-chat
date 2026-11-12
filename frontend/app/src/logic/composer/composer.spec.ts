@@ -518,6 +518,7 @@ describe("where the entry is", () => {
         anonymous: false,
         blockedUsers: new Set<string>(),
         community: undefined,
+        permitted: new Set<MessagePermission>(["text"]),
     };
 
     function client(previewing = false) {
@@ -525,16 +526,17 @@ describe("where the entry is", () => {
             isChatOrCommunityFrozen: vi.fn(() => false),
             isPreviewing: vi.fn(() => previewing),
             isLapsed: vi.fn(() => previewing),
-            canSendMessage: vi.fn(() => true),
         };
     }
 
-    test("asks what may be sent in the chat, or in a thread there", () => {
-        const c = client();
-        expect(chatEntryState(c, group, false, reader).canSend).toBe(true);
-        expect(c.canSendMessage).toHaveBeenCalledWith(group.id, "message", "text");
-        chatEntryState(c, group, true, reader);
-        expect(c.canSendMessage).toHaveBeenCalledWith(group.id, "thread", "text");
+    test("can send where text is permitted", () => {
+        expect(chatEntryState(client(), group, false, reader).canSend).toBe(true);
+        const none = { ...reader, permitted: new Set<MessagePermission>() };
+        expect(chatEntryState(client(), dm, false, none).canSend).toBe(false);
+        expect(entryBlock(chatEntryState(client(), dm, false, none))).toEqual({
+            kind: "read_only",
+            key: "readOnlyChat",
+        });
     });
 
     test("a preview or a lapse is the chat's, never a thread's", () => {

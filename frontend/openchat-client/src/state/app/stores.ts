@@ -71,11 +71,13 @@ import {
 } from "@shared";
 import { createSetStore } from "../../stores/setStore";
 import {
+    directChatRecipient,
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
     mergeEventsAndLocalUpdatesWithRange,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
+    sameDirectChatRecipient,
 } from "../../utils/chat";
 import { chatListOrder, chatsInScope } from "../../utils/chatList";
 import { enumFromStringValue } from "../../utils/enums";
@@ -100,7 +102,7 @@ import {
 } from "../selectedChat";
 import { SnsFunctions } from "../snsFunctions.svelte";
 import { messagesRead } from "../unread/markRead";
-import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
+import { allUsersStore, blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { notEq } from "../utils";
 
 export const ONE_MB = 1024 * 1024;
@@ -1190,16 +1192,29 @@ export const threadsFollowedByMeStore = derived(threadsByChatStore, (threadsByCh
     }, new ChatMap<Set<number>>());
 });
 
+// The selected DM's other user, as far as what may be sent to them goes (whether they're
+// suspended). It re-runs on every change to the users, but that's one lookup, and it only
+// publishes when what it holds changes, so what derives from it doesn't re-run for other users.
+export const selectedChatRecipientStore = derived(
+    [selectedChatSummaryStore, allUsersStore],
+    ([selectedChatSummary, users]) => directChatRecipient(selectedChatSummary, users),
+    sameDirectChatRecipient,
+);
 export const messagePermissionsForSelectedChatStore = derived(
-    selectedChatSummaryStore,
-    (selectedChatSummary) => {
-        return getMessagePermissionsForSelectedChat(selectedChatSummary, "message");
+    [selectedChatSummaryStore, selectedChatRecipientStore, currentUserStore],
+    ([selectedChatSummary, recipient, user]) => {
+        return getMessagePermissionsForSelectedChat(
+            selectedChatSummary,
+            recipient,
+            user,
+            "message",
+        );
     },
 );
 export const threadPermissionsForSelectedChatStore = derived(
-    selectedChatSummaryStore,
-    (selectedChatSummary) => {
-        return getMessagePermissionsForSelectedChat(selectedChatSummary, "thread");
+    [selectedChatSummaryStore, selectedChatRecipientStore, currentUserStore],
+    ([selectedChatSummary, recipient, user]) => {
+        return getMessagePermissionsForSelectedChat(selectedChatSummary, recipient, user, "thread");
     },
 );
 export const selectedChatDraftMessageStore = derived(
