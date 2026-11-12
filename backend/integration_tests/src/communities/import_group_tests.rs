@@ -387,6 +387,7 @@ fn pending_prizes_transferred_to_community() {
             }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned: Vec::new(),
             block_level_markdown: false,

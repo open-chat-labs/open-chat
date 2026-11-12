@@ -43,6 +43,7 @@ fn mention_users_succeeds(mention_everyone: bool) {
             content: MessageContentInitial::Text(TextContent { text }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned: if mention_everyone { Vec::new() } else { vec![(&user2).into(), (&user3).into()] },
             forwarding: false,
@@ -121,6 +122,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
             }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
@@ -182,6 +184,7 @@ fn mentioned_in_thread_adds_user_as_follower() {
             }),
             sender_name: user1.username(),
             sender_display_name: None,
+            sender_avatar_id: None,
             replies_to: None,
             mentioned: vec![types::User {
                 user_id: user2.user_id,

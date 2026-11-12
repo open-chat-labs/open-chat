@@ -95,6 +95,8 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         image_url: None,
         file_name: None,
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+        // The video bridge doesn't know the initiator's avatar
+        sender_avatar_id: None,
         crypto_transfer: None,
         call: Some(CallFacts {
             message_id: args.message_id,

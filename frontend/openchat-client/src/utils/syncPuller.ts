@@ -32,6 +32,8 @@ export class SyncPuller {
     #generation = 0;
     // Folds run one at a time so a snapshot and a pulled answer can never interleave
     #folding: Promise<void> = Promise.resolve();
+    // The pull in flight, settling once it has finished and decided whether another follows
+    #pulling: Promise<void> = Promise.resolve();
 
     constructor(private deps: SyncPullerDeps) {}
 
@@ -98,6 +100,17 @@ export class SyncPuller {
         this.#generation++;
     }
 
+    /**
+     * Resolves once every head announced so far has been pulled and folded, or its pull has
+     * failed or timed out: what the UI holds has caught up with what the worker announced.
+     */
+    async settled(): Promise<void> {
+        await this.#folding;
+        while (this.#inFlight) {
+            await this.#pulling;
+        }
+    }
+
     onHead({ userId, version }: SyncHead): void {
         if (
             this.#cursor === undefined ||
@@ -123,7 +136,7 @@ export class SyncPuller {
         // head, not retry at once
         this.#pendingHead = undefined;
         this.#inFlight = true;
-        this.#pull(this.#cursor.version, this.#generation).finally(() => {
+        this.#pulling = this.#pull(this.#cursor.version, this.#generation).finally(() => {
             this.#inFlight = false;
             this.#maybePull();
         });

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pushes for group and channel messages carry the sender's own avatar as `senderAvatarId`, never the group's, and none when the sender's avatar isn't known ([#10487](https://github.com/open-chat-labs/open-chat/pull/10487))
+
 ### Removed
 
 - Stop limiting each user to 10 prize claims in 24 hours ([#10475](https://github.com/open-chat-labs/open-chat/pull/10475))
