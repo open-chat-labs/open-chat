@@ -5,9 +5,9 @@ export type MentionLookups = {
     /** The users the app knows (allUsersStore). */
     users: Pick<UserLookup, "get">;
     /**
-     * The user groups a mention can name: the selected community's
-     * (selectedCommunityUserGroupsStore) where the text is the open chat's, every community's
-     * (userGroupSummariesStore, as Markdown looks them up) where it can be any chat's.
+     * The user groups a mention can name: every community's (userGroupSummariesStore), as
+     * Markdown looks them up, the open chat's text too (a forwarded message can name another
+     * community's group).
      */
     userGroups: { get(id: number): { name: string } | undefined };
 };

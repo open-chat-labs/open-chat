@@ -36,6 +36,7 @@
         type BotInstallationLocation,
         type ExternalBotLike,
         usersFromIds,
+        userGroupSummariesStore,
         type MultiUserChat,
     } from "@client";
     import GroupPanel, {
@@ -263,11 +264,11 @@
         pinned.messages.kind === "success" ? pinned.messages.data.flat() : [],
     );
     const pins = $derived.by(() => {
-        // a pin's mentions as the @names typed, the open chat's groups as the conversation's
+        // a pin's mentions as the @names typed, every community's groups as the conversation's
         // own rows (conversationContext)
         const typed = typedMentions({
             users: $allUsersStore,
-            userGroups: $selectedCommunityUserGroupsStore,
+            userGroups: $userGroupSummariesStore,
         });
         return pinnedEvents.map((ev) => {
             const sent = new Date(Number(ev.timestamp));

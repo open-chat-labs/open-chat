@@ -3,6 +3,7 @@
     import { urlForMediaContent } from "@src/utils/media";
     import { ColourVars, IconButton, MenuItem, type Padding } from "component-lib";
     import {
+        allUsersStore,
         chatListScopeStore,
         cryptoLookup,
         currentUserIdStore,
@@ -12,12 +13,14 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
+        userGroupSummariesStore,
         type ChatIdentifier,
         type Message,
         type MessageMenuAction,
         type MessageReminderCreatedContent,
         type OpenChat,
     } from "@client";
+    import { copyableMessageText } from "@src/logic/conversation/copyableMessageText";
     import { translateMessage as translate } from "@src/logic/conversation/translateMessage";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
@@ -272,7 +275,14 @@
     }
 
     function copyMessage() {
-        copyToClipboard(client.getContentAsText($_, msg.content));
+        copyToClipboard(
+            copyableMessageText(msg.content, {
+                formatter: $_,
+                cryptoLookup: $cryptoLookup,
+                users: $allUsersStore,
+                userGroups: $userGroupSummariesStore,
+            }),
+        );
     }
 
     function pinMessage() {

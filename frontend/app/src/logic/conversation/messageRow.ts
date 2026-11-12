@@ -36,7 +36,6 @@ import {
     type ResourceKey,
     type TokenExchangeRates,
     type TokenInfo,
-    type UserGroupDetails,
     type UserLookup,
     type VideoContent,
     type WebhookDetails,
@@ -48,7 +47,7 @@ import { getProxyAdjustedBlobUrl } from "@src/utils/media";
 import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
-import { typedMentions } from "./typedMentions";
+import { typedMentions, type MentionLookups } from "./typedMentions";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -269,7 +268,8 @@ export function messageText(
 /**
  * A quoted message's text, as a reply's quote and the composer's reply or edit strip show it: as
  * it is, not as markdown, so its mentions show as the @names typed rather than `@UserId(…)`, as
- * the old trees' quotes (Markdown) show them.
+ * the old trees' quotes (Markdown) show them. A copied message's text is this too
+ * (`copyableMessageText`, which needs no ConversationContext).
  */
 export function quoteText(
     content: MessageContent,
@@ -715,8 +715,11 @@ export type ConversationContextInput = {
     me: string;
     formatter: MessageFormatter;
     users: UserLookup;
-    /** The community's user groups (for their mentions). */
-    userGroups: Pick<ReadonlyMap<number, UserGroupDetails>, "get">;
+    /**
+     * The user groups a quote's mentions can name: every community's (userGroupSummariesStore), as
+     * the bubble's Markdown looks them up (a forwarded message can name another community's).
+     */
+    userGroups: MentionLookups["userGroups"];
     /** The chat's webhooks, and the ids of those that have sent messages in it. */
     webhooks: ReadonlyMap<string, WebhookDetails>;
     webhookIds: ReadonlySet<string>;
