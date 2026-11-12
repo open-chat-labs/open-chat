@@ -1,4 +1,7 @@
-<!-- The app's toast layer, centred at the bottom of the window, over every dialog, sheet and veil:
+<!-- The app's toast layer, docked at the foot of the middle panel, just above its composer (above
+     the panel's bottom where it has none), centred on the panel, over every dialog, sheet and veil
+     and any popup it has open (web/00 and pass 7: bottomPlacement's toastSpot; the window's
+     bottom with the panel hidden):
      the library components' toasts (`library`: a wallet send's, an invite's …, which they hand to
      the host: setToastHost), and under them the app's toast (toastStore: showFailureToast,
      showSuccessToast), as the library's UndoToast without its action. Both can show at once, as
@@ -12,6 +15,15 @@
     import { toastStore } from "@src/stores/toast";
     import type { ResourceKey } from "@client";
     import { onDestroy } from "svelte";
+    import {
+        bottomAnchor,
+        bottomAnchorFor,
+        boxOf,
+        composerPopups,
+        watchBoxes,
+        windowSize,
+    } from "./bottomAnchors.svelte";
+    import { toastSpot, type ToastSpot } from "./bottomPlacement";
     import { _ } from "svelte-i18n";
 
     let { library }: { library: ToastLayer } = $props();
@@ -28,10 +40,47 @@
     });
 
     onDestroy(() => library.dispose());
+
+    // where they show, measured only while one does: again as the middle panel or its composer
+    // change size (a composer growing, a right column docking), the composer opens a popup, the
+    // window changes size or the shell scrolls in it, and as either comes or goes (a chat opened,
+    // the wallet in its place)
+    const showing = $derived(
+        library.current !== null || (toast !== undefined && resourceKey !== undefined),
+    );
+    let spot = $state<ToastSpot | undefined>();
+    $effect(() => {
+        if (!showing) {
+            spot = undefined;
+            return;
+        }
+        const middle = bottomAnchor("middle");
+        const composer = bottomAnchor("composer");
+        const toasts = bottomAnchor("toasts");
+        let last: ToastSpot | undefined;
+        return watchBoxes([middle, composer, toasts], composer, () => {
+            const next = toastSpot(
+                windowSize(),
+                boxOf(middle),
+                boxOf(composer),
+                composerPopups(composer),
+                boxOf(toasts)?.height,
+            );
+            if (last?.left !== next.left || last?.width !== next.width || last?.y !== next.y) {
+                spot = last = next;
+            }
+        });
+    });
 </script>
 
-{#if library.current !== null || (toast !== undefined && resourceKey !== undefined)}
-    <div class="toasts">
+{#if showing && spot !== undefined}
+    <!-- the achievement toast stacks above it while it shows (bottomAnchors) -->
+    <div
+        class="toasts"
+        style:left="{spot.left}px"
+        style:width="{spot.width}px"
+        style:bottom="calc(100% - {spot.y}px)"
+        {@attach bottomAnchorFor("toasts")}>
         {#if library.current !== null}
             {@const shown = library.current}
             <div class="library">
@@ -62,10 +111,14 @@
 {/if}
 
 <style lang="scss">
+    /* placed by its spot (left, width, bottom), in the window's coordinates whatever the direction;
+       it moves with the achievement toast above it (the same timing), none with reduced motion */
     .toasts {
         position: fixed;
-        inset-block-end: calc(var(--space-24) + var(--safe-bottom));
-        inset-inline: 0;
+        transition:
+            bottom var(--duration-slow) var(--ease-out),
+            left var(--duration-slow) var(--ease-out),
+            width var(--duration-slow) var(--ease-out);
         /* over every dialog, sheet and veil, the library's menus and pickers (up to 96) and the
            sign-in dialog (200) included: a toast is never under, or inside, one (design pass 7) */
         z-index: 300;

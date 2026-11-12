@@ -944,3 +944,7 @@
 - `UserDialog` and `DmPanel`: `suspended`, the same tag after the name (`UserDialog`) or under it (`DmPanel`), and no online dot. Their avatars aren't dimmed.
 - String `ui.chatRow.suspended` ("Suspended"), used by all three. `meta.json` (`Avatar`, `ChatRow`, `UserDialog`, `DmPanel`: `suspended`).
 - Not in the design export: the user's decision (2026-11-12), to go back to it (the app's `GAPS.md` lists it). TODO(design): the dimming, the mark and the tag.
+
+## 2026-11-11 — the composer's popups say they're open (web toasts), by hand
+- `MessageComposer`: its popups (the + menu, the mention list, the emoji and GIF picker) carry `data-composer-popup`, so a host can keep its own layers clear of them: the app's toasts and achievement toast, which sit just above the composer, move up above an open one rather than cover it (the app's `GAPS.md`, "Toasts"). No prop or look changes.
+- Not in the design export: to go back to it.

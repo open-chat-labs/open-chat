@@ -330,4 +330,23 @@ describe("SyncPuller", () => {
         puller.onHead({ userId: "u1", version: 3 });
         expect(pulls).toHaveLength(1);
     });
+
+    // Notifications of chats read elsewhere are released on resume once this settles: settling
+    // early would compare against the chats as they were before the catch-up pass
+    test("settled() waits until every announced head, including one arriving mid-pull, is folded", async () => {
+        const { puller, pulls, folded } = harness();
+        await puller.seed(answer(1), async () => {});
+        puller.onHead({ userId: "u1", version: 2 });
+
+        let settledWith: string[] | undefined = undefined;
+        puller.settled().then(() => (settledWith = [...folded]));
+        puller.onHead({ userId: "u1", version: 3 });
+        pulls[0].deferred.resolve(answer(2));
+        await settle();
+        expect(settledWith).toBeUndefined();
+
+        pulls[1].deferred.resolve(answer(3));
+        await settle();
+        expect(settledWith).toEqual(["v2", "v3"]);
+    });
 });

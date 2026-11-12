@@ -25,6 +25,7 @@ const CANISTER = "dfdal-2uaaa-aaaaa-qaama-cai";
 const CHANNEL: ChannelIdentifier = { kind: "channel", communityId: CANISTER, channelId: 5 };
 const LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 const SENDER = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+const AVATAR_ID = 9n;
 const WALLET = Principal.selfAuthenticating(new Uint8Array(32).fill(7)).toText();
 const ICP = { fee: 10_000n, decimals: 8, symbol: "ICP", ledger: LEDGER };
 const CHAT = { fee: 100_000n, decimals: 8, symbol: "CHAT", ledger: "2ouva-viaaa-aaaaq-aaamq-cai" };
@@ -152,6 +153,7 @@ function sendToGroup(content: MessageContent, thread?: number): Promise<[unknown
         CANISTER,
         "sender",
         undefined,
+        AVATAR_ID,
         [],
         event(content),
         thread,
@@ -168,6 +170,7 @@ function sendToChannel(content: MessageContent, thread?: number): Promise<[unkno
         CHANNEL,
         "sender",
         undefined,
+        AVATAR_ID,
         [],
         event(content),
         thread,
@@ -201,6 +204,13 @@ describe.each([
                 },
             ],
         ]);
+    });
+
+    // So the notification of it shows the sender's own avatar rather than the group's
+    test("the sender's avatar id is sent with the message", async () => {
+        await send(crypto);
+
+        expect(sent).toMatchObject([[CANISTER, method, { sender_avatar_id: AVATAR_ID }]]);
     });
 
     test("a prize is sent as pulled from the wallet", async () => {

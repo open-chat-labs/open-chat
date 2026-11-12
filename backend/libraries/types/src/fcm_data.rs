@@ -409,7 +409,7 @@ impl From<UserNotificationPayload> for FcmData {
                 .set_group_avatar_id(n.group_avatar_id)
                 .set_sender_id(n.sender)
                 .set_sender_name(n.sender_display_name, n.sender_name)
-                .set_sender_avatar_id(n.group_avatar_id)
+                .set_sender_avatar_id(n.sender_avatar_id)
                 .set_thread(n.thread_root_message_index)
                 .set_message(n.message_text)
                 .set_message_type(n.message_type)
@@ -438,6 +438,7 @@ impl From<UserNotificationPayload> for FcmData {
                 .set_community_avatar_id(n.community_avatar_id)
                 .set_sender_id(n.sender)
                 .set_sender_name(n.sender_display_name, n.sender_name)
+                .set_sender_avatar_id(n.sender_avatar_id)
                 .set_thread(n.thread_root_message_index)
                 .set_message(n.message_text)
                 .set_message_type(n.message_type)
@@ -484,7 +485,7 @@ impl From<UserNotificationPayload> for FcmData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{DirectMessageNotification, EventIndex};
+    use crate::{ChannelMessageNotification, DirectMessageNotification, EventIndex, GroupMessageNotification};
     use candid::Principal;
 
     fn user(n: u8) -> UserId {
@@ -583,5 +584,70 @@ mod tests {
                 .as_data()
                 .contains_key("callDeclineToken")
         );
+    }
+
+    fn group_message(sender_avatar_id: Option<u128>) -> UserNotificationPayload {
+        UserNotificationPayload::GroupMessage(GroupMessageNotification {
+            chat_id: user(2).into(),
+            thread_root_message_index: None,
+            message_index: 3.into(),
+            event_index: EventIndex::from(4),
+            group_name: "g".to_string(),
+            sender: user(1),
+            sender_name: "a".to_string(),
+            sender_display_name: None,
+            message_type: "Text".to_string(),
+            message_text: Some("hi".to_string()),
+            image_url: None,
+            file_name: None,
+            group_avatar_id: Some(11),
+            sender_avatar_id,
+            crypto_transfer: None,
+            call: None,
+        })
+    }
+
+    fn channel_message(sender_avatar_id: Option<u128>) -> UserNotificationPayload {
+        UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
+            community_id: user(3).into(),
+            channel_id: 5u32.into(),
+            thread_root_message_index: None,
+            message_index: 3.into(),
+            event_index: EventIndex::from(4),
+            community_name: "c".to_string(),
+            channel_name: "ch".to_string(),
+            sender: user(1),
+            sender_name: "a".to_string(),
+            sender_display_name: None,
+            message_type: "Text".to_string(),
+            message_text: Some("hi".to_string()),
+            image_url: None,
+            file_name: None,
+            community_avatar_id: Some(12),
+            channel_avatar_id: Some(13),
+            sender_avatar_id,
+            crypto_transfer: None,
+            call: None,
+        })
+    }
+
+    // A group or channel message notification carries the sender's own avatar as
+    // `senderAvatarId`, never the group's, and still carries the conversation's avatar.
+    // Without a sender avatar there is no `senderAvatarId` at all.
+    #[test]
+    fn a_group_or_channel_message_carries_the_senders_own_avatar_never_the_groups() {
+        let group = FcmData::from(group_message(Some(7))).as_data();
+        assert_eq!(group["senderAvatarId"], "7");
+        assert_eq!(group["groupAvatarId"], "11");
+
+        let channel = FcmData::from(channel_message(Some(7))).as_data();
+        assert_eq!(channel["senderAvatarId"], "7");
+        assert_eq!(channel["channelAvatarId"], "13");
+        assert_eq!(channel["communityAvatarId"], "12");
+
+        for payload in [group_message(None), channel_message(None)] {
+            let data = FcmData::from(payload).as_data();
+            assert!(!data.contains_key("senderAvatarId"), "{data:?}");
+        }
     }
 }

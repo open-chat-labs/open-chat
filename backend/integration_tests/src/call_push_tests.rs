@@ -18,20 +18,20 @@ use types::{
     UserId, VideoCallType,
 };
 
-struct Push {
-    recipients: Vec<UserId>,
-    data: HashMap<String, String>,
+pub(crate) struct Push {
+    pub(crate) recipients: Vec<UserId>,
+    pub(crate) data: HashMap<String, String>,
 }
 
 // Notifications are read from the local user index of the canister that sent them. A test's
 // users can sit on different subnets, and a group or community goes on the subnet with the fewest
 // groups or communities, wherever its members are, so a feed reads from every local user index.
-struct Feed {
+pub(crate) struct Feed {
     luis: Vec<CanisterId>,
 }
 
 impl Feed {
-    fn new(canister_ids: &CanisterIds) -> Feed {
+    pub(crate) fn new(canister_ids: &CanisterIds) -> Feed {
         Feed {
             luis: canister_ids.subnets.iter().map(|s| s.local_user_index).collect(),
         }
@@ -58,7 +58,7 @@ impl Feed {
         tick_many(env, 3);
     }
 
-    fn snapshot(&self, env: &PocketIc, controller: Principal) -> Vec<u64> {
+    pub(crate) fn snapshot(&self, env: &PocketIc, controller: Principal) -> Vec<u64> {
         self.luis
             .iter()
             .map(|lui| local_user_index::happy_path::latest_notification_index(env, controller, *lui))
@@ -75,7 +75,7 @@ impl Feed {
     // rounds to handle its first message, more under load. A few rounds are always ticked, so
     // that a push which shouldn't be there has the chance to show. After a generous number of
     // rounds, what has arrived is returned for the test's assertions to report on.
-    fn wait_for_pushes(
+    pub(crate) fn wait_for_pushes(
         &self,
         env: &mut PocketIc,
         controller: Principal,
