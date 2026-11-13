@@ -434,8 +434,12 @@
         isSheetMenuOpen = true;
     }
 
-    let panDirection = $state();
+    let panDirection = $state<PanDirection>();
     let panFactor = $state(0);
+    // The icon a swipe shows is the action releasing it takes
+    let swipeAction = $derived(
+        panDirection ? messageSwipeAction(panDirection, me, canEdit) : undefined,
+    );
 
     function forward() {
         window.setTimeout(() => publish("forward", msg), 250);
@@ -674,9 +678,9 @@
                             class={`pan-action ${panDirection}`}
                             class:active={panFactor >= 1}
                             style:opacity={panFactor}>
-                            {#if me && canEdit && panDirection === "left"}
+                            {#if swipeAction === "edit"}
                                 <SquareEditOutline size="1.5rem" />
-                            {:else if !me && canShare && panDirection === "left"}
+                            {:else if swipeAction === "forward"}
                                 <ShareOutline size="1.5rem" />
                             {:else}
                                 <Reply size="1.5rem" />
