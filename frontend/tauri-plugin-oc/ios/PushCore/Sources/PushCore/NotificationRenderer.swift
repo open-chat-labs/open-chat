@@ -14,8 +14,10 @@ public struct RenderedNotification: Equatable {
     public let senderName: String?
     // The group or channel, nil for a direct chat
     public let conversationName: String?
+    // The only picture the notification shows, in a group or channel too: iOS shows one image, and
+    // the sender's says who wrote it, as Android's per-sender rows do. One without an avatar gets
+    // iOS's initials, never the group's picture.
     public let senderAvatar: Data?
-    public let conversationAvatar: Data?
     // The message's photo, downloaded to a local file for the notification to attach
     public let image: URL?
 }
@@ -38,17 +40,13 @@ public enum NotificationRenderer {
             return RenderedNotification(
                 title: serverTitle, body: serverBody, messageText: serverBody, threadId: "",
                 senderId: nil, senderName: nil, conversationName: nil, senderAvatar: nil,
-                conversationAvatar: nil, image: nil)
+                image: nil)
         }
 
         let imageUrl = push.imageUrl
         async let image = withDeadline(timeout) { await imageUrl.asyncMap(fetchImage) ?? nil }
-        let urls = avatarUrls(push, base: avatarBaseUrl)
-        let avatars = await withDeadline(timeout) {
-            async let sender = urls.sender.asyncMap(fetch)
-            async let conversation = urls.conversation.asyncMap(fetch)
-            return await (sender ?? nil, conversation ?? nil)
-        }
+        let avatarUrl = senderAvatarUrl(push, base: avatarBaseUrl)
+        let avatar = await withDeadline(timeout) { await avatarUrl.asyncMap(fetch) ?? nil }
 
         return RenderedNotification(
             title: title(push),
@@ -58,8 +56,7 @@ public enum NotificationRenderer {
             senderId: push.senderId,
             senderName: push.senderName,
             conversationName: conversationName(push),
-            senderAvatar: avatars?.0,
-            conversationAvatar: avatars?.1,
+            senderAvatar: avatar ?? nil,
             image: await image ?? nil)
     }
 
@@ -72,26 +69,11 @@ public enum NotificationRenderer {
         }
     }
 
-    // The sender's avatar for the person, and the group's or channel's for the conversation
-    public static func avatarUrls(_ push: MessagePush, base: String) -> (sender: URL?, conversation: URL?) {
-        func main(_ entityId: String, _ avatarId: String?) -> URL? {
-            guard let avatarId else { return nil }
-            let location = BlobLocation.of(entityId, "avatar")
-            return URL(string: "\(String(format: base, location.canisterId))/\(location.path)/\(avatarId)")
-        }
-
-        let sender = push.senderId.flatMap { main($0, push.senderAvatarId) }
-        switch push.chat {
-        case .direct:
-            return (sender, nil)
-        case .group(let groupId):
-            return (sender, main(groupId, push.groupAvatarId))
-        case .channel(let communityId, let channelId):
-            let channel = push.channelAvatarId.flatMap {
-                URL(string: "\(String(format: base, communityId))/channel/\(channelId)/avatar/\($0)")
-            }
-            return (sender, channel ?? main(communityId, push.communityAvatarId))
-        }
+    // The sender's avatar, in any chat
+    public static func senderAvatarUrl(_ push: MessagePush, base: String) -> URL? {
+        guard let senderId = push.senderId, let avatarId = push.senderAvatarId else { return nil }
+        let location = BlobLocation.of(senderId, "avatar")
+        return URL(string: "\(String(format: base, location.canisterId))/\(location.path)/\(avatarId)")
     }
 
     // The same wording as the pusher's fallback and the Android shell

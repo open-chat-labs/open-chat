@@ -97,10 +97,13 @@ final class NotificationRendererTests: XCTestCase {
         XCTAssertNil(video.image)
     }
 
-    func testAGroupMessageNamesTheSenderAndFetchesBothAvatars() async {
+    // A group or channel notification shows its sender's avatar and never the group's: iOS shows
+    // one picture, and it says who wrote the message
+    func testAGroupMessageShowsTheSendersAvatarNeverTheGroups() async {
+        let fetched = Fetched()
         let rendered = await NotificationRenderer.render(
             userInfo: groupMessage, serverTitle: "", serverBody: "", avatarBaseUrl: base,
-            timeout: .seconds(5), fetch: { url in Data(url.absoluteString.utf8) })
+            timeout: .seconds(5), fetch: { url in await fetched.add(url); return Data(url.absoluteString.utf8) })
 
         XCTAssertEqual(rendered.title, "Rust")
         XCTAssertEqual(rendered.body, "alice: hello")
@@ -109,23 +112,29 @@ final class NotificationRendererTests: XCTestCase {
         XCTAssertEqual(rendered.threadId, "group:\(group)")
         XCTAssertEqual(
             rendered.senderAvatar, Data("https://\(alice).raw.icp0.io/avatar/7".utf8))
-        XCTAssertEqual(
-            rendered.conversationAvatar, Data("https://\(group).raw.icp0.io/avatar/11".utf8))
+        let urls = await fetched.urls
+        XCTAssertEqual(urls, ["https://\(alice).raw.icp0.io/avatar/7"])
     }
 
-    // A push from a client or canister that sends no sender avatar fetches none, rather than
+    // A push from a client or canister that sends no sender avatar shows none, rather than
     // putting the group's picture on the sender
-    func testAGroupMessageWithoutASenderAvatarFetchesOnlyTheGroups() async {
+    func testAGroupMessageWithoutASenderAvatarShowsNoPicture() async {
         var push = groupMessage
         push.removeValue(forKey: "senderAvatarId")
+        let fetched = Fetched()
         let rendered = await NotificationRenderer.render(
             userInfo: push, serverTitle: "", serverBody: "", avatarBaseUrl: base,
-            timeout: .seconds(5), fetch: { url in Data(url.absoluteString.utf8) })
+            timeout: .seconds(5), fetch: { url in await fetched.add(url); return Data(url.absoluteString.utf8) })
 
         XCTAssertNil(rendered.senderAvatar)
-        XCTAssertEqual(
-            rendered.conversationAvatar, Data("https://\(group).raw.icp0.io/avatar/11".utf8))
+        let urls = await fetched.urls
+        XCTAssertEqual(urls, [])
     }
+}
+
+private actor Fetched {
+    var urls: [String] = []
+    func add(_ url: URL) { urls.append(url.absoluteString) }
 }
 
 final class MessagePushTests: XCTestCase {
