@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
-use types::{CanisterId, ChatId, MessageContentInitial, TextContent, UserId};
+use types::{CanisterId, ChatId, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -26,7 +26,14 @@ async fn invite_users_to_group(args: Args) -> Response {
         Ok(response) => match response {
             group_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    send_group_invitation(invited_by, args.group_id, s.group_name, s.invited_users, state);
+                    send_group_invitation(
+                        invited_by,
+                        args.invited_by_username,
+                        args.group_id,
+                        s.group_name,
+                        s.invited_users,
+                        state,
+                    );
                 });
                 Success
             }
@@ -54,16 +61,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
 
 pub(crate) fn send_group_invitation(
     invited_by: UserId,
+    invited_by_username: Option<String>,
     group_id: ChatId,
     group_name: String,
     invited_users: Vec<UserId>,
     state: &mut RuntimeState,
 ) {
-    let now = state.env.now();
     let text = format!("You have been invited to the group [{group_name}](/group/{group_id}) by @UserId({invited_by}).");
-    let message = MessageContentInitial::Text(TextContent { text });
-
-    for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone(), now);
-    }
+    state.push_invitation(text, invited_by, invited_by_username, invited_users);
 }

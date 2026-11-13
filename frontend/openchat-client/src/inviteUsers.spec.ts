@@ -87,7 +87,7 @@ describe("inviting people to a group", () => {
 
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
-        currentUserStore.set({ ...anonymousUser(), userId: "me" });
+        currentUserStore.set({ ...anonymousUser(), userId: "me", username: "julian" });
         localUpdates.clearAll();
         client = new OpenChat(config());
         selectGroup(["a"]);
@@ -100,6 +100,7 @@ describe("inviting people to a group", () => {
         currentUserStore.set(anonymousUser());
     });
 
+    // The inviter's username goes with the invite so the LocalUserIndex can name them in its push
     test("they're among the invited at once, and stay once the backend has them", async () => {
         let answer: (ok: boolean) => void = () => {};
         const send = vi
@@ -112,7 +113,12 @@ describe("inviting people to a group", () => {
         const invited = client.inviteUsers(groupId, ["b", "c"]);
 
         expect(send).toHaveBeenCalledWith(
-            expect.objectContaining({ kind: "inviteUsers", id: groupId, userIds: ["b", "c"] }),
+            expect.objectContaining({
+                kind: "inviteUsers",
+                id: groupId,
+                userIds: ["b", "c"],
+                callerUsername: "julian",
+            }),
         );
         expect([...selectedChatInvitedUsersStore.value].sort()).toEqual(["a", "b", "c"]);
 

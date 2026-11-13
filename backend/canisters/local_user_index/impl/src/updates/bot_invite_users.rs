@@ -65,6 +65,7 @@ async fn call_chat_canister(context: BotAccessContext, channel_id: Option<Channe
                 mutate_state(|state| {
                     send_channel_invitation(
                         context.bot_id,
+                        None,
                         community_id,
                         community_name,
                         channel_id,
@@ -92,7 +93,7 @@ async fn call_chat_canister(context: BotAccessContext, channel_id: Option<Channe
             match response {
                 Ok(response) => match response {
                     group_canister::c2c_bot_invite_users::Response::Success(result) => mutate_state(|state| {
-                        send_group_invitation(context.bot_id, chat_id, result.group_name, result.invited_users, state);
+                        send_group_invitation(context.bot_id, None, chat_id, result.group_name, result.invited_users, state);
                         Response::Success
                     }),
                     group_canister::c2c_bot_invite_users::Response::Error(error) => Response::Error(error),

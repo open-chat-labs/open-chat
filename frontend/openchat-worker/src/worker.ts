@@ -607,7 +607,8 @@ const handlers: Handlers = {
     removeApnsDevice: (payload, agent) => agent.removeApnsDevice(payload.device),
     markNotificationSubscriptionActive: (payload, agent) =>
         agent.markNotificationSubscriptionActive(payload.endpoint),
-    inviteUsers: (payload, agent) => agent.inviteUsers(payload.id, payload.userIds),
+    inviteUsers: (payload, agent) =>
+        agent.inviteUsers(payload.id, payload.userIds, payload.callerUsername),
     removeMember: (payload, agent) => agent.removeMember(payload.chatId, payload.userId),
     changeRole: (payload, agent) =>
         agent.changeRole(payload.chatId, payload.userId, payload.newRole),

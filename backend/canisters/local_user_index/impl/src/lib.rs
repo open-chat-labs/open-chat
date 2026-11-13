@@ -52,8 +52,8 @@ use types::{
     CommunityCanisterCommunitySummary, CommunityId, Cycles, CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims,
     DiamondMembershipDetails, DirectCallDismissedNotification, FcmData, GroupCallDismissedNotification, IdempotentEnvelope,
     MediaScanConfig, MessageContentInitial, MessageId, Milliseconds, ModerationReferralConfig, Notification,
-    NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
-    UserNotificationPayload, VerifiedCredentialGateArgs,
+    NotificationEnvelope, OCResult, ReferralType, TextContent, TimestampMillis, Timestamped, User, UserId,
+    UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
@@ -68,6 +68,7 @@ use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 use utils::migrated_user_ids::MigratedUserIds;
+use utils::text_validation::validate_username;
 
 mod bots;
 mod call_push;
@@ -436,14 +437,36 @@ impl RuntimeState {
         );
     }
 
-    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContentInitial, now: TimestampMillis) {
+    // Sends the OpenChat bot's invitation to each invited user
+    pub fn push_invitation(
+        &mut self,
+        text: String,
+        invited_by: UserId,
+        invited_by_username: Option<String>,
+        invited_users: Vec<UserId>,
+    ) {
+        let now = self.env.now();
+        let (message, mentioned) = invitation_message(text, invited_by, invited_by_username);
+
+        for user_id in invited_users {
+            self.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone(), now);
+        }
+    }
+
+    pub fn push_oc_bot_message_to_user(
+        &mut self,
+        user_id: UserId,
+        content: MessageContentInitial,
+        mentioned: Vec<User>,
+        now: TimestampMillis,
+    ) {
         if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
                 user_id,
                 UserEvent::OpenChatBotMessageV2(Box::new(multi_user_canister::OpenChatBotMessageV2 {
                     thread_root_message_id: None,
                     content,
-                    mentioned: Vec::new(),
+                    mentioned,
                 })),
                 now,
             );
@@ -453,7 +476,7 @@ impl RuntimeState {
                     user_id,
                     thread_root_message_id: None,
                     content,
-                    mentioned: Vec::new(),
+                    mentioned,
                 })),
                 now,
             );
@@ -1268,6 +1291,25 @@ fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
     GroupedTimerJobQueue::new(10, false)
 }
 
+// The inviter's username, which their client sends, names them in the invitation's push
+// notification, but only if it is a valid username
+fn invitation_message(
+    text: String,
+    invited_by: UserId,
+    invited_by_username: Option<String>,
+) -> (MessageContentInitial, Vec<User>) {
+    let mentioned = invited_by_username
+        .filter(|username| validate_username(username, &[]).is_ok())
+        .map(|username| User {
+            user_id: invited_by,
+            username,
+        })
+        .into_iter()
+        .collect();
+
+    (MessageContentInitial::Text(TextContent { text }), mentioned)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1449,6 +1491,33 @@ mod tests {
             vec![&types::FcmToken("android".to_string())]
         );
         assert!(upgraded.apns_device_store.is_empty());
+    }
+
+    /// An invitation whose request carries the inviter's username names them in its push; without
+    /// one, or with one that isn't a valid username, the push is as it was.
+    #[test]
+    fn invitation_push_names_the_inviter_from_the_request() {
+        use types::MessageContent;
+
+        let invited_by = UserId::from(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]));
+        let push_text = |invited_by_username: Option<&str>| {
+            let text = format!("You have been invited to the group [Foo](/group/abc) by @UserId({invited_by}).");
+            let (content, mentioned) = invitation_message(text, invited_by, invited_by_username.map(String::from));
+            MessageContent::from(content)
+                .notification_text(&mentioned, &[])
+                .unwrap()
+                .replace(&invited_by.to_string(), "inviter")
+        };
+
+        assert_eq!(
+            push_text(Some("julian")),
+            "You have been invited to the group Foo by @julian."
+        );
+        assert_eq!(push_text(None), "You have been invited to the group Foo by @UserId(inviter).");
+        assert_eq!(
+            push_text(Some("OpenChat Bot](x)")),
+            "You have been invited to the group Foo by @UserId(inviter)."
+        );
     }
 
     pub(crate) fn setup_runtime_state() -> RuntimeState {

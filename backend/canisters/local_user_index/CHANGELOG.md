@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- `invite_users_to_group`, `invite_users_to_community` and `invite_users_to_channel` take an optional `invited_by_username`, which names the inviter in the invitation's push notification when it is a valid username ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+
 ## [[2.0.2231](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2231-local_user_index)] - 2026-11-13
 
 ### Changed
