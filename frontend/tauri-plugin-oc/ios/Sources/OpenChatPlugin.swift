@@ -1,4 +1,5 @@
 import CallCore
+import ShareCore
 import SwiftRs
 import Tauri
 import UIKit
@@ -68,6 +69,10 @@ class ReleaseNotificationsArgs: Decodable {
     let communityId: String?
     let channelId: String?
     let threadIndex: String?
+}
+
+class SetAppLanguageArgs: Decodable {
+    let language: String?
 }
 
 class CallRingHandledArgs: Decodable {
@@ -256,6 +261,12 @@ class OpenChatPlugin: Plugin {
         if let args = try? invoke.parseArgs(NativeCallControlArgs.self) {
             NativeCallBridge.shared.control(args.kind, on: args.on)
         }
+        invoke.resolve()
+    }
+
+    // The language chosen in the app, which the shell's own text follows (AppLanguage)
+    @objc func setAppLanguage(_ invoke: Invoke) {
+        AppLanguage.save(appCode: (try? invoke.parseArgs(SetAppLanguageArgs.self))?.language)
         invoke.resolve()
     }
 

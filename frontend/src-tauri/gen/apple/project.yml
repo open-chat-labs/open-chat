@@ -201,6 +201,12 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.usernotifications.service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
+    # The language chosen in the app, which the notifications' text follows (ShareCore's AppLanguage)
+    entitlements:
+      path: NotificationService/OpenChatNotificationService.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.oclabs.openchat
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat.NotificationService
@@ -222,6 +228,16 @@ targets:
         basedOnDependencyAnalysis: false
         inputFiles:
           - $(SRCROOT)/open-chat_iOS/Info.plist
+      # As the share extension's: keeps the App Group, where the app's language is, through the
+      # Tauri signer
+      - script: |
+          if [ "${CODE_SIGNING_ALLOWED}" = "NO" ]; then
+            codesign --force --sign - --timestamp=none \
+              --entitlements "${SRCROOT}/NotificationService/OpenChatNotificationService.entitlements" \
+              "${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+          fi
+        name: Keep the App Group through the Tauri signer
+        basedOnDependencyAnalysis: false
   # OpenChat in the share sheet (#10403)
   OpenChatShare:
     type: app-extension

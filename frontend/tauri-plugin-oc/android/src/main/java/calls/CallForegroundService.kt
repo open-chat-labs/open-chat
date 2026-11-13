@@ -21,6 +21,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.R
+import com.ocplugin.app.localized
 
 // Keeps the process and its WebView alive while a call is active (#9559). Without a
 // microphone-typed service Android silence-fills this app's capture the moment the screen
@@ -51,7 +52,7 @@ class CallForegroundService : Service() {
                     stopNow()
                     return START_NOT_STICKY
                 }
-                val title = intent.getStringExtra(EXTRA_TITLE) ?: getString(R.string.call_in_progress)
+                val title = intent.getStringExtra(EXTRA_TITLE) ?: localized().getString(R.string.call_in_progress)
                 val startedAt = intent.getLongExtra(EXTRA_STARTED_AT, System.currentTimeMillis())
                 val sharing = intent.getBooleanExtra(EXTRA_SHARING, false)
                 startForegroundCompat(title, startedAt, sharing, intent.getBundleExtra(EXTRA_CALL))
@@ -124,7 +125,7 @@ class CallForegroundService : Service() {
     }
 
     private fun buildNotification(title: String, startedAt: Long, callBundle: android.os.Bundle?): Notification {
-        val person = Person.Builder().setName(title.ifBlank { getString(R.string.call_ongoing) }).setImportant(true).build()
+        val person = Person.Builder().setName(title.ifBlank { localized().getString(R.string.call_ongoing) }).setImportant(true).build()
         val hangUp = PendingIntent.getBroadcast(
             this,
             NOTIFICATION_ID,
@@ -139,7 +140,7 @@ class CallForegroundService : Service() {
             .setUsesChronometer(true)
             .setShowWhen(true)
             .setSmallIcon(R.drawable.ic_notification_small)
-            .setContentText(getString(R.string.call_in_progress))
+            .setContentText(localized().getString(R.string.call_in_progress))
             .setStyle(NotificationCompat.CallStyle.forOngoingCall(person, hangUp))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_CALL)
@@ -201,9 +202,9 @@ class CallForegroundService : Service() {
             if (nm.getNotificationChannel(CHANNEL_ID) != null) return
             nm.createNotificationChannel(
                 NotificationChannel(
-                    CHANNEL_ID, context.getString(R.string.call_ongoing), NotificationManager.IMPORTANCE_DEFAULT,
+                    CHANNEL_ID, context.localized().getString(R.string.call_ongoing), NotificationManager.IMPORTANCE_DEFAULT,
                 ).apply {
-                    description = context.getString(R.string.notification_channel_ongoing_call_description)
+                    description = context.localized().getString(R.string.notification_channel_ongoing_call_description)
                     setSound(null, null)
                     enableVibration(false)
                     setShowBadge(false)

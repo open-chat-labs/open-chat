@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Index
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.R
+import com.ocplugin.app.localized
 
 @JvmInline
 value class SenderId(val value: String)
@@ -102,7 +103,7 @@ object NotificationCompanion {
     // TODO would be cool if we could have a part of the parent message when dealing with threads
     fun toTitle(context: Context, notification: Notification): String {
         fun inThread(name: String) =
-            if (notification.threadIndex != null) context.getString(R.string.notification_thread, name) else name
+            if (notification.threadIndex != null) context.localized().getString(R.string.notification_thread, name) else name
 
         return when (notification.type) {
             NotificationType.DM ->
@@ -118,9 +119,9 @@ object NotificationCompanion {
 
     fun toMessage(context: Context, notification: Notification): String {
         return when (notification.bodyType) {
-            BodyType.REACTION -> context.getString(R.string.notification_reacted, notification.senderName, notification.body)
-            BodyType.TIP -> context.getString(R.string.notification_tipped, notification.senderName, notification.body)
-            BodyType.INVITE -> context.getString(R.string.notification_invited, notification.senderName, notification.body)
+            BodyType.REACTION -> context.localized().getString(R.string.notification_reacted, notification.senderName, notification.body)
+            BodyType.TIP -> context.localized().getString(R.string.notification_tipped, notification.senderName, notification.body)
+            BodyType.INVITE -> context.localized().getString(R.string.notification_invited, notification.senderName, notification.body)
             else -> attachmentLabel(context, notification)
         }
     }
@@ -133,14 +134,14 @@ object NotificationCompanion {
     // available) to make the content type obvious at a glance.
     private fun attachmentLabel(context: Context, notification: Notification): String {
         val caption = notification.body.takeIf { it.isNotBlank() }
-        val photo = "📷 " + context.getString(R.string.notification_photo)
+        val photo = "📷 " + context.localized().getString(R.string.notification_photo)
         return when (notification.messageType) {
             TYPE_IMAGE -> caption ?: photo
-            TYPE_VIDEO -> "🎥 " + (caption ?: context.getString(R.string.notification_shared_video))
-            TYPE_GIPHY -> "🎞️ " + (caption ?: context.getString(R.string.notification_shared_gif))
-            TYPE_AUDIO -> "🎙️ " + (caption ?: context.getString(R.string.notification_shared_audio))
+            TYPE_VIDEO -> "🎥 " + (caption ?: context.localized().getString(R.string.notification_shared_video))
+            TYPE_GIPHY -> "🎞️ " + (caption ?: context.localized().getString(R.string.notification_shared_gif))
+            TYPE_AUDIO -> "🎙️ " + (caption ?: context.localized().getString(R.string.notification_shared_audio))
             TYPE_FILE -> "📎 " + (notification.fileName?.takeIf { it.isNotBlank() } ?: caption
-                ?: context.getString(R.string.notification_shared_file))
+                ?: context.localized().getString(R.string.notification_shared_file))
             // Pre-v2 rows have no messageType; an image-only row would otherwise render as
             // empty text, so fall back to the image placeholder when an image URL is present.
             else -> caption ?: if (!notification.image.isNullOrBlank()) photo else notification.body

@@ -2,8 +2,9 @@
 
 import PackageDescription
 
-// The inbox the share extension leaves shared items in for the app. Foundation only, so
-// `swift test` runs it on a Mac.
+// What the app and its extensions share through the App Group: the inbox the share extension
+// leaves shared items in for the app, and the language chosen in the app (AppLanguage).
+// Foundation only, so `swift test` runs it on a Mac.
 let package = Package(
     name: "ShareCore",
     platforms: [

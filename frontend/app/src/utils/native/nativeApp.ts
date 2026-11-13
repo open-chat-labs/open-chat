@@ -3,6 +3,7 @@ import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcu
 import { activeVideoCall } from "@stores/video";
 import { invoke } from "@tauri-apps/api/core";
 import { clearAllNotifications, svelteReady } from "tauri-plugin-oc-api";
+import { followLanguageInShell } from "./appLanguage";
 import {
     expectCallActions,
     expectCallControls,
@@ -58,6 +59,9 @@ export function setupNativeApp(
         return;
     }
     nativeSetupDone = true;
+
+    // The shell's own text (notifications, the ring) is in the app's language, for the app's lifetime
+    followLanguageInShell();
 
     // Register every native event listener BEFORE signalling svelteReady:
     // the native side flushes its queued events the moment svelteReady

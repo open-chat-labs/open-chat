@@ -18,6 +18,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.ocplugin.app.AvatarHelper
 import com.ocplugin.app.R
+import com.ocplugin.app.localized
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -150,8 +151,8 @@ class IncomingCallActivity : AppCompatActivity() {
             }
             setOnClickListener { onClick() }
         }
-        buttons.addView(button(getString(R.string.call_decline), "#D32F2F") { decline() })
-        buttons.addView(button(getString(R.string.call_accept), "#2E7D32") { accept() })
+        buttons.addView(button(localized().getString(R.string.call_decline), "#D32F2F") { decline() })
+        buttons.addView(button(localized().getString(R.string.call_accept), "#2E7D32") { accept() })
         root.addView(avatar)
         root.addView(title)
         root.addView(subtitle)

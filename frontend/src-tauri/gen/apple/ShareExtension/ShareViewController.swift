@@ -30,8 +30,8 @@ final class ShareViewController: UIViewController {
             self.resolved = true
             self.showResult(
                 symbol: "exclamationmark.triangle.fill", tint: .systemOrange,
-                title: NSLocalizedString("Couldn't prepare the share", comment: ""),
-                subtitle: NSLocalizedString("Please try again", comment: ""))
+                title: AppLanguage.localized("Couldn't prepare the share"),
+                subtitle: AppLanguage.localized("Please try again"))
         }
     }
 
@@ -81,9 +81,9 @@ final class ShareViewController: UIViewController {
             share.discard()
             return showResult(
                 symbol: "exclamationmark.triangle.fill", tint: .systemOrange,
-                title: NSLocalizedString("File too large", comment: ""),
+                title: AppLanguage.localized("File too large"),
                 subtitle: String(
-                    format: NSLocalizedString("Files over %d MB can't be shared", comment: ""),
+                    format: AppLanguage.localized("Files over %d MB can't be shared"),
                     Int(ShareInbox.maxFileBytes / 1024 / 1024)))
         }
         do {
@@ -185,8 +185,8 @@ final class ShareViewController: UIViewController {
     private func showOpenTheApp() {
         showResult(
             symbol: "checkmark.circle.fill", tint: .systemGreen,
-            title: NSLocalizedString("Shared to OpenChat", comment: ""),
-            subtitle: NSLocalizedString("Open OpenChat to send it", comment: ""))
+            title: AppLanguage.localized("Shared to OpenChat"),
+            subtitle: AppLanguage.localized("Open OpenChat to send it"))
     }
 
     private func showResult(symbol: String, tint: UIColor, title: String, subtitle: String) {
@@ -210,7 +210,7 @@ final class ShareViewController: UIViewController {
         subtitleLabel.numberOfLines = 0
 
         let done = UIButton(type: .system)
-        done.setTitle(NSLocalizedString("Done", comment: ""), for: .normal)
+        done.setTitle(AppLanguage.localized("Done"), for: .normal)
         done.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         done.addAction(UIAction { [weak self] _ in self?.finish() }, for: .touchUpInside)
 

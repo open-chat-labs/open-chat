@@ -47,6 +47,7 @@ const COMMANDS: &[&str] = &[
     "can_use_full_screen_intent",
     "open_full_screen_intent_settings",
     "take_native_exit_reports",
+    "set_app_language",
 ];
 
 fn main() {

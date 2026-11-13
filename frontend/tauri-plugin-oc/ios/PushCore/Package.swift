@@ -14,8 +14,12 @@ let package = Package(
     products: [
         .library(name: "PushCore", targets: ["PushCore"])
     ],
+    dependencies: [
+        // AppLanguage, the language chosen in the app
+        .package(name: "ShareCore", path: "../ShareCore")
+    ],
     targets: [
-        .target(name: "PushCore"),
+        .target(name: "PushCore", dependencies: [.product(name: "ShareCore", package: "ShareCore")]),
         .testTarget(name: "PushCoreTests", dependencies: ["PushCore"]),
     ]
 )

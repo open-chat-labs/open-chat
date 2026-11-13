@@ -84,6 +84,7 @@
 		2D92B8DD2AA1394245FB960A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		384A3E0AA4FBC0F91F07108F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
+		3D45CB1AEFAC466265C5659B /* OpenChatNotificationService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChatNotificationService.entitlements; sourceTree = "<group>"; };
 		3E43991959F79EC044991304 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		3E98ABD390D63EC208EB7682 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		432AFFBA8DB597CA29B5282A /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -273,6 +274,7 @@
 			children = (
 				1BF1C077855D8A113A972974 /* Info.plist */,
 				29D76D5D46F7055F81CB2842 /* NotificationService.swift */,
+				3D45CB1AEFAC466265C5659B /* OpenChatNotificationService.entitlements */,
 				E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */,
 				50F41C416CDA503CEE724A78 /* Localizable.strings */,
 			);
@@ -355,6 +357,7 @@
 				41E05208CA8AE8980602ED01 /* Resources */,
 				16FAC06905205507516DADDC /* Frameworks */,
 				4D88D18DBA64CB1C00C996FB /* Set the app's version */,
+				4FDAAAB95BB10F7D0251D027 /* Keep the App Group through the Tauri signer */,
 			);
 			buildRules = (
 			);
@@ -573,6 +576,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "for KEY in CFBundleShortVersionString CFBundleVersion; do\n  VALUE=$(/usr/libexec/PlistBuddy -c \"Print :$KEY\" \"${SRCROOT}/open-chat_iOS/Info.plist\")\n  /usr/libexec/PlistBuddy -c \"Set :$KEY $VALUE\" \"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\ndone\n";
+		};
+		4FDAAAB95BB10F7D0251D027 /* Keep the App Group through the Tauri signer */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Keep the App Group through the Tauri signer";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${CODE_SIGNING_ALLOWED}\" = \"NO\" ]; then\n  codesign --force --sign - --timestamp=none \\\n    --entitlements \"${SRCROOT}/NotificationService/OpenChatNotificationService.entitlements\" \\\n    \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\nfi\n";
 		};
 		6A0FB9B9A13DBFD4E61460BC /* Keep the App Group through the Tauri signer */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -926,6 +948,7 @@
 				ARCHS = (
 					arm64,
 				);
+				CODE_SIGN_ENTITLEMENTS = NotificationService/OpenChatNotificationService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = N59KSS69AU;
 				INFOPLIST_FILE = NotificationService/Info.plist;
@@ -947,6 +970,7 @@
 				ARCHS = (
 					arm64,
 				);
+				CODE_SIGN_ENTITLEMENTS = NotificationService/OpenChatNotificationService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = N59KSS69AU;
 				INFOPLIST_FILE = NotificationService/Info.plist;

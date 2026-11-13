@@ -1,4 +1,5 @@
 import Foundation
+import ShareCore
 
 // What a message notification shows. The Notification Service Extension turns it into a
 // communication notification; anything missing falls back to what the server already put in the
@@ -128,10 +129,11 @@ public enum NotificationRenderer {
     }
 }
 
-// The text in the system language. The translations are the Notification Service Extension's
-// (NotificationService/*.lproj), so `swift test`, which has none, gets the English key back.
+// The text in the app's language (AppLanguage). The translations are the Notification Service
+// Extension's (NotificationService/*.lproj), so `swift test`, which has none, gets the English key
+// back.
 private func localized(_ key: String, _ args: CVarArg...) -> String {
-    let format = NSLocalizedString(key, bundle: .main, comment: "")
+    let format = AppLanguage.localized(key)
     return args.isEmpty ? format : String(format: format, arguments: args)
 }
 

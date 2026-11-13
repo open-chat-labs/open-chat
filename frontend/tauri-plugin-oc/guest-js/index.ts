@@ -6,6 +6,7 @@ export { getShellVersion } from "./commands/getShellVersion";
 export { haptic, type HapticStyle } from "./commands/haptic";
 export { getWindowInsets, type WindowInsets } from "./commands/getWindowInsets";
 export { setSystemBarsStyle } from "./commands/setSystemBarsStyle";
+export { setAppLanguage } from "./commands/setAppLanguage";
 export { canShareFiles, share, shareFiles } from "./commands/share";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";
