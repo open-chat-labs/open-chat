@@ -408,7 +408,8 @@ fn render_markdown_links(text: &str) -> String {
         let after = &rest[mid + 2..];
         match (rest[..mid].rfind('['), after.find(')')) {
             (Some(open), Some(close)) if !after[..close].contains(char::is_whitespace) => {
-                rendered.push_str(&rest[..open]);
+                // An image `![alt](url)` renders as its alt text too
+                rendered.push_str(rest[..open].strip_suffix('!').unwrap_or(&rest[..open]));
                 rendered.push_str(&rest[open + 1..mid]);
                 rest = &after[close + 1..];
             }
@@ -1522,6 +1523,11 @@ mod tests {
         assert_eq!(
             notification_text("Tap [here](https://oc.app/a b) or [there]", &[]),
             "Tap [here](https://oc.app/a b) or [there]"
+        );
+
+        assert_eq!(
+            notification_text("Look ![a cat](https://oc.app/cat.png)!", &[]),
+            "Look a cat!"
         );
 
         let long_url = format!("https://oc.app/{}", "x".repeat(300));
