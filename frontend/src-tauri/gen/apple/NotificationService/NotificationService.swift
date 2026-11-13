@@ -3,7 +3,7 @@ import PushCore
 import UniformTypeIdentifiers
 import UserNotifications
 
-// Renders a message push before iOS shows it (#10398 M1): the sender's and the group's avatars,
+// Renders a message push before iOS shows it (#10398 M1): the sender's avatar,
 // the message's photo, and a communication notification so iOS shows the sender like a messaging app. Whatever goes
 // wrong, a notification is delivered, with the server's text if nothing better is ready.
 final class NotificationService: UNNotificationServiceExtension {
@@ -118,9 +118,6 @@ final class NotificationService: UNNotificationServiceExtension {
             serviceName: nil,
             sender: sender,
             attachments: nil)
-        if groupName != nil, let avatar = rendered.conversationAvatar {
-            intent.setImage(INImage(imageData: avatar), forParameterNamed: \.speakableGroupName)
-        }
 
         let interaction = INInteraction(intent: intent, response: nil)
         interaction.direction = .incoming
