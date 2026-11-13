@@ -84,7 +84,11 @@ export type CryptocurrencyDetails = {
 };
 
 export type EnhancedTokenDetails = CryptocurrencyDetails & {
+    // The last balance read from the ledger, 0 if none has been
     balance: bigint;
+    // The ledger didn't answer the last time the balance was asked for (eg. it is out of cycles), so
+    // `balance` may be out of date, or 0 only because it has never been read
+    balanceUnavailable: boolean;
     dollarBalance: number | undefined;
     icpBalance: number | undefined;
     btcBalance: number | undefined;

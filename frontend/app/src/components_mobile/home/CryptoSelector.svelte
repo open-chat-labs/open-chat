@@ -81,7 +81,10 @@
                         blur={$hideTokenBalances}
                         align={"end"}
                         width={"hug"}
-                        fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+                        fontWeight={"bold"}
+                        >{tokenState.balanceUnknown
+                            ? "???"
+                            : tokenState.formattedTokenBalance}</BodySmall>
                 </div>
             </Column>
             <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />

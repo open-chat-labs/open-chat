@@ -1909,6 +1909,13 @@ design export needs. Each entry says where it came up.
   explorer. Copy ledger ID from either kebab copies through `WalletMain` (`panelRequests`). The
   logic is shared with the old wallets (`logic/wallet`: `walletTotal`, `tokenActions`,
   `accountTransactions`). Not yet:
+  - A balance that couldn't be read isn't told apart from a zero. When a ledger doesn't answer
+    (often: it's out of cycles) the client marks it (`balanceUnavailableStore`, the token's
+    `balanceUnavailable`, `walletTokensUnavailable` for the wallet's note) and both old wallets
+    show it: the row's balance marked, "???" with none read, a note naming the tokens, and the
+    desktop's Configure wallet lists them in a group of their own under the rest. `WalletToken`
+    has no such state and the panel lists only what's held, so here the token is missing, or
+    reads 0 on its page and in the settings' token list. No design.
   - All activity merges the first page of each token held that has an index canister (one call
     per token the first time, `WalletHistories`): no Load older across tokens (a token's page
     has it), and a token held at zero, or whose history fails to load, isn't in it. The

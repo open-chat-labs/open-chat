@@ -40,8 +40,12 @@
         width={{ size: "6rem" }}
         fontWeight={"bold"}
         colour={"textSecondary"}>
-        {@const renderValue =
-            tokenState.cryptoBalance === 0n ? "-" : tokenState.formattedTokenBalance}
+        <!-- a ledger which has never answered (eg. it is out of cycles) hasn't said 0 -->
+        {@const renderValue = tokenState.balanceUnknown
+            ? "???"
+            : tokenState.cryptoBalance === 0n
+              ? "-"
+              : tokenState.formattedTokenBalance}
         {renderValue}
     </Body>
 </Container>

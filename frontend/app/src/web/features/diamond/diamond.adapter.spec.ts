@@ -33,6 +33,7 @@ const token = (symbol: string, balance: bigint, dollarBalance?: number): Enhance
     btcBalance: undefined,
     ethBalance: undefined,
     zero: balance === 0n,
+    balanceUnavailable: false,
     urlFormat: "",
 });
 

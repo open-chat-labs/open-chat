@@ -5,7 +5,9 @@
         defaultWalletLedgers,
         OpenChat,
         walletConfigStore,
+        walletTokensUnavailable,
     } from "@client";
+    import type { EnhancedTokenDetails } from "@client";
     import { WalletSettingsForm } from "@src/logic/wallet/walletSettingsForm.svelte";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -69,15 +71,51 @@
     }
 
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let filteredTokens = $derived(
-        $accountsSorted.filter(
-            (token) =>
-                searchTermLower === "" ||
-                token.name.toLowerCase().includes(searchTermLower) ||
-                token.symbol.toLowerCase().includes(searchTermLower),
-        ),
-    );
+    function matchesSearch(token: EnhancedTokenDetails): boolean {
+        return (
+            searchTermLower === "" ||
+            token.name.toLowerCase().includes(searchTermLower) ||
+            token.symbol.toLowerCase().includes(searchTermLower)
+        );
+    }
+    let filteredTokens = $derived($accountsSorted.filter(matchesSearch));
+    // the tokens whose ledger didn't answer (eg. it is out of cycles) go in a group of their own
+    // under the rest: their balances aren't known, so they can't be ordered or judged by them.
+    // With them goes a token the wallet has picked which the list leaves out, a disabled one it
+    // has never read a balance of, so that it can be seen and unpicked
+    let availableTokens = $derived(filteredTokens.filter((token) => !token.balanceUnavailable));
+    let unavailableTokens = $derived.by(() => {
+        const listed = new Set($accountsSorted.map((token) => token.ledger));
+        return [
+            ...filteredTokens.filter((token) => token.balanceUnavailable),
+            ...$walletTokensUnavailable.filter(
+                (token) => !listed.has(token.ledger) && matchesSearch(token),
+            ),
+        ];
+    });
 </script>
+
+{#snippet tokenRow(token: EnhancedTokenDetails, tokens: Set<string>)}
+    <div class="token">
+        <div class="token-details">
+            <img alt={token.name} class:disabled={!token.enabled} class="icon" src={token.logo} />
+            <div>
+                {token.symbol}
+            </div>
+        </div>
+        <BalanceWithRefresh
+            ledger={token.ledger}
+            value={token.balance}
+            allowCached={true}
+            conversion={selectedConversion} />
+        <Toggle
+            checked={tokens.has(token.ledger)}
+            onChange={() => form.toggleToken(token.ledger)}
+            small
+            bottomMargin={false}
+            id={`token_${token.symbol}_toggle`}></Toggle>
+    </div>
+{/snippet}
 
 <Overlay {onClose}>
     <ModalContent closeIcon {onClose}>
@@ -136,31 +174,28 @@
                                 bind:selected={selectedConversion} />
                         </div>
                         <div class="tokens">
-                            {#each filteredTokens as token}
-                                <div class="token">
-                                    <div class="token-details">
-                                        <img
-                                            alt={token.name}
-                                            class:disabled={!token.enabled}
-                                            class="icon"
-                                            src={token.logo} />
-                                        <div>
-                                            {token.symbol}
-                                        </div>
-                                    </div>
-                                    <BalanceWithRefresh
-                                        ledger={token.ledger}
-                                        value={token.balance}
-                                        allowCached={true}
-                                        conversion={selectedConversion} />
-                                    <Toggle
-                                        checked={form.config.tokens.has(token.ledger)}
-                                        onChange={() => form.toggleToken(token.ledger)}
-                                        small
-                                        bottomMargin={false}
-                                        id={`token_${token.symbol}_toggle`}></Toggle>
-                                </div>
+                            {#each availableTokens as token (token.ledger)}
+                                {@render tokenRow(token, form.config.tokens)}
                             {/each}
+                            {#if unavailableTokens.length > 0}
+                                <div class="unavailable">
+                                    <div class="unavailable-title">
+                                        <Translatable
+                                            resourceKey={i18nKey(
+                                                "cryptoAccount.balanceUnavailable",
+                                            )} />
+                                    </div>
+                                    <div class="info">
+                                        <Translatable
+                                            resourceKey={i18nKey(
+                                                "cryptoAccount.balanceUnavailableGroupInfo",
+                                            )} />
+                                    </div>
+                                </div>
+                                {#each unavailableTokens as token (token.ledger)}
+                                    {@render tokenRow(token, form.config.tokens)}
+                                {/each}
+                            {/if}
                         </div>
                     </div>
                 {/if}
@@ -235,6 +270,22 @@
             &.disabled {
                 filter: grayscale(1);
             }
+        }
+    }
+
+    .unavailable {
+        margin-top: $sp4;
+        padding-top: $sp4;
+        border-top: solid 1px var(--bd);
+
+        .unavailable-title {
+            @include font(book, normal, fs-60);
+            text-transform: uppercase;
+            margin-bottom: $sp2;
+        }
+
+        .info {
+            margin-bottom: $sp3;
         }
     }
 

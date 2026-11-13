@@ -19,6 +19,7 @@
     } from "@client";
     import { tokenActions, tokenActionsContext } from "@src/logic/wallet/tokenActions";
     import { getContext } from "svelte";
+    import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import MenuRight from "svelte-material-icons/MenuRight.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";
@@ -69,12 +70,17 @@
             <BodySmall width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
                 >{tokenState.formattedUnitValue}</BodySmall>
         </Container>
+        <!-- the ledger didn't answer (eg. it is out of cycles): the balance last read is marked,
+             and with none ever read a 0 would be a guess -->
+        {#if tokenState.balanceUnavailable}
+            <AlertOutline size="1.25rem" color={ColourVars.validationWarning} />
+        {/if}
         <Subtitle
             blur={$hideTokenBalances}
             align={"end"}
             width={{ size: "6rem" }}
             fontWeight={"bold"}>
-            {tokenState.formattedTokenBalance}
+            {tokenState.balanceUnknown ? "???" : tokenState.formattedTokenBalance}
         </Subtitle>
         <Subtitle
             blur={$hideTokenBalances}
@@ -82,7 +88,7 @@
             width={{ size: "6rem" }}
             colour={"primary"}
             fontWeight={"bold"}>
-            {tokenState.formattedConvertedValue}
+            {tokenState.balanceUnknown ? "???" : tokenState.formattedConvertedValue}
         </Subtitle>
         {#if withMenu}
             {#if tokenState.refreshingBalance}

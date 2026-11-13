@@ -43,6 +43,7 @@ const sol: EnhancedTokenDetails = {
     btcBalance: undefined,
     ethBalance: undefined,
     zero: false,
+    balanceUnavailable: false,
     urlFormat: "",
 };
 
