@@ -2,9 +2,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // The native shells' own text (notifications, notification channels, the incoming call screen,
-// the share extension) is translated with each platform's string resources, in the system
-// language. A language missing a key, or a translation missing a placeholder, shows English or
-// garbled text only on that language's devices, so nothing else would catch it.
+// the share extension) is translated with each platform's string resources, in the language chosen
+// in the app (each shell's AppLanguage), or the system language before the app has said. A
+// language missing a key, or a translation missing a placeholder, shows English or garbled text
+// only on that language's devices, so nothing else would catch it.
 
 const frontend = join(__dirname, "../..");
 const read = (p: string) => readFileSync(join(frontend, p), "utf8");
@@ -15,11 +16,24 @@ const dirs = (p: string) =>
 
 // The web app's language codes that aren't the platforms'
 const PLATFORM_CODE: Record<string, string> = { cn: "zh", iw: "he", jp: "ja" };
-const appLanguages = readdirSync(join(frontend, "app/src/i18n"))
+const appCodes = readdirSync(join(frontend, "app/src/i18n"))
     .filter((f) => f.endsWith(".json"))
     .map((f) => f.replace(".json", ""))
-    .map((code) => PLATFORM_CODE[code] ?? code)
     .sort();
+const appLanguages = appCodes.map((code) => PLATFORM_CODE[code] ?? code).sort();
+
+// Each shell's AppLanguage maps the language chosen in the app to its own string resources
+const languageMap = (source: string, entry: RegExp) =>
+    new Map([...source.matchAll(entry)].map((m) => [m[1], m[2]]));
+
+const sourceFiles = (dir: string, extension: string): string[] =>
+    readdirSync(join(frontend, dir), { withFileTypes: true }).flatMap((d) =>
+        d.isDirectory()
+            ? sourceFiles(`${dir}/${d.name}`, extension)
+            : d.name.endsWith(extension)
+              ? [`${dir}/${d.name}`]
+              : [],
+    );
 
 const placeholders = (s: string) => [...s.matchAll(/%(\d+\$)?[sd@]/g)].map((m) => m[0]).sort();
 
@@ -64,11 +78,58 @@ const androidLocales = dirs(ANDROID_RES).filter(
     (d) => d.startsWith("values-") && !d.startsWith("values-night"),
 );
 
+// AppLanguage.kt's language tags: "zh-CN" reads values-zh-rCN, "he" values-iw, English values
+const androidTags = languageMap(
+    read("tauri-plugin-oc/android/src/main/java/AppLanguage.kt"),
+    /"(\w+)" to "([\w-]+)"/g,
+);
+const androidFolder = (tag: string) => {
+    if (tag === "en") return "values";
+    const [language, region] = tag.split("-");
+    return `values-${language === "he" ? "iw" : language}${region ? `-r${region}` : ""}`;
+};
+
 describe("Android native strings", () => {
     const base = androidStrings("values");
 
     test("cover every language the app has", () => {
         expect(["en", ...androidLocales.map(androidLanguage)].sort()).toEqual(appLanguages);
+    });
+
+    test("invariant 3 every app language maps to its values folder", () => {
+        expect([...androidTags.keys()].sort()).toEqual(appCodes);
+        for (const [code, tag] of androidTags) {
+            expect(dirs(ANDROID_RES), code).toContain(androidFolder(tag));
+        }
+    });
+
+    // A string looked up on any other context is in the phone's language
+    test("invariant 1 every string is looked up on a context localized to the app's language", () => {
+        const files = sourceFiles("tauri-plugin-oc/android/src/main/java", ".kt");
+        expect(files.length).toBeGreaterThan(0);
+        for (const file of files) {
+            const source = read(file);
+            // `val res = context.localized().resources`
+            const aliases = [
+                ...source.matchAll(/val (\w+) = \w+\.localized\(\)\.resources\b/g),
+            ].map((m) => m[1]);
+            // the receiver, if any: an Activity's or Service's own getString has none
+            for (const m of source.matchAll(
+                /(?:([\w.()]+)\.)?get(?:String|QuantityString)\(\s*R\./g,
+            )) {
+                const receiver = (m[1] ?? "").replace(/\.resources$/, "");
+                expect(
+                    receiver.endsWith("localized()") || aliases.includes(receiver),
+                    `${file}: ${m[0]}`,
+                ).toBe(true);
+            }
+        }
+    });
+
+    test("invariant 5 a Play install carries every language, not just the phone's", () => {
+        expect(read("src-tauri/gen/android/app/build.gradle.kts")).toMatch(
+            /bundle\s*\{\s*language\s*\{\s*enableSplit\s*=\s*false/,
+        );
     });
 
     test.each(androidLocales)("%s has every key, with the same placeholders", (dir) => {
@@ -112,18 +173,11 @@ const IOS_SOURCES: Record<string, string[]> = {
 };
 const IOS_TARGETS = Object.keys(IOS_SOURCES);
 
-const swiftFiles = (dir: string): string[] =>
-    readdirSync(join(frontend, dir), { withFileTypes: true }).flatMap((d) =>
-        d.isDirectory()
-            ? swiftFiles(`${dir}/${d.name}`)
-            : d.name.endsWith(".swift")
-              ? [`${dir}/${d.name}`]
-              : [],
-    );
+const swiftFiles = (dir: string) => sourceFiles(dir, ".swift");
 
-// The literals the Swift looks up: NSLocalizedString, PushCore's localized(), and SwiftUI's
-// LocalizedStringKey labels (accessibilityLabel, and the call screen's control(), whose label is its
-// second argument; NativeCallBridge has an unrelated control(kind, on:))
+// The literals the Swift looks up: NSLocalizedString, localized() (AppLanguage's, PushCore's and the
+// call screen's), SwiftUI's accessibilityLabel, and the call screen's control(), whose label is its
+// second argument (NativeCallBridge has an unrelated control(kind, on:))
 const LOOKUPS = [
     /NSLocalizedString\("((?:[^"\\]|\\.)*)"/g,
     /\blocalized\("((?:[^"\\]|\\.)*)"/g,
@@ -179,12 +233,45 @@ function iosStrings(path: string): Map<string, string> {
     return new Map([...text.matchAll(entry)].map((m) => [m[1], m[2]]));
 }
 
+// ShareCore's AppLanguage.swift: the .lproj each app language reads, and where it is saved
+const APP_LANGUAGE_SWIFT = read(
+    "tauri-plugin-oc/ios/ShareCore/Sources/ShareCore/AppLanguage.swift",
+);
+const iosLprojs = languageMap(APP_LANGUAGE_SWIFT, /"(\w+)": "([\w-]+)"/g);
+
+// The app target can't import ShareCore, so the call screen reads the saved language itself
+test("invariant 1 the iOS call screen reads the language where AppLanguage saves it", () => {
+    const key = APP_LANGUAGE_SWIFT.match(/static let key = "(\w+)"/)![1];
+    const group = read("tauri-plugin-oc/ios/ShareCore/Sources/ShareCore/ShareInbox.swift").match(
+        /appGroup = "([^"]+)"/,
+    )![1];
+    const callScreen = read(`${APPLE}/Sources/open-chat/NativeCallScreen.swift`);
+    expect(callScreen).toContain(`suiteName: "${group}"`);
+    expect(callScreen).toContain(`forKey: "${key}"`);
+});
+
 describe.each(IOS_TARGETS)("iOS native strings in %s", (target) => {
     const lprojs = dirs(target).filter((d) => d.endsWith(".lproj"));
     const base = iosStrings(`${target}/en.lproj/Localizable.strings`);
 
     test("cover every language the app has", () => {
         expect(lprojs.map(iosLanguage).sort()).toEqual(appLanguages);
+    });
+
+    // NSLocalizedString and SwiftUI's LocalizedStringKey look in the phone's language
+    test("invariant 1 every lookup goes through AppLanguage", () => {
+        for (const file of IOS_SOURCES[target].flatMap(swiftFiles)) {
+            expect(read(file), file).not.toMatch(
+                /NSLocalizedString\(|accessibilityLabel\("|\bText\("/,
+            );
+        }
+    });
+
+    test("invariant 3 every app language maps to an .lproj here", () => {
+        expect([...iosLprojs.keys()].sort()).toEqual(appCodes);
+        for (const [code, lproj] of iosLprojs) {
+            expect(lprojs, code).toContain(`${lproj}.lproj`);
+        }
     });
 
     test("every .lproj is in the Xcode project for this target", () => {

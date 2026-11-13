@@ -84,6 +84,7 @@
 		2D92B8DD2AA1394245FB960A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		384A3E0AA4FBC0F91F07108F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
+		3D45CB1AEFAC466265C5659B /* OpenChatNotificationService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChatNotificationService.entitlements; sourceTree = "<group>"; };
 		3E43991959F79EC044991304 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		3E98ABD390D63EC208EB7682 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		432AFFBA8DB597CA29B5282A /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -273,6 +274,7 @@
 			children = (
 				1BF1C077855D8A113A972974 /* Info.plist */,
 				29D76D5D46F7055F81CB2842 /* NotificationService.swift */,
+				3D45CB1AEFAC466265C5659B /* OpenChatNotificationService.entitlements */,
 				E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */,
 				50F41C416CDA503CEE724A78 /* Localizable.strings */,
 			);
@@ -926,6 +928,7 @@
 				ARCHS = (
 					arm64,
 				);
+				CODE_SIGN_ENTITLEMENTS = NotificationService/OpenChatNotificationService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = N59KSS69AU;
 				INFOPLIST_FILE = NotificationService/Info.plist;
@@ -947,6 +950,7 @@
 				ARCHS = (
 					arm64,
 				);
+				CODE_SIGN_ENTITLEMENTS = NotificationService/OpenChatNotificationService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = N59KSS69AU;
 				INFOPLIST_FILE = NotificationService/Info.plist;

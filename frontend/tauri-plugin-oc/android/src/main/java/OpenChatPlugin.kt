@@ -237,6 +237,14 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // The language chosen in the app, which the shell's own text follows (AppLanguage)
+    @Command
+    fun setAppLanguage(invoke: Invoke) {
+        val args = invoke.parseArgs(SetAppLanguageArgs::class.java)
+        AppLanguage.set(activity, args.language)
+        invoke.resolve()
+    }
+
     // What Play offers this install, so a store build announces an update only
     // once it can be installed. Resolves without a versionCode when Play offers
     // nothing or cannot be asked; the caller treats both as no update.
@@ -524,6 +532,11 @@ class CallActiveArgs {
 @InvokeArg
 class HapticArgs {
     var style: String? = null
+}
+
+@InvokeArg
+class SetAppLanguageArgs {
+    var language: String? = null
 }
 
 @InvokeArg

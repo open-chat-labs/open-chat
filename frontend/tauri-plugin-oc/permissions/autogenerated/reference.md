@@ -51,6 +51,7 @@ Default permissions for the plugin
 - `allow-stage-share-file`
 - `allow-can-share-files`
 - `allow-take-native-exit-reports`
+- `allow-set-app-language`
 
 ## Permission Table
 
@@ -941,6 +942,32 @@ Enables the save_media command without any pre-configured scope.
 <td>
 
 Denies the save_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-app-language`
+
+</td>
+<td>
+
+Enables the set_app_language command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-app-language`
+
+</td>
+<td>
+
+Denies the set_app_language command without any pre-configured scope.
 
 </td>
 </tr>

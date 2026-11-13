@@ -4,6 +4,7 @@ import CallKit
 import Foundation
 import PushCore
 import PushKit
+import ShareCore
 import Tauri
 import UIKit
 import UserNotifications
@@ -136,7 +137,7 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         let content = UNMutableNotificationContent()
         content.title = call.callerName
         // The app's open-chat_iOS/*.lproj
-        content.body = NSLocalizedString("Missed call", comment: "")
+        content.body = AppLanguage.localized("Missed call")
         content.sound = .default
         switch call.chat {
         case .direct(let userId): content.userInfo = ["type": "direct", "senderId": userId]

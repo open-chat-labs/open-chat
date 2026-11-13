@@ -17,6 +17,7 @@ import androidx.core.graphics.drawable.IconCompat
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.OCPluginCompanion
 import com.ocplugin.app.R
+import com.ocplugin.app.localized
 
 // The ring notification: CallStyle, full-screen intent to the ring activity, Accept and
 // Decline actions. The channel carries the ringtone and vibration and the notification is
@@ -41,9 +42,9 @@ object IncomingCallNotifications {
         val nm = OCPluginCompanion.getNotificationsManager(context)
         nm.deleteNotificationChannel("oc_calls")
         val channel = NotificationChannel(
-            CHANNEL_ID, context.getString(R.string.notification_channel_calls), NotificationManager.IMPORTANCE_HIGH,
+            CHANNEL_ID, context.localized().getString(R.string.notification_channel_calls), NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = context.getString(R.string.notification_channel_calls_description)
+            description = context.localized().getString(R.string.notification_channel_calls_description)
             setSound(
                 Settings.System.DEFAULT_RINGTONE_URI,
                 AudioAttributes.Builder()
@@ -62,7 +63,7 @@ object IncomingCallNotifications {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             WAITING_CHANNEL_ID,
-            context.getString(R.string.oc_call_waiting_channel),
+            context.localized().getString(R.string.oc_call_waiting_channel),
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
             setSound(null, null)
@@ -143,9 +144,9 @@ object IncomingCallNotifications {
                 .setTimeoutAfter(remaining)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setLargeIcon(avatar)
-                .addAction(0, context.getString(R.string.oc_call_waiting_decline), receiverIntent(context, call))
+                .addAction(0, context.localized().getString(R.string.oc_call_waiting_decline), receiverIntent(context, call))
                 // The answer path, which hangs up the current call first (CallRinger.accept).
-                .addAction(0, context.getString(R.string.oc_call_waiting_end_and_answer), activityIntent(context, call, ACTION_ACCEPT))
+                .addAction(0, context.localized().getString(R.string.oc_call_waiting_end_and_answer), activityIntent(context, call, ACTION_ACCEPT))
                 .build()
             OCPluginCompanion.getNotificationsManager(context).notify(TAG, notificationId(call.id), notification)
         } catch (e: Exception) {
@@ -159,7 +160,7 @@ object IncomingCallNotifications {
 
     fun subtitle(context: Context, call: IncomingCall): String {
         if (call.callerName == null) {
-            return context.getString(
+            return context.localized().getString(
                 when (call.kind) {
                     CallKind.AUDIO -> R.string.call_incoming_audio
                     CallKind.VIDEO -> R.string.call_incoming_video
@@ -167,14 +168,14 @@ object IncomingCallNotifications {
                 }
             )
         }
-        val kind = context.getString(
+        val kind = context.localized().getString(
             when (call.kind) {
                 CallKind.AUDIO -> R.string.call_kind_audio
                 CallKind.VIDEO -> R.string.call_kind_video
                 CallKind.BROADCAST -> R.string.call_kind_broadcast
             }
         )
-        return context.getString(R.string.call_is_calling, call.callerName, kind)
+        return context.localized().getString(R.string.call_is_calling, call.callerName, kind)
     }
 
     private fun activityIntent(context: Context, call: IncomingCall, action: String): PendingIntent {

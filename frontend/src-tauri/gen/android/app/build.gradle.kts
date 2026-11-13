@@ -166,6 +166,14 @@ android {
         buildConfig = true
     }
 
+    // Every install carries every language: the shell's own text follows the language chosen in
+    // the app, not the phone's, so Play mustn't leave out the languages the phone isn't set to
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     lint {
         disable += "NullSafeMutableLiveData"
         checkReleaseBuilds = false // Optional: skip all lint on release builds

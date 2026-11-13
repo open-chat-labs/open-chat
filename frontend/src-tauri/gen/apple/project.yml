@@ -201,6 +201,12 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.usernotifications.service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
+    # The language chosen in the app, which the notifications' text follows (ShareCore's AppLanguage)
+    entitlements:
+      path: NotificationService/OpenChatNotificationService.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.oclabs.openchat
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat.NotificationService

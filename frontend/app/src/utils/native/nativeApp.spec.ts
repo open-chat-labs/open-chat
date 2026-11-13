@@ -39,6 +39,8 @@ vi.mock("@stores/chatShortcuts", () => ({
 }));
 vi.mock("@stores/video", () => ({ activeVideoCall: { applyNativeControl: vi.fn() } }));
 vi.mock("./read_elsewhere", () => ({ releaseNotificationsReadElsewhere: vi.fn() }));
+const language = vi.hoisted(() => ({ followLanguageInShell: vi.fn() }));
+vi.mock("./appLanguage", () => language);
 // The real module, so a new import in nativeApp doesn't break this spec
 vi.mock("@client", async (original) => ({
     ...(await original<typeof import("@client")>()),
@@ -58,4 +60,14 @@ test("sign-out clears the tray and chat shortcuts without waiting for the push t
     tasks.forEach((task) => task());
 
     await vi.waitFor(() => expect(plugin.clearAllNotifications).toHaveBeenCalled());
+});
+
+test("invariant 4 the native setup tells the shell the app's language (appLanguage.spec.ts)", async () => {
+    vi.resetModules();
+    language.followLanguageInShell.mockClear();
+    const client = { isNativeApp: () => true, onLogout: vi.fn() } as unknown as OpenChat;
+    const { setupNativeApp } = await import("./nativeApp");
+    setupNativeApp(client, undefined);
+
+    expect(language.followLanguageInShell).toHaveBeenCalledOnce();
 });

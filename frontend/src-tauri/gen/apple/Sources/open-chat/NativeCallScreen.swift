@@ -25,7 +25,7 @@ struct NativeCallScreen: View {
                                 .foregroundColor(.white)
                                 .frame(width: 44, height: 44)
                         }
-                        .accessibilityLabel("Minimise")
+                        .accessibilityLabel(localized("Minimise"))
                         Spacer()
                     }
                 }
@@ -109,12 +109,12 @@ struct NativeCallScreen: View {
                     .background(Color.red)
                     .clipShape(Circle())
             }
-            .accessibilityLabel("Hang up")
+            .accessibilityLabel(localized("Hang up"))
         }
         .padding(.bottom, 16)
     }
 
-    private func control(_ icon: String, _ label: LocalizedStringKey, on: Bool, action: @escaping () -> Void) -> some View {
+    private func control(_ icon: String, _ label: String, on: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.title2)
@@ -123,8 +123,17 @@ struct NativeCallScreen: View {
                 .background(on ? Color.white : Color(white: 0.25))
                 .clipShape(Circle())
         }
-        .accessibilityLabel(label)
+        .accessibilityLabel(localized(label))
     }
+}
+
+// The label in the language chosen in the app, as ShareCore's AppLanguage, which saves its .lproj
+// in the App Group. The app target can't import ShareCore, the plugin's.
+private func localized(_ key: String) -> String {
+    let bundle = UserDefaults(suiteName: "group.com.oclabs.openchat")?.string(forKey: "appLanguage")
+        .flatMap { Bundle.main.path(forResource: $0, ofType: "lproj") }
+        .flatMap { Bundle(path: $0) }
+    return (bundle ?? .main).localizedString(forKey: key, value: nil, table: nil)
 }
 
 struct NativeCallVideo: UIViewRepresentable {

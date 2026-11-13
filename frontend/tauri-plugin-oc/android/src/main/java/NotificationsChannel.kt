@@ -29,14 +29,14 @@ object NotificationsChannel {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelName = context.getString(R.string.notification_channel_messages)
-            val channelDescription = context.getString(R.string.notification_channel_messages_description)
+            val channelName = context.localized().getString(R.string.notification_channel_messages)
+            val channelDescription = context.localized().getString(R.string.notification_channel_messages_description)
 
             // Or IMPORTANCE_DEFAULT, IMPORTANCE_LOW, etc. HIGH enables banners!
             val importance = NotificationManager.IMPORTANCE_HIGH
 
             // Create group!
-            val messagesGroup = NotificationChannelGroup(MESSAGES_GROUP_ID, context.getString(R.string.notification_channel_message_group))
+            val messagesGroup = NotificationChannelGroup(MESSAGES_GROUP_ID, context.localized().getString(R.string.notification_channel_message_group))
             notificationManager.createNotificationChannelGroup(messagesGroup)
 
             // Create the channel!
@@ -56,8 +56,8 @@ object NotificationsChannel {
     }
 
     fun createSummaryChannel(context: Context) {
-        val channelName = context.getString(R.string.notification_channel_summary)
-        val channelDescription = context.getString(R.string.notification_channel_summary_description)
+        val channelName = context.localized().getString(R.string.notification_channel_summary)
+        val channelDescription = context.localized().getString(R.string.notification_channel_summary_description)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // DEFAULT, not LOW, so the summary isn't classed as silent and shows on the lock

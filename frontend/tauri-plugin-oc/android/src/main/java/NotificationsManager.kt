@@ -114,7 +114,7 @@ object NotificationsManager {
         val isGroupConversation = notification.type != NotificationType.DM
 
         // Build "yourself" as the base persona to initialise the messagingStyle!
-        val you = Person.Builder().setName(context.getString(R.string.notification_you)).build()
+        val you = Person.Builder().setName(context.localized().getString(R.string.notification_you)).build()
         val messagingStyle = NotificationCompat.MessagingStyle(you)
 
         // Resolve attachment images up front, in parallel, so the per-message loop
@@ -203,7 +203,7 @@ object NotificationsManager {
         // public version). When >= 2 chats have unread messages, the group summary
         // takes over with its own text.
         val count = notifications.size
-        val publicText = context.resources.getQuantityString(R.plurals.notification_new_messages, count, count)
+        val publicText = context.localized().resources.getQuantityString(R.plurals.notification_new_messages, count, count)
         val publicVersion = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_small)
             .setContentTitle("OpenChat")
@@ -335,7 +335,7 @@ object NotificationsManager {
 
         if (activeNotifications > 0) {
             val title = "OpenChat"
-            val res = context.resources
+            val res = context.localized().resources
             val messages = res.getQuantityString(R.plurals.notification_messages, activeNotifications, activeNotifications)
             val summary = if (activeContexts > 1) {
                 res.getQuantityString(R.plurals.notification_messages_from_chats, activeContexts, messages, activeContexts)
