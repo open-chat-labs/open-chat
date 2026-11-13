@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Push notification text shows a markdown link as its label, not `[label](url)` ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+
 ### Removed
 
 - Remove `edit_message_v2`, which `edit_message_text` replaced ([#10360](https://github.com/open-chat-labs/open-chat/pull/10360))
