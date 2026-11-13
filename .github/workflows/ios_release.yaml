@@ -227,6 +227,11 @@ jobs:
                       | grep -q '<string>group.com.oclabs.openchat</string>'; then
                     echo "::error::The share extension's App Group is missing (enable App Groups on com.oclabs.openchat.Share)"; FAIL=1
                   fi
+                  # The Notification Service Extension reads the app's language from the App Group
+                  if ! codesign -d --entitlements :- "$APP/PlugIns/OpenChatNotificationService.appex" 2>/dev/null \
+                      | grep -q '<string>group.com.oclabs.openchat</string>'; then
+                    echo "::error::The notification extension's App Group is missing (enable App Groups on com.oclabs.openchat.NotificationService)"; FAIL=1
+                  fi
                   if echo "$ENT" | grep -q 'mode=developer'; then
                     echo "::error::Associated domains use ?mode=developer"; FAIL=1
                   fi
