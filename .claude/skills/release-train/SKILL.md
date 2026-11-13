@@ -132,6 +132,21 @@ That makes a constraint that is otherwise incidental load-bearing: the canisters
 
 For patch and minor bumps none of this applies. OTA delivers them and the Android shell ships whenever convenient.
 
+### Native releases (Android and iOS)
+
+A native release that bundles the same web code as a website release uses the website's number: tag `v2.0.NNNN-android` and `v2.0.NNNN-ios` at the website tag's commit. Pushing the tags builds nothing. The release workflows run when a GitHub release is published for the tag, and the developer's go is needed for that. A published Android release reaches users at once: the APK is attached to the public release, sideloaded apps are told about it, and the release hook announces it. iOS only reaches TestFlight.
+
+Publish Android first, then iOS with `--latest=false`:
+
+```bash
+gh release create v2.0.NNNN-android --verify-tag --title v2.0.NNNN-android --notes ""
+gh release create v2.0.NNNN-ios --verify-tag --title v2.0.NNNN-ios --notes "" --latest=false
+```
+
+Sideloaded Android apps ask GitHub's `releases/latest` whether a newer APK exists (`releasePath` in `app/src/utils/shellUpdate.ts`). If an iOS release becomes Latest, they read a release with no APK and no native-version marker, and stop announcing Android updates. If it happens, mark the Android release Latest again with `gh release edit v2.0.NNNN-android --latest`.
+
+Neither release needs the website live first. An app that bundles a newer version than `oc.app/version` reports itself up to date, and the shell discards an older update it downloaded earlier. The canisters the bundle calls do need to be live.
+
 Before the prod proposal, deploy the website to **web-test**. Web-test runs against the live prod backend, so do this once the backend canisters in the train are released and up to date on prod. It is the final check that the website is safe to deploy:
 
 ```bash
