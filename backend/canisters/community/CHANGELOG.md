@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Push notification text shows a markdown link as its label, not `[label](url)` ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Push notification text shows a markdown link as its label, not `[label](url)` ([#10504](https://github.com/open-chat-labs/open-chat/pull/10504))
 
 ## [[2.0.2233](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2233-community)] - 2026-11-13
 
