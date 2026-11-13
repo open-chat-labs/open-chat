@@ -1067,6 +1067,7 @@ export const TelegramUser = /* @__PURE__ */ Type.Object({
     username: Type.Optional(Type.String()),
     display_name: Type.String(),
     photo_id: Type.Optional(Type.String()),
+    bot: Type.Optional(Type.Boolean()),
 });
 
 export type UserId = Static<typeof UserId>;

@@ -79,6 +79,10 @@ pub struct TelegramUser {
     // the photo's url from it and the user's id, as it does for a Discord avatar from its hash. It's
     // the same whichever bot sees the photo, so a new photo has a new id, and a new url.
     pub photo_id: Option<String>,
+    // A bot, which no one can link, so whose messages can't be tipped
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub bot: bool,
 }
 
 #[ts_export]
@@ -153,10 +157,14 @@ impl BridgedUserId {
 }
 
 impl BridgedUser {
-    // Whether anyone could link the account. No one can link a Discord bot or webhook, nor a
+    // Whether anyone could link the account. No one can link a bot, a Discord webhook, or a
     // Telegram chat which sends messages as itself.
     pub fn can_be_linked(&self) -> bool {
-        self.id().can_be_linked() && !matches!(self, BridgedUser::Discord(user) if user.bot)
+        self.id().can_be_linked()
+            && !matches!(
+                self,
+                BridgedUser::Discord(DiscordUser { bot: true, .. }) | BridgedUser::Telegram(TelegramUser { bot: true, .. })
+            )
     }
 
     pub fn id(&self) -> BridgedUserId {
@@ -304,12 +312,20 @@ mod tests {
     }
 
     #[test]
-    fn discord_bots_and_webhooks_cant_be_linked() {
+    fn bots_and_webhooks_cant_be_linked() {
         assert!(BridgedUser::Discord(discord_user()).can_be_linked());
         assert!(
             !BridgedUser::Discord(DiscordUser {
                 bot: true,
                 ..discord_user()
+            })
+            .can_be_linked()
+        );
+        assert!(BridgedUser::Telegram(telegram_user()).can_be_linked());
+        assert!(
+            !BridgedUser::Telegram(TelegramUser {
+                bot: true,
+                ..telegram_user()
             })
             .can_be_linked()
         );
@@ -346,6 +362,7 @@ mod tests {
             username: Some("nelly".to_string()),
             display_name: "Nelly Smith".to_string(),
             photo_id: Some("AQADtLwxG5a_QEZ-".to_string()),
+            bot: false,
         }
     }
 

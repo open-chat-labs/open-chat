@@ -263,6 +263,7 @@ mod tests {
             username: Some("nelly".to_string()),
             display_name: "Nelly".to_string(),
             photo_id: None,
+            bot: false,
         })
     }
 
@@ -402,6 +403,7 @@ mod tests {
                 username: None,
                 display_name: "Sam".to_string(),
                 photo_id: None,
+                bot: false,
             }),
             1,
         );
@@ -435,6 +437,7 @@ mod tests {
                 username: None,
                 display_name: "Sam".to_string(),
                 photo_id: None,
+                bot: false,
             })
         };
         assert_eq!(users.metrics(), BridgedUserMetrics::default());

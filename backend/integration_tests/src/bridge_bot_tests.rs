@@ -119,6 +119,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         username: Some("nelly".to_string()),
         display_name: "Nelly Smith".to_string(),
         photo_id: Some("AQADtLwxG5a_QEZ-".to_string()),
+        bot: false,
     });
 
     // Relayed into a channel and into a group, each message keeps its author on the other platform
@@ -897,11 +898,12 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
     clear_bridge_bot(env, canister_ids, &bridged);
 }
 
-// No one can link a Discord bot or webhook, so a tip on one of their messages is refused, rather
+// No one can link a bot or a Discord webhook, so a tip on one of their messages is refused, rather
 // than held for 30 days and then refunded
-#[test_case(true; "in a channel")]
-#[test_case(false; "in a group")]
-fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
+#[test_case(BridgePlatform::Discord, true; "discord in a channel")]
+#[test_case(BridgePlatform::Discord, false; "discord in a group")]
+#[test_case(BridgePlatform::Telegram, false; "telegram in a group")]
+fn messages_from_bots_cant_be_tipped(platform: BridgePlatform, in_community: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -917,27 +919,35 @@ fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
         env,
         canister_ids,
         *controller,
-        BridgePlatform::Discord,
+        platform,
         in_community,
         &[&tipper],
     );
     let ledger = canister_ids.icp_ledger;
     let tip_amount = 1_0000_0000;
-    let discord_account = |bot| {
-        BridgedUser::Discord(DiscordUser {
+    let account = |bot| match platform {
+        BridgePlatform::Discord => BridgedUser::Discord(DiscordUser {
             id: random_from_u128::<u128>() as u64,
             username: random_string(),
             display_name: None,
             avatar: None,
             bot,
-        })
+        }),
+        BridgePlatform::Telegram => BridgedUser::Telegram(TelegramUser {
+            id: random_telegram_id(),
+            username: None,
+            display_name: random_string(),
+            photo_id: None,
+            bot,
+        }),
+        BridgePlatform::Twitch => unreachable!(),
     };
     let held_for = |account: &BridgedUser| icrc1::Account {
         owner: canister_ids.user_index,
         subaccount: Some(account.id().subaccount()),
     };
 
-    let bots_account = discord_account(true);
+    let bots_account = account(true);
     let (message_id, _) = relay(env, &bridged, &bots_account);
     let response = tip_to(
         env,
@@ -953,8 +963,8 @@ fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
         "{response:?}"
     );
 
-    // A Discord user's message can still be tipped, the tip being held for whoever links them
-    let users_account = discord_account(false);
+    // A person's message can still be tipped, the tip being held for whoever links them
+    let users_account = account(false);
     let (message_id, _) = relay(env, &bridged, &users_account);
     client::approve_spender(env, &tipper, ledger, bridged.spender, tip_amount + ICP_TRANSFER_FEE);
     let response = tip_to(
@@ -1179,6 +1189,7 @@ fn telegram_account(id: i64) -> BridgedUser {
         username: None,
         display_name: random_string(),
         photo_id: None,
+        bot: false,
     })
 }
 
@@ -1402,6 +1413,7 @@ fn reactions_and_replies_on_relayed_messages_go_to_whoever_linked_the_account(in
             username: None,
             display_name: random_string(),
             photo_id: None,
+            bot: false,
         })
     };
     let owners_account = telegram_account(445566778);

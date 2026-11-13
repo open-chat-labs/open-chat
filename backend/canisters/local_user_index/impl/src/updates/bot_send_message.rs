@@ -27,7 +27,7 @@ async fn bot_send_message(args: Args) -> Response {
         let context = extract_access_context_from_chat_context(args.chat_context, state)?;
         if let Some(bridged_from) = &args.bridged_from {
             check_can_relay(bridged_from, &context, state)?;
-            // Only those which can't be told from their ids, eg. Discord bots and webhooks
+            // Only those which can't be told from their ids, eg. bots and Discord webhooks
             if bridged_from.id().can_be_linked() && !bridged_from.can_be_linked() {
                 state.data.unlinkable_bridged_users.insert(bridged_from.id());
             }
