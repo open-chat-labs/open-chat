@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Pushes for group and channel messages carry the sender's own avatar as `senderAvatarId`, never the group's, and none when the sender's avatar isn't known ([#10487](https://github.com/open-chat-labs/open-chat/pull/10487))
+- Tell groups and communities that no one can link a Telegram bot, so tips on its messages are refused ([#10496](https://github.com/open-chat-labs/open-chat/pull/10496))
 
 ## [[2.0.2229](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2229-local_user_index)] - 2026-11-12
 
