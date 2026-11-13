@@ -58,12 +58,15 @@ internal class ExitSelection(val toReport: List<ExitRecord>, val watermark: Long
 
 // The name an exit is reported under, or null for one that isn't a fault: the user swiping the app
 // away, the app exiting itself (restart_app), a package update, a background kill. A SIGKILL is
-// how some OEMs' task killers end an app, so only other signals count.
-internal fun exitReasonName(reason: Int, status: Int): String? = when (reason) {
+// how some OEMs' task killers end an app, so only other signals count. Android kills apps in the
+// background for memory all the time, so a low-memory kill counts only while the user could see or
+// hear the app (a call's foreground service is perceptible).
+internal fun exitReasonName(reason: Int, status: Int, importance: Int): String? = when (reason) {
     ApplicationExitInfo.REASON_CRASH -> "crash"
     ApplicationExitInfo.REASON_CRASH_NATIVE -> "crash_native"
     ApplicationExitInfo.REASON_ANR -> "anr"
-    ApplicationExitInfo.REASON_LOW_MEMORY -> "low_memory"
+    ApplicationExitInfo.REASON_LOW_MEMORY ->
+        if (importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE) "low_memory" else null
     ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "excessive_resource_usage"
     ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "initialization_failure"
     ApplicationExitInfo.REASON_SIGNALED -> if (status == 9) null else "signaled"
@@ -75,7 +78,7 @@ internal fun exitReasonName(reason: Int, status: Int): String? = when (reason) {
 internal fun exitsToReport(exits: List<ExitRecord>, lastReported: Long): ExitSelection {
     val fresh = exits.filter { it.timestamp > lastReported }
     return ExitSelection(
-        toReport = fresh.filter { exitReasonName(it.reason, it.status) != null }.sortedBy { it.timestamp },
+        toReport = fresh.filter { exitReasonName(it.reason, it.status, it.importance) != null }.sortedBy { it.timestamp },
         watermark = fresh.maxOfOrNull { it.timestamp } ?: lastReported,
     )
 }
@@ -83,7 +86,7 @@ internal fun exitsToReport(exits: List<ExitRecord>, lastReported: Long): ExitSel
 // The report for an exit exitsToReport chose: its reason, importance and status, and for an ANR
 // the main thread's block of [anrTrace]. Null for an exit that isn't a fault.
 internal fun exitReport(record: ExitRecord, anrTrace: String?): NativeExitReport.Exit? {
-    val reason = exitReasonName(record.reason, record.status) ?: return null
+    val reason = exitReasonName(record.reason, record.status, record.importance) ?: return null
     return NativeExitReport.Exit(
         timestamp = record.timestamp,
         reason = reason,
