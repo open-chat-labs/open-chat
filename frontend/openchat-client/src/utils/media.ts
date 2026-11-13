@@ -215,6 +215,8 @@ export function fillMessage(msg: Message): boolean {
 }
 
 export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined {
+    // older browsers have no MediaRecorder at all; undefined hides the mic
+    if (typeof MediaRecorder === "undefined") return undefined;
     // prefer mp4 since it works on iOS and desktop, fallback to webm just in case
     if (MediaRecorder.isTypeSupported("audio/mp4")) {
         return "audio/mp4";

@@ -1,5 +1,6 @@
 import {
     attachFailureMessage,
+    audioRecordingMimeType,
     DIAMOND_MAX_SIZES,
     filePermission,
     FREE_MAX_SIZES,
@@ -16,6 +17,18 @@ describe("the permission a file needs", () => {
         expect(filePermission("audio/mpeg")).toBe("audio");
         expect(filePermission("application/pdf")).toBe("file");
         expect(filePermission("")).toBe("file");
+    });
+});
+
+describe("audioRecordingMimeType", () => {
+    // Rollbar #32176: a browser without MediaRecorder crashed the chat footer
+    test("is undefined, not a throw, where MediaRecorder doesn't exist", () => {
+        vi.stubGlobal("MediaRecorder", undefined);
+        try {
+            expect(audioRecordingMimeType()).toBeUndefined();
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 });
 
