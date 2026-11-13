@@ -272,3 +272,15 @@ targets:
         basedOnDependencyAnalysis: false
         inputFiles:
           - $(SRCROOT)/open-chat_iOS/Info.plist
+      # `tauri ios build` archives with signing off, then signs only the app's binary with its
+      # entitlements (the copy phase above). The export re-signs this extension from scratch, and
+      # an unsigned binary has no entitlements to keep, so it would lose the App Group the share
+      # inbox needs (#10403). An ad hoc signature carries them through; the export replaces it.
+      - script: |
+          if [ "${CODE_SIGNING_ALLOWED}" = "NO" ]; then
+            codesign --force --sign - --timestamp=none \
+              --entitlements "${SRCROOT}/ShareExtension/OpenChatShare.entitlements" \
+              "${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+          fi
+        name: Keep the App Group through the Tauri signer
+        basedOnDependencyAnalysis: false

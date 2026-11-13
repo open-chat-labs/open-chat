@@ -218,7 +218,14 @@ jobs:
                     echo "::error::Associated domains lack applinks:oc.app"; FAIL=1
                   fi
                   if ! echo "$ENT" | grep -q '<string>group.com.oclabs.openchat</string>'; then
-                    echo "::error::The share extension's App Group is missing"; FAIL=1
+                    echo "::error::The app's App Group is missing"; FAIL=1
+                  fi
+                  # The share extension hands shares to the app through the App Group. Exporting
+                  # re-signs it with its App Store profile, which drops the group if its App ID
+                  # doesn't have it, and the extension then closes without opening the app.
+                  if ! codesign -d --entitlements :- "$APP/PlugIns/OpenChatShare.appex" 2>/dev/null \
+                      | grep -q '<string>group.com.oclabs.openchat</string>'; then
+                    echo "::error::The share extension's App Group is missing (enable App Groups on com.oclabs.openchat.Share)"; FAIL=1
                   fi
                   if echo "$ENT" | grep -q 'mode=developer'; then
                     echo "::error::Associated domains use ?mode=developer"; FAIL=1

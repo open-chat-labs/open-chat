@@ -376,6 +376,7 @@
 				A025B7C725C080034694B21D /* Resources */,
 				CDAA773B7751E26DF125632E /* Frameworks */,
 				47A18625A5395E3F95637F77 /* Set the app's version */,
+				6A0FB9B9A13DBFD4E61460BC /* Keep the App Group through the Tauri signer */,
 			);
 			buildRules = (
 			);
@@ -572,6 +573,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "for KEY in CFBundleShortVersionString CFBundleVersion; do\n  VALUE=$(/usr/libexec/PlistBuddy -c \"Print :$KEY\" \"${SRCROOT}/open-chat_iOS/Info.plist\")\n  /usr/libexec/PlistBuddy -c \"Set :$KEY $VALUE\" \"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\ndone\n";
+		};
+		6A0FB9B9A13DBFD4E61460BC /* Keep the App Group through the Tauri signer */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Keep the App Group through the Tauri signer";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${CODE_SIGNING_ALLOWED}\" = \"NO\" ]; then\n  codesign --force --sign - --timestamp=none \\\n    --entitlements \"${SRCROOT}/ShareExtension/OpenChatShare.entitlements\" \\\n    \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\nfi\n";
 		};
 		763DA0549F94CD84882899B2 /* Build Rust Code */ = {
 			isa = PBXShellScriptBuildPhase;
