@@ -108,7 +108,11 @@ pub mod happy_path {
             env,
             user.principal,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_group::Args { group_id, user_ids },
+            &local_user_index_canister::invite_users_to_group::Args {
+                group_id,
+                user_ids,
+                invited_by_username: Some(user.username()),
+            },
         );
 
         match response {
@@ -169,7 +173,11 @@ pub mod happy_path {
             env,
             user.principal,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_community::Args { community_id, user_ids },
+            &local_user_index_canister::invite_users_to_community::Args {
+                community_id,
+                user_ids,
+                invited_by_username: Some(user.username()),
+            },
         );
 
         match response {
@@ -194,6 +202,7 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 user_ids,
+                invited_by_username: Some(user.username()),
             },
         );
 

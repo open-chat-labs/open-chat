@@ -1219,6 +1219,7 @@ export class OpenChatAgent extends EventTarget {
     async inviteUsers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
+        callerUsername: string,
     ): Promise<boolean> {
         if (!userIds.length) {
             return Promise.resolve(true);
@@ -1233,6 +1234,7 @@ export class OpenChatAgent extends EventTarget {
                     localUserIndex,
                     id.communityId,
                     userIds,
+                    callerUsername,
                 );
             }
             case "group_chat": {
@@ -1241,6 +1243,7 @@ export class OpenChatAgent extends EventTarget {
                     localUserIndex,
                     id.groupId,
                     userIds,
+                    callerUsername,
                 );
             }
             case "channel": {
@@ -1250,6 +1253,7 @@ export class OpenChatAgent extends EventTarget {
                     id.communityId,
                     id.channelId,
                     userIds,
+                    callerUsername,
                 );
             }
         }

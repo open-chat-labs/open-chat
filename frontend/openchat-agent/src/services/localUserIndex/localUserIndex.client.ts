@@ -406,6 +406,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         localUserIndex: string,
         communityId: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<boolean> {
         return this.update(
             localUserIndex,
@@ -413,6 +414,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             {
                 community_id: principalStringToBytes(communityId),
                 user_ids: userIds.map(principalStringToBytes),
+                invited_by_username: callerUsername,
             },
             inviteUsersResponse,
             LocalUserIndexInviteUsersToCommunityArgs,
@@ -424,6 +426,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         localUserIndex: string,
         chatId: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<boolean> {
         return this.update(
             localUserIndex,
@@ -431,6 +434,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             {
                 group_id: principalStringToBytes(chatId),
                 user_ids: userIds.map(principalStringToBytes),
+                invited_by_username: callerUsername,
             },
             inviteUsersResponse,
             LocalUserIndexInviteUsersToGroupArgs,
@@ -443,6 +447,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         communityId: string,
         channelId: number,
         userIds: string[],
+        callerUsername: string,
     ): Promise<boolean> {
         return this.update(
             localUserIndex,
@@ -451,6 +456,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 community_id: principalStringToBytes(communityId),
                 channel_id: toBigInt32(channelId),
                 user_ids: userIds.map(principalStringToBytes),
+                invited_by_username: callerUsername,
             },
             inviteUsersResponse,
             LocalUserIndexInviteUsersToChannelArgs,

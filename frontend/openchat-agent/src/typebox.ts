@@ -2790,6 +2790,7 @@ export type LocalUserIndexInviteUsersToCommunityArgs = Static<
 export const LocalUserIndexInviteUsersToCommunityArgs = /* @__PURE__ */ Type.Object({
     community_id: CommunityId,
     user_ids: Type.Array(UserId),
+    invited_by_username: Type.Optional(Type.String()),
 });
 
 export type LocalUserIndexInviteUsersToCommunityResponse = Static<
@@ -3087,6 +3088,7 @@ export const LocalUserIndexInviteUsersToChannelArgs = /* @__PURE__ */ Type.Objec
     community_id: CommunityId,
     channel_id: ChannelId,
     user_ids: Type.Array(UserId),
+    invited_by_username: Type.Optional(Type.String()),
 });
 
 export type LocalUserIndexReinstateMissedDailyClaimsArgs = Static<
@@ -7173,6 +7175,7 @@ export type LocalUserIndexInviteUsersToGroupArgs = Static<
 export const LocalUserIndexInviteUsersToGroupArgs = /* @__PURE__ */ Type.Object({
     group_id: ChatId,
     user_ids: Type.Array(UserId),
+    invited_by_username: Type.Optional(Type.String()),
 });
 
 export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args = Static<

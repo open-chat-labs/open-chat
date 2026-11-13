@@ -10,6 +10,9 @@ pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub user_ids: Vec<UserId>,
+    // The inviter's own username, for the invitation's push notification. Older clients don't send it
+    #[serde(default)]
+    pub invited_by_username: Option<String>,
 }
 
 #[ts_export(local_user_index, invite_users_to_channel)]

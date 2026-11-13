@@ -317,6 +317,8 @@ impl MessageContent {
             text = text.replace(&format!("@UserGroup({id})"), &format!("@{name}"));
         }
 
+        let text = render_markdown_links(&text);
+
         const MAX_CHARS: usize = 200;
         Some(text.chars().take(MAX_CHARS).collect())
     }
@@ -395,6 +397,30 @@ impl MessageContent {
             None
         }
     }
+}
+
+// Renders each markdown link `[label](url)` as just its label, leaving anything that isn't a link as
+// it is. The label runs from the nearest `[` before `](`, so a name containing `[` or `]` still renders.
+fn render_markdown_links(text: &str) -> String {
+    let mut rendered = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(mid) = rest.find("](") {
+        let after = &rest[mid + 2..];
+        match (rest[..mid].rfind('['), after.find(')')) {
+            (Some(open), Some(close)) if !after[..close].contains(char::is_whitespace) => {
+                // An image `![alt](url)` renders as its alt text too
+                rendered.push_str(rest[..open].strip_suffix('!').unwrap_or(&rest[..open]));
+                rendered.push_str(&rest[open + 1..mid]);
+                rest = &after[close + 1..];
+            }
+            _ => {
+                rendered.push_str(&rest[..mid + 2]);
+                rest = after;
+            }
+        }
+    }
+    rendered.push_str(rest);
+    rendered
 }
 
 impl MessageContentInitial {
@@ -1408,6 +1434,7 @@ pub struct OgPreview {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Principal;
 
     fn chart() -> PriceChartContent {
         PriceChartContent {
@@ -1474,5 +1501,51 @@ mod tests {
         invalid(|c| c.sources = vec![c.sources[0].clone(); PriceChartContent::MAX_SOURCES + 1]);
         invalid(|c| c.sources[0].url = "http://www.coingecko.com".to_string());
         invalid(|c| c.sources[0].url = "javascript:alert(1)".to_string());
+    }
+
+    fn notification_text(text: &str, mentioned: &[User]) -> String {
+        MessageContent::Text(TextContent { text: text.to_string() })
+            .notification_text(mentioned, &[])
+            .unwrap()
+    }
+
+    /// Push text shows a markdown link as its label, and the 200 char cap applies to the rendered
+    /// text, so a long url can't cut the link in half.
+    #[test]
+    fn notification_text_renders_markdown_links_as_their_labels_before_truncating() {
+        assert_eq!(
+            notification_text(
+                "You have been invited to the community [Foo](/community/abc). Join [[DAO] Builders](/group/def)!",
+                &[]
+            ),
+            "You have been invited to the community Foo. Join [DAO] Builders!"
+        );
+        assert_eq!(
+            notification_text("Tap [here](https://oc.app/a b) or [there]", &[]),
+            "Tap [here](https://oc.app/a b) or [there]"
+        );
+
+        assert_eq!(
+            notification_text("Look ![a cat](https://oc.app/cat.png)!", &[]),
+            "Look a cat!"
+        );
+
+        let long_url = format!("https://oc.app/{}", "x".repeat(300));
+        assert_eq!(notification_text(&format!("Open [Foo]({long_url}) now"), &[]), "Open Foo now");
+    }
+
+    /// Push text shows a mentioned user as @username, and leaves a user it has no username for as it is.
+    #[test]
+    fn notification_text_names_mentioned_users() {
+        let known = UserId::from(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]));
+        let unknown = UserId::from(Principal::from_slice(&[8, 7, 6, 5, 4, 3, 2, 1]));
+        let mentioned = [User {
+            user_id: known,
+            username: "julian".to_string(),
+        }];
+        assert_eq!(
+            notification_text(&format!("Hi @UserId({known}) and @UserId({unknown})"), &mentioned),
+            format!("Hi @julian and @UserId({unknown})")
+        );
     }
 }

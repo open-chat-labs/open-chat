@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::invite_users_to_community::{Response::*, *};
-use types::{CanisterId, CommunityId, MessageContentInitial, TextContent, UserId};
+use types::{CanisterId, CommunityId, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -26,7 +26,14 @@ async fn invite_users_to_community(args: Args) -> Response {
         Ok(response) => match response {
             community_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    commit(invited_by, args.community_id, s.community_name, s.invited_users, state);
+                    commit(
+                        invited_by,
+                        args.invited_by_username,
+                        args.community_id,
+                        s.community_name,
+                        s.invited_users,
+                        state,
+                    );
                 });
                 Success
             }
@@ -54,18 +61,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
 
 fn commit(
     invited_by: UserId,
+    invited_by_username: Option<String>,
     community_id: CommunityId,
     community_name: String,
     invited_users: Vec<UserId>,
     state: &mut RuntimeState,
 ) {
-    let now = state.env.now();
     let text = format!(
         "You have been invited to the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
     );
-    let message = MessageContentInitial::Text(TextContent { text });
-
-    for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone(), now);
-    }
+    state.push_invitation(text, invited_by, invited_by_username, invited_users);
 }
