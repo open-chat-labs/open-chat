@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "{platform} उपयोगकर्ता",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "बंद करें",
+        "reload": "रीलोड करें",
+        "toDesktop": "यह विंडो अब डेस्कटॉप लेआउट के लिए पर्याप्त चौड़ी है। बदलने के लिए रीलोड करें।",
+        "toPhone": "यह विंडो अब फ़ोन के आकार की है। फ़ोन लेआउट पर जाने के लिए रीलोड करें।"
+    },
     "nativeUpdate": {
         "downloadingTitle": "एक क्षण! अपडेट हो रहा है ...",
         "downloadingMessage": "हम एक छोटा अपडेट डाउनलोड कर रहे हैं और फिर आप आगे बढ़ सकेंगे ...",

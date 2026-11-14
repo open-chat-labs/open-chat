@@ -58,6 +58,9 @@ every workstream.
     Thread replies count, and the search on OpenChat for people and bots outside the list, and
     public groups in a Groups tab (back at the user's request, 2026-11-12; web/04 has none);
     GAPS.md ("Chat list").
+  - the layout by width (10b): the web tree is for desktop widths only; below 768px the old mobile
+    UI until N15, then the native tree, and a window resized across the line is offered a reload
+    (the narrow pass was dropped on 2026-11-14); GAPS.md ("Layout switch").
   - the native and operator hooks (L6): the console hooks in every App (`logic/moderation`), a
     platform moderator's freeze and unfreeze (a group's header menu and a group preview's, a
     community's header menu only), with Undo after a freeze, a DM's suspend and unsuspend,
@@ -83,7 +86,7 @@ brief's build step N + 1**, as phases 1–3 were.
 | 7 | 8 | Calls |
 | 8 | 9 | Profile, CHIT, achievements, daily puzzle, Diamond, Explore, the join gate |
 | 9 | 10 | Pages with no new design: the legal pages and `/diamond` (Landing and Learn are done) |
-| 10 | 11 | Guest pass, then the narrow-layout pass |
+| 10 | 11 | Guest pass, then the layout picked by width (the narrow pass was dropped, 10b) |
 
 Some TODOs and GAPS.md notes used the brief's step numbers. S0 below retags them:
 
@@ -131,7 +134,7 @@ any time.
 | Diamond (8e) | the `/diamond` page (9a) |
 | Explore (8a) | Landing's featured communities (9b) |
 | the call-mode decision (7a) | the call panel (7b), then `MiniCall` (7c) |
-| almost everything | the guest and narrow passes (10a, 10b), then calls (7a–7c), last |
+| almost everything | the guest pass (10a), then calls (7a–7c), last |
 
 A screen that opens something not built yet, such as "Get Diamond" in `CreateGroupDialog` or the
 join gate, waits for nothing. It opens the dialog by its query param or the dialog host, and gets a
@@ -255,14 +258,14 @@ ROUTES decision 5.
 | [9a](https://github.com/open-chat-labs/open-chat/issues/10132) | **Done:** what's left is in GAPS.md ("Legal pages and `/diamond`"). **The legal pages and `/diamond`.** Learn's extra doc pages (the library change, which 9a makes first), `/terms`, `/privacy`, `/guidelines`, and `/csea-reporting` with the moderators' NCA reporting checklist. `/diamond` from `DiamondContent`. | M | 8e, for `/diamond` only | `features/marketing` |
 | [9b](https://github.com/open-chat-labs/open-chat/issues/10133) | **Landing's loose ends.** Featured communities (from Explore's hot list), the Android APK link (GitHub releases, as the old landing page). | S | 8a | `features/marketing` |
 
-### Guest and narrow passes (phase 10)
+### The guest pass and the layout switch (phase 10)
 
-Last. These touch everything, so split them by area when we get there.
+The guest pass touches everything, so it came last.
 
 | Id | Workstream | Size | Needs | Touches |
 |---|---|---|---|---|
 | [10a](https://github.com/open-chat-labs/open-chat/issues/10134) | **Done:** what's left is in GAPS.md ("Guest pass"). **Guest pass.** Explore and public chats read-only, the composer's Sign in prompt, the routes ROUTES.md marks "sign in". Moves the sign-in dialog state to `app/src/logic/auth`. | M | the screens it covers | `Router` (its route effect), `Composer.svelte` |
-| [10b](https://github.com/open-chat-labs/open-chat/issues/10135) | **Narrow pass (< 768px).** One column at a time, Back in the conversation header, `--vh`, the shell's minimum width. Stop falling back to the old UI below 768px (`selectLayout`). | L | most of the pool | `shell/*`, `AppScreen`, `regions.ts`, `utils/layout.ts` |
+| [10b](https://github.com/open-chat-labs/open-chat/issues/10135) | **Done:** what's left is in GAPS.md ("Layout switch"). **The layout by width, and a reload banner.** The web tree is for desktop widths only. The narrow pass this row used to be (one column, Back in the header, `--vh`) was dropped on 2026-11-14, in favour of the native tree at N15 (native PLAN.md). `selectLayout` picks by width at load: below 768px the old mobile UI until N15, then the native tree; at 768px and up the web tree, at the shell's minimum width (919px) scrolling sideways below it. A window resized across 768px is offered a reload of the same URL, never re-laid out live: a banner in the web tree ("phone-sized") and in the old trees ("wide enough for the desktop layout"), with Reload and ×, debounced; dismissed, it stays hidden until the window crosses back and again. The decision and the dismissal are `logic/layout`, shared by every tree. | S | – | `utils/layout.ts`, `main.ts`, the App roots |
 
 ### Loose ends
 

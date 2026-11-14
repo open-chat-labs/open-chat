@@ -1614,7 +1614,8 @@ design export needs. Each entry says where it came up.
   - a channel's Manage has no back arrow to its community yet (the community has no Channels
     page).
   - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has
-    no narrow layout for it.
+    no narrow layout for it. Below 768px a browser gets the old mobile UI (10b), so it only shows
+    in a window narrowed after load.
   - the nav's subtitle and the About page say "1 members": the app's `memberCount` has no plural.
   - a member's read-only Rules page still shows the editor's character counter and hint.
   - Invite & share's page title says "Invite and share" (InviteDialog's own string).
@@ -2147,7 +2148,8 @@ design export needs. Each entry says where it came up.
     - a guest who follows an in-app link to a page that needs an account (a `/wallet` link in a
       message) leaves the preview for Explore under the sign-in; Back returns to it.
     - the chat list's empty state's "New message" has no handler (for anyone).
-    - narrow screens (10b): a phone browser gets the old UI, whose guest handling is its own.
+    - narrow screens: a phone browser gets the old mobile UI until N15 and then the native tree
+      (10b), each with its own guest handling.
 - **Landing** (9b #10133, `features/marketing`): the Communities section shows four: the OpenChat
   community first (`getOpenChatCommunity`, as mobile's welcome page has it; production only, so
   elsewhere there's none), then the top of Explore's ranking without it (`pinFirst`). The ranking
@@ -2195,11 +2197,12 @@ design export needs. Each entry says where it came up.
     Diamond dialog (after signing in, signed out: an emailed sign-in link too, while this page
     is open) rather than paying on the page as the dialog does. TODO(design): the page's head ("Diamond", "Benefits of Diamond") and the card under it
     have no design; the old page showed the feature table alone.
-  - Narrow screens: a phone browser gets the old UI until the narrow pass (10b): the old desktop
-    pages (from the same content) in a web build (`OC_MOBILE_LAYOUT=v1`), and "not found" where the
-    old mobile tree is mounted (`v2`), which has no legal routes of its own. The web's doc pages are
-    checked down to 390px in a narrowed window; `/diamond`'s `DiamondContent` is cramped there (its
-    own 32px padding and a feature column that wraps), as the dialog is: for the narrow pass.
+  - Narrow screens: a phone browser gets the old mobile UI until N15, then the native tree (10b):
+    the old desktop pages (from the same content) in a web build (`OC_MOBILE_LAYOUT=v1`), and "not
+    found" where the old mobile tree is mounted (`v2`), which has no legal routes of its own. The
+    web's doc pages are checked down to 390px in a narrowed window; `/diamond`'s `DiamondContent`
+    is cramped there (its own 32px padding and a feature column that wraps), as the dialog is.
+    The web tree is for desktop widths only, so that stays.
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
@@ -2296,8 +2299,9 @@ design export needs. Each entry says where it came up.
   thread's beside it, and the toast layer), measured only while it plays, at most once a frame,
   again as they resize, come or go, the window resizes or the shell scrolls. Its confetti is the
   library's layer, which takes no clicks, so a toast's Undo or × under a falling piece still
-  works. With the middle panel hidden (the narrow layout showing the list; 10b) it plays centred
-  at the window's bottom, over its safe area and any toast; that isn't checked.
+  works. With the middle panel hidden (the shell's single column showing the list) it plays
+  centred at the window's bottom, over its safe area and any toast; that isn't checked, and the
+  shell's minimum width keeps it from showing (10b: no narrow layout).
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
@@ -2321,9 +2325,9 @@ design export needs. Each entry says where it came up.
     across the part of the panel that shows (`shell/bottomPlacement`'s `toastSpot`, measured from
     `shell/bottomAnchors`). Before, it was centred on the window, 24px over its bottom, partly over
     the composer.
-  - **No middle panel** (the narrow layout showing the list; 10b): centred on the window, 24px over
-    its bottom safe area, as before. Not seen yet (the shell's minimum width keeps it from
-    showing until the narrow pass).
+  - **No middle panel** (the shell's single column showing the list): centred on the window, 24px
+    over its bottom safe area, as before. Never seen: the shell's minimum width keeps it from
+    showing, and the web tree has no narrow layout (10b).
   - **The right column's foot** (TODO(design)): web/00 docks a toast at the foot of the panel whose
     content changed, so a toast about a thread's or a details panel's action belongs at the right
     column's foot. They all go to the middle panel's: the app's toasts (`toastStore`'s
@@ -2510,7 +2514,7 @@ design export needs. Each entry says where it came up.
   `NonMessageEvent`s use too; L2), smaller in `--ink-3`; the aggregated joins, deletions and role
   changes have none, as in the old trees. The web plan's conversation (`web/05-conversation.md`)
   doesn't cover these lines, so they stay the old UI's (`TODO(design)`). The header has no back
-  button (`ConversationHeader` has none; narrow layouts don't show the shell yet), and its menu does
+  button (`ConversationHeader` has none; the web tree has no narrow layout, 10b), and its menu does
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. A
   DM's header has the old last-seen line (L2: `LastOnline` in `logic/conversation`, over
   `directChatSubtitle` in `@client`, shared with the old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
@@ -2674,7 +2678,7 @@ design export needs. Each entry says where it came up.
   (`messagePermissionsForSelectedChatStore`), and the voice limit a Diamond membership bought
   meanwhile (`maxMediaSizes($isDiamondStore)`). The "+" builders' payments are staged too (5d,
   below). Not yet: a puzzle result isn't staged, and the composer doesn't send it; the mobile
-  app's native recent-media strip waits for the narrow pass.
+  app's native recent-media strip is the native tree's (N15), not this tree's.
 - **Voice messages in the composer** (5c): the composer's own recorder (record, then review: play
   back, seek, delete or send), where the old trees' mic staged the clip as an attachment to send
   with a caption: here it goes straight out (`sendVoiceMessage`: the client makes the audio
@@ -2831,7 +2835,7 @@ design export needs. Each entry says where it came up.
     out). The tips a message got (5a) aren't shown either;
   - a proposal's collapse waits for proposals (the thread's items, reply in thread and follow /
     unfollow, are 4c's: done);
-  - the mobile app's "download media" (native save) is left to the narrow pass;
+  - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;
   - the library's `EmojiPicker` has a fixed set of about 56 emoji: no search over all of them,
     no custom emoji (`@CE(code)`, which the old pickers offered) and no skin tones. A custom
     emoji someone else reacted with shows as its code on the chip, and it can't be picked;
@@ -2854,7 +2858,39 @@ design export needs. Each entry says where it came up.
   L6's native half, left as it is (PLAN L6): the native apps keep the old UI until the native tree
   (`src/native`, which registers them itself) takes over at N15, so this tree may never need them.
 - **Viewport height**: the existing trees keep `--vh` in step with the visual viewport
-  (`calculateHeight`) for mobile browsers. Not needed until the narrow layouts come in.
+  (`calculateHeight`) for mobile browsers. Not needed: phones get the old mobile UI until N15 and
+  then the native tree (10b).
+- **Layout switch** (10b): the web tree is for desktop widths only (the user's decision of
+  2026-11-14; the narrow pass was dropped in favour of the native tree at N15). `selectLayout`
+  picks a tree by width at load: below 768px the old mobile UI (`v2`, or the old desktop tree's
+  narrow mode, `v1`, in a build with `OC_MOBILE_LAYOUT=v1`), and the native tree after N15; at
+  768px and up this tree, scrolling sideways below the shell's minimum (919px). A window resized
+  across 768px is offered a reload, never re-laid out live: `LayoutSwitchBanner` in
+  `logic/layout` (the decision, `layoutSwitchAt` in `utils/layout.ts`, and the dismissal), shown
+  by this tree (`shell/LayoutSwitchBanner`), the old mobile tree and the old desktop tree, each in
+  its own look. Dismissed, it stays hidden until the window crosses back and then again. Only
+  switches to or from a new tree are offered (a build without them behaves as before), never in
+  the native apps.
+  - TODO(design): no design for the banner. Here a slim bar floating at the top of the window
+    (the library's `Banner` and a close button on a raised card), over the shell and under the
+    dialogs' veil; in the old trees a bar across the top, where their update banner shows.
+  - The native tree (`src/native`) doesn't show it yet: a phone-width browser only gets it in a
+    build with `OC_NATIVE_LAYOUT=v4`, and its banner (towards the desktop layout) is N15's.
+  - **The reload keeps the URL**, so the user lands on the same route in the other tree. From the
+    route tables (`utils/routeTable.ts`, `components_mobile/Router.svelte`,
+    `components/Router.svelte`):
+    - every path the old mobile tree routes, this tree routes too;
+    - the chat, community, favourite, `/communities`, `/share` and `/admin` paths are in every
+      tree;
+    - no equivalent in the old mobile tree: `/wallet/:ledger`, `/wallet/send`, `/wallet/receive`,
+      `/wallet/swap` and `/wallet/recipients` (it has `/wallet` only), and the marketing and legal
+      pages (`/home`, `/features`, `/roadmap`, `/blog`, `/whitepaper`, `/architecture`, `/faq`,
+      `/terms`, `/privacy`, `/guidelines`, `/csea-reporting`, `/diamond`). They fall into its
+      legacy `/:chatId/...` route; signed out, it shows its welcome screen for them;
+    - no equivalent in the old desktop tree (the narrow one in a `v1` build): `/wallet` and its
+      sub-paths, `/notifications`, `/welcome` and `/profile_summary` (ROUTES.md, decision 2);
+    - the query-param views (`?threads`, `?profile`, `?panel=activity`, the dialogs' params) are
+      this tree's; the old trees ignore them and show the path's screen.
 - **Platform operators and moderators** (L6 #10141, `logic/moderation`): what the old desktop
   offers them, and where it is here. Built:
   - **The console hooks** (`window.platformModerator`, `window.platformOperator`): now

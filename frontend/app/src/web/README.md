@@ -1,8 +1,9 @@
 # New web UI (`src/web`)
 
-The new OpenChat web UI, built from `@openchat/ui` (`frontend/openchat-ui`). It replaces the view
-layer of `src/components` first, and of `src/components_mobile` (mobile and native) after the narrow
-pass. Routes, stores, the `OpenChat` client and every backend call stay as they are.
+The new OpenChat web UI, built from `@openchat/ui` (`frontend/openchat-ui`), for desktop widths. It
+replaces the view layer of `src/components`. Phones (`src/components_mobile`, in the apps and in a
+browser) get the native tree (`src/native`) instead, at its cutover (native plan N15). Routes,
+stores, the `OpenChat` client and every backend call stay as they are.
 
 `frontend/CLAUDE.md` applies here too, in particular "Reuse before writing" and "The client". This
 file adds what is particular to the web tree.
@@ -17,10 +18,15 @@ this tree and `@openchat/ui` out of the bundle altogether.
 
 Native builds leave it out for now (see `GAPS.md`).
 
-`selectLayout` (`utils/layout.ts`) mounts it on viewports of 768px and up. Narrower viewports keep
-getting the existing apps until the narrow layouts are designed. In a build that also has the native
-tree (`OC_NATIVE_LAYOUT=v4`, `src/native`), it's every browser that doesn't get the native tree,
-narrow desktop windows included; phones and tablets in portrait get the native tree.
+`selectLayout` (`utils/layout.ts`) mounts it on viewports of 768px and up, picked once at load.
+Between 768px and the shell's minimum width (919px) it scrolls sideways. Narrower viewports get the
+old mobile UI until N15, and the native tree after it: in a build that also has the native tree
+(`OC_NATIVE_LAYOUT=v4`, `src/native`), every viewport below 768px and tablets in portrait get that.
+The web tree has no narrow layout of its own (PLAN 10b: the narrow pass was dropped on 2026-11-14).
+
+A window resized across 768px isn't re-laid out: it's offered a reload of the same URL, which picks
+again (`shell/LayoutSwitchBanner`, from `logic/layout`, which the old trees show too; GAPS.md,
+"Layout switch").
 
 ## Layout
 

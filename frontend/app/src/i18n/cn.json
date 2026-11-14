@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "{platform} 用户",
     "bridgedUserWithPlatform": "{name}（{platform}）",
+    "layoutSwitch": {
+        "dismiss": "关闭",
+        "reload": "重新加载",
+        "toDesktop": "此窗口现在已足够宽，可使用桌面布局。重新加载以切换。",
+        "toPhone": "此窗口现在为手机尺寸。重新加载以切换到手机布局。"
+    },
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",
         "downloadingMessage": "我们正在下载一个快速更新，稍后即可继续 ...",

@@ -54,6 +54,7 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Router from "./Router.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
+    import LayoutSwitchBanner from "./LayoutSwitchBanner.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
@@ -250,6 +251,7 @@
 
     {#if !client.isNativeApp()}
         <UpgradeBanner />
+        <LayoutSwitchBanner />
     {/if}
 
     {#if $snowing}
