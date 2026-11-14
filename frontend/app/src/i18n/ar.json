@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "مستخدم {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "إغلاق",
+        "reload": "إعادة التحميل",
+        "toDesktop": "أصبحت هذه النافذة الآن عريضة بما يكفي لتخطيط سطح المكتب. أعد التحميل للتبديل.",
+        "toPhone": "أصبحت هذه النافذة الآن بحجم الهاتف. أعد التحميل للتبديل إلى تخطيط الهاتف."
+    },
     "nativeUpdate": {
         "downloadingTitle": "لحظة واحدة! جارٍ التحديث ...",
         "downloadingMessage": "نقوم بتنزيل تحديث سريع وستتمكن من المتابعة بعد قليل ...",

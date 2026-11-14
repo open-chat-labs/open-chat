@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "{platform} ユーザー",
     "bridgedUserWithPlatform": "{name}（{platform}）",
+    "layoutSwitch": {
+        "dismiss": "閉じる",
+        "reload": "再読み込み",
+        "toDesktop": "このウィンドウはデスクトップ用レイアウトに十分な幅になりました。再読み込みすると切り替わります。",
+        "toPhone": "このウィンドウはスマートフォンサイズになりました。再読み込みするとスマートフォン用レイアウトに切り替わります。"
+    },
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",
         "downloadingMessage": "簡単な更新をダウンロードしています。まもなく続行できます ...",

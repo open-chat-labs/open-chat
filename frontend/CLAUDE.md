@@ -6,7 +6,7 @@ Rules marked (lint) fail `npm run lint`. The rest are checked in review.
 
 ## Where we're going
 
-The UI is being rebuilt as one component tree, `app/src/web`, on `@openchat/ui` (`frontend/openchat-ui`). It will replace the desktop tree (`components/`) and later the mobile and native one (`components_mobile/`). Only the views change: the client, the stores, the pure `@client` functions and the state modules in `app/src/logic` are reused, not rewritten.
+The UI is being rebuilt as one component tree, `app/src/web`, on `@openchat/ui` (`frontend/openchat-ui`). It will replace the desktop tree (`components/`); the native tree, `app/src/native`, replaces the mobile and native one (`components_mobile/`). Only the views change: the client, the stores, the pure `@client` functions and the state modules in `app/src/logic` are reused, not rewritten.
 
 - `app/src/web/PLAN.md`: the remaining work and its order.
 - `app/src/web/README.md`: how the web tree is put together.
@@ -14,10 +14,10 @@ The UI is being rebuilt as one component tree, `app/src/web`, on `@openchat/ui` 
 
 This file applies everywhere, `src/web` included. Where it and the `src/web` docs disagree, stop and ask. Don't pick one.
 
-The existing trees stay live for months (mobile and native until the narrow pass). While they do:
+The existing trees stay live for months (mobile and native until the native tree, `app/src/native`, takes over at its cutover, N15; `src/web` is for desktop widths only). While they do:
 
 - A bug fix goes into the shared layer (client, `@client` functions, `app/src/logic`, `app/src/core`) when it can, so every tree gets it. A fix that can only live in a legacy view gets the matching change in `src/web`, or a `GAPS.md` entry if that screen isn't built yet.
-- New features are built in `src/web` only, unless mobile or native needs them before the narrow pass.
+- New features are built in `src/web` only (and `src/native` for phones), unless mobile or native needs them before N15.
 - Don't refactor legacy views, except to extract logic as described under "Reuse before writing".
 - The legacy landing pages' roadmap, whitepaper and blog are frozen. Content changes go to Learn's data in `app/src/web/features/marketing/learn` only.
 

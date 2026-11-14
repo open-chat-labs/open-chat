@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "Użytkownik {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "Zamknij",
+        "reload": "Załaduj ponownie",
+        "toDesktop": "To okno jest teraz wystarczająco szerokie dla układu komputerowego. Załaduj ponownie, aby przełączyć.",
+        "toPhone": "To okno ma teraz rozmiar telefonu. Załaduj ponownie, aby przełączyć na układ telefonu."
+    },
     "nativeUpdate": {
         "downloadingTitle": "Chwileczkę! Aktualizowanie ...",
         "downloadingMessage": "Pobieramy szybką aktualizację i za chwilę będzie można kontynuować ...",

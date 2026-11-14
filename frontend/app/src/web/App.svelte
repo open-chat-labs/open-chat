@@ -28,6 +28,7 @@
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "@i18n/openchatUi";
     import RouteScreen from "./features/app/RouteScreen.svelte";
+    import LayoutSwitchBanner from "./shell/LayoutSwitchBanner.svelte";
     import Toasts from "./shell/Toasts.svelte";
     import Router from "./router/Router.svelte";
 
@@ -102,6 +103,7 @@
             <RouteScreen />
         </Router>
         <Toasts library={libraryToasts} />
+        <LayoutSwitchBanner />
     {/if}
 
     {#snippet failed(_error, reset)}
