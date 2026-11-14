@@ -19,7 +19,14 @@ import {
     writeNativeCssVariables,
 } from "./theme/themes";
 import { linkFonts } from "./utils/fonts";
-import { layoutOverrideOf, selectLayout, type LayoutOverride } from "./utils/layout";
+import {
+    layoutOverrideOf,
+    selectLayout,
+    STARTUP_LAYOUT_CONTEXT,
+    type LayoutInputs,
+    type LayoutOverride,
+    type StartupLayout,
+} from "./utils/layout";
 
 // Picks the app variant once at startup (`selectLayout`, utils/layout.ts). The native Android build
 // ships OC_MOBILE_LAYOUT=v2, so phones (viewport < 768px) always mount the mobile App
@@ -30,9 +37,9 @@ import { layoutOverrideOf, selectLayout, type LayoutOverride } from "./utils/lay
 // implement that native cold-start routing.
 //
 // A build with OC_WEB_LAYOUT=v3 mounts the new web UI (src/web) instead of the v1 App on >=768px
-// viewports, outside the native apps. A build with OC_NATIVE_LAYOUT=v4 mounts the native tree
-// (src/native) in the native apps and on phones instead of the mobile App; it takes over the native
-// cold-start machinery. Both are opt-in per build while they are being built: the flags are
+// viewports, outside the native apps: it is for desktop widths only (web plan 10b). A build with
+// OC_NATIVE_LAYOUT=v4 mounts the native tree (src/native) in the native apps and on phones instead
+// of the mobile App; it takes over the native cold-start machinery. Both are opt-in per build while they are being built: the flags are
 // build-time constants, so without one the conditions below are constant-false and the bundler
 // leaves that tree out of the build.
 //
@@ -40,7 +47,11 @@ import { layoutOverrideOf, selectLayout, type LayoutOverride } from "./utils/lay
 // The decision is made synchronously before any import starts, and the native side queues
 // cold-start events until the App signals svelteReady, so deferring the mount by one chunk load is
 // safe.
-const layout = selectLayout({
+//
+// The trees never swap live. A window resized across the line between the phone layout and the
+// desktop one is offered a reload instead (`LayoutSwitchBanner`, logic/layout). For that, every tree
+// gets what was mounted and what it was picked from as context (STARTUP_LAYOUT_CONTEXT).
+const layoutInputs: LayoutInputs = {
     mobileLayoutFlag: import.meta.env.OC_MOBILE_LAYOUT,
     webLayoutFlag: import.meta.env.OC_WEB_LAYOUT,
     nativeLayoutFlag: import.meta.env.OC_NATIVE_LAYOUT,
@@ -49,7 +60,9 @@ const layout = selectLayout({
     canHover: matchesMedia("(hover: hover)"),
     nativeApp: isTauriApp(),
     override: storedLayoutOverride(),
-});
+};
+const layout = selectLayout(layoutInputs);
+const startupLayout: StartupLayout = { layout, inputs: layoutInputs };
 
 function matchesMedia(query: string): boolean {
     return window.matchMedia?.(query).matches ?? false;
@@ -97,7 +110,10 @@ const app = (
             ? import("./web/App.svelte")
             : import("./components/App.svelte")
 ).then(({ default: App }) => {
-    const mounted = mount(App, { target: document.body });
+    const mounted = mount(App, {
+        target: document.body,
+        context: new Map([[STARTUP_LAYOUT_CONTEXT, startupLayout]]),
+    });
     clearStartupBackground();
     return mounted;
 });

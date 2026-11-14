@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "Utilisateur {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "Ignorer",
+        "reload": "Recharger",
+        "toDesktop": "Cette fenêtre est maintenant assez large pour la version ordinateur. Rechargez pour changer.",
+        "toPhone": "Cette fenêtre a maintenant la taille d'un téléphone. Rechargez pour passer à la version téléphone."
+    },
     "nativeUpdate": {
         "downloadingTitle": "Un instant ! Mise à jour ...",
         "downloadingMessage": "Nous téléchargeons une petite mise à jour et vous pourrez continuer ...",

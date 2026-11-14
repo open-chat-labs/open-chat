@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "Người dùng {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "Bỏ qua",
+        "reload": "Tải lại",
+        "toDesktop": "Cửa sổ này giờ đủ rộng cho giao diện máy tính. Tải lại để chuyển.",
+        "toPhone": "Cửa sổ này giờ có kích thước điện thoại. Tải lại để chuyển sang giao diện điện thoại."
+    },
     "nativeUpdate": {
         "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
         "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",

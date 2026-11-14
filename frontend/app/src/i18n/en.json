@@ -1446,6 +1446,12 @@
     "joinGroup": "Join {level}",
     "joinGroupFailed": "Unable to join {level}",
     "lastOnline": "Last online {duration} ago",
+    "layoutSwitch": {
+        "dismiss": "Dismiss",
+        "reload": "Reload",
+        "toDesktop": "This window is now wide enough for the desktop layout. Reload to switch.",
+        "toPhone": "This window is now phone-sized. Reload to switch to the phone layout."
+    },
     "learnToEarn": {
         "accepted_swap_offer": "Accept a swap offer",
         "changed_theme": "Change the theme",

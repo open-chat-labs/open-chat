@@ -272,7 +272,7 @@ const MOUNTS_WEB_LAYOUT = `(window.innerWidth >= 768 && !${IS_NATIVE_APP})`;
 
 // Whether a build with the native tree mounts it (`selectLayout` in utils/layout.ts, the v4 branch):
 // always in the apps, then the user's stored "desktop site / mobile site", then a touch-first viewport
-// below tablet-landscape width or a narrow one that isn't a desktop pointer's. Like the web layout's,
+// below tablet-landscape width or any narrow one. Like the web layout's,
 // only a guess: main.ts goes by its own reading.
 const MOUNTS_NATIVE_LAYOUT = `(function () {
         if (${IS_NATIVE_APP}) return true;
@@ -287,7 +287,7 @@ const MOUNTS_NATIVE_LAYOUT = `(function () {
         var coarse = media("(pointer: coarse)");
         var hover = media("(hover: hover)");
         var width = window.innerWidth;
-        return (coarse && !hover && width < 1024) || (width < 768 && !(!coarse && hover));
+        return (coarse && !hover && width < 1024) || width < 768;
     })()`;
 
 // The fonts of the existing App trees and of the new web UI (src/web). Built in as

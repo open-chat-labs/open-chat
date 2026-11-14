@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "Usuario de {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "Descartar",
+        "reload": "Recargar",
+        "toDesktop": "Esta ventana ahora es lo bastante ancha para el diseño de escritorio. Recarga para cambiar.",
+        "toPhone": "Esta ventana ahora tiene tamaño de teléfono. Recarga para cambiar al diseño de teléfono."
+    },
     "nativeUpdate": {
         "downloadingTitle": "¡Un momento! Actualizando ...",
         "downloadingMessage": "Estamos descargando una actualización rápida y enseguida podrá continuar ...",

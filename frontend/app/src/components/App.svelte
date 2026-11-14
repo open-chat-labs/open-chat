@@ -58,6 +58,7 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
+    import LayoutSwitchBanner from "./LayoutSwitchBanner.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "@shared_components/Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -319,6 +320,10 @@
     {/if}
 
     <UpgradeBanner />
+
+    {#if !client.isNativeApp()}
+        <LayoutSwitchBanner />
+    {/if}
 
     {#if $snowing}
         {#await import("@shared_components/Snow.svelte") then { default: Snow }}

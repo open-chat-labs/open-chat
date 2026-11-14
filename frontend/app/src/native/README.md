@@ -16,11 +16,12 @@ tree out of the bundle, and `components_mobile` stays the native UI.
 - build: `OC_NATIVE_LAYOUT=v4 npm run build:prod_test`, or `export OC_NATIVE_LAYOUT=v4` in
   `build_android.sh` / `build_ios.sh` for the apps (which also take the web build over the air)
 
-`selectLayout` (`utils/layout.ts`) picks it once per load: always in the apps; in a browser, on a
-touch-first device (a coarse pointer that can't hover) below 1024px, or on any viewport below 768px
-that isn't a desktop pointer's. A narrow desktop window stays on the desktop site. A stored "desktop
-site / mobile site" choice (`configKeys.layoutOverride`) beats that. Resizing never swaps trees;
-switching is a reload of the same URL.
+`selectLayout` (`utils/layout.ts`) picks it once per load: always in the apps; in a browser, on any
+viewport below 768px, narrow desktop windows included (the web tree is for desktop widths only, web
+PLAN 10b), or on a touch-first device (a coarse pointer that can't hover) below 1024px. A stored
+"desktop site / mobile site" choice (`configKeys.layoutOverride`) beats that. Resizing never swaps
+trees; switching is a reload of the same URL, which the web tree offers in a banner when its window
+is narrowed below 768px. This tree doesn't offer the way back yet (N15).
 
 ## Layout
 

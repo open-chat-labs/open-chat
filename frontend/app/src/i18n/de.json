@@ -217,6 +217,12 @@
     },
     "bridgedUserUnknown": "{platform}-Nutzer",
     "bridgedUserWithPlatform": "{name} ({platform})",
+    "layoutSwitch": {
+        "dismiss": "Schließen",
+        "reload": "Neu laden",
+        "toDesktop": "Dieses Fenster ist jetzt breit genug für das Desktop-Layout. Neu laden, um zu wechseln.",
+        "toPhone": "Dieses Fenster hat jetzt Telefongröße. Neu laden, um zum Telefon-Layout zu wechseln."
+    },
     "nativeUpdate": {
         "downloadingTitle": "Einen Moment! Aktualisierung ...",
         "downloadingMessage": "Wir laden gerade eine kleine Aktualisierung herunter, dann kann es weitergehen ...",

@@ -41,10 +41,11 @@ Agreed on 2026-10-16; the tables below follow them.
    - **Registration order:** these paths have to be registered ahead of the legacy
      `/:chatId/...` route, which otherwise takes any 1–3 segment path as a group id. On the
      desktop router today, `/wallet` opens the "group not found" modal.
-   - **Only in the new UI.** The old desktop router doesn't get these paths. Until the narrow
-     pass, a v3 build serves the old UI below 768px, where a new-UI link such as `/wallet` still
-     falls into the legacy route. That only affects flagged builds, and it's gone once narrow
-     screens move to the new UI.
+   - **Only in the new UI.** The old desktop router doesn't get these paths. A v3 build serves the
+     old mobile UI below 768px until N15, and the native tree (which routes them) after it. Where
+     the old UI below 768px is the old desktop tree (`OC_MOBILE_LAYOUT=v1`), a new-UI link such as
+     `/wallet` still falls into the legacy route there. The reload a resized window is offered
+     (10b) keeps the URL; GAPS.md ("Layout switch") lists the paths the old trees don't have.
 3. **Wallet URLs.**
    - Token pages are `/wallet/:ledger`, keyed by ledger canister id rather than symbol: it's
      stable, and symbols aren't unique.
@@ -107,12 +108,13 @@ conversation or workspace, and the right is details, docked at ≥1476px and a m
 existing `rightPanelHistory` store (members, pinned, profile, thread …), not by the URL, except
 the thread, which comes from the URL.
 
-The **narrow** column is the layout below 768px: one column at a time, with Back going to the
-left column. The app tree is chosen by viewport width at page load (`mobileWidth`, any device),
-and a v3 build still falls back to v1 below 768px until the narrow pass (brief step 11). The shell
-has a basic single column, but its minimum width (919px, from Fix Brief - App Shell Layout) keeps
-it from showing: a desktop window shrunk after load scrolls the shell sideways instead. Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
-`src/web`.
+The **narrow** column is what the shell's basic single column would show: one column at a time,
+with Back going to the left column. It never shows. The app tree is chosen by viewport width at
+page load (`selectLayout`): below 768px a v3 build serves the old mobile UI until N15 and the native
+tree after it, as the web tree is for desktop widths only (10b; the narrow pass was dropped on
+2026-11-14). The shell's minimum width (919px, from Fix Brief - App Shell Layout) keeps the single
+column from showing: a window between 768px and 919px, or one narrowed after load, scrolls the shell
+sideways instead, and below 768px it's offered a reload into the phone layout.
 
 ## In-app routes
 
