@@ -116,6 +116,7 @@
 ## 2026-10-21 — sign-up asks for the terms to be agreed to, by hand
 - `AuthDialog`'s sign-up has an "I agree to the terms and conditions" checkbox (`ui.authDialog.termsAgree`, the link as before), in place of "By creating an account you agree to…". Continue stays disabled until it's ticked, and `SignupDetails.termsAccepted` says it was. Every OpenChat tree now requires it, as the mobile app did.
 - Not in the design export: to go back to it.
+- Replaced on 2026-11-11 by the export's notice again (below): the new web UI has no checkbox; the old desktop and mobile trees keep theirs.
 
 ## 2026-10-22 — DialogShell opens animated, by hand
 - `DialogShell` fades its veil in (`oc-veil-in`) and lifts its card in (`oc-dlg-in`), with the hand-built dialogs' durations and easing. It had no animation, so dialogs built on it (`ChatPicker`, the app's) popped in while the hand-built ones rose. It still has no closing animation: it unmounts as soon as its host closes it.
@@ -969,6 +970,7 @@
 - `meta.json` (`ChatListPanel.groups`); the docs' chat list pattern has sample groups (`patternGroups`).
 - Not in the design export, nor in web plan 04 (its search has chats, people and messages): the user asked for public groups back, as the old UI's search had them. TODO(design): the Groups tab, its section and its rows (the app's `GAPS.md` lists it).
 - Review of #10477 (2026-11-12, by hand): `SegmentedTabs` never spills out of its bar. One-line labels could add up to more than the bar (four search tabs with two-digit counts below ~330px, a long translated label in a native `sm` bar), and `min-width: auto` kept every tab at its full label. Now a bar too narrow for every label at its full width is `tight` (measured from the labels' full widths, the counts and the dots: `lib/tabsFit.ts`, spec'd), and its tabs shrink with their content (`flex: 1 1 auto; min-width: 0`), a label ending in an ellipsis (`padding-block` keeps its descenders under the clip); counts and dots don't shrink. A bar whose labels fit draws as before: equal tabs, a long label widening its own. `ChatListPanel`: the list's sections derived is `listSections` (it was `groups`, which the new prop's name now has to itself) and the search's is `resultSections`; no prop changes.
-## 2026-11-14 — sign-up's terms as a notice, not a checkbox by hand, at the user's request
-- `AuthDialog`: the sign-up form's "I agree to the terms and conditions" checkbox is gone; under the fields it says "By creating an account you agree to the terms and conditions." (the link as before), and Continue no longer waits for a tick. `onSignup` still gets `termsAccepted`, always `true`. String `ui.authDialog.termsAgree` becomes `termsNotice`. The export's own spec no longer ticks the box. At the user's request (2026-11-11).
-- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-11 — sign-up's terms as a notice again, not a checkbox, by hand, at the user's request
+- `AuthDialog`: the sign-up form's "I agree to the terms and conditions" checkbox (2026-10-21, above) is gone; under the fields it says "By creating an account you agree to the terms and conditions." (the link as before), and Continue no longer waits for a tick. Sending the form is the agreement: `SignupDetails.termsAccepted` is typed `true` and always sent, and the app passes it on to the sign-up as the old trees pass their ticked box. String `ui.authDialog.termsAgree` becomes `termsNotice`. The export's own specs no longer tick the box, and `Landing.spec` checks that sign-up sends `termsAccepted: true`. No `meta.json` change (`onSignup`'s type is unchanged).
+- Back to the design export, which had this line before 2026-10-21.

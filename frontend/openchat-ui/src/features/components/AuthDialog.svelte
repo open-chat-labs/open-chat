@@ -43,8 +43,12 @@
     referrer?: string;
     /** User id of the referrer, when the host supplied one. */
     referrerId?: string;
-    /** Always true: creating the account is agreeing to the terms (the form says so). */
-    termsAccepted: boolean;
+    /**
+     * The person agreed to the terms: the form says "By creating an account you agree to the
+     * terms and conditions." over Continue, so submitting it is the agreement, and it's always
+     * `true`. The host passes it on to the sign-up, as the old forms pass their ticked box.
+     */
+    termsAccepted: true;
   }
 
   export interface AuthPerson {
@@ -382,6 +386,7 @@
     }
   }
 
+  // sending the form, under "By creating an account you agree to the terms", is the agreement
   function submitSignup() {
     if (!free || recoveryBad || refLink.pending || !onSignup) return;
     attempt('signup', () =>

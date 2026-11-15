@@ -197,6 +197,8 @@ describe("the sign-in callbacks", () => {
             termsAccepted: true,
         });
         expect(client.setReferralCode).toHaveBeenCalledWith("r1");
+        // the form's agreement to the terms goes on to the client, whose sign-up needs it
+        expect(client.signUp.mock.calls[0]?.[2]).toBe(true);
         expect(client.signUpWithWebAuthn).toHaveBeenCalledWith(true, "newperson");
         expect(client.registerUser).toHaveBeenCalledWith("newperson", "me@example.com");
         expect(client.onRegisteredUser).toHaveBeenCalledWith(

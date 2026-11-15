@@ -334,7 +334,7 @@ describe('Landing', () => {
       flushSync();
       document.querySelector('[role=dialog] form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       flushSync();
-      expect(onSignup).toHaveBeenCalledWith(expect.objectContaining({ username: 'newperson1' }));
+      expect(onSignup).toHaveBeenCalledWith(expect.objectContaining({ username: 'newperson1', termsAccepted: true }));
       await settle();
       expect(onEnterApp).toHaveBeenCalledOnce();
       expect(dialog()).toBeNull();
