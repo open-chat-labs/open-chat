@@ -1,5 +1,6 @@
 package com.ocplugin.app
 
+import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -84,7 +85,25 @@ class NativeExitReportsTest {
         val selection = exitsToReport(exits, 0)
         assertEquals(emptyList<ExitRecord>(), selection.toReport)
         assertEquals(400L, selection.watermark)
-        assertNull(exitReasonName(ApplicationExitInfo.REASON_USER_REQUESTED, 0))
-        assertEquals("crash_native", exitReasonName(ApplicationExitInfo.REASON_CRASH_NATIVE, 0))
+        assertNull(exitReasonName(ApplicationExitInfo.REASON_USER_REQUESTED, 0, 0))
+        assertEquals("crash_native", exitReasonName(ApplicationExitInfo.REASON_CRASH_NATIVE, 0, 0))
+    }
+
+    // A low-memory kill is a fault only while the app was in the foreground or perceptible (a call);
+    // in the background it is Android making room, and not reported.
+    @Test
+    fun `a low-memory kill is reported only while the app could be seen or heard`() {
+        val cached = ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED
+        val foreground = ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+        val call = ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE
+        val exits = listOf(
+            ExitRecord(100, 1, ApplicationExitInfo.REASON_LOW_MEMORY, 0, cached),
+            ExitRecord(200, 2, ApplicationExitInfo.REASON_LOW_MEMORY, 0, foreground),
+            ExitRecord(300, 3, ApplicationExitInfo.REASON_LOW_MEMORY, 0, call),
+        )
+        val selection = exitsToReport(exits, 0)
+        assertEquals(listOf(200L, 300L), selection.toReport.map { it.timestamp })
+        assertEquals(300L, selection.watermark)
+        assertNull(exitReport(exits[0], null))
     }
 }
