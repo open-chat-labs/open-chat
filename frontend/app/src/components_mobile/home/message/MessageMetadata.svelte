@@ -159,7 +159,7 @@
             }
         }
 
-        .message_metadata_icons > :not(:first-child) {
+        .message_metadata_icons > .bubble_check + .bubble_check {
             z-index: 1;
 
             &:not(.fill) {
