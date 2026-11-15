@@ -482,6 +482,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onDismiss",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Shows a dismiss (×) at the end; called when it's pressed."
       }
     ],
     "group": "library"

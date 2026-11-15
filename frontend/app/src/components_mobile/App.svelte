@@ -249,10 +249,13 @@
         {/if}
     {/if}
 
-    {#if !client.isNativeApp()}
-        <UpgradeBanner />
+    <!-- the update banner and the layout switch's stack at the top, the update first -->
+    <div class="top-banners">
+        {#if !client.isNativeApp()}
+            <UpgradeBanner />
+        {/if}
         <LayoutSwitchBanner />
-    {/if}
+    </div>
 
     {#if $snowing}
         {#await import("@shared_components/Snow.svelte") then { default: Snow }}
@@ -278,6 +281,14 @@
 <svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
 
 <style lang="scss">
+    .top-banners {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        @include z-index("upgrade-banner");
+    }
+
     .boundary-failed {
         display: flex;
         flex-direction: column;

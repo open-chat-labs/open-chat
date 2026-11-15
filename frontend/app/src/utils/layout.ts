@@ -41,10 +41,11 @@ export const TABLET_LANDSCAPE_WIDTH = 1024;
 //
 // With OC_NATIVE_LAYOUT=v4 the native tree ("v4", src/native) takes over from components_mobile:
 // - the Tauri apps always get it;
-// - a browser gets it on any narrow viewport, and on a tablet in portrait: a touch-first device
-//   (coarse pointer, no hover) below tablet-landscape width. A narrow desktop window gets it too:
-//   the new web UI has no narrow layout (web plan 10b; its narrow pass was dropped on 2026-11-14 in
-//   favour of the native tree at N15);
+// - a browser gets it on a phone or a tablet in portrait: a touch-first device (coarse pointer, no
+//   hover) below tablet-landscape width, or any narrow viewport that isn't a desktop pointer's (so a
+//   phone that claims hover still counts). A narrow desktop window (a fine pointer that hovers) stays
+//   on the desktop site, as decided under #10366. Whether it should get the native tree instead, now
+//   that the new web UI has no narrow layout (web plan 10b), is the user's open question;
 // - "Switch to desktop site / mobile site" (`override`) beats the automatic rule in a browser.
 // The desktop site is the new web UI in a build with it, else components.
 export function selectLayout(inputs: LayoutInputs): AppLayout {
@@ -63,7 +64,18 @@ export function selectLayout(inputs: LayoutInputs): AppLayout {
 function prefersNative({ width, coarsePointer, canHover, override }: LayoutInputs): boolean {
     if (override !== undefined) return override === "mobile";
     const touchFirst = coarsePointer && !canHover;
-    return (touchFirst && width < TABLET_LANDSCAPE_WIDTH) || width < NARROW_WIDTH;
+    return (
+        (touchFirst && width < TABLET_LANDSCAPE_WIDTH) ||
+        (width < NARROW_WIDTH && !isDesktopPointer({ coarsePointer, canHover }))
+    );
+}
+
+// A fine pointer that hovers: a mouse or a trackpad, so a window someone can resize
+function isDesktopPointer({
+    coarsePointer,
+    canHover,
+}: Pick<LayoutInputs, "coarsePointer" | "canHover">) {
+    return !coarsePointer && canHover;
 }
 
 /** A stored layout override, or none for nothing stored or a value that isn't one. */
@@ -81,18 +93,21 @@ export type LayoutSwitch = "phone" | "desktop";
 
 // What a reload at `width` would switch to, if it would mount another tree than the one loaded.
 // Only switches to or from a new tree count (src/web, src/native): a build without them behaves as
-// before, and the native apps never switch. The way is the way the window went: narrower is towards
-// the phone layout.
+// before, and the native apps never switch. Nor does anything but a desktop pointer's window: on a
+// phone or a tablet the width changes when the device is turned, and a phone turned to landscape
+// (844px) must not be offered the desktop layout. The tree picked at load stays there, as it did
+// before 10b. The way is the way the window went: narrower is towards the phone layout.
 export function layoutSwitchAt(
     { layout, inputs }: StartupLayout,
     width: number,
 ): LayoutSwitch | undefined {
-    if (inputs.nativeApp) return undefined;
+    if (inputs.nativeApp || !isDesktopPointer(inputs)) return undefined;
     const next = selectLayout({ ...inputs, width });
     if (next === layout || !(isNewTree(next) || isNewTree(layout))) return undefined;
     return width < inputs.width ? "phone" : "desktop";
 }
 
-function isNewTree(layout: AppLayout): boolean {
+/** Whether a layout is one of the new trees: the new web UI (src/web) or the native tree (src/native). */
+export function isNewTree(layout: AppLayout): boolean {
     return layout === "v3" || layout === "v4";
 }

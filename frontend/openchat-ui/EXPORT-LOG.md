@@ -974,3 +974,8 @@
 ## 2026-11-11 — sign-up's terms as a notice again, not a checkbox, by hand, at the user's request
 - `AuthDialog`: the sign-up form's "I agree to the terms and conditions" checkbox (2026-10-21, above) is gone; under the fields it says "By creating an account you agree to the terms and conditions." (the link as before), and Continue no longer waits for a tick. Sending the form is the agreement: `SignupDetails.termsAccepted` is typed `true` and always sent, and the app passes it on to the sign-up as the old trees pass their ticked box. String `ui.authDialog.termsAgree` becomes `termsNotice`. The export's own specs no longer tick the box, and `Landing.spec` checks that sign-up sends `termsAccepted: true`. No `meta.json` change (`onSignup`'s type is unchanged).
 - Back to the design export, which had this line before 2026-10-21.
+
+## 2026-11-11 — Banner's action takes the keyboard, and Banner can be dismissed (web 10b), by hand
+- `Banner`: its action (a `role="button"` span) did nothing on Enter or Space; now both press it, as on a button (`RoundIconButton`'s way). No look changes.
+- `Banner`: `onDismiss` (optional): a ghost `IconButton` × ("Dismiss", `ui.common.dismiss`) at the end of the bar, which calls it; pulled into the bar's padding, so the bar keeps its height. Without it the bar is as before. The app's layout switch banner (web 10b, `shell/LayoutSwitchBanner`) uses both, where it drew its own × beside the bar on a second card. `meta.json` (`onDismiss`).
+- Not in the design export: to go back to it (the app's `GAPS.md`, "Layout switch"). TODO(design): the export's Banner has no dismiss.

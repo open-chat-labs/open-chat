@@ -88,6 +88,17 @@ describe("the layout switch banner", () => {
         expect(banner.offer).toBeUndefined();
     });
 
+    test("never offers a phone turned to landscape the desktop layout", () => {
+        const banner = new LayoutSwitchBanner(
+            loadedAt(390, { coarsePointer: true, canHover: false }),
+        );
+        resize(banner, 844);
+        expect(banner.offer).toBeUndefined();
+        resize(banner, 390);
+        resize(banner, 844);
+        expect(banner.offer).toBeUndefined();
+    });
+
     test("never shows in the native apps, or without the startup layout", () => {
         const app = new LayoutSwitchBanner(loadedAt(600, { nativeApp: true }));
         resize(app, 1400);
@@ -95,6 +106,29 @@ describe("the layout switch banner", () => {
         const none = new LayoutSwitchBanner(undefined);
         resize(none, 600);
         expect(none.offer).toBeUndefined();
+    });
+
+    test("follows a width store until stopped", () => {
+        const listeners = new Set<(width: number) => void>();
+        const widths = {
+            subscribe(run: (width: number) => void) {
+                listeners.add(run);
+                run(1400);
+                return () => listeners.delete(run);
+            },
+        };
+        const banner = new LayoutSwitchBanner(loadedAt(1400));
+        const stop = banner.follow(widths);
+        expect(listeners.size).toBe(1);
+        for (const run of listeners) run(600);
+        vi.advanceTimersByTime(LAYOUT_SWITCH_SETTLE_MS);
+        expect(banner.offer).toBe("phone");
+        for (const run of listeners) run(1000);
+        stop();
+        expect(listeners.size).toBe(0);
+        // a change still settling when it stopped doesn't land
+        vi.advanceTimersByTime(LAYOUT_SWITCH_SETTLE_MS);
+        expect(banner.offer).toBe("phone");
     });
 
     test("stops following the width once destroyed", () => {

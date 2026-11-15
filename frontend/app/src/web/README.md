@@ -21,11 +21,12 @@ Native builds leave it out for now (see `GAPS.md`).
 `selectLayout` (`utils/layout.ts`) mounts it on viewports of 768px and up, picked once at load.
 Between 768px and the shell's minimum width (919px) it scrolls sideways. Narrower viewports get the
 old mobile UI until N15, and the native tree after it: in a build that also has the native tree
-(`OC_NATIVE_LAYOUT=v4`, `src/native`), every viewport below 768px and tablets in portrait get that.
-The web tree has no narrow layout of its own (PLAN 10b: the narrow pass was dropped on 2026-11-14).
+(`OC_NATIVE_LAYOUT=v4`, `src/native`), phones and tablets in portrait get that, and a narrow desktop
+window stays on this tree, as before (an open question for the user: GAPS.md, "Layout switch"). The
+web tree has no narrow layout of its own (PLAN 10b: the narrow pass was dropped on 2026-11-14).
 
-A window resized across 768px isn't re-laid out: it's offered a reload of the same URL, which picks
-again (`shell/LayoutSwitchBanner`, from `logic/layout`, which the old trees show too; GAPS.md,
+A desktop window resized across 768px isn't re-laid out: it's offered a reload of the same URL,
+which picks again; a phone or a tablet that's turned isn't offered one (`shell/LayoutSwitchBanner`, from `logic/layout`, which the old trees show too; GAPS.md,
 "Layout switch").
 
 ## Layout

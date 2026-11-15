@@ -94,14 +94,6 @@
 {/if}
 
 <style lang="scss">
-    :global(.container.upgrade_banner) {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        @include z-index("upgrade-banner");
-    }
-
     a {
         text-decoration: underline;
         text-underline-offset: $sp1;

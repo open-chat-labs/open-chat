@@ -20,6 +20,7 @@ import {
 } from "./theme/themes";
 import { linkFonts } from "./utils/fonts";
 import {
+    isNewTree,
     layoutOverrideOf,
     selectLayout,
     STARTUP_LAYOUT_CONTEXT,
@@ -77,7 +78,7 @@ function storedLayoutOverride(): LayoutOverride | undefined {
     }
 }
 
-const newTree = layout === "v3" || layout === "v4";
+const newTree = isNewTree(layout);
 linkFonts(newTree ? import.meta.env.OC_WEB_FONTS_URL : import.meta.env.OC_APP_FONTS_URL);
 
 if (layout === "v2") {

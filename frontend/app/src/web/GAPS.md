@@ -2870,12 +2870,21 @@ design export needs. Each entry says where it came up.
   by this tree (`shell/LayoutSwitchBanner`), the old mobile tree and the old desktop tree, each in
   its own look. Dismissed, it stays hidden until the window crosses back and then again. Only
   switches to or from a new tree are offered (a build without them behaves as before), never in
-  the native apps.
-  - TODO(design): no design for the banner. Here a slim bar floating at the top of the window
-    (the library's `Banner` and a close button on a raised card), over the shell and under the
-    dialogs' veil; in the old trees a bar across the top, where their update banner shows.
-  - The native tree (`src/native`) doesn't show it yet: a phone-width browser only gets it in a
-    build with `OC_NATIVE_LAYOUT=v4`, and its banner (towards the desktop layout) is N15's.
+  the native apps, and only to a desktop pointer's window (a fine pointer that hovers): a phone
+  or a tablet changes width when it's turned, and a phone turned to landscape (844px) must not be
+  offered the desktop layout. The tree picked at load stays when a device is turned, as before
+  10b, so a phone loaded in landscape still gets this tree (`selectLayout`'s rule, unchanged).
+  - TODO(design): no design for the banner. Here the library's `Banner` (its × is `onDismiss`,
+    EXPORT-LOG 2026-11-11) floating at the top of the window on the page's surface, over the
+    shell and under the dialogs' veil; in the old trees a bar across the top, under their update
+    banner (the two stack, the update banner first).
+  - **Narrow desktop windows in a build with the native tree** (`OC_NATIVE_LAYOUT=v4`): they stay
+    on the desktop site (this tree, scrolling sideways), as decided under #10366, and are offered
+    nothing. Whether they should get the native tree instead, now that this tree has no narrow
+    layout, is an open question for the user; it stays as it was until they decide. If they move,
+    the native tree needs the banner back towards the desktop layout (N15).
+  - The native tree (`src/native`) doesn't show the banner: with the rule above it's never
+    offered one.
   - **The reload keeps the URL**, so the user lands on the same route in the other tree. From the
     route tables (`utils/routeTable.ts`, `components_mobile/Router.svelte`,
     `components/Router.svelte`):

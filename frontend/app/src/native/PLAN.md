@@ -139,7 +139,7 @@ Last:
 
 | Id | What | Needs |
 |---|---|---|
-| [N15](https://github.com/open-chat-labs/open-chat/issues/10383) | Cutover: Tauri and mobile web switch to the native tree. Mobile web picks the native tree by width at load, with web 10b's threshold and banner: `selectLayout`'s `OC_NATIVE_LAYOUT=v4` branch gives it every viewport below 768px (narrow desktop windows too: the web tree is for desktop widths only, its narrow pass dropped on 2026-11-14) and tablets in portrait. Until then phones keep the old mobile UI. A window resized across the line is offered a reload: the web tree already offers the phone layout; the native tree adds the banner towards the desktop layout (`LayoutSwitchBanner`, `logic/layout`), in its own look. | all |
+| [N15](https://github.com/open-chat-labs/open-chat/issues/10383) | Cutover: Tauri and mobile web switch to the native tree. Mobile web picks the native tree at load: `selectLayout`'s `OC_NATIVE_LAYOUT=v4` branch gives it phones (a viewport below 768px that isn't a desktop pointer's) and tablets in portrait. A narrow desktop window stays on the desktop site, as decided under #10366; whether it should get the native tree now that the web tree is for desktop widths only (its narrow pass dropped on 2026-11-14, web 10b) is the user's open question. Until then phones keep the old mobile UI. Only a desktop pointer's window is offered a reload across 768px (web 10b, `LayoutSwitchBanner` in `logic/layout`); turning a device never is. If narrow desktop windows move to the native tree, it needs the banner towards the desktop layout, in its own look. | all |
 
 After everything else (decided 2026-11-07):
 

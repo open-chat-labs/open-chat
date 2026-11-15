@@ -1,6 +1,7 @@
-<!-- Full-width notice with an optional text action. tone: info (accent) | warning | danger | offline (warning colours, offline icon). -->
+<!-- Full-width notice with an optional text action and an optional dismiss (×). tone: info (accent) | warning | danger | offline (warning colours, offline icon). -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import IconButton from './IconButton.svelte';
 
   interface Props {
     /** Resource key (or literal text). */
@@ -9,10 +10,20 @@
     /** Resource key (or literal text). */
     actionLabel?: string;
     actionHandler?: () => void;
+    /** Shows a dismiss (×) at the end; called when it's pressed. */
+    onDismiss?: () => void;
   }
 
-  let { text, tone = 'info', actionLabel = '', actionHandler }: Props = $props();
+  let { text, tone = 'info', actionLabel = '', actionHandler, onDismiss }: Props = $props();
   const t = useT();
+
+  // the action is a role=button span: Enter and Space press it, as they would a button
+  function actionKey(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      actionHandler?.();
+    }
+  }
 
   const icon = $derived(tone === 'danger' ? 'warning' : tone);
 </script>
@@ -21,7 +32,10 @@
   <span class="icon" style:mask="var(--icon-{icon}) center/contain no-repeat"></span>
   <span class="text">{t(text)}</span>
   {#if actionLabel}
-    <span class="action" onclick={actionHandler} role="button" tabindex="0">{t(actionLabel)}</span>
+    <span class="action" onclick={actionHandler} onkeydown={actionKey} role="button" tabindex="0">{t(actionLabel)}</span>
+  {/if}
+  {#if onDismiss}
+    <span class="dismiss"><IconButton icon="close" variant="ghost" label="ui.common.dismiss" onClick={onDismiss} /></span>
   {/if}
 </div>
 
@@ -65,6 +79,13 @@
     font: var(--weight-medium) var(--text-md) / 1.4 var(--font-sans);
     color: var(--ink);
     text-wrap: pretty;
+  }
+
+  .dismiss {
+    flex: none;
+    /* the 34px button inside the banner's padding, so the bar keeps its height */
+    margin-block: -9px;
+    margin-inline-end: calc(-1 * var(--space-10));
   }
 
   .action {

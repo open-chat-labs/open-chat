@@ -319,11 +319,11 @@
         <Profiler />
     {/if}
 
-    <UpgradeBanner />
-
-    {#if !client.isNativeApp()}
+    <!-- the update banner and the layout switch's stack at the top, the update first -->
+    <div class="top-banners">
+        <UpgradeBanner />
         <LayoutSwitchBanner />
-    {/if}
+    </div>
 
     {#if $snowing}
         {#await import("@shared_components/Snow.svelte") then { default: Snow }}
@@ -352,6 +352,14 @@
     onorientationchange={orientationChanged} />
 
 <style lang="scss">
+    .top-banners {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        @include z-index("upgrade-banner");
+    }
+
     .burst-wrapper {
         overflow: hidden;
         max-width: 100%;

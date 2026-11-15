@@ -102,10 +102,9 @@ describe("selectLayout with the native flag", () => {
         expect(selectLayout(inputs({ ...native, width: 390, canHover: false }))).toBe("v4");
     });
 
-    test("a narrow desktop window gets the native tree too: the web UI is for desktop widths", () => {
-        expect(selectLayout(inputs({ ...native, width: 600 }))).toBe("v4");
-        expect(selectLayout(inputs({ ...native, width: 767, webLayoutFlag: "v3" }))).toBe("v4");
-        expect(selectLayout(inputs({ ...native, width: 768, webLayoutFlag: "v3" }))).toBe("v3");
+    test("a narrow desktop window stays on the desktop site", () => {
+        expect(selectLayout(inputs({ ...native, width: 600 }))).toBe("v1");
+        expect(selectLayout(inputs({ ...native, width: 600, webLayoutFlag: "v3" }))).toBe("v3");
     });
 
     test("a tablet gets the native tree in portrait and the desktop site in landscape", () => {
@@ -199,12 +198,35 @@ describe("what a reload would switch to", () => {
         expect(layoutSwitchAt(app(600, { nativeLayoutFlag: "v4" }), 1400)).toBeUndefined();
     });
 
-    test("with the native tree: by width, and by orientation on a tablet", () => {
+    test("never when a phone is turned: a phone in landscape isn't offered the desktop layout", () => {
+        const phone = { coarsePointer: true, canHover: false };
+        // a build with the new web UI and the old mobile UI: portrait gets v2, landscape would get v3
+        const portrait = loaded(390, phone);
+        expect(portrait.layout).toBe("v2");
+        expect(selectLayout({ ...portrait.inputs, width: 844 })).toBe("v3");
+        expect(layoutSwitchAt(portrait, 844)).toBeUndefined();
+        // and back
+        expect(layoutSwitchAt(loaded(844, phone), 390)).toBeUndefined();
+        // a phone that says it can hover
+        const hovers = { coarsePointer: true, canHover: true };
+        expect(layoutSwitchAt(loaded(390, hovers), 844)).toBeUndefined();
+        // with the native tree in the build too
+        const native = { ...phone, nativeLayoutFlag: "v4" };
+        expect(layoutSwitchAt(loaded(390, native), 844)).toBeUndefined();
+        expect(
+            layoutSwitchAt(loaded(390, { ...hovers, nativeLayoutFlag: "v4" }), 844),
+        ).toBeUndefined();
+    });
+
+    test("never when a tablet is turned either", () => {
+        const tablet = { nativeLayoutFlag: "v4", coarsePointer: true, canHover: false };
+        expect(layoutSwitchAt(loaded(820, tablet), 1180)).toBeUndefined();
+        expect(layoutSwitchAt(loaded(1180, tablet), 820)).toBeUndefined();
+    });
+
+    test("never on a desktop window in a build with the native tree: it stays on the desktop site", () => {
         const native = { nativeLayoutFlag: "v4" };
-        expect(layoutSwitchAt(loaded(1400, native), 600)).toBe("phone");
-        expect(layoutSwitchAt(loaded(600, native), 1400)).toBe("desktop");
-        const tablet = { ...native, coarsePointer: true, canHover: false };
-        expect(layoutSwitchAt(loaded(1180, tablet), 820)).toBe("phone");
-        expect(layoutSwitchAt(loaded(820, tablet), 1180)).toBe("desktop");
+        expect(layoutSwitchAt(loaded(1400, native), 600)).toBeUndefined();
+        expect(layoutSwitchAt(loaded(600, native), 1400)).toBeUndefined();
     });
 });
