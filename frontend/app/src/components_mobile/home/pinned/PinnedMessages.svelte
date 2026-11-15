@@ -35,6 +35,7 @@
         () => chat.dateLastPinned,
     );
     let messages = $derived(pinnedMessages.messages);
+    let canUnpin = $derived(client.canPinMessages(chat.id));
 
     onMount(() => {
         return subscribe("chatWith", () => publish("closeModalPage"));
@@ -84,6 +85,7 @@
                     {#each dayGroup as message (message.event.messageId)}
                         <PinnedMessage
                             chatId={chat.id}
+                            {canUnpin}
                             timestamp={message.timestamp}
                             user={$currentUserStore}
                             senderId={message.event.sender}

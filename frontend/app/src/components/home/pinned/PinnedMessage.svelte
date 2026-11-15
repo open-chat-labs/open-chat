@@ -23,6 +23,9 @@
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import { toastStore } from "@src/stores/toast";
+    import { i18nKey } from "../../../i18n/i18n";
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
@@ -35,13 +38,14 @@
 
     interface Props {
         chatId: MultiUserChatIdentifier;
+        canUnpin: boolean;
         user: CreatedUser;
         senderId: string;
         msg: Message;
         timestamp: bigint;
     }
 
-    let { chatId, user, senderId, msg, timestamp }: Props = $props();
+    let { chatId, canUnpin, user, senderId, msg, timestamp }: Props = $props();
 
     const crypto = msg.content.kind === "crypto_content";
 
@@ -100,6 +104,12 @@
             );
         }
     }
+
+    async function unpinMessage() {
+        if (!(await client.unpinMessage(chatId, msg.messageIndex))) {
+            toastStore.showFailureToast(i18nKey("unpinMessageFailed"));
+        }
+    }
 </script>
 
 <div class="message-row" class:me onclick={goToMessageIndex}>
@@ -113,49 +123,58 @@
             userId={(linkedUser ?? sender)?.userId}
             size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
-    <IntersectionObserver>
-        {#snippet children(intersecting)}
-            <div
-                class="message-bubble"
-                class:fill={fill && !deleted}
-                class:me
-                class:deleted
-                class:crypto
-                class:rtl={$rtlStore}>
-                {#if !deleted}
-                    <div class="sender" class:fill class:rtl={$rtlStore}>
-                        <Link underline={"never"} onClick={openUserProfile}>
-                            <h4 class="username" class:fill class:crypto>{username}</h4>
-                        </Link>
-                    </div>
-                {/if}
-                {#if msg.repliesTo !== undefined && !deleted}
-                    {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                        <RepliesTo {intersecting} readonly {chatId} repliesTo={msg.repliesTo} />
-                    {:else}
-                        <UnresolvedReply />
+    <div class="bubble-column">
+        <IntersectionObserver>
+            {#snippet children(intersecting)}
+                <div
+                    class="message-bubble"
+                    class:fill={fill && !deleted}
+                    class:me
+                    class:deleted
+                    class:crypto
+                    class:rtl={$rtlStore}>
+                    {#if !deleted}
+                        <div class="sender" class:fill class:rtl={$rtlStore}>
+                            <Link underline={"never"} onClick={openUserProfile}>
+                                <h4 class="username" class:fill class:crypto>{username}</h4>
+                            </Link>
+                        </div>
                     {/if}
-                {/if}
+                    {#if msg.repliesTo !== undefined && !deleted}
+                        {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                            <RepliesTo {intersecting} readonly {chatId} repliesTo={msg.repliesTo} />
+                        {:else}
+                            <UnresolvedReply />
+                        {/if}
+                    {/if}
 
-                <ChatMessageContent
-                    readonly
-                    pinned
-                    {senderId}
-                    {fill}
-                    {timestamp}
-                    failed={false}
-                    messageContext={{ chatId }}
-                    edited={msg.edited}
-                    messageIndex={msg.messageIndex}
-                    messageId={msg.messageId}
-                    {me}
-                    {intersecting}
-                    content={msg.content}
-                    blockLevelMarkdown={msg.blockLevelMarkdown}
-                    ogPreviews={msg.ogPreviews} />
+                    <ChatMessageContent
+                        readonly
+                        pinned
+                        {senderId}
+                        {fill}
+                        {timestamp}
+                        failed={false}
+                        messageContext={{ chatId }}
+                        edited={msg.edited}
+                        messageIndex={msg.messageIndex}
+                        messageId={msg.messageId}
+                        {me}
+                        {intersecting}
+                        content={msg.content}
+                        blockLevelMarkdown={msg.blockLevelMarkdown}
+                        ogPreviews={msg.ogPreviews} />
+                </div>
+            {/snippet}
+        </IntersectionObserver>
+        {#if canUnpin}
+            <div class="unpin">
+                <Link underline={"never"} onClick={unpinMessage}>
+                    <Translatable resourceKey={i18nKey("unpinMessage")} />
+                </Link>
             </div>
-        {/snippet}
-    </IntersectionObserver>
+        {/if}
+    </div>
 </div>
 
 <style lang="scss">
@@ -201,6 +220,22 @@
 
             @include mobile() {
                 flex: 0 0 $avatar-width-mob;
+            }
+        }
+
+        .bubble-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 0;
+        }
+
+        .unpin {
+            @include font(light, normal, fs-70);
+            margin-top: $sp2;
+
+            :global(a) {
+                color: var(--text-secondary);
             }
         }
     }
