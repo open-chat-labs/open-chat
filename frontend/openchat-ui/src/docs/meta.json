@@ -2128,6 +2128,39 @@
         "doc": ""
       },
       {
+        "name": "onCommandQuery",
+        "type": "ComposerProps['onCommandQuery']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "commands",
+        "type": "ComposerProps['commands']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onPickCommand",
+        "type": "ComposerProps['onPickCommand']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "attachment",
         "type": "ComposerProps['attachment']",
         "default": null,
@@ -14526,6 +14559,39 @@
         "required": false,
         "componentDefault": "[]",
         "doc": "Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to close); a pick puts \"@handle \" in its place."
+      },
+      {
+        "name": "onCommandQuery",
+        "type": "(query: string | undefined) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft's first line while it starts with \"/\" (a bot command being typed, with any arguments after it), as it changes; undefined once it doesn't (by hand)."
+      },
+      {
+        "name": "commands",
+        "type": "ComposerCommand[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The bot commands offered for it (`{ key, name, description?, botName, avatar?, params: { name, required }[] }`, literal text), in order: listed over the text box in place of the mention list (↑ ↓ to move, Enter or Tab to pick, Esc to close), each with its parameters (the required ones filled) and its bot (by hand)."
+      },
+      {
+        "name": "onPickCommand",
+        "type": "(command: ComposerCommand) => Promise<boolean> | boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A command picked. Resolving true, the command went and the draft is emptied; false, the draft stays and the list stays closed until the draft changes (by hand)."
       },
       {
         "name": "attachment",

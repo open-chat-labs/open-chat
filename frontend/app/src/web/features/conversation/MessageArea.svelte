@@ -13,6 +13,7 @@
         anonUserStore,
         audioRecordingMimeType,
         blockedUsersStore,
+        botCommandFailure,
         botState,
         bridgedUsersStore,
         byContext as typersByContext,
@@ -27,6 +28,7 @@
         currentUserStore,
         cryptoLookup,
         currentUserIdStore,
+        directChatBotsStore,
         eventsStore,
         exchangeRatesLookupStore,
         formatClock,
@@ -46,6 +48,7 @@
         publish,
         screenWidth,
         selectedChatBlockedUsersStore,
+        selectedChatBotsStore,
         selectedChatMembersStore,
         selectedChatRecipientStore,
         selectedChatDraftMessageStore,
@@ -53,6 +56,7 @@
         selectedChatIdStore,
         selectedChatPinnedMessagesStore,
         selectedChatWebhooksStore,
+        selectedCommunityBotsStore,
         selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
@@ -77,11 +81,14 @@
         undeletingMessagesStore,
         userGroupSummariesStore,
         videoProcessingProgress,
+        subscribe,
         type AttachmentContent,
+        type BotCommandResult,
         type ChatEvent,
         type ChatSummary,
         type EventWrapper,
         type FileContent,
+        type FlattenedCommand,
         type Message,
         type VideoCallContent,
         type MessageContext,
@@ -119,8 +126,11 @@
     import type {
         ComposerAttachKind,
         ComposerAttachment,
+        ComposerCommand,
         GroupMessage,
     } from "@openchat/ui/src/lib/types";
+    import { CommandPicker } from "@src/logic/bots/commandPicker.svelte";
+    import { commandKey, composerCommand } from "@src/logic/bots/composerCommand";
     import {
         attachRefusal,
         canAttachNow,
@@ -242,6 +252,8 @@
     } from "@src/logic/conversation/timeline";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import BotCommandDialog from "./BotCommandDialog.svelte";
+    import { carriesOutCommand } from "./botCommands";
     import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { claimsStore } from "@src/stores/claims";
@@ -672,6 +684,109 @@
     // nor in a bot DM); a GIF picked becomes the draft's attachment, in place of any, and goes with
     // Send, the text its caption (attachGif)
     const gifsAllowed = $derived(attachable && permitted.has("giphy"));
+
+    // bot commands: a "/" at the start of the composer's text lists those the reader may run here
+    // (CommandPicker, logic/bots), of the built-in ones those this tree carries out
+    // (carriesOutCommand); a pick runs it, or asks for its arguments first (BotCommandDialog), as
+    // the old trees' selector and builder do. TODO(design): neither is in the design
+    const commandPicker = new CommandPicker(client);
+    $effect(() => () => commandPicker.cancel());
+    let commandQuery = $state<string | undefined>(undefined);
+
+    function commandQueried(query: string | undefined) {
+        commandQuery = query;
+        commandPicker.typed(query);
+    }
+
+    // the bots installed where the command would run (a channel's are its community's)
+    const installedBots = $derived(
+        chat.id.kind === "channel"
+            ? $selectedCommunityBotsStore
+            : chat.id.kind === "direct_chat"
+              ? $directChatBotsStore
+              : $selectedChatBotsStore,
+    );
+    const offeredCommands = $derived.by((): FlattenedCommand[] => {
+        if (commandQuery === undefined) return [];
+        return commandPicker.offered(
+            {
+                chatKind: chat.id.kind,
+                chat,
+                directBotId: client.directChatWithBot(chat),
+                permitted,
+                installedBots,
+            },
+            (c) => carriesOutCommand(c.name, attachKinds),
+        );
+    });
+    const commands = $derived(offeredCommands.map((c) => composerCommand(c, (key) => $_(key))));
+
+    // the command whose arguments are being asked for, and the composer's pick waiting on it
+    let commandForm = $state<{
+        context: MessageContext;
+        command: FlattenedCommand;
+        done: (sent: boolean) => void;
+    }>();
+
+    // the arguments' dialog closed: the composer's pick hears whether the command went
+    function closeCommandForm(sent: boolean) {
+        const form = commandForm;
+        commandForm = undefined;
+        form?.done(sent);
+    }
+
+    // resolves true once the command is on its way (the composer's text goes), false if it's
+    // dropped
+    async function pickCommand(context: MessageContext, picked: ComposerCommand): Promise<boolean> {
+        const offered = offeredCommands;
+        const command = offered.find((c) => commandKey(c) === picked.key);
+        if (command === undefined) return false;
+        const pick = await commandPicker.pick(context, offered, command);
+        switch (pick.kind) {
+            case "sent":
+                void reportCommand(pick.result);
+                return true;
+            case "needs_args":
+                return new Promise((done) => (commandForm = { context, command: pick.command, done }));
+            case "gone":
+                return false;
+        }
+    }
+
+    // a command that failed says so, as the old trees' toasts do
+    async function reportCommand(result: Promise<BotCommandResult>) {
+        const failure = botCommandFailure(await result);
+        if (failure !== undefined) toastStore.showFailureToast(failure);
+    }
+
+    // the built-in commands' own screens, for one run from this composer (the client publishes
+    // what the old trees open for each)
+    $effect(() =>
+        subscribe("createPoll", (at) => {
+            if (messageContextsEqual(at, context)) {
+                screen.dialogs.open({ kind: "poll_builder", context: at });
+            }
+        }),
+    );
+    // TODO: the amount and token typed after /crypto aren't put in the transfer dialog yet (GAPS)
+    $effect(() =>
+        subscribe("tokenTransfer", ({ context: at }) => {
+            if (messageContextsEqual(at, context)) {
+                screen.dialogs.open({
+                    kind: "send_crypto",
+                    context: at,
+                    defaultReceiver: draft?.replyingTo?.sender?.userId,
+                });
+            }
+        }),
+    );
+    $effect(() =>
+        subscribe("registerWebhook", (group) => {
+            if (thread === undefined && chatIdentifiersEqual(group.id, chat.id)) {
+                screen.dialogs.open({ kind: "webhook", chatId: group.id });
+            }
+        }),
+    );
 
     // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
     // the reader; @everyone first), and, in a chat that holds only some of its members, those it
@@ -1732,6 +1847,9 @@
                     onVoiceActive={(active) => (voiceActive = active)}
                     {mentions}
                     onGif={gifsAllowed ? (content) => attachGif(context, content) : undefined}
+                    onCommandQuery={commandQueried}
+                    {commands}
+                    onPickCommand={(command) => pickCommand(context, command)}
                 />
             {/key}
         </div>
@@ -1761,6 +1879,20 @@
         onReact={(emoji) => menu !== undefined && react(menu.context, menu.evt, emoji)}
         onClose={() => (menu = undefined)} />
 {/if}
+{#if commandForm !== undefined}
+    <BotCommandDialog
+        picker={commandPicker}
+        command={commandForm.command}
+        context={commandForm.context}
+        {me}
+        userName={(userId) => ctx.userName(userId)}
+        onSent={(result) => {
+            closeCommandForm(true);
+            void reportCommand(result);
+        }}
+        onCancel={() => closeCommandForm(false)} />
+{/if}
+
 {#if deleting !== undefined}
     <!-- TODO(design): no delete confirm in the design; the old one's words -->
     <ConfirmDialog

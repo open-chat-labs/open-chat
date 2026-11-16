@@ -40,6 +40,9 @@
     onVoiceActive?: ComposerProps['onVoiceActive'];
     onMentionQuery?: ComposerProps['onMentionQuery'];
     mentions?: ComposerProps['mentions'];
+    onCommandQuery?: ComposerProps['onCommandQuery'];
+    commands?: ComposerProps['commands'];
+    onPickCommand?: ComposerProps['onPickCommand'];
     attachment?: ComposerProps['attachment'];
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
