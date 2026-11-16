@@ -87,11 +87,6 @@
 
 <style lang="scss">
     .upgrade-banner {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        @include z-index("upgrade-banner");
         background-color: var(--notificationBar-bg);
         color: var(--notificationBar-txt);
         padding: $sp3;

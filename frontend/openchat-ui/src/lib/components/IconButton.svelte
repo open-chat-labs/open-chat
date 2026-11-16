@@ -22,11 +22,20 @@
   let { icon, variant = 'surface', state: look = 'default', pressed = false, label = '', onClick }: Props = $props();
 
   const t = useT();
+
+  // a role=button div: Enter and Space press it, as they would a button (as RoundIconButton does)
+  function onkeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    }
+  }
+
   const name = $derived(t(label || LABELS[icon] || icon.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())));
 </script>
 
 <div class="box" class:accent={variant === 'accent'}>
-  <div class="button {variant} {look}" class:pressed onclick={onClick} role="button" tabindex="0" aria-label={name} title={name}>
+  <div class="button {variant} {look}" class:pressed onclick={onClick} {onkeydown} role="button" tabindex="0" aria-label={name} title={name}>
     <span class="icon" style:mask="var(--icon-{ALIASES[icon] ?? icon}) center/contain no-repeat" data-oc-flip={DIRECTIONAL.has(icon) ? '' : undefined}></span>
   </div>
 </div>

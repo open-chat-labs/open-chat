@@ -18,9 +18,13 @@ tree out of the bundle, and `components_mobile` stays the native UI.
 
 `selectLayout` (`utils/layout.ts`) picks it once per load: always in the apps; in a browser, on a
 touch-first device (a coarse pointer that can't hover) below 1024px, or on any viewport below 768px
-that isn't a desktop pointer's. A narrow desktop window stays on the desktop site. A stored "desktop
-site / mobile site" choice (`configKeys.layoutOverride`) beats that. Resizing never swaps trees;
-switching is a reload of the same URL.
+that isn't a desktop pointer's. A narrow desktop window stays on the desktop site, as decided under
+#10366; whether it should get this tree now that the web tree has no narrow layout (web PLAN 10b) is
+an open question for the user. A stored "desktop site / mobile site" choice
+(`configKeys.layoutOverride`) beats that. Resizing never swaps trees; switching is a reload of the
+same URL. Only a desktop pointer's window is offered that reload when it crosses 768px (web GAPS,
+"Layout switch"): turning a phone or a tablet never is, so in a build with this tree nothing is
+offered yet, and this tree doesn't show the banner (N15).
 
 ## Layout
 

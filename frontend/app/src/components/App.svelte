@@ -58,6 +58,7 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
+    import LayoutSwitchBanner from "./LayoutSwitchBanner.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "@shared_components/Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -318,7 +319,11 @@
         <Profiler />
     {/if}
 
-    <UpgradeBanner />
+    <!-- the update banner and the layout switch's stack at the top, the update first -->
+    <div class="top-banners">
+        <UpgradeBanner />
+        <LayoutSwitchBanner />
+    </div>
 
     {#if $snowing}
         {#await import("@shared_components/Snow.svelte") then { default: Snow }}
@@ -347,6 +352,14 @@
     onorientationchange={orientationChanged} />
 
 <style lang="scss">
+    .top-banners {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        @include z-index("upgrade-banner");
+    }
+
     .burst-wrapper {
         overflow: hidden;
         max-width: 100%;

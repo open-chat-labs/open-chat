@@ -54,6 +54,7 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Router from "./Router.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
+    import LayoutSwitchBanner from "./LayoutSwitchBanner.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
@@ -248,9 +249,13 @@
         {/if}
     {/if}
 
-    {#if !client.isNativeApp()}
-        <UpgradeBanner />
-    {/if}
+    <!-- the update banner and the layout switch's stack at the top, the update first -->
+    <div class="top-banners">
+        {#if !client.isNativeApp()}
+            <UpgradeBanner />
+        {/if}
+        <LayoutSwitchBanner />
+    </div>
 
     {#if $snowing}
         {#await import("@shared_components/Snow.svelte") then { default: Snow }}
@@ -276,6 +281,14 @@
 <svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
 
 <style lang="scss">
+    .top-banners {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        @include z-index("upgrade-banner");
+    }
+
     .boundary-failed {
         display: flex;
         flex-direction: column;
