@@ -17,6 +17,8 @@ export class ColdStartIntents {
     #call = $state.raw<NativeCallAction | null>(null);
     #deepLink = $state<string | null>(null);
     #tap = $state<string | null>(null);
+    // Whether the router has looked for a parked intent yet: until then the app is still landing
+    #landed = false;
 
     parkCall(action: NativeCallAction): void {
         this.#call = action;
@@ -28,6 +30,18 @@ export class ColdStartIntents {
 
     parkNotificationTap(path: string): void {
         this.#tap = path;
+    }
+
+    /**
+     * A chat a direct share opens. Parked, as a tap's would be, while the app is still landing: a
+     * navigation then is lost or overridden by "/" going to the chat list. Once it has landed the
+     * caller navigates itself, as nothing would take it until some later visit to the list.
+     * Returns whether it was parked.
+     */
+    parkUnlessLanded(path: string): boolean {
+        if (this.#landed) return false;
+        this.#tap = path;
+        return true;
     }
 
     /** Whether anything's parked. Tracked: an effect reading it runs again when one lands. */
@@ -44,6 +58,7 @@ export class ColdStartIntents {
      */
     take(): ColdStartIntent | undefined {
         return untrack(() => {
+            this.#landed = true;
             const call = this.#call;
             const url = this.#deepLink;
             const path = this.#tap;

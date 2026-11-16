@@ -84,4 +84,20 @@ describe("what a cold start parked", () => {
         expect(done).toEqual(["call"]);
         cleanup();
     });
+
+    test("a direct share before the app has landed is parked, so the router opens its chat", () => {
+        // a cold-start share arrives at svelteReady, before "/" has gone to the chat list, and a
+        // navigation then is lost or overridden: the draft is saved but the chat never opens
+        const intents = new ColdStartIntents();
+        expect(intents.parkUnlessLanded("/chats/user/bob")).toBe(true);
+        expect(intents.take()).toEqual({ kind: "notification", path: "/chats/user/bob" });
+    });
+
+    test("a direct share once the app has landed isn't parked, so no later visit to the list opens it", () => {
+        const intents = new ColdStartIntents();
+        // the router looked on landing, with nothing parked
+        expect(intents.take()).toBeUndefined();
+        expect(intents.parkUnlessLanded("/chats/user/bob")).toBe(false);
+        expect(intents.pending).toBe(false);
+    });
 });
