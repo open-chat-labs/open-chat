@@ -979,3 +979,6 @@
 - `Banner`: its action (a `role="button"` span) did nothing on Enter or Space; now both press it, as on a button (`RoundIconButton`'s way). No look changes.
 - `Banner`: `onDismiss` (optional): a ghost `IconButton` × ("Dismiss", `ui.common.dismiss`) at the end of the bar, which calls it; pulled into the bar's padding, so the bar keeps its height. Without it the bar is as before. The app's layout switch banner (web 10b, `shell/LayoutSwitchBanner`) uses both, where it drew its own × beside the bar on a second card. `meta.json` (`onDismiss`).
 - Not in the design export: to go back to it (the app's `GAPS.md`, "Layout switch"). TODO(design): the export's Banner has no dismiss.
+
+## 2026-11-16 — IconButton can be pressed from the keyboard, by hand
+- `IconButton`: a `role="button"` div that only listened for clicks, so Tab reached it but Enter and Space did nothing. It now presses on Enter and Space, as `RoundIconButton` and `Banner`'s action do. That reaches every icon button, the `Banner`'s × among them. No props changed.
