@@ -2706,7 +2706,23 @@
                     "prize": "Giải thưởng",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "Đề nghị hoán đổi"
-                }
+                },
+                "default": "Mặc định",
+                "changedCount": "{count, plural, other {# thay đổi}}"
+            },
+            "publicDiamond": "Nhóm công khai là tính năng Diamond.",
+            "gatesCount": "{count, plural, other {# điều kiện}}",
+            "create": {
+                "membersStep": "Thêm người",
+                "detailsStep": "Chi tiết",
+                "noneInvited": "Chưa mời ai",
+                "noMatches": "Không ai khớp",
+                "next": "Tiếp",
+                "create": "Tạo nhóm",
+                "creating": "Đang tạo…",
+                "done": "Xong",
+                "discardTitle": "Bỏ nhóm này?",
+                "discardMessage": "Những gì bạn đã nhập sẽ không được giữ."
             }
         }
     },

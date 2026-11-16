@@ -2706,7 +2706,23 @@
                     "prize": "פרסים",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "הצעות החלפה"
-                }
+                },
+                "default": "ברירת מחדל",
+                "changedCount": "{count, plural, one {שינוי אחד} two {שני שינויים} other {# שינויים}}"
+            },
+            "publicDiamond": "קבוצות ציבוריות הן תכונה של Diamond.",
+            "gatesCount": "{count, plural, one {תנאי אחד} two {שני תנאים} other {# תנאים}}",
+            "create": {
+                "membersStep": "הוספת אנשים",
+                "detailsStep": "פרטים",
+                "noneInvited": "עוד לא הוזמן אף אחד",
+                "noMatches": "אין התאמות",
+                "next": "הבא",
+                "create": "יצירת קבוצה",
+                "creating": "יוצר…",
+                "done": "סיום",
+                "discardTitle": "לבטל את הקבוצה הזו?",
+                "discardMessage": "מה שהזנת לא יישמר."
             }
         }
     },

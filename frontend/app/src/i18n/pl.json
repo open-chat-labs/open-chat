@@ -2706,7 +2706,23 @@
                     "prize": "Nagrody",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "Oferty wymiany"
-                }
+                },
+                "default": "Domyślne",
+                "changedCount": "{count, plural, one {# zmieniona} few {# zmienione} many {# zmienionych} other {# zmienionej}}"
+            },
+            "publicDiamond": "Grupy publiczne to funkcja Diamond.",
+            "gatesCount": "{count, plural, one {# warunek} few {# warunki} many {# warunków} other {# warunku}}",
+            "create": {
+                "membersStep": "Dodaj osoby",
+                "detailsStep": "Szczegóły",
+                "noneInvited": "Nikt jeszcze nie został zaproszony",
+                "noMatches": "Nikogo nie znaleziono",
+                "next": "Dalej",
+                "create": "Utwórz grupę",
+                "creating": "Tworzenie…",
+                "done": "Gotowe",
+                "discardTitle": "Odrzucić tę grupę?",
+                "discardMessage": "To, co wpisano, nie zostanie zachowane."
             }
         }
     },

@@ -28,6 +28,7 @@ import {
     gateOperator,
     gateRemovalLosses,
     gateRows,
+    gatesSummary,
     generalRows,
     hasSavableChanges,
     rulesProblem,
@@ -35,18 +36,21 @@ import {
     threadsAsSaved,
     withMessages,
     messageBaseline,
+    invitable,
     messageTypeRows,
     nameLengthValid,
     settingsReady,
     withLossesRestored,
     operatorApplies,
     pageTitle,
+    permissionsSummary,
     recheckDays,
     recheckExpiry,
     recheckOptions,
     roleId,
     roleOf,
     roleOptions,
+    rulesSummary,
     SAME_AS_DEFAULT,
     switchGate,
     templateText,
@@ -491,5 +495,34 @@ describe("a gate taken off, and its Undo", () => {
         );
         // the gates already combined (another was added since): their operator is the user's
         expect(withLossesRestored(since, { operator: "or", expiry: WEEK }, true)).toEqual(since);
+    });
+});
+
+describe("Create group's Settings card", () => {
+    test("each link says what's set", () => {
+        expect(gatesSummary(config({ kind: "no_gate" }), t)).toBe("native.you.off");
+        expect(
+            gatesSummary(
+                config({
+                    kind: "composite_gate",
+                    operator: "and",
+                    gates: [{ kind: "diamond_gate" }, { kind: "unique_person_gate" }],
+                }),
+                t,
+            ),
+        ).toBe('native.groupSettings.gatesCount {"count":1}');
+        expect(rulesSummary(true, t)).toBe("native.groupSettings.on");
+        expect(permissionsSummary(defaultChatPermissions(), t)).toBe(
+            "native.groupSettings.permissions.default",
+        );
+        expect(
+            permissionsSummary({ ...defaultChatPermissions(), changeRoles: ROLE_OWNER }, t),
+        ).toBe('native.groupSettings.permissions.changedCount {"count":1}');
+    });
+
+    test("people are invited, not bots or the user", () => {
+        expect(invitable({ kind: "user", userId: "a" }, "me")).toBe(true);
+        expect(invitable({ kind: "bot", userId: "b" }, "me")).toBe(false);
+        expect(invitable({ kind: "user", userId: "me" }, "me")).toBe(false);
     });
 });

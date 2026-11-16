@@ -2706,7 +2706,23 @@
                     "prize": "Призи",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "Пропозиції обміну"
-                }
+                },
+                "default": "Типово",
+                "changedCount": "{count, plural, one {змінено #} few {змінено #} many {змінено #} other {змінено #}}"
+            },
+            "publicDiamond": "Публічні групи — функція Diamond.",
+            "gatesCount": "{count, plural, one {# умова} few {# умови} many {# умов} other {# умови}}",
+            "create": {
+                "membersStep": "Додати людей",
+                "detailsStep": "Подробиці",
+                "noneInvited": "Поки нікого не запрошено",
+                "noMatches": "Нікого не знайдено",
+                "next": "Далі",
+                "create": "Створити групу",
+                "creating": "Створення…",
+                "done": "Готово",
+                "discardTitle": "Скасувати створення групи?",
+                "discardMessage": "Введене не збережеться."
             }
         }
     },

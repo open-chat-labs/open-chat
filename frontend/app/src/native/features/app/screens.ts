@@ -101,7 +101,7 @@ export const screens: Screens = {
     new_chat: () => import("../chats/NewChatScreen.svelte"),
 
     // New group, from the Chats tab's menu and New chat (N7)
-    new_group: undefined,
+    new_group: () => import("../groupSettings/NewGroupScreen.svelte"),
 
     // CHIT, from the Chats tab's header and the You tab's CHIT card (N11)
     chit: undefined,
@@ -130,6 +130,9 @@ export const screens: Screens = {
     // a group's or channel's settings pages (edit, gates, rules, permissions, bots, stats), from
     // its details (N7)
     group_settings: () => import("../groupSettings/GroupSettingsScreen.svelte"),
+
+    // Create group's gates, rules and permissions, from its Settings card (N7)
+    new_group_settings: () => import("../groupSettings/NewGroupSettingsScreen.svelte"),
 
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)

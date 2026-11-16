@@ -598,3 +598,29 @@ export function withLossesRestored(
     }
     return next;
 }
+
+// ── Create group's Settings card ──
+
+/** Access gates' value: Off, or how many. */
+export function gatesSummary(config: AccessGateConfig, t: Translate): string {
+    const count = shownGates(config).length;
+    return count === 0 ? t("native.you.off") : t("native.groupSettings.gatesCount", { count });
+}
+
+/** Rules' value: On or Off. */
+export function rulesSummary(enabled: boolean, t: Translate): string {
+    return t(enabled ? "native.groupSettings.on" : "native.you.off");
+}
+
+/** Permissions' value: Default, or how many differ from it. */
+export function permissionsSummary(permissions: ChatPermissions, t: Translate): string {
+    const count = changedPermissions(permissions);
+    return count === 0
+        ? t("native.groupSettings.permissions.default")
+        : t("native.groupSettings.permissions.changedCount", { count });
+}
+
+/** Who may be invited to a new group: people (not bots), not the user. */
+export function invitable(user: { kind: string; userId: string }, me: string): boolean {
+    return user.kind === "user" && user.userId !== me;
+}

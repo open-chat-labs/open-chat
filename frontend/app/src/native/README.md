@@ -88,7 +88,10 @@ native/
                      gate sheet, GateSheet), Rules and Permissions, each on its own draft
                      (GroupSettingsEditor: the shared UpdateGroupState, a pinned Save, the
                      questions a save can need, Discard changes); Bots and webhooks and Stats
-                     are still placeholders
+                     are still placeholders; Create group (NewGroupScreen,
+                     new_group: Members, then Details), whose gates, rules and permissions are
+                     the same pages on its draft (NewGroupSettingsScreen, new_group_settings,
+                     newGroupDraft)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
