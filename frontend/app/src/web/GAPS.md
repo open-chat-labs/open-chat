@@ -1093,6 +1093,11 @@ design export needs. Each entry says where it came up.
   (so `ChatBubble` and `MessageGroup`, and `GroupMessage`) takes `tips`, a chip per token before
   the reactions: the token's logo and the total, the viewer's own marked as their reactions are,
   who tipped as its tooltip. Not a button. The design has no tips.
+
+- **Video players for links** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design
+  export: `PlayerCard`, a link's click-to-play player (a poster with a play button and the title,
+  the player only on its click, a row linking to the site where it can't play), and `ChatBubble`'s
+  `players`, before its cards in a 542px bubble. The design has no player.
 - **One message per group** (by hand, phase 3b): the conversation uses the old UI's list, which
   renders one row per event, so each message is a `MessageGroup` of its own. `avatarSpace` keeps
   the avatar's space under a run's first message and `endsRun` gives only the run's last message
@@ -2694,13 +2699,19 @@ design export needs. Each entry says where it came up.
   (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
   its card, after a confirm (`ConfirmDialog`, no design for it: `TODO(design)`). A link to
   another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
-  quoted message. A Twitch link shows its card, not the click-to-play player the old trees show
-  (`TwitchPlayer`, from `extractTwitchEmbeds`, `twitchPlayersAndCards`, `twitchPlayerParent`,
-  `twitchPlayerUrl` and `twitchPoster` in `@client`): `ChatBubble` takes cards only. The player's
-  URL starts playing as it loads, so a player here must load only on its poster's click, and back
-  to the poster when hidden, with `allow="autoplay; fullscreen"` on its iframe, as the old trees do.
-  Nothing may lie over it, not even an invisible layer clicks pass through (the old trees'
-  `ChitEarned` was one), or Twitch won't start it.
+  quoted message. A Twitch link in the text (a channel, a video or a clip) plays in the bubble, as
+  in the old trees (`TwitchPlayer`): a player before the cards (`PlayerCard`, by hand: the design
+  has none, `TODO(design)`; `ChatBubble` takes `players` and widens to 542px for them, Twitch's
+  least being 400x300), from `extractTwitchEmbeds`, `twitchPlayersAndCards` (the link's preview,
+  if the sender fetched one, is its poster, not a card of its own), `twitchPoster`,
+  `twitchPlayerUrl` and `twitchWatchUrl` in `@client` (`linkPreviews` and `twitchPlayer` in
+  `logic/conversation`). The player's URL starts playing as it loads, so it loads only on the
+  poster's click, and goes back to the poster whenever it's hidden, with `allow="autoplay;
+  fullscreen"` on its iframe. Nothing lies over it (the row's mark is behind it). Where Twitch
+  won't play (`twitchPlayerParent`: a page another site frames, or narrower than 400px), it's a
+  row linking to Twitch; the native tree always links (its context has no `twitchParent`). A card's
+  X goes by the cards shown (`previewLink`), so a Twitch link's preview, which is no card, doesn't
+  shift them. Checked on the local replica: a channel's poster, then its player on a click.
 - **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
   token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
   signs it by the bubble's side, which shows a transfer between two other people in a group as the

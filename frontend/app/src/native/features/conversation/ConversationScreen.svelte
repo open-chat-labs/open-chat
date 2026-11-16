@@ -277,6 +277,8 @@
             threads: false,
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            // Twitch doesn't play in the native apps: its links open Twitch
+            twitchParent: undefined,
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;

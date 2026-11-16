@@ -31,6 +31,7 @@ const ctx: ConversationContext = {
     threads: true,
     undeleting: () => false,
     referralLink: "https://oc.app/?ref=me",
+    twitchParent: "oc.app",
     token: () => undefined,
 };
 

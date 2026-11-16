@@ -992,6 +992,11 @@
 - `ChatBubble`: `tips`, passed to its chips; `MessageGroup` passes a message's `tips` (`GroupMessage.tips`, `lib/types.ts`) to the chips under the kinds that don't draw their own, and shows them with tips alone. `meta.json` (`ReactionChips.tips`, `ChatBubble.tips`).
 - Not in the design export: the app shows the tips a message got (web 5a), as the old trees' tip thumbnails do. To go back to it (the app's `GAPS.md` lists it). TODO(design): the tip chip.
 
+## 2026-11-16 — a link's video player (web 5a), by hand
+- New `PlayerCard`: a link's video player (a Twitch stream, video or clip) as the old trees' `TwitchPlayer` showed it: a 16:9 poster (the link's image, a play button, the title over a shade, the site's `logo`) that loads the player (`src`, an iframe with `allow="autoplay; fullscreen"`) only when clicked, as the player starts as it loads, and goes back to the poster whenever it can't show; where it can't play (no `src`, or narrower than `minWidth`, 400 for Twitch) a row linking to the site (`href`, http(s) only) with `watchLabel`. Measures its width with a 534px sizer that gives way to a narrower bubble. Strings `ui.playerCard.play`, `ui.playerCard.watch`. Nothing lies over the player.
+- `ChatBubble`: `players` (`PlayerCard`'s props without `side`), before the link cards, which makes the bubble carded and 542px wide (the player's 534px plus the inset). `meta.json` (`PlayerCard`, `ChatBubble.players`).
+- Not in the design export: the app plays a Twitch link in its message (web 5a), as the old trees did. To go back to it (the app's `GAPS.md` lists it). TODO(design): the player's poster and link row.
+
 ## 2026-11-17 — ConversationHeader's call buttons follow what the chat offers, by hand
 - `ConversationHeader`: the voice call button shows only with `onVoiceCall`, so a chat that offers one call (a broadcast, or joining the call going on) shows one button. A channel shows the call buttons too, where it hid them, since channels have calls; the host's `showCall` decides. New `callIcon` (`'video' | 'phone'`, default `'video'`): a phone for joining a voice call. `meta.json` (`callIcon`, `onVoiceCall`'s doc). Used by the app's conversation header (web 7b, #10125).
 - Not in the design export: to go back to it (the app's `GAPS.md`, "Calls").

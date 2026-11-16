@@ -19,6 +19,7 @@ import {
     untilNextDay,
     withFields,
     type ConversationContext,
+    type PlayerProps,
 } from "./messageRow";
 
 const ctx: ConversationContext = {
@@ -50,6 +51,7 @@ const ctx: ConversationContext = {
     threads: true,
     undeleting: () => false,
     referralLink: "https://oc.app/?ref=me",
+    twitchParent: "oc.app",
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -320,6 +322,38 @@ describe("link previews", () => {
         const row = messageRow(message({ ogPreviews: urls.map(preview) }), "sent", ctx).message;
         return (row as { previews: { url: string }[] }).previews.map((c) => c.url);
     };
+
+    test("a Twitch link plays in the bubble: its preview is the poster, the others stay cards", () => {
+        const row = messageRow(
+            message({
+                content: { kind: "text_content", text: "live now https://twitch.tv/ann" },
+                ogPreviews: [preview("https://www.twitch.tv/ann"), preview("https://a.com/x")],
+            }),
+            "sent",
+            ctx,
+        ).message as { previews: { url: string }[]; players: PlayerProps[] };
+        expect(row.previews.map((c) => c.url)).toEqual(["https://a.com/x"]);
+        expect(row.players).toEqual([
+            {
+                title: "T",
+                image: undefined,
+                src: "https://player.twitch.tv/?channel=ann&parent=oc.app&autoplay=true",
+                href: "https://www.twitch.tv/ann",
+                logo: "/assets/twitch.svg",
+                playLabel: "twitch.play",
+                watchLabel: "twitch.watchOnTwitch",
+            },
+        ]);
+    });
+
+    test("where Twitch won't play (the native apps, a framed page), a Twitch link links to Twitch", () => {
+        const row = messageRow(
+            message({ content: { kind: "text_content", text: "https://twitch.tv/ann" } }),
+            "sent",
+            { ...ctx, twitchParent: undefined },
+        ).message as { players: PlayerProps[] };
+        expect(row.players).toMatchObject([{ src: "", href: "https://www.twitch.tv/ann" }]);
+    });
 
     // invariant 6
     test("a link preview whose URL isn't http(s) is never rendered as a link", () => {
@@ -812,6 +846,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            twitchParent: undefined,
         });
         expect(ctx.unreadInThread(4)).toBe(2);
         expect(asked).toEqual([[4, 6]]);
@@ -854,6 +889,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            twitchParent: undefined,
         });
         expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
             "hi @alice, @mods and @UserId(zz)",
@@ -908,6 +944,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            twitchParent: undefined,
         });
         expect(ctx.avatar("alice")).toBe("https://blobs/alice");
         expect(ctx.avatar("bob")).toBeUndefined();

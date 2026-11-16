@@ -971,6 +971,17 @@
         "doc": "The sender removes a preview (by its index in `previews`): an X on each card. None without it."
       },
       {
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Video players for the links in the text (a Twitch link's), before the cards; the bubble widens for them (542px).",
+        "name": "players",
+        "type": "Omit<ComponentProps<typeof PlayerCard>, 'side'>[]"
+      },
+      {
         "name": "mirror",
         "type": "boolean",
         "default": false,
@@ -13699,6 +13710,121 @@
         "required": false,
         "componentDefault": "'large'",
         "doc": ""
+      },
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": "received",
+        "editor": "enum",
+        "options": [
+          "received",
+          "sent"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'received'",
+        "doc": ""
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "PlayerCard",
+    "source": "by hand (web 5a, 2026-11-16), from the old trees' TwitchPlayer",
+    "hash": "",
+    "description": "A link's video player (a Twitch stream, video or clip), as ChatBubble shows it under a message's text: a poster that loads the player only when clicked (it starts as it loads), back to the poster whenever it can't show; where it can't play (no src, or narrower than minWidth) a row linking to the site.",
+    "preview": {
+      "width": 560,
+      "height": 340
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": "Speedrunning the new patch",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "What's playing: the stream's or the video's title, or where it's from."
+      },
+      {
+        "name": "image",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The poster's image URL."
+      },
+      {
+        "name": "src",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The player's URL, loaded on the poster's click (it starts as it loads). None where it can't play: the link row."
+      },
+      {
+        "name": "href",
+        "type": "string",
+        "default": "https://www.twitch.tv/openchat",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The video on its own site, for the link row; only an http(s) URL is linked."
+      },
+      {
+        "name": "logo",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The site's logo (an image URL), before the title."
+      },
+      {
+        "name": "minWidth",
+        "type": "number",
+        "default": 400,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "400",
+        "doc": "The narrowest the player plays at (px); narrower, the link row. Twitch's least is 400."
+      },
+      {
+        "name": "playLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.playerCard.play'",
+        "doc": "The poster's label for screen readers. Resource key or text."
+      },
+      {
+        "name": "watchLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.playerCard.watch'",
+        "doc": "The link row's call to action. Resource key or text."
       },
       {
         "name": "side",

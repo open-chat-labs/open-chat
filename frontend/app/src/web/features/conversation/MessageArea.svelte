@@ -33,6 +33,8 @@
         exchangeRatesLookupStore,
         formatClock,
         failedMessagesStore,
+        runningInIframe,
+        twitchPlayerParent,
         i18nKey,
         isDiamondStore,
         isLifetimeDiamondStore,
@@ -366,6 +368,12 @@
             threads: true,
             locale: $locale ?? "en",
             undeleting: (messageId) => undeleting.has(messageId),
+            // a Twitch link plays here, unless this page is framed by another site
+            twitchParent: twitchPlayerParent({
+                hostname: window.location.hostname,
+                native: client.isNativeApp(),
+                framed: $runningInIframe,
+            }),
         });
     });
 

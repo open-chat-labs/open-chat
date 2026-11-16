@@ -123,6 +123,7 @@
             threads: false,
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            twitchParent: undefined,
         }),
     );
 

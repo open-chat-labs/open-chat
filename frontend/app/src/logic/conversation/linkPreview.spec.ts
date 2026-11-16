@@ -1,6 +1,6 @@
 import { i18nKey, type EventWrapper, type Message, type OgPreview } from "@client";
 import { vi } from "vitest";
-import { canRemovePreviews, previewLink, removeLinkPreview } from "./linkPreview";
+import { canRemovePreviews, linkPreviews, previewLink, removeLinkPreview } from "./linkPreview";
 
 const preview = (url: string): OgPreview => ({
     kind: "opengraph",
@@ -31,6 +31,20 @@ describe("a link preview's removal", () => {
     test("a preview goes by its place in the bubble's list", () => {
         expect(previewLink(msg, 0)).toBe("https://a.b");
         expect(previewLink(msg, 1)).toBeUndefined();
+    });
+
+    test("a Twitch link's preview is its player's poster, not a card: the cards after it keep their place", () => {
+        const twitch = {
+            ...msg,
+            content: {
+                kind: "text_content" as const,
+                text: "https://twitch.tv/ann and https://a.b",
+            },
+            ogPreviews: [preview("https://www.twitch.tv/ann"), preview("https://a.b")],
+        };
+        expect(linkPreviews(twitch).players).toHaveLength(1);
+        expect(linkPreviews(twitch).cards.map((c) => c.url)).toEqual(["https://a.b"]);
+        expect(previewLink(twitch, 0)).toBe("https://a.b");
     });
 
     test("a refusal comes back as what to say", async () => {

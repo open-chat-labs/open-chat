@@ -15,6 +15,9 @@ import {
     swapActions,
     swapLabels,
     toLongDatetimeString,
+    twitchPlayerUrl,
+    twitchPoster,
+    twitchWatchUrl,
     votesForAnswer,
     waveformLevels,
     type ChatSummary,
@@ -42,6 +45,7 @@ import {
     type TokenExchangeRates,
     type TipsReceived,
     type TokenInfo,
+    type TwitchPlayerPreview,
     type UserLookup,
     type VideoContent,
     type WebhookDetails,
@@ -54,6 +58,7 @@ import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
 import { typedMentions, type MentionLookups } from "./typedMentions";
+import { linkPreviews } from "./linkPreview";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -119,6 +124,11 @@ export type ConversationContext = {
     undeleting: (messageId: bigint) => boolean;
     /** The reader's own referral link, which the OpenChat bot's referral card gives them. */
     referralLink: string;
+    /**
+     * Where a Twitch link's player can play (`twitchPlayerParent`: this site, not framed by
+     * another, not the native apps); none, and the link shows as a row linking to Twitch.
+     */
+    twitchParent: string | undefined;
 };
 
 export type TransferToken = {
@@ -269,6 +279,32 @@ export function previewCards(previews: OgPreview[]): PreviewCard[] {
     });
 }
 
+export type PlayerProps = NonNullable<Extract<GroupMessage, { kind?: "text" }>["players"]>[number];
+
+const TWITCH_LOGO = "/assets/twitch.svg";
+
+/**
+ * A Twitch link's player (PlayerCard), as the old trees' TwitchPlayer shows it: its poster is the
+ * link's preview, if the sender fetched one that says what it is, else where it's to
+ * (`twitchPoster`); it plays here only where Twitch lets it (`twitchParent`), else it links to
+ * Twitch.
+ */
+export function twitchPlayer(
+    player: TwitchPlayerPreview,
+    ctx: Pick<ConversationContext, "twitchParent" | "text">,
+): PlayerProps {
+    const poster = twitchPoster(player.embed, player.ogPreview);
+    return {
+        title: poster.title,
+        image: poster.image,
+        src: ctx.twitchParent === undefined ? "" : twitchPlayerUrl(player.embed, ctx.twitchParent),
+        href: twitchWatchUrl(player.embed),
+        logo: TWITCH_LOGO,
+        playLabel: ctx.text(i18nKey("twitch.play", { title: poster.title })),
+        watchLabel: ctx.text(i18nKey("twitch.watchOnTwitch")),
+    };
+}
+
 /** A message's text: a text message's own, and for other kinds (until they're built) their text. */
 export function messageText(
     content: MessageContent,
@@ -312,6 +348,7 @@ export function messageRow(
     const mine = msg.sender === ctx.me;
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
+    const links = linkPreviews(msg);
     const kind = kindMessage(msg, status, ctx, {
         id: String(msg.messageId),
         time: ctx.time(evt.timestamp),
@@ -367,7 +404,8 @@ export function messageRow(
                       : ctx.userName(quoted.senderId),
             quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
             ...threadFields(msg, ctx),
-            previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
+            previews: previewCards(links.cards),
+            players: links.players.map((player) => twitchPlayer(player, ctx)),
         },
     };
 }
@@ -907,6 +945,8 @@ export type ConversationContextInput = {
     locale: string;
     /** Whether a deleted message is being undeleted (`undeletingMessagesStore`). */
     undeleting: (messageId: bigint) => boolean;
+    /** Where a Twitch link's player can play (`twitchPlayerParent`); none, a link to Twitch. */
+    twitchParent: string | undefined;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -948,6 +988,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         threads: input.threads,
         undeleting: input.undeleting,
         referralLink: referralLink(client.canonicalOrigin(), input.me),
+        twitchParent: input.twitchParent,
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
                 chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),

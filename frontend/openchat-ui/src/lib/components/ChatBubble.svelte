@@ -1,12 +1,14 @@
 <!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
      link preview cards (LinkCard) under the text: with any, the bubble takes LinkPreview's shape (its 320px width,
      cards flush to a 4px inset, the stamp in a footer under them), and an X on each card for the sender with onRemovePreview,
-     failed + Retry line, reaction chips and the thread link under them. Emoji-only messages of one or two emoji render large.
+     failed + Retry line, reaction chips and the thread link under them. By hand (web 5a): video players for its links
+     (PlayerCard, a Twitch link's) before the cards, in a wider bubble (534px, the least a player plays at and more). Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import type { ComponentProps, Snippet } from 'svelte';
   import LinkCard from './LinkCard.svelte';
+  import PlayerCard from './PlayerCard.svelte';
   import ReactionChips, { type Reaction, type Tip } from './ReactionChips.svelte';
   import ThreadLink from './ThreadLink.svelte';
 
@@ -69,6 +71,8 @@
     previews?: Omit<ComponentProps<typeof LinkCard>, 'side'>[];
     /** The sender removes a preview (by its index in `previews`): an X on each card. None without it. */
     onRemovePreview?: (index: number) => void;
+    /** Video players for the links in the text (a Twitch link's), before the cards; the bubble widens for them. */
+    players?: Omit<ComponentProps<typeof PlayerCard>, 'side'>[];
   }
 
   let {
@@ -102,11 +106,12 @@
     onOpenThread,
     previews = [],
     onRemovePreview,
+    players = [],
   }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
-  const carded = $derived(previews.length > 0);
+  const carded = $derived(previews.length > 0 || players.length > 0);
   const emojiCount = $derived(emojiOnlyCount(text));
   const scale = $derived(
     emojiCount === 1 ? { size: '42px', leading: '1.15' } : emojiCount === 2 ? { size: '32px', leading: '1.2' } : { size: 'var(--text-base)', leading: '1.5' },
@@ -136,7 +141,7 @@
     </div>
   {:else}
     <div class="column" class:sent class:mirror>
-      <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble data-bubble-sent={side === 'sent' ? '' : undefined}>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded class:players={players.length > 0} data-oc-bubble data-bubble-sent={side === 'sent' ? '' : undefined}>
         {#if quoteName && onQuote}
           <div
             class="quote link"
@@ -173,6 +178,9 @@
         {/if}
         {#if carded}
           <div class="previews">
+            {#each players as p}
+              <PlayerCard {...p} {side} />
+            {/each}
             {#each previews as p, i}
               <div class="preview">
                 <LinkCard {...p} {side} />
@@ -441,6 +449,11 @@
   .bubble.carded {
     width: 320px;
     padding: var(--space-4);
+  }
+
+  /* a player plays at 400px or more: the player's own width (534px), as wide as the bubble may be */
+  .bubble.carded.players {
+    width: 542px;
   }
 
   .carded {
