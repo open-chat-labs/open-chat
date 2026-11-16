@@ -280,6 +280,30 @@ export interface ComposerMention {
   group?: boolean;
 }
 
+/** A GIF the composer's GIF tab shows (the host's search results). */
+export interface ComposerGif {
+  /** The same while it's the same GIF. */
+  key: string;
+  /** The image the tile shows (a small animated GIF). */
+  src: string;
+  /** Its size, for the tile's shape. */
+  width: number;
+  height: number;
+  /** What it shows, for its accessible name. */
+  title: string;
+}
+
+/** The GIF tab's results, as the host has them for the search the composer last asked for. */
+export interface ComposerGifs {
+  /** The GIFs found so far, in order (more are added as the grid is scrolled). */
+  items: ComposerGif[];
+  /** `loading`: a page is on its way (the first, or more); `failed`: the last page couldn't be loaded. */
+  status: 'idle' | 'loading' | 'failed';
+  /** The search found none: "No GIFs for …", with related terms to search for; with no terms, `items` are the
+   *  trending GIFs shown under it. */
+  notFound?: { query: string; terms: string[] };
+}
+
 /** What MessageComposer's + menu offers to attach. */
 export type ComposerAttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 

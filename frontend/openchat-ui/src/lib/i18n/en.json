@@ -2182,7 +2182,10 @@
       "voiceCapped": "Recording stopped at the size limit.",
       "voiceFailed": "Couldn't send the voice message. Try again.",
       "withFee": "{summary} · +{fee} fee",
-      "clearMedia": "Clear"
+      "clearMedia": "Clear",
+      "gifsNone": "No GIFs found",
+      "gifsFailed": "GIFs couldn't load. Check your connection.",
+      "gifsNoMatch": "No GIFs for “{query}”"
     },
     "messageGroup": {
       "actions": "Message actions",

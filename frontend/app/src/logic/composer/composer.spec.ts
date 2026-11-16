@@ -4,6 +4,7 @@ import {
     type AttachmentContent,
     type ChatSummary,
     type DirectBotMessageOutcome,
+    type GiphyContent,
     type MessageContext,
     type MessagePermission,
     type SendMessageOutcome,
@@ -32,6 +33,7 @@ import {
     mentionsFor,
     pickableAttachments,
     sendComposed,
+    sendGif,
     sendVoiceRecording,
     throttleCountdown,
     TypingNotifier,
@@ -481,6 +483,20 @@ describe("sending what the composer holds", () => {
                 { kind: "declined" },
             );
         }
+    });
+
+    test("a GIF picked goes at once to the chat or thread it was picked in", async () => {
+        const gif = { kind: "giphy_content", title: "cat" } as GiphyContent;
+        const sendContent = vi.fn(async (): Promise<SendMessageOutcome> => ({ kind: "posted" }));
+        expect(await sendGif({ sendContent }, thread, gif)).toEqual({ kind: "posted" });
+        expect(sendContent).toHaveBeenCalledWith(thread, gif);
+        const refused = vi.fn(async (): Promise<SendMessageOutcome> => ({ kind: "throttled" }));
+        expect(await sendGif({ sendContent: refused }, thread, gif)).toEqual({
+            kind: "refused",
+            reason: "throttled",
+        });
+        const declined = vi.fn(async (): Promise<SendMessageOutcome> => ({ kind: "rules_declined" }));
+        expect(await sendGif({ sendContent: declined }, thread, gif)).toEqual({ kind: "declined" });
     });
 
     test("tells the library's composer: nothing once posted, false when declined, a throw when refused", () => {

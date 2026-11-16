@@ -12,10 +12,11 @@
      --composer-pad, --composer-btn and --composer-btn-radius. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, ComposerMention, MenuItem } from '../types';
+  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, ComposerGif, ComposerGifs, ComposerMention, MenuItem } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
+  import Spinner from './Spinner.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
@@ -28,6 +29,12 @@
   // GIF_WORDS are placeholder GIF results (data), only the category names are UI copy.
   // Kept until implementation: real results need a host-fed GIF source (see EXPORT.md, Known gaps).
   const GIF_CAT_KEYS: Record<(typeof GIF_CATS)[number], string> = { Trending: 'ui.messageComposer.gifTrending', Reactions: 'ui.messageComposer.gifReactions', Celebrate: 'ui.messageComposer.gifCelebrate', Crypto: 'ui.messageComposer.gifCrypto', Thanks: 'ui.messageComposer.gifThanks' };
+  // what a category searches for, with a host's results (`gifs`): Trending is the provider's trending GIFs
+  // TODO(design): the design names the categories, not what each searches for
+  const GIF_CAT_QUERIES: Record<(typeof GIF_CATS)[number], string> = { Trending: '', Reactions: 'reactions', Celebrate: 'celebrate', Crypto: 'crypto', Thanks: 'thank you' };
+  // typed words are searched once typing pauses, from 3 characters (as the old GIF pickers did)
+  const GIF_SEARCH_DELAY = 500;
+  const GIF_SEARCH_MIN = 3;
   const GIF_TONES = [
     'linear-gradient(150deg,#5CB8FF,#2F6BFF)',
     'linear-gradient(150deg,#FF8FA8,#E0456A)',
@@ -68,7 +75,17 @@
     onAttach?: (kind: AttachKind) => void;
     /** What the + menu offers (all by default); with none, there's no + button. */
     attachKinds?: AttachKind[];
+    /** The placeholder GIF tiles' pick (the word on the tile), shown without `gifs` (docs). */
     onGif?: (query: string) => void;
+    /** The GIF tab's results, for the search `onGifSearch` last asked for: shown in place of the placeholder tiles. */
+    gifs?: ComposerGifs;
+    /** What the GIF tab is to show, as it opens and as its search changes: "" for the trending GIFs, else the words
+     *  typed (once typing pauses, from 3 characters), a category's (Reactions → "reactions" …) or a related term picked. */
+    onGifSearch?: (query: string) => void;
+    /** The GIF grid was scrolled near its end: the next page of the same search. */
+    onMoreGifs?: () => void;
+    /** A GIF picked from `gifs` (the picker closes). With it, the picker has its GIF tab. */
+    onPickGif?: (gif: ComposerGif) => void;
     /** A recorded voice message (duration in seconds). The mic is hidden without it. Rejected, the take stays in review
      *  with an error; resolved `false`, it stays without one (the user backed out). */
     onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
@@ -132,6 +149,10 @@
     onAttach,
     attachKinds,
     onGif,
+    gifs,
+    onGifSearch,
+    onMoreGifs,
+    onPickGif,
     onVoice,
     voiceMimeType,
     voiceMaxBytes,
@@ -354,6 +375,48 @@
   // the composer's own emoji picker: at the caret, focusing the field
   function insert(text: string) {
     void editDraft((d, a, b) => insertAt(d, a, b, text), true);
+  }
+
+  // GIFs: the host searches what the tab asks for (`onGifSearch`), once per change
+  let gifTimer: ReturnType<typeof setTimeout> | undefined;
+  let gifAsked: string | undefined;
+  function askGifs(q: string) {
+    clearTimeout(gifTimer);
+    if (q === gifAsked) return;
+    gifAsked = q;
+    onGifSearch?.(q);
+  }
+  const categoryQuery = (i: number) => GIF_CAT_QUERIES[GIF_CATS[i]];
+
+  // typed into the GIF search: searched once typing pauses; emptied, the category's GIFs again
+  function typedGif() {
+    clearTimeout(gifTimer);
+    const q = query.trim();
+    if (!q) askGifs(categoryQuery(gifCat));
+    else if (q.length >= GIF_SEARCH_MIN) gifTimer = setTimeout(() => askGifs(q), GIF_SEARCH_DELAY);
+  }
+
+  function pickCategory(i: number) {
+    gifCat = i;
+    query = '';
+    askGifs(categoryQuery(i));
+  }
+
+  // a related term offered for a search that found none: its search, in the field
+  function searchTerm(term: string) {
+    query = term;
+    askGifs(term);
+  }
+
+  function pickGif(gif: ComposerGif) {
+    menu = null;
+    onPickGif?.(gif);
+  }
+
+  // near the grid's end, the next page (not while one is on its way)
+  function gifScrolled(e: Event) {
+    const el = e.currentTarget as HTMLElement;
+    if (gifs && gifs.status !== 'loading' && el.scrollHeight - el.scrollTop - el.clientHeight < 300) onMoreGifs?.();
   }
 
   // the host's typing (its emoji panel): at the caret, without focusing the field (focus would raise the keyboard)
@@ -614,6 +677,8 @@
     const opening = menu !== 'picker';
     menu = opening ? 'picker' : null;
     query = '';
+    // opened on the GIF tab: its category's GIFs, not the last search's
+    if (opening && tab === 1 && gifs) askGifs(categoryQuery(gifCat));
     if (opening && demo === 'interactive') {
       await tick();
       search?.focus({ preventScroll: true });
@@ -778,6 +843,7 @@
       destroyed = true;
       startRun++;
       document.removeEventListener('mousedown', down);
+      clearTimeout(gifTimer);
       ro.disconnect();
       endSeek?.();
       clearInterval(recTimer);
@@ -850,7 +916,7 @@
   {#if menu === 'picker'}
     <div class="popup picker" data-composer-popup role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
       <!-- GIFs only for a host that takes them -->
-      {#if onGif || demo !== 'interactive'}
+      {#if onGif || onPickGif || demo !== 'interactive'}
         <SegmentedTabs
           labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
           selectedIndex={tab}
@@ -858,6 +924,7 @@
           onSelect={(i) => {
             tab = i;
             query = '';
+            if (i === 1 && gifs) askGifs(categoryQuery(gifCat));
           }}
         />
       {/if}
@@ -868,7 +935,7 @@
       {:else}
         <div class="search">
           <span class="search-icon"></span>
-          <input bind:this={search} bind:value={query} placeholder={t('ui.messageComposer.searchGifs')} aria-label={t('ui.messageComposer.searchGifs')} />
+          <input bind:this={search} bind:value={query} oninput={typedGif} placeholder={t('ui.messageComposer.searchGifs')} aria-label={t('ui.messageComposer.searchGifs')} />
         </div>
         <div class="cats">
           {#each GIF_CATS as cat, i}
@@ -876,17 +943,43 @@
             <span
               class="cat"
               class:on
-              onclick={() => {
-                gifCat = i;
-                query = '';
-              }}
+              onclick={() => (gifs ? pickCategory(i) : ((gifCat = i), (query = '')))}
               role="button"
               tabindex="0"
               aria-pressed={on}>{t(GIF_CAT_KEYS[cat])}</span
             >
           {/each}
         </div>
-        <div class="gif-scroll">
+        <div class="gif-scroll" onscroll={gifScrolled}>
+          {#if gifs}
+            <!-- TODO(design): the design has no empty, failed or loading state for the GIF search -->
+            {#if gifs.notFound}
+              <p class="gif-note">{t('ui.messageComposer.gifsNoMatch', { query: gifs.notFound.query })}</p>
+              {#if gifs.notFound.terms.length > 0}
+                <div class="gif-terms">
+                  {#each gifs.notFound.terms as term (term)}
+                    <button type="button" class="cat" onclick={() => searchTerm(term)}>{term}</button>
+                  {/each}
+                </div>
+              {/if}
+            {/if}
+            {#if gifs.items.length > 0}
+              <div class="gif-columns">
+                {#each gifs.items as gif (gif.key)}
+                  <button type="button" class="gif found" style:aspect-ratio={gif.width > 0 && gif.height > 0 ? `${gif.width} / ${gif.height}` : '1'} onclick={() => pickGif(gif)} aria-label={gif.title} title={gif.title}>
+                    <img src={gif.src} alt="" loading="lazy" />
+                  </button>
+                {/each}
+              </div>
+            {:else if gifs.status !== 'loading' && !gifs.notFound}
+              <p class="gif-note">{t(gifs.status === 'failed' ? 'ui.messageComposer.gifsFailed' : 'ui.messageComposer.gifsNone')}</p>
+            {/if}
+            {#if gifs.status === 'loading'}
+              <div class="gif-loading"><Spinner size={20} /></div>
+            {:else if gifs.status === 'failed' && gifs.items.length > 0}
+              <p class="gif-note">{t('ui.messageComposer.gifsFailed')}</p>
+            {/if}
+          {:else}
           <div class="gif-columns">
             {#each gifWords as word, i}
               <span
@@ -903,6 +996,7 @@
               >
             {/each}
           </div>
+          {/if}
         </div>
       {/if}
     </div>
@@ -1281,6 +1375,46 @@
     &:hover {
       filter: brightness(1.12);
     }
+  }
+
+  // a host's GIF: its image fills the tile, shaped as the GIF is
+  .gif.found {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: var(--overlay-2);
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .gif-note {
+    margin: var(--space-12) 0 var(--space-8);
+    text-align: center;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-3);
+  }
+
+  .gif-terms {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-12);
+
+    .cat {
+      border: 0;
+    }
+  }
+
+  .gif-loading {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-12) 0;
   }
 
   .gif-label {
@@ -1729,7 +1863,8 @@
   .context-main:focus-visible,
   .thumb-remove:focus-visible,
   .tray-add:focus-visible,
-  .gif:focus-visible {
+  .gif:focus-visible,
+  .gif-terms .cat:focus-visible {
     @include focus-ring;
   }
 

@@ -82,6 +82,7 @@
         type ChatSummary,
         type EventWrapper,
         type FileContent,
+        type GiphyContent,
         type Message,
         type VideoCallContent,
         type MessageContext,
@@ -140,6 +141,7 @@
         pickableAttachments,
         composerAnswer,
         sendComposed,
+        sendGif,
         sendVoiceRecording,
         throttleCountdown,
         type ComposerBuilder,
@@ -664,6 +666,16 @@
         mimeType: string,
     ): Promise<false | undefined> {
         return composerAnswer(await sendVoiceRecording(client, context, recording, mimeType));
+    }
+
+    // the composer's GIF tab: offered where GIFs may be sent and something can be attached now (not
+    // mid-edit, where the GIF would reply to the edited message's reply, nor during a voice take,
+    // nor in a bot DM); a GIF picked goes at once, a reply to the draft's reply (sendGif)
+    const gifsAllowed = $derived(attachable && permitted.has("giphy"));
+
+    async function pickedGif(context: MessageContext, content: GiphyContent) {
+        const sent = await sendGif(client, context, content);
+        if (sent.kind === "refused") toastStore.showFailureToast(i18nKey("errorSendingMessage"));
     }
 
     // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
@@ -1724,6 +1736,7 @@
                     onMentionQuery={mentionQueried}
                     onVoiceActive={(active) => (voiceActive = active)}
                     {mentions}
+                    onGif={gifsAllowed ? (content) => pickedGif(context, content) : undefined}
                 />
             {/key}
         </div>
