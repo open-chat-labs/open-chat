@@ -129,7 +129,7 @@ export const screens: Screens = {
 
     // a group's or channel's settings pages (edit, gates, rules, permissions, bots, stats), from
     // its details (N7)
-    group_settings: undefined,
+    group_settings: () => import("../groupSettings/GroupSettingsScreen.svelte"),
 
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)

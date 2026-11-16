@@ -14,11 +14,13 @@
     icon?: string;
     /** right: opens a screen. down: opens a menu of values. */
     chevron?: 'right' | 'down';
+    /** The value in the accent: a setting changed from its default. */
+    accent?: boolean;
     /** Gets the row, to anchor a menu to. */
     onClick: (row: HTMLElement) => void;
   }
 
-  let { label, help = '', value = '', icon, chevron = 'right', onClick }: Props = $props();
+  let { label, help = '', value = '', icon, chevron = 'right', accent = false, onClick }: Props = $props();
   const t = useT();
 </script>
 
@@ -28,7 +30,7 @@
     <span class="label">{t(label)}</span>
     {#if help}<span class="help">{t(help)}</span>{/if}
   </span>
-  {#if value}<span class="value">{t(value)}</span>{/if}
+  {#if value}<span class="value" class:accent>{t(value)}</span>{/if}
   <span class="chevron {chevron}"></span>
 </button>
 
@@ -86,6 +88,10 @@
     font: var(--weight-medium) text-size(13px) / 1.2 var(--font-sans);
     color: var(--ink-2);
     text-align: end;
+
+    &.accent {
+      color: var(--accent-bright);
+    }
   }
 
   .chevron {

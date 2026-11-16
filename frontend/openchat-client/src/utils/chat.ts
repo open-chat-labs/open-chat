@@ -605,7 +605,7 @@ export function mergePermissions(
             updated.messagePermissions,
         ),
         threadPermissions: mergeThreadPermissions(
-            current.threadPermissions ?? { default: ROLE_MEMBER },
+            current.threadPermissions,
             updated.threadPermissions,
         ),
     };
@@ -635,8 +635,10 @@ function mergeMessagePermissions(
     };
 }
 
+// Threads without permissions of their own follow the messages' (undefined): an update that
+// leaves them alone keeps that, rather than giving them a set of their own
 function mergeThreadPermissions(
-    current: MessagePermissions,
+    current: MessagePermissions | undefined,
     updated: OptionUpdate<OptionalMessagePermissions>,
 ): MessagePermissions | undefined {
     if (updated === undefined) {
@@ -647,7 +649,7 @@ function mergeThreadPermissions(
         return undefined;
     }
 
-    return mergeMessagePermissions(current, updated.value);
+    return mergeMessagePermissions(current ?? { default: ROLE_MEMBER }, updated.value);
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {

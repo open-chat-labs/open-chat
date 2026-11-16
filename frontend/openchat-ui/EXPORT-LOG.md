@@ -987,6 +987,10 @@
 ## 2026-11-16 — IconButton can be pressed from the keyboard, by hand
 - `IconButton`: a `role="button"` div that only listened for clicks, so Tab reached it but Enter and Space did nothing. It now presses on Enter and Space, as `RoundIconButton` and `Banner`'s action do. That reaches every icon button, the `Banner`'s × among them. No props changed.
 
+## 2026-11-16 — a settings value in the accent where it's changed (native N7), by hand
+- `SettingsLink` and `SettingsValue`: `accent` (off by default): the value at the end in `--accent-bright`, for a setting changed from its default (native plan 11, Permissions: "role on the right (accent when changed)"). The app's group Permissions page uses it on each role. No other look changes. `meta.json` (`accent` on both).
+- Not in the design export: the native prototype draws it inline. TODO(design): the accent's shade.
+
 ## 2026-11-16 — a message's tips (web 5a), by hand
 - `ReactionChips`: `tips` (`Tip[]`: `amount`, `symbol`, `logo` as a CSS background, `mine`, `label`), a chip per token before the reactions, in the reactions' chip look with the token's logo (14px) before the amount; the viewer's own marked as their own reactions are (`mine`), who tipped as its tooltip (`label`). Not a button, never folded into "+N". The row shows with tips alone.
 - `ChatBubble`: `tips`, passed to its chips; `MessageGroup` passes a message's `tips` (`GroupMessage.tips`, `lib/types.ts`) to the chips under the kinds that don't draw their own, and shows them with tips alone. `meta.json` (`ReactionChips.tips`, `ChatBubble.tips`).

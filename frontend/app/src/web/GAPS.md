@@ -892,8 +892,8 @@ design export needs. Each entry says where it came up.
     This chat card, over Mute @everyone; the plan doesn't say to change it.
   - **Group**: under the name, "Private · N members" has a lock before it for a private group or
     channel (the user, 2026-11-10). The cover has back, favourite and Edit (the user, 2026-11-10: a kebab with one
-    item is just a button): a pencil for those whose role meets "Update group", pushing N7's page
-    (the `group_settings` placeholder, `edit`). Copying or sharing the link is Invite people's
+    item is just a button): a pencil for those whose role meets "Update group", pushing
+    Edit group (N7's `group_settings` page, `edit`). Copying or sharing the link is Invite people's
     (the Invite tile), so the cover has no Copy invite link, and nothing else on the screen is
     repeated in a menu. No Export chat. A channel's cover is its community's
     banner; a group has none, so it's the accent's gradient, as the You tab's. The avatar is the
@@ -920,8 +920,8 @@ design export needs. Each entry says where it came up.
     community's for a channel); owners and admins edit them from Manage (N7).
   - **Manage** (owners and admins, not in a frozen chat): Access gates, Rules, Permissions, Bots
     and webhooks, Stats (Access gates with a lock, ours: the gate icon is the same shield as
-    Permissions'), each pushing N7's page (a local `group_settings` screen, the placeholder
-    until N7 builds it). The tiles' **Invite** is every member's (not in a frozen chat, nor for
+    Permissions'), each pushing N7's page (a local `group_settings` screen: "Native group
+    settings", below; Bots and webhooks and Stats are still placeholders). The tiles' **Invite** is every member's (not in a frozen chat, nor for
     someone previewing): it pushes Invite people (below) where it has something to offer, and
     otherwise says who can ("Only admins can invite to this group", naming the lowest role "Invite
     users" allows; `logic/members/invitePeople`'s `chatInviteAccess`, `inviteRole`).
@@ -1059,6 +1059,74 @@ design export needs. Each entry says where it came up.
     sheet, the kebab's Copy and Edit, search from both places, and the rules sheet's Cancel and
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
+- **Native group settings** (native N7, #10373; the native plan's 11 of 2026-11-10;
+  `src/native/features/groupSettings`). Built: a group's or channel's settings pages, pushed from
+  its details without a URL (the local `group_settings` screen): Edit group (the cover's pencil)
+  and Manage's Access gates, Rules and Permissions, each its own draft (the shared
+  `UpdateGroupState`, made from the chat and its rules as the page opens) with a pinned Save (as
+  Edit profile's: "No changes" until something has changed), which sends what changed (the
+  client's `updateGroup`) and goes back to the details with "Changes saved". The values the gates
+  page reads and writes are the web's AccessGates' (moved to `logic/access/gateValues`, which the
+  web's gates adapter now uses too); the shared state gained `replaceGate` and `setOperator`.
+  Left, or decided where the plan is silent (the prototype export wasn't available to check
+  against):
+  - **Edit group**: the photo (picked, cropped square in start's crop sheet, sent with the save),
+    the name (3 to 40 characters, the old editors'), the description (growing, its length), and
+    the plan's Settings card: Public, Message history and Disappearing messages (the library's
+    TimedToggle, the details' 8 lengths; a draft until Save, unlike This chat's, which saves at
+    once). Who sees the history is a fact here, as on the web (it's set when the group is made:
+    the client has no change for it). Public and Disappearing messages are the owner's
+    (`chatManageAccess`), facts for an admin. The plan draws Create group's Details, not Edit
+    group: Edit group is the same page without the links to gates, rules and permissions (Manage
+    has them). TODO(design).
+  - **Asking first**: renaming a verified group or changing who can see it asks "Are you sure?"
+    with the old pages' words (a `NativeAlert`); No keeps the other edits, as the web's. Back
+    (the header's or Android's) with unsaved changes asks "Discard changes?" (Keep editing /
+    Discard), as the web's Manage does; the plan doesn't say. TODO(design).
+  - **Access gates**: the intro, the Gates card (Diamond and Lifetime Diamond as switches; a
+    locked or credential gate only where the group already has one, to see it and take it off;
+    Payment, Minimum token balance, Neuron holder and Minimum CHIT as rows with Add, each entry
+    under its row in words, tapped to change it, × to take it off with Undo), then Gate settings,
+    always there and dimmed (0.45) until they apply: Members must meet (All gates / Any one gate,
+    from two gates) and Re-check members (Never / Weekly / Monthly / Quarterly, from one gate; an
+    interval set elsewhere, say 14 days, shows as "Every 14 days" and stays picked). The gate
+    sheet keeps one height (74%) for its two steps: the token or nervous system (a search, those
+    the gate already names marked Added), then the value (Payment's amount, a balance's minimum,
+    a neuron's dissolve delay in days and stake, both optional; CHIT has only this step).
+    TODO(design): the dimmed look, the entry rows and the sheet's steps are ours.
+  - **Not offered**: the unique-person gate (the plan lists it, but DecideAI is suspended: the
+    web and the old pages hide it too, and one already there is kept, unseen). The plan says
+    several entries of a kind are allowed and "any one satisfies that gate"; the backend has one
+    list of gates and one All / Any for them all, so two payment gates under All both have to be
+    paid. Open question for the user.
+  - **Diamond**: adding gates is Diamond's, as on the web and the old pages; without it and with
+    no gates, the page says so and has Get Diamond (the You tab's Diamond); with gates already
+    there (Diamond lapsed) they show and can be taken off, but not added.
+  - **Rules**: the switch, the design's six templates (the web dialog's, in the app's words: a
+    card each, filling the text with its three rules, the matching one marked), the text, growing
+    (its length out of 1024, Clear, and why it can't be saved: enabled and empty), and, once the
+    text has changed, Ask members to accept them again (the old pages' Prompt existing members).
+  - **Permissions**: the Members and Moderation cards (the web dialog's nine permissions, with
+    the lowest role on the right in the accent where it isn't the client's default; the kit's
+    `SettingsValue` gained `accent`, EXPORT-LOG 2026-11-16), the Messages card (who can send, then
+    Customise per message type: the types' rows under the switch, each its own role or Same as
+    default; switching it off clears them; the defaults have swap offers for nobody, so it starts
+    on), the Threads card (Separate thread permissions, the same rows for threads under it), and
+    Reset to defaults (`defaultChatPermissions`) while anything differs. Someone whose role can't
+    change them (not the owner) sees the roles only, with no Save.
+  - **Found testing**: saving any permission gave threads a set of their own on the device (the
+    client's `mergePermissions` read "threads unchanged" as "threads like everyone"), so the next
+    Permissions page showed Separate thread permissions on; fixed in the client, for every tree.
+  - **Not built**: Bots and webhooks and Stats (Manage's last two rows) are still placeholders:
+    the plan has "Bots: list + Add a bot; webhooks: Add webhook. Stats: as in the prototype", and
+    the web has no Stats page either (the backend keeps only all-time counters). A community's
+    settings (its details are N8a's).
+  - **Checked** in a 412×915 touch browser on the native tree against the local replica (the
+    emulator wasn't running), N6 Book Club as its owner: Edit group's description saved and shown
+    in About, a permission changed (in the accent) and reset, a rules template saved and shown in
+    the details' Rules, a payment and a CHIT gate added with Any one gate and saved, both taken
+    off (Undo's toast) and saved, the visibility question declined, Discard changes; each put back
+    as it was. Not checked: the photo's crop and upload, iOS, the dark theme.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a

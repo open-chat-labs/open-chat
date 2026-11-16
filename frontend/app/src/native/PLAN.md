@@ -101,7 +101,16 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   panels'). Not built: pinning in DMs (the backend has no pins in direct chats), "Pinned by" and
   the pins' order by when they were pinned (the backend sends neither). What it left is in
   GAPS.md ("Native conversation", Pinned messages).
-- **Next:** the screens. N10a, N11 and N13 need only N3; N7 (group settings) and N8a
+- **Built:** N7's group settings pages
+  ([#10373](https://github.com/open-chat-labs/open-chat/issues/10373)), to the plan's 11: Edit
+  group (the photo, name, description and the Settings card: Public, Message history,
+  Disappearing messages as the TimedToggle) and Manage's Access gates (the Gates card, the
+  two-step gate sheet, entries with Undo, Gate settings dimmed until they apply), Rules (the
+  switch, templates, growing text) and Permissions (Members and Moderation roles in the accent
+  where changed, per message type, threads, Reset to defaults), each a draft on the shared
+  `UpdateGroupState` saved through the client's `updateGroup`. Left: Create group, a community's
+  settings, Bots and webhooks, Stats. What it left is in GAPS.md ("Native group settings").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N7's Create group and N8a
   (communities) can start now that N6 is in; N9 (the builders) needs N10b too.
 
 ## Workstreams

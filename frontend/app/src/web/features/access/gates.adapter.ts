@@ -1,24 +1,26 @@
-import {
-    editableGates,
-    formatTokens,
-    gateWithHidden,
-    validateTokenInput,
-    type AccessGateConfig,
-    type ActiveLeafGate,
-    type CryptocurrencyDetails,
-    type NervousSystemDetails,
-    type ReadonlyMap,
-} from "@client";
+import { editableGates, gateWithHidden, type AccessGateConfig, type ActiveLeafGate } from "@client";
 import type { GateAsset } from "@openchat/ui/src/features/components/AccessGates.svelte";
 import type { AccessGateRule, AccessGatesState } from "@openchat/ui/src/lib/types";
-import { getNeuronGateBindings, getPaymentGateBindings } from "@src/utils/access";
+import {
+    balanceGateOf,
+    chitGateOf,
+    DAY_MS,
+    gateAmountText,
+    gateNervousSystems,
+    gateTokens,
+    neuronGateOf,
+    neuronGateText,
+    paymentGateOf,
+    type GateLookups,
+} from "@src/logic/access/gateValues";
+
+export type { GateLookups };
 
 // A chat's or community's gate config to and from AccessGates' state. The editor never shows the
 // suspended unique-person gate or a gate it has no row for, and writing back keeps them
 // (editableGates / gateWithHidden). A rule the user left as it was is written back as the gate it
-// came from, so reading and saving never changes a gate.
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+// came from, so reading and saving never changes a gate. The values themselves are read and
+// written as the native gates page does (logic/access/gateValues).
 
 /**
  * The gate types offered to add: not unique-person (suspended) or credential (AccessGates can't
@@ -34,11 +36,6 @@ export const OFFERED_GATE_TYPES = [
     "chit",
 ];
 
-export type GateLookups = {
-    tokens: ReadonlyMap<string, CryptocurrencyDetails>;
-    nervousSystems: ReadonlyMap<string, NervousSystemDetails>;
-};
-
 // AccessGates' own interval labels, by their length in days
 const INTERVAL_LABELS: Record<number, string> = {
     1: "1 day",
@@ -48,16 +45,6 @@ const INTERVAL_LABELS: Record<number, string> = {
     90: "3 months",
     180: "6 months",
 };
-
-function amountText(amount: bigint, decimals: number | undefined): string {
-    return decimals === undefined ? "" : formatTokens(amount, decimals, ".", true);
-}
-
-// a typed amount in the token's smallest units, or undefined when it isn't one
-function parseAmount(text: string, decimals: number): bigint | undefined {
-    const { replacementText, amount } = validateTokenInput(text, decimals);
-    return replacementText === "" || amount <= 0n ? undefined : amount;
-}
 
 function toRule(
     gate: ActiveLeafGate,
@@ -81,24 +68,21 @@ function toRule(
                 ...rule,
                 type: "payment",
                 asset: gate.ledgerCanister,
-                a: amountText(gate.amount, lookups.tokens.get(gate.ledgerCanister)?.decimals),
+                a: gateAmountText(gate.amount, lookups.tokens.get(gate.ledgerCanister)?.decimals),
             };
         case "token_balance_gate":
             return {
                 ...rule,
                 type: "balance",
                 asset: gate.ledgerCanister,
-                a: amountText(gate.minBalance, lookups.tokens.get(gate.ledgerCanister)?.decimals),
+                a: gateAmountText(
+                    gate.minBalance,
+                    lookups.tokens.get(gate.ledgerCanister)?.decimals,
+                ),
             };
         case "neuron_gate": {
-            const decimals = lookups.nervousSystems.get(gate.governanceCanister)?.token.decimals;
-            return {
-                ...rule,
-                type: "neuron",
-                asset: gate.governanceCanister,
-                a: gate.minDissolveDelay ? String(gate.minDissolveDelay / DAY_MS) : "",
-                b: gate.minStakeE8s ? amountText(BigInt(gate.minStakeE8s), decimals) : "",
-            };
+            const { days, stake } = neuronGateText(gate, lookups);
+            return { ...rule, type: "neuron", asset: gate.governanceCanister, a: days, b: stake };
         }
         default:
             return undefined;
@@ -113,42 +97,19 @@ function toGate(rule: AccessGateRule, lookups: GateLookups): ActiveLeafGate | un
             return { kind: "diamond_gate" };
         case "locked":
             return { kind: "locked_gate" };
-        case "chit": {
-            const minEarned = Number(rule.a);
-            return Number.isInteger(minEarned) && minEarned > 0
-                ? { kind: "chit_earned_gate", minEarned }
-                : undefined;
-        }
+        case "chit":
+            return chitGateOf(rule.a);
         case "payment": {
             const token = lookups.tokens.get(rule.asset);
-            const amount = token && parseAmount(rule.a, token.decimals);
-            return token && amount !== undefined
-                ? {
-                      kind: "payment_gate",
-                      ledgerCanister: token.ledger,
-                      amount,
-                      fee: token.transferFee,
-                  }
-                : undefined;
+            return token && paymentGateOf(token, rule.a);
         }
         case "balance": {
             const token = lookups.tokens.get(rule.asset);
-            const minBalance = token && parseAmount(rule.a, token.decimals);
-            return token && minBalance !== undefined
-                ? { kind: "token_balance_gate", ledgerCanister: token.ledger, minBalance }
-                : undefined;
+            return token && balanceGateOf(token, rule.a);
         }
         case "neuron": {
             const ns = lookups.nervousSystems.get(rule.asset);
-            if (ns === undefined) return undefined;
-            const days = Number(rule.a);
-            const stake = rule.b.trim() === "" ? undefined : parseAmount(rule.b, ns.token.decimals);
-            return {
-                kind: "neuron_gate",
-                governanceCanister: ns.governanceCanisterId,
-                minDissolveDelay: days > 0 ? days * DAY_MS : undefined,
-                minStakeE8s: stake === undefined ? undefined : Number(stake),
-            };
+            return ns && neuronGateOf(ns, rule.a, rule.b);
         }
         // unique-person is suspended, and a new credential gate has no credential to name
         default:
@@ -211,22 +172,16 @@ export function gateAssets(lookups: GateLookups): {
     tokens: GateAsset[];
     nervousSystems: GateAsset[];
 } {
-    const nsLedgers = new Set(
-        [...lookups.nervousSystems.values()].map((ns) => ns.ledgerCanisterId),
-    );
-    const tokens = getPaymentGateBindings(lookups.tokens, nsLedgers)
-        .filter((b) => b.enabled)
-        .flatMap((b) => {
-            const token = lookups.tokens.get(b.gate.ledgerCanister);
-            return token ? [{ id: token.ledger, symbol: token.symbol, name: token.name }] : [];
-        });
-    const nervousSystems = getNeuronGateBindings(lookups.nervousSystems)
-        .filter((b) => b.enabled)
-        .flatMap((b) => {
-            const ns = lookups.nervousSystems.get(b.gate.governanceCanister);
-            return ns
-                ? [{ id: ns.governanceCanisterId, symbol: ns.token.symbol, name: ns.token.name }]
-                : [];
-        });
-    return { tokens, nervousSystems };
+    return {
+        tokens: gateTokens(lookups).map((token) => ({
+            id: token.ledger,
+            symbol: token.symbol,
+            name: token.name,
+        })),
+        nervousSystems: gateNervousSystems(lookups).map((ns) => ({
+            id: ns.governanceCanisterId,
+            symbol: ns.token.symbol,
+            name: ns.token.name,
+        })),
+    };
 }
