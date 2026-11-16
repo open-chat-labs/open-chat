@@ -7786,7 +7786,9 @@ export class OpenChat {
      * Makes the account: a passkey first, unless the identity signed in already has no account
      * (signed in some other way, or the passkey made on an earlier try), then the user. The
      * referral code set (setReferralCode) goes with it, unless it was turned down before. No
-     * account is made unless the person has agreed to the terms (`termsAccepted`).
+     * account is made unless the person has agreed to the terms (`termsAccepted`): ticked the old
+     * forms' box, or sent the new web UI's form, which says that creating an account is agreeing
+     * to them. Either way the user index records the current terms as accepted with the account.
      * `signal` gives the sign-up up before the account is asked for; once asked for, it's made.
      * An `avatar` is uploaded once the account is made, without holding the sign-up up: an upload
      * that fails leaves the account without a photo, and the sign-up still a success.
@@ -7798,7 +7800,8 @@ export class OpenChat {
         signal?: AbortSignal,
         avatar?: SignUpAvatar,
     ): Promise<SignUpOutcome> {
-        // the forms only offer sign-up once the terms are agreed to; this is the backstop
+        // the forms only offer sign-up once the terms are agreed to (the old ones' box ticked, the
+        // new web UI's form sent under its notice); this is the backstop
         if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
         selectedAuthProviderStore.set(AuthProvider.PASSKEY);
         // a passkey already made for this sign-up isn't made again

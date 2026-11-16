@@ -43,8 +43,12 @@
     referrer?: string;
     /** User id of the referrer, when the host supplied one. */
     referrerId?: string;
-    /** They ticked "I agree to the terms" (Continue needs it). */
-    termsAccepted: boolean;
+    /**
+     * The person agreed to the terms: the form says "By creating an account you agree to the
+     * terms and conditions." over Continue, so submitting it is the agreement, and it's always
+     * `true`. The host passes it on to the sign-up, as the old forms pass their ticked box.
+     */
+    termsAccepted: true;
   }
 
   export interface AuthPerson {
@@ -382,13 +386,11 @@
     }
   }
 
-  // sign-up needs the terms agreed to
-  let agreed = $state(false);
-
+  // sending the form, under "By creating an account you agree to the terms", is the agreement
   function submitSignup() {
-    if (!free || recoveryBad || !agreed || refLink.pending || !onSignup) return;
+    if (!free || recoveryBad || refLink.pending || !onSignup) return;
     attempt('signup', () =>
-      onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId, termsAccepted: agreed }),
+      onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId, termsAccepted: true }),
     );
   }
 
@@ -659,13 +661,11 @@
           </div>
           <div class="submit-row">
             <span class="terms"
-              ><label class="agree"
-                ><input type="checkbox" bind:checked={agreed} /><Translate key="ui.authDialog.termsAgree"
-                  >{#snippet link()}{#if termsUrl}<a href={termsUrl} target="_blank" rel="noopener">{t('ui.authDialog.termsLink')}</a>{:else}{t('ui.authDialog.termsLink')}{/if}{/snippet}</Translate
-                ></label
+              ><Translate key="ui.authDialog.termsNotice"
+                >{#snippet link()}{#if termsUrl}<a href={termsUrl} target="_blank" rel="noopener">{t('ui.authDialog.termsLink')}</a>{:else}{t('ui.authDialog.termsLink')}{/if}{/snippet}</Translate
               >{#if failed === 'signup'}<span class="signup-error" role="alert">{t(failReason ?? 'ui.authDialog.signupFailed')}</span>{/if}</span
             >
-            <button class="continue" class:ready={free && !recoveryBad && agreed && !refLink.pending && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || refLink.pending || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
+            <button class="continue" class:ready={free && !recoveryBad && !refLink.pending && !waiting} type="submit" disabled={!free || recoveryBad || refLink.pending || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
@@ -1389,19 +1389,6 @@
 
   .terms a {
     color: var(--accent);
-  }
-
-  .agree {
-    display: inline-flex;
-    align-items: flex-start;
-    gap: var(--space-6);
-    cursor: pointer;
-  }
-
-  .agree input {
-    margin: 2px 0 0;
-    accent-color: var(--accent);
-    flex: none;
   }
 
   .continue {

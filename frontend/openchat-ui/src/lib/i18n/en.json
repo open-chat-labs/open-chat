@@ -333,7 +333,7 @@
       "signInWith": "Sign in with {name}",
       "signupFailed": "Couldn’t create your account. Try again.",
       "taken": "Taken",
-      "termsAgree": "I agree to the {link}.",
+      "termsNotice": "By creating an account you agree to the {link}.",
       "termsLink": "terms and conditions",
       "username": "Username",
       "usernameNote": "letters, numbers and underscores",
