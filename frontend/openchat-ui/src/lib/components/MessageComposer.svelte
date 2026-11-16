@@ -964,7 +964,9 @@
       <div class="context" role="status" aria-label={contextLabel}>
         <span class="context-main" onclick={onJumpContext} role="button" tabindex="0" title={t('ui.messageComposer.showOriginal')}>
           {#if context.thumb}
-            <span class="context-thumb" style:background={context.thumb}></span>
+            <span class="context-thumb" style:background={context.thumb}
+              >{#if context.thumbVideo}<span class="context-play" aria-hidden="true"><span class="context-play-icon"></span></span>{/if}</span
+            >
           {:else}
             <span class="context-icon" class:editing><span class="context-glyph" style:mask="var(--icon-{editing ? 'edit' : 'reply'}) center/contain no-repeat"></span></span>
           {/if}
@@ -1450,6 +1452,20 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
+    @include flex-center;
+  }
+
+  // a video's: the play glyph as the media tray's video tiles have it
+  .context-play {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    @include flex-center;
+  }
+
+  .context-play-icon {
+    @include icon(play, 8px, #fff, $flex: null);
   }
 
   .context-icon {

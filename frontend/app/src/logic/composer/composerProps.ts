@@ -14,7 +14,14 @@ import type {
     ComposerContext,
     ComposerMention,
 } from "@openchat/ui/src/lib/types";
-import { quoteText, type ConversationContext } from "@src/logic/conversation/messageRow";
+import { cssUrl } from "@openchat/ui/src/lib/cssUrl";
+import {
+    isMedia,
+    mediaHeld,
+    mediaTile,
+    quoteText,
+    type ConversationContext,
+} from "@src/logic/conversation/messageRow";
 
 // The composer's props as every tree's composer (MessageComposer) takes them: the text it starts
 // from, the reply or edit strip, the staged attachment and who it offers to mention.
@@ -40,7 +47,8 @@ export function composerStartText(
 /**
  * The composer's strip for the chat's draft: the message being edited (with `editText`, the text
  * it starts from: logic/composer's `editStartText`), else the one being replied to, with who
- * wrote it. The quoted text shows its mentions as the @names typed (`quoteText`).
+ * wrote it, and its picture when it's a photo, video, GIF or meme (`replyThumb`). The quoted text
+ * shows its mentions as the @names typed (`quoteText`).
  */
 export function composerContext(
     draft:
@@ -49,7 +57,10 @@ export function composerContext(
               replyingTo?: EnhancedReplyContext;
           }
         | undefined,
-    ctx: Pick<ConversationContext, "me" | "you" | "userName" | "contentText" | "mentionsAsTyped">,
+    ctx: Pick<
+        ConversationContext,
+        "me" | "you" | "userName" | "contentText" | "mentionsAsTyped" | "media"
+    >,
     editText: string | undefined,
 ): ComposerContext | null {
     const editing = draft?.editingEvent;
@@ -68,6 +79,27 @@ export function composerContext(
         mode: "reply",
         name: reply.senderId === ctx.me ? ctx.you : ctx.userName(reply.senderId),
         quote: quoteText(reply.content, ctx),
+        ...replyThumb(reply.content, reply.messageId, ctx),
+    };
+}
+
+/**
+ * The picture beside a reply to a photo, video, GIF or meme, as the old trees' reply strips show
+ * it: the picture the message shows (a video's first frame, with a play glyph). In low bandwidth,
+ * one the reader hasn't revealed shows its thumbnail (a GIF none), as its tile does (`mediaHeld`).
+ */
+export function replyThumb(
+    content: EnhancedReplyContext["content"],
+    messageId: bigint,
+    ctx: Pick<ConversationContext, "media">,
+): Pick<ComposerContext, "thumb" | "thumbVideo"> {
+    if (!isMedia(content)) return {};
+    const tile = mediaTile(content, mediaHeld(content, messageId, ctx.media), ctx.media.url);
+    const src = tile.items[0]?.src;
+    if (src === undefined || src === "") return {};
+    return {
+        thumb: `center/cover no-repeat ${cssUrl(src)}`,
+        ...(tile.kind === "video" ? { thumbVideo: true } : {}),
     };
 }
 
