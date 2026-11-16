@@ -997,6 +997,11 @@
 - `ChatBubble`: `players` (`PlayerCard`'s props without `side`), before the link cards, which makes the bubble carded and 542px wide (the player's 534px plus the inset). `meta.json` (`PlayerCard`, `ChatBubble.players`).
 - Not in the design export: the app plays a Twitch link in its message (web 5a), as the old trees did. To go back to it (the app's `GAPS.md` lists it). TODO(design): the player's poster and link row.
 
+## 2026-11-16 — proposals in MessageGroup (web 5a), by hand
+- `lib/types.ts`: `GroupMessage` takes `{ kind: 'proposal' }` with `ProposalMessage`'s props, and `MessageGroup` renders it (with its reactions and thread under it, as the other kinds).
+- `ProposalMessage`: its type prop is `topic` (it was `kind`, which a message's kind takes in the union); `state` can also be `adopted` (decided, not yet executed: "Adopted", good) or `failed` (adopted, but its execution failed: "Failed", bad; new string `ui.proposalMessage.failed`); a host that passes `myVote` (null for none) owns the vote, and the card remembers a vote cast here only when it's left out (it remembered one whatever `myVote` was, so a vote that failed still read "You voted to adopt"); Adopt, Reject and Proposal details press on Enter and Space. `meta.json` (`topic`, `state`, `myVote`'s doc), the docs' sample (`topic`).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
 ## 2026-11-17 — ConversationHeader's call buttons follow what the chat offers, by hand
 - `ConversationHeader`: the voice call button shows only with `onVoiceCall`, so a chat that offers one call (a broadcast, or joining the call going on) shows one button. A channel shows the call buttons too, where it hid them, since channels have calls; the host's `showCall` decides. New `callIcon` (`'video' | 'phone'`, default `'video'`): a phone for joining a voice call. `meta.json` (`callIcon`, `onVoiceCall`'s doc). Used by the app's conversation header (web 7b, #10125).
 - Not in the design export: to go back to it (the app's `GAPS.md`, "Calls").

@@ -1,5 +1,7 @@
 import {
     OPENCHAT_BOT_AVATAR_URL,
+    ProposalDecisionStatus,
+    type ProposalContent,
     OPENCHAT_BOT_USER_ID,
     type ResourceKey,
     type ChatSummary,
@@ -49,6 +51,8 @@ const ctx: ConversationContext = {
     avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
+    proposalTopics: new Map(),
+    proposalVote: () => undefined,
     undeleting: () => false,
     referralLink: "https://oc.app/?ref=me",
     twitchParent: "oc.app",
@@ -141,10 +145,10 @@ describe("a message row", () => {
     });
 
     test("shows other kinds as their text, and a deleted message as deleted", () => {
-        // a kind not built yet
-        const proposal = message({ content: { kind: "proposal_content" } as Message["content"] });
-        expect(messageRow(proposal, "sent", ctx).message).toMatchObject({
-            text: "[proposal_content]",
+        // a kind with no bubble of its own
+        const encrypted = message({ content: { kind: "encrypted_content" } as Message["content"] });
+        expect(messageRow(encrypted, "sent", ctx).message).toMatchObject({
+            text: "[encrypted_content]",
         });
         const deleted = message({ content: { kind: "deleted_content" } as Message["content"] });
         expect(messageRow(deleted, "sent", ctx).message.deleted).toBe(true);
@@ -721,6 +725,76 @@ describe("prize wins", () => {
     });
 });
 
+describe("proposals", () => {
+    const HOUR = 3_600_000;
+    const proposal = (fields: Partial<ProposalContent["proposal"]> = {}, myVote?: boolean) =>
+        message({
+            content: {
+                kind: "proposal_content",
+                governanceCanisterId: "gov",
+                myVote,
+                proposal: {
+                    kind: "sns",
+                    id: 7n,
+                    action: 9,
+                    title: "Fund the design work",
+                    proposer: "0123456789abcdef",
+                    status: ProposalDecisionStatus.Open,
+                    tally: { yes: 40, no: 10, total: 100, timestamp: 0n },
+                    deadline: 50 * HOUR,
+                    minYesPercentageOfTotal: 20,
+                    minYesPercentageOfExercised: 67,
+                    ...fields,
+                } as ProposalContent["proposal"],
+            },
+        } as Partial<Message>);
+    const words = {
+        ...ctx,
+        now: 2 * HOUR,
+        text: (key: ResourceKey) => key.key,
+        proposalTopics: new Map([[9, "Transfer treasury funds"]]),
+    };
+
+    test("show their type, proposer, tally and thresholds, and how long voting has left", () => {
+        expect(messageRow(proposal(), "sent", words).message).toMatchObject({
+            kind: "proposal",
+            title: "Fund the design work",
+            topic: "Transfer treasury funds",
+            proposer: "0123..cdef",
+            critical: true,
+            state: "open",
+            adopt: 40,
+            reject: 10,
+            softThreshold: 20,
+            hardThreshold: 67,
+            when: "proposal.votingPeriodRemaining: 2d",
+            myVote: null,
+            canVote: true,
+        });
+    });
+
+    test("can't be voted on once voted, once voting has ended, decided, or read-only", () => {
+        const row = (p: EventWrapper<Message>, c = words) =>
+            messageRow(p, "sent", c).message as { canVote: boolean; myVote: string | null };
+        expect(row(proposal({}, true))).toMatchObject({ canVote: false, myVote: "adopt" });
+        expect(row(proposal(), { ...words, proposalVote: () => "rejecting" })).toMatchObject({
+            canVote: false,
+            myVote: "reject",
+        });
+        expect(row(proposal({ deadline: HOUR }))).toMatchObject({ canVote: false });
+        expect(row(proposal({ status: ProposalDecisionStatus.Executed }))).toMatchObject({
+            canVote: false,
+        });
+        expect(row(proposal(), { ...words, readonly: true })).toMatchObject({ canVote: false });
+    });
+
+    test("once decided, say how, and that voting has ended", () => {
+        expect(
+            messageRow(proposal({ status: ProposalDecisionStatus.Failed }), "sent", words).message,
+        ).toMatchObject({ state: "failed", when: "proposal.votingPeriodEnded" });
+    });
+});
+
 describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
@@ -847,6 +921,8 @@ describe("a conversation's context", () => {
             locale: "en",
             undeleting: () => false,
             twitchParent: undefined,
+            proposalTopics: new Map(),
+            proposalVotes: new Map(),
         });
         expect(ctx.unreadInThread(4)).toBe(2);
         expect(asked).toEqual([[4, 6]]);
@@ -890,6 +966,8 @@ describe("a conversation's context", () => {
             locale: "en",
             undeleting: () => false,
             twitchParent: undefined,
+            proposalTopics: new Map(),
+            proposalVotes: new Map(),
         });
         expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
             "hi @alice, @mods and @UserId(zz)",
@@ -945,6 +1023,8 @@ describe("a conversation's context", () => {
             locale: "en",
             undeleting: () => false,
             twitchParent: undefined,
+            proposalTopics: new Map(),
+            proposalVotes: new Map(),
         });
         expect(ctx.avatar("alice")).toBe("https://blobs/alice");
         expect(ctx.avatar("bob")).toBeUndefined();

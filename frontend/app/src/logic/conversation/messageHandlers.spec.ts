@@ -101,6 +101,26 @@ describe("a message's controls", () => {
         expect(h.openUrl).toHaveBeenCalledWith("https://ledger/7");
     });
 
+    test("a proposal's vote and details go to the conversation; without a vote handler, no buttons", () => {
+        const voteOnProposal = vi.fn();
+        const openProposal = vi.fn();
+        const content = { kind: "proposal_content" } as MessageContent;
+        const base = { kind: "proposal", time: "", canVote: true } as GroupMessage;
+        const shown = withHandlers(
+            row(base),
+            msg(content),
+            handlers({ voteOnProposal, openProposal }),
+            new Map(),
+        ) as { onVote: (side: "adopt" | "reject") => void; onDetails: () => void };
+        shown.onVote("reject");
+        expect(voteOnProposal).toHaveBeenCalledWith(expect.anything(), content, false);
+        shown.onDetails();
+        expect(openProposal).toHaveBeenCalledWith(content);
+        expect(withHandlers(row(base), msg(content), handlers(), new Map())).toMatchObject({
+            canVote: false,
+        });
+    });
+
     test("a swap offer has no button where the conversation takes no swaps", () => {
         const content = { kind: "p2p_swap_content" } as MessageContent;
         const base = { kind: "swap", time: "", canAct: true } as GroupMessage;

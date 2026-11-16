@@ -47,6 +47,8 @@ const ctx: ConversationContext = {
     undeleting: () => false,
     referralLink: "https://oc.app/?ref=me",
     twitchParent: "oc.app",
+    proposalTopics: new Map(),
+    proposalVote: () => undefined,
     token: (ledger) =>
         ledger === "icp"
             ? {

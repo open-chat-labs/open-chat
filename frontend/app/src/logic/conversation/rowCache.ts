@@ -1,4 +1,4 @@
-import type { EventWrapper, Message } from "@client";
+import { proposalTopicLabel, type EventWrapper, type Message } from "@client";
 import {
     messageRow,
     isOpenThread,
@@ -11,10 +11,9 @@ import {
 /**
  * The conversation's rows, kept per event while nothing a row shows changes (the event, its
  * status, the names in it, its quote's text with the mentions named, its sender's picture, and its
- * thread link's state: whether it's the thread open and its unread replies, and whether a deleted
- * message is being undeleted), so a row stays the
- * same object, and its bubble isn't redone, as users and other chat
- * state update. The screen clears it when the wording, the day or the chat changes.
+ * thread link's state: whether it's the thread open and its unread replies, whether a deleted
+ * message is being undeleted, and a proposal's type and the reader's vote on it this session), so a
+ * row stays the same object, and its bubble isn't redone, as users and other chat state update. The screen clears it when the wording, the day or the chat changes.
  */
 export class RowCache {
     #rows = new Map<
@@ -25,6 +24,7 @@ export class RowCache {
             names: string;
             thread: string;
             undeleting: boolean;
+            proposal: string;
             row: MessageRow;
         }
     >();
@@ -49,18 +49,25 @@ export class RowCache {
                 : `${isOpenThread(msg, ctx.openThread)}|${ctx.unreadInThread(msg.messageIndex)}`;
         // a deleted message's tombstone says while it's being undeleted
         const undeleting = msg.content.kind === "deleted_content" && ctx.undeleting(msg.messageId);
+        // a proposal's type (the chat's names load late) and a vote cast on it this session
+        const content = msg.content;
+        const proposal =
+            content.kind === "proposal_content"
+                ? `${ctx.proposalVote(msg.messageId) ?? ""}|${proposalTopicLabel(content, ctx.proposalTopics)}`
+                : "";
         const kept = this.#rows.get(key);
         if (
             kept?.evt === evt &&
             kept.status === status &&
             kept.names === names &&
             kept.thread === thread &&
-            kept.undeleting === undeleting
+            kept.undeleting === undeleting &&
+            kept.proposal === proposal
         ) {
             return kept.row;
         }
         const row = messageRow(evt, status, ctx);
-        this.#rows.set(key, { evt, status, names, thread, undeleting, row });
+        this.#rows.set(key, { evt, status, names, thread, undeleting, proposal, row });
         return row;
     }
 

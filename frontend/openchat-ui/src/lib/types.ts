@@ -8,6 +8,7 @@ import type { Tip } from './components/ReactionChips.svelte';
 import type MediaMessage from './components/MediaMessage.svelte';
 import type PollMessage from './components/PollMessage.svelte';
 import type PrizeMessage from './components/PrizeMessage.svelte';
+import type ProposalMessage from './components/ProposalMessage.svelte';
 import type SwapOfferMessage from './components/SwapOffer.svelte';
 import type TransferMessage from './components/TransferMessage.svelte';
 import type VoiceMessage from './components/VoiceMessage.svelte';
@@ -71,6 +72,7 @@ export type GroupMessage = GroupMessageBase &
     | ({ kind: 'swap' } & KindProps<typeof SwapOfferMessage>)
     | ({ kind: 'poll' } & KindProps<typeof PollMessage>)
     | ({ kind: 'prize' } & KindProps<typeof PrizeMessage>)
+    | ({ kind: 'proposal' } & KindProps<typeof ProposalMessage>)
   );
 
 /** One sender's run of messages, as rendered by MessageGroup (ThreadPanel `replies`). */

@@ -1,4 +1,4 @@
-import type { EventWrapper, Message } from "@client";
+import type { EventWrapper, Message, ProposalContent } from "@client";
 import type { ConversationContext } from "./messageRow";
 import { RowCache } from "./rowCache";
 
@@ -32,6 +32,8 @@ const ctx: ConversationContext = {
     undeleting: () => false,
     referralLink: "https://oc.app/?ref=me",
     twitchParent: "oc.app",
+    proposalTopics: new Map(),
+    proposalVote: () => undefined,
     token: () => undefined,
 };
 
@@ -199,5 +201,26 @@ describe("the rows kept per event", () => {
         expect(second).not.toBe(first);
         expect(second.message).toMatchObject({ deletedText: "undeletingMessage" });
         expect(rows.row("k", evt, "sent", undeleting)).toBe(second);
+    });
+
+    test("are made again as the reader votes on a proposal", () => {
+        const rows = new RowCache();
+        const evt = message();
+        evt.event.content = {
+            kind: "proposal_content",
+            governanceCanisterId: "gov",
+            proposal: {
+                kind: "nns",
+                topic: 4,
+                title: "T",
+                proposer: "n1",
+                deadline: 0,
+                tally: { yes: 0, no: 0, total: 1, timestamp: 0n },
+            } as ProposalContent["proposal"],
+        };
+        const first = rows.row("k", evt, "sent", ctx);
+        expect(rows.row("k", evt, "sent", ctx)).toBe(first);
+        const voting = { ...ctx, proposalVote: () => "adopting" as const };
+        expect(rows.row("k", evt, "sent", voting)).not.toBe(first);
     });
 });

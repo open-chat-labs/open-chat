@@ -17148,7 +17148,7 @@
         "doc": ""
       },
       {
-        "name": "kind",
+        "name": "topic",
         "type": "string",
         "default": "Transfer SNS treasury funds",
         "editor": "text",
@@ -17182,14 +17182,16 @@
       },
       {
         "name": "state",
-        "type": "'open' | 'rejected' | 'expired' | 'executed'",
+        "type": "'open' | 'rejected' | 'expired' | 'adopted' | 'executed' | 'failed'",
         "default": "open",
         "editor": "enum",
         "options": [
           "open",
           "rejected",
           "expired",
-          "executed"
+          "adopted",
+          "executed",
+          "failed"
         ],
         "section": null,
         "required": false,
@@ -17262,8 +17264,8 @@
         ],
         "section": null,
         "required": false,
-        "componentDefault": "null",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "The viewer's vote, null for none: the host's. Left out, the card remembers a vote cast here."
       },
       {
         "name": "canVote",

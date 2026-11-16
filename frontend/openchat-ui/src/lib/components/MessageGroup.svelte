@@ -24,6 +24,7 @@
   import MediaMessage from './MediaMessage.svelte';
   import PollMessage from './PollMessage.svelte';
   import PrizeMessage from './PrizeMessage.svelte';
+  import ProposalMessage from './ProposalMessage.svelte';
   import SwapOffer from './SwapOffer.svelte';
   import ThreadLink from './ThreadLink.svelte';
   import TransferMessage from './TransferMessage.svelte';
@@ -534,6 +535,8 @@
           <PollMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'prize'}
           <PrizeMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
+        {:else if m.kind === 'proposal'}
+          <ProposalMessage {...m} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}

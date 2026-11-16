@@ -98,6 +98,9 @@
         type OpenChat,
         type P2PSwapContent,
         type PollContent,
+        type ProposalContent,
+        proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -255,6 +258,12 @@
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import BotCommandDialog from "./BotCommandDialog.svelte";
     import { carriesOutCommand } from "./botCommands";
+    import ProposalVoteDialog from "./ProposalVoteDialog.svelte";
+    import {
+        proposalPage,
+        voteOnProposal,
+        type ProposalVoteProblem,
+    } from "@src/logic/conversation/proposalVote";
     import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { claimsStore } from "@src/stores/claims";
@@ -374,6 +383,8 @@
                 native: client.isNativeApp(),
                 framed: $runningInIframe,
             }),
+            proposalTopics: $proposalTopicsStore,
+            proposalVotes: $proposalVotesStore,
         });
     });
 
@@ -1418,6 +1429,8 @@
             claim,
             claiming: (messageId) => $claimsStore.has(messageId),
             vote: (m, content, next) => vote(where, m, content, next),
+            voteOnProposal: (m, content, adopt) => voteProposal(m, content, adopt),
+            openProposal: (content) => window.open(proposalPage(client, content), "_blank", "noopener"),
             download,
             get voice() {
                 return voice;
@@ -1444,6 +1457,16 @@
         if ((await votePoll(client, chat, me, msg, content, next, rootIndex)) === "failed") {
             toastStore.showFailureToast(i18nKey("poll.voteFailed"));
         }
+    }
+
+    // a vote on a proposal (it shows at once); why it didn't go through, in a dialog or a toast, as
+    // the old trees' proposal card said it
+    let proposalProblem = $state<ProposalVoteProblem>();
+
+    async function voteProposal(msg: Message, content: ProposalContent, adopt: boolean) {
+        const result = await voteOnProposal(client, chat.id, msg, content, adopt);
+        if (result.kind === "problem") proposalProblem = result.problem;
+        if (result.kind === "failed") toastStore.showFailureToast(result.message);
     }
 
     // a prize claim, from the reader's own click (claimPrize refuses any other)
@@ -1904,6 +1927,9 @@
             on={!$confirmMessageDeletion}
             onChange={(on) => confirmMessageDeletion.set(!on)} />
     </ConfirmDialog>
+{/if}
+{#if proposalProblem !== undefined}
+    <ProposalVoteDialog problem={proposalProblem} onClose={() => (proposalProblem = undefined)} />
 {/if}
 {#if removingPreview !== undefined}
     <ConfirmDialog

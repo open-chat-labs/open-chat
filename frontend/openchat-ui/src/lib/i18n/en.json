@@ -2785,6 +2785,7 @@
       "details": "Proposal details",
       "executed": "Executed",
       "expired": "Expired",
+      "failed": "Failed",
       "open": "Open",
       "passesImmediately": "Passes immediately ({percent}%)",
       "passesWhenEnds": "Passes when voting ends ({percent}%)",

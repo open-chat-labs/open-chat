@@ -69,6 +69,8 @@
         type OpenChat,
         type PollContent,
         type VideoCallContent,
+        proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
@@ -279,6 +281,8 @@
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
             // Twitch doesn't play in the native apps: its links open Twitch
             twitchParent: undefined,
+            proposalTopics: $proposalTopicsStore,
+            proposalVotes: $proposalVotesStore,
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;

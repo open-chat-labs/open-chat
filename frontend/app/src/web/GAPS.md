@@ -1111,9 +1111,35 @@ design export needs. Each entry says where it came up.
   searches for (Trending is Klipy's featured GIFs, the others search their word, "Thanks" "thank
   you"), nor the loading, empty, failed or nothing-found states: TODO(design). Typed words are
   searched once typing stops for 500ms, from 3 characters, as the old `GiphySelector`s did.
-- **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
-  render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
-  neuron with its reason, as the old UI does.
+- **Proposals** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design export:
+  `ProposalMessage` is in the `GroupMessage` union (`kind: 'proposal'`), so `MessageGroup` renders
+  it; its type prop is `topic` (it was `kind`, which the union takes), a decided proposal can also be
+  `adopted` (not yet executed) or `failed` (its execution failed), a host that passes `myVote` (null
+  for none) owns the vote (the card no longer remembers one cast here, which stayed after a failed
+  vote), and its buttons press on Enter and Space.
+- **Proposals in the conversation** (`features/conversation`, 5a; `logic/conversation/messageRow`,
+  `proposalVote`; `proposalCard` in `@client`, which both old `ProposalContent`s now use): a
+  proposal shows as `ProposalMessage`: its title, its type (the chat's names for its NNS topic or
+  SNS action, `proposalTopicsStore`, "unknown" until they load), its proposer (a known team's neuron
+  by name, `NamedNeurons`, else its id shortened), Critical for an SNS's treasury, dapp and minting
+  actions (the mobile app's list), its tally (each side's share, to two places) against the share it
+  needs to pass when voting ends (`minYesPercentageOfTotal`) and at once
+  (`minYesPercentageOfExercised`), how long voting has left ("Voting period remaining: 2d", worked
+  out when the row is made, as a poll's; it doesn't count down) or that it has ended, and how it was
+  decided. Adopt and Reject while it's open, voting hasn't ended, the reader hasn't voted and the
+  chat isn't read-only; the vote shows at once (`voteOnProposal`, `proposalVotesStore`) and the row
+  is made again as it does (`RowCache`). A vote that didn't go through says why, as the old cards
+  did: no neuron to vote with (the reader's OpenChat principal to add as a hotkey, with a copy
+  button), or each neuron that couldn't vote with why, linked on the IC dashboard
+  (`ProposalVoteDialog`, no design for it: `TODO(design)`); any other failure is a toast. Proposal
+  details opens its page on the IC dashboard (`proposalPage`). Not carried over: the summary (the
+  old card showed it, with Read more) and the payload ("Details") on the card, which the design's
+  card has no room for (they're on the dashboard page); the proposal's id and the proposer's link;
+  collapsing a proposal and the proposals filters (the right column's entry is a placeholder:
+  "Right column host"; `FilteredProposals`, and the old lists' grouping of collapsed proposals, come
+  with them). The native conversation shows the same card without Adopt and Reject (it passes no
+  vote handler yet). Checked on the local replica with proposals added to the list on the page
+  (there's no proposals chat there): the card, and a vote that fails.
 - **Prizes** (`features/conversation`, 5a): a prize shows as `PrizeMessage`. `PrizeMessage` takes
   `canClaim` and passes the click to `onClaim` by hand: the design offers Claim to everyone and
   gives no click, which `claimPrize` refuses. Claim shows only where `prizeView` (`@client`, shared
@@ -3036,8 +3062,8 @@ design export needs. Each entry says where it came up.
     no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
     out). The tips a message got show as chips (5a, "Message kinds"), which do nothing when
     clicked, where the old trees' tipped again;
-  - a proposal's collapse waits for proposals (the thread's items, reply in thread and follow /
-    unfollow, are 4c's: done);
+  - a proposal's collapse waits for the proposals filters (proposals show: 5a, "Proposals in the
+    conversation"; the thread's items, reply in thread and follow / unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;
   - the library's `EmojiPicker` has a fixed set of about 56 emoji: no search over all of them,
     no custom emoji (`@CE(code)`, which the old pickers offered) and no skin tones. A custom

@@ -34,6 +34,8 @@
         type EventWrapper,
         type Message,
         type OpenChat,
+        proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
@@ -124,6 +126,8 @@
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
             twitchParent: undefined,
+            proposalTopics: $proposalTopicsStore,
+            proposalVotes: $proposalVotesStore,
         }),
     );
 

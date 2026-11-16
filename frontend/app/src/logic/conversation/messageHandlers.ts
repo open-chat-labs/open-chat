@@ -11,6 +11,7 @@ import {
     type MessageContent,
     type P2PSwapContent,
     type PollContent,
+    type ProposalContent,
     type ReadonlyMap,
 } from "@client";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
@@ -38,6 +39,10 @@ export type MessageHandlers = {
     download: (content: FileContent) => void;
     /** The conversation's voice player: one voice message plays at a time. */
     voice: VoicePlayer;
+    /** A proposal's Adopt or Reject. None leaves its card without them. */
+    voteOnProposal?: (msg: Message, content: ProposalContent, adopt: boolean) => void;
+    /** A proposal's details: its page on the IC dashboard. */
+    openProposal?: (content: ProposalContent) => void;
 };
 
 /**
@@ -93,6 +98,20 @@ export function withHandlers(
             } as GroupMessage;
         case "file_content":
             return { ...row.message, onDownload: () => handlers.download(content) } as GroupMessage;
+        case "proposal_content": {
+            const vote = handlers.voteOnProposal;
+            const open = handlers.openProposal;
+            return {
+                ...row.message,
+                ...(vote === undefined
+                    ? { canVote: false }
+                    : {
+                          onVote: (side: "adopt" | "reject") =>
+                              vote(msg, content, side === "adopt"),
+                      }),
+                ...(open === undefined ? {} : { onDetails: () => open(content) }),
+            } as GroupMessage;
+        }
         case "audio_content": {
             const voice = handlers.voice;
             const key = row.message.id ?? "";

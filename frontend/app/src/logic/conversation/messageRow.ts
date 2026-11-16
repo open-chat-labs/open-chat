@@ -6,12 +6,18 @@ import {
     formatTokens,
     getConvertedBalances,
     i18nKey,
+    isCriticalProposal,
     isDeletedWebhook,
+    neuronLabel,
     ogPreviewCard,
     ownUserAvatarUrl,
     pollView,
     prizeView,
     referralLink,
+    proposalOutcome,
+    proposalTopicLabel,
+    proposalVotePercent,
+    proposalVoteStatus,
     swapActions,
     swapLabels,
     toLongDatetimeString,
@@ -40,6 +46,8 @@ import {
     type PrizeContentInitial,
     type PrizeReader,
     type PrizeWinnerContent,
+    type ProposalContent,
+    type ProposalVoteStatus,
     type ReadonlyMap,
     type ResourceKey,
     type TokenExchangeRates,
@@ -56,6 +64,7 @@ import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
 import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
+import { NamedNeurons } from "@src/stores/namedNeurons";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
 import { typedMentions, type MentionLookups } from "./typedMentions";
 import { linkPreviews } from "./linkPreview";
@@ -129,6 +138,10 @@ export type ConversationContext = {
      * another, not the native apps); none, and the link shows as a row linking to Twitch.
      */
     twitchParent: string | undefined;
+    /** A proposals chat's names for its proposals' types (NNS topics, SNS actions). */
+    proposalTopics: ReadonlyMap<number, string>;
+    /** The reader's vote on a proposal this session (`proposalVotesStore`), on its way or counted. */
+    proposalVote: (messageId: bigint) => ProposalVoteStatus | undefined;
 };
 
 export type TransferToken = {
@@ -615,6 +628,8 @@ function kindMessage(
                 : prizeMessage(msg.sender, sendingPrize(content), ctx, base, true);
         case "p2p_swap_content":
             return swapMessage(msg.sender, content, ctx, base);
+        case "proposal_content":
+            return proposalMessage(msg.messageId, content, ctx, base);
         case "p2p_swap_content_initial":
             // still on its way: the card as it will land; a failed one stays text, which says so
             return status === "failed"
@@ -733,6 +748,50 @@ function pollMessage(
         myVotes: content.votes.user,
         readonly: view.cannotVote,
         showResults: view.showVotes,
+    };
+}
+
+/**
+ * A governance proposal's card, as the old trees show it: its type and proposer (a known team's
+ * neuron by name), whether it's critical, its tally against the share it needs to pass when voting
+ * ends (`minYesPercentageOfTotal`) and to pass at once (`minYesPercentageOfExercised`), how long
+ * voting has left, and the reader's vote (cast this session, else the proposal's own). Adopt and
+ * Reject only while it's open, voting hasn't ended, the reader hasn't voted and the chat isn't
+ * read-only. Its summary and payload are on its page (Proposal details), not on the card.
+ */
+function proposalMessage(
+    messageId: bigint,
+    content: ProposalContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage {
+    const proposal = content.proposal;
+    const vote = proposalVoteStatus(ctx.proposalVote(messageId), content.myVote);
+    const outcome = proposalOutcome(proposal.status);
+    const left = proposal.deadline - ctx.now;
+    const open = outcome === "open" && left > 0;
+    return {
+        ...base,
+        kind: "proposal",
+        title: proposal.title,
+        topic: proposalTopicLabel(content, ctx.proposalTopics),
+        proposer: neuronLabel(proposal.proposer, NamedNeurons),
+        critical: isCriticalProposal(proposal),
+        state: outcome,
+        adopt: proposalVotePercent(proposal.tally.yes, proposal.tally),
+        reject: proposalVotePercent(proposal.tally.no, proposal.tally),
+        softThreshold: proposal.minYesPercentageOfTotal,
+        hardThreshold: proposal.minYesPercentageOfExercised,
+        when: open
+            ? `${ctx.text(i18nKey("proposal.votingPeriodRemaining"))}: ${timeLeft(left)}`
+            : ctx.text(i18nKey("proposal.votingPeriodEnded")),
+        myVote:
+            vote === undefined
+                ? null
+                : vote === "adopted" || vote === "adopting"
+                  ? "adopt"
+                  : "reject",
+        canVote: open && vote === undefined && !ctx.readonly,
     };
 }
 
@@ -947,6 +1006,10 @@ export type ConversationContextInput = {
     undeleting: (messageId: bigint) => boolean;
     /** Where a Twitch link's player can play (`twitchPlayerParent`); none, a link to Twitch. */
     twitchParent: string | undefined;
+    /** The proposals chat's names for its proposals' types (`proposalTopicsStore`). */
+    proposalTopics: ReadonlyMap<number, string>;
+    /** This session's votes on proposals (`proposalVotesStore`). */
+    proposalVotes: ReadonlyMap<bigint, ProposalVoteStatus>;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -989,6 +1052,8 @@ export function conversationContext(input: ConversationContextInput): Conversati
         undeleting: input.undeleting,
         referralLink: referralLink(client.canonicalOrigin(), input.me),
         twitchParent: input.twitchParent,
+        proposalTopics: input.proposalTopics,
+        proposalVote: (messageId) => input.proposalVotes.get(messageId),
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
                 chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),
