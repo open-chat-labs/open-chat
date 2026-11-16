@@ -93,7 +93,13 @@
         setChatDisappearing,
     } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
+    import {
+        callEventProps,
+        callLength,
+        callMedia,
+        callState,
+        isLiveCall,
+    } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
     import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
     import {
@@ -157,7 +163,6 @@
     import { blockWithToast, favouriteWithToast, muteWithToast } from "../chats/chatToasts";
     import { removeWithUndo } from "../chats/removeWithUndo";
     import {
-        callEventProps,
         disappearingPick,
         headerMenuItems,
         isDisappearingItem,

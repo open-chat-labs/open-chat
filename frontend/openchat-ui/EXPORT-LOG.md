@@ -980,5 +980,9 @@
 - `Banner`: `onDismiss` (optional): a ghost `IconButton` × ("Dismiss", `ui.common.dismiss`) at the end of the bar, which calls it; pulled into the bar's padding, so the bar keeps its height. Without it the bar is as before. The app's layout switch banner (web 10b, `shell/LayoutSwitchBanner`) uses both, where it drew its own × beside the bar on a second card. `meta.json` (`onDismiss`).
 - Not in the design export: to go back to it (the app's `GAPS.md`, "Layout switch"). TODO(design): the export's Banner has no dismiss.
 
+## 2026-11-16 — a call with no length (web 5a), by hand
+- `CallEvent`: an ended call's line under its title was its `duration`, " · ", then its `time`, so a call with no length read " · 10:00". The parts that are there are joined, so it reads "10:00". No props changed. The app's call events (web 5a) show a call that never said it ended, but isn't in progress any more, with no length.
+- Not in the design export: to go back to it.
+
 ## 2026-11-16 — IconButton can be pressed from the keyboard, by hand
 - `IconButton`: a `role="button"` div that only listened for clicks, so Tab reached it but Enter and Space did nothing. It now presses on Enter and Space, as `RoundIconButton` and `Banner`'s action do. That reaches every icon button, the `Banner`'s × among them. No props changed.

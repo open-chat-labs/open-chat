@@ -2557,6 +2557,22 @@ design export needs. Each entry says where it came up.
   (`logic/conversation/timeline`, spec'd), shared with the native conversation, whose bubble has
   no avatar (native plan 04: "three dots, no avatar"; its DMs show no avatars at all). Checked end
   to end on the local replica (two signed-in browsers, a DM).
+- **Call events** (`features/conversation`, 5a; `logic/conversation/callItem`, shared with the
+  native conversation): a call's message shows as `CallEvent`, a centred pill in the timeline, not a
+  bubble, with no menu or reactions (web/05, web/12). Ended: "Video call · 4:12 · 10:00" (its length,
+  `formatClock`); missed by the reader (ended without them in it, `overCallState`): "Missed video
+  call from Ann", with Call back; the reader's own: "You started a voice call". Live only while
+  it's the chat's call in progress (`videoCallInProgress`, `timelineCallState`), with the faces of
+  those in it and how long it has run (on the app's `now500` clock), and Join; a call that never
+  says it ended but isn't in progress any more shows as over, with no length. Two or more calls in
+  a row, each within 8h of the next, show as one grouped pill that opens to list them (web/05,
+  `groupCalls`: the list shows the run's newest, which draws the run, and the rest are left out of
+  its items; anything between them, a message or a date's pill, keeps them apart; the live call is
+  never grouped); the group is read as one (its row carries every call's index). Join and Call back
+  say that calls aren't here yet, in the native tree's words (`native.conversation.callsLater`),
+  until 7b (`TODO(phase 7)`). `CallEvent` drops the " · " before the time when a call has no length
+  (by hand, EXPORT-LOG 2026-11-16). Checked on the local replica with calls added to the list on the
+  page (no calls can be made there).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
   `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
