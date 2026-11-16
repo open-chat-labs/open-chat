@@ -538,8 +538,8 @@
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
         <!-- every other kind's reactions and thread, under it as under a text bubble (ChatBubble draws its own) -->
-        {#if m.kind && m.kind !== 'text' && m.reactions?.length}
-          <ReactionChips reactions={m.reactions} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
+        {#if m.kind && m.kind !== 'text' && (m.reactions?.length || m.tips?.length)}
+          <ReactionChips reactions={m.reactions ?? []} tips={m.tips} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
         {/if}
         {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
           <ThreadLink

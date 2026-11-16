@@ -1089,6 +1089,10 @@ design export needs. Each entry says where it came up.
 - **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
   links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
   place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).
+- **Tips** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design export: `ReactionChips`
+  (so `ChatBubble` and `MessageGroup`, and `GroupMessage`) takes `tips`, a chip per token before
+  the reactions: the token's logo and the total, the viewer's own marked as their reactions are,
+  who tipped as its tooltip. Not a button. The design has no tips.
 - **One message per group** (by hand, phase 3b): the conversation uses the old UI's list, which
   renders one row per event, so each message is a `MessageGroup` of its own. `avatarSpace` keeps
   the avatar's space under a run's first message and `endsRun` gives only the run's last message
@@ -2591,9 +2595,8 @@ design export needs. Each entry says where it came up.
   The community header's menu only marks all read; its other items open dialogs later phases
   build.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
-  3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 5), and
-  link previews, translations and tips (phase 5) aren't wired; the message menu, reactions and
-  swipes are 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
+  3c). The message kinds are 5a's (each in its bubble: "Message kinds" and the entries after it),
+  the message menu, reactions and swipes 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
   (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
   `TODO(design)`), and "N messages deleted" expands them. Each event's line has its date and time
   under it, as in the old trees (`toLongDatetimeString` in `@client`, which both old
@@ -2730,6 +2733,45 @@ design export needs. Each entry says where it came up.
   while previewing). An offer still being sent (`p2p_swap_content_initial`) shows as the card it
   will be, with "Sending offer…" where the action would go (`sending`, by hand; a failed one stays
   a text bubble, which shows the failure). Time left is worked out when the row is made. No tick or quote yet.
+- **Message kinds** (`features/conversation`, 5a; `logic/conversation/messageRow`, shared with the
+  native conversation): every kind of message, as `kindMessage` and `kindText` show it:
+  - in a bubble of its own: images, memes, GIFs and videos (`MediaMessage`), voice and files,
+    transfers, polls, prizes and swap offers (each has its entry below), and a prize's win, the
+    message the thread under a prize gets for each winner: a transfer's card (`TransferMessage`,
+    + for the reader's own win, no sign for someone else's; "View transaction" opens it), its
+    caption the old words, "Bob won 0.10 ICP", without their bold (no design for a win:
+    `TODO(design)`; the old trees' was a spinning coin over that line). One in a ledger the
+    registry doesn't carry stays a text bubble;
+  - as a text bubble in the old trees' words, through the app's markdown (`bodyMarkdown`, so a
+    link works): a hidden message (a blocked user's, "Message hidden"), one this version can't
+    show ("This message is not available in this version of the app", "This message needs a
+    newer version of OpenChat"), a placeholder ("Please wait, your message will load shortly"), a
+    reminder ("⏰ I will remind you about this message at …", then "⏰ You asked me to remind you
+    about this message.", each with its notes under it), and the referral card ("Invite
+    friends/family", what referring earns and the reader's own link, `referralLink`; the old card
+    copied the link on a click and had a QR code). No design for any of them: `TODO(design)`;
+  - still as a text bubble with its content's own English text (`contentText`, the chat list's
+    preview text): a bot still working ("Bot working ...", the old trees' typing dots), an
+    encrypted message, a price chart and a MiniApp's card (their designs are asked for: "Designs
+    needed"), the daily puzzle's result (#10236), a reported message's and a moderation report's
+    cards (the platform moderators' review cards, left from L6: "Platform operators and
+    moderators"), and calls and proposals until theirs are built;
+  - deleted: the tombstone (`ChatBubble`'s `deletedText`) says who deleted it and when, as the old
+    trees do ("Message deleted by Alice on …", `toLongDatetimeString`), "Undeleting message by …"
+    while it's being undeleted (`undeletingMessagesStore`; the row is made again as it starts and
+    stops, `RowCache`), and the OpenChat bot's removal for breaking a platform rule, whose rules
+    link the plain-text tombstone can't carry (its words only). Reveal and undelete are in its
+    menu (5b, "Message actions");
+  - translated (5b's Translate): the translation shows in the message's place, as in the old trees
+    (the client merges `translationsStore` into the events); there's no mark that it's translated,
+    as there wasn't in the old trees. The old desktop's on-device translation of a whole chat (a
+    spike, #9709: `autoTranslatableText`, `onDeviceTranslator`, its banner and header item) isn't
+    carried over;
+  - tips: a chip per token before its reactions, the token's logo and the total (`tipChips`), the
+    reader's own marked as their reactions are, who tipped in its tooltip; `ReactionChips` takes
+    `tips` by hand (EXPORT-LOG 2026-11-16; the design has none: `TODO(design)`). A token the
+    registry doesn't carry has no chip. Clicking one does nothing (tipping is 5b's, not built);
+  - reactions: chips under every kind (5b, "Message actions").
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`logic/conversation/messageRow.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
@@ -2981,7 +3023,8 @@ design export needs. Each entry says where it came up.
     or a custom amount, the fee, paying from an external wallet with its approval, the PIN; not in
     the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
     no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
-    out). The tips a message got (5a) aren't shown either;
+    out). The tips a message got show as chips (5a, "Message kinds"), which do nothing when
+    clicked, where the old trees' tipped again;
   - a proposal's collapse waits for proposals (the thread's items, reply in thread and follow /
     unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;

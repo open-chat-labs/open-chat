@@ -25,6 +25,7 @@ const ctx: ConversationContext = {
     mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
+    longDate: (timestamp) => `L${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -43,6 +44,8 @@ const ctx: ConversationContext = {
     avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
+    undeleting: () => false,
+    referralLink: "https://oc.app/?ref=me",
     token: (ledger) =>
         ledger === "icp"
             ? {

@@ -10,6 +10,7 @@ const ctx: ConversationContext = {
     mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
+    longDate: (timestamp) => `L${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -28,10 +29,14 @@ const ctx: ConversationContext = {
     avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
+    undeleting: () => false,
+    referralLink: "https://oc.app/?ref=me",
     token: () => undefined,
 };
 
-function message(): EventWrapper<Message> {
+function message(
+    content: Message["content"] = { kind: "text_content", text: "hi" },
+): EventWrapper<Message> {
     return {
         index: 3,
         timestamp: 7n,
@@ -40,7 +45,7 @@ function message(): EventWrapper<Message> {
             messageId: 42n,
             messageIndex: 2,
             sender: "alice",
-            content: { kind: "text_content", text: "hi" },
+            content,
             reactions: [],
             tips: {},
             edited: false,
@@ -182,5 +187,16 @@ describe("the rows kept per event", () => {
         const first = rows.row("k", evt, "sent", ctx);
         rows.clear();
         expect(rows.row("k", evt, "sent", ctx)).not.toBe(first);
+    });
+
+    test("are made again as a deleted message starts or stops being undeleted", () => {
+        const rows = new RowCache();
+        const evt = message({ kind: "deleted_content", deletedBy: "bob", timestamp: 1n });
+        const first = rows.row("k", evt, "sent", ctx);
+        const undeleting = { ...ctx, undeleting: () => true };
+        const second = rows.row("k", evt, "sent", undeleting);
+        expect(second).not.toBe(first);
+        expect(second.message).toMatchObject({ deletedText: "undeletingMessage" });
+        expect(rows.row("k", evt, "sent", undeleting)).toBe(second);
     });
 });

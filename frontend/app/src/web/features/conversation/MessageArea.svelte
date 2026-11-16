@@ -223,10 +223,10 @@
         type MessageRow,
     } from "@src/logic/conversation/messageRow";
     import {
+        bodyMarkdown,
         quoteFor,
         quoteTarget,
         retryFor,
-        textAsMarkdown,
         withHandlers,
         type MessageHandlers,
         type QuoteTarget,
@@ -341,6 +341,8 @@
         void ratesLoaded;
         // a thread's unread replies ("· N new" on its link) follow what's read
         void $messagesRead;
+        // a deleted message's tombstone says while it's being undeleted (rows key on it, RowCache)
+        const undeleting = $undeletingMessagesStore;
         // the thread open beside the chat (the route's), its link on the accent; rows key on it
         // (RowCache), so opening another redoes only the two it concerns
         const openThread = thread === undefined && $threadOpenStore ? $messageIndexStore : undefined;
@@ -362,6 +364,8 @@
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
             threads: true,
+            locale: $locale ?? "en",
+            undeleting: (messageId) => undeleting.has(messageId),
         });
     });
 
@@ -1669,11 +1673,15 @@
             {@const where = rowContext(evt)}
             {@const offers = rowOffers(where, evt, failed, offered)}
             {@const swipeLeft = webMessageSwipeLeft(actions)}
+            {@const markdown = bodyMarkdown(content, row.message)}
             <!-- a text message's text as the old UI renders it: markdown, mentions, links, custom
-                 emoji (a lone emoji is the bubble's own, large) -->
+                 emoji (a lone emoji is the bubble's own, large); a kind without a bubble of its
+                 own, its words (a reminder's notes, the referral card's link) -->
             {#snippet body()}
-                {#if content.kind === "text_content"}
-                    <Markdown text={content.text} inline={!msg.blockLevelMarkdown} />
+                {#if markdown !== undefined}
+                    <Markdown
+                        text={markdown}
+                        inline={content.kind === "text_content" ? !msg.blockLevelMarkdown : false} />
                 {/if}
             {/snippet}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -1724,13 +1732,7 @@
                     onSwipeLeft={swipeLeft === undefined
                         ? undefined
                         : () => run(where, swipeLeft, evt, failed)}
-                    messages={messagesFor(
-                        row,
-                        body,
-                        content.kind === "text_content" && textAsMarkdown(content.text),
-                        evt,
-                        offers,
-                    )}
+                    messages={messagesFor(row, body, markdown !== undefined, evt, offers)}
                 />
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}

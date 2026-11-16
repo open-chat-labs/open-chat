@@ -1,12 +1,26 @@
 <!-- A message's reaction chips, overlapping the bottom edge of the bubble above them. Limited to maxRows; the rest fold
      into a "+N" chip that expands them, and a close chip folds them again. Click a chip → onToggle(emoji).
      By hand: ChatBubble's chips as their own component, so every kind of message shows its reactions (MessageGroup puts
-     them under the kinds that don't draw their own). -->
+     them under the kinds that don't draw their own). Also by hand (web 5a, TODO(design)): the tips a message got, a chip
+     per token (its logo and the total) before the reactions, the viewer's own tipped ones marked as their reactions are. -->
 <script lang="ts" module>
   export interface Reaction {
     emoji: string;
     count: number;
     mine?: boolean;
+  }
+
+  /** The tips a message got in one token. */
+  export interface Tip {
+    /** Formatted total, without the symbol. */
+    amount: string;
+    symbol: string;
+    /** The token's logo, as a CSS background. */
+    logo: string;
+    /** The viewer is one of those who tipped. */
+    mine?: boolean;
+    /** Who tipped, for the chip's tooltip. */
+    label?: string;
   }
 </script>
 
@@ -16,6 +30,8 @@
 
   interface Props {
     reactions: Reaction[];
+    /** The tips the message got, a chip per token before the reactions (never folded into "+N"). */
+    tips?: Tip[];
     /** Rows of chips before the rest fold into "+N". */
     maxRows?: number;
     /** Right-aligned layouts (native sent bubbles): the chips at the inline end, under the message. */
@@ -24,7 +40,7 @@
     onShowAll?: () => void;
   }
 
-  let { reactions, maxRows = 1, mirror = false, onToggle, onShowAll }: Props = $props();
+  let { reactions, tips = [], maxRows = 1, mirror = false, onToggle, onShowAll }: Props = $props();
   const t = useT();
 
   // fit === null renders every chip so their rows can be measured
@@ -66,8 +82,13 @@
   });
 </script>
 
-{#if reactions.length > 0}
+{#if reactions.length > 0 || tips.length > 0}
   <div class="reactions" class:mirror bind:this={chips}>
+    {#each tips as tip}
+      <span class="chip tip" class:mine={tip.mine} data-oc-tip title={tip.label}
+        ><span class="coin" style:background={tip.logo} aria-hidden="true"></span>{tip.amount} {tip.symbol}</span
+      >
+    {/each}
     {#each shown as r}
       <span
         class="chip"
@@ -156,6 +177,22 @@
     &:focus-visible {
       @include focus-ring;
     }
+  }
+
+  /* a tip isn't a toggle: no pointer, no hover */
+  .chip.tip {
+    cursor: default;
+
+    &:hover {
+      filter: none;
+    }
+  }
+
+  .coin {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
   }
 
   .chip-more,

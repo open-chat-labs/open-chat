@@ -1,5 +1,7 @@
 import {
     OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_BOT_USER_ID,
+    type ResourceKey,
     type ChatSummary,
     type EventWrapper,
     type Message,
@@ -27,6 +29,7 @@ const ctx: ConversationContext = {
     mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
+    longDate: (timestamp) => `L${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -45,6 +48,8 @@ const ctx: ConversationContext = {
     avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
+    undeleting: () => false,
+    referralLink: "https://oc.app/?ref=me",
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -531,6 +536,157 @@ describe("swap offers", () => {
     });
 });
 
+describe("deleted messages", () => {
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) => `${key.key} ${JSON.stringify(key.params)}`,
+    };
+    const deleted = (deletedBy: string) =>
+        message({
+            content: { kind: "deleted_content", deletedBy, timestamp: 9n },
+        } as Partial<Message>);
+
+    test("say who deleted them and when, as the old trees do", () => {
+        expect(messageRow(deleted("bob"), "sent", words).message).toMatchObject({
+            deleted: true,
+            deletedText: 'messageDeleted {"username":"Bob","timestamp":"L9"}',
+        });
+    });
+
+    test("say while they're being undeleted", () => {
+        const undeleting = { ...words, undeleting: (id: bigint) => id === 42n };
+        expect(messageRow(deleted("bob"), "sent", undeleting).message).toMatchObject({
+            deletedText: 'undeletingMessage {"username":"Bob","timestamp":"L9"}',
+        });
+    });
+
+    test("removed by the OpenChat bot, keep the rule link's words only (the tombstone is plain text)", () => {
+        const bot = {
+            ...ctx,
+            userName: () => "OpenChat Bot",
+            text: () => "Removed by OpenChat Bot for breaking a [platform rule]() on L9",
+        };
+        expect(messageRow(deleted(OPENCHAT_BOT_USER_ID), "sent", bot).message).toMatchObject({
+            deletedText: "Removed by OpenChat Bot for breaking a platform rule on L9",
+        });
+    });
+});
+
+describe("kinds without a bubble of their own", () => {
+    const words = { ...ctx, text: (key: ResourceKey) => key.key };
+    const row = (content: object) =>
+        messageRow(message({ content } as Partial<Message>), "sent", words).message;
+
+    test("say what they are in the app's words, not the content's English", () => {
+        expect(row({ kind: "blocked_content" })).toMatchObject({
+            kind: "text",
+            text: "messageBlocked",
+        });
+        expect(row({ kind: "restricted_content" })).toMatchObject({
+            text: "appStore.messageNotAvailable",
+        });
+        expect(row({ kind: "unsupported_content" })).toMatchObject({ text: "messageUnsupported" });
+        expect(row({ kind: "placeholder_content" })).toMatchObject({ text: "placeholderContent" });
+    });
+
+    test("a reminder says when, or that it's due, with its notes", () => {
+        expect(
+            row({
+                kind: "message_reminder_created_content",
+                remindAt: 5,
+                reminderId: 1n,
+                hidden: false,
+                notes: "call mum",
+            }),
+        ).toMatchObject({ text: "⏰ reminders.remindAt\n\ncall mum" });
+        expect(row({ kind: "message_reminder_content", reminderId: 1n })).toMatchObject({
+            text: "⏰ reminders.youAsked",
+        });
+    });
+
+    test("the referral card gives the reader their own link", () => {
+        expect(row({ kind: "user_referral_card" })).toMatchObject({
+            text: "referralHeader\n\nuserReferralMessage\n\nhttps://oc.app/?ref=me",
+        });
+    });
+
+    test("other kinds still show their content's text", () => {
+        expect(row({ kind: "encrypted_content" })).toMatchObject({ text: "[encrypted_content]" });
+    });
+});
+
+describe("tips", () => {
+    test("show a chip per token with its total, the reader's own marked, and who tipped", () => {
+        const tipped = message({
+            tips: { icp: { alice: 100_000_000n, me: 50_000_000n }, unknown: { bob: 1n } },
+        });
+        expect(messageRow(tipped, "sent", ctx).message.tips).toEqual([
+            {
+                amount: "1.5",
+                symbol: "ICP",
+                logo: 'url("icp.svg") center / cover',
+                mine: true,
+                label: "Alice, You",
+            },
+        ]);
+    });
+
+    test("show on every kind", () => {
+        const file = message({
+            content: { kind: "file_content", name: "a.txt", mimeType: "text/plain", fileSize: 1 },
+            tips: { icp: { bob: 100_000_000n } },
+        } as Partial<Message>);
+        expect(messageRow(file, "sent", ctx).message).toMatchObject({
+            kind: "file",
+            tips: [{ amount: "1", mine: false, label: "Bob" }],
+        });
+    });
+});
+
+describe("prize wins", () => {
+    const win = (recipient: string, ledger = "icp") =>
+        message({
+            content: {
+                kind: "prize_winner_content",
+                prizeMessageIndex: 1,
+                transaction: {
+                    kind: "completed",
+                    ledger,
+                    recipient,
+                    sender: "alice",
+                    amountE8s: 200_000_000n,
+                    feeE8s: 10_000n,
+                    memo: 0n,
+                    blockIndex: 1n,
+                },
+            },
+        } as Partial<Message>);
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) => `**${String(key.params?.recipient)}** won`,
+    };
+
+    test("show as a transfer to the winner: in for the reader's own, saying who won", () => {
+        expect(messageRow(win("me"), "sent", words).message).toMatchObject({
+            kind: "transfer",
+            amount: "2",
+            symbol: "ICP",
+            direction: "in",
+            caption: "You won",
+        });
+        expect(messageRow(win("bob"), "sent", words).message).toMatchObject({
+            direction: "other",
+            caption: "Bob won",
+        });
+    });
+
+    test("in a ledger the registry doesn't carry, show as text", () => {
+        expect(messageRow(win("me", "unknown"), "sent", ctx).message).toMatchObject({
+            kind: "text",
+        });
+    });
+});
+
 describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
@@ -630,6 +786,7 @@ describe("a conversation's context", () => {
                     asked.push([root, latest]);
                     return latest - 4;
                 },
+                canonicalOrigin: () => "https://oc.app",
             },
             chat,
             me: "me",
@@ -653,6 +810,8 @@ describe("a conversation's context", () => {
             rates: () => new Map(),
             face: (userId) => userId,
             threads: true,
+            locale: "en",
+            undeleting: () => false,
         });
         expect(ctx.unreadInThread(4)).toBe(2);
         expect(asked).toEqual([[4, 6]]);
@@ -669,6 +828,7 @@ describe("a conversation's context", () => {
                 formatMessageDate: () => "",
                 isChatReadOnly: () => false,
                 unreadThreadMessageCount: () => 0,
+                canonicalOrigin: () => "https://oc.app",
             },
             chat: undefined,
             me: "me",
@@ -692,6 +852,8 @@ describe("a conversation's context", () => {
             rates: () => new Map(),
             face: (userId) => userId,
             threads: true,
+            locale: "en",
+            undeleting: () => false,
         });
         expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
             "hi @alice, @mods and @UserId(zz)",
@@ -720,6 +882,7 @@ describe("a conversation's context", () => {
                 formatMessageDate: () => "",
                 isChatReadOnly: () => false,
                 unreadThreadMessageCount: () => 0,
+                canonicalOrigin: () => "https://oc.app",
             },
             chat: undefined,
             me: "me",
@@ -743,6 +906,8 @@ describe("a conversation's context", () => {
             rates: () => new Map(),
             face: (userId) => userId,
             threads: true,
+            locale: "en",
+            undeleting: () => false,
         });
         expect(ctx.avatar("alice")).toBe("https://blobs/alice");
         expect(ctx.avatar("bob")).toBeUndefined();

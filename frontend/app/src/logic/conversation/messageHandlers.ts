@@ -8,6 +8,7 @@ import {
     type CryptocurrencyDetails,
     type FileContent,
     type Message,
+    type MessageContent,
     type P2PSwapContent,
     type PollContent,
     type ReadonlyMap,
@@ -15,7 +16,7 @@ import {
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { isSingleEmoji } from "@src/utils/emojis";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
-import { isMedia, type MessageRow } from "./messageRow";
+import { isMedia, isWordedKind, type MessageRow } from "./messageRow";
 import type { VoicePlayer, VoiceSpeed } from "./voicePlayer.svelte";
 
 // A message row's controls (MessageGroup's cards and players) wired to what the conversation does
@@ -58,6 +59,12 @@ export function withHandlers(
         case "crypto_content": {
             const url = buildTransactionUrl(content.transfer, tokens);
             return url === undefined
+                ? row.message
+                : ({ ...row.message, onOpen: () => handlers.openUrl(url) } as GroupMessage);
+        }
+        case "prize_winner_content": {
+            const url = buildTransactionUrl(content.transaction, tokens);
+            return url === undefined || row.message.kind !== "transfer"
                 ? row.message
                 : ({ ...row.message, onOpen: () => handlers.openUrl(url) } as GroupMessage);
         }
@@ -122,6 +129,22 @@ export function withHandlers(
  */
 export function textAsMarkdown(text: string): boolean {
     return !isSingleEmoji(text) || /^!emoji\(/.test(text);
+}
+
+/**
+ * The markdown a text bubble shows in place of its plain text (ChatBubble's `body`): a text
+ * message's own text, but for a lone native emoji (`textAsMarkdown`), and the words of a kind
+ * without a bubble of its own (`kindText`: a reminder's notes, the referral card's link). None for
+ * anything else, which shows its plain text.
+ */
+export function bodyMarkdown(content: MessageContent, message: GroupMessage): string | undefined {
+    if (content.kind === "text_content") {
+        return textAsMarkdown(content.text) ? content.text : undefined;
+    }
+    if (isWordedKind(content) && (message.kind === undefined || message.kind === "text")) {
+        return message.text;
+    }
+    return undefined;
 }
 
 /**

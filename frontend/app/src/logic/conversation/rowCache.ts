@@ -11,7 +11,8 @@ import {
 /**
  * The conversation's rows, kept per event while nothing a row shows changes (the event, its
  * status, the names in it, its quote's text with the mentions named, its sender's picture, and its
- * thread link's state: whether it's the thread open and its unread replies), so a row stays the
+ * thread link's state: whether it's the thread open and its unread replies, and whether a deleted
+ * message is being undeleted), so a row stays the
  * same object, and its bubble isn't redone, as users and other chat
  * state update. The screen clears it when the wording, the day or the chat changes.
  */
@@ -23,6 +24,7 @@ export class RowCache {
             status: MessageStatus;
             names: string;
             thread: string;
+            undeleting: boolean;
             row: MessageRow;
         }
     >();
@@ -45,17 +47,20 @@ export class RowCache {
             msg.thread === undefined || !ctx.threads
                 ? ""
                 : `${isOpenThread(msg, ctx.openThread)}|${ctx.unreadInThread(msg.messageIndex)}`;
+        // a deleted message's tombstone says while it's being undeleted
+        const undeleting = msg.content.kind === "deleted_content" && ctx.undeleting(msg.messageId);
         const kept = this.#rows.get(key);
         if (
             kept?.evt === evt &&
             kept.status === status &&
             kept.names === names &&
-            kept.thread === thread
+            kept.thread === thread &&
+            kept.undeleting === undeleting
         ) {
             return kept.row;
         }
         const row = messageRow(evt, status, ctx);
-        this.#rows.set(key, { evt, status, names, thread, row });
+        this.#rows.set(key, { evt, status, names, thread, undeleting, row });
         return row;
     }
 

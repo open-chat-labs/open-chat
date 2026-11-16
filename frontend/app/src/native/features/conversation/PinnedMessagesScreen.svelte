@@ -27,6 +27,7 @@
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
+        undeletingMessagesStore,
         userGroupSummariesStore,
         selectedServerChatStore,
         unconfirmedReadByThem,
@@ -58,7 +59,7 @@
     import { lowBandwidth } from "@src/stores/settings";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
@@ -166,6 +167,8 @@
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
             threads: false,
+            locale: $locale ?? "en",
+            undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
         }),
     );
 

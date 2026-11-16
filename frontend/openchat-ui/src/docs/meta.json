@@ -872,6 +872,17 @@
         "doc": ""
       },
       {
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The tips the message got, a chip per token before its reactions.",
+        "name": "tips",
+        "type": "Tip[]"
+      },
+      {
         "name": "threadCount",
         "type": "number",
         "default": 0,
@@ -993,6 +1004,17 @@
         "required": true,
         "componentDefault": null,
         "doc": "Emoji, count and whether they're the viewer's (mine)."
+      },
+      {
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The tips the message got, a chip per token (its logo and total) before the reactions, never folded into \"+N\".",
+        "name": "tips",
+        "type": "Tip[]"
       },
       {
         "name": "maxRows",

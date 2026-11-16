@@ -1,4 +1,5 @@
 import {
+    OPENCHAT_BOT_USER_ID,
     allowsVoteChange,
     formatClock,
     formatFileSize,
@@ -10,13 +11,16 @@ import {
     ownUserAvatarUrl,
     pollView,
     prizeView,
+    referralLink,
     swapActions,
     swapLabels,
+    toLongDatetimeString,
     votesForAnswer,
     waveformLevels,
     type ChatSummary,
     type CryptocurrencyContent,
     type CryptocurrencyDetails,
+    type DeletedContent,
     type EventWrapper,
     type GiphyContent,
     type ImageContent,
@@ -32,9 +36,11 @@ import {
     type PrizeContent,
     type PrizeContentInitial,
     type PrizeReader,
+    type PrizeWinnerContent,
     type ReadonlyMap,
     type ResourceKey,
     type TokenExchangeRates,
+    type TipsReceived,
     type TokenInfo,
     type UserLookup,
     type VideoContent,
@@ -76,6 +82,8 @@ export type ConversationContext = {
     time: (timestamp: bigint) => string;
     /** A date as the list shows it (a time today, else a short date). */
     date: (timestamp: bigint) => string;
+    /** A date and time in full, as the old trees' deleted messages and event lines say it. */
+    longDate: (timestamp: bigint | number) => string;
     /** How media shows: low bandwidth, and the media URL as this device fetches it. */
     media: MediaView;
     /** Whether the conversation is a DM. */
@@ -107,6 +115,10 @@ export type ConversationContext = {
     unreadInThread: (threadRootMessageIndex: number) => number;
     /** Whether the view shows threads: without, a message has no thread link (no thread fields). */
     threads: boolean;
+    /** Whether a deleted message is being undeleted (`undeletingMessagesStore`). */
+    undeleting: (messageId: bigint) => boolean;
+    /** The reader's own referral link, which the OpenChat bot's referral card gives them. */
+    referralLink: string;
 };
 
 export type TransferToken = {
@@ -287,8 +299,9 @@ export function showsSenderName(runStart: boolean, direct: boolean): boolean {
 }
 
 /**
- * A message as MessageGroup shows it, with its sender. Every kind shows as a text bubble for now:
- * the rich kinds are phase 5 (GAPS.md).
+ * A message as MessageGroup shows it, with its sender: a kind with a bubble of its own in it
+ * (`kindMessage`), any other as a text bubble, with its text (`kindText` in the app's words, else
+ * `contentText`; GAPS.md, "Message kinds").
  */
 export function messageRow(
     evt: EventWrapper<Message>,
@@ -308,6 +321,7 @@ export function messageRow(
             count: r.userIds.size,
             mine: r.userIds.has(ctx.me),
         })),
+        tips: tipChips(msg.tips, ctx),
         ...threadFields(msg, ctx),
     });
     if (kind !== undefined) {
@@ -327,7 +341,7 @@ export function messageRow(
         message: {
             id: String(msg.messageId),
             kind: "text",
-            text: messageText(msg.content, ctx),
+            text: kindText(msg.content, ctx) ?? messageText(msg.content, ctx),
             time: ctx.time(evt.timestamp),
             status,
             // a bot's message is edited as it's finalised, which isn't an edit to show
@@ -335,11 +349,16 @@ export function messageRow(
                 msg.edited && !(msg.senderContext?.kind === "bot" && msg.senderContext.finalised),
             forwarded: msg.forwarded,
             deleted: msg.content.kind === "deleted_content",
+            deletedText:
+                msg.content.kind === "deleted_content"
+                    ? deletedText(msg.content, ctx.undeleting(msg.messageId), ctx)
+                    : undefined,
             reactions: msg.reactions.map((r) => ({
                 emoji: r.reaction,
                 count: r.userIds.size,
                 mine: r.userIds.has(ctx.me),
             })),
+            tips: tipChips(msg.tips, ctx),
             quoteName:
                 quoted === undefined
                     ? undefined
@@ -358,7 +377,113 @@ type KindBase = {
     time: string;
     deleted: false;
     reactions: GroupMessage["reactions"];
+    tips: GroupMessage["tips"];
 } & ThreadFields;
+
+/**
+ * The tips a message got, a chip per token (its logo and the total), the reader's own marked, with
+ * who tipped as its tooltip, as the old trees' tip thumbnails sum them. A token the registry
+ * doesn't carry has no chip. TODO(design): the design has no tips; they go before the reactions.
+ */
+export function tipChips(
+    tips: TipsReceived,
+    ctx: Pick<ConversationContext, "me" | "you" | "token" | "userName">,
+): NonNullable<GroupMessage["tips"]> {
+    const chips: NonNullable<GroupMessage["tips"]> = [];
+    for (const [ledger, byUser] of Object.entries(tips)) {
+        const token = ctx.token(ledger);
+        const tippers = Object.keys(byUser);
+        if (token === undefined || tippers.length === 0) continue;
+        const total = Object.values(byUser).reduce((sum, amount) => sum + amount, 0n);
+        chips.push({
+            amount: token.amount(total),
+            symbol: token.symbol,
+            logo: `url("${token.logo}") center / cover`,
+            mine: tippers.includes(ctx.me),
+            label: tippers
+                .map((userId) => (userId === ctx.me ? ctx.you : ctx.userName(userId)))
+                .join(", "),
+        });
+    }
+    return chips;
+}
+
+/**
+ * A deleted message's tombstone, as the old trees word it: who deleted it and when, "Undeleting…"
+ * while it's being undeleted, or the OpenChat bot's removal for breaking a platform rule (whose
+ * link the tombstone, plain text, can't carry: its words only).
+ */
+export function deletedText(
+    content: DeletedContent,
+    undeleting: boolean,
+    ctx: Pick<ConversationContext, "userName" | "longDate" | "text">,
+): string {
+    const values = {
+        username: ctx.userName(content.deletedBy),
+        timestamp: ctx.longDate(content.timestamp),
+    };
+    if (undeleting) return ctx.text(i18nKey("undeletingMessage", values));
+    if (content.deletedBy === OPENCHAT_BOT_USER_ID) {
+        const text = ctx.text(i18nKey("messageDeletedByOpenChatBot", { ...values, rules: "" }));
+        return text.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+    }
+    return ctx.text(i18nKey("messageDeleted", values));
+}
+
+/** The kinds `kindText` words, shown as a text bubble with their text as markdown. */
+const WORDED_KINDS: ReadonlySet<MessageContent["kind"]> = new Set<MessageContent["kind"]>([
+    "blocked_content",
+    "restricted_content",
+    "unsupported_content",
+    "placeholder_content",
+    "message_reminder_created_content",
+    "message_reminder_content",
+    "user_referral_card",
+]);
+
+/** Whether a message's kind shows as a text bubble with the words `kindText` gives it. */
+export function isWordedKind(content: MessageContent): boolean {
+    return WORDED_KINDS.has(content.kind);
+}
+
+/**
+ * A kind that has no bubble of its own, in the old trees' words (they show it as a line of text):
+ * a hidden message, one this version can't show, a placeholder, a reminder (with its notes), the
+ * referral card (with the reader's link). Undefined for every other kind.
+ * TODO(design): none of these is in the design.
+ */
+export function kindText(
+    content: MessageContent,
+    ctx: Pick<ConversationContext, "text" | "longDate" | "referralLink">,
+): string | undefined {
+    const withNotes = (line: string, notes: string | undefined) =>
+        notes === undefined || notes.trim() === "" ? line : `${line}\n\n${notes}`;
+    switch (content.kind) {
+        case "blocked_content":
+            return ctx.text(i18nKey("messageBlocked"));
+        case "restricted_content":
+            return ctx.text(i18nKey("appStore.messageNotAvailable"));
+        case "unsupported_content":
+            return ctx.text(i18nKey("messageUnsupported"));
+        case "placeholder_content":
+            return ctx.text(i18nKey("placeholderContent"));
+        case "message_reminder_created_content":
+            return withNotes(
+                `⏰ ${ctx.text(i18nKey("reminders.remindAt", { datetime: ctx.longDate(content.remindAt) }))}`,
+                content.notes,
+            );
+        case "message_reminder_content":
+            return withNotes(`⏰ ${ctx.text(i18nKey("reminders.youAsked"))}`, content.notes);
+        case "user_referral_card":
+            return [
+                ctx.text(i18nKey("referralHeader")),
+                ctx.text(i18nKey("userReferralMessage")),
+                ctx.referralLink,
+            ].join("\n\n");
+        default:
+            return undefined;
+    }
+}
 
 /**
  * A message's thread as its link under it (design pass 8), whatever its kind: on the thread's root
@@ -443,6 +568,8 @@ function kindMessage(
             return pollMessage(msg.sender, content, ctx, base);
         case "prize_content":
             return prizeMessage(msg.sender, content, ctx, base);
+        case "prize_winner_content":
+            return prizeWinnerMessage(content, ctx, base);
         case "prize_content_initial":
             // still on its way: the card as it will land; a failed one stays text, which says so
             return status === "failed"
@@ -495,6 +622,43 @@ function transferMessage(
         direction,
         recipient: ctx.direct || direction === "in" ? undefined : ctx.userName(transfer.recipient),
         caption: content.caption ?? "",
+    };
+}
+
+/**
+ * A prize's win (the thread under a prize gets one per winner) as a transfer's card: + for the
+ * reader's own, no sign for someone else's, saying who won what as the old trees do (without their
+ * bold). One in a ledger the registry doesn't carry shows as text.
+ * TODO(design): the design has no prize win; the old trees' was a spinning coin over its line.
+ */
+function prizeWinnerMessage(
+    content: PrizeWinnerContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const transfer = content.transaction;
+    const token = ctx.token(transfer.ledger);
+    if (token === undefined) return undefined;
+    const mine = transfer.recipient === ctx.me;
+    const amount = token.amount(transfer.amountE8s);
+    return {
+        ...base,
+        kind: "transfer",
+        amount,
+        symbol: token.symbol,
+        mark: "",
+        gradient: `url("${token.logo}") center / cover`,
+        usd: token.usd(transfer.amountE8s),
+        direction: mine ? "in" : "other",
+        caption: ctx
+            .text(
+                i18nKey("prizes.winner", {
+                    recipient: mine ? ctx.you : ctx.userName(transfer.recipient),
+                    amount,
+                    token: token.symbol,
+                }),
+            )
+            .replaceAll("**", ""),
     };
 }
 
@@ -710,6 +874,7 @@ export type ConversationContextInput = {
         | "formatMessageDate"
         | "isChatReadOnly"
         | "unreadThreadMessageCount"
+        | "canonicalOrigin"
     >;
     chat: ChatSummary | undefined;
     me: string;
@@ -738,6 +903,10 @@ export type ConversationContextInput = {
     face: (userId: string) => string;
     /** Whether the view shows threads (a message's thread link); the native tree has no thread screen yet. */
     threads: boolean;
+    /** The app's language, for dates said in full. */
+    locale: string;
+    /** Whether a deleted message is being undeleted (`undeletingMessagesStore`). */
+    undeleting: (messageId: bigint) => boolean;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -762,6 +931,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
                 true,
                 true,
             ),
+        longDate: (timestamp) => toLongDatetimeString(new Date(Number(timestamp)), input.locale),
         media: {
             lowBandwidth: input.lowBandwidth,
             revealed: input.revealed,
@@ -776,6 +946,8 @@ export function conversationContext(input: ConversationContextInput): Conversati
         face: input.face,
         avatar: (userId) => ownUserAvatarUrl(findUser(userId, users, webhooks)),
         threads: input.threads,
+        undeleting: input.undeleting,
+        referralLink: referralLink(client.canonicalOrigin(), input.me),
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
                 chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),

@@ -158,7 +158,7 @@
     import { nativeMessageSwipes } from "@src/utils/messageSwipe";
     import { buildDisplayName } from "@src/utils/user";
     import { getContext, onDestroy, untrack } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
@@ -275,6 +275,8 @@
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
             // no thread screen yet (PLAN, N8a): no replies link under a message until then
             threads: false,
+            locale: $locale ?? "en",
+            undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;

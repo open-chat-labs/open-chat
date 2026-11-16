@@ -1,7 +1,14 @@
-import type { ChatIdentifier, Message, MessageContent, ReplyContext } from "@client";
+import type {
+    ChatIdentifier,
+    CryptocurrencyDetails,
+    Message,
+    MessageContent,
+    ReplyContext,
+} from "@client";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { describe, expect, test, vi } from "vitest";
 import {
+    bodyMarkdown,
     quoteFor,
     quoteTarget,
     retryFor,
@@ -67,6 +74,31 @@ describe("a message's controls", () => {
         );
         (shown as { onDownload: () => void }).onDownload();
         expect(h.download).toHaveBeenCalledWith(file);
+    });
+
+    test("a prize win opens its transaction, as a transfer's card does", () => {
+        const h = handlers();
+        const content = {
+            kind: "prize_winner_content",
+            prizeMessageIndex: 1,
+            transaction: { kind: "completed", ledger: "icp", blockIndex: 7n },
+        } as MessageContent;
+        const tokens = new Map([
+            [
+                "icp",
+                {
+                    transactionUrlFormat: "https://ledger/{transaction_index}",
+                } as CryptocurrencyDetails,
+            ],
+        ]);
+        const shown = withHandlers(
+            row({ kind: "transfer", time: "" } as GroupMessage),
+            msg(content),
+            h,
+            tokens,
+        );
+        (shown as { onOpen: () => void }).onOpen();
+        expect(h.openUrl).toHaveBeenCalledWith("https://ledger/7");
     });
 
     test("a swap offer has no button where the conversation takes no swaps", () => {
@@ -201,5 +233,26 @@ describe("a reply's quote, tapped", () => {
             quoteFor({ kind: "image", time: "", items: [] } as GroupMessage, target, go),
         ).toEqual({});
         expect(quoteFor({ time: "", text: "yes" } as GroupMessage, undefined, go)).toEqual({});
+    });
+});
+
+describe("a text bubble's markdown", () => {
+    const text = (t: string): GroupMessage => ({ kind: "text", text: t, time: "" });
+
+    test("is a text message's own text, but for a lone native emoji, which the bubble shows large", () => {
+        const content = { kind: "text_content", text: "**hi**" } as MessageContent;
+        expect(bodyMarkdown(content, text("**hi**"))).toBe("**hi**");
+        expect(bodyMarkdown({ kind: "text_content", text: "👍" }, text("👍"))).toBeUndefined();
+    });
+
+    test("is a worded kind's words (a reminder's notes, the referral card's link)", () => {
+        const reminder = { kind: "message_reminder_content", reminderId: 1n } as MessageContent;
+        expect(bodyMarkdown(reminder, text("⏰ due"))).toBe("⏰ due");
+    });
+
+    test("is none for any other kind", () => {
+        expect(
+            bodyMarkdown({ kind: "encrypted_content" } as MessageContent, text("x")),
+        ).toBeUndefined();
     });
 });

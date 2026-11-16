@@ -7,7 +7,7 @@
   import { useT } from '../i18n';
   import type { ComponentProps, Snippet } from 'svelte';
   import LinkCard from './LinkCard.svelte';
-  import ReactionChips, { type Reaction } from './ReactionChips.svelte';
+  import ReactionChips, { type Reaction, type Tip } from './ReactionChips.svelte';
   import ThreadLink from './ThreadLink.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
@@ -53,6 +53,8 @@
     maxReactionRows?: number;
     onToggleReaction?: (emoji: string) => void;
     onShowAllReactions?: () => void;
+    /** The tips the message got, a chip per token before its reactions (by hand, web 5a). */
+    tips?: Tip[];
     /** Replies in the message's thread: the thread link under the reactions. */
     threadCount?: number;
     threadLastAt?: string;
@@ -91,6 +93,7 @@
     maxReactionRows = 1,
     onToggleReaction,
     onShowAllReactions,
+    tips = [],
     threadCount = 0,
     threadLastAt = '',
     threadFaces = [],
@@ -188,7 +191,7 @@
           <span class="retry" onclick={retryAction} role="button" tabindex="0">{t('ui.common.retry')}</span>
         </div>
       {/if}
-      <ReactionChips {reactions} maxRows={maxReactionRows} {mirror} onToggle={onToggleReaction} onShowAll={onShowAllReactions} />
+      <ReactionChips {reactions} {tips} maxRows={maxReactionRows} {mirror} onToggle={onToggleReaction} onShowAll={onShowAllReactions} />
       <!-- the thread under the reactions, which overlap the bubble's edge (pass 8) -->
       {#if threadCount > 0}
         <ThreadLink
