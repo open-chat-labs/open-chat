@@ -11,6 +11,7 @@ import {
 import { get } from "svelte/store";
 import type { Share } from "../share";
 import { navigate } from "@utils/navigation";
+import { coldStartIntents } from "./coldStart.svelte";
 
 const TAURI_PLUGIN_NAME = "oc";
 const SHARE_TARGET_EVENT = "share-target";
@@ -124,10 +125,12 @@ export function shareToChat(
             .then((content) => localUpdates.draftMessages.setAttachment({ chatId }, content))
             .catch((err) => console.error("Failed to attach shared file", err));
     }
-    // navigate() routes through the centralized navigation system which handles
-    // router readiness (retrying if the router isn't ready yet). Cold-start shares
-    // arrive while Home.svelte is still loading, so we need this readiness check.
-    navigate(routeForChatIdentifier(get(chatListScopeStore).kind, chatId));
+    // A cold-start share arrives before the app has landed on its chat list, so the router
+    // opens it once it has (coldStart.svelte.ts)
+    const path = routeForChatIdentifier(get(chatListScopeStore).kind, chatId);
+    if (!coldStartIntents.parkUnlessLanded(path)) {
+        navigate(path);
+    }
 }
 
 /** Where a share for no chat in particular goes: the App tree's chat picker. */
