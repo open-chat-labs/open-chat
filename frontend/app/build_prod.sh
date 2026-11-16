@@ -10,7 +10,7 @@ export OC_NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChat
 export OC_DFX_NETWORK=ic
 export OC_VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
 export OC_DISCORD_BRIDGE_LINK_URL=https://d2l0wgzap76484.cloudfront.net/link?code={code}
-export OC_TELEGRAM_BRIDGE_LINK_URL=https://t.me/OpenChatBridgeBot?start={code}
+export OC_TELEGRAM_BRIDGE_LINK_URL=https://t.me/OpenChat_Bot?start={code}
 export OC_TWITCH_BRIDGE_LINK_URL=https://d3k84enwyokagr.cloudfront.net/link?code={code}
 export OC_BRIDGE_AVATARS_URL=https://d31v79nf0k3ss4.cloudfront.net
 export OC_PRICE_SERVICE_URL=https://d2r0806cxz8193.cloudfront.net

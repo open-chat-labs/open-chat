@@ -31,7 +31,7 @@ export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=
 export OC_VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
 export OC_DISCORD_BRIDGE_LINK_URL=https://d2l0wgzap76484.cloudfront.net/link?code={code}
-export OC_TELEGRAM_BRIDGE_LINK_URL=https://t.me/OpenChatBridgeBot?start={code}
+export OC_TELEGRAM_BRIDGE_LINK_URL=https://t.me/OpenChat_Bot?start={code}
 export OC_TWITCH_BRIDGE_LINK_URL=https://d3k84enwyokagr.cloudfront.net/link?code={code}
 export OC_BRIDGE_AVATARS_URL=https://d31v79nf0k3ss4.cloudfront.net
 export OC_PRICE_SERVICE_URL=https://d2r0806cxz8193.cloudfront.net
