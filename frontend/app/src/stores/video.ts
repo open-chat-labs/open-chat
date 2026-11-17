@@ -178,6 +178,28 @@ export const activeVideoCall = {
         const call = get(activeStore)?.call;
         return call !== undefined && get(hasPresence) ? call.participantCounts().present : 0;
     },
+    // The user's own microphone, camera and screen share in the active call: set to a value (the
+    // new UI's controls) or flipped from where Daily has them (the old ones)
+    setMicrophone: (on: boolean) => get(activeStore)?.call?.setLocalAudio(on),
+    setCamera: (on: boolean) => get(activeStore)?.call?.setLocalVideo(on),
+    setSharing: (on: boolean) => {
+        const call = get(activeStore)?.call;
+        if (call === undefined) return;
+        if (on) {
+            call.startScreenShare();
+        } else {
+            call.stopScreenShare();
+        }
+    },
+    toggleMicrophone: () => {
+        const call = get(activeStore)?.call;
+        call?.setLocalAudio(!call.localAudio());
+    },
+    toggleCamera: () => {
+        const call = get(activeStore)?.call;
+        call?.setLocalVideo(!call.localVideo());
+    },
+    toggleSharing: () => activeVideoCall.setSharing(!get(sharing)),
     // A native surface acted on the call (#9559): the ongoing notification's hang-up, a
     // headset, Telecom. Applied only to the call that is active, by message id.
     applyNativeControl: (control: NativeCallControl) => {

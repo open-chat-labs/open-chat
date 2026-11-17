@@ -73,7 +73,7 @@ let inProgress: Record<string, "default" | "broadcast" | undefined> = {};
 const client = {
     lookupChatSummary: vi.fn((chatId: ChatIdentifier) => {
         const callType = inProgress[chatId.kind];
-        return { videoCallInProgress: callType ? { callType } : undefined };
+        return { videoCallInProgress: callType ? { callType, messageId: 7n } : undefined };
     }),
     filterRightPanelHistory: vi.fn(),
     popRightPanelHistory: vi.fn(),
@@ -132,7 +132,11 @@ describe("a call", () => {
     test("an answer from the native ring during a call switches without asking", async () => {
         vi.useFakeTimers();
         try {
-            await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+            await session.startOrJoin(container, {
+                chatId: group,
+                callType: "default",
+                join: false,
+            });
 
             const answering = session.startOrJoin(container, {
                 chatId: direct,
@@ -164,7 +168,11 @@ describe("a call", () => {
         vi.useFakeTimers();
         const endCall = vi.spyOn(activeVideoCall, "endCall");
         try {
-            await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+            await session.startOrJoin(container, {
+                chatId: group,
+                callType: "default",
+                join: false,
+            });
             vi.mocked(client.startOrJoinVideoCall).mockClear();
 
             const answering = session.startOrJoin(container, {
@@ -283,6 +291,21 @@ describe("a call", () => {
         afterEach(() => {
             shell.ios = false;
             shell.invoke.mockImplementation(async () => undefined);
+        });
+
+        // Every tree that joins a call from inside the app ends the shell's ring for it, so the
+        // phone doesn't keep ringing for a call the user has already joined
+        test("joining a call from the app ends the native ring for that call", async () => {
+            inProgress = { direct_chat: "default" };
+            await session.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: true,
+            });
+
+            expect(shell.invoke).toHaveBeenCalledWith("plugin:oc|call_ring_handled", {
+                messageId: "7",
+            });
         });
 
         test("invariant 19: a call runs natively and never creates the Daily frame", async () => {

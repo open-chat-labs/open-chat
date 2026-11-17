@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        callOffer,
         chatIdentifiersEqual,
         type ChatSummary,
         currentUserIdStore,
@@ -143,7 +144,15 @@
     );
 
     // a new call that is not a broadcast is offered as an audio call or a video call
-    let canChooseCallType = $derived(!videoCallInProgress && !isPublic);
+    let canChooseCallType = $derived(
+        callOffer({
+            canStart: canStartVideoCalls,
+            isPublic,
+            inProgress: selectedChatSummary.videoCallInProgress?.callType,
+            inCall,
+            canStartBroadcast: true,
+        }).kind === "choose",
+    );
 
     let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
 
