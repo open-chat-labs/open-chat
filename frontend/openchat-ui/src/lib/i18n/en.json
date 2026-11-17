@@ -456,8 +456,11 @@
       "youStarted": "{media, select, voice {You started a voice call} other {You started a video call}}"
     },
     "callPanel": {
+      "audioDevices": "Microphone and speaker",
+      "camera": "Camera",
       "cameraOff": "Turn camera off",
       "cameraOn": "Turn camera on",
+      "cameras": "Cameras",
       "controls": "Call controls",
       "details": "Details",
       "dragToMove": "Drag to move",
@@ -467,9 +470,11 @@
       "hideDetails": "Hide details",
       "inCall": "{count} in call",
       "leave": "Leave call",
+      "microphone": "Microphone",
       "minimise": "Minimise to see messages",
       "mute": "Mute",
       "shareScreen": "Share screen",
+      "speaker": "Speaker",
       "stop": "Stop",
       "stopSharing": "Stop sharing",
       "toggleFailed": "That didn't work. Try again.",

@@ -1211,6 +1211,12 @@ design export needs. Each entry says where it came up.
     session (the web App, so a call outlives every route) and asks before switching calls (`ConfirmDialog`: the design has none). The chat list
     says voice or video. By hand in the library (EXPORT-LOG 2026-11-17): `ConversationHeader`
     shows the voice button only with `onVoiceCall`, shows calls in channels, and takes `callIcon`.
+  - **Devices, by hand** (EXPORT-LOG 2026-11-17): chevrons on Mute and Camera pick the
+    microphone, speaker and camera (`CallMedia.selectDevice`; the speaker is the app's choice,
+    `setSinkId` on every remote voice, hidden where the browser can't choose). The web design has
+    none; it follows the native Audio output menu. The choice isn't remembered between calls.
+  - **Full screen:** the call over the whole window (`CallHost`), as the prototype's, and the
+    browser's own full screen while it's there; leaving that (Esc) brings the call back inline.
   - **Not yet:** the incoming call's ring (Accept / Decline), the host-ended and denied messages,
     and a broadcast's ask to speak and the host's approve or reject (7b, 3b); `MiniCall` (7c). A
     minimised call has no floating window until then: the header's button goes back to it.

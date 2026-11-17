@@ -10,6 +10,8 @@ export class RemoteAudio {
     #blocked = new Set<HTMLAudioElement>();
     #retry = () => this.#playBlocked();
     #root: HTMLElement;
+    // The speaker the user chose, which every element plays to (none: the system's default)
+    #sinkId: string | undefined;
     #streamOf: (track: MediaStreamTrack) => MediaStream;
 
     constructor(
@@ -36,7 +38,35 @@ export class RemoteAudio {
             element.srcObject = this.#streamOf(track);
             this.#root.appendChild(element);
             this.#elements.set(key, { track, element });
+            if (this.#sinkId !== undefined) void this.#applySink(element, this.#sinkId);
             this.#play(element);
+        }
+    }
+
+    /** Whether this browser lets the app choose where audio plays (`setSinkId`). */
+    get canChooseSink(): boolean {
+        return typeof HTMLMediaElement !== "undefined" && "setSinkId" in HTMLMediaElement.prototype;
+    }
+
+    get sinkId(): string | undefined {
+        return this.#sinkId;
+    }
+
+    /** Plays every remote voice, now and later, through this speaker. */
+    async setSink(deviceId: string): Promise<void> {
+        this.#sinkId = deviceId;
+        await Promise.all(
+            [...this.#elements.values()].map(({ element }) => this.#applySink(element, deviceId)),
+        );
+    }
+
+    async #applySink(element: HTMLAudioElement, deviceId: string) {
+        try {
+            await (
+                element as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> }
+            ).setSinkId?.(deviceId);
+        } catch (err) {
+            console.warn("Couldn't play call audio on the chosen speaker", err);
         }
     }
 

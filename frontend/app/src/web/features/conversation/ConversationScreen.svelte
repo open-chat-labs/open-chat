@@ -116,6 +116,8 @@
             chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
     );
     const showingCall = $derived(inCall && $activeVideoCall?.view !== "minimised");
+    // in full screen the call covers the whole window (CallHost), so the column shows the messages
+    const callInColumn = $derived(inCall && $activeVideoCall?.view === "default");
     const call = $derived(
         // a preview (read only) offers no call: the user isn't in the chat
         chat === undefined || readonly
@@ -237,7 +239,7 @@
                     : undefined}
                 panelOpen={screen.rightColumn.open}
             />
-            {#if showingCall}
+            {#if callInColumn}
                 <CallView
                     session={screen.call}
                     {title}

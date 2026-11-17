@@ -90,3 +90,28 @@ export function callPeople(
     }
     return { people, self };
 }
+
+/** A microphone, speaker or camera the user can pick (`CallPanel`'s `CallDevice`). */
+export type CallDevice = { id: string; label: string };
+
+export type CallDevices = {
+    mics: CallDevice[];
+    speakers: CallDevice[];
+    cameras: CallDevice[];
+    mic?: string;
+    speaker?: string;
+    camera?: string;
+};
+
+export type CallDeviceKind = "mic" | "speaker" | "camera";
+
+/** The browser's media devices sorted into what the call can use, as they're named. */
+export function deviceLists(
+    devices: Pick<MediaDeviceInfo, "kind" | "deviceId" | "label">[],
+): Pick<CallDevices, "mics" | "speakers" | "cameras"> {
+    const of = (kind: MediaDeviceKind) =>
+        devices
+            .filter((d) => d.kind === kind && d.deviceId !== "")
+            .map((d) => ({ id: d.deviceId, label: d.label || d.deviceId.slice(0, 8) }));
+    return { mics: of("audioinput"), speakers: of("audiooutput"), cameras: of("videoinput") };
+}

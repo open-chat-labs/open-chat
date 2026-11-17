@@ -1,7 +1,9 @@
-<!-- The call going on in the selected chat, in the middle column under its header (web 7b, the
-     design's §7): CallPanel over the session's media (logic/video/callMedia), the user's own
-     microphone, camera and screen share through the active call (stores/video). Minimise goes back
-     to the chat's messages, the call still up; Leave hangs up. -->
+<!-- The call going on, as CallPanel over the session's media (logic/video/callMedia): in the middle
+     column under the chat's header, or over the whole window in full screen (CallHost), as the
+     design's §7. The user's own microphone, camera and screen share go through the active call
+     (stores/video), and the chevrons on Mute and Camera pick the microphone, speaker and camera
+     (TODO(design): the web design has no device choice; the native output menu's pattern).
+     Minimise goes back to the chat's messages, the call still up; Leave hangs up. -->
 <script lang="ts">
     import { allUsersStore, type OpenChat } from "@client";
     import CallPanel from "@openchat/ui/src/features/components/CallPanel.svelte";
@@ -50,4 +52,6 @@
     onToggleShare={voice ? undefined : (on) => activeVideoCall.setSharing(on)}
     onToggleFull={(full) => activeVideoCall.setView(full ? "fullscreen" : "default")}
     onMinimise={() => activeVideoCall.setView("minimised")}
-    onLeave={() => session.hangup()} />
+    onLeave={() => session.hangup()}
+    devices={session.media.devices}
+    onSelectDevice={(kind, id) => void session.media.selectDevice(kind, id)} />
