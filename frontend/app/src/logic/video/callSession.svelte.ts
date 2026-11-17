@@ -12,7 +12,7 @@ import {
     type VideoCallRoom,
     type VideoCallType,
 } from "@client";
-import { setCallRingback } from "@utils/native/call_bridge";
+import { notifyCallJoined, setCallRingback } from "@utils/native/call_bridge";
 import { createNativeCall } from "@utils/native/nativeCall";
 import { isIosTauriApp } from "@shared";
 import {
@@ -103,11 +103,14 @@ export class CallSession {
     // Starts a call in the chat, or joins the one there, in the given element
     async startOrJoin(container: HTMLElement, request: CallRequest): Promise<StartCallOutcome> {
         const { chatId, join } = request;
+        const inProgress = this.#client.lookupChatSummary(chatId)?.videoCallInProgress;
+        if (join && inProgress !== undefined) {
+            // Joining from inside the app: the shell's native ring for this call, if any, ends as
+            // answered here
+            notifyCallJoined(inProgress.messageId);
+        }
         const callType = join
-            ? joinedCallType(
-                  request.callType,
-                  this.#client.lookupChatSummary(chatId)?.videoCallInProgress?.callType,
-              )
+            ? joinedCallType(request.callType, inProgress?.callType)
             : request.callType;
 
         if (activeVideoCall.current() !== undefined) {

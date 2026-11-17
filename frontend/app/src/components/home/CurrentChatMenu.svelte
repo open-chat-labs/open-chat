@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        callOffer,
         chatIdentifiersEqual,
         type ChatSummary,
         currentUserIdStore,
@@ -143,7 +144,16 @@
     );
 
     // a new call that is not a broadcast is offered as an audio call or a video call
-    let canChooseCallType = $derived(!videoCallInProgress && !isPublic);
+    let offer = $derived(
+        callOffer({
+            canStart: canStartVideoCalls,
+            isPublic,
+            inProgress: selectedChatSummary.videoCallInProgress?.callType,
+            inCall,
+            canStartBroadcast: true,
+        }),
+    );
+    let canChooseCallType = $derived(offer.kind === "choose");
 
     let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
 
@@ -287,7 +297,14 @@
         }
     }
 
-    function startVideoCall(callType: VideoCallType = isPublic ? "broadcast" : "default") {
+    // the menu's one item starts a broadcast in a public chat, or joins the call running there
+    function startVideoCall(
+        callType: VideoCallType = offer.kind === "broadcast"
+            ? "broadcast"
+            : offer.kind === "join"
+              ? offer.callType
+              : "default",
+    ) {
         publish("startVideoCall", {
             chatId: selectedChatSummary.id,
             callType,

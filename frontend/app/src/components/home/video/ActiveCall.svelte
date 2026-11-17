@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { videoCallChat, type VideoCallChat } from "@src/logic/video/callChat";
     import {
         allUsersStore,
         chatIdentifiersEqual,
@@ -7,7 +8,6 @@
         mobileWidth,
         OpenChat,
         selectedChatSummaryStore,
-        selectedCommunitySummaryStore,
         type ChatIdentifier,
         type VideoCallType,
     } from "@client";
@@ -49,45 +49,9 @@
         activeVideoCall.changeTheme(dailyTheme($currentTheme));
     });
 
-    function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
-        if (chatId) {
-            const chat = client.lookupChatSummary(chatId);
-            if (chat) {
-                switch (chat.kind) {
-                    case "direct_chat": {
-                        const them = $allUsersStore.get(chat.them.userId);
-                        return {
-                            chatId,
-                            name: client.displayName(them),
-                            avatarUrl: client.userAvatarUrl(them),
-                            userId: chat.them,
-                            videoCallInProgress: chat.videoCallInProgress,
-                        };
-                    }
-                    case "group_chat":
-                        return {
-                            chatId,
-                            name: chat.name,
-                            avatarUrl: client.groupAvatarUrl(chat),
-                            userId: undefined,
-                            videoCallInProgress: chat.videoCallInProgress,
-                        };
-                    case "channel":
-                        return {
-                            chatId,
-                            name: `${
-                                $communitiesStore.get({
-                                    kind: "community",
-                                    communityId: chat.id.communityId,
-                                })?.name
-                            } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
-                            userId: undefined,
-                            videoCallInProgress: chat.videoCallInProgress,
-                        };
-                }
-            }
-        }
+    function normaliseChatSummary(chatId: ChatIdentifier | undefined): VideoCallChat | undefined {
+        const chat = chatId && client.lookupChatSummary(chatId);
+        return chat ? videoCallChat(client, chat, $allUsersStore, $communitiesStore) : undefined;
     }
 
     function frameOptions(chatId: ChatIdentifier): CallFrameOptions {

@@ -1,4 +1,5 @@
 import {
+    callOffer,
     joinedCallType,
     startVideoOff,
     videoCallTypeFromWire,
@@ -48,5 +49,39 @@ describe("video call type", () => {
     test("invariant 10: joining takes the type of the call in progress", () => {
         expect(joinedCallType("default", "audio")).toEqual("audio");
         expect(joinedCallType("default", undefined)).toEqual("default");
+    });
+
+    // #10125 invariant 1: a public chat's new call is a broadcast, a private chat's is audio or
+    // video as chosen, and a running call is joined as the type it was started as
+    test("invariant 1: what a chat's call button offers", () => {
+        const base = { canStart: true, isPublic: false, inCall: false, canStartBroadcast: true };
+        expect(callOffer(base)).toEqual({ kind: "choose" });
+        expect(callOffer({ ...base, isPublic: true })).toEqual({ kind: "broadcast" });
+        expect(callOffer({ ...base, inProgress: "audio" })).toEqual({
+            kind: "join",
+            callType: "audio",
+        });
+        expect(callOffer({ ...base, isPublic: true, inProgress: "broadcast" })).toEqual({
+            kind: "join",
+            callType: "broadcast",
+        });
+        expect(callOffer({ ...base, inProgress: "default", inCall: true })).toEqual({
+            kind: "leave",
+        });
+    });
+
+    test("a chat whose calls the user can't start offers none, but a running call can be joined", () => {
+        const base = { canStart: false, isPublic: false, inCall: false, canStartBroadcast: true };
+        expect(callOffer(base)).toEqual({ kind: "none" });
+        expect(callOffer({ ...base, inProgress: "default" })).toEqual({
+            kind: "join",
+            callType: "default",
+        });
+        // iOS can watch a broadcast but not start one yet (#10445)
+        expect(
+            callOffer({ ...base, canStart: true, isPublic: true, canStartBroadcast: false }),
+        ).toEqual({
+            kind: "none",
+        });
     });
 });
