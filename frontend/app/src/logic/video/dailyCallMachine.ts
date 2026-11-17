@@ -1,12 +1,13 @@
 import pin from "../../../daily-call-machine.json";
 
 /**
- * Where a Daily call object loads its call machine from: our own origin, the pinned copy that
- * fetch-daily-call-machine.mjs puts in public/daily/ (#10124). Never Daily's servers, and never
- * through eval: the CSP allows neither.
+ * Where a Daily call object loads its bundles from (its call machine, and the audio processor when
+ * it needs one): our own origin, the pinned copies that fetch-daily-call-machine.mjs puts in
+ * public/daily/<version>/ (#10124). Never Daily's servers, and never through eval: the CSP allows
+ * neither.
  */
-export function dailyCallMachineUrl(origin: string = location.origin): string {
-    return `${origin}/daily/call-machine-object-bundle-${pin.version}.js`;
+export function dailyBundlePath(origin: string = location.origin): string {
+    return `${origin}/daily/${pin.version}`;
 }
 
 export const DAILY_CALL_MACHINE_VERSION: string = pin.version;

@@ -34,7 +34,7 @@ import {
 import type { Theme } from "@src/theme/types";
 import { i18nKey } from "@src/i18n/i18n";
 import { CallMedia } from "./callMedia.svelte";
-import { dailyCallMachineUrl } from "./dailyCallMachine";
+import { dailyBundlePath } from "./dailyCallMachine";
 
 // `answer`: the user answered on the native ring, so a call in progress is replaced without asking
 export type CallRequest = {
@@ -275,11 +275,11 @@ export class CallSession {
                 userName: options.username,
                 startVideoOff: videoOff,
                 startAudioOff: !options.micOn,
-                // Daily's code runs in our page in this mode: the pinned copy from our own origin,
+                // Daily's code runs in our page in this mode: the pinned copies from our own origin,
                 // loaded as a script, never fetched from Daily and evaluated (#10124)
                 dailyConfig: {
                     avoidEval: true,
-                    callObjectBundleUrlOverride: dailyCallMachineUrl(),
+                    bundlePathOverride: dailyBundlePath(),
                 },
             });
         }

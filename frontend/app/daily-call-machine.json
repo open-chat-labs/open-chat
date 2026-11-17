@@ -1,4 +1,7 @@
 {
     "version": "0.95.0",
-    "sha256": "0b313c3f8ea882e7df07daf2ba9d188c2adc201f9befb45e0c3e96a2b1db8b98"
+    "bundles": {
+        "call-machine-object-bundle.js": "0b313c3f8ea882e7df07daf2ba9d188c2adc201f9befb45e0c3e96a2b1db8b98",
+        "audio-processor-bundle.js": "a0b6d2ad8b73b2daf6530e4e1ca8e82f720fa5c2f2c13a7b5209010575e45a21"
+    }
 }

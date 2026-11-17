@@ -303,7 +303,7 @@ describe("a call", () => {
             expect.objectContaining({
                 dailyConfig: {
                     avoidEval: true,
-                    callObjectBundleUrlOverride: `${location.origin}/daily/call-machine-object-bundle-${DAILY_CALL_MACHINE_VERSION}.js`,
+                    bundlePathOverride: `${location.origin}/daily/${DAILY_CALL_MACHINE_VERSION}`,
                 },
             }),
         );
