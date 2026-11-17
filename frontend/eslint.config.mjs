@@ -315,6 +315,7 @@ export default defineConfig([
         "**/rollup.extras.mjs",
         "**/rollup-plugin-*.mjs",
         "**/build-workers.mjs",
+        "**/fetch-daily-call-machine.mjs",
         "**/scripts/*.mjs",
         "**/svelte.config.js",
         "**/.dependency-cruiser.js",

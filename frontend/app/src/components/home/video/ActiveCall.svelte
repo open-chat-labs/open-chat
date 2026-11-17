@@ -4,7 +4,6 @@
         allUsersStore,
         chatIdentifiersEqual,
         communitiesStore,
-        currentUserStore,
         mobileWidth,
         OpenChat,
         selectedChatSummaryStore,
@@ -13,7 +12,6 @@
     } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
     import { activeVideoCall } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
@@ -23,6 +21,8 @@
         type CallFrameOptions,
         type StartCallOutcome,
     } from "@src/logic/video/callSession.svelte";
+    import { callFrameOptions } from "@src/logic/video/callFrameOptions";
+    import { toastStartCall } from "@src/utils/callToast";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -55,14 +55,7 @@
     }
 
     function frameOptions(chatId: ChatIdentifier): CallFrameOptions {
-        return {
-            title: normaliseChatSummary(chatId)?.name ?? "",
-            username: $currentUserStore.username,
-            speakerView: $videoSpeakerView,
-            cameraOn: $videoCameraOn,
-            micOn: $videoMicOn,
-            theme: dailyTheme($currentTheme),
-        };
+        return callFrameOptions(client, chatId, dailyTheme($currentTheme));
     }
 
     const session = new CallSession(client, frameOptions, () =>
@@ -70,20 +63,7 @@
     );
 
     function report(outcome: StartCallOutcome | undefined) {
-        switch (outcome?.kind) {
-            case undefined:
-            case "joined":
-            case "confirm_switch":
-                break;
-            case "no_meeting":
-                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
-                break;
-            case "failed":
-                toastStore.showFailureToast(outcome.message);
-                break;
-            default:
-                outcome satisfies never;
-        }
+        toastStartCall(outcome);
     }
 
     export async function startOrJoinVideoCall(

@@ -8,6 +8,7 @@ import {
 import { activeVideoCall, hasPresence } from "@stores/video";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { CallMedia } from "./callMedia.svelte";
+import { DAILY_CALL_MACHINE_VERSION } from "./dailyCallMachine";
 import { ANSWER_HANGUP_WAIT_MS, CallSession, type CallFrameOptions } from "./callSession.svelte";
 
 // The call's frame. `present` is how many are in the call.
@@ -44,8 +45,8 @@ vi.mock("@daily-co/daily-js", () => ({
             frame.created();
             return makeFrame();
         },
-        createCallObject: () => {
-            frame.callObject();
+        createCallObject: (properties: unknown) => {
+            frame.callObject(properties);
             return { ...makeFrame(), off: () => {}, participants: () => ({}) };
         },
     },
@@ -285,13 +286,10 @@ describe("a call", () => {
 
     test("the new UI makes its calls with Daily's call object, never the frame", async () => {
         const media = { attach: vi.fn(), detach: vi.fn() };
-        const callObjectSession = new CallSession(
-            client,
-            () => options,
-            vi.fn(),
-            "call_object",
-            media as unknown as CallMedia,
-        );
+        const callObjectSession = new CallSession(client, () => options, vi.fn(), {
+            mode: "call_object",
+            media: media as unknown as CallMedia,
+        });
         await callObjectSession.startOrJoin(container, {
             chatId: direct,
             callType: "default",
@@ -300,8 +298,30 @@ describe("a call", () => {
 
         expect(frame.callObject).toHaveBeenCalledOnce();
         expect(frame.created).not.toHaveBeenCalled();
+        // Daily's code comes from our own origin as a script, never from Daily through eval
+        expect(frame.callObject).toHaveBeenCalledWith(
+            expect.objectContaining({
+                dailyConfig: {
+                    avoidEval: true,
+                    bundlePathOverride: `${location.origin}/daily/${DAILY_CALL_MACHINE_VERSION}`,
+                },
+            }),
+        );
         // its media follow the call, so its remote audio plays
         expect(media.attach).toHaveBeenCalledOnce();
+    });
+
+    // #10125: starting a call closes any thread open in the right column, which each tree keeps
+    // its own way (the legacy trees' panel history; the new UI's URL)
+    test("starting a call closes the thread open in the right column", async () => {
+        await session.startOrJoin(container, { chatId: direct, callType: "default", join: false });
+        expect(client.filterRightPanelHistory).toHaveBeenCalledOnce();
+
+        const rightPanel = { closeThread: vi.fn(), afterLeave: vi.fn() };
+        activeVideoCall.endCall();
+        const web = new CallSession(client, () => options, vi.fn(), { rightPanel });
+        await web.startOrJoin(container, { chatId: direct, callType: "default", join: false });
+        expect(rightPanel.closeThread).toHaveBeenCalledOnce();
     });
 
     describe("on iOS", () => {

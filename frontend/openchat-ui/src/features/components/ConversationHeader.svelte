@@ -50,7 +50,10 @@
     showCall?: boolean;
     /** Resource key (or literal text). */
     callLabel?: string;
+    /** The call button's icon: a video call's camera, or a phone for joining a voice call. */
+    callIcon?: 'video' | 'phone';
     onCall?: () => void;
+    /** Shows the voice call button beside the call button. */
     onVoiceCall?: () => void;
     /** Extra icon buttons before the menu; strings are icon names wired through actionHandlers. */
     actions?: Action[];
@@ -85,6 +88,7 @@
     showMenu = true,
     showCall = true,
     callLabel = 'ui.conversationHeader.videoCall',
+    callIcon = 'video',
     onCall,
     onVoiceCall,
     actions = ['search'],
@@ -210,9 +214,11 @@
     </div>
   </div>
   <div class="actions">
-    {#if showCall && !channel}
-      <div class="slot" title={t('ui.conversationHeader.voiceCall')}><IconButton variant="ghost" icon="phone" label="ui.conversationHeader.voiceCall" onClick={onVoiceCall} /></div>
-      <div class="slot" data-oc-call title={t(callLabel)}><IconButton variant="ghost" icon="video" label={callLabel} onClick={onCall} /></div>
+    {#if showCall}
+      {#if onVoiceCall}
+        <div class="slot" title={t('ui.conversationHeader.voiceCall')}><IconButton variant="ghost" icon="phone" label="ui.conversationHeader.voiceCall" onClick={onVoiceCall} /></div>
+      {/if}
+      <div class="slot" data-oc-call title={t(callLabel)}><IconButton variant="ghost" icon={callIcon} label={callLabel} onClick={onCall} /></div>
     {/if}
     {#each shownActions as action}
       <div class="slot"><IconButton variant="ghost" icon={action.icon} onClick={action.onPress} /></div>

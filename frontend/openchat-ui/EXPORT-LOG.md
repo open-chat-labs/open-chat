@@ -986,3 +986,12 @@
 
 ## 2026-11-16 — IconButton can be pressed from the keyboard, by hand
 - `IconButton`: a `role="button"` div that only listened for clicks, so Tab reached it but Enter and Space did nothing. It now presses on Enter and Space, as `RoundIconButton` and `Banner`'s action do. That reaches every icon button, the `Banner`'s × among them. No props changed.
+
+## 2026-11-17 — ConversationHeader's call buttons follow what the chat offers, by hand
+- `ConversationHeader`: the voice call button shows only with `onVoiceCall`, so a chat that offers one call (a broadcast, or joining the call going on) shows one button. A channel shows the call buttons too, where it hid them, since channels have calls; the host's `showCall` decides. New `callIcon` (`'video' | 'phone'`, default `'video'`): a phone for joining a voice call. `meta.json` (`callIcon`, `onVoiceCall`'s doc). Used by the app's conversation header (web 7b, #10125).
+- Not in the design export: to go back to it (the app's `GAPS.md`, "Calls").
+
+## 2026-11-17 — CallPanel picks the microphone, speaker and camera, by hand
+- `CallPanel`: `devices` (`CallDevices`: `mics`, `speakers`, `cameras`, and the `mic`, `speaker` and `camera` in use) and `onSelectDevice(kind, id)`. A small chevron on Mute opens a menu of microphones and speakers above the control bar, and one on Camera a menu of cameras, each only where there's more than one; the one in use is ticked. Esc or a click outside closes it. Strings `ui.callPanel.microphone`, `speaker`, `camera`, `cameras`, `audioDevices`. `meta.json` (`devices`, `onSelectDevice`). Used by the app's call view (web 7b, #10125), which had lost the device choice the old prebuilt call gave.
+- Not in the design export: TODO(design), after the native design's Audio output menu (`plan/native/09-calls.md`).
+

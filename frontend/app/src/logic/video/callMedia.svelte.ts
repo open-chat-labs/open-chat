@@ -1,5 +1,11 @@
 import type { DailyCall, DailyEvent } from "@daily-co/daily-js";
-import { remoteAudioTracks, type CallParticipants } from "./callPeople";
+import {
+    deviceLists,
+    remoteAudioTracks,
+    type CallDeviceKind,
+    type CallDevices,
+    type CallParticipants,
+} from "./callPeople";
 import { RemoteAudio } from "./remoteAudio";
 
 // The events after which who is in the call, or what they send, may have changed
@@ -20,6 +26,8 @@ const CHANGES: DailyEvent[] = [
 export class CallMedia {
     participants = $state.raw<CallParticipants>({});
     activeSpeaker = $state<string>();
+    // the microphones, speakers and cameras to choose from, and the ones in use
+    devices = $state.raw<CallDevices>({ mics: [], speakers: [], cameras: [] });
 
     #call: DailyCall | undefined;
     #audio: RemoteAudio;
@@ -56,6 +64,15 @@ export class CallMedia {
         }
         call.on("active-speaker-change", speaker);
         this.#handlers.push(["active-speaker-change", speaker as () => void]);
+        const devices = () => void this.#refreshDevices();
+        for (const event of [
+            "joined-meeting",
+            "available-devices-updated",
+            "selected-devices-updated",
+        ] as const) {
+            call.on(event, devices);
+            this.#handlers.push([event, devices]);
+        }
         this.#refresh();
     }
 
@@ -72,6 +89,41 @@ export class CallMedia {
         this.#audio.clear();
         this.participants = {};
         this.activeSpeaker = undefined;
+        this.devices = { mics: [], speakers: [], cameras: [] };
+    }
+
+    /**
+     * Uses this microphone or camera for the call, or plays the call's audio through this speaker.
+     * The speaker is the app's choice, not Daily's: the call object plays nothing itself, so its
+     * output setting would reach none of the call's audio (RemoteAudio plays it).
+     */
+    async selectDevice(kind: CallDeviceKind, id: string): Promise<void> {
+        const call = this.#call;
+        if (call === undefined) return;
+        if (kind === "mic") await call.setInputDevicesAsync({ audioDeviceId: id });
+        if (kind === "camera") await call.setInputDevicesAsync({ videoDeviceId: id });
+        if (kind === "speaker") await this.#audio.setSink(id);
+        await this.#refreshDevices();
+    }
+
+    async #refreshDevices() {
+        const call = this.#call;
+        if (call === undefined) return;
+        const [{ devices }, inputs] = await Promise.all([
+            call.enumerateDevices(),
+            call.getInputDevices(),
+        ]);
+        if (call !== this.#call) return;
+        const lists = deviceLists(devices);
+        const id = (device: object) => ("deviceId" in device ? String(device.deviceId) : undefined);
+        this.devices = {
+            ...lists,
+            // only where the browser lets the app choose where audio plays
+            speakers: this.#audio.canChooseSink ? lists.speakers : [],
+            mic: id(inputs.mic),
+            camera: id(inputs.camera),
+            speaker: this.#audio.sinkId,
+        };
     }
 
     #refresh() {

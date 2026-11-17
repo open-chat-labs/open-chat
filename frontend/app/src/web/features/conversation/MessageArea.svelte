@@ -101,6 +101,7 @@
         callEventProps,
         callLength,
         callMedia,
+        callRequest,
         groupCalls,
         isLiveCall,
         overCallState,
@@ -183,6 +184,7 @@
     import { getProxyAdjustedBlobUrl, microphoneDenied, saveFile } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
+    import { activeVideoCall } from "@src/stores/video";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { buildDisplayName } from "@src/utils/user";
     import {
@@ -830,10 +832,22 @@
         );
     }
 
-    // TODO(phase 7): joining and calling back are 7b's; until then they say calls aren't here yet,
-    // in the native tree's words (N14 waits the same way)
-    function callsLater() {
-        toastStore.showSuccessToast(i18nKey("native.conversation.callsLater"));
+    // Join, Call back and Leave on a call in the timeline (web 7b): the app's one call session
+    // takes them (CallHost); Call back joins the call going on in the chat if there is one by then
+    function pressCall(action: "join" | "call_back", content: VideoCallContent) {
+        publish("startVideoCall", {
+            chatId: chat.id,
+            ...callRequest(action, content, chat.videoCallInProgress !== undefined),
+        });
+    }
+
+    // the user is in this live call (the app's active call is this message's)
+    function inThisCall(msg: Message<VideoCallContent>): boolean {
+        return (
+            $activeVideoCall !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, chat.id) &&
+            $activeVideoCall.messageId === msg.messageId
+        );
     }
 
     // The first unread message when the chat was opened: the unread divider stays above it while
@@ -1511,7 +1525,9 @@
                 }}
             >
                 {#if run !== undefined}
-                    <CallEvent calls={shown.map(overCall)} onCallBack={callsLater} />
+                    <CallEvent
+                        calls={shown.map(overCall)}
+                        onCallBack={() => pressCall("call_back", shown[shown.length - 1].event.content)} />
                 {:else if callIsLive(msg)}
                     <CallEvent
                         state="live"
@@ -1523,9 +1539,13 @@
                         elapsed={formatClock(
                             (callLength(msg.content, evt.timestamp, $now500) ?? 0) / 1000,
                         )}
-                        onJoin={callsLater} />
+                        joined={inThisCall(msg)}
+                        onJoin={() => pressCall("join", msg.content)}
+                        onLeave={() => publish("hangup")} />
                 {:else}
-                    <CallEvent {...overCall(evt)} onCallBack={callsLater} />
+                    <CallEvent
+                        {...overCall(evt)}
+                        onCallBack={() => pressCall("call_back", msg.content)} />
                 {/if}
             </div>
         {:else if isMessage(evt)}

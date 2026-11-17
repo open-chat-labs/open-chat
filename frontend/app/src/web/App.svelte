@@ -28,6 +28,9 @@
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "@i18n/openchatUi";
     import RouteScreen from "./features/app/RouteScreen.svelte";
+    import CallHost from "./features/call/CallHost.svelte";
+    import { createWebCall } from "./features/call/webCall";
+    import type { CallSession } from "@src/logic/video/callSession.svelte";
     import LayoutSwitchBanner from "./shell/LayoutSwitchBanner.svelte";
     import Toasts from "./shell/Toasts.svelte";
     import Router from "./router/Router.svelte";
@@ -39,6 +42,10 @@
 
     const client: OpenChat = createOpenChatClient($_, logger);
     setContext<OpenChat>("client", client);
+
+    // the app's one call, which outlives every screen and route (web 7b)
+    const call = createWebCall(client);
+    setContext<CallSession>("callSession", call);
 
     setI18n({
         t: (key, params) => uiTranslate($json, key, params, $locale ?? "en"),
@@ -104,6 +111,7 @@
         </Router>
         <Toasts library={libraryToasts} />
         <LayoutSwitchBanner />
+        <CallHost session={call} />
     {/if}
 
     {#snippet failed(_error, reset)}

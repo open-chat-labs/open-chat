@@ -7989,6 +7989,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "devices",
+        "type": "CallDevices",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Microphones, speakers and cameras to pick from, and the ones in use: a chevron on Mute opens the microphones and speakers, one on Camera the cameras, each where there's more than one."
+      },
+      {
+        "name": "onSelectDevice",
+        "type": "(kind: 'mic' | 'speaker' | 'camera', id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A device picked from those menus. No chevrons without it."
       }
     ],
     "group": "features"
@@ -9114,6 +9136,20 @@
         "doc": ""
       },
       {
+        "name": "callIcon",
+        "type": "'video' | 'phone'",
+        "default": "video",
+        "editor": "select",
+        "options": [
+          "video",
+          "phone"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'video'",
+        "doc": "The call button's icon: a video call's camera, or a phone for joining a voice call."
+      },
+      {
         "name": "onVoiceCall",
         "type": "() => void",
         "default": null,
@@ -9122,7 +9158,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Shows the voice call button beside the call button."
       },
       {
         "name": "actions",

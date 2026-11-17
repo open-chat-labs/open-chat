@@ -8,11 +8,13 @@
         anonUserStore,
         blockedUsersStore,
         chatIdentifierToString,
+        chatIdentifiersEqual,
         favouritesStore,
         platformModeratorStore,
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        publish,
         type OpenChat,
     } from "@client";
     import ConversationHeader from "@openchat/ui/src/features/components/ConversationHeader.svelte";
@@ -29,6 +31,9 @@
     import { headerMenuItems, moderationMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
     import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
+    import { activeVideoCall } from "@src/stores/video";
+    import CallView from "../call/CallView.svelte";
+    import { headerCall } from "../call/call.adapter";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -102,8 +107,53 @@
               : headerMenuItems(menuState),
     );
 
-    // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action; calls are
-    // phase 7
+    // ── the call (web 7b) ──
+
+    // the user is in this chat's call; it shows in place of the messages until they minimise it
+    const inCall = $derived(
+        chat !== undefined &&
+            $activeVideoCall !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
+    );
+    const showingCall = $derived(inCall && $activeVideoCall?.view !== "minimised");
+    // in full screen the call covers the whole window (CallHost), so the column shows the messages
+    const callInColumn = $derived(inCall && $activeVideoCall?.view === "default");
+    const call = $derived(
+        // a preview (read only) offers no call: the user isn't in the chat
+        chat === undefined || readonly
+            ? ({ show: false } as const)
+            : headerCall({
+                  canStart:
+                      !(chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId)) &&
+                      client.canStartVideoCalls(chat.id),
+                  isPublic: !client.isChatPrivate(chat),
+                  chatCall: chat.videoCallInProgress?.callType,
+                  activeCall:
+                      inCall && $activeVideoCall !== undefined
+                          ? { callType: $activeVideoCall.callType, showing: showingCall }
+                          : undefined,
+              }),
+    );
+
+    function onCall() {
+        if (chat === undefined || !call.show) return;
+        if (call.primary.kind === "return") {
+            activeVideoCall.setView("default");
+        } else {
+            publish("startVideoCall", {
+                chatId: chat.id,
+                callType: call.primary.callType,
+                join: call.primary.join,
+            });
+        }
+    }
+
+    function onVoiceCall() {
+        if (chat === undefined) return;
+        publish("startVideoCall", { chatId: chat.id, callType: "audio", join: false });
+    }
+
+    // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action
     function onMenu(id: string) {
         if (chat === undefined) return;
         runChatMenuItem(id, {
@@ -160,7 +210,11 @@
                 statusEveryone={chat.membership.atEveryoneMuted}
                 isFavourite={favourite}
                 showMenu={menuItems.length > 0}
-                showCall={false}
+                showCall={call.show}
+                callLabel={call.show ? $_(call.label) : undefined}
+                callIcon={call.show ? call.icon : undefined}
+                {onCall}
+                onVoiceCall={call.show && call.voice ? onVoiceCall : undefined}
                 actions={screen.hasRightColumn && $selectedChatPinnedMessagesStore.size > 0
                     ? [
                           {
@@ -185,8 +239,17 @@
                     : undefined}
                 panelOpen={screen.rightColumn.open}
             />
-            {@render list()}
-            {@render composer()}
+            {#if callInColumn}
+                <CallView
+                    session={screen.call}
+                    {title}
+                    started={chat.videoCallInProgress === undefined
+                        ? undefined
+                        : Number(chat.videoCallInProgress.started)} />
+            {:else}
+                {@render list()}
+                {@render composer()}
+            {/if}
         {/snippet}
     </MessageArea>
 {/if}

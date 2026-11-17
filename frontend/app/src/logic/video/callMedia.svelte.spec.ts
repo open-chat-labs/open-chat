@@ -222,4 +222,52 @@ describe("a call made with Daily's call object", () => {
             }),
         );
     });
+
+    // The user's chosen speaker plays every remote voice: the ones playing when they choose it,
+    // and those that start afterwards (the call object plays them in our audio elements, so
+    // Daily's own output setting would reach none of them)
+    test("a chosen speaker plays every remote voice, now and later", async () => {
+        const sinks: string[] = [];
+        const setSinkId = vi.fn(async function (this: HTMLAudioElement, id: string) {
+            sinks.push(`${this.dataset.callAudio}=${id}`);
+        });
+        Object.defineProperty(HTMLMediaElement.prototype, "setSinkId", {
+            value: setSinkId,
+            configurable: true,
+        });
+        try {
+            const root = document.createElement("div");
+            const audio = new RemoteAudio(root, fakeStream);
+            const a = track("a");
+            audio.sync(remoteAudioTracks({ a: participant("a", { audio: on(a) }) }));
+            await audio.setSink("headset");
+            audio.sync(
+                remoteAudioTracks({
+                    a: participant("a", { audio: on(a) }),
+                    b: participant("b", { audio: on(track("b")) }),
+                }),
+            );
+            expect(sinks.sort()).toEqual(["a:audio=headset", "b:audio=headset"]);
+            expect(audio.sinkId).toEqual("headset");
+        } finally {
+            delete (HTMLMediaElement.prototype as { setSinkId?: unknown }).setSinkId;
+        }
+    });
+
+    test("a chosen microphone or camera is the one Daily sends", async () => {
+        const media = new CallMedia(new RemoteAudio(document.createElement("div"), fakeStream));
+        const { call } = fakeCall();
+        const setInputDevicesAsync = vi.fn(async () => ({}));
+        Object.assign(call, {
+            setInputDevicesAsync,
+            enumerateDevices: async () => ({ devices: [] }),
+            getInputDevices: async () => ({ mic: {}, camera: {}, speaker: {} }),
+        });
+        media.attach(call);
+        await media.selectDevice("mic", "usb-mic");
+        await media.selectDevice("camera", "usb-cam");
+        expect(setInputDevicesAsync).toHaveBeenCalledWith({ audioDeviceId: "usb-mic" });
+        expect(setInputDevicesAsync).toHaveBeenCalledWith({ videoDeviceId: "usb-cam" });
+        media.detach();
+    });
 });

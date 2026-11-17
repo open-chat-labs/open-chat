@@ -8,6 +8,7 @@ import {
     startVideoOff,
     type ChatIdentifier,
     type OpenChat,
+    type ResourceKey,
     type VideoCallOutcome,
     type VideoCallRoom,
     type VideoCallType,
@@ -31,7 +32,9 @@ import {
     type RingOutHandle,
 } from "@utils/callRingOut";
 import type { Theme } from "@src/theme/types";
+import { i18nKey } from "@src/i18n/i18n";
 import { CallMedia } from "./callMedia.svelte";
+import { dailyBundlePath } from "./dailyCallMachine";
 
 // `answer`: the user answered on the native ring, so a call in progress is replaced without asking
 export type CallRequest = {
@@ -45,6 +48,39 @@ export type CallRequest = {
 export const ANSWER_HANGUP_WAIT_MS = 3_000;
 
 export type StartCallOutcome = VideoCallOutcome | { kind: "confirm_switch" };
+
+/**
+ * What the user is told about a call they asked for: nothing once it's joined or while a switch
+ * waits for their say, that there's no call to join any more, or why it failed.
+ */
+export function startCallToast(
+    outcome: StartCallOutcome | undefined,
+): { kind: "success" | "failure"; message: ResourceKey } | undefined {
+    switch (outcome?.kind) {
+        case undefined:
+        case "joined":
+        case "confirm_switch":
+            return undefined;
+        case "no_meeting":
+            return { kind: "success", message: i18nKey("videoCall.noMeetingToJoin") };
+        case "failed":
+            return { kind: "failure", message: outcome.message };
+    }
+}
+
+// What a call does to the right column, which each tree keeps its own way: a thread open there
+// closes when a call starts, and leaving the call goes back from what it opened (the legacy trees'
+// panel history; the new UI's thread is in its URL, and the call opens nothing there)
+export type CallRightPanel = {
+    closeThread(): void;
+    afterLeave(): void;
+};
+
+export type CallSessionOptions = {
+    mode?: CallMode;
+    media?: CallMedia;
+    rightPanel?: CallRightPanel;
+};
 
 // How a call's media is shown: in Daily's prebuilt frame, which the legacy trees use, or by the
 // app from Daily's call object (`media`), which the new UI does: it never uses the frame (#10124)
@@ -83,6 +119,7 @@ export class CallSession {
     #frameOptions: (chatId: ChatIdentifier) => CallFrameOptions;
     #onNoAnswer: () => void;
     #mode: CallMode;
+    #rightPanel: CallRightPanel;
     #call: DailyCall | undefined;
     // Ends a direct call this client started if nobody joins within the ring window
     #ringOut: RingOutHandle | undefined;
@@ -102,14 +139,18 @@ export class CallSession {
         client: OpenChat,
         frameOptions: (chatId: ChatIdentifier) => CallFrameOptions,
         onNoAnswer: () => void,
-        mode: CallMode = "frame",
-        media: CallMedia = new CallMedia(),
+        { mode = "frame", media = new CallMedia(), rightPanel }: CallSessionOptions = {},
     ) {
         this.#client = client;
         this.#frameOptions = frameOptions;
         this.#onNoAnswer = onNoAnswer;
         this.#mode = mode;
         this.media = media;
+        this.#rightPanel = rightPanel ?? {
+            closeThread: () =>
+                client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel"),
+            afterLeave: () => client.popRightPanelHistory(),
+        };
     }
 
     // Starts a call in the chat, or joins the one there, in the given element
@@ -137,7 +178,7 @@ export class CallSession {
         }
 
         // close any threads we have open in the right panel
-        this.#client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+        this.#rightPanel.closeThread();
 
         activeVideoCall.joining(chatId, callType);
 
@@ -190,7 +231,7 @@ export class CallSession {
 
             // this will trigger the left-meeting event which will in turn end the call
             active.call.leave();
-            this.#client.popRightPanelHistory();
+            this.#rightPanel.afterLeave();
         }
     }
 
@@ -234,6 +275,12 @@ export class CallSession {
                 userName: options.username,
                 startVideoOff: videoOff,
                 startAudioOff: !options.micOn,
+                // Daily's code runs in our page in this mode: the pinned copies from our own origin,
+                // loaded as a script, never fetched from Daily and evaluated (#10124)
+                dailyConfig: {
+                    avoidEval: true,
+                    bundlePathOverride: dailyBundlePath(),
+                },
             });
         }
 

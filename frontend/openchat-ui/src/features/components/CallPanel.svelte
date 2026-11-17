@@ -23,12 +23,31 @@
     /** Feed aspect ratio, width / height. */
     ratio?: number;
   }
+
+  /** A microphone, speaker or camera the user can pick, as the host names it. */
+  export interface CallDevice {
+    id: string;
+    label: string;
+  }
+
+  /** The devices on offer and the ones in use. A list with fewer than two shows no choice. */
+  export interface CallDevices {
+    mics: CallDevice[];
+    speakers: CallDevice[];
+    cameras: CallDevice[];
+    mic?: string;
+    speaker?: string;
+    camera?: string;
+  }
+
+  export type CallDeviceKind = 'mic' | 'speaker' | 'camera';
 </script>
 
 <script lang="ts">
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { onMount, tick, untrack } from 'svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
+  import Menu from '../../lib/components/Menu.svelte';
   import VideoTile from './VideoTile.svelte';
   import { useT } from '../../lib/i18n';
 
@@ -64,6 +83,13 @@
     onDetails?: () => void;
     onMinimise?: () => void;
     onLeave?: () => void;
+    /**
+     * Microphones, speakers and cameras to pick from: a chevron on Mute opens the microphones and
+     * speakers, one on Camera the cameras (each where there's more than one). Hidden without
+     * onSelectDevice.
+     */
+    devices?: CallDevices;
+    onSelectDevice?: (kind: CallDeviceKind, id: string) => void;
   }
 
   let {
@@ -87,6 +113,8 @@
     onDetails,
     onMinimise,
     onLeave,
+    devices,
+    onSelectDevice,
   }: Props = $props();
   const t = useT();
 
@@ -253,16 +281,42 @@
   }
 
   const pipInset = $derived(full ? '20px' : '12px');
-  type Control = { label: string; icon: string; variant: 'default' | 'off' | 'on' | 'danger'; pressed: boolean | undefined; press: () => void };
+  type DeviceMenu = 'audio' | 'video';
+  type Control = { label: string; icon: string; variant: 'default' | 'off' | 'on' | 'danger'; pressed: boolean | undefined; press: () => void; menu?: DeviceMenu };
+
+  // the device menus: microphones and speakers from Mute, cameras from Camera; only a real choice
+  const choice = (list: CallDevice[] | undefined) => onSelectDevice !== undefined && (list?.length ?? 0) > 1;
+  const audioMenu = $derived(choice(devices?.mics) || choice(devices?.speakers));
+  const videoMenu = $derived(choice(devices?.cameras));
+  let openMenu = $state<DeviceMenu>();
+  const deviceItems = (kind: CallDeviceKind, list: CallDevice[], current: string | undefined) =>
+    list.map((d) => ({
+      id: d.id,
+      label: d.label,
+      checkMask: d.id === current ? 'var(--icon-check) center/contain no-repeat' : '',
+      onSelect: () => {
+        openMenu = undefined;
+        onSelectDevice?.(kind, d.id);
+      },
+    }));
+  function closeMenuOutside(e: PointerEvent) {
+    if (openMenu !== undefined && !(e.target as Element | null)?.closest?.('[data-device-menu]')) openMenu = undefined;
+  }
   const controls = $derived(
     [
-      { label: muted ? 'ui.callPanel.unmute' : 'ui.callPanel.mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.() },
-      onToggleCamera && { label: cam ? 'ui.callPanel.cameraOff' : 'ui.callPanel.cameraOn', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => flip('cam') },
+      { label: muted ? 'ui.callPanel.unmute' : 'ui.callPanel.mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.(), menu: audioMenu ? 'audio' : undefined },
+      onToggleCamera && { label: cam ? 'ui.callPanel.cameraOff' : 'ui.callPanel.cameraOn', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => flip('cam'), menu: videoMenu ? 'video' : undefined },
       onToggleShare && { label: sharing ? 'ui.callPanel.stopSharing' : 'ui.callPanel.shareScreen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => flip('share') },
       { label: 'ui.callPanel.leave', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
     ].filter(Boolean) as Control[],
   );
 </script>
+
+<svelte:window
+  onpointerdown={closeMenuOutside}
+  onkeydown={(e) => {
+    if (e.key === 'Escape') openMenu = undefined;
+  }} />
 
 <div
   class="call"
@@ -368,8 +422,36 @@
 
   <div class="bottom chrome">
     {#if flipFailed}<span class="flip-error" role="alert">{t('ui.callPanel.toggleFailed')}</span>{/if}
+    {#if openMenu !== undefined && devices}
+      <div class="device-menu" data-device-menu>
+        {#if openMenu === 'audio'}
+          {#if choice(devices.mics)}<Menu heading="ui.callPanel.microphone" items={deviceItems('mic', devices.mics, devices.mic)} />{/if}
+          {#if choice(devices.speakers)}<Menu heading="ui.callPanel.speaker" items={deviceItems('speaker', devices.speakers, devices.speaker)} />{/if}
+        {:else}
+          <Menu heading="ui.callPanel.camera" items={deviceItems('camera', devices.cameras, devices.camera)} />
+        {/if}
+      </div>
+    {/if}
     <div class="pill" role="toolbar" aria-label={t('ui.callPanel.controls')}>
-      {#each controls as b}<RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressed} size={full ? 'lg' : 'md'} onPress={b.press} />{/each}
+      {#each controls as b}
+        {#if b.menu}
+          <span class="with-menu">
+            <RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressed} size={full ? 'lg' : 'md'} onPress={b.press} />
+            <button
+              type="button"
+              class="caret"
+              data-device-menu
+              aria-label={t(b.menu === 'audio' ? 'ui.callPanel.audioDevices' : 'ui.callPanel.cameras')}
+              aria-haspopup="menu"
+              aria-expanded={openMenu === b.menu}
+              onclick={() => (openMenu = openMenu === b.menu ? undefined : b.menu)}
+              ><span class="caret-icon"></span></button
+            >
+          </span>
+        {:else}
+          <RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressed} size={full ? 'lg' : 'md'} onPress={b.press} />
+        {/if}
+      {/each}
     </div>
   </div>
 </div>
@@ -679,6 +761,47 @@
     background: rgba(14, 14, 18, 0.8);
     font: 500 13px/1.3 var(--font-sans);
     color: var(--status-danger);
+  }
+
+  .device-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .with-menu {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .caret {
+    position: absolute;
+    inset-inline-end: -4px;
+    bottom: -2px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(40, 40, 48, 0.95);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .caret:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+
+  .caret-icon {
+    width: 10px;
+    height: 10px;
+    background: currentColor;
+    mask: var(--icon-chevron-up) center/contain no-repeat;
   }
 
   .pill {
