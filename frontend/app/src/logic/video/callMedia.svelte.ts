@@ -75,7 +75,9 @@ export class CallMedia {
     }
 
     #refresh() {
-        const participants = this.#call?.participants() ?? {};
+        // Daily changes one participants object in place, so the view is given a copy: the same
+        // object again would be no change to it
+        const participants = { ...(this.#call?.participants() ?? {}) };
         this.participants = participants;
         this.#audio.sync(remoteAudioTracks(participants));
     }

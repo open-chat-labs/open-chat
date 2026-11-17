@@ -1,5 +1,6 @@
 import type { DailyCall, DailyParticipant, DailyTrackState } from "@daily-co/daily-js";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { flushSync } from "svelte";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CallMedia } from "./callMedia.svelte";
 import { callPeople, remoteAudioTracks, type CallParticipants } from "./callPeople";
 import { RemoteAudio } from "./remoteAudio";
@@ -37,10 +38,11 @@ const face = (userId: string, userName: string) => ({
     grad: userId,
 });
 
-// A Daily call object that only does what CallMedia uses of it
+// A Daily call object that only does what CallMedia uses of it. Like Daily's, `participants()`
+// returns the same object every time, changed in place.
 function fakeCall() {
     const handlers = new Map<string, Set<() => void>>();
-    let participants: CallParticipants = {};
+    const participants: CallParticipants = {};
     const call = {
         on: (event: string, handler: () => void) => {
             if (!handlers.has(event)) handlers.set(event, new Set());
@@ -56,7 +58,8 @@ function fakeCall() {
     return {
         call: call as unknown as DailyCall,
         set(next: CallParticipants, event = "participant-updated") {
-            participants = next;
+            for (const key of Object.keys(participants)) delete participants[key];
+            Object.assign(participants, next);
             handlers.get(event)?.forEach((h) => h());
         },
     };
@@ -69,6 +72,9 @@ describe("a call made with Daily's call object", () => {
     // jsdom can't play media
     beforeEach(() => {
         vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    });
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     // #10124 / #10125 invariant 6: Daily's call object draws nothing, so the app plays every
@@ -101,9 +107,70 @@ describe("a call made with Daily's call object", () => {
         );
         expect(playing(root)).toEqual(["b:audio"]);
 
+        // someone joins with their audio still loading, and is heard once it plays
+        set(
+            {
+                local: participant("me", { local: true }),
+                b: participant("b", { audio: on(track("b")) }),
+                d: participant("d", {
+                    audio: { state: "loading", subscribed: true } as DailyTrackState,
+                }),
+            },
+            "participant-joined",
+        );
+        expect(playing(root)).toEqual(["b:audio"]);
+        set(
+            {
+                local: participant("me", { local: true }),
+                b: participant("b", { audio: on(track("b")) }),
+                d: participant("d", { audio: on(track("d")) }),
+            },
+            "track-started",
+        );
+        expect(playing(root)).toEqual(["b:audio", "d:audio"]);
+
         // the call is over: nothing keeps playing
         media.detach();
         expect(playing(root)).toEqual([]);
+    });
+
+    // Daily changes its participants object in place, so the call view must still see who joins
+    test("the call view follows the participants as Daily changes them", () => {
+        const media = new CallMedia(new RemoteAudio(document.createElement("div"), fakeStream));
+        const { call, set } = fakeCall();
+        const seen: number[] = [];
+        const cleanup = $effect.root(() => {
+            $effect(() => {
+                seen.push(Object.keys(media.participants).length);
+            });
+        });
+        media.attach(call);
+        flushSync();
+        set({ a: participant("a") }, "participant-joined");
+        flushSync();
+        set({ a: participant("a"), b: participant("b") }, "participant-joined");
+        flushSync();
+        expect(seen.at(-1)).toEqual(2);
+        cleanup();
+        media.detach();
+    });
+
+    test("audio the browser refused to start plays on the user's next tap or key", async () => {
+        const play = vi
+            .spyOn(HTMLMediaElement.prototype, "play")
+            .mockRejectedValueOnce(new DOMException("blocked", "NotAllowedError"))
+            .mockResolvedValue(undefined);
+        const root = document.body.appendChild(document.createElement("div"));
+        const audio = new RemoteAudio(root, fakeStream);
+        audio.sync(remoteAudioTracks({ a: participant("a", { audio: on(track("a")) }) }));
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(play).toHaveBeenCalledTimes(1);
+
+        document.dispatchEvent(new Event("pointerdown"));
+        expect(play).toHaveBeenCalledTimes(2);
+        audio.clear();
+        root.remove();
     });
 
     test("a participant whose audio track changes is played from the new track", () => {

@@ -5,6 +5,10 @@
  */
 export class RemoteAudio {
     #elements = new Map<string, { track: MediaStreamTrack; element: HTMLAudioElement }>();
+    // Elements the browser refused to start (Safari, without a recent gesture), started again on
+    // the user's next tap or key
+    #blocked = new Set<HTMLAudioElement>();
+    #retry = () => this.#playBlocked();
     #root: HTMLElement;
     #streamOf: (track: MediaStreamTrack) => MediaStream;
 
@@ -32,12 +36,7 @@ export class RemoteAudio {
             element.srcObject = this.#streamOf(track);
             this.#root.appendChild(element);
             this.#elements.set(key, { track, element });
-            // autoplay can be refused until the page has had a gesture, which joining a call is
-            try {
-                element.play()?.catch(() => undefined);
-            } catch {
-                // not playable here (no media support); the element is still attached
-            }
+            this.#play(element);
         }
     }
 
@@ -46,6 +45,32 @@ export class RemoteAudio {
         for (const key of [...this.#elements.keys()]) {
             this.#remove(key);
         }
+        this.#stopRetrying();
+    }
+
+    #play(element: HTMLAudioElement) {
+        try {
+            element.play()?.catch(() => {
+                if (!element.isConnected) return;
+                this.#blocked.add(element);
+                document.addEventListener("pointerdown", this.#retry, { capture: true });
+                document.addEventListener("keydown", this.#retry, { capture: true });
+            });
+        } catch {
+            // not playable here (no media support); the element is still attached
+        }
+    }
+
+    #playBlocked() {
+        const blocked = [...this.#blocked];
+        this.#stopRetrying();
+        blocked.filter((element) => element.isConnected).forEach((element) => this.#play(element));
+    }
+
+    #stopRetrying() {
+        this.#blocked.clear();
+        document.removeEventListener("pointerdown", this.#retry, { capture: true });
+        document.removeEventListener("keydown", this.#retry, { capture: true });
     }
 
     #remove(key: string) {
@@ -53,6 +78,7 @@ export class RemoteAudio {
         if (entry === undefined) return;
         entry.element.srcObject = null;
         entry.element.remove();
+        this.#blocked.delete(entry.element);
         this.#elements.delete(key);
     }
 }
