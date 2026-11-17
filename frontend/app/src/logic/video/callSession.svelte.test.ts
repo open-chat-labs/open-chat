@@ -8,6 +8,7 @@ import {
 import { activeVideoCall, hasPresence } from "@stores/video";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { CallMedia } from "./callMedia.svelte";
+import { DAILY_CALL_MACHINE_VERSION } from "./dailyCallMachine";
 import { ANSWER_HANGUP_WAIT_MS, CallSession, type CallFrameOptions } from "./callSession.svelte";
 
 // The call's frame. `present` is how many are in the call.
@@ -302,7 +303,7 @@ describe("a call", () => {
             expect.objectContaining({
                 dailyConfig: {
                     avoidEval: true,
-                    callObjectBundleUrlOverride: `${location.origin}/daily/call-machine-object-bundle-0.72.2.js`,
+                    callObjectBundleUrlOverride: `${location.origin}/daily/call-machine-object-bundle-${DAILY_CALL_MACHINE_VERSION}.js`,
                 },
             }),
         );

@@ -35,7 +35,7 @@
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
         "@coinbase/wallet-sdk": "^4.3.6",
-        "@daily-co/daily-js": "^0.72.0",
+        "@daily-co/daily-js": "^0.95.0",
         "@dfinity/utils": "^4.2.1",
         "@fingerprintjs/botd": "^1.9.1",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
