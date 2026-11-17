@@ -14,6 +14,8 @@
     name: string;
     initial: string;
     grad: string;
+    /** Their picture, over the avatar; the letter shows without it. */
+    avatarUrl?: string;
     muted?: boolean;
     /** Highlighted as the active speaker (from the host's audio levels). */
     speaking?: boolean;
@@ -49,12 +51,14 @@
     name: string;
     initial: string;
     grad: string;
+    avatarUrl?: string;
   }
 </script>
 
 <script lang="ts">
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { onMount, tick, untrack } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import VideoTile from './VideoTile.svelte';
@@ -65,7 +69,7 @@
     /** The other participants. */
     people: CallPerson[];
     /** You: avatar letter / background and your camera stream. */
-    self?: { initial?: string; grad?: string; stream?: MediaStream | null };
+    self?: { initial?: string; grad?: string; avatarUrl?: string; stream?: MediaStream | null };
     media?: 'video' | 'voice';
     full?: boolean;
     muted?: boolean;
@@ -197,12 +201,13 @@
   // so you're an avatar in the grid beside everyone else
   const pipMode = $derived(media === 'video' && !sharing && others.length <= 2);
 
-  type Tile = { key: string; name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean; stream: MediaStream | null };
+  type Tile = { key: string; name: string; initial: string; grad: string; avatarUrl?: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean; stream: MediaStream | null };
   const selfTile = $derived<Tile>({
     key: 'self',
     name: t('ui.callPanel.you'),
     initial: self?.initial ?? t('ui.callPanel.you').slice(0, 1),
     grad: self?.grad ?? ME_GRAD,
+    avatarUrl: self?.avatarUrl,
     bg: cam ? ME_BG : '#16161c',
     ratio: 4 / 3,
     muted,
@@ -215,6 +220,7 @@
     name: o.name,
     initial: o.initial,
     grad: o.grad,
+    avatarUrl: o.avatarUrl,
     bg: o.bg,
     ratio: o.ratio || 4 / 3,
     muted: !!o.muted,
@@ -325,6 +331,8 @@
         onSelectDevice?.(kind, d.id);
       },
     }));
+  // pictures that failed to load: their letter shows instead
+  const failedFaces = new SvelteSet<string>();
   function closeMenuOutside(e: PointerEvent) {
     if (openMenu !== undefined && !(e.target as Element | null)?.closest?.('[data-device-menu]')) openMenu = undefined;
   }
@@ -342,6 +350,11 @@
     ].filter(Boolean) as Control[],
   );
 </script>
+
+<!-- a small avatar's face: the person's picture, or their letter without one or if it fails -->
+{#snippet face(url: string | undefined, initial: string)}
+  {#if url && !failedFaces.has(url)}<img class="face-image" src={url} alt="" onerror={() => failedFaces.add(url)} />{:else}{initial}{/if}
+{/snippet}
 
 <svelte:window
   onpointerdown={closeMenuOutside}
@@ -372,7 +385,7 @@
     {/if}
     {#each tiles as tile (tile.key)}
       <div class="cell">
-        <VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} feed={tile.bg} stream={tile.stream} mirror={tile.key === 'self'} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} />
+        <VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} avatarUrl={tile.avatarUrl} feed={tile.bg} stream={tile.stream} mirror={tile.key === 'self'} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} />
       </div>
     {/each}
   </div>
@@ -384,7 +397,7 @@
           {#if tile.stream}
             <video class="strip-video" class:mirror={tile.key === 'self'} use:feed={tile.stream} autoplay playsinline muted></video>
           {:else}
-            <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{tile.initial}</span></div>
+            <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{@render face(tile.avatarUrl, tile.initial)}</span></div>
           {/if}
           <span class="tag"><span class="tag-mic" class:muted={tile.muted} style:mask="var(--icon-{tile.muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{tile.name}</span>
         </div>
@@ -412,7 +425,7 @@
       {#if selfTile.stream}
         <video class="pip-video" use:feed={selfTile.stream} autoplay playsinline muted></video>
       {:else}
-        <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{selfTile.initial}</span></div>
+        <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{@render face(selfTile.avatarUrl, selfTile.initial)}</span></div>
       {/if}
       <span class="tag"><span class="tag-mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{t('ui.callPanel.you')}</span>
     </div>
@@ -455,7 +468,7 @@
     <div class="requests" role="list" aria-label={t('ui.callPanel.requests')}>
       {#each requests as r (r.id)}
         <div class="request" role="listitem">
-          <span class="request-avatar" style:background={r.grad}>{r.initial}</span>
+          <span class="request-avatar" style:background={r.grad}>{@render face(r.avatarUrl, r.initial)}</span>
           <span class="request-text">{t('ui.callPanel.wantsToSpeak', { name: r.name })}</span>
           <RoundIconButton icon="close" label="ui.callPanel.reject" variant="overlay" size="sm" onPress={() => onReject?.(r.id)} />
           <RoundIconButton icon="check" label="ui.callPanel.approve" variant="on" size="sm" onPress={() => onApprove?.(r.id)} />
@@ -616,6 +629,13 @@
     justify-content: center;
     font: 700 14px/1 var(--font-sans);
     color: #0e0e12;
+    overflow: hidden;
+  }
+
+  .face-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .pip-avatar {
@@ -841,6 +861,7 @@
     height: 30px;
     border-radius: 50%;
     font: 600 13px/1 var(--font-sans);
+    overflow: hidden;
   }
 
   .request-text {

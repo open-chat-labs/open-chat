@@ -1,4 +1,4 @@
-import { threadOpenStore, type OpenChat, type UserSummary } from "@client";
+import { ownUserAvatarUrl, threadOpenStore, type OpenChat, type UserSummary } from "@client";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import { i18nKey } from "@src/i18n/i18n";
 import { swatchFor } from "@src/logic/chats/chatRow";
@@ -32,7 +32,7 @@ export function createWebCall(client: OpenChat): CallSession {
     );
 }
 
-/** A participant as the call view draws them without video: their name and swatch. */
+/** A participant as the call view draws them without video: their name, swatch and own picture. */
 export function callFace(
     client: Pick<OpenChat, "displayName">,
     users: ReadonlyMap<string, UserSummary>,
@@ -44,6 +44,7 @@ export function callFace(
             name,
             initial: name.slice(0, 1).toUpperCase(),
             grad: AVATAR_GRADIENTS[swatchFor(userId)],
+            avatarUrl: ownUserAvatarUrl(user),
         };
     };
 }

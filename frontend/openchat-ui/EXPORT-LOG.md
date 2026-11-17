@@ -1006,3 +1006,7 @@
 ## 2026-11-17 — CallPanel's voice calls have no floating camera tile, by hand
 - `CallPanel`: with `media="voice"` your own floating tile (the picture-in-picture camera of 1:1 and 3-person video calls) is gone; you're an avatar tile in the grid beside the others, as a 4+ call lays out. A voice call never has a camera to show there. No props changed. Used by the app's call view (web 7b, #10125).
 - Not in the design export: the native design's voice call is centred avatars (`plan/native/09-calls.md`); the web design draws voice and video alike.
+
+## 2026-11-17 — call avatars show the person's picture, by hand
+- `VideoTile`: `avatarUrl` (optional): the person's picture in the avatar circle, the letter without it or if it fails to load. `CallPanel`: `avatarUrl` on `CallPerson`, `self` and `CallSpeakRequest`, passed to its tiles and drawn the same way in the share strip, your floating tile and the request cards. `meta.json` (`VideoTile.avatarUrl`; `people`, `self`, `requests` docs). Used by the app's call view (web 7b, #10125), which had shown everyone's letter even where they have a picture.
+- Not in the design export: the export's call tiles draw letters only.

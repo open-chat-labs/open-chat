@@ -36,6 +36,7 @@ const face = (userId: string, userName: string) => ({
     name: userName,
     initial: userName.slice(0, 1),
     grad: userId,
+    avatarUrl: `avatar/${userId}`,
 });
 
 // A Daily call object that only does what CallMedia uses of it. Like Daily's, `participants()`
@@ -184,6 +185,7 @@ describe("a call made with Daily's call object", () => {
         expect((second?.srcObject as unknown as { id: string }).id).toEqual("stream-2");
     });
 
+    // Everyone is drawn with their own picture where they have one, the user too
     test("the call view shows the others' video, mute and speaking, and the user's own", () => {
         const { people, self } = callPeople(
             {
@@ -201,6 +203,7 @@ describe("a call made with Daily's call object", () => {
         expect(people).toEqual([
             expect.objectContaining({
                 id: "a",
+                avatarUrl: "avatar/user-a",
                 muted: false,
                 speaking: true,
                 stream: fakeStream(track("a-cam")),
@@ -215,6 +218,7 @@ describe("a call made with Daily's call object", () => {
         ]);
         expect(self).toEqual(
             expect.objectContaining({
+                avatarUrl: "avatar/user-me",
                 camera: true,
                 muted: true,
                 sharing: false,

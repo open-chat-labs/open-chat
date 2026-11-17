@@ -6,8 +6,9 @@ import type { DailyParticipant, DailyTrackState } from "@daily-co/daily-js";
 
 export type CallParticipants = Record<string, DailyParticipant>;
 
-/** How a participant is drawn when their video is off: from the app's users. */
-export type CallFace = { name: string; initial: string; grad: string };
+/** How a participant is drawn when their video is off: from the app's users, with their own
+ * picture where they have one. */
+export type CallFace = { name: string; initial: string; grad: string; avatarUrl?: string };
 
 /** A person in the call as `CallPanel` takes them (its `CallPerson`). */
 export type CallPersonView = CallFace & {
@@ -20,6 +21,7 @@ export type CallPersonView = CallFace & {
 export type CallSelfView = {
     initial: string;
     grad: string;
+    avatarUrl?: string;
     stream: MediaStream | null;
     muted: boolean;
     camera: boolean;
@@ -72,6 +74,7 @@ export function callPeople(
             self = {
                 initial: f.initial,
                 grad: f.grad,
+                avatarUrl: f.avatarUrl,
                 stream: stream(p.tracks.video),
                 muted: p.tracks.audio.state === "off",
                 camera: p.tracks.video.state !== "off",

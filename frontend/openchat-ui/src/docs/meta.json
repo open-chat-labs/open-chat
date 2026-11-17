@@ -7787,18 +7787,18 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "The other participants: id, name, initial, grad, muted, speaking (from audio levels), stream (MediaStream)."
+        "doc": "The other participants: id, name, initial, grad, avatarUrl, muted, speaking (from audio levels), stream (MediaStream)."
       },
       {
         "name": "self",
-        "type": "{ initial?: string; grad?: string; stream?: MediaStream | null }",
+        "type": "{ initial?: string; grad?: string; avatarUrl?: string; stream?: MediaStream | null }",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "You: avatar letter / background and your camera stream."
+        "doc": "You: avatar letter / background, your picture and your camera stream."
       },
       {
         "name": "media",
@@ -8043,7 +8043,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The host's queue of requests to speak (id, name, initial, grad), as cards under the top bar."
+        "doc": "The host's queue of requests to speak (id, name, initial, grad, avatarUrl), as cards under the top bar."
       },
       {
         "name": "onApprove",
@@ -19122,6 +19122,17 @@
         "required": false,
         "componentDefault": "'linear-gradient(140deg,#B48CFF,#6A5CFF)'",
         "doc": "Avatar background."
+      },
+      {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The person's picture, over the avatar; the letter shows without it and if it fails to load."
       },
       {
         "name": "feed",
