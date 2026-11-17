@@ -118,20 +118,20 @@ export function deviceLists(
 
 /**
  * What the user can send in the call: their microphone and camera, or, a broadcast's viewer
- * without presence, a request to speak (`asked` once made, until the host answers). While joining,
- * Daily hasn't said yet, so the usual controls show.
+ * without presence, a request to speak (`asked` once made, until the host answers). Presence is
+ * the call's own local participant's. Other calls always send, and so does a broadcast while
+ * joining, before Daily has said.
  */
 export type CallSend = "send" | "ask" | "asked";
 
-export function callSend({
-    hasPresence,
-    joining,
-    asked,
-}: {
-    hasPresence: boolean;
-    joining: boolean;
-    asked: boolean;
-}): CallSend {
-    if (hasPresence || joining) return "send";
+export function callSend(
+    active: { callType: string; status: "joining" | "joined" } | undefined,
+    local: Pick<DailyParticipant, "permissions"> | undefined,
+    asked: boolean,
+): CallSend {
+    if (active?.callType !== "broadcast" || active.status === "joining" || local === undefined) {
+        return "send";
+    }
+    if (local.permissions.hasPresence) return "send";
     return asked ? "asked" : "ask";
 }

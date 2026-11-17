@@ -40,17 +40,9 @@
     );
     const voice = $derived($activeVideoCall?.callType === "audio");
 
-    // a broadcast's viewer can't send until the host lets them; other calls always can. Presence
-    // is this call's own (Daily's local participant), not a store an earlier call left set.
-    const local = $derived(session.media.participants.local);
+    // a broadcast's viewer can't send until the host lets them (callSend)
     const send = $derived(
-        $activeVideoCall?.callType === "broadcast"
-            ? callSend({
-                  hasPresence: local?.permissions.hasPresence ?? false,
-                  joining: local === undefined || $activeVideoCall.status === "joining",
-                  asked: session.askedToSpeak,
-              })
-            : "send",
+        callSend($activeVideoCall, session.media.participants.local, session.askedToSpeak),
     );
     const requests = $derived($activeVideoCall?.accessRequests ?? []);
     const requestCards = $derived(

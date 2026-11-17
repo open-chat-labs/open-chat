@@ -273,11 +273,23 @@ describe("a call made with Daily's call object", () => {
 });
 
 describe("a broadcast's controls", () => {
+    const local = (hasPresence: boolean) =>
+        ({ local: true, permissions: { hasPresence } }) as unknown as DailyParticipant;
+    const broadcast = { callType: "broadcast", status: "joined" } as const;
+
     // A viewer without presence can't send their microphone or camera: Daily refuses it. They're
-    // offered a request to speak instead, and the usual controls once the host lets them.
+    // offered a request to speak instead, and the usual controls once the host lets them. Presence
+    // is the call's own local participant's, read the moment the call is joined.
     test("a viewer without presence asks to speak, and sends once allowed", () => {
-        expect(callSend({ hasPresence: false, joining: false, asked: false })).toBe("ask");
-        expect(callSend({ hasPresence: false, joining: false, asked: true })).toBe("asked");
-        expect(callSend({ hasPresence: true, joining: false, asked: false })).toBe("send");
+        expect(callSend(broadcast, local(false), false)).toBe("ask");
+        expect(callSend(broadcast, local(false), true)).toBe("asked");
+        expect(callSend(broadcast, local(true), false)).toBe("send");
+        // other calls always send, whatever Daily has reported so far
+        expect(callSend({ callType: "default", status: "joined" }, local(false), false)).toBe(
+            "send",
+        );
+        // while joining, before Daily says, the usual controls show
+        expect(callSend({ ...broadcast, status: "joining" }, local(false), false)).toBe("send");
+        expect(callSend(broadcast, undefined, false)).toBe("send");
     });
 });

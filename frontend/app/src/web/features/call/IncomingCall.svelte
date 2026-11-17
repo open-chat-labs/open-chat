@@ -5,7 +5,6 @@
 <script lang="ts">
     import {
         allUsersStore,
-        chatListScopeStore,
         communitiesStore,
         publish,
         routeForChatIdentifier,
@@ -44,7 +43,9 @@
             actions: ringActions(call, {
                 clear: () => incomingVideoCall.set(undefined),
                 decline: (chatId) => client.declineVideoCall(chatId),
-                open: (chatId) => navigate(routeForChatIdentifier(chatListScopeStore.value.kind, chatId)),
+                // the chat's own route, as the old trees open it: a list scope (favourites) may not
+                // have the chat, and would close it again under the call
+                open: (chatId) => navigate(routeForChatIdentifier("none", chatId)),
                 join: (request) => publish("startVideoCall", request),
             }),
         };
