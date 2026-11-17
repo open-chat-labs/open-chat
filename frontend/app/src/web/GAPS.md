@@ -2581,9 +2581,9 @@ design export needs. Each entry says where it came up.
   a row, each within 8h of the next, show as one grouped pill that opens to list them (web/05,
   `groupCalls`: the list shows the run's newest, which draws the run, and the rest are left out of
   its items; anything between them, a message or a date's pill, keeps them apart; the live call is
-  never grouped); the group is read as one (its row carries every call's index). Join and Call back
-  say that calls aren't here yet, in the native tree's words (`native.conversation.callsLater`),
-  until 7b (`TODO(phase 7)`). `CallEvent` drops the " · " before the time when a call has no length
+  never grouped); the group is read as one (its row carries every call's index). Join joins the call,
+  and Call back calls again, or joins the call going on by then (`callRequest`, 7b); a live call
+  the user is in shows Leave. `CallEvent` drops the " · " before the time when a call has no length
   (by hand, EXPORT-LOG 2026-11-16). Checked on the local replica with calls added to the list on the
   page (no calls can be made there).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as

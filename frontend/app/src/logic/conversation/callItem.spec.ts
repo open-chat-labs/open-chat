@@ -8,6 +8,7 @@ import {
     groupCalls,
     isLiveCall,
     timelineCallState,
+    callRequest,
 } from "./callItem";
 
 const joined = [{ userId: "me", joined: 1n }];
@@ -111,5 +112,24 @@ describe("runs of calls (web/05)", () => {
         const over = (item: Item) => (live.has(item.key) ? undefined : call(item));
         const grouped = groupCalls(items.slice(1), over);
         expect(grouped.runs.size).toBe(0);
+    });
+});
+
+describe("pressing a call in the timeline", () => {
+    // #10125: Join joins the call as the type it was started as, and Call back starts a new call
+    // of the same type, or joins the one running in the chat by then
+    test("Join joins, and Call back calls again or joins the call going on", () => {
+        expect(callRequest("join", { callType: "audio" }, true)).toEqual({
+            callType: "audio",
+            join: true,
+        });
+        expect(callRequest("call_back", { callType: "audio" }, false)).toEqual({
+            callType: "audio",
+            join: false,
+        });
+        expect(callRequest("call_back", { callType: "default" }, true)).toEqual({
+            callType: "default",
+            join: true,
+        });
     });
 });

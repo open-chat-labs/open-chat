@@ -1,4 +1,4 @@
-import type { VideoCallContent, VideoCallInProgress } from "@client";
+import type { VideoCallContent, VideoCallInProgress, VideoCallType } from "@client";
 
 // A call in a chat's timeline: live while it runs, then ended, or missed by someone who never
 // joined it, in every tree.
@@ -17,6 +17,19 @@ export function callState(
 /** Whether the call is voice only; a video call and a broadcast are video. */
 export function callMedia(content: Pick<VideoCallContent, "callType">): "video" | "voice" {
     return content.callType === "audio" ? "voice" : "video";
+}
+
+/**
+ * What pressing a call in the timeline asks for: Join joins it as the type it was started as; Call
+ * back starts a new call of the same type, or joins the one going on in the chat by then (the
+ * session then takes that call's type).
+ */
+export function callRequest(
+    action: "join" | "call_back",
+    content: Pick<VideoCallContent, "callType">,
+    callInProgress: boolean,
+): { callType: VideoCallType; join: boolean } {
+    return { callType: content.callType, join: action === "join" || callInProgress };
 }
 
 /**
