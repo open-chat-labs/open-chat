@@ -995,3 +995,10 @@
 - `CallPanel`: `devices` (`CallDevices`: `mics`, `speakers`, `cameras`, and the `mic`, `speaker` and `camera` in use) and `onSelectDevice(kind, id)`. A small chevron on Mute opens a menu of microphones and speakers above the control bar, and one on Camera a menu of cameras, each only where there's more than one; the one in use is ticked. Esc or a click outside closes it. Strings `ui.callPanel.microphone`, `speaker`, `camera`, `cameras`, `audioDevices`. `meta.json` (`devices`, `onSelectDevice`). Used by the app's call view (web 7b, #10125), which had lost the device choice the old prebuilt call gave.
 - Not in the design export: TODO(design), after the native design's Audio output menu (`plan/native/09-calls.md`).
 
+## 2026-11-17 — CallPanel's broadcast controls, by hand
+- `CallPanel`: `speak` (`'ask' | 'asked'`) and `onAskToSpeak`: a broadcast's viewer, who can't send their microphone or camera, gets Ask to speak in place of Mute, Camera and Share (pressed once asked). `requests` (`CallSpeakRequest[]`: `id`, `name`, `initial`, `grad`), `onApprove(id)` and `onReject(id)`: the host's requests to speak as cards under the top bar, each with Not now and Let them speak. Strings `ui.callPanel.askToSpeak`, `askedToSpeak`, `requests`, `wantsToSpeak`, `approve`, `reject`. `meta.json` (the five props). Used by the app's call view (web 7b, #10125), for the broadcasts the old prebuilt call handled.
+- Not in the design export: TODO(design), the minimal controls agreed for broadcasts until there's a design (the app's `GAPS.md`, "Calls").
+
+## 2026-11-17 — RoundIconButton's accept variant, by hand
+- `RoundIconButton`: `variant="accept"`, white on `--status-online`, for answering a call: the accent `on` read as a second red button beside Decline. `meta.json` (`variant`'s options). Used by the app's incoming call card (web 7b, #10125).
+- Not in the design export: TODO(design), no design has an incoming call.

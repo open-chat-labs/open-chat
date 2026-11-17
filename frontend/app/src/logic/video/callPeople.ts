@@ -115,3 +115,23 @@ export function deviceLists(
             .map((d) => ({ id: d.deviceId, label: d.label || d.deviceId.slice(0, 8) }));
     return { mics: of("audioinput"), speakers: of("audiooutput"), cameras: of("videoinput") };
 }
+
+/**
+ * What the user can send in the call: their microphone and camera, or, a broadcast's viewer
+ * without presence, a request to speak (`asked` once made, until the host answers). While joining,
+ * Daily hasn't said yet, so the usual controls show.
+ */
+export type CallSend = "send" | "ask" | "asked";
+
+export function callSend({
+    hasPresence,
+    joining,
+    asked,
+}: {
+    hasPresence: boolean;
+    joining: boolean;
+    asked: boolean;
+}): CallSend {
+    if (hasPresence || joining) return "send";
+    return asked ? "asked" : "ask";
+}

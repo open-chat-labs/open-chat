@@ -1,8 +1,8 @@
 <!-- Circular icon control (call controls, mini call, recorder).
-     variant: default | on (accent) | off (inverted — e.g. camera off) | danger | overlay (on video). size: sm 34 | md 50 | lg 56. -->
+     variant: default | on (accent) | off (inverted — e.g. camera off) | danger | accept (answer a call) | overlay (on video). size: sm 34 | md 50 | lg 56. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  type Variant = 'default' | 'on' | 'off' | 'danger' | 'overlay';
+  type Variant = 'default' | 'on' | 'off' | 'danger' | 'accept' | 'overlay';
   type Size = 'sm' | 'md' | 'lg';
 
   interface Props {
@@ -92,6 +92,11 @@
 
   .danger {
     --button-bg: var(--status-danger);
+    --button-ink: #fff;
+  }
+
+  .accept {
+    --button-bg: var(--status-online);
     --button-ink: #fff;
   }
 

@@ -8011,6 +8011,61 @@
         "required": false,
         "componentDefault": null,
         "doc": "A device picked from those menus. No chevrons without it."
+      },
+      {
+        "name": "speak",
+        "type": "'ask' | 'asked'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A broadcast's viewer, who can't send their microphone or camera: 'ask' shows Ask to speak in place of Mute, Camera and Share, 'asked' the same pressed while the host decides."
+      },
+      {
+        "name": "onAskToSpeak",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Ask to speak pressed."
+      },
+      {
+        "name": "requests",
+        "type": "CallSpeakRequest[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's queue of requests to speak (id, name, initial, grad), as cards under the top bar."
+      },
+      {
+        "name": "onApprove",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host let that request's person speak."
+      },
+      {
+        "name": "onReject",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host turned that request down."
       }
     ],
     "group": "features"
@@ -17160,6 +17215,7 @@
           "on",
           "off",
           "danger",
+          "accept",
           "overlay"
         ],
         "section": null,

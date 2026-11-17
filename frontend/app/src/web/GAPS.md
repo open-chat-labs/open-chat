@@ -1217,9 +1217,16 @@ design export needs. Each entry says where it came up.
     none; it follows the native Audio output menu. The choice isn't remembered between calls.
   - **Full screen:** the call over the whole window (`CallHost`), as the prototype's, and the
     browser's own full screen while it's there; leaving that (Esc) brings the call back inline.
-  - **Not yet:** the incoming call's ring (Accept / Decline), the host-ended and denied messages,
-    and a broadcast's ask to speak and the host's approve or reject (7b, 3b); `MiniCall` (7c). A
-    minimised call has no floating window until then: the header's button goes back to it.
+  - **Ringing, undesigned:** a call ringing here is a card in the window's top-right corner
+    (`IncomingCall`, from the library's `Avatar` and `RoundIconButton`), with the ringtone while the
+    user isn't in another call. Accept opens the chat and joins; Decline declines; ✕ or Esc stops
+    the ring here only. No design has an incoming call.
+  - **Ended by the host, request refused:** toasts (`CallHost`), where the old trees had sheets.
+  - **Broadcasts, minimal, by hand** (EXPORT-LOG 2026-11-17): a viewer without presence has Ask to
+    speak in place of Mute, Camera and Share; the host gets a card per request with Not now and Let
+    them speak. No demoting a speaker yet (the old participants list had it).
+  - **Not yet:** `MiniCall` (7c). A minimised call has no floating window until then: the
+    header's button goes back to it, which is too easy to miss.
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
   tree's mobile-width call menu (`MenuIcon`) mounts its items in their own root and read `chat`
   after the call ended (Rollbar #32132).

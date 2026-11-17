@@ -17,6 +17,8 @@ const frame = vi.hoisted(() => ({
     leave: vi.fn(),
     created: vi.fn(),
     callObject: vi.fn(),
+    // the session's handlers for the frame's events
+    handlers: new Map<string, (ev: unknown) => void>(),
 }));
 
 // The iOS shell, for the calls that run natively
@@ -53,7 +55,7 @@ vi.mock("@daily-co/daily-js", () => ({
 }));
 
 const makeFrame = vi.hoisted(() => () => ({
-    on: () => {},
+    on: (event: string, handler: (ev: unknown) => void) => frame.handlers.set(event, handler),
     join: async () => {},
     leave: frame.leave,
     destroy: async () => {},
@@ -277,6 +279,20 @@ describe("a call", () => {
 
     // #10124: the legacy trees keep Daily's prebuilt frame; only the new UI makes calls with the
     // call object, and it never creates the frame
+    // #10125 invariant 4: the host leaving a broadcast ends it here too, and the user is told why
+    test("invariant 4: the host leaving a broadcast ends the call here and says so", async () => {
+        await session.startOrJoin(container, {
+            chatId: group,
+            callType: "broadcast",
+            join: false,
+        });
+
+        frame.handlers.get("participant-left")?.({ participant: { owner: true, local: false } });
+
+        expect(frame.leave).toHaveBeenCalled();
+        expect(session.hostEnded).toBe(true);
+    });
+
     test("the legacy trees make their calls in Daily's prebuilt frame", async () => {
         await session.startOrJoin(container, { chatId: direct, callType: "default", join: false });
 

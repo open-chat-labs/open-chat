@@ -2,7 +2,7 @@ import type { DailyCall, DailyParticipant, DailyTrackState } from "@daily-co/dai
 import { flushSync } from "svelte";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CallMedia } from "./callMedia.svelte";
-import { callPeople, remoteAudioTracks, type CallParticipants } from "./callPeople";
+import { callPeople, callSend, remoteAudioTracks, type CallParticipants } from "./callPeople";
 import { RemoteAudio } from "./remoteAudio";
 
 const track = (id: string) => ({ id, kind: "audio" }) as unknown as MediaStreamTrack;
@@ -269,5 +269,15 @@ describe("a call made with Daily's call object", () => {
         expect(setInputDevicesAsync).toHaveBeenCalledWith({ audioDeviceId: "usb-mic" });
         expect(setInputDevicesAsync).toHaveBeenCalledWith({ videoDeviceId: "usb-cam" });
         media.detach();
+    });
+});
+
+describe("a broadcast's controls", () => {
+    // A viewer without presence can't send their microphone or camera: Daily refuses it. They're
+    // offered a request to speak instead, and the usual controls once the host lets them.
+    test("a viewer without presence asks to speak, and sends once allowed", () => {
+        expect(callSend({ hasPresence: false, joining: false, asked: false })).toBe("ask");
+        expect(callSend({ hasPresence: false, joining: false, asked: true })).toBe("asked");
+        expect(callSend({ hasPresence: true, joining: false, asked: false })).toBe("send");
     });
 });
