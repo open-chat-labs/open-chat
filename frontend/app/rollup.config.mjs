@@ -490,6 +490,8 @@ export default {
                 // Build the worker + service worker from source into their lib/
                 // dirs before the copy step above pulls them into build/.
                 `node ./build-workers.mjs`,
+                // Daily's call machine, served from our own origin, pinned (#10124)
+                `node ./fetch-daily-call-machine.mjs`,
             ],
             hook: "buildStart",
         }),

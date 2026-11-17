@@ -46,4 +46,7 @@ export OC_BASE_ORIGIN=http://localhost:$OC_DEV_PORT
 export OC_KLIPY_APIKEY="$OC_APP_KLIPY_APIKEY"
 
 # Run dev app
+# Daily's call machine, served from our own origin, pinned (#10124)
+node "$SCRIPT_DIR/fetch-daily-call-machine.mjs" || exit 1
+
 npx vite --strictPort --port $OC_DEV_PORT

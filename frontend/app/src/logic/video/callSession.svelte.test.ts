@@ -44,8 +44,8 @@ vi.mock("@daily-co/daily-js", () => ({
             frame.created();
             return makeFrame();
         },
-        createCallObject: () => {
-            frame.callObject();
+        createCallObject: (properties: unknown) => {
+            frame.callObject(properties);
             return { ...makeFrame(), off: () => {}, participants: () => ({}) };
         },
     },
@@ -297,6 +297,15 @@ describe("a call", () => {
 
         expect(frame.callObject).toHaveBeenCalledOnce();
         expect(frame.created).not.toHaveBeenCalled();
+        // Daily's code comes from our own origin as a script, never from Daily through eval
+        expect(frame.callObject).toHaveBeenCalledWith(
+            expect.objectContaining({
+                dailyConfig: {
+                    avoidEval: true,
+                    callObjectBundleUrlOverride: `${location.origin}/daily/call-machine-object-bundle-0.72.2.js`,
+                },
+            }),
+        );
         // its media follow the call, so its remote audio plays
         expect(media.attach).toHaveBeenCalledOnce();
     });
