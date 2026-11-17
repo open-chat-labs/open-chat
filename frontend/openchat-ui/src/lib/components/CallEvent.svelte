@@ -83,7 +83,11 @@
         : t('ui.callEvent.ended', { media }),
   );
   const sub = $derived(
-    live ? t('ui.callEvent.live', { elapsed, inCall: inCall ? 'yes' : 'no' }) : missed ? (one.time ?? time) : `${one.duration ?? duration} · ${one.time ?? time}`,
+    live
+      ? t('ui.callEvent.live', { elapsed, inCall: inCall ? 'yes' : 'no' })
+      : missed
+        ? (one.time ?? time)
+        : [one.duration ?? duration, one.time ?? time].filter((part) => part !== '').join(' · '),
   );
   const people = $derived(faces.map((x) => (/^(https?:|data:|\/|\.)/.test(x) ? `center/cover no-repeat ${cssUrl(x)}` : x)));
 </script>

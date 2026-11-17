@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import {
-    callEventProps,
     disappearingPick,
     disappearingSubmenu,
     headerMenuItems,
@@ -30,7 +29,10 @@ describe("the conversation header's menu", () => {
             "block",
             "delete",
         ]);
-        expect(items.find((i) => i.id === "block")).toMatchObject({ danger: true, separator: true });
+        expect(items.find((i) => i.id === "block")).toMatchObject({
+            danger: true,
+            separator: true,
+        });
         expect(items.find((i) => i.id === "delete")).toMatchObject({ danger: true });
         expect(items.find((i) => i.id === "delete")?.separator).toBeUndefined();
     });
@@ -120,30 +122,16 @@ describe("the menu's disappearing messages", () => {
 
     test("a pick sets a length or Off; the setting they already have sets nothing", () => {
         const on = { on: true, after: "1 day" };
-        expect(disappearingPick("disappearing:8 hours", on)).toEqual({ on: true, after: "8 hours" });
+        expect(disappearingPick("disappearing:8 hours", on)).toEqual({
+            on: true,
+            after: "8 hours",
+        });
         // Off keeps the length, as the details' switch does
         expect(disappearingPick("disappearing:off", on)).toEqual({ on: false, after: "1 day" });
         expect(disappearingPick("disappearing:1 day", on)).toBeUndefined();
         expect(disappearingPick("disappearing:off", { on: false, after: "1 day" })).toBeUndefined();
         expect(disappearingPick("disappearing:1 day", { on: false, after: "1 day" })).toEqual(on);
         expect(disappearingPick("mute", on)).toBeUndefined();
-    });
-});
-
-describe("an ended or missed call", () => {
-    test("the user's own reads as theirs, anyone else's by name", () => {
-        expect(callEventProps("missed", "voice", { mine: true }, "", "10:00").startedBy).toBe(
-            "You",
-        );
-        expect(
-            callEventProps("ended", "video", { mine: false, name: "Ann" }, "4:12", "10:00"),
-        ).toEqual({
-            state: "ended",
-            media: "video",
-            startedBy: "Ann",
-            duration: "4:12",
-            time: "10:00",
-        });
     });
 });
 

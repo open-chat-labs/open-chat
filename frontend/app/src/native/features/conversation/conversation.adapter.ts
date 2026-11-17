@@ -2,11 +2,11 @@ import type { NativeMenuItem } from "@openchat/ui/src/native/types";
 import type { DisappearingSetting } from "@src/logic/chats/chatDisappearing.svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { disappearingChoicesWith } from "@src/logic/chats/disappearingMessages";
-import type { CallState } from "@src/logic/conversation/callItem";
 
-// The native conversation's own props (native design notes §3.3): its header's menu and its call
-// items. Its messages are logic/conversation/messageRow's, as the web's are. The words come in from
-// the screen (`label`), translated, as the kit shows its rows' labels as they are.
+// The native conversation's own props (native design notes §3.3): its header's menu. Its call
+// items are logic/conversation/callItem's and its messages logic/conversation/messageRow's, as the
+// web's are. The words come in from the screen (`label`), translated, as the kit shows its rows'
+// labels as they are.
 
 /** An item of the header's menu. */
 export type HeaderMenuAction =
@@ -134,32 +134,6 @@ export function disappearingPick(
         picked === "off" ? { on: false, after: current.after } : { on: true, after: picked };
     const same = next.on === current.on && (!next.on || next.after === current.after);
     return same ? undefined : next;
-}
-
-/** CallEvent's props for an ended or missed call. */
-export type CallEventProps = {
-    state: "ended" | "missed";
-    media: "video" | "voice";
-    /** "You" is the library's word for the user's own call (no "from …" on a missed one). */
-    startedBy: string;
-    duration: string;
-    time: string;
-};
-
-export function callEventProps(
-    state: Exclude<CallState, "live">,
-    media: "video" | "voice",
-    startedBy: { mine: true } | { mine: false; name: string },
-    duration: string,
-    time: string,
-): CallEventProps {
-    return {
-        state,
-        media,
-        startedBy: startedBy.mine ? "You" : startedBy.name,
-        duration,
-        time,
-    };
 }
 
 /**

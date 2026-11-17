@@ -29,6 +29,7 @@
         currentUserIdStore,
         eventsStore,
         exchangeRatesLookupStore,
+        formatClock,
         failedMessagesStore,
         i18nKey,
         isDiamondStore,
@@ -82,6 +83,7 @@
         type EventWrapper,
         type FileContent,
         type Message,
+        type VideoCallContent,
         type MessageContext,
         type MessageMenu,
         type MessageMenuAction,
@@ -94,6 +96,17 @@
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import MessageActions from "@openchat/ui/src/lib/components/MessageActions.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
+    import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
+    import {
+        callEventProps,
+        callLength,
+        callMedia,
+        groupCalls,
+        isLiveCall,
+        overCallState,
+        timelineCallState,
+        type CallEventProps,
+    } from "@src/logic/conversation/callItem";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
     import TypingIndicator from "@openchat/ui/src/lib/components/TypingIndicator.svelte";
@@ -770,6 +783,59 @@
         return flattener.flatten(timeline);
     });
 
+    // ── calls ──
+
+    // calls in a row show as one grouped pill (web/05: two or more with nothing between them,
+    // each within 8h of the next; never the live one): the list shows the run's newest, which
+    // draws the run (`groupCalls`)
+    const calls = $derived(
+        groupCalls(items, (item) =>
+            item.kind === "event" && isCallEvent(item.event) && !callIsLive(item.event.event)
+                ? { timestamp: item.event.timestamp }
+                : undefined,
+        ),
+    );
+
+    function isCallEvent(
+        evt: EventWrapper<ChatEvent>,
+    ): evt is EventWrapper<Message<VideoCallContent>> {
+        return evt.event.kind === "message" && evt.event.content.kind === "video_call_content";
+    }
+
+    // the chat's call in progress (`videoCallInProgress`), whose message shows it live
+    function callIsLive(msg: Message<VideoCallContent>): boolean {
+        const inProgress = isLiveCall(chat.videoCallInProgress, msg.messageIndex);
+        return timelineCallState(msg.content, me, inProgress) === "live";
+    }
+
+    // an ended or missed call as CallEvent shows it: who started it ("You" for the reader), how
+    // long it ran, when
+    function overCall(evt: EventWrapper<Message<VideoCallContent>>): CallEventProps {
+        const msg = evt.event;
+        const length =
+            msg.content.ended === undefined ? undefined : callLength(msg.content, evt.timestamp, 0);
+        return callEventProps(
+            overCallState(msg.content, me),
+            callMedia(msg.content),
+            msg.sender === me ? { mine: true } : { mine: false, name: ctx.userName(msg.sender) },
+            length === undefined ? "" : formatClock(length / 1000),
+            ctx.time(evt.timestamp),
+        );
+    }
+
+    // a run's calls (`calls.runs`), oldest first
+    function runCalls(run: FlatChatItem[]): EventWrapper<Message<VideoCallContent>>[] {
+        return run.flatMap((item) =>
+            item.kind === "event" && isCallEvent(item.event) ? [item.event] : [],
+        );
+    }
+
+    // TODO(phase 7): joining and calling back are 7b's; until then they say calls aren't here yet,
+    // in the native tree's words (N14 waits the same way)
+    function callsLater() {
+        toastStore.showSuccessToast(i18nKey("native.conversation.callsLater"));
+    }
+
     // The first unread message when the chat was opened: the unread divider stays above it while
     // the chat is open, as messages are read. Worked out with the chat, so a new chat never shows
     // the last one's. A thread has none, as in the old trees
@@ -1369,7 +1435,7 @@
                 rootSelector={thread === undefined ? "conversation" : "thread"}
                 {chat}
                 threadRootEvent={thread}
-                {items}
+                items={calls.items}
                 {readonly}
                 maintainScroll={thread === undefined}
                 visible
@@ -1430,7 +1496,39 @@
         </div>
     {:else if item.kind === "event"}
         {@const evt = item.event}
-        {#if isMessage(evt)}
+        {#if isCallEvent(evt)}
+            {@const msg = evt.event}
+            {@const run = calls.runs.get(item.key)}
+            {@const shown = run === undefined ? [evt] : runCalls(run)}
+            <!-- a call is a centred pill in the timeline, not a bubble (web/05, web/12), with no
+                 menu; a run of them one grouped pill, read as one -->
+            <div
+                class="call"
+                data-index={shown.map((e) => e.event.messageIndex).join(" ")}
+                use:observeRead={{
+                    observer: args.messageObserver,
+                    read: shown.every((e) => readByMe(e, args)),
+                }}
+            >
+                {#if run !== undefined}
+                    <CallEvent calls={shown.map(overCall)} onCallBack={callsLater} />
+                {:else if callIsLive(msg)}
+                    <CallEvent
+                        state="live"
+                        media={callMedia(msg.content)}
+                        startedBy={msg.sender === me ? "You" : ctx.userName(msg.sender)}
+                        faces={msg.content.participants.map(
+                            (p) => ctx.avatar(p.userId) ?? ctx.face(p.userId),
+                        )}
+                        elapsed={formatClock(
+                            (callLength(msg.content, evt.timestamp, $now500) ?? 0) / 1000,
+                        )}
+                        onJoin={callsLater} />
+                {:else}
+                    <CallEvent {...overCall(evt)} onCallBack={callsLater} />
+                {/if}
+            </div>
+        {:else if isMessage(evt)}
             {@const msg = evt.event}
             {@const failed = args.isFailed($failedMessagesStore, evt)}
             {@const row = rows.row(item.key, evt, status(evt, args, failed), ctx)}
@@ -1780,6 +1878,7 @@
 
     .row.starts,
     .event,
+    .call,
     .date {
         padding-block-start: var(--space-16);
     }
