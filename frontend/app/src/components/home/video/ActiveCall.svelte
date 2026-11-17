@@ -4,7 +4,6 @@
         allUsersStore,
         chatIdentifiersEqual,
         communitiesStore,
-        currentUserStore,
         mobileWidth,
         OpenChat,
         selectedChatSummaryStore,
@@ -13,17 +12,17 @@
     } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
     import { activeVideoCall } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
     import {
         CallSession,
         dailyTheme,
-        startCallToast,
         type CallFrameOptions,
         type StartCallOutcome,
     } from "@src/logic/video/callSession.svelte";
+    import { callFrameOptions } from "@src/logic/video/callFrameOptions";
+    import { toastStartCall } from "@src/utils/callToast";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -56,14 +55,7 @@
     }
 
     function frameOptions(chatId: ChatIdentifier): CallFrameOptions {
-        return {
-            title: normaliseChatSummary(chatId)?.name ?? "",
-            username: $currentUserStore.username,
-            speakerView: $videoSpeakerView,
-            cameraOn: $videoCameraOn,
-            micOn: $videoMicOn,
-            theme: dailyTheme($currentTheme),
-        };
+        return callFrameOptions(client, chatId, dailyTheme($currentTheme));
     }
 
     const session = new CallSession(client, frameOptions, () =>
@@ -71,9 +63,7 @@
     );
 
     function report(outcome: StartCallOutcome | undefined) {
-        const toast = startCallToast(outcome);
-        if (toast?.kind === "success") toastStore.showSuccessToast(toast.message);
-        if (toast?.kind === "failure") toastStore.showFailureToast(toast.message);
+        toastStartCall(outcome);
     }
 
     export async function startOrJoinVideoCall(

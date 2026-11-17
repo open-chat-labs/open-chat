@@ -1207,8 +1207,8 @@ design export needs. Each entry says where it came up.
   - **Built (7b, 3a):** the header's call buttons follow `callOffer` (audio or video in a private
     chat, a broadcast in a public one, join the call going on, back to the user's own call once
     minimised); `CallView` shows `CallPanel` under the chat header in place of the messages while
-    the user is in that chat's call; `CallHost` (AppScreen) takes the app's call events on one
-    session and asks before switching calls (`ConfirmDialog`: the design has none). The chat list
+    the user is in that chat's call; `CallHost` (the web App) takes the app's call events on one
+    session (the web App, so a call outlives every route) and asks before switching calls (`ConfirmDialog`: the design has none). The chat list
     says voice or video. By hand in the library (EXPORT-LOG 2026-11-17): `ConversationHeader`
     shows the voice button only with `onVoiceCall`, shows calls in channels, and takes `callIcon`.
   - **Not yet:** the incoming call's ring (Accept / Decline), the host-ended and denied messages,

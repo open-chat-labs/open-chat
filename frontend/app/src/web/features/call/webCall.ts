@@ -1,45 +1,34 @@
-import {
-    allUsersStore,
-    communitiesStore,
-    currentUserStore,
-    type ChatIdentifier,
-    type OpenChat,
-    type UserSummary,
-} from "@client";
+import { threadOpenStore, type OpenChat, type UserSummary } from "@client";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import { i18nKey } from "@src/i18n/i18n";
 import { swatchFor } from "@src/logic/chats/chatRow";
-import { videoCallChat } from "@src/logic/video/callChat";
 import type { CallFace } from "@src/logic/video/callPeople";
-import { CallSession, type CallFrameOptions } from "@src/logic/video/callSession.svelte";
-import { videoCameraOn, videoMicOn, videoSpeakerView } from "@src/stores/settings";
+import { callFrameOptions } from "@src/logic/video/callFrameOptions";
+import { CallSession } from "@src/logic/video/callSession.svelte";
 import { toastStore } from "@src/stores/toast";
+import { closeThread } from "../app/rightPanel";
 
 /**
- * The new UI's call: one session for the app's lifetime (AppScreen), so a call outlives the screen
- * that started it. It makes its calls with Daily's call object, never the prebuilt frame (#10124).
+ * The new UI's call: one session for the app's lifetime (the web App), so a call outlives every
+ * screen and route. It makes its calls with Daily's call object, never the prebuilt frame (#10124).
+ * A thread open in the right column closes when a call starts; the call opens nothing there, so
+ * leaving it goes back from nothing.
  */
 export function createWebCall(client: OpenChat): CallSession {
-    const options = (chatId: ChatIdentifier): CallFrameOptions => {
-        const chat = client.lookupChatSummary(chatId);
-        return {
-            title:
-                chat === undefined
-                    ? ""
-                    : videoCallChat(client, chat, allUsersStore.value, communitiesStore.value).name,
-            username: currentUserStore.value.username,
-            speakerView: videoSpeakerView.value,
-            cameraOn: videoCameraOn.value,
-            micOn: videoMicOn.value,
-            // the frame's colours, which a call object has no use for
-            theme: { colors: {} },
-        };
-    };
     return new CallSession(
         client,
-        options,
+        // the frame's colours, which a call object has no use for
+        (chatId) => callFrameOptions(client, chatId, { colors: {} }),
         () => toastStore.showSuccessToast(i18nKey("videoCall.noAnswer")),
-        "call_object",
+        {
+            mode: "call_object",
+            rightPanel: {
+                closeThread: () => {
+                    if (threadOpenStore.value) closeThread();
+                },
+                afterLeave: () => undefined,
+            },
+        },
     );
 }
 

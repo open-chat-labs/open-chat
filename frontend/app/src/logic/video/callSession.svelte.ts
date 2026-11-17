@@ -67,6 +67,20 @@ export function startCallToast(
     }
 }
 
+// What a call does to the right column, which each tree keeps its own way: a thread open there
+// closes when a call starts, and leaving the call goes back from what it opened (the legacy trees'
+// panel history; the new UI's thread is in its URL, and the call opens nothing there)
+export type CallRightPanel = {
+    closeThread(): void;
+    afterLeave(): void;
+};
+
+export type CallSessionOptions = {
+    mode?: CallMode;
+    media?: CallMedia;
+    rightPanel?: CallRightPanel;
+};
+
 // How a call's media is shown: in Daily's prebuilt frame, which the legacy trees use, or by the
 // app from Daily's call object (`media`), which the new UI does: it never uses the frame (#10124)
 export type CallMode = "frame" | "call_object";
@@ -104,6 +118,7 @@ export class CallSession {
     #frameOptions: (chatId: ChatIdentifier) => CallFrameOptions;
     #onNoAnswer: () => void;
     #mode: CallMode;
+    #rightPanel: CallRightPanel;
     #call: DailyCall | undefined;
     // Ends a direct call this client started if nobody joins within the ring window
     #ringOut: RingOutHandle | undefined;
@@ -123,14 +138,18 @@ export class CallSession {
         client: OpenChat,
         frameOptions: (chatId: ChatIdentifier) => CallFrameOptions,
         onNoAnswer: () => void,
-        mode: CallMode = "frame",
-        media: CallMedia = new CallMedia(),
+        { mode = "frame", media = new CallMedia(), rightPanel }: CallSessionOptions = {},
     ) {
         this.#client = client;
         this.#frameOptions = frameOptions;
         this.#onNoAnswer = onNoAnswer;
         this.#mode = mode;
         this.media = media;
+        this.#rightPanel = rightPanel ?? {
+            closeThread: () =>
+                client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel"),
+            afterLeave: () => client.popRightPanelHistory(),
+        };
     }
 
     // Starts a call in the chat, or joins the one there, in the given element
@@ -158,7 +177,7 @@ export class CallSession {
         }
 
         // close any threads we have open in the right panel
-        this.#client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+        this.#rightPanel.closeThread();
 
         activeVideoCall.joining(chatId, callType);
 
@@ -211,7 +230,7 @@ export class CallSession {
 
             // this will trigger the left-meeting event which will in turn end the call
             active.call.leave();
-            this.#client.popRightPanelHistory();
+            this.#rightPanel.afterLeave();
         }
     }
 

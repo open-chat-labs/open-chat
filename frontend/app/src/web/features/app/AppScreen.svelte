@@ -70,8 +70,7 @@
     import { MessageJumps } from "./messageJumps.svelte";
     import MiddleToolbar from "./MiddleToolbar.svelte";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
-    import CallHost from "../call/CallHost.svelte";
-    import { createWebCall } from "../call/webCall";
+    import type { CallSession } from "@src/logic/video/callSession.svelte";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
 
@@ -86,8 +85,8 @@
     const railState = new RailState(() => railMode);
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
-    // the app's one call, which outlives the screen that started it (web 7b)
-    const call = createWebCall(client);
+    // the app's one call (the web App's), which outlives every screen and route (web 7b)
+    const call = getContext<CallSession>("callSession");
 
     // only Diamond members can create one; a guest is sent to sign in (from the rail or Explore)
     function createCommunity() {
@@ -330,4 +329,3 @@
 <!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
 <DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
 <AchievementToastHost />
-<CallHost session={call} />
