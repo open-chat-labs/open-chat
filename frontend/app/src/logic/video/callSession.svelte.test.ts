@@ -7,6 +7,7 @@ import {
 } from "@client";
 import { activeVideoCall, hasPresence } from "@stores/video";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { CallMedia } from "./callMedia.svelte";
 import { ANSWER_HANGUP_WAIT_MS, CallSession, type CallFrameOptions } from "./callSession.svelte";
 
 // The call's frame. `present` is how many are in the call.
@@ -14,6 +15,7 @@ const frame = vi.hoisted(() => ({
     present: 1,
     leave: vi.fn(),
     created: vi.fn(),
+    callObject: vi.fn(),
 }));
 
 // The iOS shell, for the calls that run natively
@@ -41,6 +43,10 @@ vi.mock("@daily-co/daily-js", () => ({
         createFrame: () => {
             frame.created();
             return makeFrame();
+        },
+        createCallObject: () => {
+            frame.callObject();
+            return { ...makeFrame(), off: () => {}, participants: () => ({}) };
         },
     },
 }));
@@ -266,6 +272,36 @@ describe("a call", () => {
         session.hangup();
         expect(client.endVideoCall).toHaveBeenCalledWith(group, 7n);
         expect(frame.leave).toHaveBeenCalledTimes(3);
+    });
+
+    // #10124: the legacy trees keep Daily's prebuilt frame; only the new UI makes calls with the
+    // call object, and it never creates the frame
+    test("the legacy trees make their calls in Daily's prebuilt frame", async () => {
+        await session.startOrJoin(container, { chatId: direct, callType: "default", join: false });
+
+        expect(frame.created).toHaveBeenCalledOnce();
+        expect(frame.callObject).not.toHaveBeenCalled();
+    });
+
+    test("the new UI makes its calls with Daily's call object, never the frame", async () => {
+        const media = { attach: vi.fn(), detach: vi.fn() };
+        const callObjectSession = new CallSession(
+            client,
+            () => options,
+            vi.fn(),
+            "call_object",
+            media as unknown as CallMedia,
+        );
+        await callObjectSession.startOrJoin(container, {
+            chatId: direct,
+            callType: "default",
+            join: false,
+        });
+
+        expect(frame.callObject).toHaveBeenCalledOnce();
+        expect(frame.created).not.toHaveBeenCalled();
+        // its media follow the call, so its remote audio plays
+        expect(media.attach).toHaveBeenCalledOnce();
     });
 
     describe("on iOS", () => {
