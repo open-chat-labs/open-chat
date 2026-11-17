@@ -142,12 +142,16 @@ describe("a chat list row", () => {
         expect(chatRow(forwarded(false, 5), ctx, 10).previewIcon).toBe(undefined);
     });
 
-    test("shows a call going on and muted notifications", () => {
-        const live = {
-            ...dm("bob"),
-            videoCallInProgress: { messageIndex: 1 },
-        } as unknown as ChatSummary;
-        expect(chatRow(live, ctx).liveCall).toBe("video");
+    // #10125 invariant 5: a chat row shows a live call as voice for an audio call, video otherwise
+    test("invariant 5: shows a call going on, as voice or video, and muted notifications", () => {
+        const live = (callType: string) =>
+            ({
+                ...dm("bob"),
+                videoCallInProgress: { messageIndex: 1, callType },
+            }) as unknown as ChatSummary;
+        expect(chatRow(live("default"), ctx).liveCall).toBe("video");
+        expect(chatRow(live("broadcast"), ctx).liveCall).toBe("video");
+        expect(chatRow(live("audio"), ctx).liveCall).toBe("voice");
         const muted = {
             ...dm("bob"),
             membership: { ...membership, notificationsMuted: true },

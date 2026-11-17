@@ -1,3 +1,4 @@
+import type { CallSession } from "@src/logic/video/callSession.svelte";
 import type { RightPanelView } from "@client";
 import type { Component } from "svelte";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
@@ -41,6 +42,8 @@ export type ScreenContext = {
     narrow: boolean;
     /** Where a narrow screen's Back goes from the middle: the list it came from. */
     back?: string;
+    /** The app's one call session (web 7b), which a call outlives the screen that started it on. */
+    call: CallSession;
 };
 
 export type ScreenProps<R> = { region: R; context: ScreenContext };

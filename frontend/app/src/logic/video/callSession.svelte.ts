@@ -8,6 +8,7 @@ import {
     startVideoOff,
     type ChatIdentifier,
     type OpenChat,
+    type ResourceKey,
     type VideoCallOutcome,
     type VideoCallRoom,
     type VideoCallType,
@@ -31,6 +32,7 @@ import {
     type RingOutHandle,
 } from "@utils/callRingOut";
 import type { Theme } from "@src/theme/types";
+import { i18nKey } from "@src/i18n/i18n";
 import { CallMedia } from "./callMedia.svelte";
 
 // `answer`: the user answered on the native ring, so a call in progress is replaced without asking
@@ -45,6 +47,25 @@ export type CallRequest = {
 export const ANSWER_HANGUP_WAIT_MS = 3_000;
 
 export type StartCallOutcome = VideoCallOutcome | { kind: "confirm_switch" };
+
+/**
+ * What the user is told about a call they asked for: nothing once it's joined or while a switch
+ * waits for their say, that there's no call to join any more, or why it failed.
+ */
+export function startCallToast(
+    outcome: StartCallOutcome | undefined,
+): { kind: "success" | "failure"; message: ResourceKey } | undefined {
+    switch (outcome?.kind) {
+        case undefined:
+        case "joined":
+        case "confirm_switch":
+            return undefined;
+        case "no_meeting":
+            return { kind: "success", message: i18nKey("videoCall.noMeetingToJoin") };
+        case "failed":
+            return { kind: "failure", message: outcome.message };
+    }
+}
 
 // How a call's media is shown: in Daily's prebuilt frame, which the legacy trees use, or by the
 // app from Daily's call object (`media`), which the new UI does: it never uses the frame (#10124)

@@ -7,13 +7,17 @@
         allUsersStore,
         anonUserStore,
         blockedUsersStore,
+        callOffer,
         chatIdentifierToString,
+        chatIdentifiersEqual,
         favouritesStore,
         platformModeratorStore,
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        publish,
         type OpenChat,
+        type VideoCallType,
     } from "@client";
     import ConversationHeader from "@openchat/ui/src/features/components/ConversationHeader.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
@@ -29,6 +33,8 @@
     import { headerMenuItems, moderationMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
     import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
+    import { activeVideoCall } from "@src/stores/video";
+    import CallView from "../call/CallView.svelte";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -102,8 +108,74 @@
               : headerMenuItems(menuState),
     );
 
-    // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action; calls are
-    // phase 7
+    // ── the call (web 7b) ──
+
+    // the user is in this chat's call; it shows in place of the messages until they minimise it
+    const inCall = $derived(
+        chat !== undefined &&
+            $activeVideoCall !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
+    );
+    const showingCall = $derived(inCall && $activeVideoCall?.view !== "minimised");
+    const offer = $derived(
+        chat === undefined || readonly
+            ? ({ kind: "none" } as const)
+            : callOffer({
+                  canStart:
+                      !(chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId)) &&
+                      client.canStartVideoCalls(chat.id),
+                  isPublic: !client.isChatPrivate(chat),
+                  inProgress: chat.videoCallInProgress?.callType,
+                  inCall,
+                  canStartBroadcast: true,
+              }),
+    );
+
+    function startCall(callType: VideoCallType, join = false) {
+        if (chat === undefined) return;
+        publish("startVideoCall", { chatId: chat.id, callType, join });
+    }
+
+    // the header's call buttons: audio or video for a new call in a private chat, a broadcast in a
+    // public one, joining the call going on, or back to the user's own once minimised (none while
+    // it shows: the call view has its own controls)
+    const call = $derived.by(() => {
+        switch (offer.kind) {
+            case "choose":
+                return {
+                    show: true,
+                    label: $_("videoCall.startVideo"),
+                    icon: "video" as const,
+                    onCall: () => startCall("default"),
+                    onVoiceCall: () => startCall("audio"),
+                };
+            case "broadcast":
+                return {
+                    show: true,
+                    label: $_("videoCall.startBroadcast"),
+                    icon: "video" as const,
+                    onCall: () => startCall("broadcast"),
+                };
+            case "join":
+                return {
+                    show: true,
+                    label: $_(offer.callType === "audio" ? "videoCall.joinAudio" : "videoCall.joinVideo"),
+                    icon: offer.callType === "audio" ? ("phone" as const) : ("video" as const),
+                    onCall: () => startCall(offer.callType, true),
+                };
+            case "leave":
+                return {
+                    show: !showingCall,
+                    label: $_("videoCall.join"),
+                    icon: $activeVideoCall?.callType === "audio" ? ("phone" as const) : ("video" as const),
+                    onCall: () => activeVideoCall.setView("default"),
+                };
+            case "none":
+                return { show: false };
+        }
+    });
+
+    // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action
     function onMenu(id: string) {
         if (chat === undefined) return;
         runChatMenuItem(id, {
@@ -160,7 +232,11 @@
                 statusEveryone={chat.membership.atEveryoneMuted}
                 isFavourite={favourite}
                 showMenu={menuItems.length > 0}
-                showCall={false}
+                showCall={call.show}
+                callLabel={call.show ? call.label : undefined}
+                callIcon={call.show ? call.icon : undefined}
+                onCall={call.show ? call.onCall : undefined}
+                onVoiceCall={call.show && "onVoiceCall" in call ? call.onVoiceCall : undefined}
                 actions={screen.hasRightColumn && $selectedChatPinnedMessagesStore.size > 0
                     ? [
                           {
@@ -185,8 +261,17 @@
                     : undefined}
                 panelOpen={screen.rightColumn.open}
             />
-            {@render list()}
-            {@render composer()}
+            {#if showingCall}
+                <CallView
+                    session={screen.call}
+                    {title}
+                    started={chat.videoCallInProgress === undefined
+                        ? undefined
+                        : Number(chat.videoCallInProgress.started)} />
+            {:else}
+                {@render list()}
+                {@render composer()}
+            {/if}
         {/snippet}
     </MessageArea>
 {/if}

@@ -1204,6 +1204,16 @@ design export needs. Each entry says where it came up.
   never uses the frame, broadcasts included; the legacy trees keep the frame. `CallSession` takes
   the mode; in call-object mode its `media` (`logic/video/callMedia`) follows the participants and
   plays every remote participant's audio, and `callPeople` maps them to `CallPanel`'s people.
+  - **Built (7b, 3a):** the header's call buttons follow `callOffer` (audio or video in a private
+    chat, a broadcast in a public one, join the call going on, back to the user's own call once
+    minimised); `CallView` shows `CallPanel` under the chat header in place of the messages while
+    the user is in that chat's call; `CallHost` (AppScreen) takes the app's call events on one
+    session and asks before switching calls (`ConfirmDialog`: the design has none). The chat list
+    says voice or video. By hand in the library (EXPORT-LOG 2026-11-17): `ConversationHeader`
+    shows the voice button only with `onVoiceCall`, shows calls in channels, and takes `callIcon`.
+  - **Not yet:** the incoming call's ring (Accept / Decline), the host-ended and denied messages,
+    and a broadcast's ask to speak and the host's approve or reject (7b, 3b); `MiniCall` (7c). A
+    minimised call has no floating window until then: the header's button goes back to it.
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
   tree's mobile-width call menu (`MenuIcon`) mounts its items in their own root and read `chat`
   after the call ended (Rollbar #32132).

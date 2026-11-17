@@ -51,7 +51,7 @@ export type ChatListRow = {
     muted: boolean;
     pinned: boolean;
     section: "Pinned" | "Chats";
-    liveCall: "" | "video";
+    liveCall: "" | "voice" | "video";
     selected: boolean;
     /**
      * A DM whose other user's account is suspended (by a platform moderator): ChatRow dims the
@@ -222,6 +222,12 @@ export function chatAvatarUrl(
         : ownGroupAvatarUrl(chat, groups);
 }
 
+/** A call going on in the chat: voice for an audio call, video for the others. */
+function liveCall(chat: ChatSummary): ChatListRow["liveCall"] {
+    const call = chat.videoCallInProgress;
+    return call === undefined ? "" : call.callType === "audio" ? "voice" : "video";
+}
+
 export function chatTitle(chat: ChatSummary, ctx: Pick<RowContext, "userName">): string {
     return chat.kind === "direct_chat" ? ctx.userName(chat.them.userId) : chat.name;
 }
@@ -282,7 +288,7 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
         muted: chat.membership.notificationsMuted,
         pinned,
         section: pinned ? "Pinned" : "Chats",
-        liveCall: chat.videoCallInProgress !== undefined ? "video" : "",
+        liveCall: liveCall(chat),
         selected: ctx.selected === id,
         suspended: chat.kind === "direct_chat" && ctx.userSuspended(chat.them.userId),
     };

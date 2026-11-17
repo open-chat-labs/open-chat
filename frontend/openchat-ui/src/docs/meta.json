@@ -9114,6 +9114,17 @@
         "doc": ""
       },
       {
+        "name": "callIcon",
+        "type": "'video' | 'phone'",
+        "default": "video",
+        "editor": "select",
+        "options": ["video", "phone"],
+        "section": null,
+        "required": false,
+        "componentDefault": "'video'",
+        "doc": "The call button's icon: a video call's camera, or a phone for joining a voice call."
+      },
+      {
         "name": "onVoiceCall",
         "type": "() => void",
         "default": null,
@@ -9122,7 +9133,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Shows the voice call button beside the call button."
       },
       {
         "name": "actions",

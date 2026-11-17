@@ -376,7 +376,7 @@
 
 <Section {...sec(features, 'pattern-header')}>
   <Frame cols="minmax(0, 1fr)">
-    <div class="strip"><ConversationHeader title="Danielle Moreau" kind="user" color="violet" online presence="ui.conversationHeader.online" statusFav isFavourite /></div>
+    <div class="strip"><ConversationHeader title="Danielle Moreau" kind="user" color="violet" online presence="ui.conversationHeader.online" statusFav isFavourite onVoiceCall={() => {}} /></div>
     <div class="strip">
       <ConversationHeader title="The Awesome Group" kind="group" color="teal" visibility="Public" memberCount={248} statusMuted="8h" statusEveryone actions={['search', 'threads'] as ComponentProps<typeof ConversationHeader>['actions']} />
     </div>

@@ -20,6 +20,7 @@
     import {
         CallSession,
         dailyTheme,
+        startCallToast,
         type CallFrameOptions,
         type StartCallOutcome,
     } from "@src/logic/video/callSession.svelte";
@@ -65,20 +66,9 @@
     );
 
     function report(outcome: StartCallOutcome | undefined) {
-        switch (outcome?.kind) {
-            case undefined:
-            case "joined":
-            case "confirm_switch":
-                break;
-            case "no_meeting":
-                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
-                break;
-            case "failed":
-                toastStore.showFailureToast(outcome.message);
-                break;
-            default:
-                outcome satisfies never;
-        }
+        const toast = startCallToast(outcome);
+        if (toast?.kind === "success") toastStore.showSuccessToast(toast.message);
+        if (toast?.kind === "failure") toastStore.showFailureToast(toast.message);
     }
 
     export async function startOrJoinVideoCall(
