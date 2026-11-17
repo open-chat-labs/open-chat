@@ -1,6 +1,7 @@
 <!-- Live call surface. Inline (in the conversation column, under the header) or full screen (`full`).
      Layout rule: with 1–2 other people your own video floats as a draggable window that snaps to a corner;
-     with 3+ others everyone, you included, gets an equal tile. Sharing your screen puts it on stage with people (their
+     with 3+ others everyone, you included, gets an equal tile. A voice call (`media="voice"`) is always the equal tiles:
+     there's no camera to float. Sharing your screen puts it on stage with people (their
      camera feeds, yours included) in a strip.
      Full screen hides the top bar and controls after 3s without input (pointer, keys, focus); they stay while focused.
      The host owns every media state: mute (`muted` + onToggleMute), camera (`camera` + onToggleCamera) and screen sharing
@@ -192,7 +193,9 @@
   }
 
   const others = $derived(people.map((o, i) => ({ bg: BGS[i % BGS.length], ...o })));
-  const pipMode = $derived(!sharing && others.length <= 2);
+  // your own camera floats over 1:1 and 3-person video calls; a voice call has no camera to show,
+  // so you're an avatar in the grid beside everyone else
+  const pipMode = $derived(media === 'video' && !sharing && others.length <= 2);
 
   type Tile = { key: string; name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean; stream: MediaStream | null };
   const selfTile = $derived<Tile>({
@@ -239,7 +242,7 @@
       ? 'minmax(0,1fr)'
       : pipMode
         ? 'repeat(2,minmax(0,1fr))'
-        : `repeat(${tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4},minmax(0,1fr))`,
+        : `repeat(${tiles.length <= 1 ? 1 : tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4},minmax(0,1fr))`,
   );
 
   const panelShown = $derived(!!onTogglePanel && panelOpen);
