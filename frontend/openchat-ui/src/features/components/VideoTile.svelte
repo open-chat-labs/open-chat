@@ -9,6 +9,8 @@
     initial?: string;
     /** Avatar background. */
     grad?: string;
+    /** The person's picture, over the avatar; the letter shows without it and if it fails to load. */
+    avatarUrl?: string;
     /** Placeholder background when there is no stream. */
     feed?: string;
     /** Live video for this participant. */
@@ -29,6 +31,7 @@
     nameLabel,
     initial,
     grad = 'linear-gradient(140deg,#B48CFF,#6A5CFF)',
+    avatarUrl,
     feed = 'linear-gradient(165deg,#4a3b45,#1d1a22)',
     stream = null,
     mirror = false,
@@ -39,6 +42,8 @@
     radius = 10,
   }: Props = $props();
   const t = useT();
+  // the picture that failed to load: a new one is tried
+  let failed = $state<string>();
 
   // a MediaStream can't be set as an attribute; bind it as srcObject
   function video(node: HTMLVideoElement, s: MediaStream | null) {
@@ -60,7 +65,9 @@
     {#if stream}
       <video class="video" class:mirror use:video={stream} autoplay playsinline muted></video>
     {:else}
-      <span class="avatar" class:big style:background={grad}>{initial ?? nameLabel.slice(0, 1).toUpperCase()}</span>
+      <span class="avatar" class:big style:background={grad}
+        >{#if avatarUrl && avatarUrl !== failed}<img class="avatar-image" src={avatarUrl} alt="" onerror={() => (failed = avatarUrl)} />{:else}{initial ?? nameLabel.slice(0, 1).toUpperCase()}{/if}</span
+      >
     {/if}
   </div>
   <span class="name"
@@ -125,6 +132,13 @@
     justify-content: center;
     font: 700 22px/1 var(--font-sans);
     color: #0e0e12;
+    overflow: hidden;
+  }
+
+  .avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .avatar.big {

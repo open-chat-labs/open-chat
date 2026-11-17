@@ -6,8 +6,9 @@ import type { DailyParticipant, DailyTrackState } from "@daily-co/daily-js";
 
 export type CallParticipants = Record<string, DailyParticipant>;
 
-/** How a participant is drawn when their video is off: from the app's users. */
-export type CallFace = { name: string; initial: string; grad: string };
+/** How a participant is drawn when their video is off: from the app's users, with their own
+ * picture where they have one. */
+export type CallFace = { name: string; initial: string; grad: string; avatarUrl?: string };
 
 /** A person in the call as `CallPanel` takes them (its `CallPerson`). */
 export type CallPersonView = CallFace & {
@@ -20,6 +21,7 @@ export type CallPersonView = CallFace & {
 export type CallSelfView = {
     initial: string;
     grad: string;
+    avatarUrl?: string;
     stream: MediaStream | null;
     muted: boolean;
     camera: boolean;
@@ -72,6 +74,7 @@ export function callPeople(
             self = {
                 initial: f.initial,
                 grad: f.grad,
+                avatarUrl: f.avatarUrl,
                 stream: stream(p.tracks.video),
                 muted: p.tracks.audio.state === "off",
                 camera: p.tracks.video.state !== "off",
@@ -114,4 +117,24 @@ export function deviceLists(
             .filter((d) => d.kind === kind && d.deviceId !== "")
             .map((d) => ({ id: d.deviceId, label: d.label || d.deviceId.slice(0, 8) }));
     return { mics: of("audioinput"), speakers: of("audiooutput"), cameras: of("videoinput") };
+}
+
+/**
+ * What the user can send in the call: their microphone and camera, or, a broadcast's viewer
+ * without presence, a request to speak (`asked` once made, until the host answers). Presence is
+ * the call's own local participant's. Other calls always send, and so does a broadcast while
+ * joining, before Daily has said.
+ */
+export type CallSend = "send" | "ask" | "asked";
+
+export function callSend(
+    active: { callType: string; status: "joining" | "joined" } | undefined,
+    local: Pick<DailyParticipant, "permissions"> | undefined,
+    asked: boolean,
+): CallSend {
+    if (active?.callType !== "broadcast" || active.status === "joining" || local === undefined) {
+        return "send";
+    }
+    if (local.permissions.hasPresence) return "send";
+    return asked ? "asked" : "ask";
 }

@@ -17,6 +17,8 @@ const frame = vi.hoisted(() => ({
     leave: vi.fn(),
     created: vi.fn(),
     callObject: vi.fn(),
+    // the session's handlers for the frame's events
+    handlers: new Map<string, (ev: unknown) => void>(),
 }));
 
 // The iOS shell, for the calls that run natively
@@ -53,7 +55,7 @@ vi.mock("@daily-co/daily-js", () => ({
 }));
 
 const makeFrame = vi.hoisted(() => () => ({
-    on: () => {},
+    on: (event: string, handler: (ev: unknown) => void) => frame.handlers.set(event, handler),
     join: async () => {},
     leave: frame.leave,
     destroy: async () => {},
@@ -273,6 +275,43 @@ describe("a call", () => {
         session.hangup();
         expect(client.endVideoCall).toHaveBeenCalledWith(group, 7n);
         expect(frame.leave).toHaveBeenCalledTimes(3);
+    });
+
+    // #10125 invariant 4: the host leaving a broadcast ends it here too, and the user is told why
+    test("invariant 4: the host leaving a broadcast ends the call here and says so", async () => {
+        await session.startOrJoin(container, {
+            chatId: group,
+            callType: "broadcast",
+            join: false,
+        });
+
+        frame.handlers.get("participant-left")?.({ participant: { owner: true, local: false } });
+
+        expect(frame.leave).toHaveBeenCalled();
+        expect(session.hostEnded).toBe(true);
+    });
+
+    // A request to speak belongs to its call: one left unanswered must not carry into the next call,
+    // where Ask to speak would show as already asked and do nothing
+    test("each call starts with no request to speak outstanding", async () => {
+        await session.startOrJoin(container, {
+            chatId: group,
+            callType: "broadcast",
+            join: true,
+        });
+        session.askToSpeak();
+        expect(session.askedToSpeak).toBe(true);
+
+        frame.handlers.get("left-meeting")?.(undefined);
+        expect(session.askedToSpeak).toBe(false);
+
+        session.askToSpeak();
+        await session.startOrJoin(container, {
+            chatId: group,
+            callType: "broadcast",
+            join: true,
+        });
+        expect(session.askedToSpeak).toBe(false);
     });
 
     // #10124: the legacy trees keep Daily's prebuilt frame; only the new UI makes calls with the

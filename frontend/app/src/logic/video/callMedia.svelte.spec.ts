@@ -2,7 +2,7 @@ import type { DailyCall, DailyParticipant, DailyTrackState } from "@daily-co/dai
 import { flushSync } from "svelte";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CallMedia } from "./callMedia.svelte";
-import { callPeople, remoteAudioTracks, type CallParticipants } from "./callPeople";
+import { callPeople, callSend, remoteAudioTracks, type CallParticipants } from "./callPeople";
 import { RemoteAudio } from "./remoteAudio";
 
 const track = (id: string) => ({ id, kind: "audio" }) as unknown as MediaStreamTrack;
@@ -36,6 +36,7 @@ const face = (userId: string, userName: string) => ({
     name: userName,
     initial: userName.slice(0, 1),
     grad: userId,
+    avatarUrl: `avatar/${userId}`,
 });
 
 // A Daily call object that only does what CallMedia uses of it. Like Daily's, `participants()`
@@ -184,6 +185,7 @@ describe("a call made with Daily's call object", () => {
         expect((second?.srcObject as unknown as { id: string }).id).toEqual("stream-2");
     });
 
+    // Everyone is drawn with their own picture where they have one, the user too
     test("the call view shows the others' video, mute and speaking, and the user's own", () => {
         const { people, self } = callPeople(
             {
@@ -201,6 +203,7 @@ describe("a call made with Daily's call object", () => {
         expect(people).toEqual([
             expect.objectContaining({
                 id: "a",
+                avatarUrl: "avatar/user-a",
                 muted: false,
                 speaking: true,
                 stream: fakeStream(track("a-cam")),
@@ -215,6 +218,7 @@ describe("a call made with Daily's call object", () => {
         ]);
         expect(self).toEqual(
             expect.objectContaining({
+                avatarUrl: "avatar/user-me",
                 camera: true,
                 muted: true,
                 sharing: false,
@@ -269,5 +273,27 @@ describe("a call made with Daily's call object", () => {
         expect(setInputDevicesAsync).toHaveBeenCalledWith({ audioDeviceId: "usb-mic" });
         expect(setInputDevicesAsync).toHaveBeenCalledWith({ videoDeviceId: "usb-cam" });
         media.detach();
+    });
+});
+
+describe("a broadcast's controls", () => {
+    const local = (hasPresence: boolean) =>
+        ({ local: true, permissions: { hasPresence } }) as unknown as DailyParticipant;
+    const broadcast = { callType: "broadcast", status: "joined" } as const;
+
+    // A viewer without presence can't send their microphone or camera: Daily refuses it. They're
+    // offered a request to speak instead, and the usual controls once the host lets them. Presence
+    // is the call's own local participant's, read the moment the call is joined.
+    test("a viewer without presence asks to speak, and sends once allowed", () => {
+        expect(callSend(broadcast, local(false), false)).toBe("ask");
+        expect(callSend(broadcast, local(false), true)).toBe("asked");
+        expect(callSend(broadcast, local(true), false)).toBe("send");
+        // other calls always send, whatever Daily has reported so far
+        expect(callSend({ callType: "default", status: "joined" }, local(false), false)).toBe(
+            "send",
+        );
+        // while joining, before Daily says, the usual controls show
+        expect(callSend({ ...broadcast, status: "joining" }, local(false), false)).toBe("send");
+        expect(callSend(broadcast, undefined, false)).toBe("send");
     });
 });

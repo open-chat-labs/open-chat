@@ -304,6 +304,8 @@ export class CallSession {
     async #enterRoom(container: HTMLElement, chatId: ChatIdentifier, room: VideoCallRoom) {
         const { callType, messageId } = room;
         const options = this.#frameOptions(chatId);
+        // a request to speak belongs to its call
+        this.askedToSpeak = false;
 
         if (this.#call !== undefined) {
             this.media.detach();
@@ -353,6 +355,7 @@ export class CallSession {
         // this only fires when *I* leave the meeting
         call.on("left-meeting", () => {
             this.#ringOut?.cancel();
+            this.askedToSpeak = false;
             // at this point I have already left the meeting and so participantCount will always report 0
             // so we can't use it.
             this.media.detach();
@@ -365,6 +368,7 @@ export class CallSession {
         call.on("error", (ev) => {
             console.warn("Video call ended with an error", ev?.errorMsg);
             this.#ringOut?.cancel();
+            this.askedToSpeak = false;
             this.media.detach();
             activeVideoCall.endCall();
         });

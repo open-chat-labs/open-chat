@@ -1,6 +1,7 @@
 <!-- Live call surface. Inline (in the conversation column, under the header) or full screen (`full`).
      Layout rule: with 1–2 other people your own video floats as a draggable window that snaps to a corner;
-     with 3+ others everyone, you included, gets an equal tile. Sharing your screen puts it on stage with people (their
+     with 3+ others everyone, you included, gets an equal tile. A voice call (`media="voice"`) is always the equal tiles:
+     there's no camera to float. Sharing your screen puts it on stage with people (their
      camera feeds, yours included) in a strip.
      Full screen hides the top bar and controls after 3s without input (pointer, keys, focus); they stay while focused.
      The host owns every media state: mute (`muted` + onToggleMute), camera (`camera` + onToggleCamera) and screen sharing
@@ -13,6 +14,8 @@
     name: string;
     initial: string;
     grad: string;
+    /** Their picture, over the avatar; the letter shows without it. */
+    avatarUrl?: string;
     muted?: boolean;
     /** Highlighted as the active speaker (from the host's audio levels). */
     speaking?: boolean;
@@ -41,11 +44,21 @@
   }
 
   export type CallDeviceKind = 'mic' | 'speaker' | 'camera';
+
+  /** Someone in a broadcast asking the host to let them speak. */
+  export interface CallSpeakRequest {
+    id: string;
+    name: string;
+    initial: string;
+    grad: string;
+    avatarUrl?: string;
+  }
 </script>
 
 <script lang="ts">
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { onMount, tick, untrack } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import VideoTile from './VideoTile.svelte';
@@ -56,7 +69,7 @@
     /** The other participants. */
     people: CallPerson[];
     /** You: avatar letter / background and your camera stream. */
-    self?: { initial?: string; grad?: string; stream?: MediaStream | null };
+    self?: { initial?: string; grad?: string; avatarUrl?: string; stream?: MediaStream | null };
     media?: 'video' | 'voice';
     full?: boolean;
     muted?: boolean;
@@ -90,6 +103,16 @@
      */
     devices?: CallDevices;
     onSelectDevice?: (kind: CallDeviceKind, id: string) => void;
+    /**
+     * A broadcast's viewer, who can't send their microphone or camera: `'ask'` shows Ask to speak
+     * in place of Mute, Camera and Share, `'asked'` the same pressed while the host decides.
+     */
+    speak?: 'ask' | 'asked';
+    onAskToSpeak?: () => void;
+    /** The host's queue of requests to speak, as cards under the top bar. */
+    requests?: CallSpeakRequest[];
+    onApprove?: (id: string) => void;
+    onReject?: (id: string) => void;
   }
 
   let {
@@ -115,6 +138,11 @@
     onLeave,
     devices,
     onSelectDevice,
+    speak,
+    onAskToSpeak,
+    requests = [],
+    onApprove,
+    onReject,
   }: Props = $props();
   const t = useT();
 
@@ -169,14 +197,17 @@
   }
 
   const others = $derived(people.map((o, i) => ({ bg: BGS[i % BGS.length], ...o })));
-  const pipMode = $derived(!sharing && others.length <= 2);
+  // your own camera floats over 1:1 and 3-person video calls; a voice call has no camera to show,
+  // so you're an avatar in the grid beside everyone else
+  const pipMode = $derived(media === 'video' && !sharing && others.length <= 2);
 
-  type Tile = { key: string; name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean; stream: MediaStream | null };
+  type Tile = { key: string; name: string; initial: string; grad: string; avatarUrl?: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean; stream: MediaStream | null };
   const selfTile = $derived<Tile>({
     key: 'self',
     name: t('ui.callPanel.you'),
     initial: self?.initial ?? t('ui.callPanel.you').slice(0, 1),
     grad: self?.grad ?? ME_GRAD,
+    avatarUrl: self?.avatarUrl,
     bg: cam ? ME_BG : '#16161c',
     ratio: 4 / 3,
     muted,
@@ -189,6 +220,7 @@
     name: o.name,
     initial: o.initial,
     grad: o.grad,
+    avatarUrl: o.avatarUrl,
     bg: o.bg,
     ratio: o.ratio || 4 / 3,
     muted: !!o.muted,
@@ -216,7 +248,7 @@
       ? 'minmax(0,1fr)'
       : pipMode
         ? 'repeat(2,minmax(0,1fr))'
-        : `repeat(${tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4},minmax(0,1fr))`,
+        : `repeat(${tiles.length <= 1 ? 1 : tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4},minmax(0,1fr))`,
   );
 
   const panelShown = $derived(!!onTogglePanel && panelOpen);
@@ -299,11 +331,18 @@
         onSelectDevice?.(kind, d.id);
       },
     }));
+  // pictures that failed to load: their letter shows instead
+  const failedFaces = new SvelteSet<string>();
   function closeMenuOutside(e: PointerEvent) {
     if (openMenu !== undefined && !(e.target as Element | null)?.closest?.('[data-device-menu]')) openMenu = undefined;
   }
   const controls = $derived(
-    [
+    speak !== undefined
+      ? [
+          { label: speak === 'asked' ? 'ui.callPanel.askedToSpeak' : 'ui.callPanel.askToSpeak', icon: 'mic', variant: speak === 'asked' ? 'on' : 'default', pressed: speak === 'asked', press: () => { if (speak === 'ask') onAskToSpeak?.(); } },
+          { label: 'ui.callPanel.leave', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
+        ] as Control[]
+      : [
       { label: muted ? 'ui.callPanel.unmute' : 'ui.callPanel.mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.(), menu: audioMenu ? 'audio' : undefined },
       onToggleCamera && { label: cam ? 'ui.callPanel.cameraOff' : 'ui.callPanel.cameraOn', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => flip('cam'), menu: videoMenu ? 'video' : undefined },
       onToggleShare && { label: sharing ? 'ui.callPanel.stopSharing' : 'ui.callPanel.shareScreen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => flip('share') },
@@ -311,6 +350,11 @@
     ].filter(Boolean) as Control[],
   );
 </script>
+
+<!-- a small avatar's face: the person's picture, or their letter without one or if it fails -->
+{#snippet face(url: string | undefined, initial: string)}
+  {#if url && !failedFaces.has(url)}<img class="face-image" src={url} alt="" onerror={() => failedFaces.add(url)} />{:else}{initial}{/if}
+{/snippet}
 
 <svelte:window
   onpointerdown={closeMenuOutside}
@@ -341,7 +385,7 @@
     {/if}
     {#each tiles as tile (tile.key)}
       <div class="cell">
-        <VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} feed={tile.bg} stream={tile.stream} mirror={tile.key === 'self'} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} />
+        <VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} avatarUrl={tile.avatarUrl} feed={tile.bg} stream={tile.stream} mirror={tile.key === 'self'} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} />
       </div>
     {/each}
   </div>
@@ -353,7 +397,7 @@
           {#if tile.stream}
             <video class="strip-video" class:mirror={tile.key === 'self'} use:feed={tile.stream} autoplay playsinline muted></video>
           {:else}
-            <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{tile.initial}</span></div>
+            <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{@render face(tile.avatarUrl, tile.initial)}</span></div>
           {/if}
           <span class="tag"><span class="tag-mic" class:muted={tile.muted} style:mask="var(--icon-{tile.muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{tile.name}</span>
         </div>
@@ -381,7 +425,7 @@
       {#if selfTile.stream}
         <video class="pip-video" use:feed={selfTile.stream} autoplay playsinline muted></video>
       {:else}
-        <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{selfTile.initial}</span></div>
+        <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{@render face(selfTile.avatarUrl, selfTile.initial)}</span></div>
       {/if}
       <span class="tag"><span class="tag-mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{t('ui.callPanel.you')}</span>
     </div>
@@ -419,6 +463,19 @@
       ><span class="top-icon" style:mask="var(--icon-{full ? 'minimize' : 'maximize'}) center/contain no-repeat"></span></span
     >
   </div>
+
+  {#if requests.length > 0}
+    <div class="requests" role="list" aria-label={t('ui.callPanel.requests')}>
+      {#each requests as r (r.id)}
+        <div class="request" role="listitem">
+          <span class="request-avatar" style:background={r.grad}>{@render face(r.avatarUrl, r.initial)}</span>
+          <span class="request-text">{t('ui.callPanel.wantsToSpeak', { name: r.name })}</span>
+          <RoundIconButton icon="close" label="ui.callPanel.reject" variant="overlay" size="sm" onPress={() => onReject?.(r.id)} />
+          <RoundIconButton icon="check" label="ui.callPanel.approve" variant="on" size="sm" onPress={() => onApprove?.(r.id)} />
+        </div>
+      {/each}
+    </div>
+  {/if}
 
   <div class="bottom chrome">
     {#if flipFailed}<span class="flip-error" role="alert">{t('ui.callPanel.toggleFailed')}</span>{/if}
@@ -572,6 +629,13 @@
     justify-content: center;
     font: 700 14px/1 var(--font-sans);
     color: #0e0e12;
+    overflow: hidden;
+  }
+
+  .face-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .pip-avatar {
@@ -761,6 +825,49 @@
     background: rgba(14, 14, 18, 0.8);
     font: 500 13px/1.3 var(--font-sans);
     color: var(--status-danger);
+  }
+
+  .requests {
+    position: absolute;
+    top: 62px;
+    right: 12px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(320px, calc(100% - 24px));
+  }
+
+  .full .requests {
+    top: 70px;
+    right: 20px;
+  }
+
+  .request {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px 8px 10px;
+    border-radius: 14px;
+    background: rgba(14, 14, 18, 0.85);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .request-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font: 600 13px/1 var(--font-sans);
+    overflow: hidden;
+  }
+
+  .request-text {
+    flex: 1;
+    min-width: 0;
+    font: 500 13px/1.3 var(--font-sans);
   }
 
   .device-menu {
