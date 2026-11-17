@@ -1199,8 +1199,11 @@ design export needs. Each entry says where it came up.
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
   for it), listed over the text box as a listbox the text box drives (`aria-activedescendant`):
   ↑ ↓, Enter or Tab, Esc, a click; a pick puts "@handle " in place of the word.
-- **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
-  iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
+- **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s, which Daily's prebuilt frame doesn't
+  expose. Decided on #10124 (2026-11-17): the new UI makes every call with Daily's call object and
+  never uses the frame, broadcasts included; the legacy trees keep the frame. `CallSession` takes
+  the mode; in call-object mode its `media` (`logic/video/callMedia`) follows the participants and
+  plays every remote participant's audio, and `callPeople` maps them to `CallPanel`'s people.
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
   tree's mobile-width call menu (`MenuIcon`) mounts its items in their own root and read `chat`
   after the call ended (Rollbar #32132).

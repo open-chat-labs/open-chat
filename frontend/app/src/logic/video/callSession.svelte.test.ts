@@ -7,6 +7,7 @@ import {
 } from "@client";
 import { activeVideoCall, hasPresence } from "@stores/video";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { CallMedia } from "./callMedia.svelte";
 import { ANSWER_HANGUP_WAIT_MS, CallSession, type CallFrameOptions } from "./callSession.svelte";
 
 // The call's frame. `present` is how many are in the call.
@@ -14,6 +15,7 @@ const frame = vi.hoisted(() => ({
     present: 1,
     leave: vi.fn(),
     created: vi.fn(),
+    callObject: vi.fn(),
 }));
 
 // The iOS shell, for the calls that run natively
@@ -41,6 +43,10 @@ vi.mock("@daily-co/daily-js", () => ({
         createFrame: () => {
             frame.created();
             return makeFrame();
+        },
+        createCallObject: () => {
+            frame.callObject();
+            return { ...makeFrame(), off: () => {}, participants: () => ({}) };
         },
     },
 }));
@@ -73,7 +79,7 @@ let inProgress: Record<string, "default" | "broadcast" | undefined> = {};
 const client = {
     lookupChatSummary: vi.fn((chatId: ChatIdentifier) => {
         const callType = inProgress[chatId.kind];
-        return { videoCallInProgress: callType ? { callType } : undefined };
+        return { videoCallInProgress: callType ? { callType, messageId: 7n } : undefined };
     }),
     filterRightPanelHistory: vi.fn(),
     popRightPanelHistory: vi.fn(),
@@ -132,7 +138,11 @@ describe("a call", () => {
     test("an answer from the native ring during a call switches without asking", async () => {
         vi.useFakeTimers();
         try {
-            await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+            await session.startOrJoin(container, {
+                chatId: group,
+                callType: "default",
+                join: false,
+            });
 
             const answering = session.startOrJoin(container, {
                 chatId: direct,
@@ -164,7 +174,11 @@ describe("a call", () => {
         vi.useFakeTimers();
         const endCall = vi.spyOn(activeVideoCall, "endCall");
         try {
-            await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+            await session.startOrJoin(container, {
+                chatId: group,
+                callType: "default",
+                join: false,
+            });
             vi.mocked(client.startOrJoinVideoCall).mockClear();
 
             const answering = session.startOrJoin(container, {
@@ -260,6 +274,36 @@ describe("a call", () => {
         expect(frame.leave).toHaveBeenCalledTimes(3);
     });
 
+    // #10124: the legacy trees keep Daily's prebuilt frame; only the new UI makes calls with the
+    // call object, and it never creates the frame
+    test("the legacy trees make their calls in Daily's prebuilt frame", async () => {
+        await session.startOrJoin(container, { chatId: direct, callType: "default", join: false });
+
+        expect(frame.created).toHaveBeenCalledOnce();
+        expect(frame.callObject).not.toHaveBeenCalled();
+    });
+
+    test("the new UI makes its calls with Daily's call object, never the frame", async () => {
+        const media = { attach: vi.fn(), detach: vi.fn() };
+        const callObjectSession = new CallSession(
+            client,
+            () => options,
+            vi.fn(),
+            "call_object",
+            media as unknown as CallMedia,
+        );
+        await callObjectSession.startOrJoin(container, {
+            chatId: direct,
+            callType: "default",
+            join: false,
+        });
+
+        expect(frame.callObject).toHaveBeenCalledOnce();
+        expect(frame.created).not.toHaveBeenCalled();
+        // its media follow the call, so its remote audio plays
+        expect(media.attach).toHaveBeenCalledOnce();
+    });
+
     describe("on iOS", () => {
         const me = {
             sessionId: "me",
@@ -283,6 +327,21 @@ describe("a call", () => {
         afterEach(() => {
             shell.ios = false;
             shell.invoke.mockImplementation(async () => undefined);
+        });
+
+        // Every tree that joins a call from inside the app ends the shell's ring for it, so the
+        // phone doesn't keep ringing for a call the user has already joined
+        test("joining a call from the app ends the native ring for that call", async () => {
+            inProgress = { direct_chat: "default" };
+            await session.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: true,
+            });
+
+            expect(shell.invoke).toHaveBeenCalledWith("plugin:oc|call_ring_handled", {
+                messageId: "7",
+            });
         });
 
         test("invariant 19: a call runs natively and never creates the Daily frame", async () => {

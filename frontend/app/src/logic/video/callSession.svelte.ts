@@ -12,7 +12,7 @@ import {
     type VideoCallRoom,
     type VideoCallType,
 } from "@client";
-import { setCallRingback } from "@utils/native/call_bridge";
+import { notifyCallJoined, setCallRingback } from "@utils/native/call_bridge";
 import { createNativeCall } from "@utils/native/nativeCall";
 import { isIosTauriApp } from "@shared";
 import {
@@ -31,6 +31,7 @@ import {
     type RingOutHandle,
 } from "@utils/callRingOut";
 import type { Theme } from "@src/theme/types";
+import { CallMedia } from "./callMedia.svelte";
 
 // `answer`: the user answered on the native ring, so a call in progress is replaced without asking
 export type CallRequest = {
@@ -44,6 +45,10 @@ export type CallRequest = {
 export const ANSWER_HANGUP_WAIT_MS = 3_000;
 
 export type StartCallOutcome = VideoCallOutcome | { kind: "confirm_switch" };
+
+// How a call's media is shown: in Daily's prebuilt frame, which the legacy trees use, or by the
+// app from Daily's call object (`media`), which the new UI does: it never uses the frame (#10124)
+export type CallMode = "frame" | "call_object";
 
 // How the call's frame starts, read when the user enters the call
 export type CallFrameOptions = {
@@ -77,6 +82,7 @@ export class CallSession {
     #client: OpenChat;
     #frameOptions: (chatId: ChatIdentifier) => CallFrameOptions;
     #onNoAnswer: () => void;
+    #mode: CallMode;
     #call: DailyCall | undefined;
     // Ends a direct call this client started if nobody joins within the ring window
     #ringOut: RingOutHandle | undefined;
@@ -86,6 +92,8 @@ export class CallSession {
     hostEnded = $state(false);
     denied = $state(false);
     askedToSpeak = $state(false);
+    // The call's participants and remote audio, in call-object mode
+    readonly media: CallMedia;
 
     /**
      * `onNoAnswer` is called when a direct call this user started ends because nobody answered.
@@ -94,20 +102,27 @@ export class CallSession {
         client: OpenChat,
         frameOptions: (chatId: ChatIdentifier) => CallFrameOptions,
         onNoAnswer: () => void,
+        mode: CallMode = "frame",
+        media: CallMedia = new CallMedia(),
     ) {
         this.#client = client;
         this.#frameOptions = frameOptions;
         this.#onNoAnswer = onNoAnswer;
+        this.#mode = mode;
+        this.media = media;
     }
 
     // Starts a call in the chat, or joins the one there, in the given element
     async startOrJoin(container: HTMLElement, request: CallRequest): Promise<StartCallOutcome> {
         const { chatId, join } = request;
+        const inProgress = this.#client.lookupChatSummary(chatId)?.videoCallInProgress;
+        if (join && inProgress !== undefined) {
+            // Joining from inside the app: the shell's native ring for this call, if any, ends as
+            // answered here
+            notifyCallJoined(inProgress.messageId);
+        }
         const callType = join
-            ? joinedCallType(
-                  request.callType,
-                  this.#client.lookupChatSummary(chatId)?.videoCallInProgress?.callType,
-              )
+            ? joinedCallType(request.callType, inProgress?.callType)
             : request.callType;
 
         if (activeVideoCall.current() !== undefined) {
@@ -212,6 +227,16 @@ export class CallSession {
         // daily-js is only loaded when a call actually starts so it stays out of the initial bundle
         const { default: daily } = await import("@daily-co/daily-js");
 
+        if (this.#mode === "call_object") {
+            return daily.createCallObject({
+                url,
+                token: room.token,
+                userName: options.username,
+                startVideoOff: videoOff,
+                startAudioOff: !options.micOn,
+            });
+        }
+
         return daily.createFrame(container, {
             token: room.token,
             activeSpeakerMode: callType === "broadcast" ? true : options.speakerView,
@@ -234,12 +259,16 @@ export class CallSession {
         const options = this.#frameOptions(chatId);
 
         if (this.#call !== undefined) {
+            this.media.detach();
             await this.#call.destroy();
             this.#call = undefined;
         }
 
         const call = await this.#createCall(container, room, options);
         this.#call = call;
+        if (this.#mode === "call_object") {
+            this.media.attach(call);
+        }
 
         call.on("app-message", (ev: InterCallMessage | undefined) => {
             if (chatId.kind === "direct_chat") return;
@@ -279,6 +308,7 @@ export class CallSession {
             this.#ringOut?.cancel();
             // at this point I have already left the meeting and so participantCount will always report 0
             // so we can't use it.
+            this.media.detach();
             activeVideoCall.endCall();
         });
 
@@ -288,6 +318,7 @@ export class CallSession {
         call.on("error", (ev) => {
             console.warn("Video call ended with an error", ev?.errorMsg);
             this.#ringOut?.cancel();
+            this.media.detach();
             activeVideoCall.endCall();
         });
 

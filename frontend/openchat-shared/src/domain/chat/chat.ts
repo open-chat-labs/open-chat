@@ -256,6 +256,41 @@ export function joinedCallType(
     return inProgress ?? requested;
 }
 
+/**
+ * What a chat's call button offers: leave the call this user is in there, join the one running
+ * there as the type it was started as, a broadcast for a new call in a public chat, or a choice of
+ * audio or video for a new call in a private one. None when the user can't start a call there
+ * (`canStart`: the permission, not blocked) or, for a broadcast, on a platform that can't host one
+ * yet (`canStartBroadcast`: iOS, #10445).
+ */
+export type CallOffer =
+    | { kind: "none" }
+    | { kind: "leave" }
+    | { kind: "join"; callType: VideoCallType }
+    | { kind: "broadcast" }
+    | { kind: "choose" };
+
+export function callOffer({
+    canStart,
+    isPublic,
+    inProgress,
+    inCall,
+    canStartBroadcast,
+}: {
+    canStart: boolean;
+    isPublic: boolean;
+    inProgress?: VideoCallType;
+    inCall: boolean;
+    canStartBroadcast: boolean;
+}): CallOffer {
+    if (inProgress !== undefined) {
+        return inCall ? { kind: "leave" } : { kind: "join", callType: inProgress };
+    }
+    if (!canStart) return { kind: "none" };
+    if (isPublic) return canStartBroadcast ? { kind: "broadcast" } : { kind: "none" };
+    return { kind: "choose" };
+}
+
 // An audio call is joined with the camera off whatever the user's camera setting says
 export function startVideoOff(callType: VideoCallType, cameraOn: boolean): boolean {
     return callType === "audio" || !cameraOn;

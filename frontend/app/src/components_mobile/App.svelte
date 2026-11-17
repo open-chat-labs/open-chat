@@ -15,7 +15,6 @@
     import "@utils/markdown";
     import { followWindowInsets } from "@utils/native/notification_channels";
     import { followThemeInSystemBars } from "@utils/native/systemBarsStyle";
-    import { notifyCallJoined } from "@utils/native/call_bridge";
     import {
         clearChatShortcutsOnLogout,
         setupNativeApp,
@@ -187,13 +186,6 @@
         join: boolean;
         answer?: boolean;
     }) {
-        if (payload.join) {
-            // Joining from inside the app: the shell's native ring for this call, if any,
-            // ends as answered here.
-            const messageId = client.lookupChatSummary(payload.chatId)?.videoCallInProgress
-                ?.messageId;
-            if (messageId !== undefined) notifyCallJoined(messageId);
-        }
         videoCallElement?.startOrJoinVideoCall(
             payload.chatId,
             payload.callType,

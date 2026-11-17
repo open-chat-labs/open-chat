@@ -4,7 +4,7 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "@shared_components/Typing.svelte";
     import ActiveCallActions from "./ActiveCallActions.svelte";
-    import type { VideoCallChat } from "@shared_components/home/video/callChat";
+    import type { VideoCallChat } from "@src/logic/video/callChat";
 
     interface Props {
         askedToSpeak: boolean;

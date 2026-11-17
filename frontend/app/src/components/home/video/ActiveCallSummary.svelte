@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { videoCallChat, type VideoCallChat } from "@src/logic/video/callChat";
     import {
         allUsersStore,
         AvatarSize,
@@ -8,7 +9,6 @@
         publish,
         routeForChatIdentifier,
         selectedChatIdStore,
-        selectedCommunitySummaryStore,
         type ChatIdentifier,
     } from "@client";
     import { navigate } from "@utils/navigation";
@@ -61,64 +61,24 @@
         publish("askToSpeak");
     }
 
-    function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
-        if (chatId) {
-            const chat = client.lookupChatSummary(chatId);
-            if (chat) {
-                switch (chat.kind) {
-                    case "direct_chat": {
-                        const them = $allUsersStore.get(chat.them.userId);
-                        return {
-                            name: client.displayName(them),
-                            avatarUrl: client.userAvatarUrl(them),
-                            userId: chat.them,
-                        };
-                    }
-                    case "group_chat":
-                        return {
-                            name: chat.name,
-                            avatarUrl: client.groupAvatarUrl(chat),
-                            userId: undefined,
-                        };
-                    case "channel":
-                        return {
-                            name: `${
-                                $communitiesStore.get({
-                                    kind: "community",
-                                    communityId: chat.id.communityId,
-                                })?.name
-                            } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
-                            userId: undefined,
-                        };
-                }
-            }
-        }
+    function normaliseChatSummary(chatId: ChatIdentifier | undefined): VideoCallChat | undefined {
+        const chat = chatId && client.lookupChatSummary(chatId);
+        return chat ? videoCallChat(client, chat, $allUsersStore, $communitiesStore) : undefined;
     }
 
     function toggleShare(e: Event) {
         e.stopPropagation();
-        if ($activeVideoCall?.call) {
-            if ($sharing) {
-                $activeVideoCall.call.stopScreenShare();
-            } else {
-                $activeVideoCall.call.startScreenShare();
-            }
-        }
+        activeVideoCall.toggleSharing();
     }
 
     function toggleMic(e: Event) {
         e.stopPropagation();
-        if ($activeVideoCall?.call) {
-            $activeVideoCall.call.setLocalAudio(!$activeVideoCall.call.localAudio());
-        }
+        activeVideoCall.toggleMicrophone();
     }
 
     function toggleCamera(e: Event) {
         e.stopPropagation();
-        if ($activeVideoCall?.call) {
-            $activeVideoCall.call.setLocalVideo(!$activeVideoCall.call.localVideo());
-        }
+        activeVideoCall.toggleCamera();
     }
 
     function hangup(e: Event) {

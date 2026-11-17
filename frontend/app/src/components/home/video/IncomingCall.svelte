@@ -1,10 +1,10 @@
 <script lang="ts">
+    import { videoCallChat } from "@src/logic/video/callChat";
     import {
         allUsersStore,
         AvatarSize,
         communitiesStore,
         iconSize,
-        selectedCommunitySummaryStore,
         type ChatIdentifier,
         type OpenChat,
         type VideoCallType,
@@ -40,42 +40,17 @@
     const isOnAnotherCall = $derived($activeVideoCall !== undefined);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
-        if (call) {
-            const chat = client.lookupChatSummary(call.chatId);
-            const initiator = $allUsersStore.get(call.userId);
-            if (chat && initiator) {
-                switch (chat.kind) {
-                    case "direct_chat": {
-                        const them = $allUsersStore.get(chat.them.userId);
-                        return {
-                            chatId: chat.id,
-                            name: client.displayName(them),
-                            avatarUrl: client.userAvatarUrl(them),
-                            initiator: initiator.username,
-                        };
-                    }
-                    case "group_chat":
-                        return {
-                            chatId: chat.id,
-                            name: chat.name,
-                            avatarUrl: client.groupAvatarUrl(chat),
-                            initiator: initiator.username,
-                        };
-                    case "channel":
-                        return {
-                            chatId: chat.id,
-                            name: `${
-                                $communitiesStore.get({
-                                    kind: "community",
-                                    communityId: chat.id.communityId,
-                                })?.name
-                            } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
-                            initiator: initiator.username,
-                        };
-                }
-            }
-        }
+        if (call === undefined) return undefined;
+        const chat = client.lookupChatSummary(call.chatId);
+        const initiator = $allUsersStore.get(call.userId);
+        if (chat === undefined || initiator === undefined) return undefined;
+        const { chatId, name, avatarUrl } = videoCallChat(
+            client,
+            chat,
+            $allUsersStore,
+            $communitiesStore,
+        );
+        return { chatId, name, avatarUrl, initiator: initiator.username };
     }
 
     function join() {
