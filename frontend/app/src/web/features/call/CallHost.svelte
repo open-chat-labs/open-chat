@@ -67,11 +67,12 @@
                           : Number(chat.videoCallInProgress.started),
               };
     });
-    let fullElement = $state<HTMLDivElement>();
+    // bind:this sets null, not undefined, when the overlay goes
+    let fullElement = $state<HTMLDivElement | null>(null);
 
     $effect(() => {
         const element = fullElement;
-        if (element === undefined) return;
+        if (element === null) return;
         element.requestFullscreen?.().catch(() => undefined);
         const left = () => {
             if (document.fullscreenElement === null && full) activeVideoCall.setView("default");
