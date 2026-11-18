@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {חבר אחד} other {# חברים}}",
             "videoCall": "שיחת וידאו",
             "voiceCall": "שיחה קולית",
-            "callsLater": "שיחות עדיין לא זמינות בגרסה זו.",
             "menu": {
                 "search": "חיפוש בצ'אט",
                 "contactDetails": "פרטי איש קשר",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "התפקיד שלכם לא מאפשר להסיר חברים כאן.",
                 "blockedNotAllowed": "התפקיד שלכם לא מאפשר לבטל חסימות כאן."
             }
+        },
+        "call": {
+            "askToSpeak": "בקשת רשות דיבור",
+            "askedToSpeak": "נשלחה בקשה",
+            "backToCall": "חזרה לשיחה",
+            "calling": "מתקשר…",
+            "cameraOff": "כיבוי מצלמה",
+            "cameraOn": "הפעלת מצלמה",
+            "inCall": "{count} בשיחה",
+            "join": "הצטרפות",
+            "joining": "מצטרף…",
+            "leave": "יציאה",
+            "minimise": "מזעור שיחה",
+            "mute": "השתקה",
+            "returnTo": "חזרה לשיחה עם {name}",
+            "speaker": "רמקול",
+            "startBroadcast": "התחלת שידור",
+            "unmute": "ביטול השתקה",
+            "you": "את/ה",
+            "yourCamera": "המצלמה שלך. גרור כדי להזיז"
         }
     },
     "new": "חָדָשׁ",
@@ -3475,7 +3494,8 @@
         "speakerOn": "רמקול פועל",
         "speakerOff": "רמקול כבוי",
         "toggleShare": "החלף את שיתוף שולחן העבודה",
-        "viewers": "צופים ({count})"
+        "viewers": "צופים ({count})",
+        "unsupported": "שיחות לא עובדות בדפדפן הזה."
     },
     "viewer": "צוֹפֶה",
     "votingHotkey": "Hotkey להצבעה על הצעות",

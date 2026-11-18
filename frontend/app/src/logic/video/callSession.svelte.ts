@@ -156,6 +156,12 @@ export class CallSession {
     // Starts a call in the chat, or joins the one there, in the given element
     async startOrJoin(container: HTMLElement, request: CallRequest): Promise<StartCallOutcome> {
         const { chatId, join } = request;
+        if (!(await this.#canMakeCalls())) {
+            return {
+                kind: "failed",
+                message: { kind: "resource_key", key: "videoCall.unsupported", lowercase: false },
+            };
+        }
         const inProgress = this.#client.lookupChatSummary(chatId)?.videoCallInProgress;
         if (join && inProgress !== undefined) {
             // Joining from inside the app: the shell's native ring for this call, if any, ends as
@@ -189,6 +195,16 @@ export class CallSession {
             activeVideoCall.endCall();
         }
         return outcome;
+    }
+
+    // A call object runs in this page, so the page has to be one Daily can make calls in: a secure
+    // one with the camera and microphone APIs, in a browser Daily knows. Asked before the call is
+    // started, so a call that couldn't run never shows in the chat or rings anyone. The frame and
+    // iOS's native screen make their calls elsewhere.
+    async #canMakeCalls(): Promise<boolean> {
+        if (this.#mode !== "call_object" || isIosTauriApp()) return true;
+        const { default: daily } = await import("@daily-co/daily-js");
+        return daily.supportedBrowser().supported;
     }
 
     // Leaves the current call for the one the user asked for
@@ -315,7 +331,8 @@ export class CallSession {
 
         const call = await this.#createCall(container, room, options);
         this.#call = call;
-        if (this.#mode === "call_object") {
+        // the page plays and draws a call object's media; on iOS the native screen does
+        if (this.#mode === "call_object" && !isIosTauriApp()) {
             this.media.attach(call);
         }
 

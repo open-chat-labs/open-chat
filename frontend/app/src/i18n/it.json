@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {# membro} other {# membri}}",
             "videoCall": "Videochiamata",
             "voiceCall": "Chiamata vocale",
-            "callsLater": "Le chiamate non sono ancora disponibili in questa versione.",
             "menu": {
                 "search": "Cerca nella chat",
                 "contactDetails": "Dettagli contatto",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "Il tuo ruolo non ti permette di rimuovere membri qui.",
                 "blockedNotAllowed": "Il tuo ruolo non ti permette di sbloccare persone qui."
             }
+        },
+        "call": {
+            "askToSpeak": "Chiedi di parlare",
+            "askedToSpeak": "Richiesto",
+            "backToCall": "Torna alla chiamata",
+            "calling": "Chiamata in corso…",
+            "cameraOff": "Disattiva fotocamera",
+            "cameraOn": "Attiva fotocamera",
+            "inCall": "{count} in chiamata",
+            "join": "Partecipa",
+            "joining": "Connessione…",
+            "leave": "Esci",
+            "minimise": "Riduci chiamata",
+            "mute": "Silenzia",
+            "returnTo": "Torna alla chiamata con {name}",
+            "speaker": "Altoparlante",
+            "startBroadcast": "Avvia trasmissione",
+            "unmute": "Riattiva audio",
+            "you": "Tu",
+            "yourCamera": "La tua fotocamera. Trascina per spostare"
         }
     },
     "new": "nuovo",
@@ -3475,7 +3494,8 @@
         "speakerOn": "Altoparlante attivo",
         "speakerOff": "Altoparlante disattivato",
         "toggleShare": "Attiva/disattiva la condivisione del desktop",
-        "viewers": "Spettatori ({count})"
+        "viewers": "Spettatori ({count})",
+        "unsupported": "Le chiamate non funzionano in questo browser."
     },
     "viewer": "spettatore",
     "votingHotkey": "Hotkey per votare le proposte",

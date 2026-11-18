@@ -62,3 +62,26 @@ export function videoCallChat(
         }
     }
 }
+
+/** The call's chat as the call shows it: its name, and when the call started, if the chat says. */
+export function callHeading(
+    client: Pick<
+        OpenChat,
+        "lookupChatSummary" | "displayName" | "userAvatarUrl" | "groupAvatarUrl"
+    >,
+    chatId: ChatIdentifier,
+    users: ReadonlyMap<string, UserSummary>,
+    communities: {
+        get(id: { kind: "community"; communityId: string }): CommunitySummary | undefined;
+    },
+): { title: string; started: number | undefined } | undefined {
+    const chat = client.lookupChatSummary(chatId);
+    if (chat === undefined) return undefined;
+    return {
+        title: videoCallChat(client, chat, users, communities).name,
+        started:
+            chat.videoCallInProgress === undefined
+                ? undefined
+                : Number(chat.videoCallInProgress.started),
+    };
+}

@@ -4,9 +4,11 @@
      the app's lifetime (local state, never the URL). Back to call opens the call's chat and shows
      the call there (logic/video/miniCall). -->
 <script lang="ts">
+    import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import { allUsersStore, communitiesStore, selectedChatIdStore, type OpenChat } from "@client";
     import MiniCall from "@openchat/ui/src/features/components/MiniCall.svelte";
-    import { callPeople, callSend } from "@src/logic/video/callPeople";
+    import { callHeading } from "@src/logic/video/callChat";
+    import { callFace, callPeople, callSend } from "@src/logic/video/callPeople";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
     import { backToCall, miniCallShows } from "@src/logic/video/miniCall";
     import { activeVideoCall, camera, microphone } from "@src/stores/video";
@@ -15,8 +17,6 @@
     import { bottomAnchor, boxOf, watchBoxes, windowSize } from "../../shell/bottomAnchors.svelte";
     import {
         answerSpeakRequest,
-        callFace,
-        callHeading,
         miniCallArea,
         speakRequestCards,
         type MiniCallArea,
@@ -35,7 +35,7 @@
             : callHeading(client, call.chatId, $allUsersStore, $communitiesStore),
     );
 
-    const face = $derived(callFace(client, $allUsersStore));
+    const face = $derived(callFace(client, $allUsersStore, AVATAR_GRADIENTS));
     const view = $derived(
         callPeople(
             session.media.participants,

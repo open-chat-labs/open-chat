@@ -1,4 +1,6 @@
 import type { DailyParticipant, DailyTrackState } from "@daily-co/daily-js";
+import { ownUserAvatarUrl, type OpenChat, type UserSummary } from "@client";
+import { swatchFor, type Swatch } from "@src/logic/swatch";
 
 // What the new UI's call view shows of a call made with Daily's call object (#10124): who is in
 // it, with their video, and which remote audio has to be played. Daily's call object draws
@@ -137,4 +139,25 @@ export function callSend(
     }
     if (local.permissions.hasPresence) return "send";
     return asked ? "asked" : "ask";
+}
+
+/**
+ * A participant as the call views draw them without video: their name, swatch (from the views'
+ * `gradients`, the library Avatar's) and own picture.
+ */
+export function callFace(
+    client: Pick<OpenChat, "displayName">,
+    users: ReadonlyMap<string, UserSummary>,
+    gradients: Record<Swatch, string>,
+): (userId: string, userName: string) => CallFace {
+    return (userId, userName) => {
+        const user = users.get(userId);
+        const name = user === undefined ? userName : client.displayName(user);
+        return {
+            name,
+            initial: name.slice(0, 1).toUpperCase(),
+            grad: gradients[swatchFor(userId)],
+            avatarUrl: ownUserAvatarUrl(user),
+        };
+    };
 }

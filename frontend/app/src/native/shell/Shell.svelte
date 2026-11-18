@@ -40,6 +40,7 @@
     import { _ } from "svelte-i18n";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
+    import CallHost from "../features/call/CallHost.svelte";
     import { screenModules, type ScreenContext } from "../features/app/screens";
     import { messagesIn, messagesShown } from "../features/conversation/messagesIn";
     import { StartStack, startEntry, startStepFor } from "../features/start/startStack.svelte";
@@ -698,6 +699,10 @@
         />
     </div>
 {/if}
+
+<!-- the call, over every tab and screen, for the shell's lifetime: a route that leaves the tabs
+     (a marketing page opening in the browser) mustn't end it (N14) -->
+<CallHost {overlays} barShown={location.area === "tabs" && barShown} />
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;

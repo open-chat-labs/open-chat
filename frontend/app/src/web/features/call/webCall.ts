@@ -1,19 +1,9 @@
-import {
-    ownUserAvatarUrl,
-    threadOpenStore,
-    type ChatIdentifier,
-    type CommunitySummary,
-    type OpenChat,
-    type UserSummary,
-} from "@client";
+import { threadOpenStore, type OpenChat, type UserSummary } from "@client";
 import type { CallSpeakRequest } from "@openchat/ui/src/features/components/CallPanel.svelte";
-import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import { i18nKey } from "@src/i18n/i18n";
-import { swatchFor } from "@src/logic/chats/chatRow";
 import type { CallFace } from "@src/logic/video/callPeople";
 import { callFrameOptions } from "@src/logic/video/callFrameOptions";
 import { CallSession } from "@src/logic/video/callSession.svelte";
-import { videoCallChat } from "@src/logic/video/callChat";
 import { activeVideoCall, type RequestToSpeak } from "@src/stores/video";
 import { toastStore } from "@src/stores/toast";
 import type { Box, WindowSize } from "../../shell/bottomPlacement";
@@ -41,46 +31,6 @@ export function createWebCall(client: OpenChat): CallSession {
             },
         },
     );
-}
-
-/** A participant as the call view draws them without video: their name, swatch and own picture. */
-export function callFace(
-    client: Pick<OpenChat, "displayName">,
-    users: ReadonlyMap<string, UserSummary>,
-): (userId: string, userName: string) => CallFace {
-    return (userId, userName) => {
-        const user = users.get(userId);
-        const name = user === undefined ? userName : client.displayName(user);
-        return {
-            name,
-            initial: name.slice(0, 1).toUpperCase(),
-            grad: AVATAR_GRADIENTS[swatchFor(userId)],
-            avatarUrl: ownUserAvatarUrl(user),
-        };
-    };
-}
-
-/** The call's chat as the call shows it: its name, and when the call started, if the chat says. */
-export function callHeading(
-    client: Pick<
-        OpenChat,
-        "lookupChatSummary" | "displayName" | "userAvatarUrl" | "groupAvatarUrl"
-    >,
-    chatId: ChatIdentifier,
-    users: ReadonlyMap<string, UserSummary>,
-    communities: {
-        get(id: { kind: "community"; communityId: string }): CommunitySummary | undefined;
-    },
-): { title: string; started: number | undefined } | undefined {
-    const chat = client.lookupChatSummary(chatId);
-    if (chat === undefined) return undefined;
-    return {
-        title: videoCallChat(client, chat, users, communities).name,
-        started:
-            chat.videoCallInProgress === undefined
-                ? undefined
-                : Number(chat.videoCallInProgress.started),
-    };
 }
 
 /** A broadcast host's requests to speak, as the call view and the minimised call show them. */

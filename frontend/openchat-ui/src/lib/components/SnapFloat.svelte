@@ -1,7 +1,8 @@
 <!-- Draggable floating box that snaps to 8 spots (corners + edge midpoints) inside its positioned parent.
      Drag from anywhere — a drag starts after 5px, so taps still reach buttons inside; the click after a drag is swallowed.
      Snap glides from the drop point (FLIP, 720ms ease-out). safeTop / safeBottom (px) keep it clear of a header / composer.
-     position: tl | tc | tr | ml | mr | bl | bc | br (centre drops go to the nearer side) → onSnap(position). -->
+     position: tl | tc | tr | ml | mr | bl | bc | br (centre drops go to the nearer side) → onSnap(position).
+     `sides`: six spots, no centre column (the native call's): a drop in the middle third goes to the nearer side. -->
 <script lang="ts">
   import { tick, type Snippet } from 'svelte';
   import { useT } from '../i18n';
@@ -16,6 +17,8 @@
     safeTop?: number;
     safeBottom?: number;
     zIndex?: number;
+    /** Six spots, the corners and the sides' midpoints: no top or bottom centre. */
+    sides?: boolean;
     /** Accessible name. Resource key (or literal text). */
     label?: string;
     role?: string;
@@ -23,7 +26,7 @@
     children?: Snippet;
   }
 
-  let { position = 'br', width, inset = 20, safeTop, safeBottom, zIndex = 30, label, role = 'region', onSnap, children }: Props = $props();
+  let { position = 'br', width, inset = 20, safeTop, safeBottom, zIndex = 30, sides = false, label, role = 'region', onSnap, children }: Props = $props();
   const t = useT();
 
   // follows `position` until the user drops it somewhere else
@@ -66,7 +69,7 @@
       const r = el.getBoundingClientRect(), pr = (el.offsetParent as HTMLElement).getBoundingClientRect();
       const cx = r.left + r.width / 2 - pr.left, cy = r.top + r.height / 2 - pr.top;
       const v = cy < pr.height / 3 ? 't' : cy > (pr.height * 2) / 3 ? 'b' : 'm';
-      const h = cx < pr.width / 3 ? 'l' : cx > (pr.width * 2) / 3 ? 'r' : 'c';
+      const h = sides ? (cx < pr.width / 2 ? 'l' : 'r') : cx < pr.width / 3 ? 'l' : cx > (pr.width * 2) / 3 ? 'r' : 'c';
       const next = (v === 'm' && h === 'c' ? 'm' + (cx < pr.width / 2 ? 'l' : 'r') : v + h) as Spot;
       el.style.transform = '';
       spot = next;

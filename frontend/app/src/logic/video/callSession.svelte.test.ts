@@ -14,6 +14,8 @@ import { ANSWER_HANGUP_WAIT_MS, CallSession, type CallFrameOptions } from "./cal
 // The call's frame. `present` is how many are in the call.
 const frame = vi.hoisted(() => ({
     present: 1,
+    // whether Daily can make calls in this page
+    supported: true,
     leave: vi.fn(),
     created: vi.fn(),
     callObject: vi.fn(),
@@ -43,6 +45,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 vi.mock("@daily-co/daily-js", () => ({
     default: {
+        supportedBrowser: () => ({ supported: frame.supported }),
         createFrame: () => {
             frame.created();
             return makeFrame();
@@ -115,6 +118,7 @@ describe("a call", () => {
         currentUserStore.set(anonymousUser());
         inProgress = {};
         frame.present = 1;
+        frame.supported = true;
         vi.clearAllMocks();
     });
 
@@ -291,6 +295,27 @@ describe("a call", () => {
         expect(session.hostEnded).toBe(true);
     });
 
+    // A page Daily can't make calls in (no secure context, or a browser it doesn't know) is told so
+    // before anything starts: a call started there would show in the chat, and ring the other side
+    // of a DM, then fail
+    test("a page that can't make calls says so and never starts the call", async () => {
+        frame.supported = false;
+        const page = new CallSession(client, () => options, vi.fn(), { mode: "call_object" });
+
+        const outcome = await page.startOrJoin(container, {
+            chatId: direct,
+            callType: "default",
+            join: false,
+        });
+
+        expect(outcome).toEqual({
+            kind: "failed",
+            message: { kind: "resource_key", key: "videoCall.unsupported", lowercase: false },
+        });
+        expect(client.startOrJoinVideoCall).not.toHaveBeenCalled();
+        expect(activeVideoCall.current()).toBeUndefined();
+    });
+
     // #10125 invariant 4, the rest of it: leaving and a fatal Daily error end the call here too, so
     // no call view (or minimised call) outlives its call
     test("invariant 4: leaving or a fatal Daily error clears the active call", async () => {
@@ -455,6 +480,24 @@ describe("a call", () => {
             expect(shell.invoke).toHaveBeenCalledWith(
                 "plugin:oc|native_call_join",
                 expect.objectContaining({ url: "https://openchat.daily.co/r", video: false }),
+            );
+        });
+
+        // #10382 invariant 1: the native tree asks for the call object everywhere, and on iOS the
+        // call still runs on the native screen, with no Daily call object or frame in the page
+        test("invariant 1 (#10382): a call object session still runs natively, creating neither", async () => {
+            const native = new CallSession(client, () => options, vi.fn(), { mode: "call_object" });
+            await native.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: false,
+            });
+
+            expect(frame.callObject).not.toHaveBeenCalled();
+            expect(frame.created).not.toHaveBeenCalled();
+            expect(shell.invoke).toHaveBeenCalledWith(
+                "plugin:oc|native_call_join",
+                expect.objectContaining({ video: true }),
             );
         });
 

@@ -1744,7 +1744,6 @@
             "members": "{visibility} · {count, plural, one {# member} other {# members}}",
             "videoCall": "Video call",
             "voiceCall": "Voice call",
-            "callsLater": "Calls aren't available in this version yet.",
             "menu": {
                 "search": "Search in chat",
                 "contactDetails": "Contact details",
@@ -2311,6 +2310,26 @@
                 "lapsedNotAllowed": "Your role doesn't let you remove members here.",
                 "blockedNotAllowed": "Your role doesn't let you unblock people here."
             }
+        },
+        "call": {
+            "askToSpeak": "Ask to speak",
+            "askedToSpeak": "Asked",
+            "backToCall": "Back to call",
+            "calling": "Calling…",
+            "cameraOff": "Camera off",
+            "cameraOn": "Camera on",
+            "inCall": "{count} in call",
+            "join": "Join",
+            "joining": "Joining…",
+            "leave": "Leave",
+            "minimise": "Minimise call",
+            "mute": "Mute",
+            "returnTo": "Return to call with {name}",
+            "speaker": "Speaker",
+            "startBroadcast": "Start broadcast",
+            "unmute": "Unmute",
+            "you": "You",
+            "yourCamera": "Your camera. Drag to move"
         }
     },
     "new": "new",
@@ -3496,7 +3515,8 @@
         "speakerOn": "Speaker on",
         "speakerOff": "Speaker off",
         "toggleShare": "Toggle desktop sharing",
-        "viewers": "Viewers ({count})"
+        "viewers": "Viewers ({count})",
+        "unsupported": "Calls don't work in this browser."
     },
     "viewer": "viewer",
     "votingHotkey": "Hotkey for voting on proposals",

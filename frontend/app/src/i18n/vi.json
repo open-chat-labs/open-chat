@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count} thành viên",
             "videoCall": "Gọi video",
             "voiceCall": "Gọi thoại",
-            "callsLater": "Phiên bản này chưa hỗ trợ cuộc gọi.",
             "menu": {
                 "search": "Tìm trong cuộc trò chuyện",
                 "contactDetails": "Chi tiết liên hệ",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "Vai trò của bạn không cho phép xóa thành viên ở đây.",
                 "blockedNotAllowed": "Vai trò của bạn không cho phép bỏ chặn ở đây."
             }
+        },
+        "call": {
+            "askToSpeak": "Xin phát biểu",
+            "askedToSpeak": "Đã xin",
+            "backToCall": "Quay lại cuộc gọi",
+            "calling": "Đang gọi…",
+            "cameraOff": "Tắt camera",
+            "cameraOn": "Bật camera",
+            "inCall": "{count} trong cuộc gọi",
+            "join": "Tham gia",
+            "joining": "Đang tham gia…",
+            "leave": "Rời",
+            "minimise": "Thu nhỏ cuộc gọi",
+            "mute": "Tắt tiếng",
+            "returnTo": "Quay lại cuộc gọi với {name}",
+            "speaker": "Loa ngoài",
+            "startBroadcast": "Bắt đầu phát sóng",
+            "unmute": "Bật tiếng",
+            "you": "Bạn",
+            "yourCamera": "Camera của bạn. Kéo để di chuyển"
         }
     },
     "new": "Mới",
@@ -3475,7 +3494,8 @@
         "speakerOn": "Loa đang bật",
         "speakerOff": "Loa đang tắt",
         "toggleShare": "Chuyển đổi chia sẻ máy tính để bàn",
-        "viewers": "Người xem ({count})"
+        "viewers": "Người xem ({count})",
+        "unsupported": "Cuộc gọi không hoạt động trên trình duyệt này."
     },
     "viewer": "người xem",
     "votingHotkey": "Hotkey để bỏ phiếu cho các đề xuất",

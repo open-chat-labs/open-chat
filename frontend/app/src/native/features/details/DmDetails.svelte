@@ -13,14 +13,18 @@
         blockedUsersStore,
         buildUserBackgroundUrl,
         chatIdentifierToString,
+        chatIdentifiersEqual,
         chatListScopeStore,
         favouritesStore,
+        publish,
         routeForScope,
         toMonthYearString,
         userBadges,
         type DirectChatSummary,
         type OpenChat,
     } from "@client";
+    import { activeVideoCall } from "@src/stores/video";
+    import { headerCallButtons } from "../call/call.adapter";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
@@ -128,11 +132,29 @@
 
     // ---- the tiles
 
+    // Call: a voice call, or joins the call going on, or back to the user's own (N14), as the
+    // conversation's header buttons
+    function call() {
+        const own =
+            $activeVideoCall !== undefined && chatIdentifiersEqual($activeVideoCall.chatId, chat.id)
+                ? $activeVideoCall.callType
+                : undefined;
+        const buttons = headerCallButtons({
+            canStart: !blocked,
+            isPublic: false,
+            chatCall: chat.videoCallInProgress?.callType,
+            ownCall: own,
+        });
+        const button = buttons.find((b) => b.icon === "phone") ?? buttons[0];
+        if (button === undefined) return;
+        if (button.request === "return") activeVideoCall.setView("default");
+        else publish("startVideoCall", { chatId: chat.id, ...button.request });
+    }
+
     function onTile(id: DetailTileId) {
         switch (id) {
             case "call":
-                // calls are N14's, as the conversation's header buttons
-                context.toast($_("native.conversation.callsLater"));
+                call();
                 return;
             case "search":
                 // back to the conversation, which opens its search
