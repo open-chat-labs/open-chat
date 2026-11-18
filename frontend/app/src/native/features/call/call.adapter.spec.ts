@@ -56,6 +56,7 @@ describe("the native call", () => {
 
         const videoCall = headerCallButtons({ ...base, chatCall: "default" });
         expect(videoCall.map((b) => b.live)).toEqual([true, false]);
+        expect(videoCall.every((b) => isJoin(b.request, "default"))).toBe(true);
 
         const own = headerCallButtons({ ...base, chatCall: "default", ownCall: "default" });
         expect(own.map((b) => [b.request, b.live])).toEqual([
