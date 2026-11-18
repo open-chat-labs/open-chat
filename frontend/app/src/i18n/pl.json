@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",
             "videoCall": "Rozmowa wideo",
             "voiceCall": "Rozmowa głosowa",
-            "callsLater": "Połączenia nie są jeszcze dostępne w tej wersji.",
             "menu": {
                 "search": "Szukaj w czacie",
                 "contactDetails": "Szczegóły kontaktu",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "Twoja rola nie pozwala tu usuwać członków.",
                 "blockedNotAllowed": "Twoja rola nie pozwala tu nikogo odblokować."
             }
+        },
+        "call": {
+            "askToSpeak": "Poproś o głos",
+            "askedToSpeak": "Poproszono",
+            "backToCall": "Wróć do połączenia",
+            "calling": "Dzwonienie…",
+            "cameraOff": "Wyłącz kamerę",
+            "cameraOn": "Włącz kamerę",
+            "inCall": "{count} w połączeniu",
+            "join": "Dołącz",
+            "joining": "Dołączanie…",
+            "leave": "Opuść",
+            "minimise": "Zminimalizuj połączenie",
+            "mute": "Wycisz",
+            "returnTo": "Wróć do połączenia z {name}",
+            "speaker": "Głośnik",
+            "startBroadcast": "Rozpocznij transmisję",
+            "unmute": "Wyłącz wyciszenie",
+            "you": "Ty",
+            "yourCamera": "Twoja kamera. Przeciągnij, aby przesunąć"
         }
     },
     "new": "nowy",

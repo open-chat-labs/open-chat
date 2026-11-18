@@ -22,6 +22,7 @@
         chatListScopeStore,
         byContext as typersByContext,
         chatIdentifiersEqual,
+        publish,
         chatIdentifierToString,
         chatsInitialisedStore,
         chitStateStore,
@@ -96,6 +97,7 @@
     import {
         callEventProps,
         callLength,
+        callRequest,
         callMedia,
         callState,
         isLiveCall,
@@ -189,6 +191,8 @@
     import { KeyboardSlot } from "./keyboardSlot.svelte";
     import { softKeyboard } from "../../aboveKeyboard.svelte";
     import { isAndroidTauriApp, isTauriApp } from "@client";
+    import { activeVideoCall } from "@src/stores/video";
+    import { headerCallButtons, type HeaderCallButton } from "../call/call.adapter";
     import type { ComposerBuilder } from "@src/logic/composer/composer";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "conversation" }>> =
@@ -330,29 +334,53 @@
               ),
     );
 
-    // calls are N14's: the header's buttons and a call item's Join say so for now
-    const canCall = $derived(chat !== undefined && !readonly && client.canStartVideoCalls(chat.id));
+    // ---- calls (N14): the header's buttons, the live call's Join or Leave, an ended call's Call
+    // back. The app's one call (CallHost) takes them.
 
-    function callsLater() {
-        context.toast($_("native.conversation.callsLater"));
-    }
+    // the user's own call, when it's in this chat
+    const ownCall = $derived(
+        chat !== undefined &&
+            $activeVideoCall !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, chat.id)
+            ? $activeVideoCall
+            : undefined,
+    );
 
     const headerActions = $derived(
-        canCall
-            ? [
-                  {
-                      icon: "video",
-                      label: $_("native.conversation.videoCall"),
-                      onClick: callsLater,
-                  },
-                  {
-                      icon: "phone",
-                      label: $_("native.conversation.voiceCall"),
-                      onClick: callsLater,
-                  },
-              ]
-            : [],
+        chat === undefined || readonly
+            ? []
+            : headerCallButtons({
+                  canStart:
+                      !(chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId)) &&
+                      client.canStartVideoCalls(chat.id),
+                  isPublic: !client.isChatPrivate(chat),
+                  chatCall: chat.videoCallInProgress?.callType,
+                  ownCall: ownCall?.callType,
+              }).map((button) => ({
+                  icon: button.icon,
+                  label: $_(button.label),
+                  onClick: () => pressHeaderCall(button.request),
+              })),
     );
+
+    function pressHeaderCall(request: HeaderCallButton["request"]) {
+        if (chat === undefined) return;
+        if (request === "return") activeVideoCall.setView("default");
+        else publish("startVideoCall", { chatId: chat.id, ...request });
+    }
+
+    // Join, or Leave while the user is in it; Call back joins the call going on if there is one
+    function pressCall(action: "join" | "call_back", content: Pick<VideoCallContent, "callType">) {
+        if (chat === undefined) return;
+        if (action === "join" && ownCall !== undefined) {
+            activeVideoCall.setView("default");
+            return;
+        }
+        publish("startVideoCall", {
+            chatId: chat.id,
+            ...callRequest(action, content, chat.videoCallInProgress !== undefined),
+        });
+    }
 
     function openDetails() {
         if (chat !== undefined) context.push({ kind: "chat_details", chatId: chat.id });
@@ -1281,7 +1309,7 @@
     {/if}
 
     {#if chat !== undefined && liveCall !== undefined && !liveItemShown}
-        <button type="button" class="live-strip" onclick={callsLater}>
+        <button type="button" class="live-strip" onclick={() => pressCall("join", liveCall)}>
             <span class="live-dot"></span>
             <span class="live-text">
                 <span class="live-title">
@@ -1386,9 +1414,23 @@
                                                     {liveSub(msg.content, evt.timestamp)}
                                                 </span>
                                             </span>
-                                            <button type="button" class="join" onclick={callsLater}>
-                                                {$_("ui.callEvent.join")}
-                                            </button>
+                                            {#if ownCall !== undefined && ownCall.messageId === msg.messageId}
+                                                <button
+                                                    type="button"
+                                                    class="join leave"
+                                                    onclick={() => publish("hangup")}
+                                                >
+                                                    {$_("ui.callEvent.leave")}
+                                                </button>
+                                            {:else}
+                                                <button
+                                                    type="button"
+                                                    class="join"
+                                                    onclick={() => pressCall("join", msg.content)}
+                                                >
+                                                    {$_("ui.callEvent.join")}
+                                                </button>
+                                            {/if}
                                         </div>
                                     {:else if call !== "live"}
                                         <CallEvent
@@ -1407,7 +1449,7 @@
                                                 ),
                                                 ctx.time(evt.timestamp),
                                             )}
-                                            onCallBack={callsLater}
+                                            onCallBack={() => pressCall("call_back", msg.content)}
                                         />
                                     {/if}
                                 </div>
@@ -1902,6 +1944,11 @@
         color: var(--on-accent);
         font: var(--weight-bold) text-size(13.5px) / 1 var(--font-sans);
         cursor: pointer;
+    }
+
+    .join.leave {
+        background: var(--status-danger);
+        color: #fff;
     }
 
     .to-bottom {

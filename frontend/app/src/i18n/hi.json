@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {# सदस्य} other {# सदस्य}}",
             "videoCall": "वीडियो कॉल",
             "voiceCall": "वॉइस कॉल",
-            "callsLater": "इस संस्करण में कॉल अभी उपलब्ध नहीं हैं।",
             "menu": {
                 "search": "चैट में खोजें",
                 "contactDetails": "संपर्क विवरण",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "आपकी भूमिका यहाँ सदस्यों को हटाने की अनुमति नहीं देती।",
                 "blockedNotAllowed": "आपकी भूमिका यहाँ अनब्लॉक करने की अनुमति नहीं देती।"
             }
+        },
+        "call": {
+            "askToSpeak": "बोलने का अनुरोध",
+            "askedToSpeak": "अनुरोध भेजा",
+            "backToCall": "कॉल पर वापस जाएँ",
+            "calling": "कॉल हो रही है…",
+            "cameraOff": "कैमरा बंद",
+            "cameraOn": "कैमरा चालू",
+            "inCall": "कॉल में {count}",
+            "join": "शामिल हों",
+            "joining": "शामिल हो रहे हैं…",
+            "leave": "छोड़ें",
+            "minimise": "कॉल छोटा करें",
+            "mute": "म्यूट",
+            "returnTo": "{name} के साथ कॉल पर वापस जाएँ",
+            "speaker": "स्पीकर",
+            "startBroadcast": "प्रसारण शुरू करें",
+            "unmute": "अनम्यूट",
+            "you": "आप",
+            "yourCamera": "आपका कैमरा। हिलाने के लिए खींचें"
         }
     },
     "new": "नया",

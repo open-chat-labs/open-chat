@@ -17606,6 +17606,17 @@
         "doc": ""
       },
       {
+        "name": "sides",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Six spots, the corners and the sides' midpoints: no top or bottom centre (the native call's). A drop in the middle third goes to the nearer side."
+      },
+      {
         "name": "label",
         "type": "string",
         "default": null,

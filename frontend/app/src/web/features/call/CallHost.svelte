@@ -17,7 +17,7 @@
     import { getContext } from "svelte";
     import CallView from "./CallView.svelte";
     import MiniCallHost from "./MiniCallHost.svelte";
-    import { callHeading } from "./webCall";
+    import { callHeading } from "@src/logic/video/callChat";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
     import { toastStartCall as report } from "@src/utils/callToast";
     import { _ } from "svelte-i18n";

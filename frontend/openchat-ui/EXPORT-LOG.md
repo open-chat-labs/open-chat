@@ -1016,3 +1016,6 @@
 - `SpeakRequests` (new): `CallPanel`'s request cards moved out so `MiniCall` shows the same ones. `CallPanel` keeps their place under the top bar. `meta.json` (new entry).
 - `lib/behaviours/stream`: the `srcObject` action `VideoTile` had, shared with `MiniCall`.
 - Not in the design export: the design's minimised call has mute, Back to call and Leave only.
+
+## 2026-11-18 — SnapFloat's six spots, by hand
+- `SnapFloat`: `sides` (optional): six spots, the corners and the sides' midpoints, with no top or bottom centre; a drop in the middle third goes to the nearer side. `meta.json` (`sides`). Used by the native call screen's floating camera and the minimised call (N14, #10382), which the native design snaps to six spots.

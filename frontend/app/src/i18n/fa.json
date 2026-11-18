@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count} عضو",
             "videoCall": "تماس تصویری",
             "voiceCall": "تماس صوتی",
-            "callsLater": "تماس‌ها هنوز در این نسخه در دسترس نیستند.",
             "menu": {
                 "search": "جستجو در گفتگو",
                 "contactDetails": "جزئیات مخاطب",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "نقش شما اجازه حذف اعضا را در اینجا نمی‌دهد.",
                 "blockedNotAllowed": "نقش شما اجازه رفع مسدودیت را در اینجا نمی‌دهد."
             }
+        },
+        "call": {
+            "askToSpeak": "درخواست صحبت",
+            "askedToSpeak": "درخواست شد",
+            "backToCall": "بازگشت به تماس",
+            "calling": "در حال تماس…",
+            "cameraOff": "خاموش کردن دوربین",
+            "cameraOn": "روشن کردن دوربین",
+            "inCall": "{count} در تماس",
+            "join": "پیوستن",
+            "joining": "در حال پیوستن…",
+            "leave": "ترک",
+            "minimise": "کوچک کردن تماس",
+            "mute": "بی‌صدا",
+            "returnTo": "بازگشت به تماس با {name}",
+            "speaker": "بلندگو",
+            "startBroadcast": "شروع پخش",
+            "unmute": "باصدا",
+            "you": "شما",
+            "yourCamera": "دوربین شما. برای جابه‌جایی بکشید"
         }
     },
     "new": "جدید",

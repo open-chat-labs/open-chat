@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count} 位成员",
             "videoCall": "视频通话",
             "voiceCall": "语音通话",
-            "callsLater": "此版本暂不支持通话。",
             "menu": {
                 "search": "在聊天中搜索",
                 "contactDetails": "联系人详情",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "你的角色无权在这里移除成员。",
                 "blockedNotAllowed": "你的角色无权在这里解除屏蔽。"
             }
+        },
+        "call": {
+            "askToSpeak": "申请发言",
+            "askedToSpeak": "已申请",
+            "backToCall": "返回通话",
+            "calling": "正在呼叫…",
+            "cameraOff": "关闭摄像头",
+            "cameraOn": "打开摄像头",
+            "inCall": "通话中 {count} 人",
+            "join": "加入",
+            "joining": "正在加入…",
+            "leave": "离开",
+            "minimise": "最小化通话",
+            "mute": "静音",
+            "returnTo": "返回与 {name} 的通话",
+            "speaker": "扬声器",
+            "startBroadcast": "开始直播",
+            "unmute": "取消静音",
+            "you": "你",
+            "yourCamera": "你的摄像头。拖动可移动"
         }
     },
     "new": "新的",

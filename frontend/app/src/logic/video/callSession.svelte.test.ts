@@ -458,6 +458,24 @@ describe("a call", () => {
             );
         });
 
+        // #10382 invariant 1: the native tree asks for the call object everywhere, and on iOS the
+        // call still runs on the native screen, with no Daily call object or frame in the page
+        test("invariant 1 (#10382): a call object session still runs natively, creating neither", async () => {
+            const native = new CallSession(client, () => options, vi.fn(), { mode: "call_object" });
+            await native.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: false,
+            });
+
+            expect(frame.callObject).not.toHaveBeenCalled();
+            expect(frame.created).not.toHaveBeenCalled();
+            expect(shell.invoke).toHaveBeenCalledWith(
+                "plugin:oc|native_call_join",
+                expect.objectContaining({ video: true }),
+            );
+        });
+
         test("invariant 20: the last one hanging up on the native screen ends the call", async () => {
             vi.mocked(client.endVideoCall).mockClear();
             await session.startOrJoin(container, {

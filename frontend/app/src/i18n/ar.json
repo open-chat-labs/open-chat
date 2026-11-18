@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {عضو واحد} two {عضوان} few {# أعضاء} many {# عضوًا} other {# عضو}}",
             "videoCall": "مكالمة فيديو",
             "voiceCall": "مكالمة صوتية",
-            "callsLater": "المكالمات غير متاحة في هذا الإصدار بعد.",
             "menu": {
                 "search": "البحث في الدردشة",
                 "contactDetails": "تفاصيل جهة الاتصال",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "لا يسمح لك دورك بإزالة الأعضاء هنا.",
                 "blockedNotAllowed": "لا يسمح لك دورك بإلغاء الحظر هنا."
             }
+        },
+        "call": {
+            "askToSpeak": "طلب التحدث",
+            "askedToSpeak": "تم الطلب",
+            "backToCall": "العودة إلى المكالمة",
+            "calling": "جارٍ الاتصال…",
+            "cameraOff": "إيقاف الكاميرا",
+            "cameraOn": "تشغيل الكاميرا",
+            "inCall": "{count} في المكالمة",
+            "join": "انضمام",
+            "joining": "جارٍ الانضمام…",
+            "leave": "مغادرة",
+            "minimise": "تصغير المكالمة",
+            "mute": "كتم",
+            "returnTo": "العودة إلى المكالمة مع {name}",
+            "speaker": "مكبر الصوت",
+            "startBroadcast": "بدء البث",
+            "unmute": "إلغاء الكتم",
+            "you": "أنت",
+            "yourCamera": "كاميرتك. اسحب للتحريك"
         }
     },
     "new": "جديد",

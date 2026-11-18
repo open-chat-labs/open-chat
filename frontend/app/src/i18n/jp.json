@@ -1835,7 +1835,6 @@
             "members": "{visibility} · メンバー {count} 人",
             "videoCall": "ビデオ通話",
             "voiceCall": "音声通話",
-            "callsLater": "このバージョンでは通話はまだ利用できません。",
             "menu": {
                 "search": "チャット内を検索",
                 "contactDetails": "連絡先の詳細",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "あなたの役割では、ここでメンバーを削除できません。",
                 "blockedNotAllowed": "あなたの役割では、ここでブロックを解除できません。"
             }
+        },
+        "call": {
+            "askToSpeak": "発言をリクエスト",
+            "askedToSpeak": "リクエスト済み",
+            "backToCall": "通話に戻る",
+            "calling": "発信中…",
+            "cameraOff": "カメラをオフ",
+            "cameraOn": "カメラをオン",
+            "inCall": "通話中 {count} 人",
+            "join": "参加",
+            "joining": "参加中…",
+            "leave": "退出",
+            "minimise": "通話を最小化",
+            "mute": "ミュート",
+            "returnTo": "{name} との通話に戻る",
+            "speaker": "スピーカー",
+            "startBroadcast": "配信を開始",
+            "unmute": "ミュート解除",
+            "you": "あなた",
+            "yourCamera": "あなたのカメラ。ドラッグで移動"
         }
     },
     "new": "new",

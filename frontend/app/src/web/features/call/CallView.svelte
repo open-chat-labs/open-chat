@@ -7,13 +7,15 @@
      viewer without presence asks to speak (callSend), and the host lets them or not from cards
      (TODO(design): the minimal controls GAPS.md lists). -->
 <script lang="ts">
+    import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import { allUsersStore, type OpenChat } from "@client";
     import CallPanel from "@openchat/ui/src/features/components/CallPanel.svelte";
     import { callPeople, callSend } from "@src/logic/video/callPeople";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
     import { activeVideoCall, camera, microphone, sharing } from "@src/stores/video";
     import { getContext } from "svelte";
-    import { answerSpeakRequest, callFace, speakRequestCards } from "./webCall";
+    import { callFace } from "@src/logic/video/callPeople";
+    import { answerSpeakRequest, speakRequestCards } from "./webCall";
 
     let {
         session,
@@ -23,7 +25,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    const face = $derived(callFace(client, $allUsersStore));
+    const face = $derived(callFace(client, $allUsersStore, AVATAR_GRADIENTS));
     const view = $derived(
         callPeople(
             session.media.participants,

@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {# membre} other {# membres}}",
             "videoCall": "Appel vidéo",
             "voiceCall": "Appel vocal",
-            "callsLater": "Les appels ne sont pas encore disponibles dans cette version.",
             "menu": {
                 "search": "Rechercher dans le chat",
                 "contactDetails": "Détails du contact",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "Votre rôle ne vous permet pas de retirer des membres ici.",
                 "blockedNotAllowed": "Votre rôle ne vous permet pas de débloquer quelqu'un ici."
             }
+        },
+        "call": {
+            "askToSpeak": "Demander la parole",
+            "askedToSpeak": "Demandé",
+            "backToCall": "Retour à l'appel",
+            "calling": "Appel en cours…",
+            "cameraOff": "Couper caméra",
+            "cameraOn": "Activer caméra",
+            "inCall": "{count} dans l'appel",
+            "join": "Rejoindre",
+            "joining": "Connexion…",
+            "leave": "Quitter",
+            "minimise": "Réduire l'appel",
+            "mute": "Muet",
+            "returnTo": "Retour à l'appel avec {name}",
+            "speaker": "Haut-parleur",
+            "startBroadcast": "Lancer la diffusion",
+            "unmute": "Réactiver",
+            "you": "Vous",
+            "yourCamera": "Votre caméra. Faites glisser pour déplacer"
         }
     },
     "new": "Nouveau",

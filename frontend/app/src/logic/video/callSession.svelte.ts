@@ -315,7 +315,8 @@ export class CallSession {
 
         const call = await this.#createCall(container, room, options);
         this.#call = call;
-        if (this.#mode === "call_object") {
+        // the page plays and draws a call object's media; on iOS the native screen does
+        if (this.#mode === "call_object" && !isIosTauriApp()) {
             this.media.attach(call);
         }
 

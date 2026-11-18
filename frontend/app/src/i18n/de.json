@@ -1835,7 +1835,6 @@
             "members": "{visibility} · {count, plural, one {# Mitglied} other {# Mitglieder}}",
             "videoCall": "Videoanruf",
             "voiceCall": "Sprachanruf",
-            "callsLater": "Anrufe sind in dieser Version noch nicht verfügbar.",
             "menu": {
                 "search": "Im Chat suchen",
                 "contactDetails": "Kontaktdetails",
@@ -2402,6 +2401,26 @@
                 "lapsedNotAllowed": "Deine Rolle erlaubt es hier nicht, Mitglieder zu entfernen.",
                 "blockedNotAllowed": "Deine Rolle erlaubt es hier nicht, Blockierungen aufzuheben."
             }
+        },
+        "call": {
+            "askToSpeak": "Wortmeldung",
+            "askedToSpeak": "Angefragt",
+            "backToCall": "Zurück zum Anruf",
+            "calling": "Wird angerufen…",
+            "cameraOff": "Kamera aus",
+            "cameraOn": "Kamera an",
+            "inCall": "{count} im Anruf",
+            "join": "Beitreten",
+            "joining": "Beitreten…",
+            "leave": "Verlassen",
+            "minimise": "Anruf minimieren",
+            "mute": "Stumm",
+            "returnTo": "Zurück zum Anruf mit {name}",
+            "speaker": "Lautsprecher",
+            "startBroadcast": "Übertragung starten",
+            "unmute": "Ton an",
+            "you": "Du",
+            "yourCamera": "Deine Kamera. Zum Verschieben ziehen"
         }
     },
     "new": "Neu",

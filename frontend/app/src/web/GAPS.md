@@ -22,8 +22,8 @@ design export needs. Each entry says where it came up.
   - The platform font scale needs a native bridge (iOS dynamic type's content size category,
     Android's `Configuration.fontScale`, read again when it changes); until then the native tree
     passes 1, as mobile web does.
-  - Status-bar glyphs: light on the call screen and the minimised call (N14), following the
-    theme elsewhere, through the Tauri plugin.
+  - Status-bar glyphs: light on the call screen (N14, `setDarkScreenUp`), following the theme
+    elsewhere, through the Tauri plugin. The minimised call doesn't change them.
   - For the design: the prototype's Appearance setting is "Chat text size" (Small / Default /
     Large) and only resizes messages (`--text-xs` / `--text-sm` / `--text-base` in the
     conversation: 9 / 10.5 / 12.5, 10 / 11.5 / 13.5 and 11.5 / 13 / 15.5px), while the brief and the
@@ -528,10 +528,23 @@ design export needs. Each entry says where it came up.
     than a link that opens nothing.
   - **The details** (the header's title, the menu's details item): done (N6), the local
     `chat_details` screen ("Native details", below).
-  - **Calls** are N14's: the header's video and voice buttons, a live call's Join (its item and the
-    header strip) and a missed call's Call back say so in a toast. A live call's strip says "Tap to
-    join" where the prototype names who's in it. Not checked in a browser: the local replica's
-    seeded chats have no calls.
+  - **Calls (N14, PR 1):** the header's video and voice buttons start a call (a broadcast in a
+    public chat), Join joins the call going on and, in the user's own call, the header's button
+    goes back to it; the live item has Join or Leave, the live strip Join, an ended call Call back,
+    and DM details' Call a voice call. The call screen (`features/call`): always dark, video up to 3
+    stacked with the user's camera floating at six spots, 4+ in a 2-column grid, voice as centred
+    avatars; Mute, Camera (video only), Speaker (the Android app only: a browser can't switch
+    between earpiece and loudspeaker) and Leave, hiding after 4s in video. Minimised: a video tile
+    or voice pill at six spots, clear of the header and the tab bar; on iOS always the pill, as the
+    native screen has the media. Android's Back minimises the call screen. Left:
+    - PR 2: the incoming ring in the app, a refused or host-ended call, Ask to speak's requests for
+      the host, the green header call button with no header strip (plan 04/09, 2026-11-10).
+    - PR 3: system picture-in-picture, the output menu with headphones, flip camera.
+    - Not built: the design's Video button in a voice call (an audio call's room sends audio only,
+      #9465). The header shows one button (Join, or back to the call) where the prototype keeps
+      both, the matching one joining.
+    - A live call's strip says "Tap to join" where the prototype names who's in it.
+    - Checked in a desktop browser with the native tree forced; not on a device.
   - **A swap offer's Accept / Cancel**: still no button in the native tree (`withHandlers`
     without `swap`). The kit has its alert now, but accepting asks for the wallet's PIN, whose
     sheet is N10b's: with a PIN set, the client's prompt would wait for a sheet that isn't there.
@@ -759,8 +772,8 @@ design export needs. Each entry says where it came up.
   decided where the plan is silent (the prototype export wasn't available to check against):
   - **DM**: the cover's kebab holds Delete chat (with Undo, as the conversation's menu), the one
     thing the conversation's menu has that the screen doesn't already (the plan names the kebab,
-    not what's in it); without it (the OpenChat bot's DM) there's no kebab. Call says calls come
-    later (N14), as the header's buttons; Call isn't there where calls can't start, nor Mute for a
+    not what's in it); without it (the OpenChat bot's DM) there's no kebab. Call starts a voice
+    call, or joins the one going on (N14); Call isn't there where calls can't start, nor Mute for a
     bot (a bot DM can't be muted). A bot's only tile, Search, would be a full-width row of one, so
     there's no row and Search is a round button on the cover before Favourite (the user's call,
     2026-11-10; `searchOnCover`). About shows once their profile is in (none for a bot): the bio,
