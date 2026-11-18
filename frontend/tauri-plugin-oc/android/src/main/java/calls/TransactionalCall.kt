@@ -71,6 +71,12 @@ class TransactionalCall(
     override val route: CallRoutePolicy.Route?
         get() = endpoint?.let { routeOf(it) }
 
+    override val outputs: List<CallOutputs.Output>
+        get() = CallOutputs.of(
+            endpoints.map { routeOf(it) },
+            endpoints.firstOrNull { it.endpointType == CallEndpoint.TYPE_BLUETOOTH }?.endpointName?.toString(),
+        )
+
     private val routes = CallRoutePolicy(object : CallRoutePolicy.Port {
         override fun routeState(): CallRoutePolicy.RouteState? {
             val current = endpoint
@@ -173,6 +179,8 @@ class TransactionalCall(
         routes.apply(speaker, isDefault)
     }
 
+    override fun choose(route: CallRoutePolicy.Route) = routes.choose(route)
+
     override fun finish(end: CallRegistry.End) {
         if (!finishLocally()) return
         val code = CallTelecom.transactionalDisconnectCode(end, answered)
@@ -206,13 +214,17 @@ class TransactionalCall(
         val wanted = when (route) {
             CallRoutePolicy.Route.SPEAKER -> CallEndpoint.TYPE_SPEAKER
             CallRoutePolicy.Route.EARPIECE -> CallEndpoint.TYPE_EARPIECE
+            CallRoutePolicy.Route.WIRED -> CallEndpoint.TYPE_WIRED_HEADSET
             CallRoutePolicy.Route.BLUETOOTH -> CallEndpoint.TYPE_BLUETOOTH
             CallRoutePolicy.Route.OTHER -> return
         }
         // Not listed yet, or not on this device: dropped, and asked for again at activation
-        // or when the platform next reports the other basic route.
+        // or when the platform next reports the other basic route. The earpiece is the phone,
+        // which is a wired headset while one is plugged in.
         val target = endpoint?.takeIf { it.endpointType == wanted }
             ?: endpoints.firstOrNull { it.endpointType == wanted }
+            ?: endpoints.takeIf { wanted == CallEndpoint.TYPE_EARPIECE }
+                ?.firstOrNull { it.endpointType == CallEndpoint.TYPE_WIRED_HEADSET }
         if (target == null) {
             Log.w(LOG_TAG, "No $route endpoint among ${endpoints.map { it.endpointType }}")
             return
@@ -237,6 +249,7 @@ class TransactionalCall(
     private fun routeOf(endpoint: CallEndpoint): CallRoutePolicy.Route = when (endpoint.endpointType) {
         CallEndpoint.TYPE_SPEAKER -> CallRoutePolicy.Route.SPEAKER
         CallEndpoint.TYPE_EARPIECE -> CallRoutePolicy.Route.EARPIECE
+        CallEndpoint.TYPE_WIRED_HEADSET -> CallRoutePolicy.Route.WIRED
         CallEndpoint.TYPE_BLUETOOTH -> CallRoutePolicy.Route.BLUETOOTH
         else -> CallRoutePolicy.Route.OTHER
     }
@@ -253,6 +266,7 @@ class TransactionalCall(
                 btDevices = endpoints.any { it.endpointType == CallEndpoint.TYPE_BLUETOOTH },
             ),
         )
+        if (active && current != null) CallSession.outputsReported(call.id, routeOf(current), outputs)
     }
 
     // Telecom asking us to change the call, from a surface that is not this app: a headset

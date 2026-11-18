@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.OCPluginCompanion
@@ -39,12 +40,14 @@ object CallSession {
         // follows the route the platform reports, not the request.
         route = CallRoutePolicy.Route.OTHER
         speakerUnknown = true
+        lastOutputs = null
         CallTelecom.setSpeaker(call.id, video, isDefault = true)
         CallProximity.update(context, active = true, video = video, route = route)
         CallForegroundService.start(context, call, now, sharing = false)
         // Telecom usually settled the route before the web layer got here; a report made
         // then belonged to no active call and was dropped, so ask for it now (device run).
         CallTelecom.route(call.id)?.let { routeReflected(context, call.id, it) }
+        CallTelecom.route(call.id)?.let { outputsReported(call.id, it, CallTelecom.outputs(call.id)) }
     }
 
     // The route the call is on, as the platform last reported it for an active call.
@@ -77,6 +80,40 @@ object CallSession {
         )
     }
 
+    // The user picked an output from the in-app menu (N14).
+    fun chooseOutput(route: CallRoutePolicy.Route) {
+        val current = state.active ?: return
+        Log.i(LOG_TAG, "Output $route chosen")
+        CallTelecom.choose(current.id, route)
+    }
+
+    // The outputs the platform lists for the active call, and the one in use, for the in-app
+    // output menu. Passed on when either changes. A web layer without the menu ignores them.
+    @Volatile
+    private var lastOutputs: Pair<CallRoutePolicy.Route, List<CallOutputs.Output>>? = null
+
+    fun outputsReported(id: CallId, route: CallRoutePolicy.Route, outputs: List<CallOutputs.Output>) {
+        val current = state.active ?: return
+        if (current.id != id || lastOutputs == (route to outputs)) return
+        lastOutputs = route to outputs
+        val list = JSArray()
+        outputs.forEach { output ->
+            list.put(
+                JSObject()
+                    .put("route", CallOutputs.wireName(output.route))
+                    .apply { output.name?.let { put("name", it) } },
+            )
+        }
+        OCPluginCompanion.triggerRef(
+            "call-control",
+            JSObject()
+                .put("kind", "outputs")
+                .put("messageId", id.messageId)
+                .put("route", CallOutputs.wireName(route))
+                .put("outputs", list),
+        )
+    }
+
     // The system muted or unmuted the call (a headset button): the web layer applies it to
     // the Daily call. One way: Telecom has no call for an app to set its mute.
     fun muteReported(id: CallId, muted: Boolean) {
@@ -90,6 +127,7 @@ object CallSession {
     fun ended(context: Context, id: CallId) {
         when (val ended = state.ended(id, System.currentTimeMillis())) {
             is CallSessionState.Ended.StopAfterGrace -> {
+                CallPip.callEnded()
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
                 CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
                 CallRingback.stop()
@@ -135,6 +173,7 @@ object CallSession {
             }
             Log.i(LOG_TAG, "${teardown.kind} reported to the bridge: $reported")
         }
+        CallPip.callEnded()
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallRingback.stop()
         // Only what was answered: a call still ringing keeps ringing through the ringer.

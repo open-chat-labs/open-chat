@@ -31,6 +31,8 @@ import com.ocplugin.app.calls.CallConfig
 import com.ocplugin.app.calls.CallId
 import com.ocplugin.app.calls.CallKind
 import com.ocplugin.app.calls.CallRingback
+import com.ocplugin.app.calls.CallOutputs
+import com.ocplugin.app.calls.CallPip
 import com.ocplugin.app.calls.CallSession
 import com.ocplugin.app.calls.CallSessionState
 import com.ocplugin.app.calls.IncomingCall
@@ -445,6 +447,27 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // The new UI draws a video call: picture in picture is armed while it says so (N14).
+    @Command
+    fun setCallPip(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallPipArgs::class.java)
+        CallPip.request(activity, args.on)
+        invoke.resolve()
+    }
+
+    // The in-app output menu's pick (N14): speaker, earpiece, wired or bluetooth.
+    @Command
+    fun setCallOutput(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallOutputArgs::class.java)
+        val route = CallOutputs.routeOf(args.route)
+        if (route == null) {
+            invoke.reject("Unknown output ${args.route}")
+            return
+        }
+        CallSession.chooseOutput(route)
+        invoke.resolve()
+    }
+
     // The caller's ringback while a direct call rings out.
     @Command
     fun setCallRingback(invoke: Invoke) {
@@ -547,6 +570,16 @@ class SetSystemBarsStyleArgs {
 @InvokeArg
 class SetCallSpeakerArgs {
     var speaker: Boolean = false
+}
+
+@InvokeArg
+class SetCallPipArgs {
+    var on: Boolean = false
+}
+
+@InvokeArg
+class SetCallOutputArgs {
+    var route: String? = null
 }
 
 @InvokeArg

@@ -5,7 +5,9 @@
      speaking rings. The 52px controls (callControls) hide 4s after the last tap in a video call, and
      the video grows by half their height; a tap on the stage brings them back (CallChrome).
      A broadcast's host gets the requests to speak as cards under the top bar.
-     TODO(design): flip camera on the user's tile, and the output menu with headphones (N14, PR 3). -->
+     With headphones connected, Speaker opens the output menu of what the Android shell lists (N14).
+     Flip camera is a 32px button on the user's own tile while their camera is on and the phone has
+     another; their camera is mirrored unless it faces away. -->
 <script lang="ts">
     import { allUsersStore, formatClock, type OpenChat } from "@client";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
@@ -15,13 +17,19 @@
     import { callFace, callPeople, callSend } from "@src/logic/video/callPeople";
     import { answerSpeakRequest, speakRequestCards } from "@src/logic/video/speakRequests";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
-    import { activeVideoCall, camera, microphone, speaker } from "@src/stores/video";
+    import { activeVideoCall, callOutputs, camera, microphone, speaker } from "@src/stores/video";
     import { now500 } from "@src/stores/time";
-    import { setCallSpeaker } from "@utils/native/call_bridge";
+    import { setCallOutput, setCallSpeaker, type CallOutputRoute } from "@utils/native/call_bridge";
     import { getContext, onDestroy } from "svelte";
     import { SvelteSet } from "svelte/reactivity";
     import { _ } from "svelte-i18n";
-    import { callControls, callStage, type CallControlId } from "./call.adapter";
+    import {
+        callControls,
+        callStage,
+        mirrorsSelf,
+        outputMenu,
+        type CallControlId,
+    } from "./call.adapter";
     import { CallChrome } from "./callChrome.svelte";
 
     let {
@@ -66,7 +74,7 @@
             video,
             muted: !$microphone,
             camera: $camera,
-            speaker: canRoute ? $speaker : undefined,
+            audio: canRoute ? { speaker: $speaker, outputs: $callOutputs } : undefined,
             speak: send === "send" ? undefined : send,
         }),
     );
@@ -80,8 +88,19 @@
         return started === undefined ? "" : formatClock(Math.max(0, $now500 - started) / 1000);
     });
 
+    // the output menu, with headphones connected (design notes §3.5); the controls stay while it's open
+    let outputsOpen = $state(false);
+    const outputRows = $derived($callOutputs === undefined ? [] : outputMenu($callOutputs));
+    $effect(() => {
+        if (outputRows.length === 0) outputsOpen = false;
+    });
+    function pickOutput(route: CallOutputRoute) {
+        outputsOpen = false;
+        void setCallOutput(route);
+    }
+
     const chrome = new CallChrome();
-    $effect(() => chrome.update(video, false));
+    $effect(() => chrome.update(video, outputsOpen));
     onDestroy(() => chrome.dispose());
 
     function press(id: CallControlId) {
@@ -97,6 +116,9 @@
                 // the shell owns the route and reports it back (native calls M4, #9559)
                 void setCallSpeaker(!$speaker);
                 break;
+            case "output":
+                outputsOpen = !outputsOpen;
+                break;
             case "ask":
                 if (send === "ask") session.askToSpeak();
                 break;
@@ -106,12 +128,27 @@
         }
     }
 
+    // flip camera on the user's own tile, while their camera is on and there's another to turn to
+    const canFlip = $derived($camera && session.media.devices.cameras.length > 1);
+    const mirrorSelf = $derived(mirrorsSelf(view.self?.stream ?? null));
+    function flip(e: Event) {
+        e.stopPropagation();
+        chrome.wake();
+        void session.media.flipCamera();
+    }
+
     // where the user dropped their own floating tile, for as long as the screen is up
     let selfSpot = $state<"tl" | "tr" | "ml" | "mr" | "bl" | "br">("br");
 
     // pictures that failed to load show the initial instead
     const failed = new SvelteSet<string>();
 </script>
+
+{#snippet flipButton()}
+    <button type="button" class="flip" aria-label={$_("native.call.flipCamera")} onclick={flip}>
+        <span class="flip-glyph"></span>
+    </button>
+{/snippet}
 
 {#snippet face(url: string | undefined, initial: string)}
     {#if url && !failed.has(url)}
@@ -165,19 +202,24 @@
                     : "repeat(2, minmax(0, 1fr))"}
             >
                 {#each stage.tiles as tile (tile.id)}
-                    <VideoTile
-                        nameLabel={tile.name}
-                        initial={tile.initial}
-                        grad={tile.grad}
-                        avatarUrl={tile.avatarUrl}
-                        stream={tile.stream}
-                        mirror={tile.self}
-                        muted={tile.muted}
-                        speaking={tile.speaking}
-                        big={stage.tiles.length <= 2}
-                        radius={10}
-                        ratio={0}
-                    />
+                    <div class="cell">
+                        <VideoTile
+                            nameLabel={tile.name}
+                            initial={tile.initial}
+                            grad={tile.grad}
+                            avatarUrl={tile.avatarUrl}
+                            stream={tile.stream}
+                            mirror={tile.self && mirrorSelf}
+                            muted={tile.muted}
+                            speaking={tile.speaking}
+                            big={stage.tiles.length <= 2}
+                            radius={10}
+                            ratio={0}
+                        />
+                        {#if tile.self && canFlip}
+                            {@render flipButton()}
+                        {/if}
+                    </div>
                 {/each}
             </div>
             {#if stage.floatSelf && view.self !== undefined}
@@ -198,11 +240,14 @@
                             grad={view.self.grad}
                             avatarUrl={view.self.avatarUrl}
                             stream={view.self.stream}
-                            mirror
+                            mirror={mirrorSelf}
                             muted={view.self.muted}
                             radius={10}
                             ratio={104 / 140}
                         />
+                        {#if canFlip}
+                            {@render flipButton()}
+                        {/if}
                     </div>
                 </SnapFloat>
             {/if}
@@ -222,6 +267,29 @@
                     </span>
                 {/each}
             </div>
+        </div>
+    {/if}
+
+    {#if outputsOpen}
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <div class="menu-veil" onclick={() => (outputsOpen = false)}></div>
+        <div class="menu" role="menu" aria-label={$_("native.call.output")}>
+            {#each outputRows as row (row.route)}
+                <button
+                    type="button"
+                    class="row"
+                    role="menuitemradio"
+                    aria-checked={row.selected}
+                    onclick={() => pickOutput(row.route)}
+                >
+                    <span
+                        class="row-glyph"
+                        style:mask="var(--icon-{row.icon}) center/contain no-repeat"
+                    ></span>
+                    <span class="row-label">{row.name ?? $_(row.label)}</span>
+                    <span class="row-check" class:selected={row.selected}></span>
+                </button>
+            {/each}
         </div>
     {/if}
 
@@ -387,7 +455,36 @@
         }
     }
 
+    .cell {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+    }
+
+    .flip {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 4;
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.45);
+        cursor: pointer;
+    }
+
+    .flip-glyph {
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        mask: var(--icon-camera) center/contain no-repeat;
+    }
+
     .self {
+        position: relative;
         width: 104px;
         height: 140px;
         border-radius: 10px;
@@ -484,6 +581,77 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .menu-veil {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+    }
+
+    .menu {
+        position: absolute;
+        z-index: 5;
+        left: 0;
+        right: 0;
+        bottom: calc(var(--safe-bottom) + 104px);
+        width: 248px;
+        margin: 0 auto;
+        padding: 6px;
+        box-sizing: border-box;
+        border-radius: 16px;
+        background: #1d1d25;
+        box-shadow:
+            0 12px 36px rgba(0, 0, 0, 0.6),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 48px;
+        padding: 0 12px;
+        border: none;
+        border-radius: 11px;
+        background: none;
+        color: #fff;
+        text-align: start;
+        cursor: pointer;
+
+        &:active {
+            background: rgba(255, 255, 255, 0.06);
+        }
+    }
+
+    .row-glyph {
+        flex: none;
+        width: 19px;
+        height: 19px;
+        background: #fff;
+    }
+
+    .row-label {
+        flex: 1;
+        min-width: 0;
+        font: 600 15px/1.2 var(--font-sans);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .row-check {
+        width: 16px;
+        height: 16px;
+        background: var(--accent);
+        mask: var(--icon-check) center/contain no-repeat;
+        opacity: 0;
+
+        &.selected {
+            opacity: 1;
+        }
     }
 
     .controls {

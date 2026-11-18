@@ -236,6 +236,8 @@ describe("native call bridge", () => {
             setCallRingback,
             setCallTeardownToken,
             keepCallTeardownTokenFresh,
+            setCallOutput,
+            setCallPip,
         } = await import("./call_bridge");
         const direct = { kind: "direct_chat", userId: "u" } as const;
         tauri.invoke.mockRejectedValue(new Error("not found"));
@@ -253,7 +255,10 @@ describe("native call bridge", () => {
         await expect(
             setCallTeardownToken(direct, 7n, "t", "end", undefined),
         ).resolves.toBeUndefined();
-        expect(tauri.invoke).toHaveBeenCalledTimes(5);
+        // N14's output menu and picture in picture, on a shell from before them
+        await expect(setCallOutput("bluetooth")).resolves.toBeUndefined();
+        await expect(setCallPip(true)).resolves.toBeUndefined();
+        expect(tauri.invoke).toHaveBeenCalledTimes(7);
         tauri.addPluginListener.mockRejectedValue(new Error("no such event"));
         await expect(expectCallControls(vi.fn())).resolves.toBeUndefined();
 
@@ -266,6 +271,8 @@ describe("native call bridge", () => {
         await setCallSpeaker(true);
         await setCallRingback(true);
         await setCallTeardownToken(direct, 7n, "t", "end", undefined);
+        await setCallOutput("speaker");
+        await setCallPip(true);
         keepCallTeardownTokenFresh(direct, 7n, fetchToken, undefined, 1)();
         expect(tauri.invoke).not.toHaveBeenCalled();
         expect(fetchToken).not.toHaveBeenCalled();
@@ -288,6 +295,37 @@ describe("native call bridge", () => {
             messageId: 7n,
             speaker: false,
         });
+        // N14: the outputs the shell lists, an output it doesn't name as one of ours left out, and
+        // picture in picture entered or left
+        expect(
+            parseCallControl({
+                kind: "outputs",
+                messageId: "7",
+                route: "bluetooth",
+                outputs: [
+                    { route: "speaker" },
+                    { route: "earpiece" },
+                    { route: "bluetooth", name: "Pixel Buds" },
+                    { route: "hologram" },
+                ],
+            }),
+        ).toEqual({
+            kind: "outputs",
+            messageId: 7n,
+            route: "bluetooth",
+            outputs: [
+                { route: "speaker" },
+                { route: "earpiece" },
+                { route: "bluetooth", name: "Pixel Buds" },
+            ],
+        });
+        expect(parseCallControl({ kind: "outputs", messageId: "7", route: "x" })).toBeUndefined();
+        expect(parseCallControl({ kind: "pip", messageId: "7", on: true })).toEqual({
+            kind: "pip",
+            messageId: 7n,
+            on: true,
+        });
+        expect(parseCallControl({ kind: "pip", messageId: "7" })).toBeUndefined();
         expect(parseCallControl({ kind: "hangup" })).toBeUndefined();
         expect(parseCallControl({ kind: "mute", messageId: "7" })).toBeUndefined();
         expect(parseCallControl({ kind: "explode", messageId: "7" })).toBeUndefined();

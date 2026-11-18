@@ -15,6 +15,7 @@ import {
     nativeCallControl,
     reportCallActive,
     reportCallEnded,
+    type CallOutput,
     type NativeCallControl,
 } from "../utils/native/call_bridge";
 import { isAndroidTauriApp, isIosTauriApp } from "@shared";
@@ -90,6 +91,15 @@ export const microphone = writable<boolean>(false);
 export const speaker = writable<boolean>(false);
 export const hasPresence = writable<boolean>(false);
 export const camera = writable<boolean>(false);
+
+// The outputs the Android shell can put the call's audio on, and the one in use (N14); undefined
+// where the shell doesn't list them (an older shell, or no call).
+export const callOutputs = writable<{ route: string; outputs: CallOutput[] } | undefined>(
+    undefined,
+);
+
+// The Android app is showing the call in picture in picture (N14).
+export const callPip = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
 export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
 
@@ -216,6 +226,12 @@ export const activeVideoCall = {
             case "route":
                 // the in-app speaker control follows the platform; nothing to apply to Daily
                 speaker.set(control.speaker);
+                break;
+            case "outputs":
+                callOutputs.set({ route: control.route, outputs: control.outputs });
+                break;
+            case "pip":
+                callPip.set(control.on);
                 break;
         }
     },
@@ -393,6 +409,8 @@ export const activeVideoCall = {
             camera.set(false);
             sharing.set(false);
             hasPresence.set(false);
+            callOutputs.set(undefined);
+            callPip.set(false);
             return undefined;
         });
     },

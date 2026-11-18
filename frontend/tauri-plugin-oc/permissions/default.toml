@@ -33,6 +33,8 @@ permissions = [
     "allow-call-active",
     "allow-call-ended",
     "allow-set-call-speaker",
+    "allow-set-call-output",
+    "allow-set-call-pip",
     "allow-set-call-ringback",
     "allow-set-call-end-token",
     "allow-native-call-join",

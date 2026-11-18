@@ -1,6 +1,7 @@
 import { callOffer, type VideoCallType } from "@client";
 import type { CallPersonView, CallSelfView } from "@src/logic/video/callPeople";
 import type { VideoCallView } from "@src/stores/video";
+import type { CallOutput, CallOutputRoute } from "@src/utils/native/call_bridge";
 
 // The native call (native design notes §3.5): the chat header's call buttons, how the call screen
 // lays out its people and controls, and when the screen or the minimised call shows.
@@ -121,7 +122,18 @@ export function callStage(
     return { tiles: [...others, ...selfTile], floatSelf: false, columns: video ? 2 : 1 };
 }
 
-export type CallControlId = "mic" | "camera" | "speaker" | "ask" | "leave";
+export type CallControlId = "mic" | "camera" | "speaker" | "output" | "ask" | "leave";
+
+/**
+ * Where the app can send the call's audio: the route the shell reports (`speaker`), and in a
+ * shell that lists them the outputs it can be put on and the one in use (N14).
+ */
+export type CallAudio = {
+    speaker: boolean;
+    outputs?: { route: string; outputs: CallOutput[] };
+};
+
+const headphones = (route: string) => route === "wired" || route === "bluetooth";
 
 /** A 52px control under the call (design notes §3.5 Controls). `label` is an app string key. */
 export type CallControl = {
@@ -134,21 +146,23 @@ export type CallControl = {
 
 /**
  * The call's controls. Video: Mute, Camera, Speaker, Leave; voice: Mute, Speaker, Leave, with no
- * camera (an audio call's room sends audio only). Speaker shows where the app can switch the route
- * (`speaker` is the route the shell reports; undefined where it can't), and a broadcast viewer who
- * can't send (`speak`) has Ask to speak in place of Mute and Camera.
+ * camera (an audio call's room sends audio only). Speaker shows where the app can send the audio
+ * (`audio`; undefined where it can't): a toggle between the loudspeaker and the phone, or with
+ * headphones connected the output menu, named for the output in use (design notes §3.5). A
+ * broadcast viewer who can't send (`speak`) has Ask to speak in place of Mute and Camera.
  */
 export function callControls({
     video,
     muted,
     camera,
-    speaker,
+    audio,
     speak,
 }: {
     video: boolean;
     muted: boolean;
     camera: boolean;
-    speaker: boolean | undefined;
+    /** Undefined where the app can't send the audio anywhere (a browser, iOS's native screen). */
+    audio: CallAudio | undefined;
     speak: "ask" | "asked" | undefined;
 }): CallControl[] {
     const controls: CallControl[] = [];
@@ -175,9 +189,7 @@ export function callControls({
             });
         }
     }
-    if (speaker !== undefined) {
-        controls.push({ id: "speaker", label: "native.call.speaker", icon: "volume", on: speaker });
-    }
+    if (audio !== undefined) controls.push(audioControl(audio));
     controls.push({ id: "leave", label: "native.call.leave", icon: "phone-off", on: false });
     return controls;
 }
@@ -192,4 +204,67 @@ export function callScreenShows(call: Call, drawsCalls: boolean): boolean {
 /** The minimised call shows exactly while a call is minimised. */
 export function miniCallShows(call: Call): boolean {
     return call?.view === "minimised";
+}
+
+/**
+ * The user's own camera is shown mirrored, as a mirror would, unless it faces away from them (a
+ * phone's back camera), where the mirror would turn the world round.
+ */
+export function mirrorsSelf(stream: MediaStream | null): boolean {
+    return stream?.getVideoTracks()[0]?.getSettings().facingMode !== "environment";
+}
+
+/** Speaker: the toggle, or with headphones listed, the button that opens the output menu. */
+function audioControl({ speaker, outputs }: CallAudio): CallControl {
+    if (outputs === undefined || !outputs.outputs.some((o) => headphones(o.route))) {
+        return { id: "speaker", label: "native.call.speaker", icon: "volume", on: speaker };
+    }
+    const route = outputs.route;
+    return {
+        id: "output",
+        label: headphones(route)
+            ? "native.call.headphones"
+            : route === "speaker"
+              ? "native.call.speaker"
+              : "native.call.phone",
+        icon: headphones(route) ? "headphones" : route === "speaker" ? "volume" : "phone-ear",
+        on: route === "speaker",
+    };
+}
+
+/** A row of the output menu. `label` is an app string key, shown unless there's a `name`. */
+export type OutputRow = {
+    route: CallOutputRoute;
+    label: string;
+    name?: string;
+    icon: string;
+    selected: boolean;
+};
+
+/** The output menu: each output the shell lists, the one in use ticked. */
+export function outputMenu(outputs: { route: string; outputs: CallOutput[] }): OutputRow[] {
+    const labels: Record<CallOutputRoute, [string, string]> = {
+        speaker: ["native.call.speaker", "volume"],
+        earpiece: ["native.call.phone", "phone-ear"],
+        wired: ["native.call.headphones", "headphones"],
+        bluetooth: ["native.call.bluetooth", "headphones"],
+    };
+    return outputs.outputs.map((o) => ({
+        route: o.route,
+        label: labels[o.route][0],
+        ...(o.name !== undefined ? { name: o.name } : {}),
+        icon: labels[o.route][1],
+        selected: o.route === outputs.route,
+    }));
+}
+
+/**
+ * Picture in picture is asked of the Android app only for a video call the user has joined (N14):
+ * a voice call, or one still joining, leaves the app with just its notification.
+ */
+export function pipArmed(
+    call: { status: "joining" | "joined"; callType: string } | undefined,
+    androidApp: boolean,
+): boolean {
+    return androidApp && call?.status === "joined" && call.callType !== "audio";
 }

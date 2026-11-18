@@ -29,11 +29,15 @@ interface TelecomCall {
     val answered: Boolean
     // The route the platform last reported, or null before it reported one.
     val route: CallRoutePolicy.Route?
+    // The outputs the platform last listed for the call (CallOutputs).
+    val outputs: List<CallOutputs.Output>
     // The ring was answered on this device; the call carries on.
     fun answered()
     // The web layer is in the call.
     fun activate()
     fun setSpeaker(speaker: Boolean, isDefault: Boolean)
+    // The user picked an output from the in-app menu.
+    fun choose(route: CallRoutePolicy.Route)
     fun finish(end: CallRegistry.End)
 }
 
@@ -258,6 +262,13 @@ object CallTelecom {
 
     fun route(id: CallId): CallRoutePolicy.Route? = live[id]?.route
 
+    fun outputs(id: CallId): List<CallOutputs.Output> = live[id]?.outputs ?: emptyList()
+
+    // The user's pick from the in-app output menu, for a call Telecom has.
+    fun choose(id: CallId, route: CallRoutePolicy.Route) {
+        live[id]?.choose(route)
+    }
+
     // Ends every call that was answered here (#9559 invariant 15). A ringing call is left
     // alone: Telecom keeps this process bound while it rings, so the ring, its timeout, the
     // missed-call notification and the log row all still happen through the ringer.
@@ -394,12 +405,17 @@ class CallConnection(private val context: Context, override val call: IncomingCa
     override val route: CallRoutePolicy.Route?
         get() = lastAudioState?.let { routeStateOf(it).route }
 
+    override val outputs: List<CallOutputs.Output>
+        get() = lastAudioState?.let { outputsOf(it) } ?: emptyList()
+
     private val routes = CallRoutePolicy(object : CallRoutePolicy.Port {
         override fun routeState(): CallRoutePolicy.RouteState? = lastAudioState?.let { routeStateOf(it) }
         override fun requestRoute(route: CallRoutePolicy.Route) {
             val code = when (route) {
                 CallRoutePolicy.Route.SPEAKER -> CallAudioState.ROUTE_SPEAKER
-                CallRoutePolicy.Route.EARPIECE -> CallAudioState.ROUTE_EARPIECE
+                // the phone: the earpiece, or a wired headset in its place
+                CallRoutePolicy.Route.EARPIECE -> CallAudioState.ROUTE_WIRED_OR_EARPIECE
+                CallRoutePolicy.Route.WIRED -> CallAudioState.ROUTE_WIRED_HEADSET
                 CallRoutePolicy.Route.BLUETOOTH -> CallAudioState.ROUTE_BLUETOOTH
                 CallRoutePolicy.Route.OTHER -> return
             }
@@ -485,11 +501,16 @@ class CallConnection(private val context: Context, override val call: IncomingCa
         routes.apply(speaker, isDefault)
     }
 
+    override fun choose(route: CallRoutePolicy.Route) = routes.choose(route)
+
     // The platform's view of the route and the system mute (a headset or car button).
     override fun onCallAudioStateChanged(state: CallAudioState?) {
         state ?: return
         lastAudioState = state
         routes.onRouteStateChanged(routeStateOf(state))
+        if (this.state == STATE_ACTIVE) {
+            CallSession.outputsReported(call.id, routeStateOf(state).route, outputsOf(state))
+        }
         if (answered && lastMuted != state.isMuted) {
             lastMuted = state.isMuted
             CallSession.muteReported(call.id, state.isMuted)
@@ -500,10 +521,24 @@ class CallConnection(private val context: Context, override val call: IncomingCa
         val route = when (state.route) {
             CallAudioState.ROUTE_SPEAKER -> CallRoutePolicy.Route.SPEAKER
             CallAudioState.ROUTE_EARPIECE -> CallRoutePolicy.Route.EARPIECE
+            CallAudioState.ROUTE_WIRED_HEADSET -> CallRoutePolicy.Route.WIRED
             CallAudioState.ROUTE_BLUETOOTH -> CallRoutePolicy.Route.BLUETOOTH
             else -> CallRoutePolicy.Route.OTHER
         }
         return CallRoutePolicy.RouteState(route, btDevices = state.supportedRouteMask and CallAudioState.ROUTE_BLUETOOTH != 0)
+    }
+
+    // What the platform can route the call to now. The Bluetooth device's name needs a permission
+    // the app doesn't ask for; the menu names it generically.
+    private fun outputsOf(state: CallAudioState): List<CallOutputs.Output> {
+        val mask = state.supportedRouteMask
+        val routes = buildList {
+            if (mask and CallAudioState.ROUTE_SPEAKER != 0) add(CallRoutePolicy.Route.SPEAKER)
+            if (mask and CallAudioState.ROUTE_EARPIECE != 0) add(CallRoutePolicy.Route.EARPIECE)
+            if (mask and CallAudioState.ROUTE_WIRED_HEADSET != 0) add(CallRoutePolicy.Route.WIRED)
+            if (mask and CallAudioState.ROUTE_BLUETOOTH != 0) add(CallRoutePolicy.Route.BLUETOOTH)
+        }
+        return CallOutputs.of(routes, bluetoothName = null)
     }
 
     override fun finish(end: CallRegistry.End) {

@@ -36,6 +36,8 @@ Default permissions for the plugin
 - `allow-call-active`
 - `allow-call-ended`
 - `allow-set-call-speaker`
+- `allow-set-call-output`
+- `allow-set-call-pip`
 - `allow-set-call-ringback`
 - `allow-set-call-end-token`
 - `allow-native-call-join`
@@ -1020,6 +1022,58 @@ Enables the set_call_end_token command without any pre-configured scope.
 <td>
 
 Denies the set_call_end_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-call-output`
+
+</td>
+<td>
+
+Enables the set_call_output command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-call-output`
+
+</td>
+<td>
+
+Denies the set_call_output command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-call-pip`
+
+</td>
+<td>
+
+Enables the set_call_pip command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-call-pip`
+
+</td>
+<td>
+
+Denies the set_call_pip command without any pre-configured scope.
 
 </td>
 </tr>

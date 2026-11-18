@@ -24,18 +24,21 @@
     import { callFace, callPeople } from "@src/logic/video/callPeople";
     import {
         activeVideoCall,
+        callPip,
         microphone,
         ringForRemoteCall,
         stopRingingForRemoteCall,
     } from "@src/stores/video";
     import { now500 } from "@src/stores/time";
     import { toastCallEndings, toastStartCall as report } from "@src/utils/callToast";
+    import { setCallPip } from "@utils/native/call_bridge";
     import { setDarkScreenUp } from "@utils/native/systemBarsStyle";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
-    import { callScreenShows, miniCallShows } from "./call.adapter";
+    import { callScreenShows, miniCallShows, mirrorsSelf, pipArmed } from "./call.adapter";
     import CallMini from "./CallMini.svelte";
+    import CallPip from "./CallPip.svelte";
     import CallScreen from "./CallScreen.svelte";
     import IncomingCall from "./IncomingCall.svelte";
     import { createNativeTreeCall } from "./treeCall";
@@ -93,6 +96,14 @@
         activeVideoCall.setView("minimised");
     }
 
+    // picture in picture for a joined video call, in the Android app (the shell reports entry and
+    // exit, and the call then shows full bleed)
+    const pipOn = $derived(pipArmed(call, isAndroidTauriApp()));
+    $effect(() => {
+        void setCallPip(pipOn);
+    });
+    const inPip = $derived($callPip && call !== undefined);
+
     // Android's system back minimises the call before it pops a screen
     useOverlay(overlays, () => screen, minimise);
 
@@ -115,7 +126,9 @@
         const first = people.people[0];
         if (first !== undefined) return { ...first, mirror: false };
         // alone: the user's own camera, mirrored as on the call screen
-        if (people.self !== undefined) return { ...people.self, mirror: true };
+        if (people.self !== undefined) {
+            return { ...people.self, mirror: mirrorsSelf(people.self.stream) };
+        }
         const title = heading?.title ?? "";
         return { initial: title.slice(0, 1).toUpperCase(), grad: "", stream: null, mirror: false };
     });
@@ -166,7 +179,9 @@
     />
 {/if}
 
-{#if screen && heading !== undefined}
+{#if inPip && heading !== undefined}
+    <CallPip people={people.people} self={people.self} title={heading.title} />
+{:else if screen && heading !== undefined}
     <CallScreen
         {session}
         title={heading.title}
@@ -176,7 +191,7 @@
     />
 {/if}
 
-{#if mini && call !== undefined && heading !== undefined}
+{#if mini && !inPip && call !== undefined && heading !== undefined}
     <CallMini
         title={heading.title}
         {time}

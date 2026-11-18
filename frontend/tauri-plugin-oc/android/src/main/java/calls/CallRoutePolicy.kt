@@ -5,7 +5,8 @@ package com.ocplugin.app.calls
 // Ported from big-chat's CallRoutePolicy. Pure: no Android types, so the orderings are
 // unit-tested.
 class CallRoutePolicy(private val port: Port) {
-    enum class Route { SPEAKER, EARPIECE, BLUETOOTH, OTHER }
+    // WIRED: a wired headset, which takes the earpiece's place while it's plugged in.
+    enum class Route { SPEAKER, EARPIECE, WIRED, BLUETOOTH, OTHER }
 
     // What the platform last reported: the route in use, and whether any Bluetooth device
     // is usable.
@@ -41,6 +42,12 @@ class CallRoutePolicy(private val port: Port) {
     @Volatile
     private var hadBt = false
 
+    // The user picked the phone (the earpiece, or a wired headset in its place) from the output
+    // menu while a Bluetooth device could take the call: it stays on the phone, and is asked
+    // back from Bluetooth if a device grabs it.
+    @Volatile
+    private var preferPhone = false
+
     // How many times the current route intent has been re-asserted over an external stomp.
     @Volatile
     private var routeReasserts = 0
@@ -63,10 +70,36 @@ class CallRoutePolicy(private val port: Port) {
         port.requestRoute(
             when {
                 speaker -> Route.SPEAKER
-                btAvailable() -> Route.BLUETOOTH
+                btAvailable() && !preferPhone -> Route.BLUETOOTH
                 else -> Route.EARPIECE
             },
         )
+    }
+
+    // The user picked this output from the output menu (headphones connected): it has the
+    // same absolute priority as a speaker tap. The phone is asked for as the earpiece, which
+    // the platform gives to a wired headset when one is plugged in.
+    fun choose(route: Route) {
+        resetStompBudget()
+        when (route) {
+            Route.SPEAKER -> {
+                preferPhone = false
+                apply(speaker = true)
+            }
+            Route.BLUETOOTH -> {
+                preferPhone = false
+                desiredSpeaker = false
+                desiredIsDefault = false
+                port.requestRoute(Route.BLUETOOTH)
+            }
+            Route.EARPIECE, Route.WIRED -> {
+                preferPhone = true
+                desiredSpeaker = false
+                desiredIsDefault = false
+                port.requestRoute(Route.EARPIECE)
+            }
+            Route.OTHER -> Unit
+        }
     }
 
     // The call went active: the platform honours routes now, so ask again.
@@ -100,6 +133,14 @@ class CallRoutePolicy(private val port: Port) {
         }
         hadBt = btNow
         val desired = desiredSpeaker
+        // Bluetooth took the call from the phone the user picked: ask for the phone back.
+        if (preferPhone && desired == false && state.route == Route.BLUETOOTH &&
+            routeReasserts < MAX_ROUTE_REASSERTS && port.isActive()
+        ) {
+            routeReasserts++
+            port.requestRoute(Route.EARPIECE)
+            return
+        }
         if (routeReasserts < MAX_ROUTE_REASSERTS && basicRoute && desired != null && desired != speakerNow) {
             routeReasserts++
             if (port.isActive()) apply(desired)
