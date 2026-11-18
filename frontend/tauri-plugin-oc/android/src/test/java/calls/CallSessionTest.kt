@@ -227,6 +227,53 @@ class CallSessionTest {
         assertTrue("CallPip.onUserLeaveHint(this)" in activity && "CallPip.onModeChanged(this, " in activity)
     }
 
+    // N14 (#10382) invariant 15: the tile is the WebView, and entering it pauses the activity, which
+    // wry answers by pausing the WebView: it stops drawing and the tile freezes on the last frame.
+    // So the activity hands its pause and the mode change to CallPip, which resumes the WebView.
+    @Test
+    fun `invariant 15 the picture in picture tile keeps drawing the call`() {
+        assertTrue(CallPip.drawsWhilePaused(inPip = true))
+        assertFalse(CallPip.drawsWhilePaused(inPip = false))
+        // on 12+ the pause comes before the mode does, so entering the tile is what resumes it
+        assertEquals(CallPip.Draw.RESUME, CallPip.drawOnModeChange(inPip = true, resumed = false))
+        // closed into the background it pauses; expanded, the activity's own resume follows
+        assertEquals(CallPip.Draw.PAUSE, CallPip.drawOnModeChange(inPip = false, resumed = false))
+        assertEquals(CallPip.Draw.KEEP, CallPip.drawOnModeChange(inPip = false, resumed = true))
+        val activity = File("../../src-tauri/gen/android/app/src/main/java/com/oclabs/openchat/MainActivity.kt").readText()
+        val onPause = activity.substringAfter("override fun onPause()").substringBefore("override fun")
+        assertTrue(onPause.indexOf("super.onPause()") in 0 until onPause.indexOf("CallPip.onPaused(this, "))
+        assertTrue("onWebViewCreate(" in activity)
+        assertTrue("CallPip.onModeChanged(this, isInPictureInPictureMode, webView)" in activity)
+    }
+
+    private class FakePipWindow(override val inPip: Boolean) : CallPip.Window {
+        var closed = false
+        override fun arm(on: Boolean) = Unit
+        override fun close() {
+            closed = true
+        }
+    }
+
+    // N14 (#10382) invariant 14: the end is reported from wherever it happened (the notification's
+    // hang-up runs in a receiver, not the activity), so the tile is closed through the window the
+    // web layer armed, not through the reporter's context.
+    @Test
+    fun `invariant 14 a call ended from anywhere closes its picture in picture tile`() {
+        val tile = FakePipWindow(inPip = true)
+        CallPip.attach(tile)
+        try {
+            CallPip.callEnded()
+            assertTrue(tile.closed)
+            // a window not showing the tile is left alone
+            val app = FakePipWindow(inPip = false)
+            CallPip.attach(app)
+            CallPip.callEnded()
+            assertFalse(app.closed)
+        } finally {
+            CallPip.attach(null)
+        }
+    }
+
     @Test
     fun `invariant 5 a route default that beats Telecom's registration of the call is applied on registration`() {
         val telecom = File("src/main/java/calls/CallTelecom.kt").readText()

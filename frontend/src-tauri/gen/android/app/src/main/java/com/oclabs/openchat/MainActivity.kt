@@ -272,7 +272,21 @@ class MainActivity : TauriActivity() {
 
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        CallPip.onModeChanged(this, isInPictureInPictureMode)
+        CallPip.onModeChanged(this, isInPictureInPictureMode, webView)
+    }
+
+    // The tile is the WebView, and wry pauses it on every activity pause, entering the tile
+    // included: CallPip resumes it after wry, so the tile draws the call, not its last frame.
+    private var webView: WebView? = null
+
+    override fun onWebViewCreate(webView: WebView) {
+        super.onWebViewCreate(webView)
+        this.webView = webView
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CallPip.onPaused(this, webView)
     }
 
     override fun onDestroy() {

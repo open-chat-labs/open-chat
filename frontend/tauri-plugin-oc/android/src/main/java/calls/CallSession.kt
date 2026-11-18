@@ -127,7 +127,7 @@ object CallSession {
     fun ended(context: Context, id: CallId) {
         when (val ended = state.ended(id, System.currentTimeMillis())) {
             is CallSessionState.Ended.StopAfterGrace -> {
-                CallPip.callEnded(context as? android.app.Activity)
+                CallPip.callEnded()
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
                 CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
                 CallRingback.stop()
@@ -173,6 +173,7 @@ object CallSession {
             }
             Log.i(LOG_TAG, "${teardown.kind} reported to the bridge: $reported")
         }
+        CallPip.callEnded()
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallRingback.stop()
         // Only what was answered: a call still ringing keeps ringing through the ringer.
