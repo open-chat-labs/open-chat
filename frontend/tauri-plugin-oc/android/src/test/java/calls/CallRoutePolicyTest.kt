@@ -125,6 +125,20 @@ class CallRoutePolicyTest {
         assertEquals(Route.SPEAKER, port.requests.last())
     }
 
+    // a car kit or buds that keep grabbing the call aren't fought forever
+    @Test
+    fun `the phone is asked back from Bluetooth within the re-assertion budget`() {
+        val port = FakePort()
+        port.state = RouteState(Route.BLUETOOTH, btDevices = true)
+        port.active = true
+        val policy = CallRoutePolicy(port)
+        policy.choose(Route.EARPIECE)
+        repeat(CallRoutePolicy.MAX_ROUTE_REASSERTS + 3) {
+            policy.onRouteStateChanged(RouteState(Route.BLUETOOTH, btDevices = true))
+        }
+        assertEquals(1 + CallRoutePolicy.MAX_ROUTE_REASSERTS, port.requests.count { it == Route.EARPIECE })
+    }
+
     @Test
     fun `the output menu lists the speaker, the phone and a Bluetooth device, once each`() {
         assertEquals(
@@ -139,6 +153,11 @@ class CallRoutePolicyTest {
         assertEquals(
             listOf(CallOutputs.Output(Route.SPEAKER, null), CallOutputs.Output(Route.WIRED, null)),
             CallOutputs.of(listOf(Route.SPEAKER, Route.EARPIECE, Route.WIRED), null),
+        )
+        // the names the web layer knows (call_bridge's OUTPUT_ROUTES)
+        assertEquals(
+            listOf("speaker", "earpiece", "wired", "bluetooth"),
+            listOf(Route.SPEAKER, Route.EARPIECE, Route.WIRED, Route.BLUETOOTH).map { CallOutputs.wireName(it) },
         )
         Route.values().filter { it != Route.OTHER }.forEach {
             assertEquals(it, CallOutputs.routeOf(CallOutputs.wireName(it)))
