@@ -65,7 +65,7 @@
   {/if}
   {#if children}{@render children()}{/if}
   {#each actions as action (action.icon + action.label)}
-    <button type="button" class="cell" aria-label={t(action.label)} onclick={(e) => action.onClick(e.currentTarget)}>
+    <button type="button" class="cell" class:live={action.live} aria-label={t(action.label)} onclick={(e) => action.onClick(e.currentTarget)}>
       <span class="action-icon" style:mask="var(--icon-{action.icon}) center/contain no-repeat"></span>
     </button>
   {/each}
@@ -118,6 +118,17 @@
     color: var(--ink);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  // the call going on here, which this button joins
+  .cell.live {
+    background: color-mix(in oklch, var(--status-online) 18%, transparent);
+    color: var(--status-online);
+    animation: ocCallPulse 1.8s ease-out 3;
+
+    @include reduced-motion {
+      animation: none;
+    }
   }
 
   // back: a chevron on iOS, an arrow on Android; both point against the reading direction

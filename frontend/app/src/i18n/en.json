@@ -1776,8 +1776,7 @@
             "live": {
                 "video": "Video call in progress",
                 "voice": "Voice call in progress",
-                "sub": "{elapsed} · {count, plural, one {# person} other {# people}}",
-                "tapToJoin": "Tap to join"
+                "sub": "{elapsed} · {count, plural, one {# person} other {# people}}"
             },
             "message": {
                 "info": "Info",
@@ -2320,6 +2319,8 @@
             "cameraOn": "Camera on",
             "inCall": "{count} in call",
             "join": "Join",
+            "joinVideo": "Join the video call",
+            "joinVoice": "Join the voice call",
             "joining": "Joining…",
             "leave": "Leave",
             "minimise": "Minimise call",

@@ -1019,3 +1019,6 @@
 
 ## 2026-11-18 — SnapFloat's six spots, by hand
 - `SnapFloat`: `sides` (optional): six spots, the corners and the sides' midpoints, with no top or bottom centre; a drop in the middle third goes to the nearer side. `meta.json` (`sides`). Used by the native call screen's floating camera and the minimised call (N14, #10382), which the native design snaps to six spots.
+
+## 2026-11-18 — NativePageHeader's live call button, by hand
+- `NativePageHeader`: an action can be `live` (`NativeHeaderAction.live`): green on a green tint, pulsing three times, for the header's call button that joins a call going on in the chat (native plan 09, 2026-11-10, which replaced the strip under the header). Used by the native conversation (N14, #10382).

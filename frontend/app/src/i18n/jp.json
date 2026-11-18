@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "ビデオ通話中",
                 "voice": "音声通話中",
-                "sub": "{elapsed} · {count}人",
-                "tapToJoin": "タップして参加"
+                "sub": "{elapsed} · {count}人"
             },
             "message": {
                 "info": "情報",
@@ -2411,6 +2410,8 @@
             "cameraOn": "カメラをオン",
             "inCall": "通話中 {count} 人",
             "join": "参加",
+            "joinVideo": "ビデオ通話に参加",
+            "joinVoice": "音声通話に参加",
             "joining": "参加中…",
             "leave": "退出",
             "minimise": "通話を最小化",

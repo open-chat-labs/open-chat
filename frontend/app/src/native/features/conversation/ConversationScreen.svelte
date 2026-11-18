@@ -4,7 +4,7 @@
      them, one setting with the details' switch), Leave group / Block / Delete),
      which turns into the in-chat search bar; the pinned strip under it while something is pinned
      (PinnedStrip: a tap goes to the pin, its list button pushes the Pinned messages screen); the
-     live call strip while the live call's item is off screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
+     header's call button of a call going on here is green and joins it (N14); the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
      in DMs, a strip resting on the composer in groups); the media viewer; a message's long-press menu
@@ -360,6 +360,7 @@
                   icon: button.icon,
                   label: $_(button.label),
                   onClick: () => pressHeaderCall(button.request),
+                  live: button.live,
               })),
     );
 
@@ -761,24 +762,10 @@
         }),
     );
 
-    // ---- the live call: its item in the timeline, and the header's strip while that's off screen
+    // ---- the live call: its item in the timeline (no strip under the header: the header's button
+    // of its kind is green and joins it, native plan 09, 2026-11-10)
 
     const liveCall = $derived(chat?.videoCallInProgress);
-    let liveItemShown = $state(false);
-
-    function watchShown(node: HTMLElement) {
-        const io = new IntersectionObserver(
-            (entries) => (liveItemShown = entries.some((e) => e.isIntersecting)),
-            { root: node.closest(".vcl-viewport") },
-        );
-        io.observe(node);
-        return {
-            destroy: () => {
-                io.disconnect();
-                liveItemShown = false;
-            },
-        };
-    }
 
     function liveSub(content: VideoCallContent, started: bigint): string {
         return $_("native.conversation.live.sub", {
@@ -1034,7 +1021,7 @@
     // the day of the messages at the top of the list, pinned there while it scrolls through that
     // day (the list says which: VirtualChatList's sticky date), as the old app's; the day's own pill
     // takes over as it passes under it. Where it sits is core/stickyDateTop's, as the web's: again
-    // whenever what's above the list changes (the search bar, the live call's strip)
+    // whenever what's above the list changes (the search bar, the pinned strip)
     let stickyTop = $state<number>();
     let stickyDate = $state<bigint>();
 
@@ -1308,22 +1295,6 @@
         />
     {/if}
 
-    {#if chat !== undefined && liveCall !== undefined && !liveItemShown}
-        <button type="button" class="live-strip" onclick={() => pressCall("join", liveCall)}>
-            <span class="live-dot"></span>
-            <span class="live-text">
-                <span class="live-title">
-                    {$_(
-                        liveCall.callType === "audio"
-                            ? "native.conversation.live.voice"
-                            : "native.conversation.live.video",
-                    )}
-                </span>
-                <span class="live-sub">{$_("native.conversation.live.tapToJoin")}</span>
-            </span>
-            <span class="join">{$_("ui.callEvent.join")}</span>
-        </button>
-    {/if}
 
     {#if privatePreview}
         <div class="state">
@@ -1395,7 +1366,7 @@
                                     }}
                                 >
                                     {#if call === "live" && isLiveCall(liveCall, msg.messageIndex)}
-                                        <div class="live-pill" use:watchShown>
+                                        <div class="live-pill">
                                             <span
                                                 class="live-icon"
                                                 style:mask="var(--icon-{media === 'voice'
@@ -1866,8 +1837,7 @@
     }
 
     // the live call: a compact two-line pill in the live colours, Join on the end
-    .live-pill,
-    .live-strip {
+    .live-pill {
         box-sizing: border-box;
         max-width: 100%;
         display: flex;
@@ -1883,29 +1853,11 @@
         text-align: start;
     }
 
-    .live-strip {
-        flex: none;
-        align-self: center;
-        max-width: calc(100% - 2 * var(--space-16));
-        margin: var(--space-10) 0 var(--space-6);
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-    }
-
     .live-icon {
         flex: none;
         width: 16px;
         height: 16px;
         background: var(--status-online);
-    }
-
-    .live-dot {
-        flex: none;
-        width: 8px;
-        height: 8px;
-        border-radius: var(--radius-circle);
-        background: var(--status-online);
-        box-shadow: 0 0 0 4px color-mix(in oklch, var(--status-online) 25%, transparent);
     }
 
     .live-text {

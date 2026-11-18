@@ -15,7 +15,7 @@
     import { activeVideoCall, camera, microphone, sharing } from "@src/stores/video";
     import { getContext } from "svelte";
     import { callFace } from "@src/logic/video/callPeople";
-    import { answerSpeakRequest, speakRequestCards } from "./webCall";
+    import { answerSpeakRequest, speakRequestCards } from "@src/logic/video/speakRequests";
 
     let {
         session,

@@ -23,6 +23,8 @@ export type NativeHeaderAction = {
   label: string;
   /** Gets the button, to anchor a menu to. */
   onClick: (anchor: HTMLElement) => void;
+  /** A call going on that this button joins: green, pulsing three times (native plan 09). */
+  live?: boolean;
 };
 
 /** A row of the native menus (AnchoredMenu, LongPressMenu). */

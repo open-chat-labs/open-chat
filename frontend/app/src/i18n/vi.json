@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "Đang có cuộc gọi video",
                 "voice": "Đang có cuộc gọi thoại",
-                "sub": "{elapsed} · {count} người",
-                "tapToJoin": "Chạm để tham gia"
+                "sub": "{elapsed} · {count} người"
             },
             "message": {
                 "info": "Thông tin",
@@ -2411,6 +2410,8 @@
             "cameraOn": "Bật camera",
             "inCall": "{count} trong cuộc gọi",
             "join": "Tham gia",
+            "joinVideo": "Tham gia cuộc gọi video",
+            "joinVoice": "Tham gia cuộc gọi thoại",
             "joining": "Đang tham gia…",
             "leave": "Rời",
             "minimise": "Thu nhỏ cuộc gọi",

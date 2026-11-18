@@ -1,4 +1,12 @@
-import type { ChatIdentifier, VideoCallType } from "@client";
+import type {
+    ChatIdentifier,
+    CommunitySummary,
+    OpenChat,
+    UserSummary,
+    VideoCallType,
+} from "@client";
+import type { IncomingVideoCall } from "@src/stores/video";
+import { videoCallChat } from "./callChat";
 
 /** A call ringing here: the chat it's in and the type it was started as. */
 export type RingingCall = { chatId: ChatIdentifier; callType: VideoCallType };
@@ -34,5 +42,33 @@ export function ringActions(call: RingingCall, handlers: RingHandlers) {
         dismiss() {
             handlers.clear();
         },
+    };
+}
+
+/**
+ * What a ringing call's card says: the chat's name and picture, and who is calling, with the line
+ * for its kind (an app string key, `{name}` the caller). Undefined until the chat and the caller
+ * are known here.
+ */
+export function ringCard(
+    client: Pick<
+        OpenChat,
+        "lookupChatSummary" | "displayName" | "userAvatarUrl" | "groupAvatarUrl"
+    >,
+    call: IncomingVideoCall,
+    users: ReadonlyMap<string, UserSummary>,
+    communities: {
+        get(id: { kind: "community"; communityId: string }): CommunitySummary | undefined;
+    },
+): { name: string; avatarUrl: string; line: string; caller: string } | undefined {
+    const chat = client.lookupChatSummary(call.chatId);
+    const initiator = users.get(call.userId);
+    if (chat === undefined || initiator === undefined) return undefined;
+    const { name, avatarUrl } = videoCallChat(client, chat, users, communities);
+    return {
+        name,
+        avatarUrl,
+        line: call.callType === "audio" ? "videoCall.audioRemoteStart" : "videoCall.remoteStart",
+        caller: client.displayName(initiator),
     };
 }

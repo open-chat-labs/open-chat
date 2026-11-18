@@ -1,6 +1,7 @@
 <!-- The native tree's call (N14), for the shell's lifetime: the app's call events (startVideoCall
-     from a chat's call buttons and the shell's answer, hangup, askToSpeak) on the one session, what
-     a call that couldn't start says, and the confirm before leaving one call for another. Then the
+     from a chat's call buttons and the shell's answer, hangup, askToSpeak) on the one session, a
+     call started elsewhere ringing here (IncomingCall), what a call that couldn't start says, what
+     ended or refused the user (toasts), and the confirm before leaving one call for another. Then the
      call screen while the call isn't minimised (CallScreen; in the Android app and phones'
      browsers, as on iOS the native screen draws the call), and the minimised call (CallMini). Back
      on Android minimises the call screen first, as it closes a sheet; while it's up the system
@@ -21,9 +22,14 @@
     import NativeAlert from "@openchat/ui/src/native/NativeAlert.svelte";
     import { callHeading } from "@src/logic/video/callChat";
     import { callFace, callPeople } from "@src/logic/video/callPeople";
-    import { activeVideoCall, microphone } from "@src/stores/video";
+    import {
+        activeVideoCall,
+        microphone,
+        ringForRemoteCall,
+        stopRingingForRemoteCall,
+    } from "@src/stores/video";
     import { now500 } from "@src/stores/time";
-    import { toastStartCall as report } from "@src/utils/callToast";
+    import { toastCallEndings, toastStartCall as report } from "@src/utils/callToast";
     import { setDarkScreenUp } from "@utils/native/systemBarsStyle";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -31,6 +37,7 @@
     import { callScreenShows, miniCallShows } from "./call.adapter";
     import CallMini from "./CallMini.svelte";
     import CallScreen from "./CallScreen.svelte";
+    import IncomingCall from "./IncomingCall.svelte";
     import { createNativeTreeCall } from "./treeCall";
 
     let { overlays, barShown }: { overlays: Overlays; barShown: boolean } = $props();
@@ -55,9 +62,15 @@
             subscribe("startVideoCall", (request) => void start(request)),
             subscribe("hangup", () => session.hangup()),
             subscribe("askToSpeak", () => session.askToSpeak()),
+            // a call started elsewhere rings here (in a browser; the apps ring themselves)
+            subscribe("remoteVideoCallStarted", (ev) => ringForRemoteCall(ev)),
+            subscribe("remoteVideoCallEnded", stopRingingForRemoteCall),
         ];
         return () => unsubs.forEach((u) => u());
     });
+
+    // the host ending a broadcast, or turning down a request to speak
+    $effect(() => toastCallEndings(session));
 
     async function switchCall() {
         report(await session.switchCall(nowhere));
@@ -140,6 +153,8 @@
         return () => window.removeEventListener("resize", measure);
     });
 </script>
+
+<IncomingCall {overlays} />
 
 {#if session.confirmSwitchTo}
     <NativeAlert

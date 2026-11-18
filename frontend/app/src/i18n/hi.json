@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "वीडियो कॉल चल रही है",
                 "voice": "वॉइस कॉल चल रही है",
-                "sub": "{elapsed} · {count, plural, one {# व्यक्ति} other {# लोग}}",
-                "tapToJoin": "जुड़ने के लिए टैप करें"
+                "sub": "{elapsed} · {count, plural, one {# व्यक्ति} other {# लोग}}"
             },
             "message": {
                 "info": "जानकारी",
@@ -2411,6 +2410,8 @@
             "cameraOn": "कैमरा चालू",
             "inCall": "कॉल में {count}",
             "join": "शामिल हों",
+            "joinVideo": "वीडियो कॉल में शामिल हों",
+            "joinVoice": "वॉइस कॉल में शामिल हों",
             "joining": "शामिल हो रहे हैं…",
             "leave": "छोड़ें",
             "minimise": "कॉल छोटा करें",

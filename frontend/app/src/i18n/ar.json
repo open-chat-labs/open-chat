@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "مكالمة فيديو جارية",
                 "voice": "مكالمة صوتية جارية",
-                "sub": "{elapsed} · {count, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخص}}",
-                "tapToJoin": "انقر للانضمام"
+                "sub": "{elapsed} · {count, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخص}}"
             },
             "message": {
                 "info": "معلومات",
@@ -2411,6 +2410,8 @@
             "cameraOn": "تشغيل الكاميرا",
             "inCall": "{count} في المكالمة",
             "join": "انضمام",
+            "joinVideo": "الانضمام إلى مكالمة الفيديو",
+            "joinVoice": "الانضمام إلى المكالمة الصوتية",
             "joining": "جارٍ الانضمام…",
             "leave": "مغادرة",
             "minimise": "تصغير المكالمة",

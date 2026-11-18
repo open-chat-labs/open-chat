@@ -26,30 +26,42 @@ const self: CallSelfView = {
     sharing: false,
     screenStream: null,
 };
+const isJoin = (request: unknown, callType: string) =>
+    JSON.stringify(request) === JSON.stringify({ callType, join: true });
 const ids = (stage: ReturnType<typeof callStage>) => stage.tiles.map((t) => t.id);
 
 describe("the native call", () => {
-    test("the header starts video or voice, a broadcast in public, joins the call on, or goes back", () => {
+    test("the header starts video or voice, or a broadcast in public", () => {
         const base = { canStart: true, isPublic: false, chatCall: undefined, ownCall: undefined };
-        expect(headerCallButtons(base).map((b) => b.request)).toEqual([
-            { callType: "default", join: false },
-            { callType: "audio", join: false },
+        expect(headerCallButtons(base).map((b) => [b.icon, b.request, b.live])).toEqual([
+            ["video", { callType: "default", join: false }, false],
+            ["phone", { callType: "audio", join: false }, false],
         ]);
         expect(headerCallButtons({ ...base, isPublic: true }).map((b) => b.request)).toEqual([
             { callType: "broadcast", join: false },
         ]);
-        // joined as the type it was started as
-        expect(headerCallButtons({ ...base, chatCall: "audio" })).toEqual([
-            {
-                icon: "phone",
-                label: "native.call.join",
-                request: { callType: "audio", join: true },
-            },
-        ]);
-        expect(headerCallButtons({ ...base, ownCall: "default" }).map((b) => b.request)).toEqual([
-            "return",
-        ]);
         expect(headerCallButtons({ ...base, canStart: false })).toEqual([]);
+    });
+
+    // A call going on here is joined, never started beside, from either button, as the type it was
+    // started as; the button of its kind is the green one. In the user's own call, both go back
+    test("the header joins the call going on from the button of its kind, or goes back to the user's", () => {
+        const base = { canStart: true, isPublic: false, ownCall: undefined };
+        const voiceCall = headerCallButtons({ ...base, chatCall: "audio" });
+        expect(voiceCall.map((b) => [b.icon, b.live])).toEqual([
+            ["video", false],
+            ["phone", true],
+        ]);
+        expect(voiceCall.every((b) => isJoin(b.request, "audio"))).toBe(true);
+
+        const videoCall = headerCallButtons({ ...base, chatCall: "default" });
+        expect(videoCall.map((b) => b.live)).toEqual([true, false]);
+
+        const own = headerCallButtons({ ...base, chatCall: "default", ownCall: "default" });
+        expect(own.map((b) => [b.request, b.live])).toEqual([
+            ["return", false],
+            ["return", false],
+        ]);
     });
 
     test("video up to 3 floats the user's camera over the others; 4 or more share a 2-column grid", () => {

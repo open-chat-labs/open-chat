@@ -11,12 +11,16 @@ export type HeaderCallButton = {
     /** An app string key. */
     label: string;
     request: { callType: VideoCallType; join: boolean } | "return";
+    /** The call going on here is this kind: the button is green, pulses and joins it. */
+    live: boolean;
 };
 
 /**
- * The header's call buttons (`callOffer`): video and voice for a new call in a private chat, a
- * broadcast in a public one, Join for the call going on, or back to the user's own call there.
- * The user's own call in the chat counts as the call going on before the chat's summary says so.
+ * The header's call buttons (`callOffer`; native design plan 09, 2026-11-10): video and voice,
+ * starting a call in a private chat, or one button starting a broadcast in a public one. While a
+ * call the user isn't in is going on, both join it as the type it was started as, and the one of
+ * its kind is green; in the user's own call there, both go back to it. The user's own call in the
+ * chat counts as the call going on before the chat's summary says so.
  */
 export function headerCallButtons({
     canStart,
@@ -38,22 +42,25 @@ export function headerCallButtons({
         inCall: ownCall !== undefined,
         canStartBroadcast: true,
     });
-    const icon = (callType: VideoCallType) => (callType === "audio" ? "phone" : "video");
+    const video = (request: HeaderCallButton["request"], live = false): HeaderCallButton => ({
+        icon: "video",
+        label: live ? "native.call.joinVideo" : "native.conversation.videoCall",
+        request,
+        live,
+    });
+    const voice = (request: HeaderCallButton["request"], live = false): HeaderCallButton => ({
+        icon: "phone",
+        label: live ? "native.call.joinVoice" : "native.conversation.voiceCall",
+        request,
+        live,
+    });
     switch (offer.kind) {
         case "none":
             return [];
         case "choose":
             return [
-                {
-                    icon: "video",
-                    label: "native.conversation.videoCall",
-                    request: { callType: "default", join: false },
-                },
-                {
-                    icon: "phone",
-                    label: "native.conversation.voiceCall",
-                    request: { callType: "audio", join: false },
-                },
+                video({ callType: "default", join: false }),
+                voice({ callType: "audio", join: false }),
             ];
         case "broadcast":
             return [
@@ -61,23 +68,18 @@ export function headerCallButtons({
                     icon: "video",
                     label: "native.call.startBroadcast",
                     request: { callType: "broadcast", join: false },
+                    live: false,
                 },
             ];
-        case "join":
-            return [
-                {
-                    icon: icon(offer.callType),
-                    label: "native.call.join",
-                    request: { callType: offer.callType, join: true },
-                },
-            ];
+        case "join": {
+            const request = { callType: offer.callType, join: true };
+            const voiceCall = offer.callType === "audio";
+            return [video(request, !voiceCall), voice(request, voiceCall)];
+        }
         case "leave":
             return [
-                {
-                    icon: icon(chatCall ?? ownCall ?? "default"),
-                    label: "native.call.backToCall",
-                    request: "return",
-                },
+                { ...video("return"), label: "native.call.backToCall" },
+                { ...voice("return"), label: "native.call.backToCall" },
             ];
     }
 }

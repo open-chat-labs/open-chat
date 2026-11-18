@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "Videoanruf läuft",
                 "voice": "Sprachanruf läuft",
-                "sub": "{elapsed} · {count, plural, one {# Person} other {# Personen}}",
-                "tapToJoin": "Zum Beitreten tippen"
+                "sub": "{elapsed} · {count, plural, one {# Person} other {# Personen}}"
             },
             "message": {
                 "info": "Info",
@@ -2411,6 +2410,8 @@
             "cameraOn": "Kamera an",
             "inCall": "{count} im Anruf",
             "join": "Beitreten",
+            "joinVideo": "Dem Videoanruf beitreten",
+            "joinVoice": "Dem Sprachanruf beitreten",
             "joining": "Beitreten…",
             "leave": "Verlassen",
             "minimise": "Anruf minimieren",
