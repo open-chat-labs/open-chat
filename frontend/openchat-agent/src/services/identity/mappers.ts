@@ -195,12 +195,15 @@ function webAuthnKey(key: IdentityWebAuthnKey): WebAuthnKeyFull {
 }
 
 export function apiWebAuthnKey(key: WebAuthnKeyFull): IdentityWebAuthnKey {
+    // A key cached with a malformed AAGUID (Rollbar #32181) is sent with the all-zero AAGUID an
+    // authenticator gives when it doesn't identify itself, rather than failing validation.
+    const aaguid = key.aaguid.length === 16 ? key.aaguid : new Uint8Array(16);
     return {
         public_key: key.publicKey,
         credential_id: key.credentialId,
         origin: key.origin,
         cross_platform: key.crossPlatform,
-        aaguid: [...key.aaguid.values()] as [
+        aaguid: [...aaguid.values()] as [
             number,
             number,
             number,

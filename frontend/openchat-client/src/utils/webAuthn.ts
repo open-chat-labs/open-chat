@@ -39,8 +39,7 @@ export async function createWebAuthnIdentity(
         authenticatorAttachment,
     );
 
-    // A guid identifying the model of the authenticator (eg. fbfc3007-154e-4ecc-8c0b-6e020557d7bd = iCloud Keychain)
-    const aaguid = new Uint8Array(response.getAuthenticatorData().slice(37, 53));
+    const aaguid = authDataToAaguid(attObject.authData);
 
     await saveKeyInCacheFn({
         publicKey: new Uint8Array(identity.getPublicKey().toDer()),
@@ -183,6 +182,18 @@ export function authDataToCose(authData: ArrayBuffer | Uint8Array): Uint8Array {
     const start = 55 + credentialIdLength;
     const length = cborItemLength(bytes, start);
     return bytes.slice(start, start + length);
+}
+
+/**
+ * Extracts the AAGUID, a guid identifying the model of the authenticator
+ * (eg. fbfc3007-154e-4ecc-8c0b-6e020557d7bd = iCloud Keychain), from the attestation's authenticator data.
+ *
+ * Read it from the same authData as the public key: some authenticators return a shorter
+ * getAuthenticatorData(), which gave an AAGUID of fewer than 16 bytes, and the identity canister
+ * rejected the sign-up (Rollbar #32181).
+ */
+export function authDataToAaguid(authData: ArrayBuffer | Uint8Array): Uint8Array {
+    return new Uint8Array(authData).slice(37, 53);
 }
 
 /**

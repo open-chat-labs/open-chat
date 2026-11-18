@@ -1,5 +1,5 @@
 import { WebAuthnIdentity } from "@icp-sdk/core/identity";
-import { authDataToCose } from "./webAuthn";
+import { authDataToAaguid, authDataToCose } from "./webAuthn";
 import type { WebAuthnKeyFull } from "@shared";
 import borc from "borc";
 import {
@@ -56,9 +56,7 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                         credential.authenticatorAttachment,
                     );
 
-                    const aaguid = new Uint8Array(
-                        credential.response.authenticatorData.slice(37, 53),
-                    );
+                    const aaguid = authDataToAaguid(attObject.authData);
                     saveKeyInCacheFn({
                         publicKey: new Uint8Array(identity.getPublicKey().toDer()),
                         credentialId,
