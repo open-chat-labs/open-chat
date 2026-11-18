@@ -11,15 +11,9 @@
     import CallPanel from "@openchat/ui/src/features/components/CallPanel.svelte";
     import { callPeople, callSend } from "@src/logic/video/callPeople";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
-    import {
-        activeVideoCall,
-        camera,
-        microphone,
-        sharing,
-        type RequestToSpeak,
-    } from "@src/stores/video";
+    import { activeVideoCall, camera, microphone, sharing } from "@src/stores/video";
     import { getContext } from "svelte";
-    import { callFace } from "./webCall";
+    import { answerSpeakRequest, callFace, speakRequestCards } from "./webCall";
 
     let {
         session,
@@ -45,18 +39,7 @@
         callSend($activeVideoCall, session.media.participants.local, session.askedToSpeak),
     );
     const requests = $derived($activeVideoCall?.accessRequests ?? []);
-    const requestCards = $derived(
-        requests.map((r) => {
-            const user = $allUsersStore.get(r.userId);
-            return { id: r.participantId, ...face(r.userId, user?.username ?? "") };
-        }),
-    );
-    function answer(id: string, approve: boolean) {
-        const request = requests.find((r: RequestToSpeak) => r.participantId === id);
-        if (request === undefined) return;
-        if (approve) activeVideoCall.approveAccessRequest(request);
-        else activeVideoCall.rejectAccessRequest(request);
-    }
+    const requestCards = $derived(speakRequestCards(requests, $allUsersStore, face));
 </script>
 
 <CallPanel
@@ -85,5 +68,5 @@
     speak={send === "send" ? undefined : send}
     onAskToSpeak={() => session.askToSpeak()}
     requests={requestCards}
-    onApprove={(id) => answer(id, true)}
-    onReject={(id) => answer(id, false)} />
+    onApprove={(id) => answerSpeakRequest(requests, id, true)}
+    onReject={(id) => answerSpeakRequest(requests, id, false)} />

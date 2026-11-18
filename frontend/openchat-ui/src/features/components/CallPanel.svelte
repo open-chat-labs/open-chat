@@ -59,6 +59,7 @@
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { onMount, tick, untrack } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
+  import SpeakRequests from './SpeakRequests.svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import VideoTile from './VideoTile.svelte';
@@ -465,15 +466,8 @@
   </div>
 
   {#if requests.length > 0}
-    <div class="requests" role="list" aria-label={t('ui.callPanel.requests')}>
-      {#each requests as r (r.id)}
-        <div class="request" role="listitem">
-          <span class="request-avatar" style:background={r.grad}>{@render face(r.avatarUrl, r.initial)}</span>
-          <span class="request-text">{t('ui.callPanel.wantsToSpeak', { name: r.name })}</span>
-          <RoundIconButton icon="close" label="ui.callPanel.reject" variant="overlay" size="sm" onPress={() => onReject?.(r.id)} />
-          <RoundIconButton icon="check" label="ui.callPanel.approve" variant="on" size="sm" onPress={() => onApprove?.(r.id)} />
-        </div>
-      {/each}
+    <div class="requests">
+      <SpeakRequests {requests} {onApprove} {onReject} />
     </div>
   {/if}
 
@@ -832,42 +826,12 @@
     top: 62px;
     right: 12px;
     z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
     width: min(320px, calc(100% - 24px));
   }
 
   .full .requests {
     top: 70px;
     right: 20px;
-  }
-
-  .request {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 8px 8px 10px;
-    border-radius: 14px;
-    background: rgba(14, 14, 18, 0.85);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  }
-
-  .request-avatar {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    font: 600 13px/1 var(--font-sans);
-    overflow: hidden;
-  }
-
-  .request-text {
-    flex: 1;
-    min-width: 0;
-    font: 500 13px/1.3 var(--font-sans);
   }
 
   .device-menu {

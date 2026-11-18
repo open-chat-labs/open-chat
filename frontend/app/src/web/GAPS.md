@@ -1225,11 +1225,14 @@ design export needs. Each entry says where it came up.
   - **Ended by the host, request refused:** toasts (`CallHost`), where the old trees had sheets.
   - **Broadcasts, minimal, by hand** (EXPORT-LOG 2026-11-17): a viewer without presence has Ask to
     speak in place of Mute, Camera and Share; the host gets a card per request with Not now and Let
-    them speak, inside the call view only: a host with the call minimised sees no requests until
-    they go back (the old trees showed them app-wide). No demoting a speaker yet (the old
+    them speak, in the call view and on the minimised call. No demoting a speaker yet (the old
     participants list had it).
-  - **Not yet:** `MiniCall` (7c). A minimised call has no floating window until then: the
-    header's button goes back to it, which is too easy to miss.
+  - **Minimised (7c):** `MiniCall` floats over the middle panel while the call is minimised or
+    another chat is open (`MiniCallHost`, `logic/video/miniCall`), clear of the chat's header and
+    composer, and keeps the spot it was dropped in until the app reloads. It has mute, camera (video
+    calls), Ask to speak, the host's requests, Back to call and Leave. By hand in the library
+    (EXPORT-LOG 2026-11-18). No screen share from it: that stays in the call view (the old
+    summaries had it). The design's minimised call has mute, Back to call and Leave only.
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
   tree's mobile-width call menu (`MenuIcon`) mounts its items in their own root and read `chat`
   after the call ended (Rollbar #32132).
