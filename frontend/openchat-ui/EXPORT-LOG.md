@@ -1010,3 +1010,9 @@
 ## 2026-11-17 — call avatars show the person's picture, by hand
 - `VideoTile`: `avatarUrl` (optional): the person's picture in the avatar circle, the letter without it or if it fails to load. `CallPanel`: `avatarUrl` on `CallPerson`, `self` and `CallSpeakRequest`, passed to its tiles and drawn the same way in the share strip, your floating tile and the request cards. `meta.json` (`VideoTile.avatarUrl`; `people`, `self`, `requests` docs). Used by the app's call view (web 7b, #10125), which had shown everyone's letter even where they have a picture.
 - Not in the design export: the export's call tiles draw letters only.
+
+## 2026-11-18 — MiniCall's camera, Ask to speak and requests to speak; SpeakRequests, by hand
+- `MiniCall`: `camera` + `onToggleCamera` (the Camera button, hidden without it, as for a voice call); `speak` + `onAskToSpeak` (a broadcast viewer's Ask to speak in place of mute, as `CallPanel`); `requests` + `onApprove` / `onReject` (the host's requests to speak, under the controls); `joining` (says so in place of the timer, no media controls yet); `selfStream` and `people[].stream` / `avatarUrl` (the lead's live feed or picture, the user's camera in its corner, where the export drew grey placeholders). The avatar stack shows people's pictures. `meta.json` (`MiniCall` props). Used by the app's minimised call (web 7c, #10126).
+- `SpeakRequests` (new): `CallPanel`'s request cards moved out so `MiniCall` shows the same ones. `CallPanel` keeps their place under the top bar. `meta.json` (new entry).
+- `lib/behaviours/stream`: the `srcObject` action `VideoTile` had, shared with `MiniCall`.
+- Not in the design export: the design's minimised call has mute, Back to call and Leave only.

@@ -2,6 +2,7 @@
      `stream` (a MediaStream) plays as the feed, muted: call audio is the host's to route. Without it the avatar shows on
      the `feed` placeholder. speaking → accent ring (drawn above the feed). Name pill + mic state bottom-left. -->
 <script lang="ts">
+  import { stream as playStream } from '../../lib/behaviours/stream';
   import { useT } from '../../lib/i18n';
   interface Props {
     nameLabel: string;
@@ -45,25 +46,13 @@
   // the picture that failed to load: a new one is tried
   let failed = $state<string>();
 
-  // a MediaStream can't be set as an attribute; bind it as srcObject
-  function video(node: HTMLVideoElement, s: MediaStream | null) {
-    node.srcObject = s;
-    return {
-      update(next: MediaStream | null) {
-        if (node.srcObject !== next) node.srcObject = next;
-      },
-      destroy() {
-        node.srcObject = null;
-      },
-    };
-  }
 </script>
 
 <div class="tile" style:border-radius="{radius}px" role="img" aria-label={t('ui.videoTile.label', { name: nameLabel, muted: String(muted), speaking: String(speaking) })}>
   <span class="ring" class:speaking aria-hidden="true"></span>
   <div class="feed" style:--ratio={ratio || 4 / 3} style:background={feed}>
     {#if stream}
-      <video class="video" class:mirror use:video={stream} autoplay playsinline muted></video>
+      <video class="video" class:mirror use:playStream={stream} autoplay playsinline muted></video>
     {:else}
       <span class="avatar" class:big style:background={grad}
         >{#if avatarUrl && avatarUrl !== failed}<img class="avatar-image" src={avatarUrl} alt="" onerror={() => (failed = avatarUrl)} />{:else}{initial ?? nameLabel.slice(0, 1).toUpperCase()}{/if}</span

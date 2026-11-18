@@ -1,13 +1,12 @@
 <script lang="ts">
+    import { backToCall, miniCallShows } from "@src/logic/video/miniCall";
     import { videoCallChat, type VideoCallChat } from "@src/logic/video/callChat";
     import { Avatar, ColourVars, Container, IconButton, Subtitle } from "component-lib";
     import {
         allUsersStore,
-        chatIdentifiersEqual,
         communitiesStore,
         OpenChat,
         publish,
-        routeForChatIdentifier,
         selectedChatIdStore,
         type ChatIdentifier,
     } from "@client";
@@ -40,12 +39,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    let show = $derived(
-        $activeVideoCall?.chatId !== undefined &&
-            (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore) ||
-                (chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore) &&
-                    $activeVideoCall.view === "minimised")),
-    );
+    let show = $derived(miniCallShows($activeVideoCall, $selectedChatIdStore));
 
     let chat = $derived(normaliseChatSummary($activeVideoCall?.chatId));
     // an audio call has no camera and no screen share to toggle
@@ -53,10 +47,8 @@
 
     function goToCall() {
         if ($activeVideoCall) {
-            if (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore)) {
-                navigate(routeForChatIdentifier("none", $activeVideoCall.chatId));
-            }
-            activeVideoCall.setView("default");
+            const route = backToCall($activeVideoCall, $selectedChatIdStore, activeVideoCall.setView);
+            if (route !== undefined) navigate(route);
         }
     }
 

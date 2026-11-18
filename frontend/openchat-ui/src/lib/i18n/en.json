@@ -2194,6 +2194,7 @@
     },
     "miniCall": {
       "backToCall": "Back to call",
+      "joining": "Joining…",
       "leave": "Leave call",
       "mediaOnly": "{media, select, voice {Voice} other {Video}}",
       "meta": "{media, select, voice {Voice} other {Video}} · {timer}",

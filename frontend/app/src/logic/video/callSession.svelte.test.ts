@@ -291,6 +291,46 @@ describe("a call", () => {
         expect(session.hostEnded).toBe(true);
     });
 
+    // #10125 invariant 4, the rest of it: leaving and a fatal Daily error end the call here too, so
+    // no call view (or minimised call) outlives its call
+    test("invariant 4: leaving or a fatal Daily error clears the active call", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => undefined);
+        for (const event of ["left-meeting", "error"]) {
+            await session.startOrJoin(container, {
+                chatId: group,
+                callType: "default",
+                join: false,
+            });
+            expect(activeVideoCall.current()).toBeDefined();
+
+            frame.handlers.get(event)?.({ errorMsg: "Meeting has ended" });
+
+            expect(activeVideoCall.current()).toBeUndefined();
+        }
+    });
+
+    // #10126 invariant 1: minimised, full screen and back are only ways of showing the call; none
+    // of them leaves it or starts it again
+    test("invariant 1 (#10126): minimising, restoring and full screen never leave or restart the call", async () => {
+        await session.startOrJoin(container, { chatId: group, callType: "default", join: false });
+        const status = activeVideoCall.current()?.status;
+
+        for (const view of [
+            "minimised",
+            "default",
+            "fullscreen",
+            "minimised",
+            "default",
+        ] as const) {
+            activeVideoCall.setView(view);
+        }
+
+        expect(frame.leave).not.toHaveBeenCalled();
+        expect(client.startOrJoinVideoCall).toHaveBeenCalledTimes(1);
+        expect(activeVideoCall.current()?.chatId).toEqual(group);
+        expect(activeVideoCall.current()?.status).toBe(status);
+    });
+
     // A request to speak belongs to its call: one left unanswered must not carry into the next call,
     // where Ask to speak would show as already asked and do nothing
     test("each call starts with no request to speak outstanding", async () => {

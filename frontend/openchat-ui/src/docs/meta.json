@@ -14672,7 +14672,7 @@
     "name": "MiniCall",
     "source": "lib/MiniCall.dc.html",
     "hash": "e6c8db6f",
-    "description": "Minimised call: floats over the app (SnapFloat — drag anywhere, 8 snap spots, clear of header/composer via safeTop/safeBottom).",
+    "description": "Minimised call: floats over the app (SnapFloat — drag anywhere, 8 snap spots, clear of header/composer via safeTop/safeBottom). Video calls show the lead's feed and the user's camera; mute, camera, Ask to speak and the host's requests to speak as CallPanel has them.",
     "preview": {
       "width": 600,
       "height": 420
@@ -14716,14 +14716,14 @@
       },
       {
         "name": "people",
-        "type": "{ name?: string; initial?: string; grad?: string }[]",
+        "type": "{ name?: string; initial?: string; grad?: string; avatarUrl?: string; stream?: MediaStream | null }[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Participants; the first is the lead feed."
+        "doc": "Participants; the first is the lead feed, their avatar (picture, else initial) while their video is off."
       },
       {
         "name": "faces",
@@ -14734,7 +14734,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Faces for the stack; defaults to the people's gradients."
+        "doc": "Faces for the stack; defaults to the people's pictures and gradients."
       },
       {
         "name": "avatarGrad",
@@ -14748,6 +14748,17 @@
         "doc": "Lead avatar background when the lead has none."
       },
       {
+        "name": "selfStream",
+        "type": "MediaStream | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "null",
+        "doc": "The user's own camera, in the lead's corner (video calls)."
+      },
+      {
         "name": "muted",
         "type": "boolean",
         "default": false,
@@ -14757,6 +14768,50 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "camera",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Whether the camera is on."
+      },
+      {
+        "name": "joining",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Still joining: says so in place of the timer, with no media controls yet."
+      },
+      {
+        "name": "speak",
+        "type": "'ask' | 'asked'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A broadcast's viewer: 'ask' shows Ask to speak in place of Mute and Camera, 'asked' the same pressed while the host decides."
+      },
+      {
+        "name": "requests",
+        "type": "CallSpeakRequest[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The host's queue of requests to speak, as cards under the controls (SpeakRequests)."
       },
       {
         "name": "position",
@@ -14834,6 +14889,50 @@
         "doc": ""
       },
       {
+        "name": "onToggleCamera",
+        "type": "(on: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Turns the camera on or off; the Camera button is hidden without it (a voice call)."
+      },
+      {
+        "name": "onAskToSpeak",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A broadcast viewer asked the host to speak."
+      },
+      {
+        "name": "onApprove",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host let that request's person speak."
+      },
+      {
+        "name": "onReject",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host turned that request down for now."
+      },
+      {
         "name": "onLeave",
         "type": "() => void",
         "default": null,
@@ -14843,6 +14942,52 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      }
+    ],
+    "group": "features"
+  },
+  {
+    "name": "SpeakRequests",
+    "source": "lib/CallPanel.dc.html (its request cards), by hand (7c, 2026-11-18)",
+    "hash": "",
+    "description": "A broadcast host's requests to speak, one card each: who's asking, Not now and Let them speak. CallPanel and MiniCall show them.",
+    "preview": {
+      "width": 360,
+      "height": 160
+    },
+    "props": [
+      {
+        "name": "requests",
+        "type": "CallSpeakRequest[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The requests (id, name, initial, grad, avatarUrl)."
+      },
+      {
+        "name": "onApprove",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host let that request's person speak."
+      },
+      {
+        "name": "onReject",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host turned that request down for now."
       }
     ],
     "group": "features"
