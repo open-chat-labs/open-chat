@@ -4,13 +4,16 @@
      2-column grid, the active speaker in a green ring. Voice: everyone as centred avatars with
      speaking rings. The 52px controls (callControls) hide 4s after the last tap in a video call, and
      the video grows by half their height; a tap on the stage brings them back (CallChrome).
+     A broadcast's host gets the requests to speak as cards under the top bar.
      TODO(design): flip camera on the user's tile, and the output menu with headphones (N14, PR 3). -->
 <script lang="ts">
     import { allUsersStore, formatClock, type OpenChat } from "@client";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import SnapFloat from "@openchat/ui/src/lib/components/SnapFloat.svelte";
+    import SpeakRequests from "@openchat/ui/src/features/components/SpeakRequests.svelte";
     import VideoTile from "@openchat/ui/src/features/components/VideoTile.svelte";
     import { callFace, callPeople, callSend } from "@src/logic/video/callPeople";
+    import { answerSpeakRequest, speakRequestCards } from "@src/logic/video/speakRequests";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
     import { activeVideoCall, camera, microphone, speaker } from "@src/stores/video";
     import { now500 } from "@src/stores/time";
@@ -41,14 +44,18 @@
 
     const call = $derived($activeVideoCall);
     const video = $derived(call?.callType !== "audio");
+    const faceOf = $derived(callFace(client, $allUsersStore, AVATAR_GRADIENTS));
     const view = $derived(
         callPeople(
             session.media.participants,
             session.media.activeSpeaker,
-            callFace(client, $allUsersStore, AVATAR_GRADIENTS),
+            faceOf,
             session.media.streamOf,
         ),
     );
+    // a broadcast host's requests to speak (TODO(design): the minimal controls, GAPS.md)
+    const requests = $derived(call?.accessRequests ?? []);
+    const requestCards = $derived(speakRequestCards(requests, $allUsersStore, faceOf));
     const stage = $derived(callStage(view.people, view.self, video, $_("native.call.you")));
     const count = $derived(view.people.length + 1);
     const send = $derived(
@@ -137,6 +144,16 @@
             <span class="count-glyph"></span>{count}
         </span>
     </div>
+
+    {#if requestCards.length > 0}
+        <div class="requests">
+            <SpeakRequests
+                requests={requestCards}
+                onApprove={(id) => answerSpeakRequest(requests, id, true)}
+                onReject={(id) => answerSpeakRequest(requests, id, false)}
+            />
+        </div>
+    {/if}
 
     {#if video}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -328,6 +345,15 @@
         height: 16px;
         background: #fff;
         mask: var(--icon-users) center/contain no-repeat;
+    }
+
+    // under the top bar, over the stage
+    .requests {
+        position: absolute;
+        top: calc(var(--safe-top) + 68px);
+        left: 12px;
+        right: 12px;
+        z-index: 3;
     }
 
     // the controls' height (14px above, 52px button, 6px, the label) with the safe area under them

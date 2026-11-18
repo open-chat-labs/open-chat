@@ -12,8 +12,7 @@
     } from "@client";
     import Avatar from "@openchat/ui/src/lib/components/Avatar.svelte";
     import RoundIconButton from "@openchat/ui/src/lib/components/RoundIconButton.svelte";
-    import { videoCallChat } from "@src/logic/video/callChat";
-    import { ringActions } from "@src/logic/video/incomingCall";
+    import { ringActions, ringCard } from "@src/logic/video/incomingCall";
     import {
         activeVideoCall,
         incomingVideoCall,
@@ -30,16 +29,12 @@
     const ring = $derived.by(() => {
         const call = $incomingVideoCall;
         if (call === undefined) return undefined;
-        const chat = client.lookupChatSummary(call.chatId);
-        const initiator = $allUsersStore.get(call.userId);
-        if (chat === undefined || initiator === undefined) return undefined;
-        const { name, avatarUrl } = videoCallChat(client, chat, $allUsersStore, $communitiesStore);
+        const card = ringCard(client, call, $allUsersStore, $communitiesStore);
+        if (card === undefined) return undefined;
         return {
-            name,
-            avatarUrl,
-            line: $_(call.callType === "audio" ? "videoCall.audioRemoteStart" : "videoCall.remoteStart", {
-                values: { name: client.displayName(initiator) },
-            }),
+            name: card.name,
+            avatarUrl: card.avatarUrl,
+            line: $_(card.line, { values: { name: card.caller } }),
             actions: ringActions(call, {
                 clear: () => incomingVideoCall.set(undefined),
                 decline: (chatId) => client.declineVideoCall(chatId),

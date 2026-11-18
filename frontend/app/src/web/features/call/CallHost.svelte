@@ -19,12 +19,10 @@
     import MiniCallHost from "./MiniCallHost.svelte";
     import { callHeading } from "@src/logic/video/callChat";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
-    import { toastStartCall as report } from "@src/utils/callToast";
+    import { toastCallEndings, toastStartCall as report } from "@src/utils/callToast";
     import { _ } from "svelte-i18n";
     import ConfirmDialog from "../conversation/ConfirmDialog.svelte";
     import IncomingCall from "./IncomingCall.svelte";
-    import { toastStore } from "@src/stores/toast";
-    import { i18nKey } from "@src/i18n/i18n";
 
     let { session }: { session: CallSession } = $props();
 
@@ -53,18 +51,7 @@
     });
 
     // the session raises these for the old trees' sheets; here they're toasts, said once
-    $effect(() => {
-        if (session.hostEnded) {
-            toastStore.showSuccessToast(i18nKey("videoCall.hostEnded"));
-            session.hostEnded = false;
-        }
-    });
-    $effect(() => {
-        if (session.denied) {
-            toastStore.showFailureToast(i18nKey("videoCall.denied"));
-            session.denied = false;
-        }
-    });
+    $effect(() => toastCallEndings(session));
 
     async function switchCall() {
         report(await session.switchCall(nowhere));

@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "视频通话进行中",
                 "voice": "语音通话进行中",
-                "sub": "{elapsed} · {count} 人",
-                "tapToJoin": "点按加入"
+                "sub": "{elapsed} · {count} 人"
             },
             "message": {
                 "info": "信息",
@@ -2411,6 +2410,8 @@
             "cameraOn": "打开摄像头",
             "inCall": "通话中 {count} 人",
             "join": "加入",
+            "joinVideo": "加入视频通话",
+            "joinVoice": "加入语音通话",
             "joining": "正在加入…",
             "leave": "离开",
             "minimise": "最小化通话",

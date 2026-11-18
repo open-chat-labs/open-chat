@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "Videollamada en curso",
                 "voice": "Llamada de voz en curso",
-                "sub": "{elapsed} · {count, plural, one {# persona} other {# personas}}",
-                "tapToJoin": "Toca para unirte"
+                "sub": "{elapsed} · {count, plural, one {# persona} other {# personas}}"
             },
             "message": {
                 "info": "Información",
@@ -2411,6 +2410,8 @@
             "cameraOn": "Activar cámara",
             "inCall": "{count} en la llamada",
             "join": "Unirse",
+            "joinVideo": "Unirse a la videollamada",
+            "joinVoice": "Unirse a la llamada de voz",
             "joining": "Uniéndose…",
             "leave": "Salir",
             "minimise": "Minimizar llamada",

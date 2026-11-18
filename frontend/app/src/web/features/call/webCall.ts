@@ -1,10 +1,7 @@
-import { threadOpenStore, type OpenChat, type UserSummary } from "@client";
-import type { CallSpeakRequest } from "@openchat/ui/src/features/components/CallPanel.svelte";
+import { threadOpenStore, type OpenChat } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
-import type { CallFace } from "@src/logic/video/callPeople";
 import { callFrameOptions } from "@src/logic/video/callFrameOptions";
 import { CallSession } from "@src/logic/video/callSession.svelte";
-import { activeVideoCall, type RequestToSpeak } from "@src/stores/video";
 import { toastStore } from "@src/stores/toast";
 import type { Box, WindowSize } from "../../shell/bottomPlacement";
 import { closeThread } from "../app/rightPanel";
@@ -31,26 +28,6 @@ export function createWebCall(client: OpenChat): CallSession {
             },
         },
     );
-}
-
-/** A broadcast host's requests to speak, as the call view and the minimised call show them. */
-export function speakRequestCards(
-    requests: RequestToSpeak[],
-    users: ReadonlyMap<string, UserSummary>,
-    face: (userId: string, userName: string) => CallFace,
-): CallSpeakRequest[] {
-    return requests.map((r) => ({
-        id: r.participantId,
-        ...face(r.userId, users.get(r.userId)?.username ?? ""),
-    }));
-}
-
-/** The host lets the one asking speak, or not. */
-export function answerSpeakRequest(requests: RequestToSpeak[], id: string, approve: boolean) {
-    const request = requests.find((r) => r.participantId === id);
-    if (request === undefined) return;
-    if (approve) activeVideoCall.approveAccessRequest(request);
-    else activeVideoCall.rejectAccessRequest(request);
 }
 
 /** Where the minimised call floats: a box on the window, and how far from its top and bottom. */

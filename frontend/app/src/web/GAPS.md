@@ -528,22 +528,26 @@ design export needs. Each entry says where it came up.
     than a link that opens nothing.
   - **The details** (the header's title, the menu's details item): done (N6), the local
     `chat_details` screen ("Native details", below).
-  - **Calls (N14, PR 1):** the header's video and voice buttons start a call (a broadcast in a
-    public chat), Join joins the call going on and, in the user's own call, the header's button
-    goes back to it; the live item has Join or Leave, the live strip Join, an ended call Call back,
-    and DM details' Call a voice call. The call screen (`features/call`): always dark, video up to 3
-    stacked with the user's camera floating at six spots, 4+ in a 2-column grid, voice as centred
-    avatars; Mute, Camera (video only), Speaker (the Android app only: a browser can't switch
-    between earpiece and loudspeaker) and Leave, hiding after 4s in video. Minimised: a video tile
-    or voice pill at six spots, clear of the header and the tab bar; on iOS always the pill, as the
-    native screen has the media. Android's Back minimises the call screen. Left:
-    - PR 2: the incoming ring in the app, a refused or host-ended call, Ask to speak's requests for
-      the host, the green header call button with no header strip (plan 04/09, 2026-11-10).
+  - **Calls (N14, PRs 1 and 2):** the header's video and voice buttons start a call (one button
+    starting a broadcast in a public chat). While a call the user isn't in is going on, both join
+    it as its type and the one of its kind is green and pulses three times (plan 09, 2026-11-10),
+    with no strip under the header; in the user's own call there, both go back to it. The live
+    item has Join or Leave, an ended call Call back, and DM details' Call a voice call. The call
+    screen (`features/call`): always dark, video up to 3 stacked with the user's camera floating at
+    six spots, 4+ in a 2-column grid, voice as centred avatars; Mute, Camera (video only), Speaker
+    (the Android app only: a browser can't switch between earpiece and loudspeaker) and Leave,
+    hiding after 4s in video; a broadcast host's requests to speak as the library's
+    `SpeakRequests` cards under the top bar. Minimised: a video tile or voice pill at six spots,
+    clear of the header and the tab bar; on iOS always the pill, as the native screen has the
+    media. Android's Back minimises the call screen. A call started elsewhere rings in a phone's
+    browser as a card under the status bar (`IncomingCall`; the apps ring with the system's own
+    screen), and the host ending a broadcast or refusing a request to speak is a toast. Left:
+    - Undesigned, built from the call screen's parts: the ringing card and the request cards.
+    - The minimised call doesn't show a host's requests; they wait on the call screen.
+    - The scroll-to-the-latest button doesn't show the call's state (plan 04).
     - PR 3: system picture-in-picture, the output menu with headphones, flip camera.
     - Not built: the design's Video button in a voice call (an audio call's room sends audio only,
-      #9465). The header shows one button (Join, or back to the call) where the prototype keeps
-      both, the matching one joining.
-    - A live call's strip says "Tap to join" where the prototype names who's in it.
+      #9465).
     - Checked in a desktop browser with the native tree forced; not on a device.
   - **A swap offer's Accept / Cancel**: still no button in the native tree (`withHandlers`
     without `swap`). The kit has its alert now, but accepting asks for the wallet's PIN, whose

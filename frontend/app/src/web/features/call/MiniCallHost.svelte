@@ -11,14 +11,13 @@
     import { callFace, callPeople, callSend } from "@src/logic/video/callPeople";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
     import { backToCall, miniCallShows } from "@src/logic/video/miniCall";
+    import { answerSpeakRequest, speakRequestCards } from "@src/logic/video/speakRequests";
     import { activeVideoCall, camera, microphone } from "@src/stores/video";
     import { navigate } from "@src/utils/navigation";
     import { getContext } from "svelte";
     import { bottomAnchor, boxOf, watchBoxes, windowSize } from "../../shell/bottomAnchors.svelte";
     import {
-        answerSpeakRequest,
         miniCallArea,
-        speakRequestCards,
         type MiniCallArea,
     } from "./webCall";
 

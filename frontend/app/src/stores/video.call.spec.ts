@@ -77,7 +77,9 @@ describe("the active call and the shell (#9559)", () => {
         activeVideoCall.endCall();
     });
 
-    test("invariant 16 (#10398) the iOS shell never shows the in-app ring sheet", async () => {
+    // #10382: the native tree asks to ring in the Android app too, so this guard is all that keeps
+    // the in-app card off the shells, which ring with the system's own screen
+    test("invariant 16 (#10398) neither app shell shows the in-app ring sheet", async () => {
         const { incomingVideoCall } = await import("./video");
         const { get } = await import("svelte/store");
         const ring = (messageId: bigint) => ({
@@ -86,6 +88,11 @@ describe("the active call and the shell (#9559)", () => {
             messageId,
             callType: "default" as const,
         });
+
+        platform.android = true;
+        platform.ios = false;
+        incomingVideoCall.set(ring(4n));
+        expect(get(incomingVideoCall)).toBeUndefined();
 
         platform.android = false;
         platform.ios = true;

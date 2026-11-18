@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "שיחת וידאו מתקיימת",
                 "voice": "שיחה קולית מתקיימת",
-                "sub": "{elapsed} · {count, plural, one {אדם אחד} other {# אנשים}}",
-                "tapToJoin": "הקישו כדי להצטרף"
+                "sub": "{elapsed} · {count, plural, one {אדם אחד} other {# אנשים}}"
             },
             "message": {
                 "info": "מידע",
@@ -2411,6 +2410,8 @@
             "cameraOn": "הפעלת מצלמה",
             "inCall": "{count} בשיחה",
             "join": "הצטרפות",
+            "joinVideo": "הצטרפות לשיחת הווידאו",
+            "joinVoice": "הצטרפות לשיחה הקולית",
             "joining": "מצטרף…",
             "leave": "יציאה",
             "minimise": "מזעור שיחה",

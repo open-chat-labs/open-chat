@@ -1867,8 +1867,7 @@
             "live": {
                 "video": "Trwa rozmowa wideo",
                 "voice": "Trwa rozmowa głosowa",
-                "sub": "{elapsed} · {count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
-                "tapToJoin": "Dotknij, aby dołączyć"
+                "sub": "{elapsed} · {count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
             },
             "message": {
                 "info": "Informacje",
@@ -2411,6 +2410,8 @@
             "cameraOn": "Włącz kamerę",
             "inCall": "{count} w połączeniu",
             "join": "Dołącz",
+            "joinVideo": "Dołącz do rozmowy wideo",
+            "joinVoice": "Dołącz do rozmowy głosowej",
             "joining": "Dołączanie…",
             "leave": "Opuść",
             "minimise": "Zminimalizuj połączenie",
