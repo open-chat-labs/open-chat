@@ -3494,7 +3494,8 @@
         "speakerOn": "Haut-parleur activé",
         "speakerOff": "Haut-parleur désactivé",
         "toggleShare": "Activer le partage de bureau",
-        "viewers": "Téléspectateurs ({count})"
+        "viewers": "Téléspectateurs ({count})",
+        "unsupported": "Les appels ne fonctionnent pas dans ce navigateur."
     },
     "viewer": "téléspectateur",
     "votingHotkey": "Hotkey pour voter sur les propositions",

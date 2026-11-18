@@ -3494,7 +3494,8 @@
         "speakerOn": "Altoparlante attivo",
         "speakerOff": "Altoparlante disattivato",
         "toggleShare": "Attiva/disattiva la condivisione del desktop",
-        "viewers": "Spettatori ({count})"
+        "viewers": "Spettatori ({count})",
+        "unsupported": "Le chiamate non funzionano in questo browser."
     },
     "viewer": "spettatore",
     "votingHotkey": "Hotkey per votare le proposte",

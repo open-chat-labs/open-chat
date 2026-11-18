@@ -3515,7 +3515,8 @@
         "speakerOn": "Speaker on",
         "speakerOff": "Speaker off",
         "toggleShare": "Toggle desktop sharing",
-        "viewers": "Viewers ({count})"
+        "viewers": "Viewers ({count})",
+        "unsupported": "Calls don't work in this browser."
     },
     "viewer": "viewer",
     "votingHotkey": "Hotkey for voting on proposals",

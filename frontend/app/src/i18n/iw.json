@@ -3494,7 +3494,8 @@
         "speakerOn": "רמקול פועל",
         "speakerOff": "רמקול כבוי",
         "toggleShare": "החלף את שיתוף שולחן העבודה",
-        "viewers": "צופים ({count})"
+        "viewers": "צופים ({count})",
+        "unsupported": "שיחות לא עובדות בדפדפן הזה."
     },
     "viewer": "צוֹפֶה",
     "votingHotkey": "Hotkey להצבעה על הצעות",

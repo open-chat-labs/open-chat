@@ -3494,7 +3494,8 @@
         "speakerOn": "Lautsprecher an",
         "speakerOff": "Lautsprecher aus",
         "toggleShare": "Desktop-Freigabe umschalten",
-        "viewers": "Zuschauer ({count})"
+        "viewers": "Zuschauer ({count})",
+        "unsupported": "Anrufe funktionieren in diesem Browser nicht."
     },
     "viewer": "Zuschauer",
     "votingHotkey": "Hotkey zum Abstimmen über Vorschläge",

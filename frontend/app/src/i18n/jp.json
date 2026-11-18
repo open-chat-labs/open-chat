@@ -3494,7 +3494,8 @@
         "speakerOn": "スピーカーオン",
         "speakerOff": "スピーカーオフ",
         "toggleShare": "デスクトップ共有の切り替え",
-        "viewers": "視聴者 ({count})"
+        "viewers": "視聴者 ({count})",
+        "unsupported": "このブラウザでは通話できません。"
     },
     "viewer": "ビューア",
     "votingHotkey": "提案に投票するためのホットキー",

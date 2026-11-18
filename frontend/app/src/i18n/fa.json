@@ -3494,7 +3494,8 @@
         "speakerOn": "بلندگو روشن",
         "speakerOff": "بلندگو خاموش",
         "toggleShare": "اشتراک گذاری دسکتاپ را تغییر دهید",
-        "viewers": "بینندگان ({count})"
+        "viewers": "بینندگان ({count})",
+        "unsupported": "تماس‌ها در این مرورگر کار نمی‌کنند."
     },
     "viewer": "بیننده",
     "votingHotkey": "Hotkey برای رای دادن به پیشنهادات",

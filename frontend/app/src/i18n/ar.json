@@ -3494,7 +3494,8 @@
         "speakerOn": "مكبر الصوت مفعّل",
         "speakerOff": "مكبر الصوت مغلق",
         "toggleShare": "تبديل مشاركة سطح المكتب",
-        "viewers": "المشاهدون ({count})"
+        "viewers": "المشاهدون ({count})",
+        "unsupported": "المكالمات لا تعمل في هذا المتصفح."
     },
     "viewer": "مشاهد",
     "votingHotkey": "Hotkey للتصويت على المقترحات",

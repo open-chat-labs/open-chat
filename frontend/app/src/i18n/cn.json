@@ -3494,7 +3494,8 @@
         "speakerOn": "扬声器已开启",
         "speakerOff": "扬声器已关闭",
         "toggleShare": "切换桌面共享",
-        "viewers": "观看者 ({count})"
+        "viewers": "观看者 ({count})",
+        "unsupported": "此浏览器不支持通话。"
     },
     "viewer": "观众",
     "votingHotkey": "用于对提案投票的热键",

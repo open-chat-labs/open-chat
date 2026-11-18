@@ -3494,7 +3494,8 @@
         "speakerOn": "स्पीकर चालू",
         "speakerOff": "स्पीकर बंद",
         "toggleShare": "डेस्कटॉप साझाकरण टॉगल करें",
-        "viewers": "दर्शक ({count})"
+        "viewers": "दर्शक ({count})",
+        "unsupported": "इस ब्राउज़र में कॉल काम नहीं करते।"
     },
     "viewer": "दर्शक",
     "votingHotkey": "प्रस्तावों पर वोट करने के लिए हॉटकी",

@@ -3494,7 +3494,8 @@
         "speakerOn": "Loa đang bật",
         "speakerOff": "Loa đang tắt",
         "toggleShare": "Chuyển đổi chia sẻ máy tính để bàn",
-        "viewers": "Người xem ({count})"
+        "viewers": "Người xem ({count})",
+        "unsupported": "Cuộc gọi không hoạt động trên trình duyệt này."
     },
     "viewer": "người xem",
     "votingHotkey": "Hotkey để bỏ phiếu cho các đề xuất",

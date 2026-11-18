@@ -3494,7 +3494,8 @@
         "speakerOn": "Altavoz activado",
         "speakerOff": "Altavoz desactivado",
         "toggleShare": "Alternar compartir escritorio",
-        "viewers": "Espectadores ({count})"
+        "viewers": "Espectadores ({count})",
+        "unsupported": "Las llamadas no funcionan en este navegador."
     },
     "viewer": "espectador",
     "votingHotkey": "Hotkey para votar propuestas",
