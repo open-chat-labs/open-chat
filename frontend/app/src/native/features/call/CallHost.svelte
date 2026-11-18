@@ -64,10 +64,14 @@
     }
 
     const call = $derived($activeVideoCall);
+    // a chat the client can't find still has its call shown, untitled, so it can always be left
     const heading = $derived(
         call === undefined
             ? undefined
-            : callHeading(client, call.chatId, $allUsersStore, $communitiesStore),
+            : (callHeading(client, call.chatId, $allUsersStore, $communitiesStore) ?? {
+                  title: "",
+                  started: undefined,
+              }),
     );
     const screen = $derived(callScreenShows(call, !isIosTauriApp()));
     const mini = $derived(miniCallShows(call));
