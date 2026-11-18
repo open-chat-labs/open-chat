@@ -1,6 +1,6 @@
 # The MiniApp service's image. Build from the repo's root, as the service is part of its workspace:
 #   docker build -f backend/mini_app_service/Dockerfile -t oc-mini-app-service .
-FROM rust:1.99.0-bookworm AS build
+FROM rust:1.100.0-bookworm AS build
 WORKDIR /src
 COPY . .
 # The workspace's release profile is tuned for small canister wasms rather than speed
