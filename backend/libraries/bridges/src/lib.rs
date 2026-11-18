@@ -301,14 +301,14 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(State, Scan), PuzzleError> {
         }
         let root = dsf.find(0);
         let mut groups: Vec<(usize, Vec<u16>)> = Vec::new();
-        for i in 1..st.islands.len() {
+        for (i, island) in st.islands.iter().enumerate().skip(1) {
             let r = dsf.find(i);
             if r == root {
                 continue;
             }
             match groups.iter_mut().find(|(g, _)| *g == r) {
-                Some((_, cells)) => cells.push(st.islands[i].cell as u16),
-                None => groups.push((r, vec![st.islands[i].cell as u16])),
+                Some((_, cells)) => cells.push(island.cell as u16),
+                None => groups.push((r, vec![island.cell as u16])),
             }
         }
         connected = groups.is_empty();

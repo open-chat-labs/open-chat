@@ -471,8 +471,8 @@ fn loop_deductions(st: &mut State, cx: &mut Ctx) -> Diff {
     let grid = st.grid;
     let mut dsf = Dsf::new(grid.dots());
     let mut edgecount = 0;
-    for e in 0..grid.edges() {
-        if st.lines[e] == Line::Yes {
+    for (e, line) in st.lines.iter().enumerate() {
+        if *line == Line::Yes {
             let (a, b) = grid.edge_dots(e);
             dsf.merge(a, b);
             edgecount += 1;
@@ -538,8 +538,8 @@ fn loop_deductions(st: &mut State, cx: &mut Ctx) -> Diff {
         }
         cx.record(|| {
             let mut focus = vec![e as u16];
-            for other in 0..grid.edges() {
-                if st.lines[other] == Line::Yes && dsf.find(grid.edge_dots(other).0) == root {
+            for (other, line) in st.lines.iter().enumerate() {
+                if *line == Line::Yes && dsf.find(grid.edge_dots(other).0) == root {
                     focus.push(other as u16);
                 }
             }
