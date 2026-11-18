@@ -133,7 +133,7 @@ Screens:
 | [N11](https://github.com/open-chat-labs/open-chat/issues/10379) | CHIT, the daily puzzle, streak insurance and claim history | N3 |
 | [N12](https://github.com/open-chat-labs/open-chat/issues/10380) | You tab and settings | N3 |
 | [N13](https://github.com/open-chat-labs/open-chat/issues/10381) | Activity | N3 |
-| [N14](https://github.com/open-chat-labs/open-chat/issues/10382) | Calls: full screen, picture-in-picture and call pill. **In progress:** PR 1 the call screen and minimised call (#10526, merged); PR 2 around the call; PR 3 the device (web GAPS.md, "Calls (N14)") | N5b, web 7a |
+| [N14](https://github.com/open-chat-labs/open-chat/issues/10382) | Calls: full screen, picture-in-picture and call pill. **In progress:** PR 1 the call screen and minimised call (#10526), PR 2 around the call (#10527), both merged; PR 3 the device (web GAPS.md, "Calls (N14)") | N5b, web 7a |
 
 Last:
 

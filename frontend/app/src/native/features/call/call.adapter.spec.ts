@@ -6,6 +6,9 @@ import {
     callStage,
     headerCallButtons,
     miniCallShows,
+    outputMenu,
+    pipArmed,
+    type CallAudio,
 } from "./call.adapter";
 
 const person = (id: string): CallPersonView => ({
@@ -79,7 +82,7 @@ describe("the native call", () => {
     });
 
     test("invariant 5: a voice call shows no camera control", () => {
-        const state = { muted: false, camera: false, speaker: undefined, speak: undefined };
+        const state = { muted: false, camera: false, audio: undefined, speak: undefined };
         expect(callControls({ ...state, video: false }).map((c) => c.id)).toEqual(["mic", "leave"]);
         expect(callControls({ ...state, video: true }).map((c) => c.id)).toEqual([
             "mic",
@@ -90,15 +93,58 @@ describe("the native call", () => {
 
     test("invariant 7: Speaker shows only where the route can be switched, as the route reported", () => {
         const state = { video: false, muted: false, camera: false, speak: undefined };
-        expect(callControls({ ...state, speaker: undefined }).some((c) => c.id === "speaker")).toBe(
-            false,
-        );
-        expect(callControls({ ...state, speaker: true }).find((c) => c.id === "speaker")?.on).toBe(
-            true,
-        );
-        expect(callControls({ ...state, speaker: false }).find((c) => c.id === "speaker")?.on).toBe(
-            false,
-        );
+        const speakerOf = (audio: Parameters<typeof callControls>[0]["audio"]) =>
+            callControls({ ...state, audio }).find((c) => c.id === "speaker");
+        expect(speakerOf(undefined)).toBeUndefined();
+        expect(speakerOf({ speaker: true })?.on).toBe(true);
+        expect(speakerOf({ speaker: false })?.on).toBe(false);
+    });
+
+    // #10382 invariant 10: with headphones connected Speaker opens the menu of what the shell lists,
+    // named for the output in use; without, it stays the loudspeaker toggle
+    test("invariant 10: headphones turn Speaker into the output menu, of what the shell lists", () => {
+        const state = { video: true, muted: false, camera: true, speak: undefined };
+        const phoneOnly: CallAudio = {
+            speaker: false,
+            outputs: { route: "earpiece", outputs: [{ route: "speaker" }, { route: "earpiece" }] },
+        };
+        expect(callControls({ ...state, audio: phoneOnly }).map((c) => c.id)).toContain("speaker");
+
+        const buds = {
+            speaker: false,
+            outputs: {
+                route: "bluetooth",
+                outputs: [
+                    { route: "speaker" },
+                    { route: "earpiece" },
+                    { route: "bluetooth", name: "Pixel Buds" },
+                ],
+            },
+        } satisfies CallAudio;
+        const controls = callControls({ ...state, audio: buds });
+        expect(controls.some((c) => c.id === "speaker")).toBe(false);
+        expect(controls.find((c) => c.id === "output")).toMatchObject({
+            label: "native.call.headphones",
+            icon: "headphones",
+            on: false,
+        });
+        expect(
+            outputMenu(buds.outputs).map((r) => [r.route, r.name ?? r.label, r.selected]),
+        ).toEqual([
+            ["speaker", "native.call.speaker", false],
+            ["earpiece", "native.call.phone", false],
+            ["bluetooth", "Pixel Buds", true],
+        ]);
+    });
+
+    // #10382 invariant 11: the app is asked for picture in picture only for a joined video call
+    test("invariant 11: picture in picture is asked for only for a joined video call, in the Android app", () => {
+        expect(pipArmed({ status: "joined", callType: "default" }, true)).toBe(true);
+        expect(pipArmed({ status: "joined", callType: "broadcast" }, true)).toBe(true);
+        expect(pipArmed({ status: "joined", callType: "audio" }, true)).toBe(false);
+        expect(pipArmed({ status: "joining", callType: "default" }, true)).toBe(false);
+        expect(pipArmed(undefined, true)).toBe(false);
+        expect(pipArmed({ status: "joined", callType: "default" }, false)).toBe(false);
     });
 
     test("a broadcast viewer asks to speak in place of Mute and Camera", () => {
@@ -106,7 +152,7 @@ describe("the native call", () => {
             video: true,
             muted: true,
             camera: false,
-            speaker: undefined,
+            audio: undefined,
             speak: "ask",
         });
         expect(controls.map((c) => c.id)).toEqual(["ask", "leave"]);

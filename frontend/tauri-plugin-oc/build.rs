@@ -32,6 +32,8 @@ const COMMANDS: &[&str] = &[
     "call_active",
     "call_ended",
     "set_call_speaker",
+    "set_call_output",
+    "set_call_pip",
     "set_call_ringback",
     "set_call_end_token",
     "native_call_join",

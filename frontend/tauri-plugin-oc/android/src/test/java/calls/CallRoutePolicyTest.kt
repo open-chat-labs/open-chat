@@ -99,6 +99,52 @@ class CallRoutePolicyTest {
         assertEquals(listOf(Route.EARPIECE, Route.EARPIECE), port.requests)
     }
 
+    // #10382 (N14): the output menu's pick is the user's, with a tap's priority
+    @Test
+    fun `a chosen output is asked for, and the phone is held against Bluetooth`() {
+        val port = FakePort()
+        port.state = RouteState(Route.BLUETOOTH, btDevices = true)
+        port.active = true
+        val policy = CallRoutePolicy(port)
+
+        policy.choose(Route.EARPIECE)
+        assertEquals(listOf(Route.EARPIECE), port.requests)
+        // the headset grabs the call back: the phone is asked for again
+        policy.onRouteStateChanged(RouteState(Route.BLUETOOTH, btDevices = true))
+        assertEquals(listOf(Route.EARPIECE, Route.EARPIECE), port.requests)
+        // and a later re-assertion of "not the speaker" keeps to the phone, not Bluetooth
+        policy.reapply()
+        assertEquals(Route.EARPIECE, port.requests.last())
+
+        policy.choose(Route.BLUETOOTH)
+        assertEquals(Route.BLUETOOTH, port.requests.last())
+        policy.onRouteStateChanged(RouteState(Route.BLUETOOTH, btDevices = true))
+        assertEquals(Route.BLUETOOTH, port.requests.last())
+
+        policy.choose(Route.SPEAKER)
+        assertEquals(Route.SPEAKER, port.requests.last())
+    }
+
+    @Test
+    fun `the output menu lists the speaker, the phone and a Bluetooth device, once each`() {
+        assertEquals(
+            listOf(
+                CallOutputs.Output(Route.SPEAKER, null),
+                CallOutputs.Output(Route.EARPIECE, null),
+                CallOutputs.Output(Route.BLUETOOTH, "Pixel Buds"),
+            ),
+            CallOutputs.of(listOf(Route.BLUETOOTH, Route.EARPIECE, Route.SPEAKER, Route.BLUETOOTH), "Pixel Buds"),
+        )
+        // a wired headset is the phone while it's plugged in
+        assertEquals(
+            listOf(CallOutputs.Output(Route.SPEAKER, null), CallOutputs.Output(Route.WIRED, null)),
+            CallOutputs.of(listOf(Route.SPEAKER, Route.EARPIECE, Route.WIRED), null),
+        )
+        Route.values().filter { it != Route.OTHER }.forEach {
+            assertEquals(it, CallOutputs.routeOf(CallOutputs.wireName(it)))
+        }
+    }
+
     @Test
     fun `invariant 6 the proximity lock is held only for an active voice call on the earpiece`() {
         assertTrue(ProximityRule.holdWakeLock(active = true, video = false, route = Route.EARPIECE))

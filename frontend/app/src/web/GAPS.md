@@ -528,7 +528,7 @@ design export needs. Each entry says where it came up.
     than a link that opens nothing.
   - **The details** (the header's title, the menu's details item): done (N6), the local
     `chat_details` screen ("Native details", below).
-  - **Calls (N14, PRs 1 and 2):** the header's video and voice buttons start a call (one button
+  - **Calls (N14, PRs 1 to 3):** the header's video and voice buttons start a call (one button
     starting a broadcast in a public chat). While a call the user isn't in is going on, both join
     it as its type and the one of its kind is green and pulses three times (plan 09, 2026-11-10),
     with no strip under the header; in the user's own call there, both go back to it. The live
@@ -545,7 +545,13 @@ design export needs. Each entry says where it came up.
     - Undesigned, built from the call screen's parts: the ringing card and the request cards.
     - The minimised call doesn't show a host's requests; they wait on the call screen.
     - The scroll-to-the-latest button doesn't show the call's state (plan 04).
-    - PR 3: system picture-in-picture, the output menu with headphones, flip camera.
+    - PR 3 (needs a shell with it; an older one keeps the Speaker toggle and has no picture in
+      picture): with headphones connected Speaker opens the output menu of what the Android shell
+      lists (speaker, phone, a wired headset or a Bluetooth device, named where the call is
+      transactional, Android 16 QPR2+);
+      picture in picture for a joined video call in the Android app (12+ by itself, 8 to 11 on
+      leaving), full bleed with no controls; flip camera on the user's own tile, which stops
+      mirroring on a back camera. Phones' browsers have no picture in picture or output menu.
     - Not built: the design's Video button in a voice call (an audio call's room sends audio only,
       #9465).
     - Checked in a desktop browser with the native tree forced; not on a device.

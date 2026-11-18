@@ -261,6 +261,20 @@ export function nativeCallControl(control: {
     return invoke<void>("plugin:oc|native_call_control", control).catch(() => undefined);
 }
 
+// The output menu's pick (N14, Android). A shell without the command never lists outputs, so the
+// menu never shows there; a rejection is ignored all the same.
+export function setCallOutput(route: CallOutputRoute): Promise<void> {
+    if (!isAndroidTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|set_call_output", { route }).catch(() => undefined);
+}
+
+// Picture in picture for a video call the new UI draws (N14, Android): armed while `on`. A shell
+// without the command has no picture in picture, and ignores it.
+export function setCallPip(on: boolean): Promise<void> {
+    if (!isAndroidTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|set_call_pip", { on }).catch(() => undefined);
+}
+
 // The in-app speaker control. The shell owns the route (Telecom, or the native call on iOS);
 // this is a request.
 export function setCallSpeaker(speaker: boolean): Promise<void> {
@@ -269,13 +283,48 @@ export function setCallSpeaker(speaker: boolean): Promise<void> {
     return invoke<void>("plugin:oc|set_call_speaker", { speaker }).catch(() => undefined);
 }
 
-// What a native surface (the ongoing notification, a headset, Telecom) did to the call.
+// Where a call's audio can go, as the Android shell names it (N14): the loudspeaker, the phone's
+// earpiece, a wired headset in its place, or a Bluetooth device.
+export type CallOutputRoute = "speaker" | "earpiece" | "wired" | "bluetooth";
+export type CallOutput = { route: CallOutputRoute; name?: string };
+
+// What a native surface (the ongoing notification, a headset, Telecom) did to the call, or what
+// the shell reports about it: the outputs it can be put on (N14) and picture in picture entered or
+// left (N14).
 export type NativeCallControl =
     | { kind: "hangup"; messageId: bigint }
     | { kind: "mute"; messageId: bigint; muted: boolean }
-    | { kind: "route"; messageId: bigint; speaker: boolean };
+    | { kind: "route"; messageId: bigint; speaker: boolean }
+    | { kind: "outputs"; messageId: bigint; route: string; outputs: CallOutput[] }
+    | { kind: "pip"; messageId: bigint; on: boolean };
 
-type RawCallControl = { kind?: string; messageId?: string; muted?: boolean; speaker?: boolean };
+type RawCallControl = {
+    kind?: string;
+    messageId?: string;
+    muted?: boolean;
+    speaker?: boolean;
+    route?: unknown;
+    outputs?: unknown;
+    on?: boolean;
+};
+
+const OUTPUT_ROUTES: readonly string[] = ["speaker", "earpiece", "wired", "bluetooth"];
+
+// Pure. Outputs the shell doesn't name as one of ours are left out.
+function parseOutputs(raw: unknown): CallOutput[] | undefined {
+    if (!Array.isArray(raw)) return undefined;
+    return raw.flatMap((o: unknown) => {
+        if (typeof o !== "object" || o === null) return [];
+        const { route, name } = o as { route?: unknown; name?: unknown };
+        if (typeof route !== "string" || !OUTPUT_ROUTES.includes(route)) return [];
+        return [
+            {
+                route: route as CallOutputRoute,
+                ...(typeof name === "string" && name !== "" ? { name } : {}),
+            },
+        ];
+    });
+}
 
 // Pure. Anything malformed is dropped rather than guessed at.
 export function parseCallControl(raw: unknown): NativeCallControl | undefined {
@@ -294,6 +343,14 @@ export function parseCallControl(raw: unknown): NativeCallControl | undefined {
             return typeof r.speaker === "boolean"
                 ? { kind: "route", messageId, speaker: r.speaker }
                 : undefined;
+        case "outputs": {
+            const outputs = parseOutputs(r.outputs);
+            return typeof r.route === "string" && outputs !== undefined
+                ? { kind: "outputs", messageId, route: r.route, outputs }
+                : undefined;
+        }
+        case "pip":
+            return typeof r.on === "boolean" ? { kind: "pip", messageId, on: r.on } : undefined;
         default:
             return undefined;
     }

@@ -39,6 +39,7 @@
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustNothing"
             android:screenOrientation="portrait"
+            android:supportsPictureInPicture="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

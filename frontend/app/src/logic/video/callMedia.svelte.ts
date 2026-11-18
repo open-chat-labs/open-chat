@@ -106,6 +106,14 @@ export class CallMedia {
         await this.#refreshDevices();
     }
 
+    /** Turns the camera round: the front and back cameras of a phone, by their facing mode. */
+    async flipCamera(): Promise<void> {
+        const call = this.#call;
+        if (call === undefined) return;
+        await call.cycleCamera({ preferDifferentFacingMode: true });
+        await this.#refreshDevices();
+    }
+
     async #refreshDevices() {
         const call = this.#call;
         if (call === undefined) return;

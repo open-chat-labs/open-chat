@@ -1,10 +1,12 @@
 package com.oclabs.openchat
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import com.ocplugin.app.calls.CallPip
 import com.ocplugin.app.calls.CallSession
 import android.webkit.WebView
 import androidx.activity.addCallback
@@ -261,6 +263,18 @@ class MainActivity : TauriActivity() {
     // The WebView dies with this activity. If a call is running, nothing on the web side can
     // end it now, so the native side does (#9559). A configuration change keeps the task and
     // the call; only a finishing activity counts.
+    // A video call drawn by the new UI shrinks into a tile when the user leaves the app: Android
+    // 8 to 11 enter it here, 12+ by itself (CallPip).
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        CallPip.onUserLeaveHint(this)
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        CallPip.onModeChanged(this, isInPictureInPictureMode)
+    }
+
     override fun onDestroy() {
         if (isFinishing) CallSession.endAll(this)
         super.onDestroy()

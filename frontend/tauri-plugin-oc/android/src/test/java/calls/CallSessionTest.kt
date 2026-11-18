@@ -201,15 +201,30 @@ class CallSessionTest {
         assertTrue(active.indexOf("CallForegroundService.start(") < active.indexOf("CallTelecom.route(call.id)"))
     }
 
+    // #9559 invariant 9, rewritten by N14 (#10382): picture in picture came back once the new UI
+    // drew calls itself. Armed only for an active video call the web layer asked for, so the old
+    // UI's frame calls and every voice call leave only the notification.
     @Test
-    fun `invariant 9 there is no picture in picture, a call in the background leaves only the notification`() {
+    fun `invariant 9 picture in picture is armed only for an active video call the web layer asked for`() {
+        val video = CallSessionState.Active(alice, video = true, title = "Alice", startedAt = now)
+        val voice = video.copy(video = false)
+        assertTrue(CallPip.armed(requested = true, active = video))
+        assertFalse(CallPip.armed(requested = false, active = video))
+        assertFalse(CallPip.armed(requested = true, active = voice))
+        assertFalse(CallPip.armed(requested = true, active = null))
+        // the platform enters it by itself from 12, the leave hint before, never below 8
+        assertEquals(CallPip.Entry.AUTO, CallPip.entry(31))
+        assertEquals(CallPip.Entry.LEAVE_HINT, CallPip.entry(26))
+        assertEquals(CallPip.Entry.NONE, CallPip.entry(25))
+        // only the web layer's command asks for it: the shell never arms it on its own
+        val sources = File("src/main").walkTopDown().filter { it.isFile && it.extension == "kt" }
+        val requesters = sources.filter { "CallPip.request(" in it.readText() }.map { it.name }.toList()
+        assertEquals(listOf("OpenChatPlugin.kt"), requesters)
+        // and the activity declares it and passes the platform's hooks on
         val app = File("../../src-tauri/gen/android/app/src/main")
-        assertFalse(File(app, "AndroidManifest.xml").readText().contains("supportsPictureInPicture"))
-        val sources = (File("src/main").walkTopDown() + app.walkTopDown()).filter { it.isFile && it.extension == "kt" }
-        for (file in sources) {
-            val text = file.readText()
-            assertFalse(file.name, text.contains("PictureInPicture") || text.contains("enterPictureInPictureMode"))
-        }
+        assertTrue(File(app, "AndroidManifest.xml").readText().contains("android:supportsPictureInPicture=\"true\""))
+        val activity = File(app, "java/com/oclabs/openchat/MainActivity.kt").readText()
+        assertTrue("CallPip.onUserLeaveHint(this)" in activity && "CallPip.onModeChanged(this, " in activity)
     }
 
     @Test
@@ -265,9 +280,11 @@ class CallSessionTest {
     private class FakeCall(override val call: IncomingCall, override var answered: Boolean) : TelecomCall {
         var finishedWith: CallRegistry.End? = null
         override val route: CallRoutePolicy.Route? = null
+        override val outputs: List<CallOutputs.Output> = emptyList()
         override fun answered() { answered = true }
         override fun activate() { answered = true }
         override fun setSpeaker(speaker: Boolean, isDefault: Boolean) {}
+        override fun choose(route: CallRoutePolicy.Route) {}
         override fun finish(end: CallRegistry.End) { finishedWith = end }
     }
 
