@@ -102,8 +102,7 @@ mod tests {
 
         assert_eq!(events_collection.events.len(), 10);
 
-        for i in 0..10 {
-            let indexed_event = &events_collection.events[i];
+        for (i, indexed_event) in events_collection.events.iter().enumerate() {
             assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }

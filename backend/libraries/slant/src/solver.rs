@@ -358,8 +358,8 @@ fn focus_for(st: &State, sc: &mut Scratch, i: usize, v: i8, technique: Technique
         }
         Technique::Equivalence => {
             let class = sc.equiv.find(i);
-            for j in 0..st.size() {
-                if j != i && st.soln[j] != 0 && sc.equiv.find(j) == class {
+            for (j, &s) in st.soln.iter().enumerate() {
+                if j != i && s != 0 && sc.equiv.find(j) == class {
                     focus.push(j as u16);
                 }
             }

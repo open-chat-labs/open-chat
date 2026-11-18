@@ -86,9 +86,5 @@ fn default_channels_valid(default_channels: &[String]) -> bool {
 
     let names: HashSet<String> = default_channels.iter().map(|name| name.to_lowercase()).collect();
 
-    if names.len() != default_channels.len() {
-        return false;
-    }
-
-    true
+    names.len() == default_channels.len()
 }

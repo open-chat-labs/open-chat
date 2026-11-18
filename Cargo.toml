@@ -218,7 +218,6 @@ futures = "0.3"
 getrandom = "0.4"
 getrandom_02 = { package = "getrandom", version = "0.2", features = ["custom"] }
 hex = "0.4"
-hmac-sha256 = { version = "1", features = ["traits010"] }
 http = "1"
 ic-agent = "0.49"
 ic-canister-sig-creation = "1"
@@ -258,9 +257,6 @@ pocket-ic = "=16.0.0"
 proc-macro2 = "1"
 prometheus = "0.14"
 proptest = "1"
-pulldown-cmark = { version = "0.13", default-features = false, features = [
-    "html",
-] }
 querystring = "1"
 quote = "1"
 rand = "0.10"

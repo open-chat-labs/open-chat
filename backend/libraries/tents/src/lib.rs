@@ -260,28 +260,28 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Scan), PuzzleEr
 
     // A line short of its count means the grid is unfinished, not wrong;
     // only a line over its count is a rule broken.
-    for y in 0..h {
+    for (y, &expected) in d.row_counts.iter().enumerate() {
         let actual = (0..w).filter(|&x| tent(y * w + x)).count() as u8;
-        if actual != d.row_counts[y] {
+        if actual != expected {
             counts_exact = false;
         }
-        if actual > d.row_counts[y] {
+        if actual > expected {
             out.push(Violation::RowCount {
                 row: y as u8,
-                expected: d.row_counts[y],
+                expected,
                 actual,
             });
         }
     }
-    for x in 0..w {
+    for (x, &expected) in d.column_counts.iter().enumerate() {
         let actual = (0..h).filter(|&y| tent(y * w + x)).count() as u8;
-        if actual != d.column_counts[x] {
+        if actual != expected {
             counts_exact = false;
         }
-        if actual > d.column_counts[x] {
+        if actual > expected {
             out.push(Violation::ColumnCount {
                 column: x as u8,
-                expected: d.column_counts[x],
+                expected,
                 actual,
             });
         }
