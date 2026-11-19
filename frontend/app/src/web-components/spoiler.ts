@@ -18,6 +18,15 @@ const applyStyles = sharedStyles(`
         cursor: default;
         user-select: text;
       }
+
+      /* the page's link rules don't reach this shadow root: a link here takes the message's
+         link colour and weight (--msg-link, --msg-link-weight: @openchat/ui's message bubbles
+         set them, and they inherit in), else the browser's own link colour as before */
+      a {
+        color: var(--msg-link, LinkText);
+        font-weight: var(--msg-link-weight, inherit);
+        text-decoration: underline;
+      }
     `);
 
 class SpoilerSpan extends HTMLElement {

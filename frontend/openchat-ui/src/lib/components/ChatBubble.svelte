@@ -273,6 +273,8 @@
     --msg-soft: var(--ink-3);
     --msg-stamp: var(--meta);
     --msg-link: var(--accent-bright);
+    /* the message-link mixin's weight, for a link the mixin can't reach (in a host's shadow root, e.g. a spoiler) */
+    --msg-link-weight: 700;
     max-width: 675px;
     min-width: 0;
     display: flex;
@@ -430,6 +432,12 @@
      text colour on sent (every theme), underlined either way */
   .bubble .text.body :global(a) {
     @include message-link;
+  }
+
+  /* group mentions are links in the markdown (@everyone `?everyone`, a user group `?usergroup=…`) but mentions to the
+     eye: the text's colour, bold and underlined, as an @user mention (<profile-link>) */
+  .bubble .text.body :global(a:is([href^='?everyone'], [href^='?usergroup'])) {
+    @include message-link(inherit);
   }
 
   /* a host's body flows inline where it ends (its root, and a paragraph closing it), so the
