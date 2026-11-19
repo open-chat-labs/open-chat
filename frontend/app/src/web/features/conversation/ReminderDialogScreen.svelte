@@ -6,9 +6,11 @@
 <script lang="ts">
     import {
         i18nKey,
+        OPENCHAT_BOT_USER_ID,
         REMINDER_PRESETS,
         reminderPresetText,
         reminderTime,
+        routeForChatIdentifier,
         type OpenChat,
         type ReminderPreset,
     } from "@client";
@@ -16,17 +18,23 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import DurationChips from "@openchat/ui/src/lib/components/DurationChips.svelte";
     import TextArea from "@openchat/ui/src/lib/components/TextArea.svelte";
+    import { getToastHost } from "@openchat/ui/src/lib/toasts.svelte";
     import { interpolateNewUi } from "@src/i18n/i18n";
+    import { reminderSetText } from "@src/logic/conversation/reminderSet";
     import { now } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
+    import { navigate } from "@src/utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import { UNDO_TOAST_MS } from "../../shell/pendingToast";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "remind_message" }>> =
         $props();
 
     const client = getContext<OpenChat>("client");
+    // the app's library toast layer (App), which outlasts the dialog and shows an action
+    const toastHost = getToastHost();
 
     let when = $state<ReminderPreset | "custom">("twentyMinutes");
     // the custom time, as the date and time field holds it (local time)
@@ -55,8 +63,13 @@
         return d.toISOString().slice(0, 16);
     });
 
-    // set, and the dialog closed: a toast says how it went, as the old dialog did
+    // set, and the dialog closed: a toast says how it went, as the old dialog did. Set, it says when
+    // it goes off, with View: the OpenChat Bot's DM, where its "I will remind you about this
+    // message at …" (with Cancel reminder) lands. That message arrives after the call returns, so
+    // the DM opens where a chat opens (its first unread, else its latest), not at the message.
     async function create(at: number) {
+        // the words, read while the dialog is still mounted
+        const formatter = $_;
         onClose();
         const set = await client.setMessageReminder(
             dialog.chatId,
@@ -65,11 +78,33 @@
             note.trim() === "" ? undefined : note.trim(),
             dialog.threadRootMessageIndex,
         );
-        if (set) {
-            toastStore.showSuccessToast(i18nKey("reminders.success"));
-        } else {
+        if (!set) {
             toastStore.showFailureToast(i18nKey("reminders.failure"));
+            return;
         }
+        const message = reminderSetText(at, Date.now(), {
+            time: (d) => client.toShortTimeString(d),
+            date: (d) => client.toDateString(d),
+        });
+        if (toastHost === undefined) {
+            toastStore.showSuccessToast(message);
+            return;
+        }
+        toastHost({
+            message: interpolateNewUi(formatter, message),
+            tone: "success",
+            icon: "check",
+            actionLabel: formatter("reminders.view"),
+            // as long as a toast offering Undo, so there's time to use View
+            duration: UNDO_TOAST_MS,
+            onAction: () =>
+                navigate(
+                    routeForChatIdentifier("chats", {
+                        kind: "direct_chat",
+                        userId: OPENCHAT_BOT_USER_ID,
+                    }),
+                ),
+        });
     }
 </script>
 
