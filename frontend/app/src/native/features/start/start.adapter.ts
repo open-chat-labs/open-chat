@@ -141,11 +141,12 @@ const STANDARD_CODES: Record<string, string> = { cn: "zh", jp: "ja", iw: "he" };
 
 /**
  * The app's languages (i18n's `supportedLanguages`) as the language sheet lists them, those
- * matching `query` (their own name, English name or code), the one in use ticked.
+ * matching `query` (their own name, English name or code), those `selected` ticked (Welcome's: the
+ * one in use; Explore's: those picked).
  */
 export function languageRows(
     languages: readonly { name: string; code: string }[],
-    current: string,
+    selected: (code: string) => boolean,
     query: string,
     englishName: (code: string) => string | undefined,
 ): LanguageRow[] {
@@ -161,7 +162,7 @@ export function languageRows(
                     english !== undefined && english.toLowerCase() !== language.name.toLowerCase()
                         ? english
                         : undefined,
-                selected: language.code === current,
+                selected: selected(language.code),
             };
         })
         .filter(

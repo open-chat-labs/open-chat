@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, one {החברים נבדקים מחדש כל שבוע.} other {החברים נבדקים מחדש כל # שבועות.}}"
             }
             }
+        },
+        "explore": {
+            "title": "גילוי",
+            "search": "חיפוש קהילות",
+            "languages": "שפות",
+            "filterByLanguage": "סינון לפי שפה",
+            "languagesPicked": "שפות: {languages}",
+            "removeLanguage": "הסרת {language}",
+            "clear": "ניקוי",
+            "featured": "מומלצות",
+            "viewAll": "הצגת הכול",
+            "results": "תוצאות",
+            "communitiesIn": "קהילות ב{languages}",
+            "inLanguages": "ב{languages}.",
+            "none": "אין קהילות תואמות. אפשר לנסות חיפוש או שפה אחרים.",
+            "members": "{count, plural, one {חבר אחד} other {# חברים}}",
+            "joined": "הצטרפת",
+            "failed": "לא ניתן לטעון קהילות. כדאי לבדוק את החיבור ולנסות שוב.",
+            "showLanguages": "{count, plural, =0 {הצגת כל השפות} one {הצגת שפה אחת} other {הצגת # שפות}}",
+            "shelf": {
+                "popular": "פופולריות"
+            },
+            "shelfSub": {
+                "popular": "הכי הרבה חברים."
+            }
         }
     },
     "new": "חָדָשׁ",

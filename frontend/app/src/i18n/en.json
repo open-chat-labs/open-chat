@@ -2384,6 +2384,31 @@
                 "week": "{count, plural, one {Members are re-checked every week.} other {Members are re-checked every # weeks.}}"
             }
             }
+        },
+        "explore": {
+            "title": "Explore",
+            "search": "Search communities",
+            "languages": "Languages",
+            "filterByLanguage": "Filter by language",
+            "languagesPicked": "Languages: {languages}",
+            "removeLanguage": "Remove {language}",
+            "clear": "Clear",
+            "featured": "Featured",
+            "viewAll": "View all",
+            "results": "Results",
+            "communitiesIn": "Communities in {languages}",
+            "inLanguages": "In {languages}.",
+            "none": "No communities match. Try another search or language.",
+            "members": "{count, plural, one {# member} other {# members}}",
+            "joined": "Joined",
+            "failed": "Communities couldn't be loaded. Check your connection and try again.",
+            "showLanguages": "{count, plural, =0 {Show all languages} one {Show # language} other {Show # languages}}",
+            "shelf": {
+                "popular": "Popular"
+            },
+            "shelfSub": {
+                "popular": "Most members."
+            }
         }
     },
     "new": "new",

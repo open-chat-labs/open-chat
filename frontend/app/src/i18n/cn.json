@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, other {成员每 # 周重新检查一次。}}"
             }
             }
+        },
+        "explore": {
+            "title": "探索",
+            "search": "搜索社区",
+            "languages": "语言",
+            "filterByLanguage": "按语言筛选",
+            "languagesPicked": "语言：{languages}",
+            "removeLanguage": "移除 {language}",
+            "clear": "清除",
+            "featured": "精选",
+            "viewAll": "查看全部",
+            "results": "结果",
+            "communitiesIn": "{languages} 社区",
+            "inLanguages": "语言：{languages}。",
+            "none": "没有匹配的社区。换个搜索词或语言试试。",
+            "members": "{count} 位成员",
+            "joined": "已加入",
+            "failed": "无法加载社区。请检查网络连接后重试。",
+            "showLanguages": "{count, plural, =0 {显示所有语言} other {显示 # 种语言}}",
+            "shelf": {
+                "popular": "热门"
+            },
+            "shelfSub": {
+                "popular": "成员最多。"
+            }
         }
     },
     "new": "新的",

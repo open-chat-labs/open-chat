@@ -113,7 +113,7 @@ describe("the language sheet", () => {
         ({ en: "English", fr: "French", zh: "Chinese" })[code] ?? undefined;
 
     test("lists the languages with their flags, the one in use ticked", () => {
-        const rows = languageRows(languages, "fr", "", english);
+        const rows = languageRows(languages, (c) => c === "fr", "", english);
         expect(rows.map((r) => [r.code, r.english, r.selected])).toEqual([
             ["en", undefined, false],
             ["fr", "French", true],
@@ -124,8 +124,14 @@ describe("the language sheet", () => {
     });
 
     test("finds a language by its own name, its English name or its code", () => {
-        expect(languageRows(languages, "en", "fran", english).map((r) => r.code)).toEqual(["fr"]);
-        expect(languageRows(languages, "en", "chin", english).map((r) => r.code)).toEqual(["cn"]);
-        expect(languageRows(languages, "en", "CN", english).map((r) => r.code)).toEqual(["cn"]);
+        expect(
+            languageRows(languages, (c) => c === "en", "fran", english).map((r) => r.code),
+        ).toEqual(["fr"]);
+        expect(
+            languageRows(languages, (c) => c === "en", "chin", english).map((r) => r.code),
+        ).toEqual(["cn"]);
+        expect(
+            languageRows(languages, (c) => c === "en", "CN", english).map((r) => r.code),
+        ).toEqual(["cn"]);
     });
 });

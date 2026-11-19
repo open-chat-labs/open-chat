@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, other {メンバーは # 週間ごとに再確認されます。}}"
             }
             }
+        },
+        "explore": {
+            "title": "探す",
+            "search": "コミュニティを検索",
+            "languages": "言語",
+            "filterByLanguage": "言語で絞り込む",
+            "languagesPicked": "言語: {languages}",
+            "removeLanguage": "{language} を外す",
+            "clear": "クリア",
+            "featured": "おすすめ",
+            "viewAll": "すべて見る",
+            "results": "結果",
+            "communitiesIn": "{languages} のコミュニティ",
+            "inLanguages": "{languages}。",
+            "none": "一致するコミュニティはありません。別の検索語か言語をお試しください。",
+            "members": "メンバー {count} 人",
+            "joined": "参加済み",
+            "failed": "コミュニティを読み込めませんでした。接続を確認して、もう一度お試しください。",
+            "showLanguages": "{count, plural, =0 {すべての言語を表示} other {# 言語を表示}}",
+            "shelf": {
+                "popular": "人気"
+            },
+            "shelfSub": {
+                "popular": "メンバーが多い順。"
+            }
         }
     },
     "new": "new",

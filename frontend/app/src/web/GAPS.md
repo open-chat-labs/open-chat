@@ -399,6 +399,19 @@ design export needs. Each entry says where it came up.
     is the details screens' (`DetailsHead`: 88px avatar, 132px cover), not the design's 80px and
     170px; Back at the tab's root cancels the preview (`cancelPreview`). Left: a member's page is a
     placeholder until N8a; a community the client can't find shows a spinner.
+  - **Explore** (N8b PR 4, native/features/explore): the search, the language button (with a count
+    once any are picked) and the picked languages as pills (Clear with more than one); browsing,
+    Featured and the shelves, a shelf hidden under 3 communities, View all pushing its whole list;
+    with no shelf left (a language with few communities), every community in one list; searching,
+    the results. Pages come from the shared search (`communitySearchState`, the web's), filtered
+    by the languages saved on this device (`communityFiltersStore`) and the viewer's moderation
+    flags, one more as a list nears its end. The language sheet is Welcome's (`LanguageSheet`),
+    with checkboxes and the design's Clear and "Show 2 languages". Ours, as the backend has one
+    ranking, most members first (#10405): Featured is its top 3 communities the user isn't in,
+    and Popular the rest; the design's Fastest growing, Most active and Recently added shelves
+    wait for #10405, as do a row's metric (growth, messages, age), so a row shows its language
+    instead. Left: the language sheet has no per-language counts (the backend gives none); the
+    search text isn't in the URL (the web's is).
   - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
     `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't
     available):

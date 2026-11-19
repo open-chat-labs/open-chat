@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, other {اعضا هر # هفته دوباره بررسی می‌شوند.}}"
             }
             }
+        },
+        "explore": {
+            "title": "کاوش",
+            "search": "جستجوی انجمن‌ها",
+            "languages": "زبان‌ها",
+            "filterByLanguage": "فیلتر بر اساس زبان",
+            "languagesPicked": "زبان‌ها: {languages}",
+            "removeLanguage": "حذف {language}",
+            "clear": "پاک کردن",
+            "featured": "برگزیده",
+            "viewAll": "مشاهدهٔ همه",
+            "results": "نتایج",
+            "communitiesIn": "انجمن‌ها به {languages}",
+            "inLanguages": "به {languages}.",
+            "none": "هیچ انجمنی پیدا نشد. جستجو یا زبان دیگری را امتحان کنید.",
+            "members": "{count} عضو",
+            "joined": "عضو شده",
+            "failed": "انجمن‌ها بارگیری نشدند. اتصال خود را بررسی کنید و دوباره تلاش کنید.",
+            "showLanguages": "{count, plural, =0 {نمایش همهٔ زبان‌ها} other {نمایش # زبان}}",
+            "shelf": {
+                "popular": "محبوب"
+            },
+            "shelfSub": {
+                "popular": "بیشترین اعضا."
+            }
         }
     },
     "new": "جدید",

@@ -1,16 +1,29 @@
-<!-- Welcome's language (native design notes §3.1): the app's languages with search, each row its
-     flag, own name, English name and code, the one in use ticked; picking one switches to it
-     (setLocale, kept in this browser) and closes the sheet. -->
+<!-- The app's languages with search (native design notes §3.1, §3.8), each row its flag, own name, English name and
+     code. One language (Welcome's: the one in use ticked; picking one switches to it, setLocale, and closes the
+     sheet) or several (Explore's: each a checkbox, with the sheet's buttons under them, `footer`). -->
 <script lang="ts">
     import Field from "@openchat/ui/src/lib/components/Field.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
-    import { languageCode, setLocale, supportedLanguages } from "@i18n/i18n";
-    import { _, locale } from "svelte-i18n";
+    import { supportedLanguages } from "@i18n/i18n";
+    import type { Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
     import { languageRows } from "./start.adapter";
 
-    type Props = { open: boolean; onClose: () => void };
+    type Props = {
+        open: boolean;
+        onClose: () => void;
+        /** Translated. */
+        title: string;
+        /** Those ticked. */
+        selected: (code: string) => boolean;
+        onPick: (code: string) => void;
+        /** Several can be ticked, as checkboxes. */
+        multiple?: boolean;
+        /** Under the languages (Explore's Clear and Show). */
+        footer?: Snippet;
+    };
 
-    let { open, onClose }: Props = $props();
+    let { open, onClose, title, selected, onPick, multiple = false, footer }: Props = $props();
 
     let query = $state("");
 
@@ -23,23 +36,15 @@
         }
     })();
 
-    const rows = $derived(
-        languageRows(supportedLanguages, languageCode($locale), query, english),
-    );
+    const rows = $derived(languageRows(supportedLanguages, selected, query, english));
 
     // the search starts empty the next time
-    function close() {
-        query = "";
-        onClose();
-    }
-
-    function pick(code: string) {
-        void setLocale(code);
-        close();
-    }
+    $effect(() => {
+        if (!open) query = "";
+    });
 </script>
 
-<BottomSheet {open} onClose={close} title={$_("native.start.language.title")} height="72%">
+<BottomSheet {open} {onClose} {title} height="72%">
     {#snippet header()}
         <div class="search">
             <Field
@@ -50,27 +55,34 @@
                 showShortcut={false} />
         </div>
     {/snippet}
-    <div class="rows" role="radiogroup" aria-label={$_("native.start.language.title")}>
+    <div class="rows" role={multiple ? "group" : "radiogroup"} aria-label={title}>
         {#each rows as row (row.code)}
             <button
                 type="button"
                 class="row"
                 class:selected={row.selected}
-                role="radio"
+                role={multiple ? "checkbox" : "radio"}
                 aria-checked={row.selected}
-                onclick={() => pick(row.code)}>
+                onclick={() => onPick(row.code)}>
                 <span class="flag" aria-hidden="true">{row.flag}</span>
                 <span class="names">
                     <span class="name">{row.name}</span>
                     {#if row.english}<span class="english">{row.english}</span>{/if}
                 </span>
                 <span class="code">{row.code.toUpperCase()}</span>
-                <span class="check" class:on={row.selected}></span>
+                {#if multiple}
+                    <span class="box" class:on={row.selected}><span class="tick"></span></span>
+                {:else}
+                    <span class="check" class:on={row.selected}></span>
+                {/if}
             </button>
         {:else}
             <p class="none">{$_("native.start.language.none")}</p>
         {/each}
     </div>
+    {#if footer}
+        <div class="footer">{@render footer()}</div>
+    {/if}
 </BottomSheet>
 
 <style lang="scss">
@@ -157,6 +169,37 @@
         &.on {
             opacity: 1;
         }
+    }
+
+    // Explore's: a 24px box, filled with the accent once ticked (the design's)
+    .box {
+        flex: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        box-sizing: border-box;
+        @include flex-center;
+        box-shadow: inset 0 0 0 1.5px var(--ink-4);
+
+        &.on {
+            background: var(--accent);
+            box-shadow: none;
+        }
+    }
+
+    .tick {
+        @include icon(check, 12px, var(--on-accent));
+        opacity: 0;
+
+        .on & {
+            opacity: 1;
+        }
+    }
+
+    .footer {
+        flex: none;
+        padding: var(--space-12) var(--space-16) calc(var(--safe-bottom) + var(--space-12));
+        box-shadow: inset 0 1px 0 var(--line-1);
     }
 
     .none {
