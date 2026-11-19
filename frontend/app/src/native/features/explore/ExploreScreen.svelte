@@ -22,11 +22,13 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import {
+        exploreFlags,
         exploreNeedsSearch,
         exploreSearchKey,
         languageToggles,
     } from "@src/logic/explore/exploreSearch";
     import { communitySearchState, heldCommunitySearch } from "@src/stores/search.svelte";
+    import { disableRestrictedContent } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -53,7 +55,10 @@
     });
 
     const languages = $derived([...$communityFiltersStore]);
-    const flags = $derived($exploreCommunitiesFiltersStore.flags);
+    // a store build never shows adult or offensive communities
+    const flags = $derived(
+        exploreFlags($exploreCommunitiesFiltersStore.flags, disableRestrictedContent),
+    );
     const query = $derived({ text: term, languages });
 
     let status = $state<"loading" | "ready" | "failed">("ready");

@@ -11,8 +11,13 @@
     import { supportedLanguagesByCode } from "@i18n/i18n";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
-    import { exploreNeedsSearch, exploreSearchKey } from "@src/logic/explore/exploreSearch";
+    import {
+        exploreFlags,
+        exploreNeedsSearch,
+        exploreSearchKey,
+    } from "@src/logic/explore/exploreSearch";
     import { communitySearchState, heldCommunitySearch } from "@src/stores/search.svelte";
+    import { disableRestrictedContent } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -28,7 +33,10 @@
     const client = getContext<OpenChat>("client");
 
     const languages = $derived([...$communityFiltersStore]);
-    const flags = $derived($exploreCommunitiesFiltersStore.flags);
+    // a store build never shows adult or offensive communities
+    const flags = $derived(
+        exploreFlags($exploreCommunitiesFiltersStore.flags, disableRestrictedContent),
+    );
     // the shelves rank the communities found with no search text
     const query = $derived({ text: "", languages });
     let loading = $state(false);

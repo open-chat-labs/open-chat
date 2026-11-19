@@ -1,5 +1,6 @@
 import type { CommunityMatch } from "@client";
 import {
+    exploreFlags,
     exploreNeedsSearch,
     exploreSearch,
     exploreSearchKey,
@@ -59,5 +60,11 @@ describe("Explore (#10375)", () => {
         expect(
             exploreNeedsSearch(held, exploreSearchKey({ text: "", languages: ["fr"] }, 0), 12),
         ).toBe(true);
+    });
+
+    test("invariant 10: a store build's Explore never asks for adult or offensive communities, whatever the viewer's setting", () => {
+        const adultAndOffensive = 3;
+        expect(exploreFlags(adultAndOffensive, true)).toBe(0);
+        expect(exploreFlags(adultAndOffensive, false)).toBe(adultAndOffensive);
     });
 });

@@ -67,3 +67,11 @@ export function languageToggles(saved: Iterable<string>, picked: string[]): stri
         ...picked.filter((l, i) => !before.includes(l) && picked.indexOf(l) === i),
     ];
 }
+
+/**
+ * The moderation flags Explore searches with: the viewer's (adult and offensive communities shown
+ * to those who turned them on), none in a store build, which never shows them (`disableRestrictedContent`).
+ */
+export function exploreFlags(viewerFlags: number, store: boolean): number {
+    return store ? 0 : viewerFlags;
+}
