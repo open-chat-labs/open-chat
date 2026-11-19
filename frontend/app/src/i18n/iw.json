@@ -2429,6 +2429,13 @@
             "you": "את/ה",
             "yourCamera": "המצלמה שלך. גרור כדי להזיז",
             "speakRequests": "בקשות לדבר: {count}"
+        },
+        "join": {
+            "previewingChannel": "תצוגה מקדימה של #{channel} ב-{community}. הצטרפו כדי לשלוח הודעות.",
+            "notInChannel": "עדיין לא הצטרפת ל-#{channel}. הצטרפו לערוץ כדי לשלוח הודעות.",
+            "previewingGroup": "תצוגה מקדימה של {group}. הצטרפו כדי לשלוח הודעות.",
+            "review": "עיון והצטרפות",
+            "signIn": "התחברו כדי להצטרף"
         }
     },
     "new": "חָדָשׁ",

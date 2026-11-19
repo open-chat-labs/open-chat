@@ -2429,6 +2429,13 @@
             "you": "Du",
             "yourCamera": "Deine Kamera. Zum Verschieben ziehen",
             "speakRequests": "Wortmeldungen: {count}"
+        },
+        "join": {
+            "previewingChannel": "Du siehst dir #{channel} in {community} als Vorschau an. Tritt bei, um Nachrichten zu senden.",
+            "notInChannel": "Du bist noch nicht in #{channel}. Tritt dem Kanal bei, um Nachrichten zu senden.",
+            "previewingGroup": "Du siehst dir {group} als Vorschau an. Tritt bei, um Nachrichten zu senden.",
+            "review": "Prüfen und beitreten",
+            "signIn": "Zum Beitreten anmelden"
         }
     },
     "new": "Neu",

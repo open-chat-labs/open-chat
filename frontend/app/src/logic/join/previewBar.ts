@@ -10,6 +10,7 @@ import {
     type CommunitySummary,
     type EnhancedAccessGate,
     type MultiUserChat,
+    type OpenChat,
     type ResourceKey,
 } from "@client";
 import type { JoinTarget } from "./joinFlow.svelte";
@@ -44,6 +45,8 @@ export type PreviewBar = {
     back: PreviewBack;
     /** A locked gate: Join can't be pressed. */
     locked: boolean;
+    /** The membership lapsed (the community's, for its bar): Join rejoins. */
+    lapsed: boolean;
 };
 
 export type PreviewBarInput = {
@@ -170,5 +173,25 @@ export function previewBar(input: PreviewBarInput): PreviewBar {
         joinLabel,
         back,
         locked,
+        lapsed,
     };
+}
+
+/**
+ * The bar for a group or channel being previewed, from what the client knows of it (as joining
+ * asks for its gates: those an invitation bypasses left out). Reads the client's stores through
+ * `.value`, so a view following it reads the communities, the user and the balances too.
+ */
+export function chatPreviewBar(
+    client: Pick<OpenChat, "isLapsed" | "accessGatesForChat" | "doesUserMeetAccessGate">,
+    chat: MultiUserChat,
+    context: Pick<PreviewBarInput, "community" | "guest" | "origin">,
+): PreviewBar {
+    return previewBar({
+        chat,
+        ...context,
+        lapsed: client.isLapsed(chat.id),
+        gates: client.accessGatesForChat(chat, true),
+        meets: (gate) => client.doesUserMeetAccessGate(gate),
+    });
 }

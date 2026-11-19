@@ -2429,6 +2429,13 @@
             "you": "Tú",
             "yourCamera": "Tu cámara. Arrastra para mover",
             "speakRequests": "Solicitudes para hablar: {count}"
+        },
+        "join": {
+            "previewingChannel": "Estás viendo una vista previa de #{channel} en {community}. Únete para enviar mensajes.",
+            "notInChannel": "Aún no estás en #{channel}. Únete al canal para enviar mensajes.",
+            "previewingGroup": "Estás viendo una vista previa de {group}. Únete para enviar mensajes.",
+            "review": "Revisar y unirse",
+            "signIn": "Inicia sesión para unirte"
         }
     },
     "new": "nuevo",

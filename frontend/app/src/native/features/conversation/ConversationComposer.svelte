@@ -97,6 +97,7 @@
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeOs } from "../../platform";
+    import JoinBar from "../join/JoinBar.svelte";
     import AttachPanel, { type RecentItem } from "./AttachPanel.svelte";
     import EmojiPanel from "./EmojiPanel.svelte";
     import KeyboardPanel from "./KeyboardPanel.svelte";
@@ -540,7 +541,9 @@
     $effect(() => () => onToastFloor(undefined));
 </script>
 
-{#if blocked !== undefined}
+{#if block?.kind === "preview" && chat.kind !== "direct_chat"}
+    <JoinBar {chat} {toast} />
+{:else if blocked !== undefined}
     <div class="blocked">
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>

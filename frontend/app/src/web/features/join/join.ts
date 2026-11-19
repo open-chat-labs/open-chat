@@ -1,5 +1,6 @@
-import { i18nKey, type OpenChat, type ResourceKey } from "@client";
+import { i18nKey, type OpenChat } from "@client";
 import {
+    joinFailure,
     joinTargetName,
     startJoin,
     type JoinStep,
@@ -47,14 +48,6 @@ export function showJoinStep(
         default:
             step satisfies never;
     }
-}
-
-/** Why a join didn't go through, as the web tree says it. */
-export function joinFailure(
-    step: Extract<JoinStep, { kind: "failed" | "gate_check_failed" }>,
-): ResourceKey {
-    // TODO(design): which gates weren't met (the old AccessGateCheckFailed); GAPS.md
-    return step.kind === "failed" ? step.message : i18nKey("access.gateCheckFailed");
 }
 
 /** Joins a group, channel or community, and shows what comes of it (`name`: as `showJoinStep`). */

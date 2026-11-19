@@ -2429,6 +2429,13 @@
             "you": "أنت",
             "yourCamera": "كاميرتك. اسحب للتحريك",
             "speakRequests": "طلبات التحدث: {count}"
+        },
+        "join": {
+            "previewingChannel": "أنت تعاين #{channel} في {community}. انضم لإرسال الرسائل.",
+            "notInChannel": "لست في #{channel} بعد. انضم إلى القناة لإرسال الرسائل.",
+            "previewingGroup": "أنت تعاين {group}. انضم لإرسال الرسائل.",
+            "review": "مراجعة وانضمام",
+            "signIn": "سجّل الدخول للانضمام"
         }
     },
     "new": "جديد",
