@@ -9,6 +9,7 @@ import {
     type CommunityPreviewOrigin,
     type CommunitySummary,
     type EnhancedAccessGate,
+    type Level,
     type MultiUserChat,
     type OpenChat,
     type ResourceKey,
@@ -128,7 +129,7 @@ export function previewBar(input: PreviewBarInput): PreviewBar {
     const gates = communityOnly ? communityLevel : input.gates;
     const locked = gates.some((g) => isLocked(g));
     const count = requirementCount(gates, meets);
-    const state: PreviewBarState = guest ? "guest" : count > 0 && !locked ? "gated" : "preview";
+    const state = barState(guest, count, locked);
 
     const target: JoinTarget =
         communityOnly && community !== undefined
@@ -146,15 +147,10 @@ export function previewBar(input: PreviewBarInput): PreviewBar {
           : "back";
 
     // the old footers' labels: locked, then lapsed, then join
-    let joinLabel: ResourceKey | undefined;
-    let hint: ResourceKey | undefined;
-    if (locked) {
-        joinLabel = i18nKey("access.lockedGate", undefined, level, true);
-        hint = i18nKey("access.lockedGateInfo", undefined, level, true);
-    } else if (lapsed) {
-        joinLabel = i18nKey("access.lapsed.rejoin", undefined, level, true);
-        hint = i18nKey("access.lapsed.label");
-    } else if (!ofCommunity && state !== "guest") {
+    const words = lockedOrLapsedWords(locked, lapsed, level);
+    let joinLabel = words?.joinLabel;
+    let hint = words?.hint;
+    if (words === undefined && !ofCommunity && state !== "guest") {
         // the bar's own copy is a community's ("Join community", "Only public channels are shown")
         if (state === "preview") joinLabel = i18nKey("joinGroup", undefined, level, true);
         hint =
@@ -175,6 +171,60 @@ export function previewBar(input: PreviewBarInput): PreviewBar {
         locked,
         lapsed,
     };
+}
+
+/**
+ * The bar for a community being previewed, at its own page (its preview's Join): Join joins the
+ * community alone, with its requirements (those an invitation bypasses left out). Reads the
+ * client's stores through `.value`, as `chatPreviewBar` does.
+ */
+export function communityPreviewBar(
+    client: Pick<OpenChat, "accessGatesForCommunity" | "doesUserMeetAccessGate">,
+    community: CommunitySummary,
+    guest: boolean,
+): PreviewBar {
+    const gates = client.accessGatesForCommunity(community, true);
+    const locked = gates.some((g) => isLocked(g));
+    const lapsed = community.membership.lapsed;
+    const requirements = requirementCount(gates, (gate) => client.doesUserMeetAccessGate(gate));
+    const words = lockedOrLapsedWords(locked, lapsed, "community");
+    return {
+        target: { kind: "community", community },
+        name: community.name,
+        community,
+        state: barState(guest, requirements, locked),
+        requirements,
+        hint: words?.hint,
+        joinLabel: words?.joinLabel,
+        back: lapsed ? "none" : "back",
+        locked,
+        lapsed,
+    };
+}
+
+function barState(guest: boolean, requirements: number, locked: boolean): PreviewBarState {
+    return guest ? "guest" : requirements > 0 && !locked ? "gated" : "preview";
+}
+
+/** The old footers' words for a locked gate, then a lapse; none for anything else. */
+function lockedOrLapsedWords(
+    locked: boolean,
+    lapsed: boolean,
+    level: Level,
+): { joinLabel: ResourceKey; hint: ResourceKey } | undefined {
+    if (locked) {
+        return {
+            joinLabel: i18nKey("access.lockedGate", undefined, level, true),
+            hint: i18nKey("access.lockedGateInfo", undefined, level, true),
+        };
+    }
+    if (lapsed) {
+        return {
+            joinLabel: i18nKey("access.lapsed.rejoin", undefined, level, true),
+            hint: i18nKey("access.lapsed.label"),
+        };
+    }
+    return undefined;
 }
 
 /**

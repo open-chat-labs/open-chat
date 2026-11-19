@@ -389,6 +389,16 @@ design export needs. Each entry says where it came up.
     (`access.paymentDistributionMessage`). Left: "Get ICP" on a payment the wallet can't cover
     (TODO(design), once the wallet is native, N10); a requirement the backend finds unmet says
     "Access gate not met", not which one.
+  - **A community's preview** (N8b PR 3, native/features/communities): `/community/x`, not joined
+    (or lapsed), shows the design's preview at the Communities tab's root: the cover with Back and
+    Share, the avatar, name, "Public · 1,284 members · English" and about, the Requirements card
+    and the public channels (each opens the channel with the join bar), over Join. The card's rows
+    are the requirements sheet's (`sheetRows`), all of them, met ones included, with the design's
+    statuses (Met, On join, Not met, To do) and a note (all or any, and how often members are
+    re-checked). Join is the join bar's (`JoinButton`): it joins the community alone. Ours: the top
+    is the details screens' (`DetailsHead`: 88px avatar, 132px cover), not the design's 80px and
+    170px; Back at the tab's root cancels the preview (`cancelPreview`). Left: a member's page is a
+    placeholder until N8a; a community the client can't find shows a spinner.
   - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
     `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't
     available):

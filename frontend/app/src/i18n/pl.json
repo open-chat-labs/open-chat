@@ -2455,6 +2455,26 @@
                 "leaveAnyTime": "Możesz odejść w dowolnej chwili.",
                 "storePayment": "Płatność, której ta aplikacja nie może wykonać"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "Wymagania",
+                "channels": "Kanały",
+                "channelsNote": "Widoczne są tylko kanały publiczne. Otwórz jeden, aby poczytać przed dołączeniem.",
+                "met": "Spełnione",
+                "onJoin": "Przy dołączeniu",
+                "notMet": "Niespełnione",
+                "toDo": "Do zrobienia",
+                "all": "Musisz spełnić wszystkie.",
+                "any": "Wystarczy spełnić jedno.",
+                "channelMembers": "{count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",
+                "recheck": {
+                "minute": "{count, plural, one {Członkowie są sprawdzani co minutę.} other {Członkowie są sprawdzani co # min.}}",
+                "hour": "{count, plural, one {Członkowie są sprawdzani co godzinę.} other {Członkowie są sprawdzani co # godz.}}",
+                "day": "{count, plural, one {Członkowie są sprawdzani codziennie.} other {Członkowie są sprawdzani co # dni.}}",
+                "week": "{count, plural, one {Członkowie są sprawdzani co tydzień.} few {Członkowie są sprawdzani co # tygodnie.} many {Członkowie są sprawdzani co # tygodni.} other {Członkowie są sprawdzani co # tygodnia.}}"
+            }
+            }
         }
     },
     "new": "nowy",

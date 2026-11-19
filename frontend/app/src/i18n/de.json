@@ -2455,6 +2455,26 @@
                 "leaveAnyTime": "Du kannst jederzeit wieder austreten.",
                 "storePayment": "Eine Zahlung, die diese App nicht ausführen kann"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "Voraussetzungen",
+                "channels": "Kanäle",
+                "channelsNote": "Nur öffentliche Kanäle werden angezeigt. Öffne einen, um vor dem Beitritt mitzulesen.",
+                "met": "Erfüllt",
+                "onJoin": "Beim Beitritt",
+                "notMet": "Nicht erfüllt",
+                "toDo": "Offen",
+                "all": "Du musst alle davon erfüllen.",
+                "any": "Eine davon zu erfüllen reicht.",
+                "channelMembers": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
+                "recheck": {
+                "minute": "{count, plural, one {Mitglieder werden jede Minute erneut geprüft.} other {Mitglieder werden alle # Minuten erneut geprüft.}}",
+                "hour": "{count, plural, one {Mitglieder werden jede Stunde erneut geprüft.} other {Mitglieder werden alle # Stunden erneut geprüft.}}",
+                "day": "{count, plural, one {Mitglieder werden jeden Tag erneut geprüft.} other {Mitglieder werden alle # Tage erneut geprüft.}}",
+                "week": "{count, plural, one {Mitglieder werden jede Woche erneut geprüft.} other {Mitglieder werden alle # Wochen erneut geprüft.}}"
+            }
+            }
         }
     },
     "new": "Neu",

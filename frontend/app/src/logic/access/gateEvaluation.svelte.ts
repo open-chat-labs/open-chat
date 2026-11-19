@@ -52,19 +52,7 @@ export class GateEvaluation {
 
     #leaves = $derived.by(() => {
         const gate = this.gate;
-        if (gate === undefined) return [];
-        // Unique person (DecideAI) verification is suspended, so hide it. originalIndex is
-        // taken before filtering so compositeGateIndex still maps to the real gate.
-        const leaves = isCompositeGate(gate)
-            ? gate.gates.map((g, i) => ({
-                  ...g,
-                  level: gate.level,
-                  collectionName: gate.collectionName,
-                  expiry: gate.expiry,
-                  originalIndex: i,
-              }))
-            : [{ ...gate, originalIndex: 0 }];
-        return leaves.filter((g) => !isUniquePersonGate(g));
+        return gate === undefined ? [] : gateLeaves(gate);
     });
 
     /** The current gate's leaves, satisfied ones first */
@@ -183,4 +171,24 @@ export class GateEvaluation {
         }
         return this.#client.doesUserMeetAccessGate(leaf);
     }
+}
+
+/**
+ * A gate's requirements, one per leaf, in the gate's order, without unique person (DecideAI
+ * verification is suspended, so it's hidden). `originalIndex` is the leaf's place in its composite
+ * gate, taken before the filtering, so compositeGateIndex still maps to the real gate.
+ */
+export function gateLeaves(
+    gate: EnhancedAccessGate,
+): (EnhancedLeafGate & { originalIndex: number })[] {
+    const leaves = isCompositeGate(gate)
+        ? gate.gates.map((g, i) => ({
+              ...g,
+              level: gate.level,
+              collectionName: gate.collectionName,
+              expiry: gate.expiry,
+              originalIndex: i,
+          }))
+        : [{ ...gate, originalIndex: 0 }];
+    return leaves.filter((g) => !isUniquePersonGate(g));
 }

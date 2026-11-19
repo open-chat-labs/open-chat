@@ -2455,6 +2455,26 @@
                 "leaveAnyTime": "Puedes salir cuando quieras.",
                 "storePayment": "Un pago que esta app no puede realizar"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "Requisitos",
+                "channels": "Canales",
+                "channelsNote": "Solo se muestran los canales públicos. Abre uno para leer antes de unirte.",
+                "met": "Cumplido",
+                "onJoin": "Al unirte",
+                "notMet": "No cumplido",
+                "toDo": "Pendiente",
+                "all": "Tienes que cumplir todos.",
+                "any": "Basta con cumplir uno.",
+                "channelMembers": "{count, plural, one {# miembro} other {# miembros}}",
+                "recheck": {
+                "minute": "{count, plural, one {Los miembros se vuelven a comprobar cada minuto.} other {Los miembros se vuelven a comprobar cada # minutos.}}",
+                "hour": "{count, plural, one {Los miembros se vuelven a comprobar cada hora.} other {Los miembros se vuelven a comprobar cada # horas.}}",
+                "day": "{count, plural, one {Los miembros se vuelven a comprobar cada día.} other {Los miembros se vuelven a comprobar cada # días.}}",
+                "week": "{count, plural, one {Los miembros se vuelven a comprobar cada semana.} other {Los miembros se vuelven a comprobar cada # semanas.}}"
+            }
+            }
         }
     },
     "new": "nuevo",

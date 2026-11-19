@@ -58,8 +58,8 @@ export const screens: Screens = {
     // the Chats tab: the list, search and New chat (N5a)
     chats: () => import("../chats/ChatsScreen.svelte"),
 
-    // the Communities tab: the switcher and a community's channels (N8a)
-    communities: undefined,
+    // the Communities tab: a community's preview (N8b), the switcher and its channels (N8a)
+    communities: () => import("../communities/CommunityScreen.svelte"),
 
     // the Wallet tab's root (N10a)
     wallet: undefined,

@@ -2455,6 +2455,26 @@
                 "leaveAnyTime": "いつでも退出できます。",
                 "storePayment": "このアプリでは行えない支払い"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "参加条件",
+                "channels": "チャンネル",
+                "channelsNote": "公開チャンネルのみ表示しています。参加する前に開いて読めます。",
+                "met": "達成",
+                "onJoin": "参加時",
+                "notMet": "未達成",
+                "toDo": "未完了",
+                "all": "すべての条件を満たす必要があります。",
+                "any": "いずれか 1 つを満たせば参加できます。",
+                "channelMembers": "メンバー {count} 人",
+                "recheck": {
+                "minute": "{count, plural, other {メンバーは # 分ごとに再確認されます。}}",
+                "hour": "{count, plural, other {メンバーは # 時間ごとに再確認されます。}}",
+                "day": "{count, plural, other {メンバーは # 日ごとに再確認されます。}}",
+                "week": "{count, plural, other {メンバーは # 週間ごとに再確認されます。}}"
+            }
+            }
         }
     },
     "new": "new",

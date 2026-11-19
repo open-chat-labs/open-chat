@@ -7277,7 +7277,7 @@ export class OpenChat {
         const community =
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
         if (community !== undefined && isPreviewingCommunity(community)) {
-            gates.push(...this.#accessGatesForCommunity(community, excludeInvited));
+            gates.push(...this.accessGatesForCommunity(community, excludeInvited));
         }
         if (
             chat.gateConfig.gate.kind !== "no_gate" &&
@@ -7294,7 +7294,11 @@ export class OpenChat {
         return gates;
     }
 
-    #accessGatesForCommunity(
+    /**
+     * The gates joining a community asks for: its own, if it has one. With `excludeInvited`, none
+     * for someone it has invited (an invitation bypasses them).
+     */
+    accessGatesForCommunity(
         community: CommunitySummary,
         excludeInvited: boolean = false,
     ): EnhancedAccessGate[] {
@@ -13243,7 +13247,7 @@ export class OpenChat {
         }
 
         if (gateCheck === undefined) {
-            const gates = this.#accessGatesForCommunity(community, true);
+            const gates = this.accessGatesForCommunity(community, true);
             if (!this.#doesUserMeetAccessGates(gates) && this.#gatePreprocessingRequired(gates)) {
                 return { kind: "needs_gate_evaluation", gates };
             }
@@ -13262,7 +13266,7 @@ export class OpenChat {
         }
         if (resp.kind === "gate_check_failed") {
             // With no gates to show the user would see nothing, so report a plain failure
-            const gates = this.#accessGatesForCommunity(community);
+            const gates = this.accessGatesForCommunity(community);
             if (gates.length > 0) return { kind: "gate_check_failed", gates };
         }
         return { kind: "failed", message: i18nKey("communities.errors.joinFailed") };
