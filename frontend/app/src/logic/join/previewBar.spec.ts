@@ -7,7 +7,7 @@ import {
     type MultiUserChat,
 } from "@client";
 import { describe, expect, test } from "vitest";
-import { previewBar, type PreviewBarInput } from "./previewBar";
+import { hiddenMessagesNotice, previewBar, type PreviewBarInput } from "./previewBar";
 
 const group = {
     kind: "group_chat",
@@ -230,5 +230,22 @@ describe("the preview bar", () => {
         expect(lapsedGroup.back).toBe("none");
         expect(lapsedGroup.lapsed).toBe(true);
         expect(previewBar(input({})).lapsed).toBe(false);
+    });
+});
+
+describe("a preview whose messages are hidden (#10375)", () => {
+    const hides = (hidden: boolean) => ({ maskChatMessages: () => hidden });
+
+    test("invariant 7: a public chat that hides its messages says members only, never that only an invitation lets you in", () => {
+        const notice = hiddenMessagesNotice(hides(true), { ...channel, public: true });
+        expect(notice?.title.key).toBe("group.membersOnly");
+        expect(notice?.body.key).toBe("group.membersOnlyInfo");
+        expect(hiddenMessagesNotice(hides(true), { ...group, public: false })?.body.key).toBe(
+            "group.privateGroupInfo",
+        );
+    });
+
+    test("invariant 7: messages the chat's own settings show need no notice, whatever its gates", () => {
+        expect(hiddenMessagesNotice(hides(false), { ...channel, public: true })).toBeUndefined();
     });
 });

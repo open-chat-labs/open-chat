@@ -1322,6 +1322,8 @@
         "next": "Suivant",
         "privateGroup": "Privé {level}",
         "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce {level} librement. Ils doivent être ajoutés ou invités par un membre autorisé.",
+        "membersOnly": "Réservé aux membres",
+        "membersOnlyInfo": "Seuls les membres peuvent voir les messages ici.",
         "publicGroup": "Publique {level}",
         "searchForCommunityMember": "Rechercher un membre de la communauté",
         "searchForUser": "Rechercher un utilisateur",

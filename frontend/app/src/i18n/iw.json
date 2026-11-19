@@ -1322,6 +1322,8 @@
         "next": "הַבָּא",
         "privateGroup": "פרטי {level}",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף ל-{level} הזה באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
+        "membersOnly": "לחברים בלבד",
+        "membersOnlyInfo": "רק חברים יכולים לראות את ההודעות כאן.",
         "publicGroup": "ציבורי {level}",
         "searchForCommunityMember": "חפש חבר בקהילה",
         "searchForUser": "חפש משתמש",

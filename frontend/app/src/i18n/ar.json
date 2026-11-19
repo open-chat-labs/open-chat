@@ -1322,6 +1322,8 @@
         "next": "التالي",
         "privateGroup": "خاص {level}",
         "privateGroupInfo": "لا يمكن للمستخدمين الانضمام إلى {level} بحرية. يجب أن تتم إضافتهم أو دعوتهم من قبل عضو مخول.",
+        "membersOnly": "للأعضاء فقط",
+        "membersOnlyInfo": "يمكن للأعضاء فقط رؤية الرسائل هنا.",
         "publicGroup": "عامة {level}",
         "searchForCommunityMember": "البحث عن عضو المجتمع",
         "searchForUser": "البحث عن مستخدم",

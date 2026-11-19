@@ -35,7 +35,6 @@
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
-        isPrivateCommunityPreview,
         localUpdates,
         messageContextsEqual,
         messageReadByThem,
@@ -250,7 +249,11 @@
     import { RowCache } from "@src/logic/conversation/rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
     import { isJoining, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
-    import { chatPreviewBar, type PreviewBar } from "@src/logic/join/previewBar";
+    import {
+        chatPreviewBar,
+        hiddenMessagesNotice,
+        type PreviewBar,
+    } from "@src/logic/join/previewBar";
     import { join } from "../join/join";
     import { previewBarProps } from "../join/previewBar.adapter";
     import { bottomAnchorFor } from "../../shell/bottomAnchors.svelte";
@@ -751,13 +754,13 @@
 
     // ── what can be shown ──
 
-    // a private chat or community that isn't joined shows no messages (as the old UI)
-    const privatePreview = $derived(
-        thread === undefined &&
-            (isPrivateCommunityPreview($selectedCommunitySummaryStore) ||
-                client.maskChatMessages(chat)),
+    // a group or channel whose own settings hide its messages from non-members shows none until
+    // joined, its gates or its community's aside (logic/join); the join bar shows either way
+    const hiddenNotice = $derived(
+        thread !== undefined || chat.kind === "direct_chat"
+            ? undefined
+            : hiddenMessagesNotice(client, chat),
     );
-    const levelText = $derived($_(`level.${level}`).toLowerCase());
 
     // ── the timeline ──
 
@@ -1416,12 +1419,12 @@
 </div>
 
 {#snippet messageList()}
-    {#if privatePreview}
+    {#if hiddenNotice !== undefined}
         <div class="state">
             <EmptyState
                 preset="no-conversations"
-                title={$_("group.privateGroup", { values: { level: levelText } })}
-                body={$_("group.privateGroupInfo", { values: { level: levelText } })}
+                title={interpolate($_, hiddenNotice.title)}
+                body={interpolate($_, hiddenNotice.body)}
                 actionLabel=""
             />
         </div>

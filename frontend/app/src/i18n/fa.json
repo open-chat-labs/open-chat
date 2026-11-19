@@ -1322,6 +1322,8 @@
         "next": "بعد",
         "privateGroup": "خصوصی {level}",
         "privateGroupInfo": "کاربران نمی توانند آزادانه به این {level} بپیوندند. آنها باید یا اضافه شوند یا توسط یک عضو مجاز دعوت شوند.",
+        "membersOnly": "فقط برای اعضا",
+        "membersOnlyInfo": "فقط اعضا می‌توانند پیام‌های اینجا را ببینند.",
         "publicGroup": "عمومی {level}",
         "searchForCommunityMember": "جستجوی یک عضو انجمن",
         "searchForUser": "جستجوی کاربر",

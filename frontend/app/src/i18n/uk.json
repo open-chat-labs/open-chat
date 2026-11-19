@@ -1322,6 +1322,8 @@
         "next": "Далі",
         "privateGroup": "Приватний {level}",
         "privateGroupInfo": "Користувачі не можуть вільно приєднуватися до {level}. Їх має додати або запросити авторизований учасник.",
+        "membersOnly": "Лише для учасників",
+        "membersOnlyInfo": "Повідомлення тут бачать лише учасники.",
         "publicGroup": "Загальнодоступний {level}",
         "searchForCommunityMember": "Пошук учасника спільноти",
         "searchForUser": "Пошук користувача",

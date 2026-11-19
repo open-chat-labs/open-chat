@@ -1322,6 +1322,8 @@
         "next": "下一个",
         "privateGroup": "私人{level}",
         "privateGroupInfo": "用户不能自由加入这个 {level}。他们必须由授权成员添加或邀请。",
+        "membersOnly": "仅限成员",
+        "membersOnlyInfo": "只有成员才能查看这里的消息。",
         "publicGroup": "公开{level}",
         "searchForCommunityMember": "搜索社区成员",
         "searchForUser": "搜索用户",

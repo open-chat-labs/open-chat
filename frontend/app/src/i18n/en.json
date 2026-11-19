@@ -1300,6 +1300,8 @@
         "next": "Next",
         "privateGroup": "Private {level}",
         "privateGroupInfo": "Users cannot join this {level} freely. They must either be added or invited by an authorised member.",
+        "membersOnly": "Members only",
+        "membersOnlyInfo": "Only members can see the messages in this {level}.",
         "publicGroup": "Public {level}",
         "searchForCommunityMember": "Search for a community member",
         "searchForUser": "Search for a user",
