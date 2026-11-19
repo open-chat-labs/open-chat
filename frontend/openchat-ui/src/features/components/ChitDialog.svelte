@@ -16,6 +16,7 @@
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
+  import { milestoneReachedToday, ringFill, streakRingProgress } from '../../lib/streakRing';
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
@@ -35,8 +36,10 @@
     claimable?: boolean;
     /** Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365. */
     milestones?: number[];
-    /** How full the streak ring is, 0 to 1. Defaults to the way from the last milestone reached (or 0) to the next:
-     *  empty at 0, full on a milestone and from the last one on. */
+    /** How full the streak ring is, 0 to 1 (not a finite number: the default). Defaults to the way from the last
+     *  milestone reached (or 0) to the next: empty at 0, full on the day a milestone is reached, then empty on the next
+     *  segment once the next claim opens, full from the last one on. Pass the same rule (@client's
+     *  `streakRingProgress`) so the milestone heading agrees with it. */
     progress?: number;
     /** Achievements for the "Ways to earn" row; the count is hidden without it. */
     achievements?: { total: number; left: number };
@@ -130,17 +133,11 @@
   });
 
   const nextTier = $derived(TIERS.find((t) => t > days) ?? TIERS[TIERS.length - 1]);
-  // the ring runs tier to tier so it means "distance to the next rate": empty at 0, full on a milestone (3 is full),
-  // starting again the day after, and full from the last one on
-  const within = $derived.by(() => {
-    if (progress != null) return Math.min(Math.max(progress, 0), 1);
-    const last = TIERS[TIERS.length - 1];
-    if (days <= 0) return 0;
-    if (days >= last) return 1;
-    const next = TIERS.find((t) => t >= days) ?? last;
-    const prev = TIERS.filter((t) => t < days).pop() ?? 0;
-    return (days - prev) / (next - prev);
-  });
+  // the ring runs tier to tier so it means "distance to the next rate": empty at 0, full on the day a milestone is
+  // reached (the heading then names it), and on the next segment, empty, once the next claim opens (the heading
+  // counts the days to the next), so a claim never empties it; full from the last one on (lib/streakRing)
+  const within = $derived(ringFill(progress, () => streakRingProgress(days, claimed, TIERS)));
+  const reachedToday = $derived(milestoneReachedToday(days, claimed, TIERS));
 
   // the streak sits between its two bracketing milestones, in their spacing
   const barPct = $derived.by(() => {
@@ -219,7 +216,11 @@
       <div class="milestones">
         <div class="milestone-head">
           <span class="milestone-title"
-            >{days >= TIERS[TIERS.length - 1] ? t('ui.chitDialog.allMilestones', { daily: fmt(daily) }) : t('ui.chitDialog.toNextMilestone', { count: nextTier - days, tier: nextTier })}</span
+            >{days >= TIERS[TIERS.length - 1]
+              ? t('ui.chitDialog.allMilestones', { daily: fmt(daily) })
+              : reachedToday != null
+                ? t('ui.chitDialog.milestoneReached', { tier: reachedToday })
+                : t('ui.chitDialog.toNextMilestone', { count: nextTier - days, tier: nextTier })}</span
           >
           <span class="rate">{t('ui.chitDialog.perDay', { amount: fmt(daily) })}</span>
         </div>

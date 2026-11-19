@@ -70,7 +70,7 @@ export function chitDialogProps(
         daily: claim.daily,
         claimable: claim.claimable,
         milestones: CHIT_STREAK_MILESTONES,
-        progress: streakRingProgress(claim.streak, CHIT_STREAK_MILESTONES),
+        progress: streakRingProgress(claim.streak, claim.claimable, CHIT_STREAK_MILESTONES),
         countdown: claim.countdown,
         insured: insurance.daysInsured,
         used: insurance.daysMissed,

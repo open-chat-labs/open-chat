@@ -8830,7 +8830,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "How full the streak ring is, 0 to 1. Defaults to the way from the last milestone reached (or 0) to the next: empty at 0, full on a milestone and from the last one on."
+        "doc": "How full the streak ring is, 0 to 1 (not a finite number: the default). Defaults to the way from the last milestone reached (or 0) to the next: empty at 0, full on the day a milestone is reached, then empty on the next segment once the next claim opens, full from the last one on. Pass the same rule (@client's `streakRingProgress`) so the milestone heading agrees with it."
       },
       {
         "name": "achievements",

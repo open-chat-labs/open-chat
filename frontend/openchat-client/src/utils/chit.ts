@@ -101,19 +101,29 @@ export const CHIT_STREAK_MILESTONES: number[] = CLAIM_SCHEDULE.map(([streak]) =>
 
 /**
  * How full the streak's ring is, 0 to 1: the way from the last milestone reached (or the start) to
- * the next. Empty with no streak, full on a milestone (3 days is the first one filled), and it
- * starts again the day after (4 days is a quarter of the way from 3 to 7). Full from the last
- * milestone on.
+ * the next. Empty with no streak, a third a day towards 3, and full on the day a milestone is
+ * reached. Once the next claim opens (`claimable`), the ring starts on the next segment, empty,
+ * as the dialog's "N days to the next milestone" heading does: 3 days with the next claim open is
+ * empty, 4 days a quarter of the way from 3 to 7. So a claim always moves the ring forward. Full
+ * from the last milestone on. An empty list means the default milestones.
+ *
+ * `@openchat/ui` can't import this, so its `ChitDialog` falls back to a copy of the same rule
+ * (`streakRingProgress` in `openchat-ui/src/lib/streakRing.ts`) when `progress` isn't passed:
+ * change both together.
  */
 export function streakRingProgress(
     streak: number,
+    claimable: boolean,
     milestones: number[] = CHIT_STREAK_MILESTONES,
 ): number {
-    const sorted = [...milestones].sort((a, b) => a - b);
+    const sorted = [...(milestones.length > 0 ? milestones : CHIT_STREAK_MILESTONES)].sort(
+        (a, b) => a - b,
+    );
     const last = sorted[sorted.length - 1];
     if (streak <= 0 || last === undefined) return 0;
     if (streak >= last) return 1;
-    const next = sorted.find((m) => m >= streak) ?? last;
+    if (sorted.includes(streak)) return claimable ? 0 : 1;
+    const next = sorted.find((m) => m > streak) ?? last;
     const prev = sorted.filter((m) => m < streak).pop() ?? 0;
     return (streak - prev) / (next - prev);
 }

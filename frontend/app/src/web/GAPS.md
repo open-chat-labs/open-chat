@@ -1073,8 +1073,10 @@ design export needs. Each entry says where it came up.
   shell (both ways, below 919 × 720px) rather than the page. Confirm against the prototype.
 - **CHIT streak ring** (by hand, 8d, EXPORT-LOG 2026-11-19, to take back to the design):
   `ChitDialog`'s ring fills from the last milestone reached to the next (`progress`, from
-  `@client`'s `streakRingProgress`): empty at 0, a third a day towards 3, full on a milestone and
-  from 365 on. The export's drew a fixed arc at 0 and emptied on each milestone.
+  `@client`'s `streakRingProgress`): empty at 0, a third a day towards 3, full on the day a
+  milestone is reached (the heading then reads "3-day milestone reached!"), on the next segment,
+  empty, once the next claim opens, and full from 365 on. The export's drew a fixed arc at 0 and
+  emptied on each milestone.
 - **Nav rail's local pick** (by hand): `NavRail` keeps the item a click picked until the host's
   `activeIndex` changes; it now also lets it go when `items` change, as the app shows Favourites
   only with favourites, which moves the items after it.
