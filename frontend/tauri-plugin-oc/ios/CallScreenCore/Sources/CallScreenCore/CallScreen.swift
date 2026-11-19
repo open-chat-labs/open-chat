@@ -20,7 +20,8 @@ public struct CallStage: Equatable {
         if video, selfId != nil, everyone.count <= 3 {
             return CallStage(tiles: others, floatSelf: true, columns: 1)
         }
-        return CallStage(tiles: everyone, floatSelf: false, columns: video ? 2 : 1)
+        // up to three people stack in one column; a broadcast viewer has no tile of their own
+        return CallStage(tiles: everyone, floatSelf: false, columns: video && everyone.count > 3 ? 2 : 1)
     }
 }
 
@@ -132,5 +133,29 @@ public enum CallOutput: Equatable {
         guard let port else { return .phone }
         if SpeakerButton.headphones.contains(port) { return .headphones }
         return port == "Speaker" ? .speaker : .phone
+    }
+}
+
+/// When the call follows the audio route (#10529 invariant 7). The call screen's Speaker button
+/// shows the route, and Daily is told about a route someone else picked so it doesn't move it
+/// back. While Daily sets up the audio session the route can flip between the speaker and the
+/// earpiece; following each flip asks Daily for it and starts the next one. So a move is followed
+/// only once the route has stayed put for `settleAfter` seconds, and then once.
+public struct RouteFollower<Route: Equatable> {
+    public static var settleAfter: TimeInterval { 0.4 }
+
+    private var pending: (route: Route, at: Date)?
+
+    public init() {}
+
+    public mutating func moved(to route: Route, at now: Date) {
+        pending = (route, now)
+    }
+
+    /// The route it settled on, once it has stayed put long enough; asked again, nil.
+    public mutating func settled(at now: Date) -> Route? {
+        guard let pending, now.timeIntervalSince(pending.at) >= Self.settleAfter else { return nil }
+        self.pending = nil
+        return pending.route
     }
 }
