@@ -1,22 +1,36 @@
 import {
+    OPENCHAT_BOT_USER_ID,
     allowsVoteChange,
     formatClock,
     formatFileSize,
     formatTokens,
     getConvertedBalances,
     i18nKey,
+    isCriticalProposal,
     isDeletedWebhook,
+    neuronLabel,
     ogPreviewCard,
     ownUserAvatarUrl,
     pollView,
     prizeView,
+    referralLink,
+    proposalOutcome,
+    proposalTopicLabel,
+    proposalVotePercent,
+    proposalVoteStatus,
     swapActions,
     swapLabels,
+    toLongDatetimeString,
+    twitchLiveThumbnailUrl,
+    twitchPlayerUrl,
+    twitchPoster,
+    twitchWatchUrl,
     votesForAnswer,
     waveformLevels,
     type ChatSummary,
     type CryptocurrencyContent,
     type CryptocurrencyDetails,
+    type DeletedContent,
     type EventWrapper,
     type GiphyContent,
     type ImageContent,
@@ -32,10 +46,15 @@ import {
     type PrizeContent,
     type PrizeContentInitial,
     type PrizeReader,
+    type PrizeWinnerContent,
+    type ProposalContent,
+    type ProposalVoteStatus,
     type ReadonlyMap,
     type ResourceKey,
     type TokenExchangeRates,
+    type TipsReceived,
     type TokenInfo,
+    type TwitchPlayerPreview,
     type UserLookup,
     type VideoContent,
     type WebhookDetails,
@@ -46,8 +65,10 @@ import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
 import { swatchFor, type Swatch } from "@src/logic/swatch";
 import { findUser } from "@src/utils/user";
+import { NamedNeurons } from "@src/stores/namedNeurons";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
 import { typedMentions, type MentionLookups } from "./typedMentions";
+import { linkPreviews } from "./linkPreview";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -76,6 +97,8 @@ export type ConversationContext = {
     time: (timestamp: bigint) => string;
     /** A date as the list shows it (a time today, else a short date). */
     date: (timestamp: bigint) => string;
+    /** A date and time in full, as the old trees' deleted messages and event lines say it. */
+    longDate: (timestamp: bigint | number) => string;
     /** How media shows: low bandwidth, and the media URL as this device fetches it. */
     media: MediaView;
     /** Whether the conversation is a DM. */
@@ -107,6 +130,19 @@ export type ConversationContext = {
     unreadInThread: (threadRootMessageIndex: number) => number;
     /** Whether the view shows threads: without, a message has no thread link (no thread fields). */
     threads: boolean;
+    /** Whether a deleted message is being undeleted (`undeletingMessagesStore`). */
+    undeleting: (messageId: bigint) => boolean;
+    /** The reader's own referral link, which the OpenChat bot's referral card gives them. */
+    referralLink: string;
+    /**
+     * Where a Twitch link's player can play (`twitchPlayerParent`: this site, not framed by
+     * another, not the native apps); none, and the link shows as a row linking to Twitch.
+     */
+    twitchParent: string | undefined;
+    /** A proposals chat's names for its proposals' types (NNS topics, SNS actions). */
+    proposalTopics: ReadonlyMap<number, string>;
+    /** The reader's vote on a proposal this session (`proposalVotesStore`), on its way or counted. */
+    proposalVote: (messageId: bigint) => ProposalVoteStatus | undefined;
 };
 
 export type TransferToken = {
@@ -257,6 +293,38 @@ export function previewCards(previews: OgPreview[]): PreviewCard[] {
     });
 }
 
+export type PlayerProps = NonNullable<Extract<GroupMessage, { kind?: "text" }>["players"]>[number];
+
+const TWITCH_LOGO = "/assets/twitch.svg";
+
+/**
+ * A Twitch link's player (PlayerCard), as the old trees' TwitchPlayer shows it: its poster's title
+ * is the link's preview's, if the sender fetched one that says what it is, else where it's to
+ * (`twitchPoster`); it plays here only where Twitch lets it (`twitchParent`), else it links to
+ * Twitch. Unlike the old trees, a channel's poster is what it's streaming now
+ * (`twitchLiveThumbnailUrl`), not its preview's image (the channel's avatar, and none at all when
+ * the sender's preview fetch failed); a video or clip has no picture to show (Twitch gives a
+ * preview fetch only its logo), so its poster is the black frame and its title.
+ */
+export function twitchPlayer(
+    player: TwitchPlayerPreview,
+    ctx: Pick<ConversationContext, "twitchParent" | "text">,
+): PlayerProps {
+    const poster = twitchPoster(player.embed, player.ogPreview);
+    return {
+        title: poster.title,
+        image:
+            player.embed.kind === "twitch_channel"
+                ? twitchLiveThumbnailUrl(player.embed.login)
+                : poster.image,
+        src: ctx.twitchParent === undefined ? "" : twitchPlayerUrl(player.embed, ctx.twitchParent),
+        href: twitchWatchUrl(player.embed),
+        logo: TWITCH_LOGO,
+        playLabel: ctx.text(i18nKey("twitch.play", { title: poster.title })),
+        watchLabel: ctx.text(i18nKey("twitch.watchOnTwitch")),
+    };
+}
+
 /** A message's text: a text message's own, and for other kinds (until they're built) their text. */
 export function messageText(
     content: MessageContent,
@@ -287,8 +355,9 @@ export function showsSenderName(runStart: boolean, direct: boolean): boolean {
 }
 
 /**
- * A message as MessageGroup shows it, with its sender. Every kind shows as a text bubble for now:
- * the rich kinds are phase 5 (GAPS.md).
+ * A message as MessageGroup shows it, with its sender: a kind with a bubble of its own in it
+ * (`kindMessage`), any other as a text bubble, with its text (`kindText` in the app's words, else
+ * `contentText`; GAPS.md, "Message kinds").
  */
 export function messageRow(
     evt: EventWrapper<Message>,
@@ -299,6 +368,7 @@ export function messageRow(
     const mine = msg.sender === ctx.me;
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
+    const links = linkPreviews(msg);
     const kind = kindMessage(msg, status, ctx, {
         id: String(msg.messageId),
         time: ctx.time(evt.timestamp),
@@ -308,6 +378,7 @@ export function messageRow(
             count: r.userIds.size,
             mine: r.userIds.has(ctx.me),
         })),
+        tips: tipChips(msg.tips, ctx),
         ...threadFields(msg, ctx),
     });
     if (kind !== undefined) {
@@ -327,7 +398,7 @@ export function messageRow(
         message: {
             id: String(msg.messageId),
             kind: "text",
-            text: messageText(msg.content, ctx),
+            text: kindText(msg.content, ctx) ?? messageText(msg.content, ctx),
             time: ctx.time(evt.timestamp),
             status,
             // a bot's message is edited as it's finalised, which isn't an edit to show
@@ -335,11 +406,16 @@ export function messageRow(
                 msg.edited && !(msg.senderContext?.kind === "bot" && msg.senderContext.finalised),
             forwarded: msg.forwarded,
             deleted: msg.content.kind === "deleted_content",
+            deletedText:
+                msg.content.kind === "deleted_content"
+                    ? deletedText(msg.content, ctx.undeleting(msg.messageId), ctx)
+                    : undefined,
             reactions: msg.reactions.map((r) => ({
                 emoji: r.reaction,
                 count: r.userIds.size,
                 mine: r.userIds.has(ctx.me),
             })),
+            tips: tipChips(msg.tips, ctx),
             quoteName:
                 quoted === undefined
                     ? undefined
@@ -348,7 +424,8 @@ export function messageRow(
                       : ctx.userName(quoted.senderId),
             quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
             ...threadFields(msg, ctx),
-            previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
+            previews: previewCards(links.cards),
+            players: links.players.map((player) => twitchPlayer(player, ctx)),
         },
     };
 }
@@ -358,7 +435,117 @@ type KindBase = {
     time: string;
     deleted: false;
     reactions: GroupMessage["reactions"];
+    tips: GroupMessage["tips"];
 } & ThreadFields;
+
+/**
+ * The tips a message got, a chip per token (its logo and the total), the reader's own marked, with
+ * who tipped as its tooltip, as the old trees' tip thumbnails sum them. A token the registry
+ * doesn't carry has no chip. TODO(design): the design has no tips; they go before the reactions.
+ */
+export function tipChips(
+    tips: TipsReceived,
+    ctx: Pick<ConversationContext, "me" | "you" | "token" | "userName">,
+): NonNullable<GroupMessage["tips"]> {
+    const chips: NonNullable<GroupMessage["tips"]> = [];
+    for (const [ledger, byUser] of Object.entries(tips)) {
+        const token = ctx.token(ledger);
+        const tippers = Object.keys(byUser);
+        if (token === undefined || tippers.length === 0) continue;
+        const total = Object.values(byUser).reduce((sum, amount) => sum + amount, 0n);
+        chips.push({
+            amount: token.amount(total),
+            symbol: token.symbol,
+            logo: `url("${token.logo}") center / cover`,
+            mine: tippers.includes(ctx.me),
+            label: tippers
+                .map((userId) => (userId === ctx.me ? ctx.you : ctx.userName(userId)))
+                .join(", "),
+        });
+    }
+    return chips;
+}
+
+/**
+ * A deleted message's tombstone, as the old trees word it: who deleted it and when, "Undeleting…"
+ * while it's being undeleted, or the OpenChat bot's removal for breaking a platform rule (whose
+ * link the tombstone, plain text, can't carry: its words only).
+ */
+export function deletedText(
+    content: DeletedContent,
+    undeleting: boolean,
+    ctx: Pick<ConversationContext, "userName" | "longDate" | "text">,
+): string {
+    const values = {
+        username: ctx.userName(content.deletedBy),
+        timestamp: ctx.longDate(content.timestamp),
+    };
+    if (undeleting) return ctx.text(i18nKey("undeletingMessage", values));
+    if (content.deletedBy === OPENCHAT_BOT_USER_ID) {
+        const text = ctx.text(i18nKey("messageDeletedByOpenChatBot", { ...values, rules: "" }));
+        return text.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+    }
+    return ctx.text(i18nKey("messageDeleted", values));
+}
+
+/** The kinds `kindText` words, shown as a text bubble with their text as markdown. */
+const WORDED_KINDS: ReadonlySet<MessageContent["kind"]> = new Set<MessageContent["kind"]>([
+    "blocked_content",
+    "restricted_content",
+    "unsupported_content",
+    "placeholder_content",
+    "message_reminder_created_content",
+    "message_reminder_content",
+    "user_referral_card",
+]);
+
+/** Whether a message's kind shows as a text bubble with the words `kindText` gives it. */
+export function isWordedKind(content: MessageContent): boolean {
+    return WORDED_KINDS.has(content.kind);
+}
+
+/**
+ * A kind that has no bubble of its own, in the old trees' words (they show it as a line of text):
+ * a hidden message, one this version can't show, a placeholder, a reminder (with its notes), the
+ * referral card (with the reader's link). Undefined for every other kind.
+ * TODO(design): none of these is in the design.
+ */
+export function kindText(
+    content: MessageContent,
+    ctx: Pick<ConversationContext, "text" | "longDate" | "referralLink">,
+): string | undefined {
+    const withNotes = (line: string, notes: string | undefined) =>
+        notes === undefined || notes.trim() === "" ? line : `${line}\n\n${notes}`;
+    switch (content.kind) {
+        case "blocked_content":
+            return ctx.text(i18nKey("messageBlocked"));
+        case "restricted_content":
+            return ctx.text(i18nKey("appStore.messageNotAvailable"));
+        case "unsupported_content":
+            return ctx.text(i18nKey("messageUnsupported"));
+        case "placeholder_content":
+            return ctx.text(i18nKey("placeholderContent"));
+        case "message_reminder_created_content":
+            // a cancelled reminder promises nothing: the timeline folds it away with the
+            // deleted messages (groupEvents' messageIsHidden), as the old trees; anywhere else
+            // it shows its notes alone, as before 5a
+            if (content.hidden) return content.notes ?? "";
+            return withNotes(
+                `⏰ ${ctx.text(i18nKey("reminders.remindAt", { datetime: ctx.longDate(content.remindAt) }))}`,
+                content.notes,
+            );
+        case "message_reminder_content":
+            return withNotes(`⏰ ${ctx.text(i18nKey("reminders.youAsked"))}`, content.notes);
+        case "user_referral_card":
+            return [
+                ctx.text(i18nKey("referralHeader")),
+                ctx.text(i18nKey("userReferralMessage")),
+                ctx.referralLink,
+            ].join("\n\n");
+        default:
+            return undefined;
+    }
+}
 
 /**
  * A message's thread as its link under it (design pass 8), whatever its kind: on the thread's root
@@ -443,6 +630,8 @@ function kindMessage(
             return pollMessage(msg.sender, content, ctx, base);
         case "prize_content":
             return prizeMessage(msg.sender, content, ctx, base);
+        case "prize_winner_content":
+            return prizeWinnerMessage(content, ctx, base);
         case "prize_content_initial":
             // still on its way: the card as it will land; a failed one stays text, which says so
             return status === "failed"
@@ -450,6 +639,8 @@ function kindMessage(
                 : prizeMessage(msg.sender, sendingPrize(content), ctx, base, true);
         case "p2p_swap_content":
             return swapMessage(msg.sender, content, ctx, base);
+        case "proposal_content":
+            return proposalMessage(msg.messageId, content, ctx, base);
         case "p2p_swap_content_initial":
             // still on its way: the card as it will land; a failed one stays text, which says so
             return status === "failed"
@@ -499,6 +690,43 @@ function transferMessage(
 }
 
 /**
+ * A prize's win (the thread under a prize gets one per winner) as a transfer's card: + for the
+ * reader's own, no sign for someone else's, saying who won what as the old trees do (without their
+ * bold). One in a ledger the registry doesn't carry shows as text.
+ * TODO(design): the design has no prize win; the old trees' was a spinning coin over its line.
+ */
+function prizeWinnerMessage(
+    content: PrizeWinnerContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const transfer = content.transaction;
+    const token = ctx.token(transfer.ledger);
+    if (token === undefined) return undefined;
+    const mine = transfer.recipient === ctx.me;
+    const amount = token.amount(transfer.amountE8s);
+    return {
+        ...base,
+        kind: "transfer",
+        amount,
+        symbol: token.symbol,
+        mark: "",
+        gradient: `url("${token.logo}") center / cover`,
+        usd: token.usd(transfer.amountE8s),
+        direction: mine ? "in" : "other",
+        caption: ctx
+            .text(
+                i18nKey("prizes.winner", {
+                    recipient: mine ? ctx.you : ctx.userName(transfer.recipient),
+                    amount,
+                    token: token.symbol,
+                }),
+            )
+            .replaceAll("**", ""),
+    };
+}
+
+/**
  * A poll's card. It's locked when it can't be voted on (5a invariant 4, `pollView`), and its counts
  * show only when the poll lets the reader see them.
  */
@@ -531,6 +759,50 @@ function pollMessage(
         myVotes: content.votes.user,
         readonly: view.cannotVote,
         showResults: view.showVotes,
+    };
+}
+
+/**
+ * A governance proposal's card, as the old trees show it: its type and proposer (a known team's
+ * neuron by name), whether it's critical, its tally against the share it needs to pass when voting
+ * ends (`minYesPercentageOfTotal`) and to pass at once (`minYesPercentageOfExercised`), how long
+ * voting has left, and the reader's vote (cast this session, else the proposal's own). Adopt and
+ * Reject until its deadline, whatever its outcome (`proposalVoting`), while the reader hasn't voted
+ * and the chat isn't read-only, as the old cards. Its summary and payload are on its page
+ * (Proposal details), not on the card.
+ */
+function proposalMessage(
+    messageId: bigint,
+    content: ProposalContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage {
+    const proposal = content.proposal;
+    const vote = proposalVoteStatus(ctx.proposalVote(messageId), content.myVote);
+    const outcome = proposalOutcome(proposal.status);
+    const { open, left } = proposalVoting(proposal.deadline, ctx.now);
+    return {
+        ...base,
+        kind: "proposal",
+        title: proposal.title,
+        topic: proposalTopicLabel(content, ctx.proposalTopics),
+        proposer: neuronLabel(proposal.proposer, NamedNeurons),
+        critical: isCriticalProposal(proposal),
+        state: outcome,
+        adopt: proposalVotePercent(proposal.tally.yes, proposal.tally),
+        reject: proposalVotePercent(proposal.tally.no, proposal.tally),
+        softThreshold: proposal.minYesPercentageOfTotal,
+        hardThreshold: proposal.minYesPercentageOfExercised,
+        when: open
+            ? `${ctx.text(i18nKey("proposal.votingPeriodRemaining"))}: ${left}`
+            : ctx.text(i18nKey("proposal.votingPeriodEnded")),
+        myVote:
+            vote === undefined
+                ? null
+                : vote === "adopted" || vote === "adopting"
+                  ? "adopt"
+                  : "reject",
+        canVote: open && vote === undefined && !ctx.readonly,
     };
 }
 
@@ -672,6 +944,30 @@ export function sendingSwap(content: P2PSwapContentInitial, now: number): P2PSwa
     };
 }
 
+/**
+ * Whether a proposal can still be voted on, and how long it has left ("3d", "5h", "12m"): until its
+ * deadline, whatever its outcome, as the old cards (the NNS keeps voting open after a proposal is
+ * decided early, for the voting rewards). Rows key on it (`RowCache`), and a proposals chat's
+ * screen makes its rows' context again every minute (`PROPOSAL_CLOCK_MS`), so a card stops
+ * offering a vote at its deadline and its countdown keeps up.
+ */
+export function proposalVoting(deadline: number, now: number): { open: boolean; left: string } {
+    const ms = deadline - now;
+    return ms > 0 ? { open: true, left: timeLeft(ms) } : { open: false, left: "" };
+}
+
+/** How often a proposals chat's rows' context is made again, for its cards' deadlines. */
+export const PROPOSAL_CLOCK_MS = 60_000;
+
+/** Whether a chat is a proposals chat, whose cards count down to their deadlines (`proposalVoting`). */
+export function hasProposals(chat: ChatSummary | undefined): boolean {
+    return (
+        chat !== undefined &&
+        chat.kind !== "direct_chat" &&
+        chat.subtype?.kind === "governance_proposals"
+    );
+}
+
 /** Time left as its largest unit: 3d, 5h, 12m (under a minute counts as 1m). */
 function timeLeft(ms: number): string {
     const minutes = Math.max(1, Math.ceil(ms / 60_000));
@@ -710,6 +1006,7 @@ export type ConversationContextInput = {
         | "formatMessageDate"
         | "isChatReadOnly"
         | "unreadThreadMessageCount"
+        | "canonicalOrigin"
     >;
     chat: ChatSummary | undefined;
     me: string;
@@ -738,6 +1035,16 @@ export type ConversationContextInput = {
     face: (userId: string) => string;
     /** Whether the view shows threads (a message's thread link); the native tree has no thread screen yet. */
     threads: boolean;
+    /** The app's language, for dates said in full. */
+    locale: string;
+    /** Whether a deleted message is being undeleted (`undeletingMessagesStore`). */
+    undeleting: (messageId: bigint) => boolean;
+    /** Where a Twitch link's player can play (`twitchPlayerParent`); none, a link to Twitch. */
+    twitchParent: string | undefined;
+    /** The proposals chat's names for its proposals' types (`proposalTopicsStore`). */
+    proposalTopics: ReadonlyMap<number, string>;
+    /** This session's votes on proposals (`proposalVotesStore`). */
+    proposalVotes: ReadonlyMap<bigint, ProposalVoteStatus>;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -762,6 +1069,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
                 true,
                 true,
             ),
+        longDate: (timestamp) => toLongDatetimeString(new Date(Number(timestamp)), input.locale),
         media: {
             lowBandwidth: input.lowBandwidth,
             revealed: input.revealed,
@@ -776,6 +1084,11 @@ export function conversationContext(input: ConversationContextInput): Conversati
         face: input.face,
         avatar: (userId) => ownUserAvatarUrl(findUser(userId, users, webhooks)),
         threads: input.threads,
+        undeleting: input.undeleting,
+        referralLink: referralLink(client.canonicalOrigin(), input.me),
+        twitchParent: input.twitchParent,
+        proposalTopics: input.proposalTopics,
+        proposalVote: (messageId) => input.proposalVotes.get(messageId),
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
                 chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),

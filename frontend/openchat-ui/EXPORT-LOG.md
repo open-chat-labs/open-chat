@@ -987,6 +987,21 @@
 ## 2026-11-16 — IconButton can be pressed from the keyboard, by hand
 - `IconButton`: a `role="button"` div that only listened for clicks, so Tab reached it but Enter and Space did nothing. It now presses on Enter and Space, as `RoundIconButton` and `Banner`'s action do. That reaches every icon button, the `Banner`'s × among them. No props changed.
 
+## 2026-11-16 — a message's tips (web 5a), by hand
+- `ReactionChips`: `tips` (`Tip[]`: `amount`, `symbol`, `logo` as a CSS background, `mine`, `label`), a chip per token before the reactions, in the reactions' chip look with the token's logo (14px) before the amount; the viewer's own marked as their own reactions are (`mine`), who tipped as its tooltip (`label`). Not a button, never folded into "+N". The row shows with tips alone.
+- `ChatBubble`: `tips`, passed to its chips; `MessageGroup` passes a message's `tips` (`GroupMessage.tips`, `lib/types.ts`) to the chips under the kinds that don't draw their own, and shows them with tips alone. `meta.json` (`ReactionChips.tips`, `ChatBubble.tips`).
+- Not in the design export: the app shows the tips a message got (web 5a), as the old trees' tip thumbnails do. To go back to it (the app's `GAPS.md` lists it). TODO(design): the tip chip.
+
+## 2026-11-16 — a link's video player (web 5a), by hand
+- New `PlayerCard`: a link's video player (a Twitch stream, video or clip) as the old trees' `TwitchPlayer` showed it: a 16:9 poster (the link's image, a play button, the title over a shade, the site's `logo`) that loads the player (`src`, an iframe with `allow="autoplay; fullscreen"`) only when clicked, as the player starts as it loads, and goes back to the poster whenever it can't show; where it can't play (no `src`, or narrower than `minWidth`, 400 for Twitch) a row linking to the site (`href`, http(s) only) with `watchLabel`. Measures its width with a 534px sizer that gives way to a narrower bubble. Strings `ui.playerCard.play`, `ui.playerCard.watch`. Nothing lies over the player.
+- `ChatBubble`: `players` (`PlayerCard`'s props without `side`), before the link cards, which makes the bubble carded and 542px wide (the player's 534px plus the inset). `meta.json` (`PlayerCard`, `ChatBubble.players`).
+- Not in the design export: the app plays a Twitch link in its message (web 5a), as the old trees did. To go back to it (the app's `GAPS.md` lists it). TODO(design): the player's poster and link row.
+
+## 2026-11-16 — proposals in MessageGroup (web 5a), by hand
+- `lib/types.ts`: `GroupMessage` takes `{ kind: 'proposal' }` with `ProposalMessage`'s props, and `MessageGroup` renders it (with its reactions and thread under it, as the other kinds).
+- `ProposalMessage`: its type prop is `topic` (it was `kind`, which a message's kind takes in the union); `state` can also be `adopted` (decided, not yet executed: "Adopted", good) or `failed` (adopted, but its execution failed: "Failed", bad; new string `ui.proposalMessage.failed`); a host that passes `myVote` (null for none) owns the vote, and the card remembers a vote cast here only when it's left out (it remembered one whatever `myVote` was, so a vote that failed still read "You voted to adopt"); Adopt, Reject and Proposal details press on Enter and Space. `meta.json` (`topic`, `state`, `myVote`'s doc), the docs' sample (`topic`).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
 ## 2026-11-17 — ConversationHeader's call buttons follow what the chat offers, by hand
 - `ConversationHeader`: the voice call button shows only with `onVoiceCall`, so a chat that offers one call (a broadcast, or joining the call going on) shows one button. A channel shows the call buttons too, where it hid them, since channels have calls; the host's `showCall` decides. New `callIcon` (`'video' | 'phone'`, default `'video'`): a phone for joining a voice call. `meta.json` (`callIcon`, `onVoiceCall`'s doc). Used by the app's conversation header (web 7b, #10125).
 - Not in the design export: to go back to it (the app's `GAPS.md`, "Calls").

@@ -24,6 +24,7 @@
   import MediaMessage from './MediaMessage.svelte';
   import PollMessage from './PollMessage.svelte';
   import PrizeMessage from './PrizeMessage.svelte';
+  import ProposalMessage from './ProposalMessage.svelte';
   import SwapOffer from './SwapOffer.svelte';
   import ThreadLink from './ThreadLink.svelte';
   import TransferMessage from './TransferMessage.svelte';
@@ -534,12 +535,14 @@
           <PollMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'prize'}
           <PrizeMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
+        {:else if m.kind === 'proposal'}
+          <ProposalMessage {...m} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
         <!-- every other kind's reactions and thread, under it as under a text bubble (ChatBubble draws its own) -->
-        {#if m.kind && m.kind !== 'text' && m.reactions?.length}
-          <ReactionChips reactions={m.reactions} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
+        {#if m.kind && m.kind !== 'text' && (m.reactions?.length || m.tips?.length)}
+          <ReactionChips reactions={m.reactions ?? []} tips={m.tips} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
         {/if}
         {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
           <ThreadLink

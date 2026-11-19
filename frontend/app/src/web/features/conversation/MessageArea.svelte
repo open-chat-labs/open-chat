@@ -33,6 +33,8 @@
         exchangeRatesLookupStore,
         formatClock,
         failedMessagesStore,
+        runningInIframe,
+        twitchPlayerParent,
         i18nKey,
         isDiamondStore,
         isLifetimeDiamondStore,
@@ -96,6 +98,9 @@
         type OpenChat,
         type P2PSwapContent,
         type PollContent,
+        type ProposalContent,
+        proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -211,9 +216,11 @@
     import { messageMenuItems } from "./conversation.adapter";
     import {
         conversationContext,
+        hasProposals,
         isMedia,
         mediaHeld,
         messageStatus,
+        PROPOSAL_CLOCK_MS,
         senderColor,
         showsSenderName,
         untilNextDay,
@@ -223,10 +230,10 @@
         type MessageRow,
     } from "@src/logic/conversation/messageRow";
     import {
+        bodyMarkdown,
         quoteFor,
         quoteTarget,
         retryFor,
-        textAsMarkdown,
         withHandlers,
         type MessageHandlers,
         type QuoteTarget,
@@ -253,6 +260,12 @@
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import BotCommandDialog from "./BotCommandDialog.svelte";
     import { carriesOutCommand } from "./botCommands";
+    import ProposalVoteDialog from "./ProposalVoteDialog.svelte";
+    import {
+        proposalPage,
+        voteOnProposal,
+        type ProposalVoteProblem,
+    } from "@src/logic/conversation/proposalVote";
     import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { claimsStore } from "@src/stores/claims";
@@ -318,6 +331,15 @@
         return () => clearTimeout(timer);
     });
 
+    // a proposals chat's cards count down to their deadlines, and stop offering a vote at them:
+    // its rows' context is made again every minute, and the rows key on what voting has left
+    let clock = $state(0);
+    $effect(() => {
+        if (!hasProposals(chat)) return;
+        const timer = setInterval(() => (clock += 1), PROPOSAL_CLOCK_MS);
+        return () => clearInterval(timer);
+    });
+
     // what a prize's requirements ask of the reader; rows are made again when it changes (joining
     // a previewed chat offers its prizes' Claim)
     const claimant = $derived({
@@ -334,6 +356,7 @@
 
     const ctx = $derived.by((): ConversationContext => {
         void day;
+        void clock;
         // a revealed image redoes its row (the cache is cleared with it), as do the token registry
         // and the exchange rates arriving: rows are made again from this, so it has to change too
         void rowsVersion;
@@ -341,6 +364,8 @@
         void ratesLoaded;
         // a thread's unread replies ("· N new" on its link) follow what's read
         void $messagesRead;
+        // a deleted message's tombstone says while it's being undeleted (rows key on it, RowCache)
+        const undeleting = $undeletingMessagesStore;
         // the thread open beside the chat (the route's), its link on the accent; rows key on it
         // (RowCache), so opening another redoes only the two it concerns
         const openThread = thread === undefined && $threadOpenStore ? $messageIndexStore : undefined;
@@ -362,6 +387,16 @@
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
             threads: true,
+            locale: $locale ?? "en",
+            undeleting: (messageId) => undeleting.has(messageId),
+            // a Twitch link plays here, unless this page is framed by another site
+            twitchParent: twitchPlayerParent({
+                hostname: window.location.hostname,
+                native: client.isNativeApp(),
+                framed: $runningInIframe,
+            }),
+            proposalTopics: $proposalTopicsStore,
+            proposalVotes: $proposalVotesStore,
         });
     });
 
@@ -1406,6 +1441,8 @@
             claim,
             claiming: (messageId) => $claimsStore.has(messageId),
             vote: (m, content, next) => vote(where, m, content, next),
+            voteOnProposal: (m, content, adopt) => voteProposal(m, content, adopt),
+            openProposal: (content) => window.open(proposalPage(client, content), "_blank", "noopener"),
             download,
             get voice() {
                 return voice;
@@ -1432,6 +1469,16 @@
         if ((await votePoll(client, chat, me, msg, content, next, rootIndex)) === "failed") {
             toastStore.showFailureToast(i18nKey("poll.voteFailed"));
         }
+    }
+
+    // a vote on a proposal (it shows at once); why it didn't go through, in a dialog or a toast, as
+    // the old trees' proposal card said it
+    let proposalProblem = $state<ProposalVoteProblem>();
+
+    async function voteProposal(msg: Message, content: ProposalContent, adopt: boolean) {
+        const result = await voteOnProposal(client, chat.id, msg, content, adopt);
+        if (result.kind === "problem") proposalProblem = result.problem;
+        if (result.kind === "failed") toastStore.showFailureToast(result.message);
     }
 
     // a prize claim, from the reader's own click (claimPrize refuses any other)
@@ -1669,11 +1716,15 @@
             {@const where = rowContext(evt)}
             {@const offers = rowOffers(where, evt, failed, offered)}
             {@const swipeLeft = webMessageSwipeLeft(actions)}
+            {@const markdown = bodyMarkdown(content, row.message)}
             <!-- a text message's text as the old UI renders it: markdown, mentions, links, custom
-                 emoji (a lone emoji is the bubble's own, large) -->
+                 emoji (a lone emoji is the bubble's own, large); a kind without a bubble of its
+                 own, its words (a reminder's notes, the referral card's link) -->
             {#snippet body()}
-                {#if content.kind === "text_content"}
-                    <Markdown text={content.text} inline={!msg.blockLevelMarkdown} />
+                {#if markdown !== undefined}
+                    <Markdown
+                        text={markdown}
+                        inline={content.kind === "text_content" ? !msg.blockLevelMarkdown : false} />
                 {/if}
             {/snippet}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -1724,13 +1775,7 @@
                     onSwipeLeft={swipeLeft === undefined
                         ? undefined
                         : () => run(where, swipeLeft, evt, failed)}
-                    messages={messagesFor(
-                        row,
-                        body,
-                        content.kind === "text_content" && textAsMarkdown(content.text),
-                        evt,
-                        offers,
-                    )}
+                    messages={messagesFor(row, body, markdown !== undefined, evt, offers)}
                 />
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}
@@ -1894,6 +1939,9 @@
             on={!$confirmMessageDeletion}
             onChange={(on) => confirmMessageDeletion.set(!on)} />
     </ConfirmDialog>
+{/if}
+{#if proposalProblem !== undefined}
+    <ProposalVoteDialog problem={proposalProblem} onClose={() => (proposalProblem = undefined)} />
 {/if}
 {#if removingPreview !== undefined}
     <ConfirmDialog

@@ -1,6 +1,8 @@
 <!-- Governance proposal. Outcome pill in the header (Open, Passing, Adopted, You voted to adopt/reject, Rejected, Expired) coloured by state.
      Native's two-threshold bar: ▾ softThreshold = passes when voting ends, ▼ hardThreshold = adopted immediately. Adopt/Reject only while you can vote.
-     Without myVote it remembers the vote cast here. -->
+     Without myVote it remembers the vote cast here; a host that passes myVote (null for none) owns it.
+     By hand (web 5a): its type is `topic` (it was `kind`, which a message's kind in MessageGroup takes), and a decided
+     proposal can also be adopted (not yet executed) or failed (adopted, but its execution failed). -->
 <script lang="ts">
   import { useT } from '../i18n';
   import Translate from './Translate.svelte';
@@ -11,11 +13,11 @@
   interface Props {
     title: string;
     /** Proposal type, e.g. "Transfer SNS treasury funds". */
-    kind: string;
+    topic: string;
     proposer: string;
     /** Critical proposals use 20% / 67% thresholds by default. */
     critical?: boolean;
-    state?: 'open' | 'rejected' | 'expired' | 'executed';
+    state?: 'open' | 'rejected' | 'expired' | 'adopted' | 'executed' | 'failed';
     /** Percent of voting power. */
     adopt: number;
     reject: number;
@@ -23,6 +25,7 @@
     hardThreshold?: number;
     /** e.g. "Voting ends in 2d 4h"; closed proposals default to "Voting ended". Resource key (or literal text). */
     when?: string;
+    /** The viewer's vote, null for none: the host's. Left out, the card remembers a vote cast here. */
     myVote?: Vote | null;
     canVote?: boolean;
     time: string;
@@ -33,7 +36,7 @@
 
   let {
     title,
-    kind,
+    topic,
     proposer,
     critical = false,
     state: status = 'open',
@@ -42,7 +45,7 @@
     softThreshold,
     hardThreshold,
     when,
-    myVote = null,
+    myVote,
     canVote = true,
     time,
     lastInGroup = true,
@@ -62,23 +65,53 @@
   const softLabel = $derived(t('ui.proposalMessage.passesWhenEnds', { percent: soft }));
   const hardLabel = $derived(t('ui.proposalMessage.passesImmediately', { percent: hard }));
 
-  const tone = $derived(mine ? (mine === 'adopt' ? 'good' : 'bad') : status === 'rejected' ? 'bad' : status === 'expired' ? 'muted' : adopted || passing ? 'good' : 'info');
+  const tone = $derived(
+    mine
+      ? mine === 'adopt'
+        ? 'good'
+        : 'bad'
+      : status === 'rejected' || status === 'failed'
+        ? 'bad'
+        : status === 'expired'
+          ? 'muted'
+          : adopted || passing || status === 'adopted' || status === 'executed'
+            ? 'good'
+            : 'info',
+  );
   const outcome = $derived(
     t(
       open
         ? mine
           ? mine === 'adopt' ? 'ui.proposalMessage.votedAdopt' : 'ui.proposalMessage.votedReject'
           : adopted ? 'ui.proposalMessage.adopted' : passing ? 'ui.proposalMessage.passing' : 'ui.proposalMessage.open'
-        : status === 'rejected' ? 'ui.proposalMessage.rejected' : status === 'executed' ? 'ui.proposalMessage.executed' : 'ui.proposalMessage.expired',
+        : status === 'rejected'
+          ? 'ui.proposalMessage.rejected'
+          : status === 'executed'
+            ? 'ui.proposalMessage.executed'
+            : status === 'adopted'
+              ? 'ui.proposalMessage.adopted'
+              : status === 'failed'
+                ? 'ui.proposalMessage.failed'
+                : 'ui.proposalMessage.expired',
     ),
   );
-  const icon = $derived(mine || status === 'executed' ? 'check' : status === 'rejected' ? 'close' : status === 'expired' ? 'clock' : 'dot');
+  const icon = $derived(
+    mine || status === 'executed' || status === 'adopted' ? 'check' : status === 'rejected' || status === 'failed' ? 'close' : status === 'expired' ? 'clock' : 'dot',
+  );
 
   function cast(side: Vote) {
     if (!open || mine) return;
-    if (myVote == null) castHere = side;
+    if (myVote === undefined) castHere = side;
     onVote?.(side);
   }
+
+  // Enter and Space press a role="button" span, as on a button
+  const keys = (press: () => void) => (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      press();
+    }
+  };
 </script>
 
 <div class="shell" class:last={lastInGroup} class:expired={status === 'expired'}>
@@ -90,7 +123,7 @@
       </div>
       <span class="title">{title}</span>
       {#snippet proposerName()}<span class="proposer">{proposer}</span>{/snippet}
-      <span class="byline"><Translate key="ui.proposalMessage.byline" params={{ kind }} proposer={proposerName} /></span>
+      <span class="byline"><Translate key="ui.proposalMessage.byline" params={{ kind: topic }} proposer={proposerName} /></span>
     </div>
     <div class="tally">
       <ThresholdBar
@@ -111,11 +144,11 @@
     </div>
     {#if open && !mine && canVote}
       <div class="votes">
-        <span class="vote adopt" onclick={() => cast('adopt')} role="button" tabindex="0"><span class="vote-icon check"></span>{t('ui.proposalMessage.adopt')}</span>
-        <span class="vote reject" onclick={() => cast('reject')} role="button" tabindex="0"><span class="vote-icon cross"></span>{t('ui.proposalMessage.reject')}</span>
+        <span class="vote adopt" onclick={() => cast('adopt')} onkeydown={keys(() => cast('adopt'))} role="button" tabindex="0"><span class="vote-icon check"></span>{t('ui.proposalMessage.adopt')}</span>
+        <span class="vote reject" onclick={() => cast('reject')} onkeydown={keys(() => cast('reject'))} role="button" tabindex="0"><span class="vote-icon cross"></span>{t('ui.proposalMessage.reject')}</span>
       </div>
     {/if}
-    <span class="details" onclick={onDetails} role="button" tabindex="0">{t('ui.proposalMessage.details')}<span class="external"></span></span>
+    <span class="details" onclick={onDetails} onkeydown={keys(() => onDetails?.())} role="button" tabindex="0">{t('ui.proposalMessage.details')}<span class="external"></span></span>
   </div>
   <div class="time">{time}</div>
 </div>

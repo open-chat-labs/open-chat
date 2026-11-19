@@ -1089,6 +1089,15 @@ design export needs. Each entry says where it came up.
 - **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
   links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
   place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).
+- **Tips** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design export: `ReactionChips`
+  (so `ChatBubble` and `MessageGroup`, and `GroupMessage`) takes `tips`, a chip per token before
+  the reactions: the token's logo and the total, the viewer's own marked as their reactions are,
+  who tipped as its tooltip. Not a button. The design has no tips.
+
+- **Video players for links** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design
+  export: `PlayerCard`, a link's click-to-play player (a poster with a play button and the title,
+  the player only on its click, a row linking to the site where it can't play), and `ChatBubble`'s
+  `players`, before its cards in a 542px bubble. The design has no player.
 - **One message per group** (by hand, phase 3b): the conversation uses the old UI's list, which
   renders one row per event, so each message is a `MessageGroup` of its own. `avatarSpace` keeps
   the avatar's space under a run's first message and `endsRun` gives only the run's last message
@@ -1102,9 +1111,39 @@ design export needs. Each entry says where it came up.
   searches for (Trending is Klipy's featured GIFs, the others search their word, "Thanks" "thank
   you"), nor the loading, empty, failed or nothing-found states: TODO(design). Typed words are
   searched once typing stops for 500ms, from 3 characters, as the old `GiphySelector`s did.
-- **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
-  render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
-  neuron with its reason, as the old UI does.
+- **Proposals** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design export:
+  `ProposalMessage` is in the `GroupMessage` union (`kind: 'proposal'`), so `MessageGroup` renders
+  it; its type prop is `topic` (it was `kind`, which the union takes), a decided proposal can also be
+  `adopted` (not yet executed) or `failed` (its execution failed), a host that passes `myVote` (null
+  for none) owns the vote (the card no longer remembers one cast here, which stayed after a failed
+  vote), and its buttons press on Enter and Space.
+- **Proposals in the conversation** (`features/conversation`, 5a; `logic/conversation/messageRow`,
+  `proposalVote`; `proposalCard` in `@client`, the new trees' only: the old `ProposalContent`s keep
+  their own arithmetic, so what they show doesn't change, e.g. NaN% with no voting power): a
+  proposal shows as `ProposalMessage`: its title, its type (the chat's names for its NNS topic or
+  SNS action, `proposalTopicsStore`, "unknown" until they load), its proposer (a known team's neuron
+  by name, `NamedNeurons`, else its id shortened), Critical for an SNS's treasury, dapp and minting
+  actions (the mobile app's list), its tally (each side's share, to two places) against the share it
+  needs to pass when voting ends (`minYesPercentageOfTotal`) and at once
+  (`minYesPercentageOfExercised`), how long voting has left ("Voting period remaining: 2d") or that
+  it has ended, and how it was decided. Adopt and Reject until its deadline, whatever the outcome
+  (the NNS keeps voting open after an early decision, for the rewards), while the reader hasn't
+  voted and the chat isn't read-only, as the old cards (`proposalVoting`). A proposals chat's
+  screen makes its rows' context again every minute (`PROPOSAL_CLOCK_MS`) and the rows key on the
+  time left, so the countdown keeps up and voting closes at the deadline (the old cards ticked
+  with `now`); the vote shows at once (`voteOnProposal`, `proposalVotesStore`) and the row
+  is made again as it does (`RowCache`). A vote that didn't go through says why, as the old cards
+  did: no neuron to vote with (the reader's OpenChat principal to add as a hotkey, with a copy
+  button), or each neuron that couldn't vote with why, linked on the IC dashboard
+  (`ProposalVoteDialog`, no design for it: `TODO(design)`); any other failure is a toast. Proposal
+  details opens its page on the IC dashboard (`proposalPage`). Not carried over: the summary (the
+  old card showed it, with Read more) and the payload ("Details") on the card, which the design's
+  card has no room for (they're on the dashboard page); the proposal's id and the proposer's link;
+  collapsing a proposal and the proposals filters (the right column's entry is a placeholder:
+  "Right column host"; `FilteredProposals`, and the old lists' grouping of collapsed proposals, come
+  with them). The native conversation shows the same card without Adopt and Reject (it passes no
+  vote handler yet). Checked on the local replica with proposals added to the list on the page
+  (there's no proposals chat there): the card, and a vote that fails.
 - **Prizes** (`features/conversation`, 5a): a prize shows as `PrizeMessage`. `PrizeMessage` takes
   `canClaim` and passes the click to `onClaim` by hand: the design offers Claim to everyone and
   gives no click, which `claimPrize` refuses. Claim shows only where `prizeView` (`@client`, shared
@@ -2591,9 +2630,8 @@ design export needs. Each entry says where it came up.
   The community header's menu only marks all read; its other items open dialogs later phases
   build.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
-  3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 5), and
-  link previews, translations and tips (phase 5) aren't wired; the message menu, reactions and
-  swipes are 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
+  3c). The message kinds are 5a's (each in its bubble: "Message kinds" and the entries after it),
+  the message menu, reactions and swipes 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
   (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
   `TODO(design)`), and "N messages deleted" expands them. Each event's line has its date and time
   under it, as in the old trees (`toLongDatetimeString` in `@client`, which both old
@@ -2691,13 +2729,25 @@ design export needs. Each entry says where it came up.
   (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
   its card, after a confirm (`ConfirmDialog`, no design for it: `TODO(design)`). A link to
   another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
-  quoted message. A Twitch link shows its card, not the click-to-play player the old trees show
-  (`TwitchPlayer`, from `extractTwitchEmbeds`, `twitchPlayersAndCards`, `twitchPlayerParent`,
-  `twitchPlayerUrl` and `twitchPoster` in `@client`): `ChatBubble` takes cards only. The player's
-  URL starts playing as it loads, so a player here must load only on its poster's click, and back
-  to the poster when hidden, with `allow="autoplay; fullscreen"` on its iframe, as the old trees do.
-  Nothing may lie over it, not even an invisible layer clicks pass through (the old trees'
-  `ChitEarned` was one), or Twitch won't start it.
+  quoted message. A Twitch link in the text (a channel, a video or a clip) plays in the bubble, as
+  in the old trees (`TwitchPlayer`): a player before the cards (`PlayerCard`, by hand: the design
+  has none, `TODO(design)`; `ChatBubble` takes `players` and widens to 542px for them, Twitch's
+  least being 400x300), from `extractTwitchEmbeds`, `twitchPlayersAndCards` (the link's preview,
+  if the sender fetched one, is its poster, not a card of its own), `twitchPoster`,
+  `twitchPlayerUrl` and `twitchWatchUrl` in `@client` (`linkPreviews` and `twitchPlayer` in
+  `logic/conversation`). The player's URL starts playing as it loads, so it loads only on the
+  poster's click, and goes back to the poster whenever it's hidden, with `allow="autoplay;
+  fullscreen"` on its iframe. Nothing lies over it (the row's mark is behind it). Where Twitch
+  won't play (`twitchPlayerParent`: a page another site frames, or narrower than 400px), it's a
+  row linking to Twitch; the native tree always links (its context has no `twitchParent`). A card's
+  X goes by the cards shown (`previewLink`), so a Twitch link's preview, which is no card, doesn't
+  shift them. Checked on the local replica: a channel's poster, then its player on a click.
+  One change from the old trees: a channel's poster image is Twitch's picture of the channel now
+  (`twitchLiveThumbnailUrl`: the stream's latest frame while it's live, Twitch's offline picture
+  when not), not its preview's image, which is only the channel's avatar and is missing whenever
+  the sender's preview fetch failed (the old trees then show a black poster). A video or clip still
+  has a black poster with its title: Twitch gives a preview fetch only its logo, and its own
+  thumbnails need its API.
 - **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
   token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
   signs it by the bubble's side, which shows a transfer between two other people in a group as the
@@ -2730,6 +2780,46 @@ design export needs. Each entry says where it came up.
   while previewing). An offer still being sent (`p2p_swap_content_initial`) shows as the card it
   will be, with "Sending offer…" where the action would go (`sending`, by hand; a failed one stays
   a text bubble, which shows the failure). Time left is worked out when the row is made. No tick or quote yet.
+- **Message kinds** (`features/conversation`, 5a; `logic/conversation/messageRow`, shared with the
+  native conversation): every kind of message, as `kindMessage` and `kindText` show it:
+  - in a bubble of its own: images, memes, GIFs and videos (`MediaMessage`), voice and files,
+    transfers, polls, prizes and swap offers (each has its entry below), and a prize's win, the
+    message the thread under a prize gets for each winner: a transfer's card (`TransferMessage`,
+    + for the reader's own win, no sign for someone else's; "View transaction" opens it), its
+    caption the old words, "Bob won 0.10 ICP", without their bold (no design for a win:
+    `TODO(design)`; the old trees' was a spinning coin over that line). One in a ledger the
+    registry doesn't carry stays a text bubble;
+  - as a text bubble in the old trees' words, through the app's markdown (`bodyMarkdown`, web and
+    native, so a link works): a hidden message (a blocked user's, "Message hidden"), one this version can't
+    show ("This message is not available in this version of the app", "This message needs a
+    newer version of OpenChat"), a placeholder ("Please wait, your message will load shortly"), a
+    reminder ("⏰ I will remind you about this message at …", then "⏰ You asked me to remind you
+    about this message.", each with its notes under it; a cancelled one is folded away with the
+    deleted messages, as the old trees, and elsewhere shows its notes alone), and the referral card ("Invite
+    friends/family", what referring earns and the reader's own link, `referralLink`; the old card
+    copied the link on a click and had a QR code). No design for any of them: `TODO(design)`;
+  - still as a text bubble with its content's own English text (`contentText`, the chat list's
+    preview text): a bot still working ("Bot working ...", the old trees' typing dots), an
+    encrypted message, a price chart and a MiniApp's card (their designs are asked for: "Designs
+    needed"), the daily puzzle's result (#10236), a reported message's and a moderation report's
+    cards (the platform moderators' review cards, left from L6: "Platform operators and
+    moderators"), and calls and proposals until theirs are built;
+  - deleted: the tombstone (`ChatBubble`'s `deletedText`) says who deleted it and when, as the old
+    trees do ("Message deleted by Alice on …", `toLongDatetimeString`), "Undeleting message by …"
+    while it's being undeleted (`undeletingMessagesStore`; the row is made again as it starts and
+    stops, `RowCache`), and the OpenChat bot's removal for breaking a platform rule, whose rules
+    link the plain-text tombstone can't carry (its words only). Reveal and undelete are in its
+    menu (5b, "Message actions");
+  - translated (5b's Translate): the translation shows in the message's place, as in the old trees
+    (the client merges `translationsStore` into the events); there's no mark that it's translated,
+    as there wasn't in the old trees. The old desktop's on-device translation of a whole chat (a
+    spike, #9709: `autoTranslatableText`, `onDeviceTranslator`, its banner and header item) isn't
+    carried over;
+  - tips: a chip per token before its reactions, the token's logo and the total (`tipChips`), the
+    reader's own marked as their reactions are, who tipped in its tooltip; `ReactionChips` takes
+    `tips` by hand (EXPORT-LOG 2026-11-16; the design has none: `TODO(design)`). A token the
+    registry doesn't carry has no chip. Clicking one does nothing (tipping is 5b's, not built);
+  - reactions: chips under every kind (5b, "Message actions").
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`logic/conversation/messageRow.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
@@ -2981,9 +3071,10 @@ design export needs. Each entry says where it came up.
     or a custom amount, the fee, paying from an external wallet with its approval, the PIN; not in
     the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
     no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
-    out). The tips a message got (5a) aren't shown either;
-  - a proposal's collapse waits for proposals (the thread's items, reply in thread and follow /
-    unfollow, are 4c's: done);
+    out). The tips a message got show as chips (5a, "Message kinds"), which do nothing when
+    clicked, where the old trees' tipped again;
+  - a proposal's collapse waits for the proposals filters (proposals show: 5a, "Proposals in the
+    conversation"; the thread's items, reply in thread and follow / unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;
   - the library's `EmojiPicker` has a fixed set of about 56 emoji: no search over all of them,
     no custom emoji (`@CE(code)`, which the old pickers offered) and no skin tones. A custom

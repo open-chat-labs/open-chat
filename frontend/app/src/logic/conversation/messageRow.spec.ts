@@ -1,5 +1,9 @@
 import {
     OPENCHAT_BOT_AVATAR_URL,
+    ProposalDecisionStatus,
+    type ProposalContent,
+    OPENCHAT_BOT_USER_ID,
+    type ResourceKey,
     type ChatSummary,
     type EventWrapper,
     type Message,
@@ -9,6 +13,8 @@ import {
 } from "@client";
 import {
     conversationContext,
+    hasProposals,
+    proposalVoting,
     mediaHeld,
     messageRow,
     messageStatus,
@@ -17,6 +23,7 @@ import {
     untilNextDay,
     withFields,
     type ConversationContext,
+    type PlayerProps,
 } from "./messageRow";
 
 const ctx: ConversationContext = {
@@ -27,6 +34,7 @@ const ctx: ConversationContext = {
     mentionsAsTyped: (text) => text.replace(/@UserId\((\w+)\)/g, "@$1"),
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
+    longDate: (timestamp) => `L${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -45,6 +53,11 @@ const ctx: ConversationContext = {
     avatar: () => undefined,
     unreadInThread: () => 0,
     threads: true,
+    proposalTopics: new Map(),
+    proposalVote: () => undefined,
+    undeleting: () => false,
+    referralLink: "https://oc.app/?ref=me",
+    twitchParent: "oc.app",
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -134,10 +147,10 @@ describe("a message row", () => {
     });
 
     test("shows other kinds as their text, and a deleted message as deleted", () => {
-        // a kind not built yet
-        const proposal = message({ content: { kind: "proposal_content" } as Message["content"] });
-        expect(messageRow(proposal, "sent", ctx).message).toMatchObject({
-            text: "[proposal_content]",
+        // a kind with no bubble of its own
+        const encrypted = message({ content: { kind: "encrypted_content" } as Message["content"] });
+        expect(messageRow(encrypted, "sent", ctx).message).toMatchObject({
+            text: "[encrypted_content]",
         });
         const deleted = message({ content: { kind: "deleted_content" } as Message["content"] });
         expect(messageRow(deleted, "sent", ctx).message.deleted).toBe(true);
@@ -315,6 +328,93 @@ describe("link previews", () => {
         const row = messageRow(message({ ogPreviews: urls.map(preview) }), "sent", ctx).message;
         return (row as { previews: { url: string }[] }).previews.map((c) => c.url);
     };
+
+    const players = (text: string, ogPreviews: Message["ogPreviews"] = []) =>
+        (
+            messageRow(message({ content: { kind: "text_content", text }, ogPreviews }), "sent", ctx)
+                .message as { players: PlayerProps[] }
+        ).players;
+
+    test("a Twitch link plays in the bubble: its preview titles the poster, the others stay cards", () => {
+        const row = messageRow(
+            message({
+                content: { kind: "text_content", text: "live now https://twitch.tv/ann" },
+                ogPreviews: [preview("https://www.twitch.tv/ann"), preview("https://a.com/x")],
+            }),
+            "sent",
+            ctx,
+        ).message as { previews: { url: string }[]; players: PlayerProps[] };
+        expect(row.previews.map((c) => c.url)).toEqual(["https://a.com/x"]);
+        expect(row.players).toEqual([
+            {
+                title: "T",
+                image: "https://static-cdn.jtvnw.net/previews-ttv/live_user_ann-640x360.jpg",
+                src: "https://player.twitch.tv/?channel=ann&parent=oc.app&autoplay=true",
+                href: "https://www.twitch.tv/ann",
+                logo: "/assets/twitch.svg",
+                playLabel: "twitch.play",
+                watchLabel: "twitch.watchOnTwitch",
+            },
+        ]);
+    });
+
+    test("a channel's poster is what it's streaming now, with or without a preview", () => {
+        // no preview: the sender's preview fetch failed (or was never made)
+        expect(players("https://www.twitch.tv/Aztecross")).toMatchObject([
+            {
+                title: "twitch.tv/aztecross",
+                image: "https://static-cdn.jtvnw.net/previews-ttv/live_user_aztecross-640x360.jpg",
+                src: "https://player.twitch.tv/?channel=aztecross&parent=oc.app&autoplay=true",
+            },
+        ]);
+        // its preview's image is the channel's avatar, not the stream
+        expect(
+            players("https://twitch.tv/ann", [
+                {
+                    ...preview("https://twitch.tv/ann"),
+                    image: { url: "https://cdn/avatar.png", width: 300, height: 300 },
+                },
+            ]),
+        ).toMatchObject([
+            { image: "https://static-cdn.jtvnw.net/previews-ttv/live_user_ann-640x360.jpg" },
+        ]);
+    });
+
+    test("a video or clip shows a poster with where it's to, and plays on its own player", () => {
+        expect(players("https://www.twitch.tv/videos/2500000000?t=1h2m3s")).toEqual([
+            expect.objectContaining({
+                title: "twitch.tv/videos/2500000000?t=1h2m3s",
+                image: undefined,
+                src: "https://player.twitch.tv/?video=v2500000000&time=1h2m3s&parent=oc.app&autoplay=true",
+                href: "https://www.twitch.tv/videos/2500000000?t=1h2m3s",
+            }),
+        ]);
+        // Twitch's generic preview (its logo) says nothing about the clip
+        expect(
+            players("https://clips.twitch.tv/AwkwardHelplessSalamander", [
+                {
+                    ...preview("https://clips.twitch.tv/AwkwardHelplessSalamander"),
+                    title: "Twitch",
+                    image: { url: "https://cdn/twitch_logo3.jpg", width: 262, height: 200 },
+                },
+            ]),
+        ).toEqual([
+            expect.objectContaining({
+                title: "clips.twitch.tv/AwkwardHelplessSalamander",
+                image: undefined,
+                src: "https://clips.twitch.tv/embed?clip=AwkwardHelplessSalamander&parent=oc.app&autoplay=true",
+            }),
+        ]);
+    });
+
+    test("where Twitch won't play (the native apps, a framed page), a Twitch link links to Twitch", () => {
+        const row = messageRow(
+            message({ content: { kind: "text_content", text: "https://twitch.tv/ann" } }),
+            "sent",
+            { ...ctx, twitchParent: undefined },
+        ).message as { players: PlayerProps[] };
+        expect(row.players).toMatchObject([{ src: "", href: "https://www.twitch.tv/ann" }]);
+    });
 
     // invariant 6
     test("a link preview whose URL isn't http(s) is never rendered as a link", () => {
@@ -531,6 +631,283 @@ describe("swap offers", () => {
     });
 });
 
+describe("deleted messages", () => {
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) => `${key.key} ${JSON.stringify(key.params)}`,
+    };
+    const deleted = (deletedBy: string) =>
+        message({
+            content: { kind: "deleted_content", deletedBy, timestamp: 9n },
+        } as Partial<Message>);
+
+    test("say who deleted them and when, as the old trees do", () => {
+        expect(messageRow(deleted("bob"), "sent", words).message).toMatchObject({
+            deleted: true,
+            deletedText: 'messageDeleted {"username":"Bob","timestamp":"L9"}',
+        });
+    });
+
+    test("say while they're being undeleted", () => {
+        const undeleting = { ...words, undeleting: (id: bigint) => id === 42n };
+        expect(messageRow(deleted("bob"), "sent", undeleting).message).toMatchObject({
+            deletedText: 'undeletingMessage {"username":"Bob","timestamp":"L9"}',
+        });
+    });
+
+    test("removed by the OpenChat bot, keep the rule link's words only (the tombstone is plain text)", () => {
+        const bot = {
+            ...ctx,
+            userName: () => "OpenChat Bot",
+            text: () => "Removed by OpenChat Bot for breaking a [platform rule]() on L9",
+        };
+        expect(messageRow(deleted(OPENCHAT_BOT_USER_ID), "sent", bot).message).toMatchObject({
+            deletedText: "Removed by OpenChat Bot for breaking a platform rule on L9",
+        });
+    });
+});
+
+describe("kinds without a bubble of their own", () => {
+    const words = { ...ctx, text: (key: ResourceKey) => key.key };
+    const row = (content: object) =>
+        messageRow(message({ content } as Partial<Message>), "sent", words).message;
+
+    test("say what they are in the app's words, not the content's English", () => {
+        expect(row({ kind: "blocked_content" })).toMatchObject({
+            kind: "text",
+            text: "messageBlocked",
+        });
+        expect(row({ kind: "restricted_content" })).toMatchObject({
+            text: "appStore.messageNotAvailable",
+        });
+        expect(row({ kind: "unsupported_content" })).toMatchObject({ text: "messageUnsupported" });
+        expect(row({ kind: "placeholder_content" })).toMatchObject({ text: "placeholderContent" });
+    });
+
+    test("a reminder says when, or that it's due, with its notes", () => {
+        expect(
+            row({
+                kind: "message_reminder_created_content",
+                remindAt: 5,
+                reminderId: 1n,
+                hidden: false,
+                notes: "call mum",
+            }),
+        ).toMatchObject({ text: "⏰ reminders.remindAt\n\ncall mum" });
+        expect(row({ kind: "message_reminder_content", reminderId: 1n })).toMatchObject({
+            text: "⏰ reminders.youAsked",
+        });
+    });
+
+    test("a cancelled reminder promises nothing: its notes alone", () => {
+        const cancelled = {
+            kind: "message_reminder_created_content",
+            remindAt: 5,
+            reminderId: 1n,
+            hidden: true,
+        };
+        expect(row({ ...cancelled, notes: "call mum" })).toMatchObject({ text: "call mum" });
+        expect(row(cancelled)).toMatchObject({ text: "" });
+    });
+
+    test("the referral card gives the reader their own link", () => {
+        expect(row({ kind: "user_referral_card" })).toMatchObject({
+            text: "referralHeader\n\nuserReferralMessage\n\nhttps://oc.app/?ref=me",
+        });
+    });
+
+    test("other kinds still show their content's text", () => {
+        expect(row({ kind: "encrypted_content" })).toMatchObject({ text: "[encrypted_content]" });
+    });
+});
+
+describe("tips", () => {
+    test("show a chip per token with its total, the reader's own marked, and who tipped", () => {
+        const tipped = message({
+            tips: { icp: { alice: 100_000_000n, me: 50_000_000n }, unknown: { bob: 1n } },
+        });
+        expect(messageRow(tipped, "sent", ctx).message.tips).toEqual([
+            {
+                amount: "1.5",
+                symbol: "ICP",
+                logo: 'url("icp.svg") center / cover',
+                mine: true,
+                label: "Alice, You",
+            },
+        ]);
+    });
+
+    test("show on every kind", () => {
+        const file = message({
+            content: { kind: "file_content", name: "a.txt", mimeType: "text/plain", fileSize: 1 },
+            tips: { icp: { bob: 100_000_000n } },
+        } as Partial<Message>);
+        expect(messageRow(file, "sent", ctx).message).toMatchObject({
+            kind: "file",
+            tips: [{ amount: "1", mine: false, label: "Bob" }],
+        });
+    });
+});
+
+describe("prize wins", () => {
+    const win = (recipient: string, ledger = "icp") =>
+        message({
+            content: {
+                kind: "prize_winner_content",
+                prizeMessageIndex: 1,
+                transaction: {
+                    kind: "completed",
+                    ledger,
+                    recipient,
+                    sender: "alice",
+                    amountE8s: 200_000_000n,
+                    feeE8s: 10_000n,
+                    memo: 0n,
+                    blockIndex: 1n,
+                },
+            },
+        } as Partial<Message>);
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) => `**${String(key.params?.recipient)}** won`,
+    };
+
+    test("show as a transfer to the winner: in for the reader's own, saying who won", () => {
+        expect(messageRow(win("me"), "sent", words).message).toMatchObject({
+            kind: "transfer",
+            amount: "2",
+            symbol: "ICP",
+            direction: "in",
+            caption: "You won",
+        });
+        expect(messageRow(win("bob"), "sent", words).message).toMatchObject({
+            direction: "other",
+            caption: "Bob won",
+        });
+    });
+
+    test("in a ledger the registry doesn't carry, show as text", () => {
+        expect(messageRow(win("me", "unknown"), "sent", ctx).message).toMatchObject({
+            kind: "text",
+        });
+    });
+});
+
+describe("proposals", () => {
+    const HOUR = 3_600_000;
+    const proposal = (fields: Partial<ProposalContent["proposal"]> = {}, myVote?: boolean) =>
+        message({
+            content: {
+                kind: "proposal_content",
+                governanceCanisterId: "gov",
+                myVote,
+                proposal: {
+                    kind: "sns",
+                    id: 7n,
+                    action: 9,
+                    title: "Fund the design work",
+                    proposer: "0123456789abcdef",
+                    status: ProposalDecisionStatus.Open,
+                    tally: { yes: 40, no: 10, total: 100, timestamp: 0n },
+                    deadline: 50 * HOUR,
+                    minYesPercentageOfTotal: 20,
+                    minYesPercentageOfExercised: 67,
+                    ...fields,
+                } as ProposalContent["proposal"],
+            },
+        } as Partial<Message>);
+    const words = {
+        ...ctx,
+        now: 2 * HOUR,
+        text: (key: ResourceKey) => key.key,
+        proposalTopics: new Map([[9, "Transfer treasury funds"]]),
+    };
+
+    test("show their type, proposer, tally and thresholds, and how long voting has left", () => {
+        expect(messageRow(proposal(), "sent", words).message).toMatchObject({
+            kind: "proposal",
+            title: "Fund the design work",
+            topic: "Transfer treasury funds",
+            proposer: "0123..cdef",
+            critical: true,
+            state: "open",
+            adopt: 40,
+            reject: 10,
+            softThreshold: 20,
+            hardThreshold: 67,
+            when: "proposal.votingPeriodRemaining: 2d",
+            myVote: null,
+            canVote: true,
+        });
+    });
+
+    test("can't be voted on once voted, once voting has ended, or read-only", () => {
+        const row = (p: EventWrapper<Message>, c = words) =>
+            messageRow(p, "sent", c).message as { canVote: boolean; myVote: string | null };
+        expect(row(proposal({}, true))).toMatchObject({ canVote: false, myVote: "adopt" });
+        expect(row(proposal(), { ...words, proposalVote: () => "rejecting" })).toMatchObject({
+            canVote: false,
+            myVote: "reject",
+        });
+        expect(row(proposal({ deadline: HOUR }))).toMatchObject({ canVote: false });
+        expect(row(proposal({ deadline: 2 * HOUR }))).toMatchObject({ canVote: false });
+        expect(row(proposal(), { ...words, readonly: true })).toMatchObject({ canVote: false });
+    });
+
+    test("decided early, can still be voted on until the deadline, as the NNS allows", () => {
+        for (const status of [ProposalDecisionStatus.Adopted, ProposalDecisionStatus.Executed]) {
+            expect(messageRow(proposal({ status }), "sent", words).message).toMatchObject({
+                state: status === ProposalDecisionStatus.Adopted ? "adopted" : "executed",
+                canVote: true,
+                when: "proposal.votingPeriodRemaining: 2d",
+            });
+        }
+    });
+
+    test("once the deadline passes, say how it was decided and that voting has ended", () => {
+        expect(
+            messageRow(
+                proposal({ status: ProposalDecisionStatus.Failed, deadline: HOUR }),
+                "sent",
+                words,
+            ).message,
+        ).toMatchObject({ state: "failed", when: "proposal.votingPeriodEnded", canVote: false });
+    });
+
+    test("count down by the context's time, made again as the screen's clock moves on", () => {
+        const later = { ...words, now: 50 * HOUR - 5 * 60_000 };
+        expect(messageRow(proposal(), "sent", later).message).toMatchObject({
+            when: "proposal.votingPeriodRemaining: 5m",
+            canVote: true,
+        });
+        const after = { ...words, now: 50 * HOUR };
+        expect(messageRow(proposal(), "sent", after).message).toMatchObject({
+            when: "proposal.votingPeriodEnded",
+            canVote: false,
+        });
+    });
+});
+
+describe("a proposal's voting", () => {
+    test("is open until the deadline, with the time left in its largest unit", () => {
+        expect(proposalVoting(100 * 60_000, 0)).toEqual({ open: true, left: "1h" });
+        expect(proposalVoting(60_001, 60_000)).toEqual({ open: true, left: "1m" });
+        expect(proposalVoting(60_000, 60_000)).toEqual({ open: false, left: "" });
+        expect(proposalVoting(0, 60_000)).toEqual({ open: false, left: "" });
+    });
+});
+
+describe("a proposals chat", () => {
+    test("is a group or channel of the governance proposals subtype", () => {
+        const subtype = { kind: "governance_proposals" } as const;
+        expect(hasProposals({ kind: "group_chat", subtype } as ChatSummary)).toBe(true);
+        expect(hasProposals({ kind: "channel", subtype } as ChatSummary)).toBe(true);
+        expect(hasProposals({ kind: "group_chat", subtype: undefined } as ChatSummary)).toBe(false);
+        expect(hasProposals({ kind: "direct_chat" } as ChatSummary)).toBe(false);
+        expect(hasProposals(undefined)).toBe(false);
+    });
+});
+
 describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
@@ -617,7 +994,7 @@ describe("a conversation's context", () => {
             kind: "channel",
             id: { kind: "channel", communityId: "c", channelId: 1 },
             membership: { latestThreads: [{ threadRootMessageIndex: 4, latestMessageIndex: 6 }] },
-        } as unknown as ChatSummary;
+        } as ChatSummary;
         const asked: [number, number][] = [];
         const ctx = conversationContext({
             client: {
@@ -630,6 +1007,7 @@ describe("a conversation's context", () => {
                     asked.push([root, latest]);
                     return latest - 4;
                 },
+                canonicalOrigin: () => "https://oc.app",
             },
             chat,
             me: "me",
@@ -653,6 +1031,11 @@ describe("a conversation's context", () => {
             rates: () => new Map(),
             face: (userId) => userId,
             threads: true,
+            locale: "en",
+            undeleting: () => false,
+            twitchParent: undefined,
+            proposalTopics: new Map(),
+            proposalVotes: new Map(),
         });
         expect(ctx.unreadInThread(4)).toBe(2);
         expect(asked).toEqual([[4, 6]]);
@@ -669,6 +1052,7 @@ describe("a conversation's context", () => {
                 formatMessageDate: () => "",
                 isChatReadOnly: () => false,
                 unreadThreadMessageCount: () => 0,
+                canonicalOrigin: () => "https://oc.app",
             },
             chat: undefined,
             me: "me",
@@ -692,6 +1076,11 @@ describe("a conversation's context", () => {
             rates: () => new Map(),
             face: (userId) => userId,
             threads: true,
+            locale: "en",
+            undeleting: () => false,
+            twitchParent: undefined,
+            proposalTopics: new Map(),
+            proposalVotes: new Map(),
         });
         expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
             "hi @alice, @mods and @UserId(zz)",
@@ -720,6 +1109,7 @@ describe("a conversation's context", () => {
                 formatMessageDate: () => "",
                 isChatReadOnly: () => false,
                 unreadThreadMessageCount: () => 0,
+                canonicalOrigin: () => "https://oc.app",
             },
             chat: undefined,
             me: "me",
@@ -743,6 +1133,11 @@ describe("a conversation's context", () => {
             rates: () => new Map(),
             face: (userId) => userId,
             threads: true,
+            locale: "en",
+            undeleting: () => false,
+            twitchParent: undefined,
+            proposalTopics: new Map(),
+            proposalVotes: new Map(),
         });
         expect(ctx.avatar("alice")).toBe("https://blobs/alice");
         expect(ctx.avatar("bob")).toBeUndefined();

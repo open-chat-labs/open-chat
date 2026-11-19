@@ -105,6 +105,18 @@ export {
 export type { MiniAppGameListener } from "./utils/miniAppService";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export {
+    IC_DASHBOARD_URL,
+    isCriticalProposal,
+    neuronDashboardUrl,
+    neuronLabel,
+    proposalDashboardUrl,
+    proposalOutcome,
+    proposalTopicLabel,
+    proposalVotePercent,
+    proposalVoteStatus,
+    type ProposalOutcome,
+} from "./utils/proposalCard";
+export {
     achievementList,
     achievementReward,
     chitEarnedSummary,

@@ -24,6 +24,7 @@
         messageReadByThem,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
+        undeletingMessagesStore,
         userGroupSummariesStore,
         selectedServerChatStore,
         unconfirmedReadByThem,
@@ -33,6 +34,8 @@
         type EventWrapper,
         type Message,
         type OpenChat,
+        proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
@@ -49,7 +52,7 @@
     } from "@src/logic/conversation/messageRow";
     import { lowBandwidth } from "@src/stores/settings";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import type { ScreenProps } from "../app/screens";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
@@ -120,6 +123,11 @@
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
             threads: false,
+            locale: $locale ?? "en",
+            undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            twitchParent: undefined,
+            proposalTopics: $proposalTopicsStore,
+            proposalVotes: $proposalVotesStore,
         }),
     );
 

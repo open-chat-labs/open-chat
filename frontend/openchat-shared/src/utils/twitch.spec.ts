@@ -2,6 +2,7 @@ import { extractTwitchEmbeds, MAX_LINK_PREVIEWS } from "./linkPreviews";
 import type { OgPreview } from "../domain";
 import {
     parseTwitchUrl,
+    twitchLiveThumbnailUrl,
     twitchPlayerParent,
     twitchPlayersAndCards,
     twitchPlayerUrl,
@@ -266,6 +267,17 @@ describe("twitchWatchUrl", () => {
         ],
     ])("%s is watched at %s", (url, watchUrl) => {
         expect(twitchWatchUrl(parseTwitchUrl(url)!)).toBe(watchUrl);
+    });
+});
+
+describe("twitchLiveThumbnailUrl", () => {
+    test("Twitch's picture of the channel now, 640x360 unless asked otherwise", () => {
+        expect(twitchLiveThumbnailUrl("aztecross")).toBe(
+            "https://static-cdn.jtvnw.net/previews-ttv/live_user_aztecross-640x360.jpg",
+        );
+        expect(twitchLiveThumbnailUrl("Nelly", 320, 180)).toBe(
+            "https://static-cdn.jtvnw.net/previews-ttv/live_user_nelly-320x180.jpg",
+        );
     });
 });
 

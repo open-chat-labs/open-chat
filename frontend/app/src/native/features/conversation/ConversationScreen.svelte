@@ -69,6 +69,8 @@
         type OpenChat,
         type PollContent,
         type VideoCallContent,
+        proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
@@ -104,10 +106,10 @@
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
     import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
     import {
+        bodyMarkdown,
         quoteFor,
         quoteTarget,
         retryFor,
-        textAsMarkdown,
         withHandlers,
         type MessageHandlers,
         type QuoteTarget,
@@ -118,9 +120,11 @@
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
         conversationContext,
+        hasProposals,
         isMedia,
         mediaHeld,
         messageStatus,
+        PROPOSAL_CLOCK_MS,
         senderColor,
         untilNextDay,
         withFields,
@@ -158,7 +162,7 @@
     import { nativeMessageSwipes } from "@src/utils/messageSwipe";
     import { buildDisplayName } from "@src/utils/user";
     import { getContext, onDestroy, untrack } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
@@ -231,6 +235,15 @@
         return () => clearTimeout(timer);
     });
 
+    // a proposals chat's cards count down to their deadlines, and stop offering a vote at them:
+    // its rows' context is made again every minute, and the rows key on what voting has left
+    let clock = $state(0);
+    $effect(() => {
+        if (!hasProposals(chat)) return;
+        const timer = setInterval(() => (clock += 1), PROPOSAL_CLOCK_MS);
+        return () => clearInterval(timer);
+    });
+
     // ---- the rows' context, as the web's conversation makes it (logic/conversation/messageRow)
 
     // what a prize's requirements ask of the reader; rows are made again when it changes
@@ -255,6 +268,7 @@
     const heldCtx = new HeldWhileLeaving<ConversationContext | undefined>(undefined);
     const ctx = $derived.by((): ConversationContext => {
         void day;
+        void clock;
         void rowsVersion;
         void ratesLoaded;
         const live = conversationContext({
@@ -275,6 +289,12 @@
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
             // no thread screen yet (PLAN, N8a): no replies link under a message until then
             threads: false,
+            locale: $locale ?? "en",
+            undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            // Twitch doesn't play in the native apps: its links open Twitch
+            twitchParent: undefined,
+            proposalTopics: $proposalTopicsStore,
+            proposalVotes: $proposalVotesStore,
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;
@@ -1489,13 +1509,18 @@
                                 {@const searchMatch =
                                     searchOpen && args.focusIndex === msg.messageIndex && !failed}
                                 {@const quoted = quotedIndex === msg.messageIndex && !failed}
+                                {@const markdown = bodyMarkdown(content, row.message)}
                                 <!-- a text message's text as the old UI renders it: markdown, mentions,
-                                     links, custom emoji (a lone emoji is the bubble's own, large) -->
+                                     links, custom emoji (a lone emoji is the bubble's own, large); a
+                                     kind without a bubble of its own, its words (a reminder's notes,
+                                     the referral card's link), as the web's -->
                                 {#snippet body()}
-                                    {#if content.kind === "text_content"}
+                                    {#if markdown !== undefined}
                                         <Markdown
-                                            text={content.text}
-                                            inline={!msg.blockLevelMarkdown}
+                                            text={markdown}
+                                            inline={content.kind === "text_content"
+                                                ? !msg.blockLevelMarkdown
+                                                : false}
                                         />
                                     {/if}
                                 {/snippet}
@@ -1554,8 +1579,7 @@
                                             : () => edit(evt)}
                                         messages={messagesFor(
                                             row,
-                                            content.kind === "text_content" &&
-                                                textAsMarkdown(content.text),
+                                            markdown !== undefined,
                                             body,
                                             evt,
                                             offers,

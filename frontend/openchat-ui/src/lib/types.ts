@@ -4,9 +4,11 @@ import type { Component } from 'svelte';
 import type ChatBubble from './components/ChatBubble.svelte';
 import type FileMessage from './components/FileMessage.svelte';
 import type LinkPreview from './components/LinkPreview.svelte';
+import type { Tip } from './components/ReactionChips.svelte';
 import type MediaMessage from './components/MediaMessage.svelte';
 import type PollMessage from './components/PollMessage.svelte';
 import type PrizeMessage from './components/PrizeMessage.svelte';
+import type ProposalMessage from './components/ProposalMessage.svelte';
 import type SwapOfferMessage from './components/SwapOffer.svelte';
 import type TransferMessage from './components/TransferMessage.svelte';
 import type VoiceMessage from './components/VoiceMessage.svelte';
@@ -39,6 +41,8 @@ interface GroupMessageBase {
    *  group decides (own text: right edits, left replies; else right replies, left forwards). */
   swipeLeft?: 'edit' | 'reply' | 'forward';
   reactions?: { emoji: string; count: number; mine?: boolean }[];
+  /** The tips it got, a chip per token before its reactions (by hand, web 5a). */
+  tips?: Tip[];
   /** Replies in the message's thread: "N replies" under it (when the last came, `threadLastAt`), opening it (`onOpenThread`). */
   threadCount?: number;
   threadLastAt?: string;
@@ -68,6 +72,7 @@ export type GroupMessage = GroupMessageBase &
     | ({ kind: 'swap' } & KindProps<typeof SwapOfferMessage>)
     | ({ kind: 'poll' } & KindProps<typeof PollMessage>)
     | ({ kind: 'prize' } & KindProps<typeof PrizeMessage>)
+    | ({ kind: 'proposal' } & KindProps<typeof ProposalMessage>)
   );
 
 /** One sender's run of messages, as rendered by MessageGroup (ThreadPanel `replies`). */

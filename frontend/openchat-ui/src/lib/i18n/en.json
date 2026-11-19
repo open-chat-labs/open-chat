@@ -2284,6 +2284,10 @@
       "invite": "Invite",
       "manage": "Manage"
     },
+    "playerCard": {
+      "play": "Play {title}",
+      "watch": "Watch"
+    },
     "pollBuilderDialog": {
       "addQuestion": "Add a question",
       "addTwoAnswers": "Add at least two answers",
@@ -2781,6 +2785,7 @@
       "details": "Proposal details",
       "executed": "Executed",
       "expired": "Expired",
+      "failed": "Failed",
       "open": "Open",
       "passesImmediately": "Passes immediately ({percent}%)",
       "passesWhenEnds": "Passes when voting ends ({percent}%)",

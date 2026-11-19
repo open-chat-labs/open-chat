@@ -230,7 +230,7 @@
         <PollMessage side="received" question={S.poll.question} options={S.poll.options} publicVotes endsIn="2d" myVotes={[1]} time="12:04" />
         <PrizeMessage token={S.prizeToken} winners={20} claimed={7} endsIn="4m 12s" endingSoon gates={[{ label: 'docs.features.prize.diamondMember', met: true }, { label: 'docs.features.prize.hold10Chat', met: true }]} time="12:05" />
         <PrizeMessage token={S.prizeToken} winners={10} claimed={2} endsIn="1h 03m" gates={[{ label: 'docs.features.prize.diamondMember', met: true }, { label: 'docs.features.prize.hold1000Chat', met: false }]} time="12:06" />
-        <ProposalMessage title="Fund the design system work" kind="Transfer SNS treasury funds" proposer="hamish" adopt={41} reject={6} when="docs.features.proposal.votingEnds" canVote time="12:07" />
+        <ProposalMessage title="Fund the design system work" topic="Transfer SNS treasury funds" proposer="hamish" adopt={41} reject={6} when="docs.features.proposal.votingEnds" canVote time="12:07" />
       </div>
     </Frame>
   </div>
