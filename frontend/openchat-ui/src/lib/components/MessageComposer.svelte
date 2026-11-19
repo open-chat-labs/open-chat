@@ -1040,6 +1040,26 @@
   {/snippet}
 
   <div class="bar" class:focused={(focused || !!menu) && !editing} class:recording={voice === 'recording'}>
+    <!-- top to bottom: the reply / edit card, what's attached, then the text (the attachment's caption) -->
+    {#if context && !voice}
+      <div class="context" role="status" aria-label={contextLabel}>
+        <span class="context-main" onclick={onJumpContext} role="button" tabindex="0" title={t('ui.messageComposer.showOriginal')}>
+          {#if context.thumb}
+            <span class="context-thumb" style:background={context.thumb}
+              >{#if context.thumbVideo}<span class="context-play" aria-hidden="true"><span class="context-play-icon"></span></span>{/if}</span
+            >
+          {:else}
+            <span class="context-icon" class:editing><span class="context-glyph" style:mask="var(--icon-{editing ? 'edit' : 'reply'}) center/contain no-repeat"></span></span>
+          {/if}
+          <span class="context-text"
+            ><span class="context-label" class:editing>{contextLabel}</span><span class="context-quote">{context.quote}</span></span
+          >
+        </span>
+        <span class="round-close" onclick={onCancelContext} role="button" tabindex="0" aria-label={t(editing ? 'ui.messageComposer.cancelEdit' : 'ui.messageComposer.cancelReply')} data-tip={t(editing ? 'ui.messageComposer.cancelEdit' : 'ui.messageComposer.cancelReply')}
+          ><span class="close-icon"></span></span
+        >
+      </div>
+    {/if}
     {#if att?.type === 'media' && mediaLabel}
       <div class="media-header">
         <span class="media-count" aria-live="polite">{mediaLabel}</span>
@@ -1060,25 +1080,6 @@
         {#if onAddMedia && att.items.length < 10}
           <span class="tray-add" onclick={onAddMedia} role="button" tabindex="0" aria-label={t('ui.messageComposer.addMedia')} title={t('ui.messageComposer.addMore')}><span class="tray-add-icon"></span></span>
         {/if}
-      </div>
-    {/if}
-    {#if context && !voice}
-      <div class="context" role="status" aria-label={contextLabel}>
-        <span class="context-main" onclick={onJumpContext} role="button" tabindex="0" title={t('ui.messageComposer.showOriginal')}>
-          {#if context.thumb}
-            <span class="context-thumb" style:background={context.thumb}
-              >{#if context.thumbVideo}<span class="context-play" aria-hidden="true"><span class="context-play-icon"></span></span>{/if}</span
-            >
-          {:else}
-            <span class="context-icon" class:editing><span class="context-glyph" style:mask="var(--icon-{editing ? 'edit' : 'reply'}) center/contain no-repeat"></span></span>
-          {/if}
-          <span class="context-text"
-            ><span class="context-label" class:editing>{contextLabel}</span><span class="context-quote">{context.quote}</span></span
-          >
-        </span>
-        <span class="round-close" onclick={onCancelContext} role="button" tabindex="0" aria-label={t(editing ? 'ui.messageComposer.cancelEdit' : 'ui.messageComposer.cancelReply')} data-tip={t(editing ? 'ui.messageComposer.cancelEdit' : 'ui.messageComposer.cancelReply')}
-          ><span class="close-icon"></span></span
-        >
       </div>
     {/if}
     {#if att && chip}
@@ -1464,6 +1465,11 @@
     flex-wrap: wrap;
     gap: var(--space-8);
     padding: 6px 6px 0;
+  }
+
+  // under the reply / edit card the bar's row gap is the space: no inset from the bar's top edge
+  .context + .tray {
+    padding-top: 0;
   }
 
   // the media's header (a host's count, and Clear): a 24px row over the thumbnails

@@ -1042,3 +1042,7 @@
 
 ## 2026-11-19 — MessageComposer: a GIF picked focuses the text box (web 5c), by hand
 - `MessageComposer`: picking a GIF (`onPickGif`) closes the picker and focuses the text box (not while a host's panel is in the keyboard's place), so a caption can be typed: the web app now attaches a picked GIF to the draft, sent with Send, rather than sending it at once (the user's decision of 2026-11-19, against web spec 06). `meta.json` (`onPickGif`'s doc). No props changed.
+
+## 2026-11-19 — MessageComposer: the reply / edit card above the attached media (web 5c), by hand
+- `MessageComposer`: with a reply or edit card (`context`) and media attached, the card comes first, then the media header and thumbnails, then the text, as the file and builder chips already did; the media had sat above the card. Under the card the thumbnails lose their 6px top inset (the bar's row gap is the space). Alone, either looks as before. Every host (web and native) gets it; native plan 05 places both "above the input" without ordering them. No props changed.
+- Not in the design export: the export's markup put the media above the card.
