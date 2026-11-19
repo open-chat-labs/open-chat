@@ -43,6 +43,7 @@
     import LongPressMenu from "@openchat/ui/src/native/LongPressMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { longPress } from "@openchat/ui/src/native/longPress";
+    import Markdown from "@src/core/Markdown.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { chatRowActionLabel, chatRowMenu, type ChatRowAction } from "@src/logic/chats/chatMenu";
     import {
@@ -456,6 +457,11 @@
     const fabShown = $derived(!fabHidden && !searchOpen);
 </script>
 
+<!-- the latest message's markdown, on one line, as the old trees' rows render it -->
+{#snippet previewText(text: string)}
+    <Markdown {text} oneLine suppressLinks />
+{/snippet}
+
 <div class="chats">
     <NativePageHeader
         title={scope.kind === "favourite" ? $_("communities.favourites") : $_("native.tabs.chats")}
@@ -518,7 +524,11 @@
             <VirtualList items={shown} keyFn={(item) => item.key}>
                 {#snippet children(item)}
                     <div class="row" use:longPress={(el) => pressRow(item, el)}>
-                        <ChatRow {...rowProps(item)} onClick={() => open(item.chat)} />
+                        <ChatRow
+                            {...rowProps(item)}
+                            {previewText}
+                            onClick={() => open(item.chat)}
+                        />
                     </div>
                 {/snippet}
             </VirtualList>
@@ -568,7 +578,7 @@
 >
     {#snippet row()}
         {#if pressed !== null}
-            <ChatRow {...rowProps(pressed.listed)} />
+            <ChatRow {...rowProps(pressed.listed)} {previewText} />
         {/if}
     {/snippet}
 </LongPressMenu>

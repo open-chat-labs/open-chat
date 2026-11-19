@@ -8,7 +8,7 @@
      ending in "+N more …" that switches to its tab (lib/searchTabs). TODO(design): Groups; web/04 has no groups. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import type { ComponentProps } from 'svelte';
+  import type { ComponentProps, Snippet } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Badge from '../../lib/components/Badge.svelte';
   import ChatListHeader from './ChatListHeader.svelte';
@@ -31,7 +31,7 @@
   const SEARCH_TAB_KEYS = SEARCH_TABS.map((tab) => `ui.chatListPanel.searchTabs.${tab}`);
   const MORE_KEYS = { chats: 'ui.chatListPanel.moreChats', people: 'ui.chatListPanel.morePeople', groups: 'ui.chatListPanel.moreGroups' } as const;
 
-  type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems'>;
+  type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems' | 'previewText'>;
 
   interface Row extends RowProps {
     /** The chat's id, reported by onSelect. */
@@ -89,6 +89,8 @@
     filterLabels?: string[];
     emptyPreset?: ComponentProps<typeof EmptyState>['preset'];
     loading?: boolean;
+    /** Every row's preview text as the host renders it (markdown, mentions); plain text without it. */
+    previewText?: Snippet<[string]>;
   }
 
   let {
@@ -121,6 +123,7 @@
     filterLabels = ['All', 'Direct', 'Groups', 'Unread'],
     emptyPreset = 'no-conversations',
     loading = false,
+    previewText,
   }: Props = $props();
   const t = useT();
 
@@ -193,6 +196,7 @@
       kind={row.kind}
       preview={row.preview}
       previewIcon={row.previewIcon}
+      {previewText}
       time={row.time}
       unreadCount={row.unreadCount}
       mentions={row.mentions}

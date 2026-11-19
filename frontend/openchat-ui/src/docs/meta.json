@@ -1214,6 +1214,17 @@
         "doc": "An icon before the preview, e.g. `forward` when the last message was forwarded."
       },
       {
+        "name": "previewText",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The preview's text as the host renders it (markdown, mentions), shown in its place; plain text without it."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "10:48",
@@ -8719,6 +8730,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "previewText",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Every row's preview text as the host renders it (markdown, mentions); plain text without it."
       }
     ],
     "group": "features"
