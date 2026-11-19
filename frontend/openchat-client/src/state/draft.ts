@@ -46,6 +46,23 @@ export function createDraftMessagesStore() {
         });
     }
 
+    /**
+     * The draft once an edit ends, saved or cancelled: what the user was writing when it started
+     * (none if nothing was).
+     */
+    function afterEdit(draft: DraftMessage | undefined): DraftMessage | undefined {
+        const before = draft?.beforeEdit;
+        if (
+            before === undefined ||
+            (before.textContent === undefined &&
+                before.attachment === undefined &&
+                before.replyingTo === undefined)
+        ) {
+            return undefined;
+        }
+        return { ...before };
+    }
+
     return {
         subscribe: (sub: Subscriber<MessageContextMap<DraftMessage>>, invalidate?: () => void) =>
             store.subscribe(sub, invalidate),
@@ -61,6 +78,19 @@ export function createDraftMessagesStore() {
         setReplyingTo(key: MessageContext, replyingTo?: EnhancedReplyContext) {
             updateDraft(key, (d) => ({ ...d, replyingTo }));
         },
+        /**
+         * Replies to a message, the reply that's being written: an edit going on ends first, its
+         * text dropped and the draft put back as it was before it (`endEditing`), so the reply
+         * replaces any reply that was there then.
+         */
+        replyTo(key: MessageContext, replyingTo: EnhancedReplyContext) {
+            store.update((map) => {
+                const draft = map.get(key);
+                const kept = draft?.editingEvent !== undefined ? afterEdit(draft) : draft;
+                map.set(key, { ...(kept ?? new DraftMessage()), replyingTo });
+                return map;
+            });
+        },
         delete(key: MessageContext) {
             store.update((map) => {
                 map.delete(key);
@@ -73,16 +103,11 @@ export function createDraftMessagesStore() {
          */
         endEditing(key: MessageContext) {
             store.update((map) => {
-                const before = map.get(key)?.beforeEdit;
-                if (
-                    before === undefined ||
-                    (before.textContent === undefined &&
-                        before.attachment === undefined &&
-                        before.replyingTo === undefined)
-                ) {
+                const after = afterEdit(map.get(key));
+                if (after === undefined) {
                     map.delete(key);
                 } else {
-                    map.set(key, { ...before });
+                    map.set(key, after);
                 }
                 return map;
             });

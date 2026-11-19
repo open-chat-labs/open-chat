@@ -22,14 +22,17 @@ type Composing = {
     replyingTo?: EnhancedReplyContext;
 };
 
-/** Sets the chat's draft to reply to the message. */
+/**
+ * Sets the chat's draft to reply to the message. An edit going on ends: its text is dropped and
+ * the draft goes back to what was being written before it, now replying to this message.
+ */
 export function replyToMessage(
     chatId: ChatIdentifier,
     evt: EventWrapper<Message>,
     users: UserLookup,
 ): void {
     const context = { chatId };
-    localUpdates.draftMessages.setReplyingTo(
+    localUpdates.draftMessages.replyTo(
         context,
         messageReplyContext(evt, users.get(evt.event.sender), context),
     );

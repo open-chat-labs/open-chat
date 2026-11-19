@@ -3027,7 +3027,7 @@ design export needs. Each entry says where it came up.
     its `MessageContext`).
   - Not yet: paying from an external wallet (above); the design's "Poll sent · Undo" toast.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
-  edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
+  edited (`replyTo` or `setReplyingTo`, and `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
   as the old entries started it (`editStartText`, logic/composer, which both old entries now
   call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
@@ -3040,7 +3040,11 @@ design export needs. Each entry says where it came up.
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
   the old trees dropped the whole draft, and now get it back too), also when the chat was left
   mid-edit: the composer then mounts with that text to go back to (`composerStartText`;
-  `MessageComposer` takes `text` so mounted in edit mode, by hand). A reply to a photo, video,
+  `MessageComposer` takes `text` so mounted in edit mode, by hand). Replying to a message
+  mid-edit (its menu, a swipe, a double click, a private reply into a DM being edited in) ends
+  the edit the same way, its text dropped, and replies from the draft put back (`replyTo`, the
+  client's drafts, through `replyToMessage`); the old trees' replies (`setReplyingTo`) still stay
+  in the edit. Editing mid-reply starts the edit, and cancelling it puts the reply back. A reply to a photo, video,
   GIF or meme shows its picture beside the quote, as the old trees' reply strips do
   (`replyThumb`, `logic/composer/composerProps`: a video's first frame with a play glyph,
   `ComposerContext.thumbVideo`, by hand, EXPORT-LOG 2026-11-16; in low bandwidth a photo not
