@@ -1,4 +1,5 @@
 import AVFoundation
+import CallScreenCore
 import Daily
 import SwiftUI
 import UIKit
@@ -256,6 +257,7 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     // The device Daily was last asked for. Daily's own preferredAudioDevice lags while a request is
     // in flight, so a Speaker press made then would be lost.
     private var requestedDevice: AudioDeviceType?
+    private var routeFollower = RouteFollower<AVAudioSession.Port?>()
 
     init(settings: NativeCallSettings, send: @escaping ([String: Any]) -> Void) {
         self.settings = settings
@@ -417,10 +419,20 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     // The system call screen's Speaker button, or a headset coming or going, moved the audio. The
     // screen follows, and Daily is told so it doesn't move it back. Any reason counts: the Speaker
     // button can arrive as a category change, as Daily reshapes the session around the override.
-    // Daily's own moves land on the device it was asked for, so following them changes nothing.
+    // Daily's own moves end on the device it was asked for, so following them changes nothing,
+    // but on the way the route can flip, so it's followed once it settles (RouteFollower).
     private func routeChanged(_ reason: AVAudioSession.RouteChangeReason?) {
         let output = AVAudioSession.sharedInstance().currentRoute.outputs.first?.portType
         NSLog("[NativeCall] route %@ reason %d", output?.rawValue ?? "none", Int(reason?.rawValue ?? 0))
+        routeFollower.moved(to: output, at: Date())
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64((RouteFollower<AVAudioSession.Port?>.settleAfter + 0.05) * 1_000_000_000))
+            followSettledRoute()
+        }
+    }
+
+    private func followSettledRoute() {
+        guard let output = routeFollower.settled(at: Date()) else { return }
         refreshRoutePorts()
         guard joined, let device = AudioDeviceType(port: output) else { return }
         let speaker = device == .speakerphone
