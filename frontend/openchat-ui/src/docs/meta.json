@@ -4040,6 +4040,17 @@
         "doc": "Right-aligned sent messages (native): a sent run sits at the inline end, its bubbles' corners mirrored."
       },
       {
+        "name": "compactGifs",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": false,
+        "doc": "GIFs at three quarters (native, by choice; MediaMessage's `compactGif`)."
+      },
+      {
         "name": "avatarSize",
         "type": "number",
         "default": 34,
@@ -13980,6 +13991,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
+        "name": "compactGif",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": false,
+        "doc": "A GIF at three quarters (native, by choice): 180 × 315 at most, where it's otherwise as big as a photo."
       },
       {
         "name": "onOpen",

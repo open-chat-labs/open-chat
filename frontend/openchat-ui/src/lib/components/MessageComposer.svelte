@@ -192,7 +192,12 @@
   // mounting straight into edit mode starts from the original text (later context changes are handled below)
   let draft = $state(untrack(() => (context?.mode === 'edit' ? context.text ?? '' : text)));
   let menu = $state<'plus' | 'picker' | null>(null);
-  let tab = $state(0);
+  // the picker's tab as last picked: 0 emoji, 1 GIFs
+  let picked = $state(0);
+  // GIFs only for a host that takes them (none while editing, say): without, the picker is emoji only, whatever
+  // tab was picked last
+  const takesGifs = $derived(!!(onGif || onPickGif || demo !== 'interactive'));
+  const tab = $derived(takesGifs ? picked : 0);
   let query = $state('');
   let gifCat = $state(0);
   let voice = $state<'recording' | 'review' | null>(null);
@@ -763,7 +768,7 @@
     menu = null;
     voice = null;
     draft = '';
-    tab = 0;
+    picked = 0;
     playing = false;
     playPos = 0;
     focused = false;
@@ -774,7 +779,7 @@
     else if (d === 'emoji') menu = 'picker';
     else if (d === 'gif') {
       menu = 'picker';
-      tab = 1;
+      picked = 1;
     } else if (d === 'recording' || d === 'review') {
       levels = Array.from({ length: 160 }, amp);
       voice = d;
@@ -915,14 +920,13 @@
   {/if}
   {#if menu === 'picker'}
     <div class="popup picker" data-composer-popup role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
-      <!-- GIFs only for a host that takes them -->
-      {#if onGif || onPickGif || demo !== 'interactive'}
+      {#if takesGifs}
         <SegmentedTabs
           labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
           selectedIndex={tab}
           dotOnLast={false}
           onSelect={(i) => {
-            tab = i;
+            picked = i;
             query = '';
             if (i === 1 && gifs) askGifs(categoryQuery(gifCat));
           }}

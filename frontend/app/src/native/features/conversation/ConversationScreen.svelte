@@ -1478,6 +1478,7 @@
                                         </div>
                                     {/if}
                                     <MessageGroup
+                                        compactGifs
                                         side={row.side}
                                         senderName={row.senderName}
                                         color={row.color}

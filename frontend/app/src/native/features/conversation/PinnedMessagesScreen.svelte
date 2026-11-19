@@ -333,6 +333,7 @@
                                 onkeydown={(e) => e.key === "Enter" && goTo(evt)}
                             >
                                 <MessageGroup
+                                    compactGifs
                                     side={row.side}
                                     senderName={row.senderName}
                                     color={row.color}

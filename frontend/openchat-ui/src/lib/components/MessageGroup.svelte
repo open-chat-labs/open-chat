@@ -73,6 +73,8 @@
     onSenderClick?: (el: HTMLElement) => void;
     /** Right-aligned sent messages (native): a sent run sits at the inline end, its bubbles' corners mirrored. */
     mirror?: boolean;
+    /** GIFs at three quarters (native, by choice; MediaMessage's `compactGif`). */
+    compactGifs?: boolean;
     /** The avatar's size (px). Native groups use 28. */
     avatarSize?: number;
     /**
@@ -110,6 +112,7 @@
     onEdit,
     onSwipeLeft,
     mirror = false,
+    compactGifs = false,
     avatarSize = 34,
     swipeStyle = 'gutter',
     hoverBar = true,
@@ -518,7 +521,7 @@
         {#if m.kind === 'voice'}
           <VoiceMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'image' || m.kind === 'album' || m.kind === 'video' || m.kind === 'gif'}
-          <MediaMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
+          <MediaMessage {...m} {side} lastInGroup={last} mirror={mirrored} compactGif={compactGifs} />
         {:else if m.kind === 'file'}
           <FileMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'link'}

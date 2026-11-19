@@ -2639,8 +2639,10 @@ design export needs. Each entry says where it came up.
   (by hand, EXPORT-LOG 2026-11-16). Checked on the local replica with calls added to the list on the
   page (no calls can be made there).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
-  `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
-  takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
+  `MediaMessage` tiles, a GIF as big as a photo (the native tree's are three quarters, by choice:
+  `compactGifs`, by hand, EXPORT-LOG 2026-11-19). They have no quote or edited mark yet
+  (`MediaMessage` takes none), so a reply sent as a photo, video or GIF doesn't show what it
+  replies to. In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
   first click, which loads it in the bubble; the old trees put a "load image" button on it, which
   `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
   still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
