@@ -1035,3 +1035,7 @@
 - `MediaMessage`: a GIF is capped as a photo is (360 × 420), where since 2026-11-08 every host had native's three quarters (180 × 315). `compactGif` keeps native's, by choice; `MessageGroup`'s `compactGifs` passes it to every media message, and the native tree's groups set it (the conversation, message info, pinned messages). `meta.json` (both).
 - `MessageComposer`: without a GIF handler (`onGif` / `onPickGif`, none while editing, say) the picker shows its emoji, whatever tab was picked last: it had kept the GIF tab with the docs' placeholder tiles and no tabs to leave it. The tab picked is kept for when GIFs are on offer again. No props changed.
 - Not in the design export: to go back to it (the app's `GAPS.md`).
+
+## 2026-11-19 — MessageComposer's GIF tab: a failed load retried, keyboard categories (web 5c review), by hand
+- `MessageComposer`: a search whose load failed is asked for again (`onGifSearch`) when it's asked for once more (the picker reopened on the GIF tab, the tab picked, the same category picked). It had been asked once per change, so a failed Trending or category stayed failed until something else was typed. The rule is `asksForGifs` (`lib/gifAsk`). A typed search still waiting for typing to pause is dropped when the picker closes or the Emoji tab is picked. The category chips are buttons (Enter and Space pick them, with a focus ring), where they were spans that took only a click. No props changed.
+- Not in the design export: the export's chips are spans.

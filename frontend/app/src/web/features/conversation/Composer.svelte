@@ -128,7 +128,11 @@
 
     // the GIF tab's search (Klipy's: trending, or what's typed), in a build with a Klipy key
     const feed = klipyApiKey === undefined ? undefined : new GifFeed(klipyApiKey);
-    const gifs = $derived(feed === undefined || onGif === undefined ? undefined : composerGifs(feed));
+    const gifs = $derived(
+        feed === undefined || onGif === undefined
+            ? undefined
+            : composerGifs(feed, $_("ui.messageComposer.gif")),
+    );
 
     function pickGif(picked: ComposerGif) {
         const gif = feed?.gifs.find((g) => g.id === picked.key);

@@ -21,6 +21,7 @@
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
   import { deleteBackward, insertAt, type TextEdit } from '../textEdit';
+  import { asksForGifs } from '../gifAsk';
   import { insertMention, mentionAt } from '../mentionQuery';
 
   type AttachKind = ComposerAttachKind;
@@ -382,23 +383,27 @@
     void editDraft((d, a, b) => insertAt(d, a, b, text), true);
   }
 
-  // GIFs: the host searches what the tab asks for (`onGifSearch`), once per change
+  // GIFs: the host searches what the tab asks for (`onGifSearch`), once per change, or again after it failed
   let gifTimer: ReturnType<typeof setTimeout> | undefined;
   let gifAsked: string | undefined;
   function askGifs(q: string) {
     clearTimeout(gifTimer);
-    if (q === gifAsked) return;
+    if (!asksForGifs(q, gifAsked, gifs?.status)) return;
     gifAsked = q;
     onGifSearch?.(q);
   }
   const categoryQuery = (i: number) => GIF_CAT_QUERIES[GIF_CATS[i]];
 
-  // typed into the GIF search: searched once typing pauses; emptied, the category's GIFs again
+  // typed into the GIF search: searched once typing pauses; emptied, the category's GIFs again. The picker closed
+  // (a GIF picked, Esc, a click outside) or the Emoji tab picked before the pause: nothing is searched
   function typedGif() {
     clearTimeout(gifTimer);
     const q = query.trim();
     if (!q) askGifs(categoryQuery(gifCat));
-    else if (q.length >= GIF_SEARCH_MIN) gifTimer = setTimeout(() => askGifs(q), GIF_SEARCH_DELAY);
+    else if (q.length >= GIF_SEARCH_MIN)
+      gifTimer = setTimeout(() => {
+        if (menu === 'picker' && tab === 1) askGifs(q);
+      }, GIF_SEARCH_DELAY);
   }
 
   function pickCategory(i: number) {
@@ -414,6 +419,7 @@
   }
 
   function pickGif(gif: ComposerGif) {
+    clearTimeout(gifTimer);
     menu = null;
     onPickGif?.(gif);
   }
@@ -944,13 +950,8 @@
         <div class="cats">
           {#each GIF_CATS as cat, i}
             {@const on = !needle && i === gifCat}
-            <span
-              class="cat"
-              class:on
-              onclick={() => (gifs ? pickCategory(i) : ((gifCat = i), (query = '')))}
-              role="button"
-              tabindex="0"
-              aria-pressed={on}>{t(GIF_CAT_KEYS[cat])}</span
+            <button type="button" class="cat" class:on onclick={() => (gifs ? pickCategory(i) : ((gifCat = i), (query = '')))} aria-pressed={on}
+              >{t(GIF_CAT_KEYS[cat])}</button
             >
           {/each}
         </div>
@@ -1342,6 +1343,7 @@
     align-items: center;
     height: 28px;
     padding: 0 var(--space-10);
+    border: 0;
     border-radius: var(--radius-pill);
     background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
@@ -1409,10 +1411,6 @@
     justify-content: center;
     gap: var(--space-6);
     margin-bottom: var(--space-12);
-
-    .cat {
-      border: 0;
-    }
   }
 
   .gif-loading {
@@ -1868,7 +1866,7 @@
   .thumb-remove:focus-visible,
   .tray-add:focus-visible,
   .gif:focus-visible,
-  .gif-terms .cat:focus-visible {
+  .cat:focus-visible {
     @include focus-ring;
   }
 
