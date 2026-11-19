@@ -2455,6 +2455,26 @@
                 "leaveAnyTime": "Bạn có thể rời đi bất cứ lúc nào.",
                 "storePayment": "Khoản thanh toán mà ứng dụng này không thể thực hiện"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "Yêu cầu",
+                "channels": "Kênh",
+                "channelsNote": "Chỉ hiển thị các kênh công khai. Mở một kênh để đọc trước khi tham gia.",
+                "met": "Đã đạt",
+                "onJoin": "Khi tham gia",
+                "notMet": "Chưa đạt",
+                "toDo": "Cần làm",
+                "all": "Bạn cần đáp ứng tất cả các yêu cầu này.",
+                "any": "Chỉ cần đáp ứng một trong số này.",
+                "channelMembers": "{count} thành viên",
+                "recheck": {
+                "minute": "{count, plural, other {Thành viên được kiểm tra lại mỗi # phút.}}",
+                "hour": "{count, plural, other {Thành viên được kiểm tra lại mỗi # giờ.}}",
+                "day": "{count, plural, other {Thành viên được kiểm tra lại mỗi # ngày.}}",
+                "week": "{count, plural, other {Thành viên được kiểm tra lại mỗi # tuần.}}"
+            }
+            }
         }
     },
     "new": "Mới",

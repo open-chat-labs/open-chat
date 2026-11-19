@@ -2364,6 +2364,26 @@
                 "leaveAnyTime": "You can leave at any time.",
                 "storePayment": "A payment this app can't make"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "Requirements",
+                "channels": "Channels",
+                "channelsNote": "Only public channels are shown. Open one to read along before you join.",
+                "met": "Met",
+                "onJoin": "On join",
+                "notMet": "Not met",
+                "toDo": "To do",
+                "all": "You need to meet all of these.",
+                "any": "Meeting any one of these is enough.",
+                "channelMembers": "{count, plural, one {# member} other {# members}}",
+                "recheck": {
+                "minute": "{count, plural, one {Members are re-checked every minute.} other {Members are re-checked every # minutes.}}",
+                "hour": "{count, plural, one {Members are re-checked every hour.} other {Members are re-checked every # hours.}}",
+                "day": "{count, plural, one {Members are re-checked every day.} other {Members are re-checked every # days.}}",
+                "week": "{count, plural, one {Members are re-checked every week.} other {Members are re-checked every # weeks.}}"
+            }
+            }
         }
     },
     "new": "new",

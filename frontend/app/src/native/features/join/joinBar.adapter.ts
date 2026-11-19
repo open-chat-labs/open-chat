@@ -1,27 +1,37 @@
-import { i18nKey, type MultiUserChat, type ResourceKey } from "@client";
+import { i18nKey, type Level, type MultiUserChat, type ResourceKey } from "@client";
 import { joinFailure, type JoinStep } from "@src/logic/join/joinFlow.svelte";
 import type { PreviewBar } from "@src/logic/join/previewBar";
 
 // The join bar in place of the composer (N8b, native plan 04 "Joining" and 12 "Preview and join"):
 // a line saying what's previewed over Join. What Join joins is logic/join's `previewBar`; this is
 // what the bar says. A channel of a community being previewed names the community ("Join
-// community"), since Join joins the community with the channel.
+// community"), since Join joins the community with the channel. A community's preview has the
+// same Join under its page (`joinButton`).
 
-export type JoinBarView = {
-    note: ResourceKey;
+/** Join: its label and icon, and whether it can be pressed. */
+export type JoinButtonView = {
     label: ResourceKey;
     icon: "plus" | "lock";
     /** Join can't be pressed. */
     disabled: boolean;
 };
 
+export type JoinBarView = JoinButtonView & { note: ResourceKey };
+
 export function joinBarView(bar: PreviewBar, chat: MultiUserChat): JoinBarView {
-    const gated = bar.state === "gated";
     // a locked gate and a lapse have the old footers' words, which previewBar picks
     const oldWords = bar.locked || bar.lapsed;
-    const level = bar.community !== undefined ? "community" : chat.level;
     return {
         note: (oldWords ? bar.hint : undefined) ?? previewNote(bar, chat),
+        ...joinButton(bar, bar.community !== undefined ? "community" : chat.level),
+    };
+}
+
+/** Join, for what the bar joins at `level`. */
+export function joinButton(bar: PreviewBar, level: Level): JoinButtonView {
+    const gated = bar.state === "gated";
+    const oldWords = bar.locked || bar.lapsed;
+    return {
         label:
             (oldWords ? bar.joinLabel : undefined) ??
             (bar.state === "guest"

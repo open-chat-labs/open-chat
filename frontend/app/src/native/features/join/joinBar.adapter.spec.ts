@@ -6,9 +6,9 @@ import {
     type EnhancedAccessGate,
     type MultiUserChat,
 } from "@client";
-import { previewBar, type PreviewBarInput } from "@src/logic/join/previewBar";
+import { communityPreviewBar, previewBar, type PreviewBarInput } from "@src/logic/join/previewBar";
 import { describe, expect, test } from "vitest";
-import { joinBarView } from "./joinBar.adapter";
+import { joinBarView, joinButton } from "./joinBar.adapter";
 
 const group = {
     kind: "group_chat",
@@ -88,6 +88,46 @@ describe("the join bar (#10375)", () => {
         });
         // met already: a plain Join
         expect(bar({ gates: [diamond], meets: () => true }).view.label).toMatchObject({
+            key: "joinGroup",
+        });
+    });
+});
+
+describe("a community's preview (#10375)", () => {
+    function preview(gates: AccessGate[], meets = false) {
+        const client = {
+            accessGatesForCommunity: () =>
+                gates.map((g) => ({
+                    ...g,
+                    level: "community" as const,
+                    collectionName: "x",
+                    expiry: undefined,
+                })),
+            doesUserMeetAccessGate: () => meets,
+        };
+        const b = communityPreviewBar(client, community(ROLE_NONE), false);
+        return { bar: b, view: joinButton(b, "community") };
+    }
+
+    test("invariant 1: its Join joins the community alone, and says so", () => {
+        const { bar, view } = preview([]);
+        expect(bar.target).toEqual({ kind: "community", community: community(ROLE_NONE) });
+        expect(view).toMatchObject({
+            label: { key: "joinGroup", level: "community" },
+            disabled: false,
+        });
+    });
+
+    test("invariant 2: a locked community's Join can't be pressed, and one with requirements offers Review and join", () => {
+        expect(preview([{ kind: "locked_gate" }]).view).toMatchObject({
+            label: { key: "access.lockedGate", level: "community" },
+            disabled: true,
+        });
+        expect(preview([{ kind: "diamond_gate" }]).view).toMatchObject({
+            label: { key: "native.join.review" },
+            disabled: false,
+        });
+        expect(preview([{ kind: "diamond_gate" }], true).view.label).toMatchObject({
             key: "joinGroup",
         });
     });

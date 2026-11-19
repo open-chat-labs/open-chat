@@ -8,9 +8,7 @@
     import {
         allUsersStore,
         chatSummariesListStore,
-        communitiesStore,
         routeForChatIdentifier,
-        sortedCommunitiesStore,
     } from "@client";
     import { _ } from "svelte-i18n";
     import type { NativeScreen, StackStep } from "../../router/locations";
@@ -55,23 +53,6 @@
                     })),
                     { label: "Followed threads", url: "/chats?threads" },
                 ];
-            case "communities": {
-                const community = $communitiesStore.get(screen.communityId);
-                const others = $sortedCommunitiesStore.filter(
-                    (c) => c.id.communityId !== screen.communityId.communityId,
-                );
-                return [
-                    ...(community?.channels ?? []).slice(0, 6).map((channel) => ({
-                        label: `#${channel.name}`,
-                        url: routeForChatIdentifier("community", channel.id),
-                    })),
-                    { label: "Explore", url: "/communities" },
-                    ...others.slice(0, 4).map((c) => ({
-                        label: `Switch to ${c.name}`,
-                        url: `/community/${c.id.communityId}`,
-                    })),
-                ];
-            }
             case "wallet":
                 return [
                     { label: "Send", url: "/wallet/send" },

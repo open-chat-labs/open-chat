@@ -10,20 +10,17 @@
         cryptoBalanceStore,
         currentUserStore,
         selectedCommunitySummaryStore,
-        type EnhancedAccessGate,
         type MultiUserChat,
         type OpenChat,
     } from "@client";
     import { interpolate } from "@i18n/i18n";
-    import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
-    import { isJoining, startJoin, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
     import { chatPreviewBar } from "@src/logic/join/previewBar";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { Overlays } from "../../shell/overlays.svelte";
-    import { joinBarView, joinStepToast } from "./joinBar.adapter";
-    import JoinSheet from "./JoinSheet.svelte";
+    import { joinBarView } from "./joinBar.adapter";
+    import JoinButton from "./JoinButton.svelte";
 
     interface Props {
         chat: MultiUserChat;
@@ -46,25 +43,6 @@
         });
     });
     const view = $derived(joinBarView(bar, chat));
-
-    // the requirements the client answered Join with; a closed sheet stays to slide away
-    let sheet = $state<{
-        id: number;
-        target: JoinTarget;
-        gates: EnhancedAccessGate[];
-        name: string;
-    }>();
-
-    async function join() {
-        const { target, name } = bar;
-        const step = await startJoin(client, target);
-        if (step.kind === "evaluate_gates") {
-            sheet = { id: (sheet?.id ?? 0) + 1, target, gates: step.gates, name };
-            return;
-        }
-        const message = joinStepToast(step, name);
-        if (message !== undefined) toast(interpolate($_, message));
-    }
 </script>
 
 <div class="join-bar">
@@ -72,22 +50,8 @@
         <Icon icon="eye" size={15} />
         {interpolate($_, view.note)}
     </span>
-    <Button
-        label={interpolate($_, view.label)}
-        icon={view.icon}
-        size="lg"
-        fullWidth
-        disabled={view.disabled}
-        busy={isJoining(bar.target)}
-        onClick={join}
-    />
+    <JoinButton {bar} {view} {overlays} {toast} />
 </div>
-
-{#if sheet !== undefined}
-    {#key sheet.id}
-        <JoinSheet join={sheet} {overlays} {toast} />
-    {/key}
-{/if}
 
 <style lang="scss">
     // the design's bar: a 1px rule on top, the note over a full-width Join

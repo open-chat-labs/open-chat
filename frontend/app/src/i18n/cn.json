@@ -2455,6 +2455,26 @@
                 "leaveAnyTime": "你可以随时退出。",
                 "storePayment": "本应用无法完成的付款"
             }
+        },
+        "community": {
+            "preview": {
+                "requirements": "加入条件",
+                "channels": "频道",
+                "channelsNote": "仅显示公开频道。加入前可以打开一个先看看。",
+                "met": "已满足",
+                "onJoin": "加入时",
+                "notMet": "未满足",
+                "toDo": "待完成",
+                "all": "你需要满足以下全部条件。",
+                "any": "满足其中任意一项即可。",
+                "channelMembers": "{count} 位成员",
+                "recheck": {
+                "minute": "{count, plural, other {成员每 # 分钟重新检查一次。}}",
+                "hour": "{count, plural, other {成员每 # 小时重新检查一次。}}",
+                "day": "{count, plural, other {成员每 # 天重新检查一次。}}",
+                "week": "{count, plural, other {成员每 # 周重新检查一次。}}"
+            }
+            }
         }
     },
     "new": "新的",

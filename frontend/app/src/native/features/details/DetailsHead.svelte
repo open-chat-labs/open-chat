@@ -33,6 +33,8 @@
         onEdit?: () => void;
         /** The pencil's label. */
         editLabel?: string;
+        /** A share button before the kebab (a community's preview); none without it. */
+        onShare?: () => void;
     };
 
     let {
@@ -50,6 +52,7 @@
         onMore,
         onEdit,
         editLabel = "",
+        onShare,
     }: Props = $props();
 </script>
 
@@ -94,6 +97,11 @@
         {#if onEdit}
             <button type="button" class="cover-button" aria-label={editLabel} onclick={onEdit}>
                 <span class="edit-icon"></span>
+            </button>
+        {/if}
+        {#if onShare}
+            <button type="button" class="cover-button" aria-label={$_("share")} onclick={onShare}>
+                <span class="share-icon"></span>
             </button>
         {/if}
         {#if onMore}
@@ -214,6 +222,10 @@
 
     .edit-icon {
         @include icon(edit, 19px);
+    }
+
+    .share-icon {
+        @include icon(share, 19px);
     }
 
     // the kebab: horizontal dots on iOS, vertical on Android
