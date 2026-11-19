@@ -1,5 +1,6 @@
 import type { CommandArg, CommandParam } from "@client";
 import {
+    dateInPast,
     argField,
     argFromChoice,
     argFromText,
@@ -109,19 +110,10 @@ describe("a field's text as the argument", () => {
         expect(value(argFromText(arg, ""))).toBeNull();
     });
 
-    test("a date before the earliest allowed (now, for a future-only one) is none", () => {
+    test("a date in the past is kept as typed, so the field still shows it", () => {
         const arg: CommandArg = { kind: "dateTime", name: "at", value: null };
-        const now = new Date(2026, 10, 16, 9, 30).getTime();
-        const later = now + 60_000;
-        expect(value(argFromText(arg, localDateTime(now - 60_000), now))).toBeNull();
-        expect(argFromText(arg, localDateTime(later), now)).toEqual({
-            ...arg,
-            value: BigInt(later),
-        });
-        expect(argFromText(arg, localDateTime(now - 60_000))).toEqual({
-            ...arg,
-            value: BigInt(now - 60_000),
-        });
+        const past = new Date(2020, 0, 1, 9, 30).getTime();
+        expect(argFromText(arg, localDateTime(past))).toEqual({ ...arg, value: BigInt(past) });
     });
 });
 
@@ -148,5 +140,44 @@ describe("a choice as the argument", () => {
         };
         const n: CommandArg = { kind: "integer", name: "level", value: null };
         expect(argFromChoice(level, n, 1)).toEqual({ ...n, value: 9n });
+    });
+});
+
+describe("a future-only date in the past", () => {
+    const at = (future_only: boolean): CommandParam => ({
+        ...common,
+        kind: "dateTime",
+        future_only,
+    });
+    const arg = (ms: number | null): CommandArg => ({
+        kind: "dateTime",
+        name: "p",
+        value: ms === null ? null : BigInt(ms),
+    });
+    // 12:34:40
+    const now = new Date(2026, 10, 19, 12, 34, 40).getTime();
+
+    test("an earlier minute is in the past", () => {
+        expect(dateInPast(at(true), arg(new Date(2026, 10, 19, 12, 33).getTime()), now)).toBe(true);
+    });
+
+    test("the current minute isn't, as the field's earliest pick is that minute", () => {
+        expect(dateInPast(at(true), arg(new Date(2026, 10, 19, 12, 34).getTime()), now)).toBe(
+            false,
+        );
+        expect(dateInPast(at(true), arg(new Date(2026, 10, 19, 12, 35).getTime()), now)).toBe(
+            false,
+        );
+    });
+
+    test("a date that was fine goes into the past as time passes", () => {
+        const picked = arg(new Date(2026, 10, 19, 12, 35).getTime());
+        expect(dateInPast(at(true), picked, now)).toBe(false);
+        expect(dateInPast(at(true), picked, now + 2 * 60_000)).toBe(true);
+    });
+
+    test("no date, or a parameter that takes any date, never is", () => {
+        expect(dateInPast(at(true), arg(null), now)).toBe(false);
+        expect(dateInPast(at(false), arg(0), now)).toBe(false);
     });
 });

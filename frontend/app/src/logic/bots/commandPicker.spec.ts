@@ -201,6 +201,33 @@ describe("a bot command typed in the composer", () => {
         expect(picker.shown).toEqual([]);
     });
 
+    test("a future-only date that has passed stays as picked, and the form won't send it", async () => {
+        const bots = new BotState();
+        const remind: CommandDefinition = {
+            ...weather,
+            name: "remind",
+            params: [{ kind: "dateTime", name: "when", required: true, future_only: true }],
+        };
+        bots.setExternalBots([bot([remind])]);
+        const client = { executeBotCommand: vi.fn(async () => "success" as BotCommandResult) };
+        const picker = new CommandPicker(client, bots, async () => {});
+        picker.typed("/remind");
+        const offered = picker.offered(place, () => false);
+        expect((await picker.pick(context, offered, offered[0])).kind).toBe("needs_args");
+        const now = new Date(2026, 10, 19, 12, 34, 40).getTime();
+        const earlier = new Date(2026, 10, 19, 12, 33).getTime();
+        picker.setArg(0, { kind: "dateTime", name: "when", value: BigInt(earlier) });
+        expect(picker.args[0]).toMatchObject({ value: BigInt(earlier) });
+        expect(picker.pastDates(now)).toEqual([0]);
+        expect(picker.submit(context, now)).toBeUndefined();
+        expect(picker.form).toBeDefined();
+        expect(client.executeBotCommand).not.toHaveBeenCalled();
+        const thisMinute = new Date(2026, 10, 19, 12, 34).getTime();
+        picker.setArg(0, { kind: "dateTime", name: "when", value: BigInt(thisMinute) });
+        expect(picker.pastDates(now)).toEqual([]);
+        expect(await picker.submit(context, now)).toBe("success");
+    });
+
     describe("a chat's and a thread's composers", () => {
         function two() {
             const { bots } = setUp();

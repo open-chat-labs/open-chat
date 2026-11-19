@@ -71,9 +71,10 @@ export function argText(arg: CommandArg): string {
 
 /**
  * The argument a text, number or date field's text makes; text that isn't a number or a date makes
- * none, as does a date before `notBefore` (now, for a parameter that takes only future dates).
+ * none. A date in the past is kept as typed, so the field still shows it: `dateInPast` says it
+ * can't be sent.
  */
-export function argFromText(arg: CommandArg, text: string, notBefore?: number): CommandArg {
+export function argFromText(arg: CommandArg, text: string): CommandArg {
     const typed = text.trim();
     switch (arg.kind) {
         case "string":
@@ -86,12 +87,28 @@ export function argFromText(arg: CommandArg, text: string, notBefore?: number): 
         }
         case "dateTime": {
             const at = typed === "" ? NaN : new Date(typed).getTime();
-            const past = notBefore !== undefined && at < notBefore;
-            return { ...arg, value: Number.isNaN(at) || past ? null : BigInt(at) };
+            return { ...arg, value: Number.isNaN(at) ? null : BigInt(at) };
         }
         default:
             return arg;
     }
+}
+
+/**
+ * Whether a date is in the past for a parameter that takes only future dates (`future_only`), as
+ * the old trees' date field says ("mustBeFutureDateError"). The field picks to the minute, so a date
+ * in the current minute isn't: a time picked as the earliest the field allows can still be sent.
+ */
+export function dateInPast(param: CommandParam, arg: CommandArg, now: number): boolean {
+    if (param.kind !== "dateTime" || !param.future_only || arg.kind !== "dateTime") return false;
+    if (arg.value === undefined || arg.value === null) return false;
+    return Number(arg.value) < startOfMinute(now);
+}
+
+function startOfMinute(ms: number): number {
+    const d = new Date(ms);
+    d.setSeconds(0, 0);
+    return d.getTime();
 }
 
 /** Which of its parameter's choices an argument is (-1 for none yet). */

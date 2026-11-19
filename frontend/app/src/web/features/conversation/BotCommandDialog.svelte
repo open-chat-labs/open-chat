@@ -52,6 +52,8 @@
     const client = getContext<OpenChat>("client");
 
     const shown = $derived(picker.shown);
+    // the future-only dates that have passed: shown as such, and Send waits (the picker checks too)
+    const past = $derived(picker.pastDates($now));
 
     // a parameter's label: its name, and "Optional" for one that may be left out
     function label(param: CommandParam): string {
@@ -159,15 +161,15 @@
                                 type="datetime-local"
                                 min={field.futureOnly ? localDateTime($now) : undefined}
                                 value={argText(arg)}
-                                oninput={(e) =>
-                                    set(
-                                        i,
-                                        argFromText(
-                                            arg,
-                                            e.currentTarget.value,
-                                            field.futureOnly ? Date.now() : undefined,
-                                        ),
-                                    )} />
+                                aria-invalid={past.includes(i)}
+                                aria-describedby={past.includes(i) ? `bot-arg-${i}-error` : undefined}
+                                oninput={(e) => set(i, argFromText(arg, e.currentTarget.value))} />
+                            {#if past.includes(i)}
+                                <!-- TODO(design): the old trees' words; the design has no form -->
+                                <p class="error" id="bot-arg-{i}-error">
+                                    {$_("mustBeFutureDateError")}
+                                </p>
+                            {/if}
                         {:else if field.kind === "user" && arg.kind === "user"}
                             {#if arg.userId !== undefined}
                                 <div class="chosen">
@@ -206,7 +208,7 @@
         {/each}
         <div class="actions">
             <Button label={$_("cancel")} variant="secondary" onClick={cancel} />
-            <Button label={$_("send")} disabled={!picker.valid || sending} onClick={send} />
+            <Button label={$_("send")} disabled={!picker.valid || past.length > 0 || sending} onClick={send} />
         </div>
     </form>
 </DialogShell>
@@ -223,6 +225,12 @@
         margin: 0;
         font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
         color: var(--ink-3);
+    }
+
+    .error {
+        margin: 0;
+        font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+        color: var(--status-danger);
     }
 
     .param {

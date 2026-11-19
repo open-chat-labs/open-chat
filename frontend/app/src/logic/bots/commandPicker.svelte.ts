@@ -13,6 +13,7 @@ import {
     type MessageContext,
     type OpenChat,
 } from "@client";
+import { dateInPast } from "@src/logic/bots/commandArgs";
 import { dateAwareSelection } from "@src/utils/commandSelection";
 
 // A bot command typed in the composer, as both old trees run one: the "/" at the start of the draft
@@ -157,9 +158,20 @@ export class CommandPicker {
             : shownParams(command.params, this.#bots.selectedCommandArgs);
     }
 
-    /** Whether the form's arguments are enough to run it. */
+    /** Whether the form's arguments are enough to run it (a date in the past aside: `pastDates`). */
     get valid(): boolean {
         return this.#bots.instanceValid;
+    }
+
+    /** The shown parameters whose date is in the past where only a future one will do, at `now`. */
+    pastDates(now: number): number[] {
+        const args = this.#bots.selectedCommandArgs;
+        return this.shown.flatMap((param, i) => {
+            const arg = args[i];
+            return param !== undefined && arg !== undefined && dateInPast(param, arg, now)
+                ? [i]
+                : [];
+        });
     }
 
     /** A parameter's argument changed in the form. */
@@ -167,10 +179,17 @@ export class CommandPicker {
         this.#bots.selectedCommandArgs[index] = arg;
     }
 
-    /** Runs the command being filled in, if its arguments are enough; the form closes, sent. */
-    submit(context: MessageContext): Promise<BotCommandResult> | undefined {
+    /**
+     * Runs the command being filled in, if its arguments are enough and none of its future-only dates
+     * has passed (`now`); the form closes, sent.
+     */
+    submit(
+        context: MessageContext,
+        now: number = Date.now(),
+    ): Promise<BotCommandResult> | undefined {
         const command = this.#bots.selectedCommand;
         if (command === undefined || !this.#bots.instanceValid) return undefined;
+        if (this.pastDates(now).length > 0) return undefined;
         const result = this.#run(context, command);
         this.#closeForm(true);
         return result;

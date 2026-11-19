@@ -2811,8 +2811,9 @@ design export needs. Each entry says where it came up.
   command when they're enough (`executeBotCommand`), the text going; else a dialog asks for them
   (`BotCommandDialog`, the old `CommandInstanceBuilder`: a field per parameter it shows, text, a
   number, one of its choices as chips, on or off, someone in the chat, a date and time;
-  `logic/bots/commandArgs`; a past date for one that wants a future date counts as none, as the
-  old date input had it), the text staying until it's sent, and staying if the dialog's
+  `logic/bots/commandArgs`; a date in the past for one that wants a future date stays as picked
+  and says "You must select a future date" under the field, as the old date input did, and Send
+  waits; checked to the minute the field picks, again as it's sent: `dateInPast`), the text staying until it's sent, and staying if the dialog's
   cancelled; the dialog closes if the chat changes under it. A chat's and a thread's composers
   each type and pick their own (each `CommandPicker` keeps its own `BotState`, going by the app's
   bots). Failures toast as the old trees' do (`botCommandFailure`, `@client`: `bots.failed`,
