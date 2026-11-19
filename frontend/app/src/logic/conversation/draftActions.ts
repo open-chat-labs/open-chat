@@ -2,7 +2,7 @@ import {
     localUpdates,
     messageContextsEqual,
     messageReplyContext,
-    type ChatIdentifier,
+    type DirectChatIdentifier,
     type EnhancedReplyContext,
     type EventWrapper,
     type GiphyContent,
@@ -23,28 +23,47 @@ type Composing = {
 };
 
 /**
- * Sets the chat's draft to reply to the message. An edit going on ends: its text is dropped and
- * the draft goes back to what was being written before it, now replying to this message.
+ * Sets the draft where the message is (`context`: the chat, or the thread in it) to reply to the
+ * message. An edit going on there ends: its text is dropped and the draft goes back to what was
+ * being written before it, now replying to this message. Another chat's or thread's edit stays.
  */
 export function replyToMessage(
-    chatId: ChatIdentifier,
+    context: MessageContext,
     evt: EventWrapper<Message>,
     users: UserLookup,
 ): void {
-    const context = { chatId };
     localUpdates.draftMessages.replyTo(
         context,
         messageReplyContext(evt, users.get(evt.event.sender), context),
     );
 }
 
-/** Starts editing the message: the chat's draft holds it, with what was written before kept. */
+/**
+ * Starts editing the message in the draft where it is (`context`: the chat, or the thread in it),
+ * with what was written before kept.
+ */
 export function editMessage(
-    chatId: ChatIdentifier,
+    context: MessageContext,
     evt: EventWrapper<Message>,
     users: UserLookup,
 ): void {
-    localUpdates.draftMessages.setEditing({ chatId }, evt, users);
+    localUpdates.draftMessages.setEditing(context, evt, users);
+}
+
+/**
+ * The sender's DM once the client's `replyPrivately` has set its reply: an edit going on there
+ * ends too (its text dropped), the reply showing with nothing written, as it does when nothing was
+ * being edited. The client's call, which the old mobile tree makes too, leaves the edit in place
+ * with its text blanked and the reply behind it.
+ */
+export function privateReplyEndsEdit(
+    dm: DirectChatIdentifier,
+    replyingTo: EnhancedReplyContext,
+): void {
+    const context = { chatId: dm };
+    if (localUpdates.draftMessages.value.get(context)?.editingEvent === undefined) return;
+    localUpdates.draftMessages.replyTo(context, replyingTo);
+    localUpdates.draftMessages.setTextContent(context, "");
 }
 
 /**
