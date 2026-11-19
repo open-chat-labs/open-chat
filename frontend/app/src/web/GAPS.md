@@ -3041,10 +3041,11 @@ design export needs. Each entry says where it came up.
   the old trees dropped the whole draft, and now get it back too), also when the chat was left
   mid-edit: the composer then mounts with that text to go back to (`composerStartText`;
   `MessageComposer` takes `text` so mounted in edit mode, by hand). Replying to a message
-  mid-edit (its menu, a swipe, a double click, a private reply into a DM being edited in) ends
-  the edit the same way, its text dropped, and replies from the draft put back (`replyTo`, the
-  client's drafts, through `replyToMessage`); the old trees' replies (`setReplyingTo`) still stay
-  in the edit. Editing mid-reply starts the edit, and cancelling it puts the reply back. A reply to a photo, video,
+  mid-edit (its menu, a swipe, a double click) ends the edit the same way, its text dropped, and
+  replies from the draft put back (`replyTo`, the client's drafts, through `replyToMessage`). Not
+  a private reply into a DM being edited in: the client's `replyPrivately`, which the old mobile
+  tree calls too, is left as it was (the old trees are left alone, the user's decision of
+  2026-11-19); the old trees' replies (`setReplyingTo`) still stay in the edit. Editing mid-reply starts the edit, and cancelling it puts the reply back. A reply to a photo, video,
   GIF or meme shows its picture beside the quote, as the old trees' reply strips do
   (`replyThumb`, `logic/composer/composerProps`: a video's first frame with a play glyph,
   `ComposerContext.thumbVideo`, by hand, EXPORT-LOG 2026-11-16; in low bandwidth a photo not

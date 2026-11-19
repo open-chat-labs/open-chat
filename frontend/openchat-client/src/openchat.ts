@@ -4665,9 +4665,8 @@ export class OpenChat {
             ? chatId
             : await this.createDirectChat(chatId);
         if (directChatId === undefined) return undefined;
-        // an edit going on in the DM ends, as replying does anywhere
-        localUpdates.draftMessages.replyTo({ chatId: directChatId }, replyingTo);
         localUpdates.draftMessages.setTextContent({ chatId: directChatId }, "");
+        localUpdates.draftMessages.setReplyingTo({ chatId: directChatId }, replyingTo);
         return directChatId;
     }
 
