@@ -135,6 +135,7 @@ export {
     dailyChitAmount,
     dailyChitClaimable,
     mergeChitEvents,
+    streakRingProgress,
 } from "./utils/chit";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginCreateCommunity, postLoginJoin, postLoginPath } from "./utils/join";

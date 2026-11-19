@@ -61,6 +61,12 @@ describe("the CHIT dialog's props", () => {
         expect(chitRailProps(inputs(), false).chitStreak).toBe(6);
     });
 
+    test("the streak ring fills towards the next milestone, and is empty once the streak has ended", () => {
+        // 6 days: three of the four from 3 to 7
+        expect(known(inputs(), noInsurance).progress).toBe(3 / 4);
+        expect(known(inputs({ streakEnds: BigInt(NOW - 1) }), noInsurance).progress).toBe(0);
+    });
+
     test("the claim is offered only when nextDailyChitClaim < now, the last sync is under 10 minutes old and disableChit is off", () => {
         // the rail, as the old desktop rail offers it
         const offered = (i: ChitInputs) => chitRailProps(i, false).chitClaimable;

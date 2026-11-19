@@ -123,6 +123,7 @@
         daily={chit.daily}
         claimable={chit.claimable}
         milestones={chit.milestones}
+        progress={chit.progress}
         countdown={chit.countdown}
         insured={chit.insured}
         used={chit.used}

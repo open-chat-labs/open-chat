@@ -99,6 +99,25 @@ export const CHIT_STREAK_MILESTONES: number[] = CLAIM_SCHEDULE.map(([streak]) =>
     .filter((streak) => streak > 1)
     .reverse();
 
+/**
+ * How full the streak's ring is, 0 to 1: the way from the last milestone reached (or the start) to
+ * the next. Empty with no streak, full on a milestone (3 days is the first one filled), and it
+ * starts again the day after (4 days is a quarter of the way from 3 to 7). Full from the last
+ * milestone on.
+ */
+export function streakRingProgress(
+    streak: number,
+    milestones: number[] = CHIT_STREAK_MILESTONES,
+): number {
+    const sorted = [...milestones].sort((a, b) => a - b);
+    const last = sorted[sorted.length - 1];
+    if (streak <= 0 || last === undefined) return 0;
+    if (streak >= last) return 1;
+    const next = sorted.find((m) => m >= streak) ?? last;
+    const prev = sorted.filter((m) => m < streak).pop() ?? 0;
+    return (streak - prev) / (next - prev);
+}
+
 /** The CHIT a daily claim pays when it makes the streak `streak` days long, as the backend pays it. */
 export function dailyChitAmount(streak: number): number {
     return CLAIM_SCHEDULE.find(([from]) => streak >= from)?.[1] ?? 0;

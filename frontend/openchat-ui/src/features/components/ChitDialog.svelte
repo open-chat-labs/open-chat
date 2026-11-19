@@ -35,6 +35,9 @@
     claimable?: boolean;
     /** Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365. */
     milestones?: number[];
+    /** How full the streak ring is, 0 to 1. Defaults to the way from the last milestone reached (or 0) to the next:
+     *  empty at 0, full on a milestone and from the last one on. */
+    progress?: number;
     /** Achievements for the "Ways to earn" row; the count is hidden without it. */
     achievements?: { total: number; left: number };
     /** Time until the next claim (and the next puzzle). */
@@ -71,6 +74,7 @@
     daily,
     claimable = false,
     milestones,
+    progress,
     achievements,
     countdown = '',
     insured = 0,
@@ -125,12 +129,17 @@
     return t('ui.chitDialog.boardRank', { rank: boardRank, ord, hasScore: boardScore != null ? 'yes' : 'no', score: boardScore != null ? fmt(boardScore) : '' });
   });
 
-  // progress runs tier to tier so the ring means "distance to the next rate"
   const nextTier = $derived(TIERS.find((t) => t > days) ?? TIERS[TIERS.length - 1]);
+  // the ring runs tier to tier so it means "distance to the next rate": empty at 0, full on a milestone (3 is full),
+  // starting again the day after, and full from the last one on
   const within = $derived.by(() => {
-    const prev = TIERS.filter((t) => t <= days).pop() ?? 0;
-    const span = Math.max(nextTier - prev, 1);
-    return Math.min(Math.max(days - prev, 0), span) / span;
+    if (progress != null) return Math.min(Math.max(progress, 0), 1);
+    const last = TIERS[TIERS.length - 1];
+    if (days <= 0) return 0;
+    if (days >= last) return 1;
+    const next = TIERS.find((t) => t >= days) ?? last;
+    const prev = TIERS.filter((t) => t < days).pop() ?? 0;
+    return (days - prev) / (next - prev);
   });
 
   // the streak sits between its two bracketing milestones, in their spacing
@@ -144,9 +153,10 @@
     return loPos + (TIER_POS[hi] - loPos) * ((days - lo) / (hi - lo));
   });
 
+  // the filled arc is exactly `within` of the turn: none at 0, the whole ring at 1
   const ring = $derived(
-    `conic-gradient(var(--accent) 0turn, var(--status-chit) ${(0.15 + within * 0.7).toFixed(3)}turn, ` +
-      `var(--overlay-2) ${(0.16 + within * 0.7).toFixed(3)}turn, var(--overlay-2) 1turn)`,
+    `conic-gradient(var(--accent) 0turn, var(--status-chit) ${within.toFixed(3)}turn, ` +
+      `var(--overlay-2) ${within.toFixed(3)}turn, var(--overlay-2) 1turn)`,
   );
 
   async function claim() {

@@ -6,6 +6,7 @@ import {
     dailyChitClaimable,
     mergeChitEvents,
     newestFirstChitEvents,
+    streakRingProgress,
 } from "./chit";
 
 describe("the current streak", () => {
@@ -128,5 +129,40 @@ describe("what a daily claim pays", () => {
         for (const m of CHIT_STREAK_MILESTONES) {
             expect(dailyChitAmount(m)).toBeGreaterThan(dailyChitAmount(m - 1));
         }
+    });
+});
+
+describe("the streak ring", () => {
+    test("is empty with no streak", () => {
+        expect(streakRingProgress(0)).toBe(0);
+    });
+
+    test("fills by thirds towards the first milestone, and is full on it", () => {
+        expect(streakRingProgress(1)).toBeCloseTo(1 / 3);
+        expect(streakRingProgress(2)).toBeCloseTo(2 / 3);
+        expect(streakRingProgress(3)).toBe(1);
+    });
+
+    test("starts again towards the next milestone the day after one", () => {
+        expect(streakRingProgress(4)).toBe(1 / 4);
+        expect(streakRingProgress(6)).toBe(3 / 4);
+        expect(streakRingProgress(8)).toBe(1 / 7);
+        expect(streakRingProgress(65)).toBe(35 / 70);
+    });
+
+    test("is full on each milestone", () => {
+        for (const m of CHIT_STREAK_MILESTONES) {
+            expect(streakRingProgress(m)).toBe(1);
+        }
+    });
+
+    test("stays full past the last milestone", () => {
+        expect(streakRingProgress(366)).toBe(1);
+        expect(streakRingProgress(1000)).toBe(1);
+    });
+
+    test("follows the milestones it's given, in any order", () => {
+        expect(streakRingProgress(5, [10, 4])).toBe(1 / 6);
+        expect(streakRingProgress(5, [])).toBe(0);
     });
 });

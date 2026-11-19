@@ -8822,6 +8822,17 @@
         "doc": "Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365."
       },
       {
+        "name": "progress",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How full the streak ring is, 0 to 1. Defaults to the way from the last milestone reached (or 0) to the next: empty at 0, full on a milestone and from the last one on."
+      },
+      {
         "name": "achievements",
         "type": "{ total: number; left: number }",
         "default": null,
