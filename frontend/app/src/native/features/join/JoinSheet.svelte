@@ -14,7 +14,7 @@
         type OpenChat,
         type ResourceKey,
     } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
@@ -46,7 +46,7 @@
     let { join, overlays, toast }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const text = (key: ResourceKey) => interpolate($_, key);
+    const text = (key: ResourceKey) => interpolateNewUi($_, key);
 
     const evaluation = new GateEvaluation(
         client,

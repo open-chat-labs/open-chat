@@ -33,7 +33,7 @@
         type LeaveOrDelete,
         type OpenChat,
     } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import ChatRow from "@openchat/ui/src/lib/components/ChatRow.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import SegmentedTabs from "@openchat/ui/src/lib/components/SegmentedTabs.svelte";
@@ -236,7 +236,7 @@
     function actionLabel(action: ChatRowAction, chat: ChatSummary): string {
         return action === "mark_read"
             ? $_("native.chats.markRead")
-            : interpolate($_, chatRowActionLabel(action, chat));
+            : interpolateNewUi($_, chatRowActionLabel(action, chat));
     }
 
     function onRowMenu(id: string) {

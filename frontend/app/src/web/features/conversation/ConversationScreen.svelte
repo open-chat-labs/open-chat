@@ -21,7 +21,7 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
@@ -93,7 +93,7 @@
                   anon: $anonUserStore,
                   unblockLabel: $_("unblockUser"),
                   platformModerator: $platformModeratorStore,
-                  translate: (key) => interpolate($_, key),
+                  translate: (key) => interpolateNewUi($_, key),
               }),
     );
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));

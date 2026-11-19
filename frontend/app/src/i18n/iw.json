@@ -1567,6 +1567,11 @@
         "community": "קהילה",
         "group": "קְבוּצָה"
     },
+    "levelNoun": {
+        "channel": "ערוץ",
+        "community": "קהילה",
+        "group": "קבוצה"
+    },
     "light": "אוֹר",
     "linkCopiedToClipboard": "הקישור הועתק ללוח",
     "loadGif": "הצג gif",

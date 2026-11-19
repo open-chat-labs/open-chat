@@ -1567,6 +1567,11 @@
         "community": "Cộng đồng",
         "group": "Nhóm"
     },
+    "levelNoun": {
+        "channel": "kênh",
+        "community": "cộng đồng",
+        "group": "nhóm"
+    },
     "light": "Sáng",
     "linkCopiedToClipboard": "Liên kết được sao chép vào khay nhớ tạm",
     "loadGif": "Hiển thị ảnh gif",

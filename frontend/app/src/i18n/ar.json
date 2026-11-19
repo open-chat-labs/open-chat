@@ -1567,6 +1567,11 @@
         "community": "مجتمع",
         "group": "مجموعة"
     },
+    "levelNoun": {
+        "channel": "قناة",
+        "community": "مجتمع",
+        "group": "مجموعة"
+    },
     "light": "ضوء",
     "linkCopiedToClipboard": "تم نسخ الرابط إلى الحافظة",
     "loadGif": "عرض الصورة المتحركة",

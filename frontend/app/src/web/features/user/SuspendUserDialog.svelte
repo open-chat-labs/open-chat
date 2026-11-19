@@ -7,7 +7,7 @@
      pending toast (`unsuspend`: "Un-suspending …", then how it went). -->
 <script lang="ts">
     import { allUsersStore, type OpenChat } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import MemberRow from "@openchat/ui/src/lib/components/MemberRow.svelte";
@@ -56,7 +56,7 @@
         if (outcome === undefined) return;
         onClose();
         toastHost?.({
-            message: interpolate($_, outcome.message),
+            message: interpolateNewUi($_, outcome.message),
             duration: UNDO_TOAST_MS,
             onAction: () => undo(target),
         });
@@ -92,7 +92,7 @@
         maxLength={512}
         onInput={(e) => (reason = e.currentTarget.value)} />
     {#if action.error !== undefined}
-        <p class="error" role="alert">{interpolate($_, action.error)}</p>
+        <p class="error" role="alert">{interpolateNewUi($_, action.error)}</p>
     {/if}
     <div class="actions">
         <Button label={$_("cancel")} variant="secondary" disabled={action.busy} onClick={close} />

@@ -13,7 +13,7 @@
         type MultiUserChat,
         type OpenChat,
     } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
     import { chatPreviewBar } from "@src/logic/join/previewBar";
     import { getContext } from "svelte";
@@ -48,7 +48,7 @@
 <div class="join-bar">
     <span class="note">
         <Icon icon="eye" size={15} />
-        {interpolate($_, view.note)}
+        {interpolateNewUi($_, view.note)}
     </span>
     <JoinButton {bar} {view} {overlays} {toast} />
 </div>

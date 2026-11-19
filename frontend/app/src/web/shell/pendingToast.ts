@@ -1,5 +1,5 @@
 import type { MessageFormatter } from "@client";
-import { interpolate } from "@i18n/i18n";
+import { interpolateNewUi } from "@i18n/i18n";
 import type { HostedToast, PendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
 import type { PendingToastAction, SettledOutcome } from "@src/logic/moderation/pendingToast";
 import { toastStore } from "@src/stores/toast";
@@ -20,7 +20,7 @@ export const SETTLED_TOAST_MS = 2500;
  * TODO(design): the design has no failure tone for a toast.
  */
 export function settledToast(outcome: SettledOutcome, formatter: MessageFormatter): HostedToast {
-    const message = interpolate(formatter, outcome.message);
+    const message = interpolateNewUi(formatter, outcome.message);
     return outcome.kind === "success"
         ? { message, tone: "success", icon: "check", duration: SETTLED_TOAST_MS }
         : { message, icon: "none" };
@@ -39,6 +39,6 @@ export async function runInPendingToast(
         toastStore.showOutcome(await action.run());
         return;
     }
-    const toast = host({ message: interpolate(formatter, action.pending), icon: "none" });
+    const toast = host({ message: interpolateNewUi(formatter, action.pending), icon: "none" });
     toast.settle(settledToast(await action.run(), formatter));
 }

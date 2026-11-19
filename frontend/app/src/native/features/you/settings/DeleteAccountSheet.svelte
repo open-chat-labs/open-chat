@@ -10,7 +10,7 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { deleteAccount } from "@src/logic/auth/deleteAccount";
     import { ReAuthentication, type ReAuthSuccess } from "@src/logic/auth/reAuthentication.svelte";
     import { getContext, onDestroy, onMount } from "svelte";
@@ -54,7 +54,7 @@
         failed
             ? $_("danger.deleteAccountFailed")
             : reAuth.error !== undefined
-              ? interpolate($_, reAuth.error)
+              ? interpolateNewUi($_, reAuth.error)
               : undefined,
     );
 

@@ -1567,6 +1567,11 @@
         "community": "समुदाय",
         "group": "समूह"
     },
+    "levelNoun": {
+        "channel": "चैनल",
+        "community": "समुदाय",
+        "group": "समूह"
+    },
     "light": "रोशनी",
     "linkCopiedToClipboard": "लिंक को क्लिपबोर्ड पर कॉपी किया गया",
     "loadGif": "GIF दिखाएँ",

@@ -18,7 +18,7 @@
     import DurationChips from "@openchat/ui/src/lib/components/DurationChips.svelte";
     import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
     import Markdown from "@src/core/Markdown.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -33,7 +33,7 @@
     let deleteToo = $state(false);
 
     // the reasons as the chips show them (by their text), and back
-    const labels = $derived(REPORT_REASONS.map((r) => interpolate($_, reportReasonText(r))));
+    const labels = $derived(REPORT_REASONS.map((r) => interpolateNewUi($_, reportReasonText(r))));
 
     function pick(label: string) {
         reason = REPORT_REASONS[labels.indexOf(label)];

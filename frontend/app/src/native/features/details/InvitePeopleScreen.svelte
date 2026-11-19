@@ -44,7 +44,7 @@
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import SettingsSwitch from "@openchat/ui/src/native/SettingsSwitch.svelte";
     import QRCode from "@src/core/QRCode.svelte";
-    import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import { searchTerm } from "@src/logic/chats/chatSearch";
     import { TermSearch } from "@src/logic/chats/termSearch.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
@@ -76,7 +76,7 @@
 
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
     // a key that names the chat's kind ("this group", "this channel")
-    const tl = (key: string) => interpolate($_, i18nKey(key, undefined, chat?.level, true));
+    const tl = (key: string) => interpolateNewUi($_, i18nKey(key, undefined, chat?.level, true));
 
     // the chat is the selected one (the details'), held while the screen slides out
     const selected = $derived(
@@ -241,7 +241,7 @@
                 outcome.added.map(displayName),
                 outcome.invited.map(displayName),
                 t,
-                outcome.kind === "partly_sent" ? interpolate($_, outcome.message) : undefined,
+                outcome.kind === "partly_sent" ? interpolateNewUi($_, outcome.message) : undefined,
             ),
         );
     }

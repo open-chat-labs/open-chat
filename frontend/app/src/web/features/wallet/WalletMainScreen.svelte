@@ -77,7 +77,7 @@
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
         addressNetworkName,
@@ -589,7 +589,7 @@
 
     // a reason Swap shows in place of its own (SwapFailed's message); without one, Swap's own
     const swapFailure = (key: ResourceKey | undefined): Error =>
-        key === undefined ? new Error("nothing to say") : new SwapFailed(interpolate($_, key));
+        key === undefined ? new Error("nothing to say") : new SwapFailed(interpolateNewUi($_, key));
 
     // pay with a held, swappable token; buy one a DEX has a pool for with it (null while loading)
     const swapPayable = $derived(

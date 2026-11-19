@@ -59,7 +59,7 @@ import {
     type VideoContent,
     type WebhookDetails,
 } from "@client";
-import { interpolate } from "@i18n/i18n";
+import { interpolateNewUi } from "@i18n/i18n";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
@@ -1092,7 +1092,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         readonly: chat !== undefined && client.isChatReadOnly(chat.id),
         now: Date.now(),
         claimant: input.claimant,
-        text: (key) => interpolate(formatter, key),
+        text: (key) => interpolateNewUi(formatter, key),
         openThread: input.openThread,
         face: input.face,
         avatar: (userId) => ownUserAvatarUrl(findUser(userId, users, webhooks)),

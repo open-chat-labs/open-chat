@@ -116,3 +116,28 @@ describe("a run of joins, deletions and role changes", () => {
         ]);
     });
 });
+
+/** Invariant: the new UIs name the level with levelNoun.*; the old trees keep level.*, lower-cased. */
+describe("the level's word", () => {
+    // French level.channel is "Canaliser" (a verb), levelNoun.channel "canal"; German "Gruppe"
+    const words: Record<string, string> = {
+        "level.channel": "Canaliser",
+        "levelNoun.channel": "canal",
+        "level.group": "Gruppe",
+        "levelNoun.group": "Gruppe",
+    };
+    const formatter: EventTextContext["formatter"] = (key, options) =>
+        words[key] ?? `${key}${JSON.stringify(options?.values ?? {})}`;
+    const added: Partial<TextEvent> = { kind: "members_added", userIds: ["bob"], addedBy: "alice" };
+
+    test("the old trees' timeline is unchanged", () => {
+        expect(text(added, { ...ctx, formatter })).toContain('"level":"canaliser"');
+        expect(text(added, { ...ctx, formatter, level: "group" })).toContain('"level":"gruppe"');
+    });
+
+    test("the new UIs' timeline uses the noun as it reads mid-sentence", () => {
+        const newUi: EventTextContext = { ...ctx, formatter, levelWords: "levelNoun" };
+        expect(text(added, newUi)).toContain('"level":"canal"');
+        expect(text(added, { ...newUi, level: "group" })).toContain('"level":"Gruppe"');
+    });
+});

@@ -1567,6 +1567,11 @@
         "community": "Wspólnota",
         "group": "Grupa"
     },
+    "levelNoun": {
+        "channel": "kanał",
+        "community": "społeczność",
+        "group": "grupa"
+    },
     "light": "światło",
     "linkCopiedToClipboard": "Link skopiowany do schowka",
     "loadGif": "Pokaż gifa",

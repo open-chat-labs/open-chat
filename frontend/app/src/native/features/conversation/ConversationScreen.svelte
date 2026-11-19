@@ -85,7 +85,7 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
     import { stickyDateTop } from "@src/core/stickyDateTop";
@@ -309,6 +309,7 @@
             users,
             displayName: (userId, kind) => buildDisplayName(users, userId, kind),
             level,
+            levelWords: "levelNoun",
             canInvite: chat !== undefined && client.canInviteUsers(chat.id),
             botName: (botId) => botState.externalBots.get(botId)?.name,
         };
@@ -1370,8 +1371,8 @@
         <div class="state">
             <EmptyState
                 preset="no-conversations"
-                title={interpolate($_, hiddenNotice.title)}
-                body={interpolate($_, hiddenNotice.body)}
+                title={interpolateNewUi($_, hiddenNotice.title)}
+                body={interpolateNewUi($_, hiddenNotice.body)}
                 actionLabel=""
             />
         </div>

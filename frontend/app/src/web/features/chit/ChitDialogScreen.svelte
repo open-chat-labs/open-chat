@@ -30,7 +30,7 @@
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
     import { puzzleCardProps } from "./puzzle.adapter";
     import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { _ } from "svelte-i18n";
     import { loadExternalAchievements, type Loaded } from "./externalAchievements";
 
@@ -80,7 +80,7 @@
     // leaderboard), or that there's none today
     const puzzle = $derived(
         puzzleCardProps(playableDailyPuzzleRows($dailyPuzzleStore), $now500, (key: ResourceKey) =>
-            interpolate($_, key),
+            interpolateNewUi($_, key),
         ),
     );
 

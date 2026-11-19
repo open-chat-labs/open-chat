@@ -8,6 +8,7 @@ import { _, getLocaleFromNavigator, init, locale, register } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "@shared";
 import { withEnglishFallback } from "./localeFallback";
+import { interpolateWith } from "./levelWords";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -180,23 +181,17 @@ withEnglishFallback(
     registerLocaleLoaders,
 ).then((loaded) => localeLoadFailed.set(!loaded));
 
-export function interpolate(
-    formatter: MessageFormatter,
-    { key, params, level, lowercase }: ResourceKey,
-): string {
-    if (level !== undefined) {
-        const levelTxt = formatter(`level.${level}`);
-        const p = params ?? {};
-        return formatter(key, {
-            values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
-        });
-    } else {
-        const result = formatter(key, { values: params });
-        if (typeof result !== "string") {
-            return key;
-        }
-        return result;
-    }
+/** The old trees' (components/, components_mobile/) text for a resource key: {level} from `level.*`. */
+export function interpolate(formatter: MessageFormatter, resourceKey: ResourceKey): string {
+    return interpolateWith(formatter, resourceKey, "level");
+}
+
+/**
+ * The new UIs' (src/web, src/native) text for a resource key: {level} from `levelNoun.*`, the
+ * nouns correct in every language. The old trees keep `interpolate`.
+ */
+export function interpolateNewUi(formatter: MessageFormatter, resourceKey: ResourceKey): string {
+    return interpolateWith(formatter, resourceKey, "levelNoun");
 }
 
 export const editmode = writable<boolean>(false);

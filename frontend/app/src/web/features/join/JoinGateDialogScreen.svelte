@@ -19,7 +19,7 @@
         type ResourceKey,
     } from "@client";
     import JoinGateDialog from "@openchat/ui/src/features/components/JoinGateDialog.svelte";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
     import { dropJoin, joinFailure, submitGates } from "@src/logic/join/joinFlow.svelte";
     import { toastStore } from "@src/stores/toast";
@@ -44,7 +44,7 @@
     // the level showing: each has a dialog of its own
     let level = $state(0);
 
-    const text = (key: ResourceKey) => interpolate($_, key);
+    const text = (key: ResourceKey) => interpolateNewUi($_, key);
     // the last level's, kept while its join is on its way: the evaluation has moved past it then,
     // and the dialog stays to show how the join went
     let held: JoinGateProps | undefined;

@@ -6,7 +6,7 @@
 <script lang="ts">
     import CopyButton from "@openchat/ui/src/lib/components/CopyButton.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Markdown from "@src/core/Markdown.svelte";
     import type { ProposalVoteProblem } from "@src/logic/conversation/proposalVote";
     import { _ } from "svelte-i18n";
@@ -44,7 +44,7 @@
                 {#each problem.failures as failure (failure.neuronId)}
                     <li>
                         <a href={failure.url} target="_blank" rel="noreferrer">{failure.label}</a>
-                        <span class="reason">{interpolate($_, failure.reason)}</span>
+                        <span class="reason">{interpolateNewUi($_, failure.reason)}</span>
                     </li>
                 {/each}
             </ul>

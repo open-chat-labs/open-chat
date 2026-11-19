@@ -17,7 +17,7 @@
     } from "@client";
     import ActivityPanel from "@openchat/ui/src/features/components/ActivityPanel.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import { typedMentions } from "@src/logic/conversation/typedMentions";
@@ -119,7 +119,7 @@
                 users,
                 userGroups: { get: (id) => $userGroupSummariesStore.get(id) },
             }),
-            text: (key) => interpolate($_, key),
+            text: (key) => interpolateNewUi($_, key),
             day: (timestamp) => client.formatMessageDate(timestamp, $_("today"), $_("yesterday")),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             readUpTo: $messageActivitySummaryStore.readUpToTimestamp,

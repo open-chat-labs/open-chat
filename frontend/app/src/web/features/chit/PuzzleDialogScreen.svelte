@@ -15,7 +15,7 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { openablePuzzle } from "@src/core/dailyPuzzle/registry";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
@@ -59,7 +59,7 @@
             : openablePuzzle($dailyPuzzleStore, dialog.gameId),
     );
     const title = $derived(
-        puzzleTitle(available ? playing : undefined, (key: ResourceKey) => interpolate($_, key)),
+        puzzleTitle(available ? playing : undefined, (key: ResourceKey) => interpolateNewUi($_, key)),
     );
 
     // opened from the CHIT dialog: its back arrow returns to it in its place

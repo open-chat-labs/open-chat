@@ -9,6 +9,7 @@ import {
     type MessageFormatter,
     type UserLookup,
 } from "@client";
+import { levelWord, type LevelWords } from "@i18n/levelWords";
 
 export type EventTextContext = {
     /** The app's translator ($_). */
@@ -20,6 +21,11 @@ export type EventTextContext = {
     displayName: (userId: string, kind: "user" | "me") => string;
     /** "group" or "channel". */
     level: Level;
+    /**
+     * Which words name the level: the new UIs pass "levelNoun"; left out, the old trees' `level.*`
+     * (lower-cased), as before.
+     */
+    levelWords?: LevelWords;
     /** Whether the reader can invite users: only they see changes to the invite link. */
     canInvite: boolean;
     /** An installed bot's name (botState.externalBots). */
@@ -75,7 +81,7 @@ function members(ctx: EventTextContext, userIds: string[], truncate: boolean): s
 }
 
 function levelText(ctx: EventTextContext): string {
-    return ctx.formatter(`level.${ctx.level}`).toLowerCase();
+    return levelWord(ctx.formatter, ctx.level, true, ctx.levelWords ?? "level");
 }
 
 /**

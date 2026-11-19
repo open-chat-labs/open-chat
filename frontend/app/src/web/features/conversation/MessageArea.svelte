@@ -279,7 +279,7 @@
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { claimsStore } from "@src/stores/claims";
     import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { RowCache } from "@src/logic/conversation/rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
@@ -437,6 +437,7 @@
             users,
             displayName: (userId, kind) => buildDisplayName(users, userId, kind),
             level,
+            levelWords: "levelNoun",
             canInvite: client.canInviteUsers(chat.id),
             botName: (botId) => botState.externalBots.get(botId)?.name,
         };
@@ -491,7 +492,7 @@
             bar.community !== undefined
                 ? bar.community.avatar.blobUrl
                 : ownGroupAvatarUrl(chat, groupAvatarLookups(client, community));
-        return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolate($_, key)) };
+        return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolateNewUi($_, key)) };
     });
 
     // "You joined …" names what the bar does
@@ -572,7 +573,7 @@
         });
         if (shown === undefined) return undefined;
         const words = entryNoticeText(shown);
-        return { text: interpolate($_, words.key), tone: words.tone };
+        return { text: interpolateNewUi($_, words.key), tone: words.tone };
     });
 
     // the draft's photo, video or file, or a builder's payment (5d), staged above the text (only
@@ -717,7 +718,7 @@
     const placeholder = $derived(
         rootAuthor !== undefined
             ? $_("ui.threadPanel.replyTo", { values: { name: rootAuthor } })
-            : interpolate($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
+            : interpolateNewUi($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
     );
 
     // a voice message is recorded in a format every device plays (no mic where the browser can't),
@@ -1653,8 +1654,8 @@
         <div class="state">
             <EmptyState
                 preset="no-conversations"
-                title={interpolate($_, hiddenNotice.title)}
-                body={interpolate($_, hiddenNotice.body)}
+                title={interpolateNewUi($_, hiddenNotice.title)}
+                body={interpolateNewUi($_, hiddenNotice.body)}
                 actionLabel=""
             />
         </div>

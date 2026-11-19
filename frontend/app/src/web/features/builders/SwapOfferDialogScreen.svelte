@@ -29,7 +29,7 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import type { SwapOffer } from "@openchat/ui/src/lib/types";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { SwapOfferForm } from "@src/logic/wallet/swapOfferForm.svelte";
     import { toastStore } from "@src/stores/toast";
     import { untrack } from "svelte";
@@ -136,7 +136,7 @@
             height="auto"
             onBack={() => form.back()}
             {onClose}>
-            <p class="message">{interpolate($_, form.stage.confirmation)}</p>
+            <p class="message">{interpolateNewUi($_, form.stage.confirmation)}</p>
             <div class="actions">
                 <Button label="ui.swapOfferDialog.attach" onClick={confirm} />
             </div>

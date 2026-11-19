@@ -114,6 +114,33 @@ export default defineConfig([
         files: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
         rules: restrictAppImports(agentOrWorker),
     },
+    // The new UIs name groups, channels and communities with levelNoun.* (interpolateNewUi); the old
+    // trees' interpolate keeps level.*, whose words are wrong in some languages.
+    {
+        files: [
+            "app/src/web/**/*.ts",
+            "app/src/web/**/*.svelte",
+            "app/src/native/**/*.ts",
+            "app/src/native/**/*.svelte",
+        ],
+        ignores: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        agentOrWorker,
+                        insideClient,
+                        {
+                            regex: "(^|[/@])i18n/i18n$",
+                            importNames: ["interpolate"],
+                            message: "The new UIs use interpolateNewUi: its {level} words are levelNoun.*.",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
     // app/src/logic stays view-agnostic. Its specs may reach inside the client like the others.
     {
         files: ["app/src/logic/**/*.ts"],

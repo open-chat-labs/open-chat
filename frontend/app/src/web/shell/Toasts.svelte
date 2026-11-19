@@ -10,7 +10,7 @@
      un-suspend) shows a loader until it settles, then how it went in its place. The app's failure stays until it's closed, as the old UI's; its success goes by itself
      (toastStore), and a library toast after its own time (ToastLayer). -->
 <script lang="ts">
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import UndoToast from "@openchat/ui/src/lib/components/UndoToast.svelte";
     import type { ToastLayer } from "@openchat/ui/src/lib/toasts.svelte";
     import { toastStore } from "@src/stores/toast";
@@ -103,7 +103,7 @@
             <div role="status">
                 <!-- TODO(design): no failure tone for a toast in the design -->
                 <UndoToast
-                    message={interpolate($_, resourceKey)}
+                    message={interpolateNewUi($_, resourceKey)}
                     tone={toast.kind === "success" ? "success" : "neutral"}
                     icon={toast.kind === "success" ? "check" : "none"}
                     onClose={() => toastStore.hideToast()} />

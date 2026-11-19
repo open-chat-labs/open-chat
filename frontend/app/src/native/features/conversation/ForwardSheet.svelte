@@ -20,7 +20,7 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Field from "@openchat/ui/src/lib/components/Field.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { chatsToShareTo } from "@src/logic/share/chatsToShareTo";
     import { typedMentions } from "@src/logic/conversation/typedMentions";
     import { getContext, untrack } from "svelte";
@@ -82,7 +82,7 @@
             (chat) =>
                 chat.kind === "direct_chat"
                     ? ""
-                    : chat.description || interpolate($_, groupMembersLine(chat)),
+                    : chat.description || interpolateNewUi($_, groupMembersLine(chat)),
         ),
     );
 

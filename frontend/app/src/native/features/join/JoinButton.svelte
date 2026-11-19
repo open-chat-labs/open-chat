@@ -4,7 +4,7 @@
      or why it didn't go through comes as a toast. -->
 <script lang="ts">
     import { type EnhancedAccessGate, type OpenChat } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import { isJoining, startJoin, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
     import type { PreviewBar } from "@src/logic/join/previewBar";
@@ -41,12 +41,12 @@
             return;
         }
         const message = joinStepToast(step, name);
-        if (message !== undefined) toast(interpolate($_, message));
+        if (message !== undefined) toast(interpolateNewUi($_, message));
     }
 </script>
 
 <Button
-    label={interpolate($_, view.label)}
+    label={interpolateNewUi($_, view.label)}
     icon={view.icon}
     size="lg"
     fullWidth

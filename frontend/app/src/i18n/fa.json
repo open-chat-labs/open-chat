@@ -1567,6 +1567,11 @@
         "community": "انجمن",
         "group": "گروه"
     },
+    "levelNoun": {
+        "channel": "کانال",
+        "community": "انجمن",
+        "group": "گروه"
+    },
     "light": "سبک",
     "linkCopiedToClipboard": "پیوند در کلیپ بورد کپی شد",
     "loadGif": "نمایش گیف",
