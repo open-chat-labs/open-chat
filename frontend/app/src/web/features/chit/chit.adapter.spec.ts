@@ -73,6 +73,16 @@ describe("the CHIT dialog's props", () => {
         expect(known(inputs({ streak: 7 }), noInsurance).progress).toBe(0);
     });
 
+    test("with CHIT off, a milestone reached yesterday with today's claim due isn't claimed today", () => {
+        const off = known(inputs({ streak: 3 }, { disabled: true }), noInsurance);
+        expect(off.claimable).toBe(false);
+        expect(off.claimedToday).toBe(false);
+        expect(off.progress).toBe(0);
+        const made = { streak: 3, nextDailyChitClaim: BigInt(NOW + 60 * MINUTE) };
+        expect(known(inputs(made, { disabled: true }), noInsurance).claimedToday).toBe(true);
+        expect(known(inputs(made, { disabled: true }), noInsurance).progress).toBe(1);
+    });
+
     test("the claim is offered only when nextDailyChitClaim < now, the last sync is under 10 minutes old and disableChit is off", () => {
         // the rail, as the old desktop rail offers it
         const offered = (i: ChitInputs) => chitRailProps(i, false).chitClaimable;

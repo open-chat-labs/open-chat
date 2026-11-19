@@ -16,7 +16,7 @@
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
-  import { milestoneReachedToday, ringFill, streakRingProgress } from '../../lib/streakRing';
+  import { claimMadeToday, milestoneReachedToday, ringFill, streakRingProgress } from '../../lib/streakRing';
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
@@ -34,6 +34,9 @@
     daily: number;
     /** Whether today's claim is open (defaults to false). */
     claimable?: boolean;
+    /** Whether today's claim has been made, here or elsewhere, for the ring and the "milestone reached" heading.
+     *  Defaults to `!claimable`; pass it when nothing is claimable for another reason (CHIT turned off). */
+    claimedToday?: boolean;
     /** Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365. */
     milestones?: number[];
     /** How full the streak ring is, 0 to 1 (not a finite number: the default). Defaults to the way from the last
@@ -76,6 +79,7 @@
     earned,
     daily,
     claimable = false,
+    claimedToday,
     milestones,
     progress,
     achievements,
@@ -136,8 +140,9 @@
   // the ring runs tier to tier so it means "distance to the next rate": empty at 0, full on the day a milestone is
   // reached (the heading then names it), and on the next segment, empty, once the next claim opens (the heading
   // counts the days to the next), so a claim never empties it; full from the last one on (lib/streakRing)
-  const within = $derived(ringFill(progress, () => streakRingProgress(days, claimed, TIERS)));
-  const reachedToday = $derived(milestoneReachedToday(days, claimed, TIERS));
+  const madeToday = $derived(claimMadeToday(claimedHere, claimedToday, claimable));
+  const within = $derived(ringFill(progress, () => streakRingProgress(days, madeToday, TIERS)));
+  const reachedToday = $derived(milestoneReachedToday(days, madeToday, TIERS));
 
   // the streak sits between its two bracketing milestones, in their spacing
   const barPct = $derived.by(() => {

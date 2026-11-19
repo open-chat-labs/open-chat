@@ -8811,6 +8811,17 @@
         "doc": "Whether today's claim is open (defaults to false)."
       },
       {
+        "name": "claimedToday",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether today's claim has been made, here or elsewhere, for the ring and the \"milestone reached\" heading. Defaults to `!claimable`; pass it when nothing is claimable for another reason (CHIT turned off)."
+      },
+      {
         "name": "milestones",
         "type": "number[]",
         "default": null,

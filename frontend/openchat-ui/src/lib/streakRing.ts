@@ -22,6 +22,13 @@ export function ringFill(progress: number | undefined, fallback: () => number): 
   return progress != null && Number.isFinite(progress) ? Math.min(Math.max(progress, 0), 1) : fallback();
 }
 
+/** Whether today's claim has been made: one made in the dialog, else the host's `claimedToday`, else not claimable.
+ *  The host's flag matters when nothing is claimable for another reason (CHIT turned off): `!claimable` would then
+ *  call a claim still due made, and a milestone reached days ago "reached today". */
+export function claimMadeToday(claimedHere: boolean | null, claimedToday: boolean | undefined, claimable: boolean): boolean {
+  return claimedHere === true || (claimedToday ?? !claimable);
+}
+
 /** The milestone the streak reached today, while the ring shows it full (claimed, short of the last one, which has
  *  its own heading); undefined otherwise, when the heading counts the days to the next. */
 export function milestoneReachedToday(streak: number, claimed: boolean, tiers: readonly number[]): number | undefined {

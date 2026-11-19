@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { milestoneReachedToday, ringFill, streakRingProgress } from './streakRing';
+import { claimMadeToday, milestoneReachedToday, ringFill, streakRingProgress } from './streakRing';
 
 const TIERS = [3, 7, 14, 30, 100, 365];
 
@@ -44,5 +44,21 @@ describe('milestoneReachedToday', () => {
     expect(milestoneReachedToday(3, false, TIERS)).toBeUndefined();
     expect(milestoneReachedToday(4, true, TIERS)).toBeUndefined();
     expect(milestoneReachedToday(365, true, TIERS)).toBeUndefined();
+  });
+});
+
+describe('claimMadeToday', () => {
+  test("the host's claimedToday when it passes one: with CHIT off nothing is claimable, made or not", () => {
+    expect(claimMadeToday(null, false, false)).toBe(false);
+    expect(claimMadeToday(null, true, false)).toBe(true);
+  });
+
+  test('without it, not claimable means made', () => {
+    expect(claimMadeToday(null, undefined, false)).toBe(true);
+    expect(claimMadeToday(null, undefined, true)).toBe(false);
+  });
+
+  test('a claim made in the dialog counts before the host has caught up', () => {
+    expect(claimMadeToday(true, false, true)).toBe(true);
   });
 });
