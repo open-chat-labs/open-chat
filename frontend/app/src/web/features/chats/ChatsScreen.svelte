@@ -50,6 +50,7 @@
         anonUserStore,
     } from "@client";
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
     import { interpolate } from "@i18n/i18n";
     import { now } from "@src/stores/time";
@@ -448,5 +449,10 @@
         {threadCount}
         threadsAction={() => navigate(withQueryStringFlag("threads"), "overlay")}
         loading={!$chatsInitialisedStore}
-    />
+    >
+        <!-- the latest message's markdown, on one line, as the old trees' rows render it -->
+        {#snippet previewText(text: string)}
+            <Markdown {text} oneLine suppressLinks />
+        {/snippet}
+    </ChatListPanel>
 {/key}

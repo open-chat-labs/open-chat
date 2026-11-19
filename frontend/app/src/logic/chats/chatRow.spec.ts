@@ -426,4 +426,22 @@ describe("a list's row context", () => {
             "ask @carol and @mods",
         );
     });
+
+    test("escapes the author's and the mentions' names: the rows render the preview as markdown", () => {
+        const withText = {
+            ...client,
+            getContentAsText: (_: unknown, content: { kind: string; text?: string }) =>
+                content.text ?? "",
+        } as Parameters<typeof rowContext>[0];
+        const users = new Map([
+            ["b1", { userId: "b1", username: "_bob_", displayName: "_Bob_" } as UserSummary],
+        ]);
+        const chat = {
+            ...group("g1", "Hikers", { sender: "b1", text: "**hey** @UserId(b1)" }),
+            latestMessageIndex: 1,
+        };
+        expect(rowContext(withText, { ...inputs, users }).preview(chat)).toBe(
+            "&#95;Bob&#95;: **hey** @&#95;bob&#95;",
+        );
+    });
 });

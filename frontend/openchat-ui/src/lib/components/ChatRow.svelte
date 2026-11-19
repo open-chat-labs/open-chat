@@ -4,7 +4,7 @@
      a touch long-press anchors to the row at the finger, Shift+F10 / Menu key anchors to the row. All share one ContextMenu. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, type Snippet } from 'svelte';
   import type { MenuItem } from '../types';
   import Avatar from './Avatar.svelte';
   import ContextMenu from './ContextMenu.svelte';
@@ -17,6 +17,8 @@
     preview: string;
     /** An icon before the preview, e.g. `forward` when the last message was forwarded. */
     previewIcon?: string;
+    /** The preview's text as the host renders it (markdown, mentions), shown in its place; plain text without it. */
+    previewText?: Snippet<[string]>;
     time: string;
     kind?: 'user' | 'group' | 'channel';
     color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
@@ -49,6 +51,7 @@
     title,
     preview,
     previewIcon,
+    previewText,
     time,
     kind = 'user',
     color = 'violet',
@@ -241,7 +244,9 @@
                 role={previewIcon === 'forward' ? 'img' : undefined}
                 aria-label={previewIcon === 'forward' ? t('ui.chatRow.forwarded') : undefined}
                 aria-hidden={previewIcon === 'forward' ? undefined : 'true'}></span
-              >{/if}<span class="preview-text">{preview}</span></span>
+              >{/if}<span class="preview-text"
+                >{#if previewText}{@render previewText(preview)}{:else}{preview}{/if}</span
+              ></span>
         {/if}
         {#if mentions > 0}
           <span class="count mention" role="img" aria-label={t('ui.chatRow.mentions', { count: mentions })} title={t('ui.chatRow.mentions', { count: mentions })}>@</span>
@@ -485,6 +490,20 @@
   .preview-text {
     @include truncate;
     min-width: 0;
+  }
+
+  // the host's rendering (previewText) takes the line's box: no margins of its own (the app's Markdown is a <p>, whose
+  // browser margins made the row 16px taller)
+  .preview-text > :global(*) {
+    margin: 0;
+  }
+
+  // the host's rendering (previewText): a link is text in the row's colour, and a click on it or on a spoiler opens the
+  // chat (a spoiler stays hidden in the row)
+  .preview-text :global(:is(a, spoiler-span)) {
+    color: inherit;
+    text-decoration: none;
+    pointer-events: none;
   }
 
   .count {

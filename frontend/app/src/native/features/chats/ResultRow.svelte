@@ -3,6 +3,7 @@
      radius. -->
 <script lang="ts">
     import Avatar from "@openchat/ui/src/lib/components/Avatar.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import type { ResultRow } from "./chats.adapter";
 
     let { row, onSelect }: { row: ResultRow; onSelect: () => void } = $props();
@@ -15,7 +16,15 @@
             >{row.kind === "channel" ? "#" : ""}{row.title.before}<span class="match"
                 >{row.title.match}</span
             >{row.title.after}</span>
-        {#if row.sub}<span class="sub">{row.sub}</span>{/if}
+        {#if row.sub}
+            <span class="sub">
+                {#if row.subMarkdown}
+                    <Markdown text={row.sub} oneLine suppressLinks />
+                {:else}
+                    {row.sub}
+                {/if}
+            </span>
+        {/if}
     </span>
 </button>
 
@@ -68,5 +77,18 @@
         font: var(--weight-regular) text-size(13.5px) / 1.35 var(--font-sans);
         color: var(--ink-3);
         @include truncate;
+
+        // the Markdown is a <p>: no margins of its own, so the line keeps its height
+        > :global(*) {
+            margin: 0;
+        }
+
+        // a latest message's link is text in the row's colour, and a tap on it or on a spoiler
+        // picks the row (as the list's rows, ChatRow)
+        :global(:is(a, spoiler-span)) {
+            color: inherit;
+            text-decoration: none;
+            pointer-events: none;
+        }
     }
 </style>

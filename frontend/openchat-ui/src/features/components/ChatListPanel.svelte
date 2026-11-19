@@ -8,7 +8,7 @@
      ending in "+N more …" that switches to its tab (lib/searchTabs). TODO(design): Groups; web/04 has no groups. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import type { ComponentProps } from 'svelte';
+  import type { ComponentProps, Snippet } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Badge from '../../lib/components/Badge.svelte';
   import ChatListHeader from './ChatListHeader.svelte';
@@ -31,7 +31,7 @@
   const SEARCH_TAB_KEYS = SEARCH_TABS.map((tab) => `ui.chatListPanel.searchTabs.${tab}`);
   const MORE_KEYS = { chats: 'ui.chatListPanel.moreChats', people: 'ui.chatListPanel.morePeople', groups: 'ui.chatListPanel.moreGroups' } as const;
 
-  type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems'>;
+  type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems' | 'previewText'>;
 
   interface Row extends RowProps {
     /** The chat's id, reported by onSelect. */
@@ -89,6 +89,9 @@
     filterLabels?: string[];
     emptyPreset?: ComponentProps<typeof EmptyState>['preset'];
     loading?: boolean;
+    /** The chats' preview text as the host renders it (markdown, mentions); plain text without it. Not for the people
+        and groups a search found, whose line is plain text. */
+    previewText?: Snippet<[string]>;
   }
 
   let {
@@ -121,6 +124,7 @@
     filterLabels = ['All', 'Direct', 'Groups', 'Unread'],
     emptyPreset = 'no-conversations',
     loading = false,
+    previewText,
   }: Props = $props();
   const t = useT();
 
@@ -184,7 +188,9 @@
   const resultSections = $derived(searchSections(SEARCH_TABS[searchTab] ?? 'all', found));
 </script>
 
-{#snippet chatRow(row: (typeof all)[number])}
+<!-- `rendered`: the row's preview is the host's (previewText), a chat's latest message; the people and groups a search
+     found have plain text (a username, a bot's description, a member count) -->
+{#snippet chatRow(row: (typeof all)[number], rendered: boolean)}
   <div class="cell">
     <ChatRow
       liveCall={row.liveCall}
@@ -193,6 +199,7 @@
       kind={row.kind}
       preview={row.preview}
       previewIcon={row.previewIcon}
+      previewText={rendered ? previewText : undefined}
       time={row.time}
       unreadCount={row.unreadCount}
       mentions={row.mentions}
@@ -274,7 +281,7 @@
                 <div class="section-label">{t(SEARCH_TAB_KEYS[SEARCH_TABS.indexOf(section.tab)]).toUpperCase()} <span class="section-count">{section.total}</span></div>
               {/if}
               {#each section.rows as row (row.id)}
-                {@render chatRow(row)}
+                {@render chatRow(row, section.tab === 'chats')}
               {/each}
               {#if section.more > 0}
                 <button type="button" class="more" onclick={() => (searchTab = SEARCH_TABS.indexOf(section.tab))}>{t(MORE_KEYS[section.tab], { count: section.more })}</button>
@@ -299,7 +306,7 @@
               <div class="section-label">{t(SECTION_KEYS[section.label] ?? section.label).toUpperCase()} <span class="section-count">{section.rows.length}</span></div>
             {/if}
             {#each section.rows as row (row.id)}
-              {@render chatRow(row)}
+              {@render chatRow(row, true)}
             {/each}
           </div>
         {/each}
