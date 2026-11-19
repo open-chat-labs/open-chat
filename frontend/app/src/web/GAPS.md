@@ -410,7 +410,9 @@ design export needs. Each entry says where it came up.
     ranking, most members first (#10405): Featured is its top 3 communities the user isn't in,
     and Popular the rest; the design's Fastest growing, Most active and Recently added shelves
     wait for #10405, as do a row's metric (growth, messages, age), so a row shows its language
-    instead. Left: the language sheet has no per-language counts (the backend gives none); the
+    instead. A shelf swipes only once it has a second full column; fewer rows are one column the
+    screen's width (the design's peeking column read as cut off on a short shelf). Left: the
+    language sheet has no per-language counts (the backend gives none); the
     search text isn't in the URL (the web's is).
   - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
     `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't

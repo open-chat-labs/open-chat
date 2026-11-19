@@ -31,7 +31,7 @@ export type ExploreShelfKey = "popular";
 export type ExploreShelf = {
     key: ExploreShelfKey;
     rows: ExploreRow[];
-    /** Its rows 3 to a column, swiped across. */
+    /** Its rows 3 to a column, swiped across; one column of them all while there's no second full one. */
     columns: ExploreRow[][];
 };
 
@@ -82,7 +82,10 @@ export function exploreBrowse(rows: readonly ExploreRow[]): ExploreBrowse {
         : { kind: "shelves", featured, shelves };
 }
 
+// Columns to swipe only once there's a second full one, its edge showing beside the first;
+// fewer rows are one column the screen's width, with nothing left hanging off its edge.
 function shelf(key: ExploreShelfKey, rows: ExploreRow[]): ExploreShelf {
+    if (rows.length < 2 * COLUMN) return { key, rows, columns: [rows] };
     const columns: ExploreRow[][] = [];
     for (let i = 0; i < rows.length; i += COLUMN) columns.push(rows.slice(i, i + COLUMN));
     return { key, rows, columns };

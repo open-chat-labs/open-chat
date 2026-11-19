@@ -601,6 +601,11 @@
         scroll-snap-align: start;
         display: flex;
         flex-direction: column;
+
+        // a shelf with one column has nothing to swipe to
+        &:only-child {
+            width: 100%;
+        }
     }
 
     .sheet-buttons {
