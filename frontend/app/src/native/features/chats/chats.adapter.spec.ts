@@ -73,11 +73,13 @@ describe("search results", () => {
             id: "u1",
             title: { before: "Lucy ", match: "Lin", after: "den" },
             sub: "@lucy",
+            subMarkdown: false,
             kind: "user",
         });
         const group = { kind: "group_chat" } as ChatSummary;
         expect(chatResult(group, row, "hik", () => undefined)).toMatchObject({
             sub: "Lucy: see you there",
+            subMarkdown: true,
             kind: "group",
             color: "teal",
         });
@@ -89,6 +91,7 @@ describe("search results", () => {
             id: "u2",
             title: { before: "Matt ", match: "Web", after: "b" },
             sub: "@matt",
+            subMarkdown: false,
             kind: "user",
         });
     });

@@ -92,6 +92,14 @@ describe("a chat's latest message preview", () => {
         ).toBe("Webhook: hi");
     });
 
+    test("escapes the author's name for a preview going through Markdown, not the text", () => {
+        const preview = chat("group_chat", { sender: "_x_", text: "**hi**" });
+        expect(latestMessagePreview(preview, untranslated)).toBe("_x_: **hi**");
+        expect(latestMessagePreview(preview, { ...untranslated, markdown: true })).toBe(
+            "&#95;x&#95;: **hi**",
+        );
+    });
+
     test("shows restricted content as such, not its text", () => {
         expect(
             latestMessagePreview(

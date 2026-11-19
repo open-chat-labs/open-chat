@@ -34,6 +34,7 @@ export type ChatListRow = {
     /** The chat's id (chatIdentifierToString). */
     id: string;
     title: string;
+    /** The latest message, as markdown: its author's and mentions' names escaped. */
     preview: string;
     previewIcon: "forward" | undefined;
     time: string;
@@ -64,7 +65,7 @@ export type RowContext = {
     userName: (userId: string) => string;
     /** Whether a user's account is suspended (their UserSummary's `suspended`). */
     userSuspended: (userId: string) => boolean;
-    /** The latest message as the row shows it (app/src/logic/chats/latestMessagePreview). */
+    /** The latest message as the row shows it, as markdown (logic/chats/latestMessagePreview). */
     preview: (chat: ChatSummary) => string;
     /** A chat's display date as the list shows it (a time today, else a short date). */
     date: (timestamp: bigint) => string;
@@ -113,8 +114,9 @@ export type RowContextInputs = Pick<
 
 /**
  * The RowContext every chat list builds from the client and the stores: names as the client shows
- * them, the latest message as `latestMessagePreview` has it with its mentions as the @names typed
- * (`typedMentions`; the old trees show it through Markdown instead), the list's dates, unread
+ * them, the latest message as `latestMessagePreview` has it, as markdown, with its mentions as the
+ * @names typed and its names escaped (`typedMentions`; the rows render it through Markdown, as the
+ * old trees' do), the list's dates, unread
  * counts, and, for a list that asks (`withMentionsAndAvatars`), the chats' own pictures
  * (`chatAvatarUrl`) and unread mentions. The counts read `messagesRead`'s state, so a list builds
  * its context again as that store changes.
@@ -147,7 +149,8 @@ export function rowContext(
     const groupAvatars = groupAvatarLookups(client, community);
     // the preview shows its mentions as the @names typed: the list is built again as the users
     // load (it follows allUsersStore), so a mention of someone loaded later gets their name then
-    const typed = typedMentions({ users, userGroups });
+    // the rows render it through Markdown (ChatRow's previewText), so the names in it are escaped
+    const typed = typedMentions({ users, userGroups }, { markdown: true });
     const extras: Pick<RowContext, "mentions" | "avatar"> = withMentionsAndAvatars
         ? {
               mentions: (chat) =>
@@ -170,6 +173,7 @@ export function rowContext(
                 contentText: (content) => typed(client.getContentAsText(formatter, content)),
                 bridgedUsers,
                 users,
+                markdown: true,
             }),
         date: (timestamp) =>
             client.formatMessageDate(

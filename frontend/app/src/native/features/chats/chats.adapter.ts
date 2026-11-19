@@ -90,6 +90,8 @@ export type ResultRow = {
     id: string;
     title: MatchedText;
     sub: string;
+    /** `sub` is markdown (a chat's latest message, as the list's rows have it), not plain text. */
+    subMarkdown: boolean;
     kind: "user" | "group" | "channel";
     color: Swatch;
 };
@@ -107,6 +109,7 @@ export function chatResult(
         title: splitAtMatch(row.title, term),
         // a DM's @username; a group's or channel's latest message
         sub: handle !== undefined ? `@${handle}` : row.preview,
+        subMarkdown: handle === undefined,
         kind: row.kind,
         color: row.color,
     };
@@ -118,6 +121,7 @@ export function personResult(user: UserSummary, name: string, term: string): Res
         id: user.userId,
         title: splitAtMatch(name, term),
         sub: `@${user.username}`,
+        subMarkdown: false,
         kind: "user",
         color: swatchFor(chatIdentifierToString({ kind: "direct_chat", userId: user.userId })),
     };

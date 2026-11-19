@@ -492,8 +492,9 @@
     min-width: 0;
   }
 
-  // the host's rendering (previewText): a link is text in the row's colour, and a click on it opens the chat
-  .preview-text :global(a) {
+  // the host's rendering (previewText): a link is text in the row's colour, and a click on it or on a spoiler opens the
+  // chat (a spoiler stays hidden in the row)
+  .preview-text :global(:is(a, spoiler-span)) {
     color: inherit;
     text-decoration: none;
     pointer-events: none;

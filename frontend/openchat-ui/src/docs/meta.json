@@ -8740,7 +8740,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Every row's preview text as the host renders it (markdown, mentions); plain text without it."
+        "doc": "The chats' preview text as the host renders it (markdown, mentions); plain text without it. Not for the people and groups a search found, whose line is plain text."
       }
     ],
     "group": "features"

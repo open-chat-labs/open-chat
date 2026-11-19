@@ -207,6 +207,8 @@ design export needs. Each entry says where it came up.
   stays right while another tab's route sets another scope (it's dragged into view by the swipe
   between tabs). The rows' previews show mentions as the `@names` typed (`typedMentions`, the
   rows shared with the web's chat list), and so does the forward sheet's preview of the message.
+  The rows' previews (and a chat's latest message in the search) render their markdown, as the
+  web's chat list's do (see the web's "Chat list").
   Left, or decided against the prototype:
   - **Message search**: the backend has no search across chats, and a chat's own search
     (`searchChat`) returns message indexes without their text, so the search has Chats and People
@@ -2495,12 +2497,25 @@ design export needs. Each entry says where it came up.
     (`MiddleToolbar`). TODO(design): the design doesn't say which words, icon or action, nor what
     shows beside the activity feed; there's no action (the list's own New message has no handler
     yet either).
+  - **the preview's markdown**: the preview goes through the app's `Markdown` (one line, links
+    suppressed), as the old rows' does, so `**` and `_` format rather than show. The library's
+    `ChatRow` takes it as `previewText`, a snippet the host renders (by hand, EXPORT-LOG
+    2026-11-19, to take back to the design export: the export's preview is plain text);
+    `ChatListPanel` passes it to the chats' rows only, not to the people and groups a search
+    found (a username, a bot's description, a member count stay plain). In the row a link is text
+    in the row's colour and a spoiler stays hidden: a click on either opens the chat (the old rows
+    reveal the spoiler and open the chat). The native Chats tab's rows and its search's chats do
+    the same.
   - **mentions in the preview**: as the `@names` typed (`typedMentions` in `logic/conversation`,
-    through `mentionsAsTyped`), where the old rows show the preview through Markdown, which shows
-    them as `@username` too. The same goes for every other text the new UI shows as it is, not
-    through Markdown: the list of threads, the thread's root card, the activity feed, the pinned
-    messages and the forward picker's preview. A mention of a user or group not known yet stays as
-    `@UserId(…)` until it loads (the client loads those a latest message or an activity mentions).
+    through `mentionsAsTyped`), escaped (`escapeMarkdown`), as is the author's name before a
+    group's message (`latestMessagePreview`'s `markdown`), so a name like `_john_` shows as it is.
+    The old rows pass the raw `@UserId(…)` to Markdown, which shows a `@username` link (suppressed).
+    Every other text the new UI shows as it is, not through Markdown, has the names as typed,
+    unescaped: the list of threads, the thread's root card, the activity feed, the pinned messages
+    and the forward picker's preview. A mention of a user or group not known yet stays as
+    `@UserId(…)` until it loads (the client loads those a latest message or an activity mentions);
+    in the preview a group not known shows as Markdown has it, a bold `@unknown_user_group`, as in
+    the old rows.
   - **avatars**: a chat's own picture (`chatAvatarUrl`): a DM's user's avatar
     (`ownUserAvatarUrl` in `@client`), a group's or channel's own (`ownGroupAvatarUrl` in
     `@client`, which the client's `groupAvatarUrl` now uses too): its avatar, else a proposals

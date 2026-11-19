@@ -89,7 +89,8 @@
     filterLabels?: string[];
     emptyPreset?: ComponentProps<typeof EmptyState>['preset'];
     loading?: boolean;
-    /** Every row's preview text as the host renders it (markdown, mentions); plain text without it. */
+    /** The chats' preview text as the host renders it (markdown, mentions); plain text without it. Not for the people
+        and groups a search found, whose line is plain text. */
     previewText?: Snippet<[string]>;
   }
 
@@ -187,7 +188,9 @@
   const resultSections = $derived(searchSections(SEARCH_TABS[searchTab] ?? 'all', found));
 </script>
 
-{#snippet chatRow(row: (typeof all)[number])}
+<!-- `rendered`: the row's preview is the host's (previewText), a chat's latest message; the people and groups a search
+     found have plain text (a username, a bot's description, a member count) -->
+{#snippet chatRow(row: (typeof all)[number], rendered: boolean)}
   <div class="cell">
     <ChatRow
       liveCall={row.liveCall}
@@ -196,7 +199,7 @@
       kind={row.kind}
       preview={row.preview}
       previewIcon={row.previewIcon}
-      {previewText}
+      previewText={rendered ? previewText : undefined}
       time={row.time}
       unreadCount={row.unreadCount}
       mentions={row.mentions}
@@ -278,7 +281,7 @@
                 <div class="section-label">{t(SEARCH_TAB_KEYS[SEARCH_TABS.indexOf(section.tab)]).toUpperCase()} <span class="section-count">{section.total}</span></div>
               {/if}
               {#each section.rows as row (row.id)}
-                {@render chatRow(row)}
+                {@render chatRow(row, section.tab === 'chats')}
               {/each}
               {#if section.more > 0}
                 <button type="button" class="more" onclick={() => (searchTab = SEARCH_TABS.indexOf(section.tab))}>{t(MORE_KEYS[section.tab], { count: section.more })}</button>
@@ -303,7 +306,7 @@
               <div class="section-label">{t(SECTION_KEYS[section.label] ?? section.label).toUpperCase()} <span class="section-count">{section.rows.length}</span></div>
             {/if}
             {#each section.rows as row (row.id)}
-              {@render chatRow(row)}
+              {@render chatRow(row, true)}
             {/each}
           </div>
         {/each}

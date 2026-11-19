@@ -1077,5 +1077,5 @@
 - Not in the design export.
 
 ## 2026-11-19 — ChatRow's preview text as the host renders it, by hand
-- `ChatRow`: `previewText` (optional `Snippet<[string]>`): the preview's text as the host renders it, in place of the plain text, as `ChatBubble`'s `body` does for a message. `ChatListPanel`: `previewText`, passed to every row. `meta.json` (both). A link in it is plain text in the row's colour, and clicking it opens the chat (`pointer-events: none`). The app passes its `Markdown` (one line), so a latest message's markdown shows as it does in the old trees' rows, not as raw `**` and `_` (web and native chat lists).
-- Not in the design export: the export's preview is plain text.
+- `ChatRow`: `previewText` (optional `Snippet<[string]>`): the preview's text as the host renders it, in place of the plain text, as `ChatBubble`'s `body` does for a message. `ChatListPanel`: `previewText`, passed to the chats' rows only: the people and groups a search found keep their plain line (a username, a bot's description, a member count). `meta.json` (both). A link in it is plain text in the row's colour, and a spoiler stays hidden: clicking either opens the chat (`pointer-events: none`). The app passes its `Markdown` (one line), so a latest message's markdown shows as it does in the old trees' rows, not as raw `**` and `_` (web and native chat lists).
+- Not in the design export: the export's preview is plain text (the app's `GAPS.md`, "Chat list").

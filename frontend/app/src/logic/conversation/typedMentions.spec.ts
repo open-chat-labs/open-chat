@@ -20,6 +20,15 @@ describe("typedMentions", () => {
         expect(typed("hi @UserId(zz) and @UserGroup(8)")).toBe("hi @UserId(zz) and @UserGroup(8)");
     });
 
+    test("escapes the names for a text going through Markdown, not the rest", () => {
+        const odd = new Map([["j1", { userId: "j1", username: "_john_" } as UserSummary]]);
+        const groups = new Map([[3, { name: "__mods__" }]]);
+        const marked = typedMentions({ users: odd, userGroups: groups }, { markdown: true });
+        expect(marked("**hi** @UserId(j1) @UserGroup(3) @UserId(zz)")).toBe(
+            "**hi** @&#95;john&#95; @&#95;&#95;mods&#95;&#95; @UserId(zz)",
+        );
+    });
+
     test("leaves a text without mentions, and @everyone, alone", () => {
         expect(typed("hello @everyone")).toBe("hello @everyone");
     });

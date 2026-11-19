@@ -16,6 +16,7 @@ import {
     type MessageFormatter,
     type UserLookup,
 } from "@client";
+import { escapeMarkdown } from "@src/core/markdownRender";
 
 export type PreviewText = {
     /** The app's translator ($_). */
@@ -32,6 +33,11 @@ export type PreviewText = {
     bridgedUsers: { get(key: string): BridgedUserSummary | undefined };
     /** The users the app knows (allUsersStore), to find who has linked an account. */
     users: Pick<UserLookup, "get">;
+    /**
+     * The preview goes through Markdown (the new trees' chat lists): the author's name is escaped
+     * (`escapeMarkdown`) so it shows as it is, not as formatting. The old trees' rows leave it out.
+     */
+    markdown?: boolean;
 };
 
 /** What naming a message's author needs (see `messageAuthorName`). */
@@ -124,5 +130,6 @@ export function latestMessagePreview(
 
     if (chat.kind === "direct_chat") return text;
 
-    return `${messageAuthorName(chat.latestMessage.event, names)}: ${text}`;
+    const author = messageAuthorName(chat.latestMessage.event, names);
+    return `${names.markdown ? escapeMarkdown(author) : author}: ${text}`;
 }
