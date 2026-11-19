@@ -492,6 +492,12 @@
     min-width: 0;
   }
 
+  // the host's rendering (previewText) takes the line's box: no margins of its own (the app's Markdown is a <p>, whose
+  // browser margins made the row 16px taller)
+  .preview-text > :global(*) {
+    margin: 0;
+  }
+
   // the host's rendering (previewText): a link is text in the row's colour, and a click on it or on a spoiler opens the
   // chat (a spoiler stays hidden in the row)
   .preview-text :global(:is(a, spoiler-span)) {

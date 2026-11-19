@@ -78,6 +78,11 @@
         color: var(--ink-3);
         @include truncate;
 
+        // the Markdown is a <p>: no margins of its own, so the line keeps its height
+        > :global(*) {
+            margin: 0;
+        }
+
         // a latest message's link is text in the row's colour, and a tap on it or on a spoiler
         // picks the row (as the list's rows, ChatRow)
         :global(:is(a, spoiler-span)) {
