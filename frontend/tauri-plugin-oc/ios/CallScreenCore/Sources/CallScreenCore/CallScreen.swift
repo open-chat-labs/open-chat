@@ -114,6 +114,8 @@ public enum SpeakerButton: Equatable {
 
     static let headphones: Set<String> = [
         "Headphones", "BluetoothHFP", "BluetoothA2DPOutput", "BluetoothLE", "USBAudio", "CarAudio",
+        // a wired headset's mic, still an input after the user sends the call to the speaker
+        "MicrophoneWired",
     ]
 
     public static func kind(ports: [String]) -> SpeakerButton {

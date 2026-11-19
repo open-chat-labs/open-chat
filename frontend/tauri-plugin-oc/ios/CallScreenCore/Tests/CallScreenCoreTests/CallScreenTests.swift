@@ -86,6 +86,10 @@ final class CallScreenTests: XCTestCase {
         for headphones in ["Headphones", "BluetoothHFP", "BluetoothA2DPOutput", "BluetoothLE", "USBAudio"] {
             XCTAssertEqual(SpeakerButton.kind(ports: ["Receiver", headphones]), .picker, headphones)
         }
+        // headphones still connected after the user picked the speaker: the outputs are the speaker,
+        // the headset's mic is still an input
+        XCTAssertEqual(SpeakerButton.kind(ports: ["Speaker", "MicrophoneBuiltIn", "MicrophoneWired"]), .picker)
+        XCTAssertEqual(SpeakerButton.kind(ports: ["Speaker", "MicrophoneBuiltIn", "BluetoothHFP"]), .picker)
         XCTAssertEqual(SpeakerButton.kind(ports: ["Receiver"]), .toggle)
         XCTAssertEqual(SpeakerButton.kind(ports: ["Speaker", "MicrophoneBuiltIn"]), .toggle)
         XCTAssertEqual(SpeakerButton.kind(ports: []), .toggle)

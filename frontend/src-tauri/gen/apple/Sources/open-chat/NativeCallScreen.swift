@@ -236,10 +236,14 @@ struct NativeCallScreen: View {
             if SpeakerButton.kind(ports: call.routePorts) == .picker {
                 // headphones: the system's output picker, under a button showing the route, as Android's
                 let output = CallOutput.of(port: call.routeOutput)
-                labelled(localized(output == .headphones ? "Headphones" : output == .speaker ? "Speaker" : "Phone")) {
+                let (label, icon): (String, OCIcon) = switch output {
+                case .headphones: (localized("Headphones"), .headphones)
+                case .speaker: (localized("Speaker"), .volume)
+                case .phone: (localized("Phone"), .phoneEar)
+                }
+                labelled(label) {
                     ZStack {
-                        circle(on: output == .speaker,
-                               icon: output == .headphones ? .headphones : output == .speaker ? .volume : .phoneEar)
+                        circle(on: output == .speaker, icon: icon)
                         RoutePicker().frame(width: 52, height: 52)
                     }
                 }

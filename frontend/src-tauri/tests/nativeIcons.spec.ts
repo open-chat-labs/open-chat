@@ -15,7 +15,8 @@ test("the iOS call screen draws only the v3 icon set's glyphs", () => {
     expect(names.length).toBeGreaterThan(0);
     // iconSvg draws an unknown name as the search icon
     expect(names.filter((name) => !(name in ICONS))).toEqual([]);
-    expect(callScreen).not.toContain("systemName:");
+    // Image(systemName:), Label(_:systemImage:) and Button(_:systemImage:) all draw SF Symbols
+    expect(callScreen).not.toMatch(/systemName:|systemImage:/);
 });
 
 test("each glyph the iOS call screen draws is icons.js's, as a template imageset", () => {
