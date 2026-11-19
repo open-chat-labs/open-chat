@@ -87,6 +87,8 @@ export function composerContext(
  * The picture beside a reply to a photo, video, GIF or meme, as the old trees' reply strips show
  * it: the picture the message shows (a video's first frame, with a play glyph). In low bandwidth,
  * one the reader hasn't revealed shows its thumbnail (a GIF none), as its tile does (`mediaHeld`).
+ * A photo with no full-size picture (a reply whose blob reference is missing) shows its
+ * thumbnail, as a video's frame falls back to its own.
  */
 export function replyThumb(
     content: EnhancedReplyContext["content"],
@@ -95,7 +97,9 @@ export function replyThumb(
 ): Pick<ComposerContext, "thumb" | "thumbVideo"> {
     if (!isMedia(content)) return {};
     const tile = mediaTile(content, mediaHeld(content, messageId, ctx.media), ctx.media.url);
-    const src = tile.items[0]?.src;
+    const src =
+        tile.items[0]?.src ??
+        (content.kind === "image_content" ? content.thumbnailData : undefined);
     if (src === undefined || src === "") return {};
     return {
         thumb: `center/cover no-repeat ${cssUrl(src)}`,

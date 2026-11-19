@@ -193,6 +193,12 @@ describe("a media reply's thumbnail in the strip", () => {
         );
     });
 
+    test("a photo with no full-size picture shows its thumbnail", () => {
+        expect(strip({ ...image, blobUrl: undefined })?.thumb).toBe(
+            'center/cover no-repeat url("data:thumb")',
+        );
+    });
+
     test("text and files have none", () => {
         expect(strip({ kind: "text_content", text: "hi" })?.thumb).toBeUndefined();
         expect(
