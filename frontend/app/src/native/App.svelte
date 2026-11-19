@@ -43,6 +43,8 @@
     import { toastStore } from "@src/stores/toast";
     import { hostHaptics } from "./haptics";
     import { nativeOs } from "./platform";
+    import { nativeViewport } from "./viewport";
+    import { mobileOperatingSystem } from "@src/utils/devices";
     import { followAndroidSystemBars } from "./systemBars";
     import Router from "./router/Router.svelte";
     import Shell from "./shell/Shell.svelte";
@@ -113,6 +115,15 @@
         clearChatShortcutsOnLogout(client);
         // the Android app reports its system bars itself
         const stopFollowingBars = isAndroidTauriApp() ? followAndroidSystemBars(root) : () => {};
+        // iOS mustn't zoom in on a field taking the focus (viewport.ts)
+        const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+        const pageViewport = viewport?.content;
+        if (viewport != null && pageViewport !== undefined) {
+            viewport.content = nativeViewport(
+                pageViewport,
+                isIosTauriApp() || mobileOperatingSystem === "iOS",
+            );
+        }
         window.addEventListener("unhandledrejection", unhandledError);
         return () => {
             window.removeEventListener("unhandledrejection", unhandledError);
@@ -123,6 +134,7 @@
             delete root.dataset.mode;
             delete root.dataset.accent;
             root.style.removeProperty("--text-scale");
+            if (viewport != null && pageViewport !== undefined) viewport.content = pageViewport;
         };
     });
 
