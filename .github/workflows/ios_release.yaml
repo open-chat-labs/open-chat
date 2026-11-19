@@ -54,6 +54,12 @@ jobs:
               timeout-minutes: 10
               run: swift test
 
+            # The call screen's rules (#10529 invariants 1 to 5)
+            - name: Test CallScreenCore
+              working-directory: frontend/tauri-plugin-oc/ios/CallScreenCore
+              timeout-minutes: 10
+              run: swift test
+
             - name: Test PushCore
               working-directory: frontend/tauri-plugin-oc/ios/PushCore
               timeout-minutes: 10

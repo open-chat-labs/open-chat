@@ -233,6 +233,13 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     @Published private(set) var speakerOn: Bool
     @Published private(set) var micDenied = false
     @Published private(set) var cameraDenied = false
+    // The call screen's (#10529): who is speaking, when the call was joined (the timer), which
+    // way the camera faces, and the audio route's ports (headphones make Speaker the system picker)
+    @Published private(set) var activeSpeakerId: String?
+    @Published private(set) var joinedAt: Date?
+    @Published private(set) var facing: MediaTrackFacingMode = .user
+    @Published private(set) var routePorts: [String] = []
+    @Published private(set) var routeOutput: String?
     var onFinished: (() -> Void)?
     var onMinimise: (() -> Void)?
     // Leaving, so a new call has to wait for this one to finish
@@ -286,11 +293,13 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
             ))
         _ = try await client.join(url: settings.url, token: MeetingToken(stringValue: settings.token), settings: update)
         joined = true
+        joinedAt = Date()
         guard !leaveRequested else {
             leave()
             return currentState()
         }
         await prefer(settings.audioDevice)
+        refreshRoutePorts()
         refreshTiles()
         let state = currentState()
         joinResult = .success(state)
@@ -370,6 +379,22 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
             completion: nil)
     }
 
+    func flipCamera() {
+        let next: MediaTrackFacingMode = facing == .user ? .environment : .user
+        facing = next
+        client.updateInputs(
+            .set(InputSettingsUpdate(camera: .set(CameraInputSettingsUpdate(
+                settings: .set(VideoMediaTrackSettingsUpdate(facingMode: .set(next))))))),
+            completion: nil)
+    }
+
+    private func refreshRoutePorts() {
+        let session = AVAudioSession.sharedInstance()
+        routePorts = (session.currentRoute.outputs.map(\.portType) + (session.availableInputs ?? []).map(\.portType))
+            .map(\.rawValue)
+        routeOutput = session.currentRoute.outputs.first?.portType.rawValue
+    }
+
     func toggleSpeaker() {
         speakerOn.toggle()
         send(["kind": "route", "speaker": speakerOn])
@@ -396,6 +421,7 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     private func routeChanged(_ reason: AVAudioSession.RouteChangeReason?) {
         let output = AVAudioSession.sharedInstance().currentRoute.outputs.first?.portType
         NSLog("[NativeCall] route %@ reason %d", output?.rawValue ?? "none", Int(reason?.rawValue ?? 0))
+        refreshRoutePorts()
         guard joined, let device = AudioDeviceType(port: output) else { return }
         let speaker = device == .speakerphone
         if speakerOn != speaker {
@@ -494,6 +520,10 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
         Task { @MainActor in
             if state == .left { self.finishIfLeft() }
         }
+    }
+
+    nonisolated func callClient(_ callClient: CallClient, activeSpeakerChanged activeSpeaker: Participant?) {
+        Task { @MainActor in self.activeSpeakerId = activeSpeaker.map { "\($0.id)" } }
     }
 
     nonisolated func callClient(_ callClient: CallClient, error: CallClientError) {

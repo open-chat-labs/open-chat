@@ -1,8 +1,16 @@
 /* The English text is the key. Every other .lproj has every key this file has
    (src-tauri/tests/nativeStrings.spec.ts). */
 "Missed call" = "Missed call";
-"Minimise" = "Minimise";
-"Microphone" = "Microphone";
-"Camera" = "Camera";
+"Minimise call" = "Minimise call";
+"Joining…" = "Joining…";
+"You" = "You";
+"Your camera. Drag to move" = "Your camera. Drag to move";
+"Flip camera" = "Flip camera";
+"Mute" = "Mute";
+"Unmute" = "Unmute";
+"Camera off" = "Camera off";
+"Camera on" = "Camera on";
 "Speaker" = "Speaker";
-"Hang up" = "Hang up";
+"Leave" = "Leave";
+"Headphones" = "Headphones";
+"Phone" = "Phone";
