@@ -9,7 +9,9 @@
      throttle countdown, a video being prepared) shows over it. The emoji picker's GIF tab searches
      Klipy (GifFeed), where GIFs may be sent here and the build has a Klipy key; a GIF picked is
      the draft's attachment, sent with Send, the text its caption (the user's decision of
-     2026-11-19, not 06's "Picking sends the GIF"). Mount it once per chat (keyed). -->
+     2026-11-19, not 06's "Picking sends the GIF"). A "/" at the start of the text lists the bot
+     commands the screen offers for it; a pick runs it, or asks for its arguments first (the
+     screen's). Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
@@ -17,6 +19,7 @@
     import type {
         ComposerAttachKind,
         ComposerAttachment,
+        ComposerCommand,
         ComposerContext,
         ComposerGif,
         ComposerMention,
@@ -66,6 +69,9 @@
         mentions,
         onVoiceActive,
         onGif,
+        onCommandQuery,
+        commands,
+        onPickCommand,
         onSignIn,
     }: {
         // what stands in for the composer where the reader can't send
@@ -125,6 +131,12 @@
         // takes a GIF picked from the emoji picker's GIF tab (the draft's attachment, sent with
         // Send); none where no GIF may be attached now (no GIF tab then)
         onGif: ((content: GiphyContent) => void) | undefined;
+        // the bot command being typed (the text's first line, while it starts with "/"), the
+        // commands offered for it, and one picked: resolves true once it's sent (the text goes),
+        // false if it was dropped (the text stays)
+        onCommandQuery: (query: string | undefined) => void;
+        commands: ComposerCommand[];
+        onPickCommand: (command: ComposerCommand) => Promise<boolean>;
     } = $props();
 
     // the GIF tab's search (Klipy's: trending, or what's typed), in a build with a Klipy key
@@ -180,8 +192,9 @@
     // leaving, "stopped typing" would go to the chat selected next, so the others' "typing" is left
     // to run out by itself
     $effect(() => () => typing.cancel());
-    // leaving, no "@word" is being typed here any more
+    // leaving, no "@word" or command is being typed here any more
     $effect(() => () => untrack(() => onMentionQuery(undefined)));
+    $effect(() => () => untrack(() => onCommandQuery(undefined)));
 
     function onInput(text: string) {
         // an empty or blank draft is no draft (as the old composer)
@@ -210,7 +223,6 @@
             actionHandler={blocked.signIn ? onSignIn : undefined} />
     </div>
 {:else}
-    <!-- TODO(phase 5, 5c): bot commands -->
     <div class="entry" onpaste={paste}>
         <ComposerBar
             {text}
@@ -241,7 +253,10 @@
             {gifs}
             onGifSearch={gifs === undefined ? undefined : (query) => void feed?.search(query)}
             onMoreGifs={gifs === undefined ? undefined : () => void feed?.more()}
-            onPickGif={gifs === undefined ? undefined : pickGif} />
+            onPickGif={gifs === undefined ? undefined : pickGif}
+            {onCommandQuery}
+            {commands}
+            {onPickCommand} />
     </div>
     {#if onFile !== undefined}
         <input

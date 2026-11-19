@@ -2185,7 +2185,8 @@
       "clearMedia": "Clear",
       "gifsNone": "No GIFs found",
       "gifsFailed": "GIFs couldn't load. Check your connection.",
-      "gifsNoMatch": "No GIFs for “{query}”"
+      "gifsNoMatch": "No GIFs for “{query}”",
+      "commands": "Bot commands"
     },
     "messageGroup": {
       "actions": "Message actions",

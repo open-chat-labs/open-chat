@@ -12,7 +12,7 @@
      --composer-pad, --composer-btn and --composer-btn-radius. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, ComposerGif, ComposerGifs, ComposerMention, MenuItem } from '../types';
+  import type { ComposerAttachKind, ComposerAttachment, ComposerCommand, ComposerContext, ComposerGif, ComposerGifs, ComposerMention, MenuItem } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
@@ -102,6 +102,15 @@
     /** Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to
      *  close); a pick puts "@handle " in its place. */
     mentions?: ComposerMention[];
+    /** The draft's first line while it starts with "/" (a bot command being typed, with any arguments after it), as it
+     *  changes; undefined once it doesn't. */
+    onCommandQuery?: (query: string | undefined) => void;
+    /** The commands offered for it, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to
+     *  close), in place of the mention list. */
+    commands?: ComposerCommand[];
+    /** A command picked. Resolving true, the command went and the draft is emptied; false, the draft stays and the
+     *  list stays closed until the draft changes. */
+    onPickCommand?: (command: ComposerCommand) => Promise<boolean> | boolean;
     attachment?: ComposerAttachment | null;
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
@@ -161,6 +170,9 @@
     onVoiceActive,
     onMentionQuery,
     mentions = [],
+    onCommandQuery,
+    commands = [],
+    onPickCommand,
     attachment = null,
     onEditAttachment,
     onRemoveAttachment,
@@ -321,15 +333,84 @@
     grow();
   }
 
-  // mentions: the "@word" at the caret goes to the host, which offers who to mention for it
   const uid = $props.id();
+
+  // bot commands: the draft's first line, while it starts with "/", goes to the host, which offers the commands for it
+  const commandListId = `${uid}-commands`;
+  let commandIndex = $state(0);
+  // Esc, or a pick that didn't go, closes the list until the draft changes
+  let dismissedCommand = $state<string | undefined>(undefined);
+  let picking = $state(false);
+  const commandText = $derived(editing || voice ? undefined : /^\/.*/.exec(draft)?.[0]);
+  const commandOpen = $derived(
+    focused && commandText !== undefined && commands.length > 0 && !menu && !picking && dismissedCommand !== draft,
+  );
+  const activeCommand = $derived(Math.min(commandIndex, commands.length - 1));
+
+  let reportedCommand: string | undefined = undefined;
+  $effect(() => {
+    const query = commandText;
+    if (query === reportedCommand) return;
+    reportedCommand = query;
+    commandIndex = 0;
+    untrack(() => onCommandQuery?.(query));
+  });
+
+  async function pickCommand(c: ComposerCommand) {
+    if (picking) return;
+    const at = draft;
+    picking = true;
+    let sent = false;
+    try {
+      sent = (await onPickCommand?.(c)) === true;
+    } catch {
+      sent = false;
+    } finally {
+      picking = false;
+    }
+    if (sent) {
+      // anything typed meanwhile stays
+      if (draft === at) draft = '';
+      await tick();
+      grow();
+      input?.focus();
+    } else dismissedCommand = draft;
+  }
+
+  // the list's keys, while it's open: true when the key was the list's
+  function commandKey(e: KeyboardEvent): boolean {
+    if (!commandOpen || e.isComposing) return false;
+    const n = commands.length;
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+        commandIndex = (activeCommand + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
+        void tick().then(() => document.getElementById(`${commandListId}-${activeCommand}`)?.scrollIntoView({ block: 'nearest' }));
+        break;
+      case 'Enter':
+      case 'Tab':
+        if (e.shiftKey) return false;
+        void pickCommand(commands[activeCommand]);
+        break;
+      case 'Escape':
+        dismissedCommand = draft;
+        e.stopPropagation();
+        break;
+      default:
+        return false;
+    }
+    e.preventDefault();
+    return true;
+  }
+
+  // mentions: the "@word" at the caret goes to the host, which offers who to mention for it
   const mentionListId = `${uid}-mentions`;
   let caret = $state(0);
   let mentionIndex = $state(0);
   // Esc closes the list for that "@word" (until it's gone)
   let dismissedAt = $state<number | undefined>(undefined);
   const mention = $derived(focused ? mentionAt(draft, Math.min(caret, draft.length)) : undefined);
-  const mentionOpen = $derived(!!mention && mentions.length > 0 && !menu && !voice && dismissedAt !== mention.start);
+  const mentionOpen = $derived(!!mention && mentions.length > 0 && !menu && !voice && !commandOpen && dismissedAt !== mention.start);
   const activeMention = $derived(Math.min(mentionIndex, mentions.length - 1));
 
   function syncCaret() {
@@ -902,6 +983,37 @@
       <Menu heading={t('ui.messageComposer.addHeading')} minWidth="232px" items={plusItems} />
     </div>
   {/if}
+  {#if commandOpen}
+    <!-- TODO(design): no bot command list in the design; drawn as the mention list -->
+    <div class="popup mentions commands" data-composer-popup id={commandListId} role="listbox" aria-label={t('ui.messageComposer.commands')}>
+      {#each commands as c, i (c.key)}
+        <!-- the text box keeps the focus (and the keys: aria-activedescendant) -->
+        <div
+          class="mention command"
+          class:on={i === activeCommand}
+          id="{commandListId}-{i}"
+          role="option"
+          tabindex="-1"
+          aria-selected={i === activeCommand}
+          onmousedown={(e) => e.preventDefault()}
+          onmousemove={() => (commandIndex = i)}
+          onclick={() => pickCommand(c)}
+        >
+          <span class="mention-avatar" style:background={c.avatar ? `center/cover no-repeat ${cssUrl(c.avatar)}` : undefined}>
+            {#if !c.avatar}<span class="mention-icon" style:mask="var(--icon-bot) center/contain no-repeat"></span>{/if}
+          </span>
+          <span class="command-text">
+            <span class="command-line">
+              <span class="mention-name">/{c.name}</span>
+              {#each c.params as p}<span class="command-param" class:required={p.required}>{p.name}</span>{/each}
+            </span>
+            {#if c.description}<span class="command-description">{c.description}</span>{/if}
+          </span>
+          <span class="mention-handle">{c.botName}</span>
+        </div>
+      {/each}
+    </div>
+  {/if}
   {#if mentionOpen}
     <!-- TODO(design): no mention list in the design; drawn as the composer's other popups -->
     <div class="popup mentions" data-composer-popup id={mentionListId} role="listbox" aria-label={t('ui.messageComposer.mentions')}>
@@ -1119,6 +1231,7 @@
             grow();
           }}
           onkeydown={(e) => {
+            if (commandKey(e)) return;
             if (mentionKey(e)) return;
             if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
               e.preventDefault();
@@ -1132,9 +1245,9 @@
             syncCaret();
           }}
           onblur={() => (focused = false)}
-          aria-autocomplete={onMentionQuery ? 'list' : undefined}
-          aria-controls={mentionOpen ? mentionListId : undefined}
-          aria-activedescendant={mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
+          aria-autocomplete={onMentionQuery || onCommandQuery ? 'list' : undefined}
+          aria-controls={commandOpen ? commandListId : mentionOpen ? mentionListId : undefined}
+          aria-activedescendant={commandOpen ? `${commandListId}-${activeCommand}` : mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
           placeholder={t(att ? attachedPlaceholder : placeholder)}
           aria-label={t(att ? attachedPlaceholder : placeholder)}
         ></textarea>
@@ -1289,6 +1402,54 @@
     min-width: 0;
     font: var(--weight-regular) var(--text-xs) / 1.2 var(--font-sans);
     color: var(--ink-4);
+    @include truncate;
+  }
+
+  // a command's row: its name and parameters over what it does
+  .commands {
+    width: min(420px, 100%);
+  }
+
+  .command {
+    height: auto;
+    min-height: 40px;
+    padding-block: var(--space-6);
+  }
+
+  .command-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .command-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .command-param {
+    flex: none;
+    padding: 1px var(--space-6);
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    font: var(--weight-regular) var(--text-xs) / 1.3 var(--font-sans);
+    color: var(--ink-3);
+
+    &.required {
+      background: color-mix(in oklch, var(--accent) 18%, transparent);
+      box-shadow: none;
+      color: var(--accent-bright);
+    }
+  }
+
+  .command-description {
+    font: var(--weight-regular) var(--text-xs) / 1.3 var(--font-sans);
+    color: var(--ink-3);
     @include truncate;
   }
 

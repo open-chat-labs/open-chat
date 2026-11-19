@@ -88,6 +88,9 @@ function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | un
 }
 
 export class BotState {
+    // the BotState whose bots and formatter this one goes by, keeping its own typing and pick (a
+    // composer's, as a chat's and a thread's composers each type their own)
+    readonly #source: BotState | undefined;
     #messageFormatter = $state<MessageFormatter>((s) => s);
     #error = $state<string | undefined>();
     #prefix = $state<string>("");
@@ -102,7 +105,8 @@ export class BotState {
     #commands = $derived.by(() => {
         const prefixParts = this.#prefixParts;
         const parsedPrefix = this.#parsedPrefix;
-        const bots = [builtinBot, ...this.#externalBots.values()];
+        const bots = [builtinBot, ...this.externalBots.values()];
+        const formatter = this.#formatter;
         return bots
             .flatMap((b) => {
                 switch (b.kind) {
@@ -121,7 +125,7 @@ export class BotState {
                             })
                             .filter((c) =>
                                 filterCommand(
-                                    this.#messageFormatter,
+                                    formatter,
                                     c,
                                     this.#selectedCommand,
                                     parsedPrefix,
@@ -140,7 +144,7 @@ export class BotState {
                             })
                             .filter((c) =>
                                 filterCommand(
-                                    this.#messageFormatter,
+                                    formatter,
                                     c,
                                     this.#selectedCommand,
                                     parsedPrefix,
@@ -156,8 +160,20 @@ export class BotState {
         return this.instanceIsValid(this.#selectedCommand, this.#selectedCommandArgs);
     });
 
+    /**
+     * `source`: another BotState whose bots and message formatter this one goes by, keeping its own
+     * prefix, selected command and arguments.
+     */
+    constructor(source?: BotState) {
+        this.#source = source;
+    }
+
     public set messageFormatter(v: MessageFormatter) {
         this.#messageFormatter = v;
+    }
+
+    get #formatter(): MessageFormatter {
+        return this.#source === undefined ? this.#messageFormatter : this.#source.#formatter;
     }
 
     public get focusedCommandIndex() {
@@ -279,8 +295,8 @@ export class BotState {
         return shownArgsAreValid(command.params, params);
     }
 
-    public get externalBots() {
-        return this.#externalBots;
+    public get externalBots(): Map<string, ExternalBot> {
+        return this.#source?.externalBots ?? this.#externalBots;
     }
 
     setExternalBots(bots: ExternalBot[]) {

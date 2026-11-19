@@ -12,10 +12,13 @@
     /** Resource key (or literal text). */
     hint?: string;
     branch?: boolean;
-    onChange?: (value: string) => void;
+    /** Which option is selected, by position, in place of `value` (for options with the same text). */
+    selectedIndex?: number;
+    /** The option picked, and its position. */
+    onChange?: (value: string, index: number) => void;
   }
 
-  let { value, options, title, hint, branch = true, onChange }: Props = $props();
+  let { value, options, title, hint, branch = true, selectedIndex, onChange }: Props = $props();
   const t = useT();
 
   const list = $derived(options?.length ? options : DURATIONS);
@@ -30,8 +33,8 @@
     {#if hint}<span class="hint">{t(hint)}</span>{/if}
   </div>
   <div class="options inset">
-    {#each list as label}
-      <span class="chip" class:selected={label === value} onclick={() => onChange?.(label)} role="button" tabindex="0">{durationText(t, label)}</span>
+    {#each list as label, index}
+      <span class="chip" class:selected={selectedIndex === undefined ? label === value : index === selectedIndex} onclick={() => onChange?.(label, index)} role="button" tabindex="0">{durationText(t, label)}</span>
     {/each}
   </div>
 </div>

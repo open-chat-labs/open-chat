@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Button, Column, Form, Sheet, Subtitle } from "component-lib";
-    import { botState, OpenChat } from "@client";
+    import { botCommandFailure, botState, OpenChat } from "@client";
     import { random64, shownParams, type FlattenedCommand, type MessageContext } from "@shared";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -38,11 +38,8 @@
                 botState.createBotInstance(command),
             )
             .then((result) => {
-                if (result === "failure") {
-                    toastStore.showFailureToast(i18nKey("bots.failed"));
-                } else if (result === "too_many_requests") {
-                    toastStore.showFailureToast(i18nKey("bots.tooManyRequests"));
-                }
+                const failure = botCommandFailure(result);
+                if (failure !== undefined) toastStore.showFailureToast(failure);
             });
         onCommandSent();
     }

@@ -304,6 +304,22 @@ export interface ComposerGifs {
   notFound?: { query: string; terms: string[] };
 }
 
+/** A bot command the composer offers for the "/" typed at the start of the draft. */
+export interface ComposerCommand {
+  /** The same while it's the same command. */
+  key: string;
+  /** Its name, without the "/". */
+  name: string;
+  /** What it does (literal text). */
+  description?: string;
+  /** The bot it belongs to (literal text). */
+  botName: string;
+  /** The bot's avatar URL; without one, the bot icon. */
+  avatar?: string;
+  /** Its parameters, in order (literal text), the required ones marked. */
+  params: { name: string; required: boolean }[];
+}
+
 /** What MessageComposer's + menu offers to attach. */
 export type ComposerAttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 

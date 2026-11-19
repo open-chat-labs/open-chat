@@ -87,6 +87,12 @@ export {
     isPreviewingCommunity,
     isPrivateCommunityPreview,
 } from "./utils/community";
+export {
+    botCommandFailure,
+    commandsAvailable,
+    type BotCommandResult,
+    type CommandPlace,
+} from "./utils/botCommands";
 export { userMessagePermissionFor } from "./utils/botMessagePermissions";
 export {
     miniAppCardView,

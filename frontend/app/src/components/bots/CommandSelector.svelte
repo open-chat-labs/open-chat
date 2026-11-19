@@ -1,30 +1,17 @@
 <script lang="ts">
-    import type {
-        ChatPermissions,
-        ChatSummary,
-        GrantedBotPermissions,
-        MessageContext,
-        OpenChat,
-        PermissionRole,
-        ReadonlyMap,
-    } from "@client";
+    import type { MessageContext, OpenChat } from "@client";
     import {
+        botCommandFailure,
         botState,
+        commandsAvailable,
         directChatBotsStore,
-        isPermitted,
         messagePermissionsForSelectedChatStore,
         selectedChatBotsStore,
         selectedChatSummaryStore,
         selectedCommunityBotsStore,
         threadPermissionsForSelectedChatStore,
-        userMessagePermissionFor,
     } from "@client";
-    import {
-        hasEveryRequiredPermission,
-        loadDateParser,
-        random64,
-        type FlattenedCommand,
-    } from "@shared";
+    import { loadDateParser, random64, type FlattenedCommand } from "@shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -62,98 +49,19 @@
         }
     });
 
-    let commands = $derived.by(() => {
-        return botState.commands.filter((c) => {
-            return (
-                restrictByBotIfNecessary(c) &&
-                restrictByChatIfNecessary(c) &&
-                hasPermissionForCommand(c, installedBots, $selectedChatSummaryStore)
-            );
-        });
-    });
-
-    function restrictByBotIfNecessary(command: FlattenedCommand): boolean {
-        return (
-            selectedBotId === undefined ||
-            (command.kind === "external_bot" && command.botId === selectedBotId) ||
-            (command.kind === "internal_bot" && command.directBotDisabled === false)
-        );
-    }
-
-    function restrictByChatIfNecessary(command: FlattenedCommand): boolean {
-        return !(
-            messageContext.chatId.kind === "direct_chat" && command.directChatsDisabled === true
-        );
-    }
-
-    function userHasPermissionForCommand(
-        command: FlattenedCommand,
-        chat: ChatSummary | undefined,
-    ): boolean {
-        const chatRolePermitted =
-            chat !== undefined && chat.kind !== "direct_chat"
-                ? isPermitted(chat.membership.role, command.defaultRole)
-                : true;
-
-        const chatPermitted =
-            chat !== undefined && chat.kind !== "direct_chat"
-                ? [...command.permissions.chatPermissions].every(
-                      (p) =>
-                          ["readMessages", "readMembership", "readChatSummary"].includes(p) ||
-                          isPermitted(
-                              chat.membership.role,
-                              chat.permissions[p as keyof ChatPermissions] as PermissionRole,
-                          ),
-                  )
-                : true;
-
-        switch (mode) {
-            case "message":
-                return (
-                    chatRolePermitted &&
-                    chatPermitted &&
-                    [...command.permissions.messagePermissions].every((p) => {
-                        const userPermission = userMessagePermissionFor(p);
-                        return (
-                            userPermission !== undefined &&
-                            $messagePermissionsForSelectedChatStore.has(userPermission)
-                        );
-                    })
-                );
-            case "thread":
-                return (
-                    chatRolePermitted &&
-                    chatPermitted &&
-                    [...command.permissions.messagePermissions].every((p) => {
-                        const userPermission = userMessagePermissionFor(p);
-                        return (
-                            userPermission !== undefined &&
-                            $threadPermissionsForSelectedChatStore.has(userPermission)
-                        );
-                    })
-                );
-        }
-    }
-
-    function hasPermissionForCommand(
-        command: FlattenedCommand,
-        installedBots: ReadonlyMap<string, GrantedBotPermissions>,
-        chat: ChatSummary | undefined,
-    ): boolean {
-        const userPermission = userHasPermissionForCommand(command, chat);
-        if (command.kind === "external_bot") {
-            // for an external bot we also need to know that the bot has been granted all the permissions it requires
-            const granted = installedBots.get(command.botId);
-            const required = command.permissions;
-            return (
-                userPermission &&
-                granted !== undefined &&
-                hasEveryRequiredPermission(required, granted.command)
-            );
-        } else {
-            return userPermission;
-        }
-    }
+    // what the reader may run here (`commandsAvailable`, shared with the new web UI)
+    let commands = $derived(
+        commandsAvailable(botState.commands, {
+            chatKind: messageContext.chatId.kind,
+            chat: $selectedChatSummaryStore,
+            directBotId: selectedBotId,
+            permitted:
+                mode === "thread"
+                    ? $threadPermissionsForSelectedChatStore
+                    : $messagePermissionsForSelectedChatStore,
+            installedBots,
+        }),
+    );
 
     const selection = dateAwareSelection((command: FlattenedCommand | undefined) => {
         botState.setSelectedCommand(messageContext, commands, command);
@@ -177,11 +85,8 @@
                     botState.createBotInstance(botState.selectedCommand),
                 )
                 .then((result) => {
-                    if (result === "failure") {
-                        toastStore.showFailureToast(i18nKey("bots.failed"));
-                    } else if (result === "too_many_requests") {
-                        toastStore.showFailureToast(i18nKey("bots.tooManyRequests"));
-                    }
+                    const failure = botCommandFailure(result);
+                    if (failure !== undefined) toastStore.showFailureToast(failure);
                 });
             onCommandSent();
         }

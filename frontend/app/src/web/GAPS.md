@@ -2729,9 +2729,9 @@ design export needs. Each entry says where it came up.
   any more, since `extractEnabledLinks` stops at the 3 links that get previews
   (`MAX_LINK_PREVIEWS`) so it never counts past 5, and nothing hides a message's previews past 5
   links; the first 3 get them. To drop from the desktop entry too, or to word again (say, "only
-  the first 3 links get previews") if the design wants one. In a bot DM, what's typed goes to the bot as its direct-message command,
-  but there's no `/` command selector, and a bot that takes no direct messages gets the
-  composer's error instead of the old warning. A bot's private (ephemeral) reply isn't shown:
+  the first 3 links get previews") if the design wants one. In a bot DM, what's typed goes to the bot as its direct-message command
+  (its `/` commands are listed as in any chat, below), and a bot that takes no direct messages
+  gets the composer's error instead of the old warning. A bot's private (ephemeral) reply isn't shown:
   nothing here subscribes to `ephemeralMessage`, so it's dropped. The old trees show it above the
   composer for a minute, or until it's closed, paused while the app is hidden. A chat's rules are asked for in a plain dialog
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
@@ -2798,14 +2798,42 @@ design export needs. Each entry says where it came up.
   GIFs may be sent (`giphy`) and something can be attached now (not mid-edit, nor during a voice take, nor
   in a bot DM), and in a build with a Klipy key (`OC_KLIPY_APIKEY`): without one, there's no GIF
   tab. TODO(design): the loading, empty, failed and nothing-found states.
+- **Bot commands in the composer** (5c; none of it is in the design: TODO(design)): a "/" at the
+  start of the text lists the commands the reader may run here, matched to what's typed, as both
+  old selectors do: the client's `BotState` matches them (by name or description, or by name once
+  arguments follow), `commandsAvailable` (`@client`, moved out of both old `CommandSelector`s,
+  which use it now) keeps those the reader's role, the chat's permissions, what the reader may
+  send and the bot's granted permissions allow, only the DM's bot's in a bot DM. The list is the
+  composer's own (`MessageComposer`'s `commands`, by hand, EXPORT-LOG 2026-11-16), drawn as its
+  mention list: ↑ ↓, Enter or Tab, Esc; the command's parameters by it, the required ones
+  filled, and its bot. A pick takes the arguments typed after the name (`CommandPicker`,
+  `logic/bots`, on `dateAwareSelection`: a date in words once the date parser is in) and runs the
+  command when they're enough (`executeBotCommand`), the text going; else a dialog asks for them
+  (`BotCommandDialog`, the old `CommandInstanceBuilder`: a field per parameter it shows, text, a
+  number, one of its choices as chips, on or off, someone in the chat, a date and time;
+  `logic/bots/commandArgs`; a date in the past for one that wants a future date stays as picked
+  and says "You must select a future date" under the field, as the old date input did, and Send
+  waits; checked to the minute the field picks, again as it's sent: `dateInPast`), the text staying until it's sent, and staying if the dialog's
+  cancelled; the dialog closes if the chat changes under it. A chat's and a thread's composers
+  each type and pick their own (each `CommandPicker` keeps its own `BotState`, going by the app's
+  bots). Failures toast as the old trees' do (`botCommandFailure`, `@client`: `bots.failed`,
+  `bots.tooManyRequests`, which both old trees use now). The built-in bot's commands are offered
+  only where this tree carries them out (`carriesOutCommand`): /diamond and /faq (they post), /poll
+  and /crypto where the "+" menu offers their builders (the client's `createPoll` and
+  `tokenTransfer` open them), /register_webhook (its dialog). Decided (the user, 2026-11-19): /crypto
+  opens the transfer dialog empty, whatever is typed after it; the dialog's user field lists only
+  the chat's members matching what's typed (`mentionsFor`), where the old one searched every user.
+  Not yet:
+  - /gif (the GIF picker is the composer's own, with no way in from outside), /search (no search
+    in the conversation yet), and the bot developers' and seasonal ones (/register_bot,
+    /update_bot, /remove_bot, /witch, /test-msg in development): not offered. Each is offered
+    once this tree has the screen it opens (the user's decision of 2026-11-19);
+  - a bot's private (ephemeral) reply (above) isn't shown, nor does an external bot's command run
+    locally (the local replica has no bots registered; checked with specs and the built-in bot);
+
+  - /register_webhook's description has no words (`bots.register_webhook.desc`), in the old trees
+    too.
 - **Composer, not yet** (5c, left for later pieces of it):
-  - bot commands: the old trees' `/` selector (the commands the reader's role, the chat's
-    permissions and the bot's granted permissions allow, `restrictByBot` / `restrictByChat` /
-    `hasPermissionForCommand` in both `CommandSelector`s, to move to `@client`), the arguments'
-    dialog (`CommandInstanceBuilder` and `CommandArg`: text, numbers, choices, a user, a date), the
-    failure toasts (`bots.failed`, `bots.tooManyRequests`) and a bot's ephemeral reply (above);
-    in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
-    old `bots.direct.warning`. The design has none of it;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
   opens (`build` in the conversation), offered where the chat lets the reader send what it makes
