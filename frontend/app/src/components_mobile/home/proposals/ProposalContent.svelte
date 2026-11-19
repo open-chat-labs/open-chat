@@ -19,17 +19,10 @@
         type OpenChat,
         type ProposalContent,
         ProposalDecisionStatus,
-        isCriticalProposal,
-        neuronDashboardUrl,
-        neuronLabel,
-        proposalDashboardUrl,
-        proposalTopicLabel,
         proposalTopicsStore,
-        proposalVotePercent,
-        proposalVoteStatus,
         proposalVotesStore,
     } from "@client";
-    import { type NeuronVoteFailureMessage } from "@shared";
+    import { type NeuronVoteFailureMessage, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -41,6 +34,7 @@
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
+    import { round2 } from "../../../utils/math";
     import { copyToClipboard } from "../../../utils/urls";
     import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@src/core/Markdown.svelte";
@@ -73,13 +67,17 @@
     const client = getContext<OpenChat>("client");
     const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
+    const dashboardUrl = "https://dashboard.internetcomputer.org";
     let showNeuronInfo = $state(false);
     let neuronVoteFailures = $state<NeuronVoteFailureMessage[] | undefined>();
     let rootCanister = $derived(
         client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "",
     );
     let isNns = $derived(content.proposal.kind === "nns");
-    let voteStatus = $derived(proposalVoteStatus($proposalVotesStore.get(messageId), content.myVote));
+    let voteStatus = $derived(
+        $proposalVotesStore.get(messageId) ??
+            (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined),
+    );
     let proposal = $derived(content.proposal);
     const statusColour: Record<ProposalDecisionStatus, string> = {
         0: ColourVars.surfaceDisabled, // unspecified
@@ -89,20 +87,37 @@
         4: ColourVars.validationSuccess, // executed
         5: ColourVars.validationSuccess, // adopted
     };
-    let proposalUrl = $derived(proposalDashboardUrl(proposal, rootCanister));
+    let proposalUrl = $derived(
+        isNns
+            ? `${dashboardUrl}/proposal/${proposal.id}`
+            : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`,
+    );
     let proposerUrl = $derived(neuronUrl(proposal.proposer));
-    let adoptPercent = $derived(proposalVotePercent(proposal.tally.yes, proposal.tally));
-    let rejectPercent = $derived(proposalVotePercent(proposal.tally.no, proposal.tally));
+    let adoptPercent = $derived(round2((100 * proposal.tally.yes) / proposal.tally.total));
+    let rejectPercent = $derived(round2((100 * proposal.tally.no) / proposal.tally.total));
     let votingEnded = $derived(proposal.deadline <= $now);
     let disable = $derived(readonly || reply || votingEnded);
     let votingDisabled = $derived(voteStatus !== undefined || disable);
-    let typeValue = $derived(proposalTopicLabel(content, $proposalTopicsStore));
+    let typeValue = $derived(getProposalTopicLabel(content, $proposalTopicsStore));
     let payload = $derived(content.proposal.payloadTextRendering);
     let payloadEmpty = $derived(
         payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0,
     );
 
-    let isCritical = $derived(isCriticalProposal(content.proposal));
+    // Certain SNS proposal actions are considered "critical" and use higher
+    // voting thresholds. Keep this list in sync with the SNS governance
+    // specification / action-id mapping used by the client. (If the upstream
+    // action ids change, this classification must be updated accordingly.)
+    const criticalSnsProposals = [
+        9, // transfer treasury funds
+        11, // deregister dapp canisters
+        12, // mint sns tokens
+    ];
+    let isCritical = $derived(
+        content.proposal.kind === "sns"
+            ? criticalSnsProposals.indexOf(content.proposal.action) > -1
+            : false,
+    );
 
     let showDetails = $state(false);
 
@@ -152,11 +167,34 @@
     }
 
     function neuronUrl(neuronId: string): string {
-        return neuronDashboardUrl(neuronId, isNns, rootCanister);
+        return isNns
+            ? `${dashboardUrl}/neuron/${neuronId}`
+            : `${dashboardUrl}/sns/${rootCanister}/neuron/${neuronId}`;
     }
 
     function renderNeuronId(neuronId: string): string {
-        return neuronLabel(neuronId, NamedNeurons);
+        const name = NamedNeurons[neuronId];
+        if (name !== undefined) {
+            return name;
+        }
+
+        const length = neuronId.length;
+        if (length < 12) {
+            return neuronId;
+        }
+
+        return `${neuronId.slice(0, 4)}..${neuronId.slice(length - 4, length)}`;
+    }
+
+    export function getProposalTopicLabel(
+        content: ProposalContent,
+        proposalTopics: ReadonlyMap<number, string>,
+    ): string {
+        return (
+            proposalTopics.get(
+                content.proposal.kind === "nns" ? content.proposal.topic : content.proposal.action,
+            ) ?? "unknown"
+        );
     }
 </script>
 

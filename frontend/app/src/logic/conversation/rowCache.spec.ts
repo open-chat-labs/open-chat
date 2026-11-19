@@ -1,6 +1,6 @@
 import type { EventWrapper, Message, ProposalContent } from "@client";
 import type { ConversationContext } from "./messageRow";
-import { RowCache } from "./rowCache";
+import { namedInRow, RowCache } from "./rowCache";
 
 const ctx: ConversationContext = {
     me: "me",
@@ -222,5 +222,89 @@ describe("the rows kept per event", () => {
         expect(rows.row("k", evt, "sent", ctx)).toBe(first);
         const voting = { ...ctx, proposalVote: () => "adopting" as const };
         expect(rows.row("k", evt, "sent", voting)).not.toBe(first);
+    });
+
+    test("are made again as a proposal's time left changes and as its voting ends", () => {
+        const MINUTE = 60_000;
+        const rows = new RowCache();
+        const evt = message();
+        evt.event.content = {
+            kind: "proposal_content",
+            governanceCanisterId: "gov",
+            proposal: {
+                kind: "nns",
+                topic: 4,
+                title: "T",
+                proposer: "n1",
+                deadline: 10 * MINUTE,
+                tally: { yes: 0, no: 0, total: 1, timestamp: 0n },
+            } as ProposalContent["proposal"],
+        };
+        const first = rows.row("k", evt, "sent", { ...ctx, now: 0 });
+        // the same time left ("10m"): the same row
+        expect(rows.row("k", evt, "sent", { ...ctx, now: 1000 })).toBe(first);
+        const later = rows.row("k", evt, "sent", { ...ctx, now: 5 * MINUTE });
+        expect(later).not.toBe(first);
+        const ended = rows.row("k", evt, "sent", { ...ctx, now: 10 * MINUTE });
+        expect(ended).not.toBe(later);
+        expect(ended.message).toMatchObject({ canVote: false });
+    });
+
+    test("are made again as the names a row shows besides its sender's load", () => {
+        const named = {
+            ...ctx,
+            userName: (id: string) => ({ carol: "Carol", dan: "Dan" })[id] ?? id,
+        };
+        const kinds: Message["content"][] = [
+            { kind: "deleted_content", deletedBy: "carol", timestamp: 1n },
+            {
+                kind: "prize_winner_content",
+                transaction: { recipient: "carol" },
+            } as Message["content"],
+            {
+                kind: "crypto_content",
+                transfer: { kind: "completed", recipient: "carol" },
+            } as Message["content"],
+        ];
+        for (const content of kinds) {
+            const rows = new RowCache();
+            const evt = message(content);
+            const first = rows.row("k", evt, "sent", ctx);
+            expect(rows.row("k", evt, "sent", ctx)).toBe(first);
+            expect(rows.row("k", evt, "sent", named)).not.toBe(first);
+        }
+        const rows = new RowCache();
+        const tipped = message();
+        tipped.event.tips = { icp: { dan: 5n } };
+        const first = rows.row("k", tipped, "sent", ctx);
+        expect(rows.row("k", tipped, "sent", named)).not.toBe(first);
+    });
+});
+
+describe("the names a row shows besides its sender's", () => {
+    test("are the deleter's, a transfer's or prize win's recipient's, and the tippers'", () => {
+        const name = { userName: (id: string) => id.toUpperCase() };
+        const msg = (content: object, tips: Message["tips"] = {}): Message => ({
+            ...message(content as Message["content"]).event,
+            tips,
+        });
+        expect(namedInRow(msg({ kind: "deleted_content", deletedBy: "bob" }), name)).toEqual([
+            "BOB",
+        ]);
+        expect(
+            namedInRow(
+                msg({ kind: "prize_winner_content", transaction: { recipient: "a" } }),
+                name,
+            ),
+        ).toEqual(["A"]);
+        expect(
+            namedInRow(msg({ kind: "crypto_content", transfer: { recipient: "b" } }), name),
+        ).toEqual(["B"]);
+        expect(
+            namedInRow(
+                msg({ kind: "text_content" }, { icp: { x: 1n, y: 2n }, chat: { z: 1n } }),
+                name,
+            ),
+        ).toEqual(["X", "Y", "Z"]);
     });
 });

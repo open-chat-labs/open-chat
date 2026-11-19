@@ -519,6 +519,10 @@ export function kindText(
         case "placeholder_content":
             return ctx.text(i18nKey("placeholderContent"));
         case "message_reminder_created_content":
+            // a cancelled reminder promises nothing: the timeline folds it away with the
+            // deleted messages (groupEvents' messageIsHidden), as the old trees; anywhere else
+            // it shows its notes alone, as before 5a
+            if (content.hidden) return content.notes ?? "";
             return withNotes(
                 `⏰ ${ctx.text(i18nKey("reminders.remindAt", { datetime: ctx.longDate(content.remindAt) }))}`,
                 content.notes,
@@ -756,8 +760,9 @@ function pollMessage(
  * neuron by name), whether it's critical, its tally against the share it needs to pass when voting
  * ends (`minYesPercentageOfTotal`) and to pass at once (`minYesPercentageOfExercised`), how long
  * voting has left, and the reader's vote (cast this session, else the proposal's own). Adopt and
- * Reject only while it's open, voting hasn't ended, the reader hasn't voted and the chat isn't
- * read-only. Its summary and payload are on its page (Proposal details), not on the card.
+ * Reject until its deadline, whatever its outcome (`proposalVoting`), while the reader hasn't voted
+ * and the chat isn't read-only, as the old cards. Its summary and payload are on its page
+ * (Proposal details), not on the card.
  */
 function proposalMessage(
     messageId: bigint,
@@ -768,8 +773,7 @@ function proposalMessage(
     const proposal = content.proposal;
     const vote = proposalVoteStatus(ctx.proposalVote(messageId), content.myVote);
     const outcome = proposalOutcome(proposal.status);
-    const left = proposal.deadline - ctx.now;
-    const open = outcome === "open" && left > 0;
+    const { open, left } = proposalVoting(proposal.deadline, ctx.now);
     return {
         ...base,
         kind: "proposal",
@@ -783,7 +787,7 @@ function proposalMessage(
         softThreshold: proposal.minYesPercentageOfTotal,
         hardThreshold: proposal.minYesPercentageOfExercised,
         when: open
-            ? `${ctx.text(i18nKey("proposal.votingPeriodRemaining"))}: ${timeLeft(left)}`
+            ? `${ctx.text(i18nKey("proposal.votingPeriodRemaining"))}: ${left}`
             : ctx.text(i18nKey("proposal.votingPeriodEnded")),
         myVote:
             vote === undefined
@@ -931,6 +935,30 @@ export function sendingSwap(content: P2PSwapContentInitial, now: number): P2PSwa
         swapId: 0,
         token0TxnIn: 0n,
     };
+}
+
+/**
+ * Whether a proposal can still be voted on, and how long it has left ("3d", "5h", "12m"): until its
+ * deadline, whatever its outcome, as the old cards (the NNS keeps voting open after a proposal is
+ * decided early, for the voting rewards). Rows key on it (`RowCache`), and a proposals chat's
+ * screen makes its rows' context again every minute (`PROPOSAL_CLOCK_MS`), so a card stops
+ * offering a vote at its deadline and its countdown keeps up.
+ */
+export function proposalVoting(deadline: number, now: number): { open: boolean; left: string } {
+    const ms = deadline - now;
+    return ms > 0 ? { open: true, left: timeLeft(ms) } : { open: false, left: "" };
+}
+
+/** How often a proposals chat's rows' context is made again, for its cards' deadlines. */
+export const PROPOSAL_CLOCK_MS = 60_000;
+
+/** Whether a chat is a proposals chat, whose cards count down to their deadlines (`proposalVoting`). */
+export function hasProposals(chat: ChatSummary | undefined): boolean {
+    return (
+        chat !== undefined &&
+        chat.kind !== "direct_chat" &&
+        chat.subtype?.kind === "governance_proposals"
+    );
 }
 
 /** Time left as its largest unit: 3d, 5h, 12m (under a minute counts as 1m). */

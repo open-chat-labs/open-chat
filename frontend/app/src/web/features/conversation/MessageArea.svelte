@@ -216,9 +216,11 @@
     import { messageMenuItems } from "./conversation.adapter";
     import {
         conversationContext,
+        hasProposals,
         isMedia,
         mediaHeld,
         messageStatus,
+        PROPOSAL_CLOCK_MS,
         senderColor,
         showsSenderName,
         untilNextDay,
@@ -329,6 +331,15 @@
         return () => clearTimeout(timer);
     });
 
+    // a proposals chat's cards count down to their deadlines, and stop offering a vote at them:
+    // its rows' context is made again every minute, and the rows key on what voting has left
+    let clock = $state(0);
+    $effect(() => {
+        if (!hasProposals(chat)) return;
+        const timer = setInterval(() => (clock += 1), PROPOSAL_CLOCK_MS);
+        return () => clearInterval(timer);
+    });
+
     // what a prize's requirements ask of the reader; rows are made again when it changes (joining
     // a previewed chat offers its prizes' Claim)
     const claimant = $derived({
@@ -345,6 +356,7 @@
 
     const ctx = $derived.by((): ConversationContext => {
         void day;
+        void clock;
         // a revealed image redoes its row (the cache is cleared with it), as do the token registry
         // and the exchange rates arriving: rows are made again from this, so it has to change too
         void rowsVersion;

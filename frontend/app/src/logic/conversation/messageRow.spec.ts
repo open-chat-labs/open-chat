@@ -13,6 +13,8 @@ import {
 } from "@client";
 import {
     conversationContext,
+    hasProposals,
+    proposalVoting,
     mediaHeld,
     messageRow,
     messageStatus,
@@ -642,6 +644,17 @@ describe("kinds without a bubble of their own", () => {
         });
     });
 
+    test("a cancelled reminder promises nothing: its notes alone", () => {
+        const cancelled = {
+            kind: "message_reminder_created_content",
+            remindAt: 5,
+            reminderId: 1n,
+            hidden: true,
+        };
+        expect(row({ ...cancelled, notes: "call mum" })).toMatchObject({ text: "call mum" });
+        expect(row(cancelled)).toMatchObject({ text: "" });
+    });
+
     test("the referral card gives the reader their own link", () => {
         expect(row({ kind: "user_referral_card" })).toMatchObject({
             text: "referralHeader\n\nuserReferralMessage\n\nhttps://oc.app/?ref=me",
@@ -773,7 +786,7 @@ describe("proposals", () => {
         });
     });
 
-    test("can't be voted on once voted, once voting has ended, decided, or read-only", () => {
+    test("can't be voted on once voted, once voting has ended, or read-only", () => {
         const row = (p: EventWrapper<Message>, c = words) =>
             messageRow(p, "sent", c).message as { canVote: boolean; myVote: string | null };
         expect(row(proposal({}, true))).toMatchObject({ canVote: false, myVote: "adopt" });
@@ -782,16 +795,61 @@ describe("proposals", () => {
             myVote: "reject",
         });
         expect(row(proposal({ deadline: HOUR }))).toMatchObject({ canVote: false });
-        expect(row(proposal({ status: ProposalDecisionStatus.Executed }))).toMatchObject({
-            canVote: false,
-        });
+        expect(row(proposal({ deadline: 2 * HOUR }))).toMatchObject({ canVote: false });
         expect(row(proposal(), { ...words, readonly: true })).toMatchObject({ canVote: false });
     });
 
-    test("once decided, say how, and that voting has ended", () => {
+    test("decided early, can still be voted on until the deadline, as the NNS allows", () => {
+        for (const status of [ProposalDecisionStatus.Adopted, ProposalDecisionStatus.Executed]) {
+            expect(messageRow(proposal({ status }), "sent", words).message).toMatchObject({
+                state: status === ProposalDecisionStatus.Adopted ? "adopted" : "executed",
+                canVote: true,
+                when: "proposal.votingPeriodRemaining: 2d",
+            });
+        }
+    });
+
+    test("once the deadline passes, say how it was decided and that voting has ended", () => {
         expect(
-            messageRow(proposal({ status: ProposalDecisionStatus.Failed }), "sent", words).message,
-        ).toMatchObject({ state: "failed", when: "proposal.votingPeriodEnded" });
+            messageRow(
+                proposal({ status: ProposalDecisionStatus.Failed, deadline: HOUR }),
+                "sent",
+                words,
+            ).message,
+        ).toMatchObject({ state: "failed", when: "proposal.votingPeriodEnded", canVote: false });
+    });
+
+    test("count down by the context's time, made again as the screen's clock moves on", () => {
+        const later = { ...words, now: 50 * HOUR - 5 * 60_000 };
+        expect(messageRow(proposal(), "sent", later).message).toMatchObject({
+            when: "proposal.votingPeriodRemaining: 5m",
+            canVote: true,
+        });
+        const after = { ...words, now: 50 * HOUR };
+        expect(messageRow(proposal(), "sent", after).message).toMatchObject({
+            when: "proposal.votingPeriodEnded",
+            canVote: false,
+        });
+    });
+});
+
+describe("a proposal's voting", () => {
+    test("is open until the deadline, with the time left in its largest unit", () => {
+        expect(proposalVoting(100 * 60_000, 0)).toEqual({ open: true, left: "1h" });
+        expect(proposalVoting(60_001, 60_000)).toEqual({ open: true, left: "1m" });
+        expect(proposalVoting(60_000, 60_000)).toEqual({ open: false, left: "" });
+        expect(proposalVoting(0, 60_000)).toEqual({ open: false, left: "" });
+    });
+});
+
+describe("a proposals chat", () => {
+    test("is a group or channel of the governance proposals subtype", () => {
+        const subtype = { kind: "governance_proposals" } as const;
+        expect(hasProposals({ kind: "group_chat", subtype } as ChatSummary)).toBe(true);
+        expect(hasProposals({ kind: "channel", subtype } as ChatSummary)).toBe(true);
+        expect(hasProposals({ kind: "group_chat", subtype: undefined } as ChatSummary)).toBe(false);
+        expect(hasProposals({ kind: "direct_chat" } as ChatSummary)).toBe(false);
+        expect(hasProposals(undefined)).toBe(false);
     });
 });
 
@@ -881,7 +939,7 @@ describe("a conversation's context", () => {
             kind: "channel",
             id: { kind: "channel", communityId: "c", channelId: 1 },
             membership: { latestThreads: [{ threadRootMessageIndex: 4, latestMessageIndex: 6 }] },
-        } as unknown as ChatSummary;
+        } as ChatSummary;
         const asked: [number, number][] = [];
         const ctx = conversationContext({
             client: {

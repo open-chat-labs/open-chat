@@ -5,16 +5,10 @@
         type ProposalContent,
         ProposalDecisionStatus,
         iconSize,
-        neuronDashboardUrl,
-        neuronLabel,
-        proposalDashboardUrl,
-        proposalTopicLabel,
         proposalTopicsStore,
-        proposalVotePercent,
-        proposalVoteStatus,
         proposalVotesStore,
     } from "@client";
-    import { type NeuronVoteFailureMessage } from "@shared";
+    import { type NeuronVoteFailureMessage, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
@@ -27,6 +21,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
+    import { round2 } from "../../../utils/math";
     import { copyToClipboard } from "../../../utils/urls";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -61,6 +56,7 @@
     const client = getContext<OpenChat>("client");
     const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
+    const dashboardUrl = "https://dashboard.internetcomputer.org";
 
     let summaryExpanded = $state(false);
     let showNeuronInfo = $state(false);
@@ -117,17 +113,43 @@
     }
 
     function neuronUrl(neuronId: string): string {
-        return neuronDashboardUrl(neuronId, isNns, rootCanister);
+        return isNns
+            ? `${dashboardUrl}/neuron/${neuronId}`
+            : `${dashboardUrl}/sns/${rootCanister}/neuron/${neuronId}`;
     }
 
     function renderNeuronId(neuronId: string): string {
-        return neuronLabel(neuronId, NamedNeurons);
+        const name = NamedNeurons[neuronId];
+        if (name !== undefined) {
+            return name;
+        }
+
+        const length = neuronId.length;
+        if (length < 12) {
+            return neuronId;
+        }
+
+        return `${neuronId.slice(0, 4)}..${neuronId.slice(length - 4, length)}`;
+    }
+
+    export function getProposalTopicLabel(
+        content: ProposalContent,
+        proposalTopics: ReadonlyMap<number, string>,
+    ): string {
+        return (
+            proposalTopics.get(
+                content.proposal.kind === "nns" ? content.proposal.topic : content.proposal.action,
+            ) ?? "unknown"
+        );
     }
     let rootCanister = $derived(
         client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "",
     );
     let isNns = $derived(content.proposal.kind === "nns");
-    let voteStatus = $derived(proposalVoteStatus($proposalVotesStore.get(messageId), content.myVote));
+    let voteStatus = $derived(
+        $proposalVotesStore.get(messageId) ??
+            (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined),
+    );
     let proposal = $derived(content.proposal);
     let positive = $derived(
         proposal.status == ProposalDecisionStatus.Adopted ||
@@ -138,14 +160,18 @@
             proposal.status == ProposalDecisionStatus.Rejected ||
             proposal.status == ProposalDecisionStatus.Unspecified,
     );
-    let proposalUrl = $derived(proposalDashboardUrl(proposal, rootCanister));
+    let proposalUrl = $derived(
+        isNns
+            ? `${dashboardUrl}/proposal/${proposal.id}`
+            : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`,
+    );
     let proposerUrl = $derived(neuronUrl(proposal.proposer));
-    let adoptPercent = $derived(proposalVotePercent(proposal.tally.yes, proposal.tally));
-    let rejectPercent = $derived(proposalVotePercent(proposal.tally.no, proposal.tally));
+    let adoptPercent = $derived(round2((100 * proposal.tally.yes) / proposal.tally.total));
+    let rejectPercent = $derived(round2((100 * proposal.tally.no) / proposal.tally.total));
     let votingEnded = $derived(proposal.deadline <= $now);
     let disable = $derived(readonly || reply || votingEnded);
     let votingDisabled = $derived(voteStatus !== undefined || disable);
-    let typeValue = $derived(proposalTopicLabel(content, $proposalTopicsStore));
+    let typeValue = $derived(getProposalTopicLabel(content, $proposalTopicsStore));
     let showFullSummary = $derived(proposal.summary.length < 400);
     let payload = $derived(content.proposal.payloadTextRendering);
     let payloadEmpty = $derived(

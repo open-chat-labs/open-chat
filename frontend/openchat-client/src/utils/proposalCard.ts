@@ -7,7 +7,8 @@ import {
 } from "@shared";
 import type { ProposalVoteStatus } from "../stores/proposalVotes";
 
-// How a governance proposal in a proposals chat shows, for every tree: its links on the IC
+// How a governance proposal in a proposals chat shows, for the new trees (the old ProposalContents
+// keep their own arithmetic, unchanged): its links on the IC
 // dashboard, its proposer, its type, whether it's critical, its tally and the reader's vote.
 
 export const IC_DASHBOARD_URL = "https://dashboard.internetcomputer.org";
