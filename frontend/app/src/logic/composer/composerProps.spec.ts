@@ -1,4 +1,11 @@
-import type { EventWrapper, Message } from "@client";
+import type {
+    EventWrapper,
+    GiphyContent,
+    ImageContent,
+    Message,
+    MessageContent,
+    VideoContent,
+} from "@client";
 import type { ConversationContext } from "@src/logic/conversation/messageRow";
 import {
     composerAttachment,
@@ -118,6 +125,86 @@ describe("the composer's reply or edit strip", () => {
             quote: "hi @alice",
             text: "hi @alice",
         });
+    });
+});
+
+describe("a media reply's thumbnail in the strip", () => {
+    const base = {
+        kind: "rehydrated_reply_context" as const,
+        senderId: "alice",
+        eventIndex: 3,
+        messageId: 42n,
+        messageIndex: 2,
+        edited: false,
+        isThreadRoot: false,
+        sourceContext: { chatId: { kind: "group_chat" as const, groupId: "g" } },
+    };
+    const image: ImageContent = {
+        kind: "image_content",
+        width: 10,
+        height: 10,
+        thumbnailData: "data:thumb",
+        mimeType: "image/jpeg",
+        blobUrl: "https://blob/image",
+    };
+    const video: VideoContent = {
+        kind: "video_content",
+        width: 10,
+        height: 10,
+        thumbnailData: "data:vthumb",
+        mimeType: "video/mp4",
+        imageData: { blobUrl: "https://blob/frame" },
+        videoData: { blobUrl: "https://blob/video" },
+    };
+    const gif: GiphyContent = {
+        kind: "giphy_content",
+        title: "cat",
+        desktop: { width: 10, height: 10, url: "https://gif/desktop.mp4", mimeType: "video/mp4" },
+        mobile: { width: 10, height: 10, url: "https://gif/tiny.gif", mimeType: "image/gif" },
+    };
+    const strip = (content: MessageContent, media = ctx.media) =>
+        composerContext({ replyingTo: { ...base, content } }, { ...ctx, media }, undefined);
+
+    test("a photo shows its picture", () => {
+        expect(strip(image)).toMatchObject({
+            thumb: 'center/cover no-repeat url("https://blob/image")',
+        });
+        expect(strip(image)?.thumbVideo).toBeUndefined();
+    });
+
+    test("a video shows its first frame, with a play glyph", () => {
+        expect(strip(video)).toMatchObject({
+            thumb: 'center/cover no-repeat url("https://blob/frame")',
+            thumbVideo: true,
+        });
+    });
+
+    test("a GIF shows its small rendition", () => {
+        expect(strip(gif)?.thumb).toBe('center/cover no-repeat url("https://gif/tiny.gif")');
+    });
+
+    test("in low bandwidth, a photo not revealed shows its thumbnail, a GIF none", () => {
+        const low = { lowBandwidth: true, revealed: () => false, url: (u?: string) => u };
+        expect(strip(image, low)?.thumb).toBe('center/cover no-repeat url("data:thumb")');
+        expect(strip(gif, low)?.thumb).toBeUndefined();
+        const revealed = { ...low, revealed: (id: bigint) => id === 42n };
+        expect(strip(image, revealed)?.thumb).toBe(
+            'center/cover no-repeat url("https://blob/image")',
+        );
+    });
+
+    test("a photo with no full-size picture shows its thumbnail", () => {
+        expect(strip({ ...image, blobUrl: undefined })?.thumb).toBe(
+            'center/cover no-repeat url("data:thumb")',
+        );
+    });
+
+    test("text and files have none", () => {
+        expect(strip({ kind: "text_content", text: "hi" })?.thumb).toBeUndefined();
+        expect(
+            strip({ kind: "file_content", name: "a.pdf", mimeType: "application/pdf", fileSize: 1 })
+                ?.thumb,
+        ).toBeUndefined();
     });
 });
 

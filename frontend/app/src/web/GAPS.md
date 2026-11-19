@@ -2877,8 +2877,13 @@ design export needs. Each entry says where it came up.
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
   the old trees dropped the whole draft, and now get it back too), also when the chat was left
   mid-edit: the composer then mounts with that text to go back to (`composerStartText`;
-  `MessageComposer` takes `text` so mounted in edit mode, by hand). Not yet: a media reply's
-  thumbnail (`thumb`).
+  `MessageComposer` takes `text` so mounted in edit mode, by hand). A reply to a photo, video,
+  GIF or meme shows its picture beside the quote, as the old trees' reply strips do
+  (`replyThumb`, `logic/composer/composerProps`: a video's first frame with a play glyph,
+  `ComposerContext.thumbVideo`, by hand, EXPORT-LOG 2026-11-16; in low bandwidth a photo not
+  revealed shows its small thumbnail and a GIF none, as their tiles do, where the old strips
+  fetched the full picture). The native composer shows it too. TODO(design): the export's
+  thumbnail has no video glyph.
 - **Message actions** (`features/conversation`, 5b): every message's menu (`MessageActions`:
   right-click, the hover bar's ⋯, Shift+F10, a long press on touch), its hover bar's quick
   reactions (the app's `quickReactions`), the emoji picker, the reaction chips (under every
