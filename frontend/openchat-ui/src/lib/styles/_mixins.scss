@@ -72,12 +72,12 @@
   }
 }
 
-/// A link in a message's text: underlined, bold, in `--msg-link`, which the message sets per side (received:
+/// A link in a message's text: underlined, semibold (600), in `--msg-link`, which the message sets per side (received:
 /// `--accent-bright`; sent: `--bubble-text`, the bubble's own text colour in every theme, so the underline is what marks
 /// it). Hover, focus and visited keep that colour: the page's `a:hover` would put an accent on the accent bubble.
 /// `$colour` for a link that isn't one to the eye (a group mention: `inherit`, the text's colour, as @user mentions).
 @mixin message-link($colour: var(--msg-link)) {
-  font-weight: 700;
+  font-weight: var(--weight-semibold);
   text-decoration: underline;
   text-underline-offset: 2px;
   color: $colour;
