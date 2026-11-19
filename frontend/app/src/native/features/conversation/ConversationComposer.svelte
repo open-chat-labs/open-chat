@@ -97,6 +97,7 @@
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeOs } from "../../platform";
+    import type { Overlays } from "../../shell/overlays.svelte";
     import JoinBar from "../join/JoinBar.svelte";
     import AttachPanel, { type RecentItem } from "./AttachPanel.svelte";
     import EmojiPanel from "./EmojiPanel.svelte";
@@ -116,6 +117,8 @@
         gallery: boolean;
         /** Says something went wrong (the native toast). */
         toast: (message: string) => void;
+        /** The screen's, where a preview's requirements sheet registers for Android's back. */
+        overlays: Overlays;
         /** A builder picked from the attach panel (a poll, a prize …). */
         onBuild: (builder: ComposerBuilder) => void;
         /** Goes to a message in the list (the one replied to or edited). */
@@ -127,7 +130,8 @@
         onToastFloor: (px: number | undefined) => void;
     };
 
-    let { chat, ctx, slot, os, gallery, toast, onBuild, onJump, onToastFloor }: Props = $props();
+    let { chat, ctx, slot, os, gallery, toast, overlays, onBuild, onJump, onToastFloor }: Props =
+        $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -542,7 +546,7 @@
 </script>
 
 {#if block?.kind === "preview" && chat.kind !== "direct_chat"}
-    <JoinBar {chat} {toast} />
+    <JoinBar {chat} {overlays} {toast} />
 {:else if blocked !== undefined}
     <div class="blocked">
         <Banner tone={blocked.tone} text={$_(blocked.key)} />

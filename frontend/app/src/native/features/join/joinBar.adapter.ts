@@ -30,8 +30,8 @@ export function joinBarView(bar: PreviewBar, chat: MultiUserChat): JoinBarView {
                   ? i18nKey("native.join.review")
                   : i18nKey("joinGroup", undefined, level, true)),
         icon: bar.locked || gated ? "lock" : "plus",
-        // TODO(N8b PR 2): "Review and join" opens the requirements sheet
-        disabled: bar.locked || gated,
+        // "Review and join" asks the client, which answers with the requirements (JoinSheet)
+        disabled: bar.locked,
     };
 }
 
@@ -59,7 +59,7 @@ export function joinStepToast(step: JoinStep, name: string): ResourceKey | undef
         case "failed":
         case "gate_check_failed":
             return joinFailure(step);
-        // TODO(N8b PR 2): the requirements sheet, for gates the bar didn't know of
+        // the requirements sheet shows them
         case "evaluate_gates":
         case "not_sent":
         case "cancelled":

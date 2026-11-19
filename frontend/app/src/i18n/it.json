@@ -1322,6 +1322,8 @@
         "next": "Prossimo",
         "privateGroup": "Privato {level}",
         "privateGroupInfo": "Gli utenti non possono unirsi liberamente a questo {level}. Devono essere aggiunti o invitati da un membro autorizzato.",
+        "membersOnly": "Solo membri",
+        "membersOnlyInfo": "Solo i membri possono vedere i messaggi qui.",
         "publicGroup": "Pubblico {level}",
         "searchForCommunityMember": "Cerca un membro della comunità",
         "searchForUser": "Cerca un utente",
@@ -2435,7 +2437,24 @@
             "notInChannel": "Non sei ancora in #{channel}. Unisciti al canale per inviare messaggi.",
             "previewingGroup": "Stai visualizzando un'anteprima di {group}. Unisciti per inviare messaggi.",
             "review": "Controlla e unisciti",
-            "signIn": "Accedi per unirti"
+            "signIn": "Accedi per unirti",
+            "sheet": {
+                "title": "Unisciti a {name}",
+                "introAll": "Soddisfa tutti i requisiti qui sotto per unirti.",
+                "introAny": "Soddisfa uno qualsiasi dei requisiti qui sotto per unirti.",
+                "pay": "Paga {amount} {symbol}",
+                "hold": "Possiedi {amount} {symbol}",
+                "charged": "Addebitato quando ti unisci",
+                "notEnough": "Non hai abbastanza {symbol} nel tuo portafoglio",
+                "youHold": "Possiedi {amount} {symbol}",
+                "diamondYes": "Sei un membro Diamond",
+                "diamondNo": "Non sei ancora un membro Diamond",
+                "lifetimeYes": "Sei un membro Diamond a vita",
+                "getDiamond": "Ottieni Diamond",
+                "payAndJoin": "Paga {amount} {symbol} e unisciti",
+                "leaveAnyTime": "Puoi uscire in qualsiasi momento.",
+                "storePayment": "Un pagamento che questa app non può effettuare"
+            }
         }
     },
     "new": "nuovo",

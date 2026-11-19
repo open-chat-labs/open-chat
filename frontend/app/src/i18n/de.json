@@ -1322,6 +1322,8 @@
         "next": "Nächste",
         "privateGroup": "Private {level}",
         "privateGroupInfo": "Benutzer können diesem {level} nicht frei beitreten. Sie müssen entweder von einem autorisierten Mitglied hinzugefügt oder eingeladen werden.",
+        "membersOnly": "Nur für Mitglieder",
+        "membersOnlyInfo": "Nur Mitglieder können die Nachrichten hier sehen.",
         "publicGroup": "Öffentliche {level}",
         "searchForCommunityMember": "Suche nach einem Community-Mitglied",
         "searchForUser": "Nach einem Benutzer suchen",
@@ -2435,7 +2437,24 @@
             "notInChannel": "Du bist noch nicht in #{channel}. Tritt dem Kanal bei, um Nachrichten zu senden.",
             "previewingGroup": "Du siehst dir {group} als Vorschau an. Tritt bei, um Nachrichten zu senden.",
             "review": "Prüfen und beitreten",
-            "signIn": "Zum Beitreten anmelden"
+            "signIn": "Zum Beitreten anmelden",
+            "sheet": {
+                "title": "{name} beitreten",
+                "introAll": "Erfülle alle folgenden Anforderungen, um beizutreten.",
+                "introAny": "Erfülle eine der folgenden Anforderungen, um beizutreten.",
+                "pay": "{amount} {symbol} zahlen",
+                "hold": "{amount} {symbol} halten",
+                "charged": "Wird beim Beitritt abgebucht",
+                "notEnough": "Nicht genug {symbol} in deiner Wallet",
+                "youHold": "Du hältst {amount} {symbol}",
+                "diamondYes": "Du bist Diamond-Mitglied",
+                "diamondNo": "Du bist noch kein Diamond-Mitglied",
+                "lifetimeYes": "Du bist lebenslanges Diamond-Mitglied",
+                "getDiamond": "Diamond holen",
+                "payAndJoin": "{amount} {symbol} zahlen und beitreten",
+                "leaveAnyTime": "Du kannst jederzeit wieder austreten.",
+                "storePayment": "Eine Zahlung, die diese App nicht ausführen kann"
+            }
         }
     },
     "new": "Neu",

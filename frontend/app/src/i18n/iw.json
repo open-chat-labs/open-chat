@@ -1322,6 +1322,8 @@
         "next": "הַבָּא",
         "privateGroup": "פרטי {level}",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף ל-{level} הזה באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
+        "membersOnly": "לחברים בלבד",
+        "membersOnlyInfo": "רק חברים יכולים לראות את ההודעות כאן.",
         "publicGroup": "ציבורי {level}",
         "searchForCommunityMember": "חפש חבר בקהילה",
         "searchForUser": "חפש משתמש",
@@ -2435,7 +2437,24 @@
             "notInChannel": "עדיין לא הצטרפת ל-#{channel}. הצטרפו לערוץ כדי לשלוח הודעות.",
             "previewingGroup": "תצוגה מקדימה של {group}. הצטרפו כדי לשלוח הודעות.",
             "review": "עיון והצטרפות",
-            "signIn": "התחברו כדי להצטרף"
+            "signIn": "התחברו כדי להצטרף",
+            "sheet": {
+                "title": "הצטרפות ל-{name}",
+                "introAll": "יש לעמוד בכל הדרישות שלהלן כדי להצטרף.",
+                "introAny": "יש לעמוד באחת מהדרישות שלהלן כדי להצטרף.",
+                "pay": "תשלום {amount} {symbol}",
+                "hold": "החזקת {amount} {symbol}",
+                "charged": "החיוב מתבצע בעת ההצטרפות",
+                "notEnough": "אין מספיק {symbol} בארנק",
+                "youHold": "ברשותך {amount} {symbol}",
+                "diamondYes": "יש לך מנוי Diamond",
+                "diamondNo": "עדיין אין לך מנוי Diamond",
+                "lifetimeYes": "יש לך מנוי Diamond לכל החיים",
+                "getDiamond": "קבלת Diamond",
+                "payAndJoin": "תשלום {amount} {symbol} והצטרפות",
+                "leaveAnyTime": "אפשר לעזוב בכל עת.",
+                "storePayment": "תשלום שהאפליקציה הזו לא יכולה לבצע"
+            }
         }
     },
     "new": "חָדָשׁ",

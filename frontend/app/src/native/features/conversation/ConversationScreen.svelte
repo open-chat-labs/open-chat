@@ -39,7 +39,6 @@
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
-        isPrivateCommunityPreview,
         messageIndexStore,
         messageReadByThem,
         messagesRead,
@@ -84,6 +83,7 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
+    import { interpolate } from "@i18n/i18n";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
     import { stickyDateTop } from "@src/core/stickyDateTop";
@@ -153,6 +153,7 @@
     import { toastStore } from "@src/stores/toast";
     import { disableTipsFeature } from "@src/utils/features";
     import { getProxyAdjustedBlobUrl, saveFile } from "@src/utils/media";
+    import { hiddenMessagesNotice } from "@src/logic/join/previewBar";
     import { navigate } from "@src/utils/navigation";
     import { nativeMessageSwipes } from "@src/utils/messageSwipe";
     import { buildDisplayName } from "@src/utils/user";
@@ -882,13 +883,14 @@
 
     // ---- the timeline
 
-    // a private chat or community that isn't joined shows no messages (as the old UI)
-    const privatePreview = $derived(
-        chat !== undefined &&
-            (isPrivateCommunityPreview($selectedCommunitySummaryStore) ||
-                client.maskChatMessages(chat)),
+    // a group or channel whose own settings hide its messages from non-members shows none until
+    // joined, its gates or its community's aside (logic/join); the join bar shows either way
+    const hiddenNotice = $derived(
+        chat === undefined || chat.kind === "direct_chat"
+            ? undefined
+            : hiddenMessagesNotice(client, chat),
     );
-    const levelText = $derived($_(`level.${level}`).toLowerCase());
+    const privatePreview = $derived(hiddenNotice !== undefined);
 
     const grouper = new TimelineGrouper();
     const flattener = new TimelineFlattener();
@@ -1304,15 +1306,55 @@
     {/if}
 
 
-    {#if privatePreview}
+    <!-- the composer, or the join bar in its place while previewing, messages shown or not -->
+    {#snippet composerArea()}
+        {#if chat !== undefined}
+            <!-- searching has no composer (the design's search mode): it's back when the search closes -->
+            {#if searchOpen}
+                <div class="search-end"></div>
+            {:else}
+                <footer class="composer" bind:this={footer}>
+                    {#if typingAt === "strip"}
+                        <div
+                            class="typing-strip"
+                            class:shown={typingNames.length > 0}
+                            aria-live="polite"
+                            aria-hidden={typingNames.length === 0}
+                        >
+                            <span class="dots small"><span></span><span></span><span></span></span>
+                            <span class="typing-text">{typingText}</span>
+                        </div>
+                    {/if}
+                    <!-- one per chat: it starts from that chat's draft -->
+                    {#key chatKey}
+                        <ConversationComposer
+                            {chat}
+                            {ctx}
+                            {slot}
+                            {os}
+                            gallery={isTauriApp()}
+                            toast={(message) => context.toast(message)}
+                            {overlays}
+                            onBuild={build}
+                            onJump={jumpTo}
+                            onToastFloor={(px) => (toastFloor = px)}
+                        />
+                    {/key}
+                </footer>
+            {/if}
+        {/if}
+    {/snippet}
+
+    {#if hiddenNotice !== undefined}
         <div class="state">
             <EmptyState
                 preset="no-conversations"
-                title={$_("group.privateGroup", { values: { level: levelText } })}
-                body={$_("group.privateGroupInfo", { values: { level: levelText } })}
+                title={interpolate($_, hiddenNotice.title)}
+                body={interpolate($_, hiddenNotice.body)}
                 actionLabel=""
             />
         </div>
+        {@render composerArea()}
     {:else if chat === undefined}
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
     {:else}
@@ -1600,38 +1642,7 @@
             </div>
         {/if}
 
-        <!-- searching has no composer (the design's search mode): it's back when the search closes -->
-        {#if searchOpen}
-            <div class="search-end"></div>
-        {:else}
-            <footer class="composer" bind:this={footer}>
-                {#if typingAt === "strip"}
-                    <div
-                        class="typing-strip"
-                        class:shown={typingNames.length > 0}
-                        aria-live="polite"
-                        aria-hidden={typingNames.length === 0}
-                    >
-                        <span class="dots small"><span></span><span></span><span></span></span>
-                        <span class="typing-text">{typingText}</span>
-                    </div>
-                {/if}
-                <!-- one per chat: it starts from that chat's draft -->
-                {#key chatKey}
-                    <ConversationComposer
-                        {chat}
-                        {ctx}
-                        {slot}
-                        {os}
-                        gallery={isTauriApp()}
-                        toast={(message) => context.toast(message)}
-                        onBuild={build}
-                        onJump={jumpTo}
-                        onToastFloor={(px) => (toastFloor = px)}
-                    />
-                {/key}
-            </footer>
-        {/if}
+        {@render composerArea()}
     {/if}
 </div>
 

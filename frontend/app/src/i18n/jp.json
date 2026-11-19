@@ -1322,6 +1322,8 @@
         "next": "次",
         "privateGroup": "非公開{level}",
         "privateGroupInfo": "ユーザーはこの {level} に自由に参加することはできません。これらは、承認されたメンバーによって追加または招待される必要があります。",
+        "membersOnly": "メンバー限定",
+        "membersOnlyInfo": "メッセージはメンバーのみ閲覧できます。",
         "publicGroup": "公開{level}",
         "searchForCommunityMember": "コミュニティメンバーを検索",
         "searchForUser": "ユーザーを検索",
@@ -2435,7 +2437,24 @@
             "notInChannel": "まだ #{channel} に参加していません。メッセージを送るにはチャンネルに参加してください。",
             "previewingGroup": "{group} をプレビュー中です。メッセージを送るには参加してください。",
             "review": "確認して参加",
-            "signIn": "サインインして参加"
+            "signIn": "サインインして参加",
+            "sheet": {
+                "title": "{name} に参加",
+                "introAll": "以下のすべての条件を満たすと参加できます。",
+                "introAny": "以下のいずれかの条件を満たすと参加できます。",
+                "pay": "{amount} {symbol} を支払う",
+                "hold": "{amount} {symbol} を保有",
+                "charged": "参加時に請求されます",
+                "notEnough": "ウォレットの {symbol} が不足しています",
+                "youHold": "{amount} {symbol} を保有しています",
+                "diamondYes": "ダイヤモンド会員です",
+                "diamondNo": "まだダイヤモンド会員ではありません",
+                "lifetimeYes": "生涯ダイヤモンド会員です",
+                "getDiamond": "ダイヤモンドを入手",
+                "payAndJoin": "{amount} {symbol} を支払って参加",
+                "leaveAnyTime": "いつでも退出できます。",
+                "storePayment": "このアプリでは行えない支払い"
+            }
         }
     },
     "new": "new",

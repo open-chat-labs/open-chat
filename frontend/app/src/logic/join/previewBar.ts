@@ -195,3 +195,23 @@ export function chatPreviewBar(
         meets: (gate) => client.doesUserMeetAccessGate(gate),
     });
 }
+
+/**
+ * What a previewed group or channel shows in place of its messages, when its own settings hide them
+ * from non-members (private, or messages not visible to non-members: `maskChatMessages`, the
+ * backend's rule). Its gates, and its community's, never hide them; the join bar shows either way.
+ * A private chat is joined by invitation; a public one that hides its messages is members only.
+ */
+export function hiddenMessagesNotice(
+    client: Pick<OpenChat, "maskChatMessages">,
+    chat: MultiUserChat,
+): { title: ResourceKey; body: ResourceKey } | undefined {
+    if (!client.maskChatMessages(chat)) return undefined;
+    const [title, body] = chat.public
+        ? ["group.membersOnly", "group.membersOnlyInfo"]
+        : ["group.privateGroup", "group.privateGroupInfo"];
+    return {
+        title: i18nKey(title, undefined, chat.level, true),
+        body: i18nKey(body, undefined, chat.level, true),
+    };
+}

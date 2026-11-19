@@ -1322,6 +1322,8 @@
         "next": "Następny",
         "privateGroup": "Prywatny {level}",
         "privateGroupInfo": "Użytkownicy nie mogą swobodnie dołączać do tego {level}. Muszą zostać dodani lub zaproszeni przez upoważnionego członka.",
+        "membersOnly": "Tylko dla członków",
+        "membersOnlyInfo": "Tylko członkowie mogą zobaczyć tutaj wiadomości.",
         "publicGroup": "Publiczne {level}",
         "searchForCommunityMember": "Wyszukaj członka społeczności",
         "searchForUser": "Wyszukaj użytkownika",
@@ -2435,7 +2437,24 @@
             "notInChannel": "Nie jesteś jeszcze w #{channel}. Dołącz do kanału, aby wysyłać wiadomości.",
             "previewingGroup": "Przeglądasz podgląd {group}. Dołącz, aby wysyłać wiadomości.",
             "review": "Sprawdź i dołącz",
-            "signIn": "Zaloguj się, aby dołączyć"
+            "signIn": "Zaloguj się, aby dołączyć",
+            "sheet": {
+                "title": "Dołącz do {name}",
+                "introAll": "Spełnij wszystkie poniższe wymagania, aby dołączyć.",
+                "introAny": "Spełnij dowolne z poniższych wymagań, aby dołączyć.",
+                "pay": "Zapłać {amount} {symbol}",
+                "hold": "Posiadaj {amount} {symbol}",
+                "charged": "Pobierane przy dołączeniu",
+                "notEnough": "Za mało {symbol} w portfelu",
+                "youHold": "Masz {amount} {symbol}",
+                "diamondYes": "Jesteś członkiem Diamond",
+                "diamondNo": "Nie jesteś jeszcze członkiem Diamond",
+                "lifetimeYes": "Jesteś dożywotnim członkiem Diamond",
+                "getDiamond": "Zdobądź Diamond",
+                "payAndJoin": "Zapłać {amount} {symbol} i dołącz",
+                "leaveAnyTime": "Możesz odejść w dowolnej chwili.",
+                "storePayment": "Płatność, której ta aplikacja nie może wykonać"
+            }
         }
     },
     "new": "nowy",

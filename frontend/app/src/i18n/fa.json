@@ -1322,6 +1322,8 @@
         "next": "بعد",
         "privateGroup": "خصوصی {level}",
         "privateGroupInfo": "کاربران نمی توانند آزادانه به این {level} بپیوندند. آنها باید یا اضافه شوند یا توسط یک عضو مجاز دعوت شوند.",
+        "membersOnly": "فقط برای اعضا",
+        "membersOnlyInfo": "فقط اعضا می‌توانند پیام‌های اینجا را ببینند.",
         "publicGroup": "عمومی {level}",
         "searchForCommunityMember": "جستجوی یک عضو انجمن",
         "searchForUser": "جستجوی کاربر",
@@ -2435,7 +2437,24 @@
             "notInChannel": "هنوز در #{channel} عضو نیستید. برای ارسال پیام به کانال بپیوندید.",
             "previewingGroup": "در حال پیش‌نمایش {group} هستید. برای ارسال پیام عضو شوید.",
             "review": "بررسی و عضویت",
-            "signIn": "برای عضویت وارد شوید"
+            "signIn": "برای عضویت وارد شوید",
+            "sheet": {
+                "title": "عضویت در {name}",
+                "introAll": "برای عضویت همهٔ شرایط زیر را داشته باشید.",
+                "introAny": "برای عضویت یکی از شرایط زیر را داشته باشید.",
+                "pay": "پرداخت {amount} {symbol}",
+                "hold": "داشتن {amount} {symbol}",
+                "charged": "هنگام عضویت کسر می‌شود",
+                "notEnough": "{symbol} کافی در کیف پول شما نیست",
+                "youHold": "شما {amount} {symbol} دارید",
+                "diamondYes": "شما عضو الماس هستید",
+                "diamondNo": "هنوز عضو الماس نیستید",
+                "lifetimeYes": "شما عضو مادام‌العمر الماس هستید",
+                "getDiamond": "دریافت الماس",
+                "payAndJoin": "پرداخت {amount} {symbol} و عضویت",
+                "leaveAnyTime": "هر زمان که بخواهید می‌توانید خارج شوید.",
+                "storePayment": "پرداختی که این برنامه نمی‌تواند انجام دهد"
+            }
         }
     },
     "new": "جدید",
