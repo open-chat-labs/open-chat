@@ -1039,3 +1039,6 @@
 ## 2026-11-19 — MessageComposer's GIF tab: a failed load retried, keyboard categories (web 5c review), by hand
 - `MessageComposer`: a search whose load failed is asked for again (`onGifSearch`) when it's asked for once more (the picker reopened on the GIF tab, the tab picked, the same category picked). It had been asked once per change, so a failed Trending or category stayed failed until something else was typed. The rule is `asksForGifs` (`lib/gifAsk`). A typed search still waiting for typing to pause is dropped when the picker closes or the Emoji tab is picked. The category chips are buttons (Enter and Space pick them, with a focus ring), where they were spans that took only a click. No props changed.
 - Not in the design export: the export's chips are spans.
+
+## 2026-11-19 — MessageComposer: a GIF picked focuses the text box (web 5c), by hand
+- `MessageComposer`: picking a GIF (`onPickGif`) closes the picker and focuses the text box (not while a host's panel is in the keyboard's place), so a caption can be typed: the web app now attaches a picked GIF to the draft, sent with Send, rather than sending it at once (the user's decision of 2026-11-19, against web spec 06). `meta.json` (`onPickGif`'s doc). No props changed.

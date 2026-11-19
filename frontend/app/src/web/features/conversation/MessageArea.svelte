@@ -82,7 +82,6 @@
         type ChatSummary,
         type EventWrapper,
         type FileContent,
-        type GiphyContent,
         type Message,
         type VideoCallContent,
         type MessageContext,
@@ -141,7 +140,6 @@
         pickableAttachments,
         composerAnswer,
         sendComposed,
-        sendGif,
         sendVoiceRecording,
         throttleCountdown,
         type ComposerBuilder,
@@ -154,6 +152,7 @@
         composerStartText,
     } from "@src/logic/composer/composerProps";
     import {
+        attachGif,
         cancelComposing,
         composingMessageIndex,
         submitEdit,
@@ -670,13 +669,9 @@
 
     // the composer's GIF tab: offered where GIFs may be sent and something can be attached now (not
     // mid-edit, where the GIF would reply to the edited message's reply, nor during a voice take,
-    // nor in a bot DM); a GIF picked goes at once, a reply to the draft's reply (sendGif)
+    // nor in a bot DM); a GIF picked becomes the draft's attachment, in place of any, and goes with
+    // Send, the text its caption (attachGif)
     const gifsAllowed = $derived(attachable && permitted.has("giphy"));
-
-    async function pickedGif(context: MessageContext, content: GiphyContent) {
-        const sent = await sendGif(client, context, content);
-        if (sent.kind === "refused") toastStore.showFailureToast(i18nKey("errorSendingMessage"));
-    }
 
     // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
     // the reader; @everyone first), and, in a chat that holds only some of its members, those it
@@ -1736,7 +1731,7 @@
                     onMentionQuery={mentionQueried}
                     onVoiceActive={(active) => (voiceActive = active)}
                     {mentions}
-                    onGif={gifsAllowed ? (content) => pickedGif(context, content) : undefined}
+                    onGif={gifsAllowed ? (content) => attachGif(context, content) : undefined}
                 />
             {/key}
         </div>

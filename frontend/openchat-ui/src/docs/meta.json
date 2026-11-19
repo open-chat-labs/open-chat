@@ -14459,7 +14459,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "A GIF picked from `gifs`; the picker closes. With it, the picker has its GIF tab (by hand)."
+        "doc": "A GIF picked from `gifs`: the picker closes and the text box takes the focus (the host may attach it, the text its caption, or send it). With it, the picker has its GIF tab (by hand)."
       },
       {
         "name": "onVoice",

@@ -11,7 +11,6 @@ import {
     type AttachmentContent,
     type ChatSummary,
     type CommunitySummary,
-    type GiphyContent,
     type MessageContent,
     type MessageContext,
     type MessageFormatter,
@@ -524,19 +523,6 @@ function composedSend(outcome: SendMessageOutcome): ComposedSend {
         default:
             return { kind: "refused", reason: outcome.kind };
     }
-}
-
-/**
- * Sends a GIF picked in the composer's picker to the chat or thread it's in, at once (web 06
- * "Picking sends the GIF"; the native panel's way too): as a reply to the draft's reply, which it
- * clears, leaving the rest of the draft (`sendContent`).
- */
-export async function sendGif(
-    client: Pick<OpenChat, "sendContent">,
-    context: MessageContext,
-    content: GiphyContent,
-): Promise<ComposedSend> {
-    return composedSend(await client.sendContent(context, content));
 }
 
 /**

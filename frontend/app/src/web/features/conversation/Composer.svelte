@@ -8,7 +8,8 @@
      Sign in to join for a guest, and Back; 8b); a notice (the
      throttle countdown, a video being prepared) shows over it. The emoji picker's GIF tab searches
      Klipy (GifFeed), where GIFs may be sent here and the build has a Klipy key; a GIF picked is
-     sent at once (06 "Picking sends the GIF"). Mount it once per chat (keyed). -->
+     the draft's attachment, sent with Send, the text its caption (the user's decision of
+     2026-11-19, not 06's "Picking sends the GIF"). Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
@@ -121,8 +122,8 @@
         // a voice message is being recorded or reviewed, or that's over (nothing can be attached
         // meanwhile: sending it posts the draft)
         onVoiceActive: (active: boolean) => void;
-        // sends a GIF picked from the emoji picker's GIF tab; none where no GIF may be sent now
-        // (no GIF tab then)
+        // takes a GIF picked from the emoji picker's GIF tab (the draft's attachment, sent with
+        // Send); none where no GIF may be attached now (no GIF tab then)
         onGif: ((content: GiphyContent) => void) | undefined;
     } = $props();
 

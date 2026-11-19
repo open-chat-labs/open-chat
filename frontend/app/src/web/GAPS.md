@@ -2789,11 +2789,13 @@ design export needs. Each entry says where it came up.
   pickers and the native panel do (`GifFeed`, `logic/composer`): Trending (Klipy's featured GIFs)
   as it opens, a category's word, or what's typed, a page at a time as the grid scrolls; a search
   with no match says "No GIFs for …" with Klipy's related terms to search for, or the trending
-  GIFs under it (the native panel's decision, kept). A pick sends the GIF at once and closes the
-  picker (06 "Picking sends the GIF"; `sendGif` through `sendContent`, a reply to the draft's
-  reply, the rest of the draft left), where the old desktop picker let the user add a caption
-  first; refused, the failure toast `errorSendingMessage`. The tab is there only where GIFs may be
-  sent (`giphy`) and something can be attached now (not mid-edit, nor during a voice take, nor
+  GIFs under it (the native panel's decision, kept). A pick isn't sent: it closes the picker and
+  becomes the draft's attachment (`attachGif`), in place of anything attached (as a file picked
+  is), shown in the media tray with its ×, and goes out with Send like a photo, the text its
+  optional caption, as a reply to the draft's reply. That's the user's decision of 2026-11-19,
+  against web 06's "Picking sends the GIF" (the old desktop picker let the user add a caption
+  first too); the native panel still sends as it's tapped, by design. The tab is there only where
+  GIFs may be sent (`giphy`) and something can be attached now (not mid-edit, nor during a voice take, nor
   in a bot DM), and in a build with a Klipy key (`OC_KLIPY_APIKEY`): without one, there's no GIF
   tab. TODO(design): the loading, empty, failed and nothing-found states.
 - **Composer, not yet** (5c, left for later pieces of it):

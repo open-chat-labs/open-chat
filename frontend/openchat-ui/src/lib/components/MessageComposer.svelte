@@ -85,7 +85,8 @@
     onGifSearch?: (query: string) => void;
     /** The GIF grid was scrolled near its end: the next page of the same search. */
     onMoreGifs?: () => void;
-    /** A GIF picked from `gifs` (the picker closes). With it, the picker has its GIF tab. */
+    /** A GIF picked from `gifs`: the picker closes and the text box takes the focus (the host may attach it, the
+     *  text its caption, or send it). With it, the picker has its GIF tab. */
     onPickGif?: (gif: ComposerGif) => void;
     /** A recorded voice message (duration in seconds). The mic is hidden without it. Rejected, the take stays in review
      *  with an error; resolved `false`, it stays without one (the user backed out). */
@@ -418,10 +419,12 @@
     askGifs(term);
   }
 
+  // the picker closes and the text box takes the focus, for a caption should the host attach the GIF
   function pickGif(gif: ComposerGif) {
     clearTimeout(gifTimer);
     menu = null;
     onPickGif?.(gif);
+    if (!hostPanelOn) input?.focus({ preventScroll: true });
   }
 
   // near the grid's end, the next page (not while one is on its way)

@@ -1,5 +1,13 @@
-import type { EnhancedReplyContext, EventWrapper, Message, MessageContext } from "@client";
-import { composingMessageIndex, submitEdit } from "./draftActions";
+import {
+    localUpdates,
+    type AttachmentContent,
+    type EnhancedReplyContext,
+    type EventWrapper,
+    type GiphyContent,
+    type Message,
+    type MessageContext,
+} from "@client";
+import { attachGif, composingMessageIndex, submitEdit } from "./draftActions";
 
 const here: MessageContext = { chatId: { kind: "group_chat", groupId: "g1" } };
 const elsewhere: MessageContext = { chatId: { kind: "group_chat", groupId: "g2" } };
@@ -21,6 +29,35 @@ describe("the message the composer is replying to or editing", () => {
         expect(composingMessageIndex({ replyingTo: reply(here) }, here)).toBe(3);
         expect(composingMessageIndex({ replyingTo: reply(elsewhere) }, here)).toBeUndefined();
         expect(composingMessageIndex(undefined, here)).toBeUndefined();
+    });
+});
+
+describe("a GIF picked in the web composer", () => {
+    afterEach(() => localUpdates.draftMessages.delete(here));
+
+    const gif = { kind: "giphy_content", title: "cat" } as GiphyContent;
+    const draft = () => localUpdates.draftMessages.value.get(here);
+
+    test("is the draft's attachment, to go out with Send, keeping its text and reply", () => {
+        localUpdates.draftMessages.setTextContent(here, "so true");
+        localUpdates.draftMessages.setReplyingTo(here, reply(here));
+        attachGif(here, gif);
+        expect(draft()?.attachment).toBe(gif);
+        expect(draft()?.textContent).toBe("so true");
+        expect(draft()?.replyingTo).toEqual(reply(here));
+    });
+
+    test("takes the place of what was attached, as a file picked does", () => {
+        localUpdates.draftMessages.setAttachment(here, {
+            kind: "file_content",
+        } as AttachmentContent);
+        attachGif(here, gif);
+        expect(draft()?.attachment).toBe(gif);
+    });
+
+    test("is attached in its own chat or thread only", () => {
+        attachGif(here, gif);
+        expect(localUpdates.draftMessages.value.get(elsewhere)?.attachment).toBeUndefined();
     });
 });
 
