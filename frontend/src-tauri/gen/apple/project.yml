@@ -11,6 +11,9 @@ packages:
   # The inbox the share extension hands shared items to the app through (#10403)
   ShareCore:
     path: ../../../tauri-plugin-oc/ios/ShareCore
+  # The call screen's rules (#10529), the app target's alone
+  CallScreenCore:
+    path: ../../../tauri-plugin-oc/ios/CallScreenCore
   # Native call media (#10445)
   Daily:
     url: https://github.com/daily-co/daily-client-ios
@@ -140,6 +143,7 @@ targets:
       - package: Daily
         product: Daily
         embed: false
+      - package: CallScreenCore
       - framework: libapp.a
         embed: false
       - sdk: CoreGraphics.framework

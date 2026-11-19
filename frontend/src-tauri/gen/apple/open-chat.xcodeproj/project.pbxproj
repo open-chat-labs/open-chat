@@ -10,6 +10,7 @@
 		24C1D01D42F7C40FE2C3AED2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */; };
 		28BAC41DBC7E12FC25DD780B /* NativeCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AB4FFBEA5597A029FDCC3D /* NativeCalls.swift */; };
 		2C2AE878C73D710C6B28B451 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 24DEDD57D1B3A43C924DDC93 /* MetalKit.framework */; };
+		360B5C0EC633915C40E1399E /* CallScreenCore in Frameworks */ = {isa = PBXBuildFile; productRef = 75CBB1601A68D78E05D2E825 /* CallScreenCore */; };
 		38E4F6C109C0052E8864402E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C587610A2DF92B55D48C524 /* WebKit.framework */; };
 		3B922DD4B66E7C6B8FDA7617 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AE857753D46B3772C2BF7CF /* UIKit.framework */; };
 		4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */; };
@@ -111,6 +112,7 @@
 		72A37ADB07A0BB20592A4855 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		72F57D63ECA2281A8E33103F /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7B5465D38123E67CA54CF109 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		7CABCE73FE49EA93ECB3BD44 /* CallScreenCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CallScreenCore; path = "../../../tauri-plugin-oc/ios/CallScreenCore"; sourceTree = SOURCE_ROOT; };
 		800ACAE721E139A214A462DB /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		80F3BDE1AFADD325DEA8B1BC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		80FD08E1B5202F3AB350EB3B /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4A31C5977ABF9C43067645CE /* Daily in Frameworks */,
+				360B5C0EC633915C40E1399E /* CallScreenCore in Frameworks */,
 				420EEDDE4D7B1AD1575A8B62 /* libapp.a in Frameworks */,
 				B6D4D3E52790D5E4158C3F18 /* CoreGraphics.framework in Frameworks */,
 				6C68F46ADB8840E2F4853638 /* Metal.framework in Frameworks */,
@@ -319,6 +322,7 @@
 		93663503E93E316EC2301611 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
+				7CABCE73FE49EA93ECB3BD44 /* CallScreenCore */,
 				A619DD738199AEAC42094B69 /* PushCore */,
 				ABE5A59E20A302EA8370CE9D /* ShareCore */,
 			);
@@ -414,6 +418,7 @@
 			name = "open-chat_iOS";
 			packageProductDependencies = (
 				F6EDDEA97A0629F705B41CC2 /* Daily */,
+				75CBB1601A68D78E05D2E825 /* CallScreenCore */,
 			);
 			productName = "open-chat_iOS";
 			productReference = E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */;
@@ -467,6 +472,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				0B03C5FECE4E9B418F89A494 /* XCRemoteSwiftPackageReference "daily-client-ios" */,
+				5B44430F18F18B5CF7CDF206 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/CallScreenCore" */,
 				86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */,
 				C701720CE957C4798D23A8A4 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/ShareCore" */,
 			);
@@ -1084,6 +1090,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		5B44430F18F18B5CF7CDF206 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/CallScreenCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../tauri-plugin-oc/ios/CallScreenCore";
+		};
 		86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../../tauri-plugin-oc/ios/PushCore";
@@ -1109,6 +1119,10 @@
 		4CF21605C7C10B9C1392BDD4 /* ShareCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ShareCore;
+		};
+		75CBB1601A68D78E05D2E825 /* CallScreenCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CallScreenCore;
 		};
 		BC2AF3EBF9E211DA709E9F4F /* PushCore */ = {
 			isa = XCSwiftPackageProductDependency;
