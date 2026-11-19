@@ -1844,7 +1844,8 @@
                 "emptyTitle": "No pinned messages",
                 "emptyBody": "Long-press a message in the chat and choose Pin to keep it at the top.",
                 "loadFailed": "Couldn't load the pinned messages"
-            }
+            },
+            "latestCall": "Go to latest message. A call is in progress"
         },
         "shareUnavailable": "Sharing to OpenChat from other apps isn't available in this version yet.",
         "start": {
@@ -2335,7 +2336,8 @@
             "startBroadcast": "Start broadcast",
             "unmute": "Unmute",
             "you": "You",
-            "yourCamera": "Your camera. Drag to move"
+            "yourCamera": "Your camera. Drag to move",
+            "speakRequests": "Requests to speak: {count}"
         }
     },
     "new": "new",

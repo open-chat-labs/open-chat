@@ -295,6 +295,8 @@ export interface ComposerContext {
   quote: string;
   /** CSS background for a media thumbnail. */
   thumb?: string;
+  /** The thumbnail is a video's first frame: a play glyph over it. */
+  thumbVideo?: boolean;
   /** Edit mode: the original text. */
   text?: string;
 }

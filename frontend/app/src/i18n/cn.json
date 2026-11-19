@@ -1935,7 +1935,8 @@
                 "emptyTitle": "没有置顶消息",
                 "emptyBody": "在聊天中长按一条消息并选择“固定”，即可将其保持在顶部。",
                 "loadFailed": "无法加载置顶消息"
-            }
+            },
+            "latestCall": "转到最新消息。通话进行中"
         },
         "shareUnavailable": "此版本暂不支持从其他应用分享到 OpenChat。",
         "start": {
@@ -2426,7 +2427,8 @@
             "startBroadcast": "开始直播",
             "unmute": "取消静音",
             "you": "你",
-            "yourCamera": "你的摄像头。拖动可移动"
+            "yourCamera": "你的摄像头。拖动可移动",
+            "speakRequests": "发言请求：{count}"
         }
     },
     "new": "新的",

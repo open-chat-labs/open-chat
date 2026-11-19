@@ -207,6 +207,24 @@ export function miniCallShows(call: Call): boolean {
 }
 
 /**
+ * The minimised call's badge: how many people are asking the host to speak, the requests the call
+ * screen shows as cards. None waiting, no badge.
+ */
+export function miniCallRequests(
+    call: { accessRequests: readonly unknown[] } | undefined,
+): number | undefined {
+    return call?.accessRequests.length || undefined;
+}
+
+/**
+ * The scroll-to-the-latest button shows the call going on (plan 04: green, with a phone badge)
+ * exactly while the header's call button does: a call in the chat the user isn't in.
+ */
+export function latestShowsCall(headerButtons: HeaderCallButton[]): boolean {
+    return headerButtons.some((b) => b.live);
+}
+
+/**
  * The user's own camera is shown mirrored, as a mirror would, unless it faces away from them (a
  * phone's back camera), where the mirror would turn the world round.
  */

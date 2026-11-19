@@ -1022,3 +1022,7 @@
 
 ## 2026-11-18 — NativePageHeader's live call button, by hand
 - `NativePageHeader`: an action can be `live` (`NativeHeaderAction.live`): green on a green tint, pulsing three times, for the header's call button that joins a call going on in the chat (native plan 09, 2026-11-10, which replaced the strip under the header). Used by the native conversation (N14, #10382).
+
+## 2026-11-16 — a video reply's thumbnail has a play glyph (web 5c), by hand
+- `ComposerContext.thumbVideo` (optional): the reply strip's `thumb` is a video's first frame, so a small play glyph sits over it, as on the media tray's video tiles and the old trees' reply strips. Without it the thumbnail is as before. The app now passes a reply's picture as `thumb` (a photo, a video's first frame, a GIF, a meme). No component props changed (`ComposerContext` is a type), so no `meta.json` change.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it). TODO(design): the export's thumbnail has no video glyph.

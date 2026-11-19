@@ -36,7 +36,13 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
-    import { callScreenShows, miniCallShows, mirrorsSelf, pipArmed } from "./call.adapter";
+    import {
+        callScreenShows,
+        miniCallRequests,
+        miniCallShows,
+        mirrorsSelf,
+        pipArmed,
+    } from "./call.adapter";
     import CallMini from "./CallMini.svelte";
     import CallPip from "./CallPip.svelte";
     import CallScreen from "./CallScreen.svelte";
@@ -198,6 +204,7 @@
         tile={call.callType !== "audio" && !isIosTauriApp()}
         {lead}
         muted={!$microphone}
+        requests={miniCallRequests(call)}
         position={spot}
         {safeTop}
         {safeBottom}

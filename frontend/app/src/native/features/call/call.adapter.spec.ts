@@ -5,6 +5,8 @@ import {
     callScreenShows,
     callStage,
     headerCallButtons,
+    latestShowsCall,
+    miniCallRequests,
     miniCallShows,
     outputMenu,
     pipArmed,
@@ -169,5 +171,25 @@ describe("the native call", () => {
         expect(callScreenShows({ view: "default" }, true)).toBe(true);
         expect(callScreenShows({ view: "minimised" }, true)).toBe(false);
         expect(callScreenShows(undefined, true)).toBe(false);
+    });
+
+    // plan 04: green, with the phone badge, as the header's call button
+    test("invariant 16: the scroll-to-the-latest button shows a call exactly while the header's button is live", () => {
+        const base = { canStart: true, isPublic: false };
+        const shows = (chatCall?: "audio" | "default", ownCall?: "audio" | "default") =>
+            latestShowsCall(headerCallButtons({ ...base, chatCall, ownCall }));
+        expect(shows("audio")).toBe(true);
+        expect(shows("default")).toBe(true);
+        // the user's own call there, or none
+        expect(shows("audio", "audio")).toBe(false);
+        expect(shows(undefined, "default")).toBe(false);
+        expect(shows()).toBe(false);
+    });
+
+    test("invariant 17: the minimised call counts the requests to speak waiting, and shows none when none wait", () => {
+        const request = (id: string) => ({ participantId: id, userId: id });
+        expect(miniCallRequests({ accessRequests: [request("a"), request("b")] })).toBe(2);
+        expect(miniCallRequests({ accessRequests: [] })).toBeUndefined();
+        expect(miniCallRequests(undefined)).toBeUndefined();
     });
 });
