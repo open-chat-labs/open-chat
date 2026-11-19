@@ -2811,8 +2811,11 @@ design export needs. Each entry says where it came up.
   command when they're enough (`executeBotCommand`), the text going; else a dialog asks for them
   (`BotCommandDialog`, the old `CommandInstanceBuilder`: a field per parameter it shows, text, a
   number, one of its choices as chips, on or off, someone in the chat, a date and time;
-  `logic/bots/commandArgs`), the text staying until it's sent, and staying if the dialog's
-  cancelled. Failures toast as the old trees' do (`botCommandFailure`, `@client`: `bots.failed`,
+  `logic/bots/commandArgs`; a past date for one that wants a future date counts as none, as the
+  old date input had it), the text staying until it's sent, and staying if the dialog's
+  cancelled; the dialog closes if the chat changes under it. A chat's and a thread's composers
+  each type and pick their own (each `CommandPicker` keeps its own `BotState`, going by the app's
+  bots). Failures toast as the old trees' do (`botCommandFailure`, `@client`: `bots.failed`,
   `bots.tooManyRequests`, which both old trees use now). The built-in bot's commands are offered
   only where this tree carries them out (`carriesOutCommand`): /diamond and /faq (they post), /poll
   and /crypto where the "+" menu offers their builders (the client's `createPoll` and

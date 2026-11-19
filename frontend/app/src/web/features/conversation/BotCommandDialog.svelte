@@ -2,7 +2,8 @@
      trees' CommandInstanceBuilder): what the command does, then a field per parameter it shows
      (shownParams: a parameter, or a choice, can hang on an earlier one's value), by its kind: text,
      a number, one of its choices, on or off, someone in the chat, a date and time. Send runs it
-     (CommandPicker.submit), Cancel or closing drops it.
+     (CommandPicker.submit), Cancel or closing drops it (CommandPicker.cancel); either way the form
+     closes (CommandPicker.form).
      TODO(design): the design has no bot command dialog; drawn from the library's dialog, text
      area, chips and toggle, and the plain fields the reminder dialog uses. -->
 <script lang="ts">
@@ -44,11 +45,9 @@
         userName: (userId: string) => string;
         /** It's running: `result` settles with how that went. */
         onSent: (result: Promise<BotCommandResult>) => void;
-        /** It was dropped. */
-        onCancel: () => void;
     }
 
-    let { picker, command, context, me, userName, onSent, onCancel }: Props = $props();
+    let { picker, command, context, me, userName, onSent }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -86,7 +85,6 @@
 
     function cancel() {
         picker.cancel();
-        onCancel();
     }
 </script>
 
@@ -114,15 +112,9 @@
                             value={choiceIndex(param, arg) < 0
                                 ? ""
                                 : $_(field.names[choiceIndex(param, arg)])}
-                            onChange={(picked) =>
-                                set(
-                                    i,
-                                    argFromChoice(
-                                        param,
-                                        arg,
-                                        field.names.findIndex((n) => $_(n) === picked),
-                                    ),
-                                )} />
+                            selectedIndex={choiceIndex(param, arg)}
+                            onChange={(_picked, index) =>
+                                set(i, argFromChoice(param, arg, index))} />
                     {:else if field.kind === "toggle"}
                         <Toggle
                             on={arg.kind === "boolean" && arg.value === true}
@@ -167,7 +159,15 @@
                                 type="datetime-local"
                                 min={field.futureOnly ? localDateTime($now) : undefined}
                                 value={argText(arg)}
-                                oninput={(e) => set(i, argFromText(arg, e.currentTarget.value))} />
+                                oninput={(e) =>
+                                    set(
+                                        i,
+                                        argFromText(
+                                            arg,
+                                            e.currentTarget.value,
+                                            field.futureOnly ? Date.now() : undefined,
+                                        ),
+                                    )} />
                         {:else if field.kind === "user" && arg.kind === "user"}
                             {#if arg.userId !== undefined}
                                 <div class="chosen">

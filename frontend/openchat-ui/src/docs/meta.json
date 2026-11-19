@@ -2930,8 +2930,19 @@
         "doc": ""
       },
       {
+        "name": "selectedIndex",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Which option is selected, by position, in place of `value` (for options with the same text)."
+      },
+      {
         "name": "onChange",
-        "type": "(value: string) => void",
+        "type": "(value: string, index: number) => void",
         "default": null,
         "editor": null,
         "options": null,

@@ -69,8 +69,11 @@ export function argText(arg: CommandArg): string {
     }
 }
 
-/** The argument a text, number or date field's text makes; text that isn't a number or a date makes none. */
-export function argFromText(arg: CommandArg, text: string): CommandArg {
+/**
+ * The argument a text, number or date field's text makes; text that isn't a number or a date makes
+ * none, as does a date before `notBefore` (now, for a parameter that takes only future dates).
+ */
+export function argFromText(arg: CommandArg, text: string, notBefore?: number): CommandArg {
     const typed = text.trim();
     switch (arg.kind) {
         case "string":
@@ -83,7 +86,8 @@ export function argFromText(arg: CommandArg, text: string): CommandArg {
         }
         case "dateTime": {
             const at = typed === "" ? NaN : new Date(typed).getTime();
-            return { ...arg, value: Number.isNaN(at) ? null : BigInt(at) };
+            const past = notBefore !== undefined && at < notBefore;
+            return { ...arg, value: Number.isNaN(at) || past ? null : BigInt(at) };
         }
         default:
             return arg;

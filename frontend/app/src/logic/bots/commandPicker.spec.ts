@@ -101,7 +101,7 @@ describe("a bot command typed in the composer", () => {
     });
 
     test("one with nothing to ask runs at once, and the picking's over", async () => {
-        const { picker, offered, client, bots } = setUp();
+        const { picker, offered, client } = setUp();
         picker.typed("/po");
         const pick = await picker.pick(context, offered(), offered()[0]);
         expect(pick.kind).toBe("sent");
@@ -110,7 +110,6 @@ describe("a bot command typed in the composer", () => {
             expect.objectContaining({ kind: "chat_scope", chatId: context.chatId }),
             { kind: "internal_bot", command: { name: "poll", arguments: [] } },
         );
-        expect(bots.prefix).toBe("");
         expect(offered()).toEqual([]);
     });
 
@@ -131,22 +130,51 @@ describe("a bot command typed in the composer", () => {
         picker.typed("/weather");
         const pick = await picker.pick(context, offered(), offered()[0]);
         expect(pick.kind).toBe("needs_args");
+        expect(picker.form).toEqual({
+            context,
+            command: expect.objectContaining({ name: "weather" }),
+        });
         expect(picker.valid).toBe(false);
         expect(picker.shown.map((p) => p?.name)).toEqual(["city"]);
         expect(picker.submit(context)).toBeUndefined();
+        expect(picker.form).toBeDefined();
         picker.setArg(0, { kind: "string", name: "city", value: "Rome" });
         expect(picker.valid).toBe(true);
         expect(await picker.submit(context)).toBe("success");
         expect(ran[0].command.arguments).toEqual([{ kind: "string", name: "city", value: "Rome" }]);
+        expect(picker.form).toBeUndefined();
+        if (pick.kind === "needs_args") expect(await pick.sent).toBe(true);
     });
 
-    test("cancelled, nothing runs and nothing's listed", async () => {
+    test("cancelled, nothing runs, nothing's listed and the form closes, not sent", async () => {
         const { picker, offered, client } = setUp();
         picker.typed("/weather");
-        await picker.pick(context, offered(), offered()[0]);
+        const pick = await picker.pick(context, offered(), offered()[0]);
         picker.cancel();
         expect(client.executeBotCommand).not.toHaveBeenCalled();
         expect(offered()).toEqual([]);
+        expect(picker.form).toBeUndefined();
+        if (pick.kind === "needs_args") expect(await pick.sent).toBe(false);
+    });
+
+    test("the composer going (another chat opened) closes the form, not sent", async () => {
+        const { picker, offered, client } = setUp();
+        picker.typed("/weather");
+        const pick = await picker.pick(context, offered(), offered()[0]);
+        expect(pick.kind).toBe("needs_args");
+        picker.typed(undefined);
+        expect(picker.form).toBeUndefined();
+        if (pick.kind === "needs_args") expect(await pick.sent).toBe(false);
+        expect(client.executeBotCommand).not.toHaveBeenCalled();
+    });
+
+    test("loads the date parser it's given once a '/' is typed", () => {
+        const { bots } = setUp();
+        const loadParser = vi.fn(async () => {});
+        const picker = new CommandPicker({ executeBotCommand: vi.fn() }, bots, loadParser);
+        picker.typed("/");
+        picker.typed("/we");
+        expect(loadParser).toHaveBeenCalledTimes(1);
     });
 
     test("one with a date waits for the date parser, and a pick meanwhile overtakes it", async () => {
@@ -169,17 +197,62 @@ describe("a bot command typed in the composer", () => {
         expect((await second).kind).toBe("sent");
         release();
         await parser;
-        expect(bots.selectedCommand).toBeUndefined();
+        expect(picker.form).toBeUndefined();
+        expect(picker.shown).toEqual([]);
     });
 
-    test("the '/' going leaves the other composer's typing alone", () => {
-        const { bots } = setUp();
-        const chat = new CommandPicker({ executeBotCommand: vi.fn() }, bots, async () => {});
-        const thread = new CommandPicker({ executeBotCommand: vi.fn() }, bots, async () => {});
-        thread.typed("/fa");
-        chat.typed(undefined);
-        expect(bots.prefix).toBe("/fa");
-        thread.typed(undefined);
-        expect(bots.prefix).toBe("");
+    describe("a chat's and a thread's composers", () => {
+        function two() {
+            const { bots } = setUp();
+            const picker = () =>
+                new CommandPicker({ executeBotCommand: vi.fn() }, bots, async () => {});
+            const chat = picker();
+            const thread = picker();
+            const names = (p: CommandPicker) =>
+                p
+                    .offered(place, (c) => ["poll", "faq", "diamond"].includes(c.name))
+                    .map((c) => c.name);
+            return { bots, chat, thread, names };
+        }
+
+        test("the '/' going in one leaves the other's typing alone", () => {
+            const { chat, thread, names } = two();
+            thread.typed("/fa");
+            chat.typed(undefined);
+            expect(names(thread)).toEqual(["faq"]);
+        });
+
+        test("each lists for its own typing, both typing", () => {
+            const { chat, thread, names } = two();
+            chat.typed("/po");
+            thread.typed("/");
+            expect(names(chat)).toEqual(["poll"]);
+            expect(names(thread)).toEqual(["diamond", "faq", "poll", "weather"]);
+            // the '/' deleted in the thread's: the chat's still lists /po's, not every command
+            thread.typed(undefined);
+            expect(names(chat)).toEqual(["poll"]);
+            expect(names(thread)).toEqual([]);
+        });
+
+        test("a pick in one leaves the other's list and picking alone", async () => {
+            const { chat, thread, names } = two();
+            chat.typed("/");
+            thread.typed("/weather");
+            const offered = thread.offered(place, () => true);
+            const pick = await thread.pick(context, offered, offered[0]);
+            expect(pick.kind).toBe("needs_args");
+            expect(chat.form).toBeUndefined();
+            expect(chat.shown).toEqual([]);
+            expect(names(chat)).toEqual(["diamond", "faq", "poll", "weather"]);
+            chat.typed(undefined);
+            expect(thread.form?.command.name).toBe("weather");
+        });
+
+        test("neither's typing is the app's", () => {
+            const { bots, chat } = two();
+            chat.typed("/po");
+            expect(bots.prefix).toBe("");
+            expect(bots.selectedCommand).toBeUndefined();
+        });
     });
 });

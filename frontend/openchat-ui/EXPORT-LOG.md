@@ -1050,3 +1050,7 @@
 ## 2026-11-19 — MessageComposer: the reply / edit card above the attached media (web 5c), by hand
 - `MessageComposer`: with a reply or edit card (`context`) and media attached, the card comes first, then the media header and thumbnails, then the text, as the file and builder chips already did; the media had sat above the card. Under the card the thumbnails lose their 6px top inset (the bar's row gap is the space). Alone, either looks as before. Every host (web and native) gets it; native plan 05 places both "above the input" without ordering them. No props changed.
 - Not in the design export: the export's markup put the media above the card.
+
+## 2026-11-19 — DurationChips picks by position (web 5c), by hand
+- `DurationChips`: `onChange(value, index)` also hears the option's position, and `selectedIndex` (optional) marks the selected option by position in place of `value`, so options with the same text (a bot command's choices can share a name) pick and show the right one. Without `selectedIndex` it's as before. `meta.json` (`selectedIndex`, `onChange`). Used by the bot command dialog's choices.
+- Not in the design export: to go back to it.

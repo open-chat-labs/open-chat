@@ -1,5 +1,5 @@
-import type { MessageContext } from "@shared";
-import { botState } from "./bots.svelte";
+import { ROLE_MEMBER, type ExternalBot, type MessageContext } from "@shared";
+import { BotState, botState } from "./bots.svelte";
 
 const messageContext: MessageContext = { chatId: { kind: "group_chat", groupId: "123456" } };
 
@@ -75,6 +75,61 @@ describe("bot state", () => {
                     ]),
                 );
             });
+        });
+    });
+
+    describe("one that goes by another's bots", () => {
+        const bot: ExternalBot = {
+            kind: "external_bot",
+            id: "wb",
+            name: "Weatherbot",
+            ownerId: "owner",
+            endpoint: "https://wb",
+            registrationStatus: { kind: "public" },
+            definition: {
+                kind: "bot_definition",
+                description: "",
+                commands: [
+                    {
+                        name: "weather",
+                        description: "Ask the sky",
+                        defaultRole: ROLE_MEMBER,
+                        directMessages: false,
+                        permissions: {
+                            chatPermissions: [],
+                            communityPermissions: [],
+                            messagePermissions: [],
+                        },
+                        params: [],
+                    },
+                ],
+                autonomousConfig: undefined,
+                defaultSubscriptions: undefined,
+                dataEncoding: undefined,
+                restrictedLocations: undefined,
+                miniApps: [],
+            },
+        };
+
+        test("lists its source's bots, with its formatter, for its own prefix", () => {
+            const source = new BotState();
+            const own = new BotState(source);
+            source.messageFormatter = (s) => (s === "Ask the sky" ? "the forecast" : s);
+            source.setExternalBots([bot]);
+            source.prefix = "/faq";
+            own.prefix = "/forecast";
+            expect(own.commands.map((c) => c.name)).toEqual(["weather"]);
+            expect(source.commands.map((c) => c.name)).toEqual(["faq"]);
+        });
+
+        test("keeps its own pick", () => {
+            const source = new BotState();
+            const own = new BotState(source);
+            own.prefix = "/faq";
+            own.setSelectedCommand(messageContext, own.commands, own.commands[0]);
+            expect(own.selectedCommand?.name).toBe("faq");
+            expect(source.selectedCommand).toBeUndefined();
+            expect(source.commands.length).toBeGreaterThan(1);
         });
     });
 });

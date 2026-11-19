@@ -721,19 +721,9 @@
     });
     const commands = $derived(offeredCommands.map((c) => composerCommand(c, (key) => $_(key))));
 
-    // the command whose arguments are being asked for, and the composer's pick waiting on it
-    let commandForm = $state<{
-        context: MessageContext;
-        command: FlattenedCommand;
-        done: (sent: boolean) => void;
-    }>();
-
-    // the arguments' dialog closed: the composer's pick hears whether the command went
-    function closeCommandForm(sent: boolean) {
-        const form = commandForm;
-        commandForm = undefined;
-        form?.done(sent);
-    }
+    // the command whose arguments are being asked for (the composer's pick waits on it); it closes
+    // with the composer, as when another chat's opened
+    const commandForm = $derived(commandPicker.form);
 
     // resolves true once the command is on its way (the composer's text goes), false if it's
     // dropped
@@ -747,7 +737,7 @@
                 void reportCommand(pick.result);
                 return true;
             case "needs_args":
-                return new Promise((done) => (commandForm = { context, command: pick.command, done }));
+                return pick.sent;
             case "gone":
                 return false;
         }
@@ -1886,11 +1876,7 @@
         context={commandForm.context}
         {me}
         userName={(userId) => ctx.userName(userId)}
-        onSent={(result) => {
-            closeCommandForm(true);
-            void reportCommand(result);
-        }}
-        onCancel={() => closeCommandForm(false)} />
+        onSent={(result) => void reportCommand(result)} />
 {/if}
 
 {#if deleting !== undefined}

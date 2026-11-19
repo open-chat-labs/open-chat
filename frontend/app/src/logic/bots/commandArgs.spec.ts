@@ -108,6 +108,21 @@ describe("a field's text as the argument", () => {
         expect(argText({ ...arg, value: BigInt(at) })).toBe("2026-11-16T09:30");
         expect(value(argFromText(arg, ""))).toBeNull();
     });
+
+    test("a date before the earliest allowed (now, for a future-only one) is none", () => {
+        const arg: CommandArg = { kind: "dateTime", name: "at", value: null };
+        const now = new Date(2026, 10, 16, 9, 30).getTime();
+        const later = now + 60_000;
+        expect(value(argFromText(arg, localDateTime(now - 60_000), now))).toBeNull();
+        expect(argFromText(arg, localDateTime(later), now)).toEqual({
+            ...arg,
+            value: BigInt(later),
+        });
+        expect(argFromText(arg, localDateTime(now - 60_000))).toEqual({
+            ...arg,
+            value: BigInt(now - 60_000),
+        });
+    });
 });
 
 describe("a choice as the argument", () => {
