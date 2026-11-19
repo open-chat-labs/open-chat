@@ -222,14 +222,13 @@ export function quoteTarget(
 }
 
 /**
- * A text bubble's quote, tapped, goes to its target (`go`): ChatBubble's `onQuote`. Nothing for a
- * message that isn't a reply, or of a kind that shows no quote.
+ * A reply's quote, tapped, goes to its target (`go`): its message's `onQuote`, whatever its kind
+ * (every kind shows the quote, as the text bubble does). Nothing for a message that isn't a reply.
  */
 export function quoteFor(
-    message: GroupMessage,
     target: QuoteTarget | undefined,
     go: (target: QuoteTarget) => void,
 ): { onQuote?: () => void } {
-    if (target === undefined || (message.kind !== undefined && message.kind !== "text")) return {};
+    if (target === undefined) return {};
     return { onQuote: () => go(target) };
 }

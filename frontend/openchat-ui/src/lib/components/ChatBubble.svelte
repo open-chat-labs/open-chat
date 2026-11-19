@@ -10,6 +10,7 @@
   import LinkCard from './LinkCard.svelte';
   import PlayerCard from './PlayerCard.svelte';
   import ReactionChips, { type Reaction, type Tip } from './ReactionChips.svelte';
+  import ReplyQuote from './ReplyQuote.svelte';
   import ThreadLink from './ThreadLink.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
@@ -122,14 +123,6 @@
 
 </script>
 
-{#snippet quote()}
-  <span class="quote-bar"></span>
-  <div class="quote-body">
-    <div class="quote-name">{quoteName}</div>
-    <div class="quote-text">{quoteText}</div>
-  </div>
-{/snippet}
-
 {#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
 
 <div class="wrap" class:mirror>
@@ -142,28 +135,8 @@
   {:else}
     <div class="column" class:sent class:mirror>
       <div class="bubble" class:last={lastInGroup} class:mirror class:carded class:players={players.length > 0} data-oc-bubble data-bubble-sent={side === 'sent' ? '' : undefined}>
-        {#if quoteName && onQuote}
-          <div
-            class="quote link"
-            role="button"
-            tabindex="0"
-            onclick={(e) => {
-              e.stopPropagation();
-              onQuote();
-            }}
-            onkeydown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onQuote();
-              }
-            }}
-          >
-            {@render quote()}
-          </div>
-        {:else if quoteName}
-          <div class="quote">
-            {@render quote()}
-          </div>
+        {#if quoteName}
+          <ReplyQuote name={quoteName} text={quoteText} {sent} onOpen={onQuote} />
         {/if}
         {#if forwarded}
           <div class="forwarded"><span class="forward-icon"></span><span class="forward-label">{t('ui.chatBubble.forwarded')}</span></div>
@@ -328,60 +301,10 @@
     }
   }
 
-  /* received: a tinted panel with an accent bar; sent: the bubble's own reply shade */
-  .quote {
-    --quote-bg: var(--overlay-2);
-    --quote-bar: var(--accent);
-    --quote-name: var(--accent-bright);
-    --quote-text: var(--ink-3);
-    display: flex;
-    gap: var(--space-8);
-    padding: var(--space-8) var(--space-10);
-    border-radius: var(--radius-md);
-    background: var(--quote-bg);
+  /* the quote (ReplyQuote: received, a tinted panel with an accent bar; sent, the bubble's own reply shade) reaches
+     into the bubble's padding */
+  .column .bubble > :global(.reply-quote) {
     margin: -5px -6px 8px;
-
-    .sent & {
-      --quote-bg: var(--bubble-reply);
-      --quote-bar: var(--bubble-text-soft);
-      --quote-name: var(--bubble-text);
-      --quote-text: var(--bubble-text-soft);
-    }
-  }
-
-  .quote.link {
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-  }
-
-  .quote-bar {
-    flex: none;
-    width: 4px;
-    border-radius: var(--radius-pill);
-    background: var(--quote-bar);
-  }
-
-  .quote-body {
-    min-width: 0;
-  }
-
-  .quote-name {
-    font: var(--weight-bold) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--quote-name);
-    @include truncate;
-  }
-
-  /* quoted text wraps up to three lines, then ends in an ellipsis */
-  .quote-text {
-    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--quote-text);
-    @include line-clamp(3);
-    overflow-wrap: anywhere;
   }
 
   .forwarded {
@@ -472,11 +395,11 @@
     width: 542px;
   }
 
-  .carded {
-    > .quote {
-      margin: 0 0 var(--space-8);
-    }
+  .column .bubble.carded > :global(.reply-quote) {
+    margin: 0 0 var(--space-8);
+  }
 
+  .carded {
     > .forwarded,
     > .code,
     > .text {

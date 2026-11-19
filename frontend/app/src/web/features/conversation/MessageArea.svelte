@@ -1148,7 +1148,7 @@
                 ...previewRemoval(where, evt),
                 ...retryFor(row.message, offers.retry),
                 ...threadLink(evt),
-                ...quoteFor(row.message, quoted, goToQuote),
+                ...quoteFor(quoted, goToQuote),
                 menu: offers.menu,
             }),
         ];

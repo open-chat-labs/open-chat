@@ -1120,7 +1120,7 @@
             withFields(message, {
                 ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
-                ...quoteFor(row.message, quoted, goToQuote),
+                ...quoteFor(quoted, goToQuote),
                 menu: offers.menu,
                 swipeLeft: offers.swipes.left,
             }),

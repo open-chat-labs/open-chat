@@ -3,6 +3,7 @@
      (sent = you sent it). Optional caption sits under the card. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import ReplyQuote from './ReplyQuote.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Props {
@@ -22,6 +23,11 @@
     lastInGroup?: boolean;
     /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
     mirror?: boolean;
+    /** Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message ("You" for your own), at the top of the message. */
+    quoteName?: string;
+    quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
     onOpen?: () => void;
   }
 
@@ -38,6 +44,9 @@
     time,
     lastInGroup = true,
     mirror = false,
+    quoteName = '',
+    quoteText = '',
+    onQuote,
     onOpen,
   }: Props = $props();
   const t = useT();
@@ -48,6 +57,7 @@
 </script>
 
 <div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined}>
+  {#if quoteName}<ReplyQuote name={quoteName} text={quoteText} sent={side === 'sent'} tile {mirror} onOpen={onQuote} />{/if}
   <div class="card">
     <div class="head">
       <TokenAvatar {symbol} {mark} {gradient} badge={way === 'in' ? 'receive' : 'send'} size={40} />
@@ -101,6 +111,12 @@
     .sent & {
       background: rgba(0, 0, 0, 0.18);
     }
+  }
+
+  /* under a reply quote (the card's first tile then), its top corners are a tile's */
+  .shell:has(> :global(.reply-quote)) > .card {
+    border-start-start-radius: 6px;
+    border-start-end-radius: 6px;
   }
 
   .head {

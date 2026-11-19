@@ -196,6 +196,47 @@ describe("a message row", () => {
         expect(messageRow(reply, "sent", ctx).message).toMatchObject({ quoteText: "ask @alice" });
     });
 
+    test("quotes the message it replies to whatever its kind (a GIF, a voice message, a file …)", () => {
+        const repliesTo = {
+            kind: "rehydrated_reply_context",
+            senderId: "bob",
+            content: { kind: "text_content", text: "ask @UserId(alice)" },
+        } as Message["repliesTo"];
+        const kinds = {
+            gif: {
+                kind: "giphy_content",
+                title: "cat",
+                desktop: { url: "d", width: 480, height: 270, mimeType: "video/mp4" },
+                mobile: { url: "m", width: 240, height: 135, mimeType: "image/gif" },
+            },
+            image: { kind: "image_content", width: 4, height: 3, blobUrl: "u", mimeType: "x" },
+            voice: {
+                kind: "audio_content",
+                mimeType: "audio/webm",
+                durationMs: 2000n,
+                samples: new Uint8Array([128]),
+            },
+            file: {
+                kind: "file_content",
+                name: "a.pdf",
+                mimeType: "application/pdf",
+                fileSize: 10,
+                blobUrl: "u",
+            },
+        };
+        for (const [kind, content] of Object.entries(kinds)) {
+            const row = messageRow(
+                message({ content: content as Message["content"], repliesTo }),
+                "sent",
+                ctx,
+            );
+            expect(row.message).toMatchObject({ kind, quoteName: "Bob", quoteText: "ask @alice" });
+        }
+        // not a reply: no quote
+        const gif = messageRow(message({ content: kinds.gif as Message["content"] }), "sent", ctx);
+        expect(gif.message).toMatchObject({ kind: "gif", quoteName: undefined });
+    });
+
     test("has its thread's reply count, last reply and the faces of those in it", () => {
         const threaded = message({
             thread: {

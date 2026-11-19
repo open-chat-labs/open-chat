@@ -4,6 +4,7 @@
      shape is the same for both sides); `mirror` flips the corners for a right-aligned layout (mobile, native). -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import ReplyQuote from './ReplyQuote.svelte';
   import Waveform from './Waveform.svelte';
 
   const H = [7, 14, 20, 11, 17, 9, 15, 21, 10, 16, 6, 13, 19, 8, 12, 18, 10, 15, 7, 20];
@@ -22,6 +23,11 @@
     side?: 'received' | 'sent';
     /** A right-aligned layout (mobile, native): the grouped corners on the inline-end side, as ChatBubble's. */
     mirror?: boolean;
+    /** Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message ("You" for your own), at the top of the message. */
+    quoteName?: string;
+    quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
     lastInGroup?: boolean;
     time: string;
     cornerBottomLeft?: number | string | null;
@@ -32,7 +38,7 @@
     onSeek?: (fraction: number) => void;
   }
 
-  let { progress = 0, levels, elapsed, total, speed = '1x', side = 'received', mirror = false, lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
+  let { progress = 0, levels, elapsed, total, speed = '1x', side = 'received', mirror = false, quoteName = '', quoteText = '', onQuote, lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
   const t = useT();
 
   // play state, seeking and speed changes stick locally until the parent sends new values
@@ -72,6 +78,7 @@
 
 <div class="row" class:mirror>
   <div class="bubble" class:sent class:mirror data-bubble-sent={sent ? '' : undefined} class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
+    {#if quoteName}<ReplyQuote name={quoteName} text={quoteText} sent={side === 'sent'} onOpen={onQuote} />{/if}
     <div class="controls">
       <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
         <span class="play-icon"></span>
@@ -139,6 +146,11 @@
         border-end-end-radius: var(--radius-lg);
       }
     }
+  }
+
+  /* the quote reaches into the bubble's padding, as ChatBubble's; 8px over the controls */
+  .bubble > :global(.reply-quote) {
+    margin: -4px -8px -4px -6px;
   }
 
   .controls {
