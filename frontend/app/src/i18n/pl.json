@@ -1935,7 +1935,8 @@
                 "emptyTitle": "Brak przypiętych wiadomości",
                 "emptyBody": "Przytrzymaj wiadomość w czacie i wybierz Przypnij, aby została na górze.",
                 "loadFailed": "Nie udało się wczytać przypiętych wiadomości"
-            }
+            },
+            "latestCall": "Przejdź do ostatniej wiadomości. Trwa rozmowa"
         },
         "shareUnavailable": "Udostępnianie do OpenChat z innych aplikacji nie jest jeszcze dostępne w tej wersji.",
         "start": {
@@ -2426,7 +2427,8 @@
             "startBroadcast": "Rozpocznij transmisję",
             "unmute": "Wyłącz wyciszenie",
             "you": "Ty",
-            "yourCamera": "Twoja kamera. Przeciągnij, aby przesunąć"
+            "yourCamera": "Twoja kamera. Przeciągnij, aby przesunąć",
+            "speakRequests": "Prośby o głos: {count}"
         }
     },
     "new": "nowy",
