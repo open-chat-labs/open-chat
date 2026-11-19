@@ -2453,9 +2453,6 @@
                 "getDiamond": "ダイヤモンドを入手",
                 "payAndJoin": "{amount} {symbol} を支払って参加",
                 "leaveAnyTime": "いつでも退出できます。",
-                "membership": "メンバーシップ",
-                "membershipYes": "取得済み",
-                "storeMembership": "このアプリでは提供できないメンバーシップ",
                 "storePayment": "このアプリでは行えない支払い"
             }
         }

@@ -76,8 +76,8 @@ function tokenRow(
 
 /**
  * The rows for a gate's leaves (GateEvaluation's), with the user's tokens and their balances. A
- * store build (`appStoreBuild`) makes no payment and never names or sells Diamond: a payment can't
- * be met in it, and a Diamond gate is a "membership" the app can't provide (met if the user has it).
+ * store build (`appStoreBuild`) moves no crypto and sells no Diamond, as v2's store build: a payment
+ * can't be met in it, and a Diamond row doesn't offer Get Diamond.
  */
 export function sheetRows(
     leaves: EvaluatedLeafGate[],
@@ -127,21 +127,6 @@ export function sheetRows(
             }
             case "diamond_gate":
             case "lifetime_diamond_gate": {
-                if (store) {
-                    return {
-                        ...base,
-                        label: i18nKey(
-                            leaf.satisfied
-                                ? "native.join.sheet.membership"
-                                : "native.join.sheet.storeMembership",
-                        ),
-                        detail: leaf.satisfied
-                            ? i18nKey("native.join.sheet.membershipYes")
-                            : undefined,
-                        state: leaf.satisfied ? "met" : "todo",
-                        icon: "lock",
-                    };
-                }
                 const lifetime = leaf.kind === "lifetime_diamond_gate";
                 return {
                     ...base,
@@ -157,7 +142,7 @@ export function sheetRows(
                     ),
                     state: leaf.satisfied ? "met" : "todo",
                     icon: "diamond",
-                    getDiamond: !leaf.satisfied,
+                    getDiamond: !leaf.satisfied && !store,
                 };
             }
         }

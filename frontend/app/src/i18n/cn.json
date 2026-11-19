@@ -2453,9 +2453,6 @@
                 "getDiamond": "获取钻石会员",
                 "payAndJoin": "支付 {amount} {symbol} 并加入",
                 "leaveAnyTime": "你可以随时退出。",
-                "membership": "会员资格",
-                "membershipYes": "你已拥有",
-                "storeMembership": "本应用无法提供的会员资格",
                 "storePayment": "本应用无法完成的付款"
             }
         }

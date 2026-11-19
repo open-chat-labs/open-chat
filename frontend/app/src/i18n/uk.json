@@ -2453,9 +2453,6 @@
                 "getDiamond": "Отримати Diamond",
                 "payAndJoin": "Сплатити {amount} {symbol} і приєднатися",
                 "leaveAnyTime": "Ви можете вийти будь-коли.",
-                "membership": "Членство",
-                "membershipYes": "Воно у вас є",
-                "storeMembership": "Членство, яке цей застосунок не може надати",
                 "storePayment": "Платіж, який цей застосунок не може здійснити"
             }
         }

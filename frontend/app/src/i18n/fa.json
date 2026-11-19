@@ -2453,9 +2453,6 @@
                 "getDiamond": "دریافت الماس",
                 "payAndJoin": "پرداخت {amount} {symbol} و عضویت",
                 "leaveAnyTime": "هر زمان که بخواهید می‌توانید خارج شوید.",
-                "membership": "عضویت",
-                "membershipYes": "آن را دارید",
-                "storeMembership": "عضویتی که این برنامه نمی‌تواند ارائه دهد",
                 "storePayment": "پرداختی که این برنامه نمی‌تواند انجام دهد"
             }
         }

@@ -2453,9 +2453,6 @@
                 "getDiamond": "Obtenir Diamond",
                 "payAndJoin": "Payer {amount} {symbol} et rejoindre",
                 "leaveAnyTime": "Vous pouvez partir à tout moment.",
-                "membership": "Abonnement",
-                "membershipYes": "Vous l'avez",
-                "storeMembership": "Un abonnement que cette app ne peut pas fournir",
                 "storePayment": "Un paiement que cette app ne peut pas effectuer"
             }
         }

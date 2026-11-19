@@ -92,19 +92,18 @@ describe("the requirements sheet (#10375)", () => {
         expect(sheet(diamond, {}).rows[0].getDiamond).toBe(true);
     });
 
-    test("invariant 8: a store build's sheet never names or offers Diamond, and never pays", () => {
+    test("invariant 8: a store build's sheet never offers Get Diamond, and never pays", () => {
         const all: AccessGate = { kind: "composite_gate", operator: "and", gates: [pay(1n), diamond] };
         const unmet = sheet(all, { icp: 10n ** 12n }, false, true);
         const either: AccessGate = { kind: "composite_gate", operator: "or", gates: [pay(1n), diamond] };
         const met = sheet(either, { icp: 10n ** 12n }, true, true);
         for (const row of [...unmet.rows, ...met.rows]) {
-            expect(JSON.stringify([row.label, row.detail])).not.toMatch(/diamond/i);
             expect(row.getDiamond).toBe(false);
             expect(row.payment).toBeUndefined();
         }
         expect(unmet.ready).toBe(false);
         expect(unmet.payments).toEqual([]);
-        // a Diamond member still gets in ("Membership"), paying nothing
+        // a Diamond member still gets in, paying nothing
         expect(met).toMatchObject({ ready: true, choice: { paid: [] } });
     });
 });
