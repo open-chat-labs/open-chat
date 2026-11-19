@@ -1,7 +1,9 @@
 import {
     i18nKey,
+    localUpdates,
     type CryptocurrencyDetails,
     type DirectChatIdentifier,
+    type EnhancedReplyContext,
     type EventWrapper,
     type Message,
     type UserSummary,
@@ -42,7 +44,9 @@ function fakeClient() {
         deleteMessage: vi.fn(async () => true),
         followThread: vi.fn(async () => true),
         pinMessage: vi.fn(async () => true),
-        replyPrivately: vi.fn(async (): Promise<DirectChatIdentifier | undefined> => undefined),
+        replyPrivately: vi.fn(
+            async (_: EnhancedReplyContext): Promise<DirectChatIdentifier | undefined> => undefined,
+        ),
         retrySendMessage: vi.fn(async () => ({ kind: "failure" as const })),
         revealBlockedMessage: vi.fn(),
         revealDeletedMessage: vi.fn(async () => true),
@@ -197,6 +201,74 @@ describe("a message's actions", () => {
         expect(await messageAction("reply_privately", target(client))).toEqual({
             kind: "open_chat",
             chatId: dm,
+        });
+    });
+
+    describe("replying and editing, mid-edit", () => {
+        const inChat = { chatId };
+        const inThread = { chatId, threadRootMessageIndex: 9 };
+        const dm = { kind: "direct_chat" as const, userId: "them" };
+        const edited = { ...evt, event: { ...evt.event, messageId: 1n, messageIndex: 1 } };
+        const drafts = localUpdates.draftMessages;
+
+        afterEach(() => {
+            drafts.delete(inChat);
+            drafts.delete(inThread);
+            drafts.delete({ chatId: dm });
+        });
+
+        test("a reply in a thread goes to the thread's draft, and the chat's edit stays", async () => {
+            drafts.setEditing(inChat, edited, new Map());
+            drafts.setTextContent(inChat, "changed");
+            await messageAction("reply", target(fakeClient(), { context: inThread }));
+
+            expect(drafts.value.get(inChat)?.editingEvent).toBe(edited);
+            expect(drafts.value.get(inChat)?.textContent).toBe("changed");
+            const thread = drafts.value.get(inThread);
+            expect(thread?.replyingTo?.messageId).toBe(42n);
+            expect(thread?.replyingTo?.sourceContext).toEqual(inThread);
+        });
+
+        test("an edit in a thread goes to the thread's draft, the chat's left alone", async () => {
+            drafts.setTextContent(inChat, "hello");
+            await messageAction("edit", target(fakeClient(), { context: inThread }));
+
+            expect(drafts.value.get(inThread)?.editingEvent).toBe(evt);
+            expect(drafts.value.get(inChat)?.editingEvent).toBeUndefined();
+            expect(drafts.value.get(inChat)?.textContent).toBe("hello");
+        });
+
+        test("a private reply into a DM being edited ends the edit, the reply shown", async () => {
+            drafts.setTextContent({ chatId: dm }, "before");
+            drafts.setEditing({ chatId: dm }, edited, new Map());
+            const client = fakeClient();
+            // as the client's replyPrivately leaves it: text blanked, the reply behind the edit
+            client.replyPrivately.mockImplementation(async (replyingTo) => {
+                drafts.setTextContent({ chatId: dm }, "");
+                drafts.setReplyingTo({ chatId: dm }, replyingTo);
+                return dm;
+            });
+            await messageAction("reply_privately", target(client));
+
+            const after = drafts.value.get({ chatId: dm });
+            expect(after?.editingEvent).toBeUndefined();
+            expect(after?.beforeEdit).toBeUndefined();
+            expect(after?.textContent).toBe("");
+            expect(after?.replyingTo?.messageId).toBe(42n);
+        });
+
+        test("a private reply into a DM not being edited is left as the client set it", async () => {
+            const client = fakeClient();
+            client.replyPrivately.mockImplementation(async (replyingTo) => {
+                drafts.setTextContent({ chatId: dm }, "");
+                drafts.setReplyingTo({ chatId: dm }, replyingTo);
+                return dm;
+            });
+            await messageAction("reply_privately", target(client));
+
+            const after = drafts.value.get({ chatId: dm });
+            expect(after?.textContent).toBe("");
+            expect(after?.replyingTo?.messageId).toBe(42n);
         });
     });
 

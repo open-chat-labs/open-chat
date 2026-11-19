@@ -1191,11 +1191,12 @@
     }
 
     function reply(evt: EventWrapper<Message>) {
-        if (chat !== undefined) replyToMessage(chat.id, evt, $allUsersStore);
+        // no threads on native yet (N8a): its messages are the chat's
+        if (chat !== undefined) replyToMessage({ chatId: chat.id }, evt, $allUsersStore);
     }
 
     function edit(evt: EventWrapper<Message>) {
-        if (chat !== undefined) editMessage(chat.id, evt, $allUsersStore);
+        if (chat !== undefined) editMessage({ chatId: chat.id }, evt, $allUsersStore);
     }
 
     function retry(evt: EventWrapper<Message>) {

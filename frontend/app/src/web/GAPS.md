@@ -3030,23 +3030,33 @@ design export needs. Each entry says where it came up.
   - Each opens for the composer it's picked from, a chat's or a thread's (4c: the dialogs take
     its `MessageContext`).
   - Not yet: paying from an external wallet (above); the design's "Poll sent · Undo" toast.
-- **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
-  edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
+- **Replies and edits in the composer** (5b): the draft where the message is (the chat's, or the
+  thread's for a message in a thread) holds the message replied to or edited (`replyTo` or
+  `setReplyingTo`, and `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
   as the old entries started it (`editStartText`, logic/composer, which both old entries now
   call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
   out, a caption for a captioned message, its mentions as typed too; 5c). The quoted text above
   it, an edit's or a reply's, shows its mentions the same way (`quoteText` in
   `logic/conversation/messageRow`, through `mentionsAsTyped` in `@shared`, L2), as the bubbles'
-  reply quotes do, where the old trees' Markdown shows them as `@username`. Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
-  private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
-  saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
-  cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
-  the old trees dropped the whole draft, and now get it back too), also when the chat was left
-  mid-edit: the composer then mounts with that text to go back to (`composerStartText`;
-  `MessageComposer` takes `text` so mounted in edit mode, by hand). A reply to a photo, video,
-  GIF or meme shows its picture beside the quote, as the old trees' reply strips do
-  (`replyThumb`, `logic/composer/composerProps`: a video's first frame with a play glyph,
+  reply quotes do, where the old trees' Markdown shows them as `@username`. Its X drops a reply,
+  or ends an edit; a click on it goes to the message when it's in this chat (a private reply
+  quotes another chat's: no jump, where the old UI opened that chat). An edit is saved with
+  `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or cancelled, puts
+  back what the user was writing before it (`endEditing`, kept by `setEditing`; the old trees
+  dropped the whole draft, and now get it back too), also when the chat was left mid-edit: the
+  composer then mounts with that text to go back to (`composerStartText`; `MessageComposer` takes
+  `text` so mounted in edit mode, by hand). Replying to a message mid-edit (its menu, a swipe, a
+  double click) ends the edit the same way, its text dropped, and replies from the draft put back
+  (`replyTo`, the client's drafts, through `replyToMessage`, given the row's `MessageContext`: a
+  reply in a thread leaves the chat's edit alone). A private reply into a DM being edited ends
+  that edit too, the reply showing with nothing written, as when nothing was being edited
+  (`privateReplyEndsEdit`, after the client's `replyPrivately`, which the old mobile tree calls
+  too and which is left as it was: the old trees are left alone, the user's decision of
+  2026-11-19). The old trees' replies (`setReplyingTo`) still stay in the edit. Editing mid-reply
+  starts the edit, and cancelling it puts the reply back. A reply to a photo, video, GIF or meme
+  shows its picture beside the quote, as the old trees' reply strips do (`replyThumb`,
+  `logic/composer/composerProps`: a video's first frame with a play glyph,
   `ComposerContext.thumbVideo`, by hand, EXPORT-LOG 2026-11-16; in low bandwidth a photo not
   revealed shows its small thumbnail and a GIF none, as their tiles do, where the old strips
   fetched the full picture). The native composer shows it too. TODO(design): the export's

@@ -14,7 +14,7 @@ import {
 import { buildMessageUrl, shareMessageOrFail } from "@src/utils/share";
 import { copyToClipboard } from "@src/utils/urls";
 import { copyableMessageText, type CopyableTextLookups } from "./copyableMessageText";
-import { editMessage, replyToMessage } from "./draftActions";
+import { editMessage, privateReplyEndsEdit, replyToMessage } from "./draftActions";
 import type { MentionLookups } from "./typedMentions";
 import { translateMessage } from "./translateMessage";
 
@@ -121,10 +121,10 @@ export async function messageAction(
     const msg = evt.event;
     switch (action) {
         case "reply":
-            replyToMessage(chatId, evt, target.users);
+            replyToMessage(context, evt, target.users);
             return DONE;
         case "edit":
-            editMessage(chatId, evt, target.users);
+            editMessage(context, evt, target.users);
             return DONE;
         case "forward":
             return { kind: "ask", dialog: { kind: "forward", evt } };
@@ -133,11 +133,12 @@ export async function messageAction(
         case "remind":
             return { kind: "ask", dialog: { kind: "remind", evt } };
         case "reply_privately": {
-            // the sender's DM, made if there's none, with the reply set
-            const dm = await client.replyPrivately(
-                messageReplyContext(evt, target.users.get(msg.sender), context),
-            );
-            return dm === undefined ? { kind: "not_found" } : { kind: "open_chat", chatId: dm };
+            // the sender's DM, made if there's none, with the reply set (an edit there ending)
+            const replyingTo = messageReplyContext(evt, target.users.get(msg.sender), context);
+            const dm = await client.replyPrivately(replyingTo);
+            if (dm === undefined) return { kind: "not_found" };
+            privateReplyEndsEdit(dm, replyingTo);
+            return { kind: "open_chat", chatId: dm };
         }
         case "start_thread":
             return { kind: "open_thread", threadRootMessageIndex: msg.messageIndex };
