@@ -9,7 +9,6 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { currentTheme } from "@theme/themes";
-    import "@utils/markdown";
     import {
         expectNotificationTap,
         expectPushNotifications,

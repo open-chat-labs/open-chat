@@ -10,6 +10,9 @@ import {
 } from "@client";
 import { marked } from "marked";
 import { DOMPurifyDefault, sanitizeOneLine } from "@src/utils/domPurify";
+// marked's renderer as OpenChat needs it (links to OpenChat itself as in-app paths, raw HTML as
+// text), registered here so every tree that renders markdown gets it
+import "@src/utils/markdown";
 
 export type MentionedUser = { id: string; userId: string; username: string };
 export type MentionedUserGroup = { id: number; groupId: number; name: string };
