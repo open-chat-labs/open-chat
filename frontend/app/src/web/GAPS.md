@@ -2816,15 +2816,17 @@ design export needs. Each entry says where it came up.
   `bots.tooManyRequests`, which both old trees use now). The built-in bot's commands are offered
   only where this tree carries them out (`carriesOutCommand`): /diamond and /faq (they post), /poll
   and /crypto where the "+" menu offers their builders (the client's `createPoll` and
-  `tokenTransfer` open them), /register_webhook (its dialog). Not yet:
-  - the token and amount typed after /crypto aren't put in the transfer dialog (it opens empty);
+  `tokenTransfer` open them), /register_webhook (its dialog). Decided (the user, 2026-11-19): /crypto
+  opens the transfer dialog empty, whatever is typed after it; the dialog's user field lists only
+  the chat's members matching what's typed (`mentionsFor`), where the old one searched every user.
+  Not yet:
   - /gif (the GIF picker is the composer's own, with no way in from outside), /search (no search
     in the conversation yet), and the bot developers' and seasonal ones (/register_bot,
-    /update_bot, /remove_bot, /witch, /test-msg in development): not offered;
+    /update_bot, /remove_bot, /witch, /test-msg in development): not offered. Each is offered
+    once this tree has the screen it opens (the user's decision of 2026-11-19);
   - a bot's private (ephemeral) reply (above) isn't shown, nor does an external bot's command run
     locally (the local replica has no bots registered; checked with specs and the built-in bot);
-  - the dialog's user field lists the chat's members matching what's typed (`mentionsFor`), where
-    the old one searched every user;
+
   - /register_webhook's description has no words (`bots.register_webhook.desc`), in the old trees
     too.
 - **Composer, not yet** (5c, left for later pieces of it):
