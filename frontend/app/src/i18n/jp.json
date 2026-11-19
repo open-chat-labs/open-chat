@@ -2429,6 +2429,13 @@
             "you": "あなた",
             "yourCamera": "あなたのカメラ。ドラッグで移動",
             "speakRequests": "発言リクエスト：{count}"
+        },
+        "join": {
+            "previewingChannel": "{community} の #{channel} をプレビュー中です。メッセージを送るには参加してください。",
+            "notInChannel": "まだ #{channel} に参加していません。メッセージを送るにはチャンネルに参加してください。",
+            "previewingGroup": "{group} をプレビュー中です。メッセージを送るには参加してください。",
+            "review": "確認して参加",
+            "signIn": "サインインして参加"
         }
     },
     "new": "new",

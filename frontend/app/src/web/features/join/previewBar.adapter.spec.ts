@@ -17,6 +17,7 @@ function bar(over: Partial<PreviewBar>): PreviewBar {
         joinLabel: undefined,
         back: "explore",
         locked: false,
+        lapsed: false,
         ...over,
     };
 }

@@ -7,6 +7,7 @@ import {
     type JoinGroup,
     type JoinOutcome,
     type MultiUserChat,
+    i18nKey,
     type OpenChat,
     type ResourceKey,
 } from "@client";
@@ -51,6 +52,14 @@ export function joinStep(outcome: JoinOutcome): JoinStep {
         default:
             return outcome satisfies never;
     }
+}
+
+/** Why a join didn't go through, as the views say it. */
+export function joinFailure(
+    step: Extract<JoinStep, { kind: "failed" | "gate_check_failed" }>,
+): ResourceKey {
+    // TODO(design): which gates weren't met (the old AccessGateCheckFailed); GAPS.md
+    return step.kind === "failed" ? step.message : i18nKey("access.gateCheckFailed");
 }
 
 type JoinClient = Pick<OpenChat, "joinGroup" | "joinCommunity">;

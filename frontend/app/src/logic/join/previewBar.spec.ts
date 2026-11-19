@@ -220,6 +220,7 @@ describe("the preview bar", () => {
         expect(bar.community?.name).toBe("DAO Builders");
         expect(bar.joinLabel).toMatchObject({ key: "access.lapsed.rejoin", level: "community" });
         expect(bar.back).toBe("none");
+        expect(bar.lapsed).toBe(true);
 
         const lapsedGroup = previewBar(input({ lapsed: true }));
         expect(lapsedGroup.joinLabel).toMatchObject({
@@ -227,5 +228,7 @@ describe("the preview bar", () => {
             level: "group",
         });
         expect(lapsedGroup.back).toBe("none");
+        expect(lapsedGroup.lapsed).toBe(true);
+        expect(previewBar(input({})).lapsed).toBe(false);
     });
 });

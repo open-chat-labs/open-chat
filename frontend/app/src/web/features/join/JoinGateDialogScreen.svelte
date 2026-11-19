@@ -21,14 +21,14 @@
     import JoinGateDialog from "@openchat/ui/src/features/components/JoinGateDialog.svelte";
     import { interpolate } from "@i18n/i18n";
     import { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
-    import { dropJoin, submitGates } from "@src/logic/join/joinFlow.svelte";
+    import { dropJoin, joinFailure, submitGates } from "@src/logic/join/joinFlow.svelte";
     import { toastStore } from "@src/stores/toast";
     import { recordGateChoice } from "@src/logic/join/joinGate";
     import { userWalletAddress } from "@src/logic/wallet/receiveAddress";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
-    import { joinFailure, showJoinStep } from "./join";
+    import { showJoinStep } from "./join";
     import { joinGateProps, paidLeaves, type JoinGateProps } from "./joinGate.adapter";
 
     let { dialog, onClose, dialogs }: DialogProps<Extract<LocalDialog, { kind: "join_gate" }>> =

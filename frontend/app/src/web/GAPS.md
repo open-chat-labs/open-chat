@@ -369,8 +369,15 @@ design export needs. Each entry says where it came up.
   bubble and strip, call items and the media viewer. Left, or decided against the prototype:
   - **The composer** is N5c's ("Native composer", below), with the typing strip resting on it. A
     swipe sets the chat's draft (the reply, or the edit), which the composer shows, and the
-    message is marked. A preview's join bar (a channel not joined, a community previewed) comes
-    with N8b: until then a preview shows the old footer's words in the composer's place.
+    message is marked.
+  - **A preview's join bar** (N8b PR 1, native/features/join): a channel not joined, a group or a
+    community previewed shows the design's note over Join in the composer's place. Join joins what
+    logic/join's `previewBar` targets: a channel of a community being previewed names the community
+    ("Join community") and joins both. A locked chat and a lapse keep the old footers' words
+    (Locked, Re-join). Ours: the design has no words for a group, so it's the channel's
+    ("You're previewing Pixel Art. Join to send messages.", "Join group"); a guest gets "Sign in to
+    join". Left: "Review and join" (a join with requirements the user doesn't meet yet) can't be
+    pressed until the requirements sheet (N8b PR 2).
   - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
     `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't
     available):

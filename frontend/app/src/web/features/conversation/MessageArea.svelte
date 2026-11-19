@@ -250,7 +250,7 @@
     import { RowCache } from "@src/logic/conversation/rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
     import { isJoining, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
-    import { previewBar, type PreviewBar } from "@src/logic/join/previewBar";
+    import { chatPreviewBar, type PreviewBar } from "@src/logic/join/previewBar";
     import { join } from "../join/join";
     import { previewBarProps } from "../join/previewBar.adapter";
     import { bottomAnchorFor } from "../../shell/bottomAnchors.svelte";
@@ -421,15 +421,10 @@
         // what the client's calls below read through `.value`, so the bar follows it: a lapse or a
         // join (the communities), Diamond bought or CHIT earned (the user), a top-up (balances)
         void [$communitiesStore, $currentUserStore, $cryptoBalanceStore];
-        const bar = previewBar({
-            chat,
+        const bar = chatPreviewBar(client, chat, {
             community,
-            lapsed: client.isLapsed(chat.id),
-            // as joining asks for them: those an invitation bypasses left out
-            gates: client.accessGatesForChat(chat, true),
             guest: $anonUserStore,
             origin: $communityPreviewOriginStore,
-            meets: (gate) => client.doesUserMeetAccessGate(gate),
         });
         // its own picture, else its swatch (as everywhere in the new web UI, 2026-11-10)
         const avatarUrl =

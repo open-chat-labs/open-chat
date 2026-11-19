@@ -2429,6 +2429,13 @@
             "you": "Ty",
             "yourCamera": "Twoja kamera. Przeciągnij, aby przesunąć",
             "speakRequests": "Prośby o głos: {count}"
+        },
+        "join": {
+            "previewingChannel": "Przeglądasz podgląd #{channel} w {community}. Dołącz, aby wysyłać wiadomości.",
+            "notInChannel": "Nie jesteś jeszcze w #{channel}. Dołącz do kanału, aby wysyłać wiadomości.",
+            "previewingGroup": "Przeglądasz podgląd {group}. Dołącz, aby wysyłać wiadomości.",
+            "review": "Sprawdź i dołącz",
+            "signIn": "Zaloguj się, aby dołączyć"
         }
     },
     "new": "nowy",

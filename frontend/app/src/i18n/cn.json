@@ -2429,6 +2429,13 @@
             "you": "你",
             "yourCamera": "你的摄像头。拖动可移动",
             "speakRequests": "发言请求：{count}"
+        },
+        "join": {
+            "previewingChannel": "你正在预览 {community} 中的 #{channel}。加入后即可发送消息。",
+            "notInChannel": "你还没有加入 #{channel}。加入频道后即可发送消息。",
+            "previewingGroup": "你正在预览 {group}。加入后即可发送消息。",
+            "review": "查看并加入",
+            "signIn": "登录以加入"
         }
     },
     "new": "新的",

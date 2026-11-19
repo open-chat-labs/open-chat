@@ -2338,6 +2338,13 @@
             "you": "You",
             "yourCamera": "Your camera. Drag to move",
             "speakRequests": "Requests to speak: {count}"
+        },
+        "join": {
+            "previewingChannel": "You're previewing #{channel} in {community}. Join to send messages.",
+            "notInChannel": "You're not in #{channel} yet. Join the channel to send messages.",
+            "previewingGroup": "You're previewing {group}. Join to send messages.",
+            "review": "Review and join",
+            "signIn": "Sign in to join"
         }
     },
     "new": "new",

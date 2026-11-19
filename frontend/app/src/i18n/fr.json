@@ -2429,6 +2429,13 @@
             "you": "Vous",
             "yourCamera": "Votre caméra. Faites glisser pour déplacer",
             "speakRequests": "Demandes de parole : {count}"
+        },
+        "join": {
+            "previewingChannel": "Vous prévisualisez #{channel} dans {community}. Rejoignez pour envoyer des messages.",
+            "notInChannel": "Vous n'êtes pas encore dans #{channel}. Rejoignez le canal pour envoyer des messages.",
+            "previewingGroup": "Vous prévisualisez {group}. Rejoignez pour envoyer des messages.",
+            "review": "Vérifier et rejoindre",
+            "signIn": "Connectez-vous pour rejoindre"
         }
     },
     "new": "Nouveau",
