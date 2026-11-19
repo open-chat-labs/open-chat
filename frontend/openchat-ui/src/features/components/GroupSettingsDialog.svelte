@@ -144,8 +144,9 @@
     /** Tokens (ledger canisters) and nervous systems (governance canisters) the gate editor offers. */
     gateTokens?: GateAsset[];
     gateSystems?: GateAsset[];
-    /** "community" also allows a custom cover image (and a taller cover). */
-    noun?: 'group' | 'community';
+    /** What it is, for the words that name it ("Channel name", "How this community works"). "community" also
+     *  allows a custom cover image (and a taller cover), and has no history or messages of its own. */
+    noun?: 'group' | 'channel' | 'community';
     /** Save it. The form only counts as saved once this resolves; a rejection keeps the edits with an error. */
     onSave?: (all: GroupSettings) => Promise<unknown> | void;
     onCancel?: () => void;
@@ -518,8 +519,8 @@
 
   const switches = $derived([
     {
-      title: t('ui.groupSettingsDialog.publicGroup'),
-      hint: t(isPublic ? 'ui.groupSettingsDialog.publicHintOn' : 'ui.groupSettingsDialog.publicHintOff'),
+      title: t('ui.groupSettingsDialog.publicGroup', { noun }),
+      hint: t(isPublic ? 'ui.groupSettingsDialog.publicHintOn' : 'ui.groupSettingsDialog.publicHintOff', { noun }),
       on: isPublic,
       // going public needs Diamond; going private never does
       locked: !isDiamond && !isPublic && !lockedSection('visibility'),
@@ -564,7 +565,7 @@
           label: t(PERM_GROUP_LABEL[g]).toUpperCase(),
           items: items.map((x, i) => {
             const cur = perms.general[x.key];
-            return { label: t(x.label), master: false, last: i === items.length - 1, valueLabel: t(VALUE_LABEL[cur]), tone: cur === 'nobody' ? 'off' : 'set', open: (el: HTMLElement) => openPermMenu(el, 'general', x.key, false) };
+            return { label: t(x.label, { noun }), master: false, last: i === items.length - 1, valueLabel: t(VALUE_LABEL[cur]), tone: cur === 'nobody' ? 'off' : 'set', open: (el: HTMLElement) => openPermMenu(el, 'general', x.key, false) };
           }),
         };
       });
@@ -617,14 +618,14 @@
         <div class="head-row">
           <span class="gear-tile"><span class="gear" style:mask={mask('gear')}></span></span>
           <div class="head-text">
-            <span class="head-title">{t('ui.groupSettingsDialog.title')}</span>
-            <span class="head-name">{value?.info?.name || t('ui.groupSettingsDialog.thisGroup')}</span>
+            <span class="head-title">{t('ui.groupSettingsDialog.title', { noun })}</span>
+            <span class="head-name">{value?.info?.name || t('ui.groupSettingsDialog.thisGroup', { noun })}</span>
           </div>
           <span class="icon-button" onclick={() => dismiss(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
         </div>
         <div class="cell">
           <SegmentedTabs
-            labels={TABS.map((x) => t(x))}
+            labels={TABS.map((x) => t(x, { noun }))}
             counts={[null, gateCount || null, ruleLines || null, permsChanged || null]}
             selectedIndex={tab}
             dotIndexes={[!nameOk && submitted ? 0 : null, gatesBad && submitted ? 1 : null, rulesBad && submitted ? 2 : null].filter((i): i is number => i !== null)}
@@ -703,7 +704,7 @@
                     <div class="photo-pick" onclick={() => avatarInput?.click()} role="button" tabindex="0"><span class="icon-15 ink" style:mask={mask('camera')}></span></div>
                   </div>
                   <div class="photo-text">
-                    <span class="photo-title">{t('ui.groupSettingsDialog.groupPhoto')}</span>
+                    <span class="photo-title">{t('ui.groupSettingsDialog.groupPhoto', { noun })}</span>
                     <div class="photo-line">
                       <span class="photo-hint">{t('ui.groupSettingsDialog.photoHint')}</span>
                       <span class="grow"></span>
@@ -726,7 +727,7 @@
 
                 <div class="field-block">
                   <div class="field-label-row">
-                    <span class="field-label">{t('ui.groupSettingsDialog.groupName')}</span>
+                    <span class="field-label">{t('ui.groupSettingsDialog.groupName', { noun })}</span>
                     <span class="required">*</span>
                   </div>
                   <div class="name-box" class:bad={!nameOk && (touched || submitted)}>
@@ -737,13 +738,13 @@
                         checkNameSoon(name);
                         touched = true;
                       }}
-                      placeholder={t('ui.groupSettingsDialog.groupName')}
+                      placeholder={t('ui.groupSettingsDialog.groupName', { noun })}
                       maxlength={NAME_MAX}
                     />
                     <span class="name-left" class:low={NAME_MAX - name.length <= 5}>{NAME_MAX - name.length}</span>
                   </div>
                   {#if !nameOk && (touched || submitted)}
-                    <span class="name-error">{t('ui.groupSettingsDialog.nameError')}</span>
+                    <span class="name-error">{t('ui.groupSettingsDialog.nameError', { noun })}</span>
                   {:else if nameTaken}
                     <span class="name-error" role="alert">{t(nameResult === 'taken' ? 'ui.groupSettingsDialog.nameTaken' : 'ui.groupSettingsDialog.nameInvalid')}</span>
                   {/if}
@@ -754,7 +755,7 @@
                     <span class="field-label">{t('ui.groupSettingsDialog.description')}</span>
                     <span class="optional">{t('ui.groupSettingsDialog.optional')}</span>
                   </div>
-                  <div class="cell"><TextArea value={about} onInput={(e) => (about = e.currentTarget.value)} placeholder={t('ui.groupSettingsDialog.descriptionPlaceholder')} maxLength={ABOUT_MAX} minHeight={49} /></div>
+                  <div class="cell"><TextArea value={about} onInput={(e) => (about = e.currentTarget.value)} placeholder={t('ui.groupSettingsDialog.descriptionPlaceholder', { noun })} maxLength={ABOUT_MAX} minHeight={49} /></div>
                 </div>
 
                 <div class="list-block">
@@ -775,7 +776,7 @@
                             <div class="toggle-cell"><Toggle on={s.on} ariaLabel={s.title} disabled={!!s.locked || !!s.fixed} onChange={s.set} /></div>
                           </div>
                           {#if s.locked}
-                            <UpgradeBanner text={t('ui.groupSettingsDialog.diamondOnly')} {onUpgrade} />
+                            <UpgradeBanner text={t('ui.groupSettingsDialog.diamondOnly', { noun })} {onUpgrade} />
                           {/if}
                         {/if}
                       </div>
@@ -877,10 +878,10 @@
             <div class="column huge-gap">
               <div class="switch-line">
                 <div class="switch-text">
-                  <span class="switch-title">{t('ui.groupSettingsDialog.enableRules')}</span>
+                  <span class="switch-title">{t('ui.groupSettingsDialog.enableRules', { noun })}</span>
                   <span class="switch-hint">{t('ui.groupSettingsDialog.enableRulesHint')}</span>
                 </div>
-                {#if statusOnly}{@render status(rulesOn)}{:else}<div class="toggle-cell"><Toggle on={rulesOn} ariaLabel="ui.groupSettingsDialog.enableRules" onChange={(on) => (rulesOn = on)} /></div>{/if}
+                {#if statusOnly}{@render status(rulesOn)}{:else}<div class="toggle-cell"><Toggle on={rulesOn} ariaLabel={t('ui.groupSettingsDialog.enableRules', { noun })} onChange={(on) => (rulesOn = on)} /></div>{/if}
               </div>
 
               {#if rulesOn}

@@ -1395,8 +1395,8 @@
         "lapsed": "Lapsed members · {count}"
       },
       "memberNotes": {
-        "blocked": "Users which have been blocked from accessing this group.",
-        "lapsed": "When a member of your group no longer satisfies the access gates set in the group settings, they become a lapsed member!"
+        "blocked": "{scope, select, community {Users which have been blocked from accessing this community.} channel {Users which have been blocked from accessing this channel.} other {Users which have been blocked from accessing this group.}}",
+        "lapsed": "{scope, select, community {When a member of your community no longer satisfies the access gates set in the community settings, they become a lapsed member!} channel {When a member of your channel no longer satisfies the access gates set in the channel settings, they become a lapsed member!} other {When a member of your group no longer satisfies the access gates set in the group settings, they become a lapsed member!}}"
       },
       "memberSearch": {
         "blocked": "Search blocked",
@@ -1457,7 +1457,7 @@
       "perms": {
         "calls": "Start calls",
         "delete": "Delete messages",
-        "edit": "Edit group info",
+        "edit": "{scope, select, community {Edit community info} channel {Edit channel info} other {Edit group info}}",
         "everyone": "Mention @everyone",
         "invite": "Invite users",
         "pin": "Pin messages",
@@ -1489,7 +1489,7 @@
       },
       "roleSummary": "{owners, plural, one {# owner} other {# owners}} · {admins, plural, one {# admin} other {# admins}} · {members, plural, one {# member} other {# members}}",
       "rulesHint": "{count, plural, one {# rule for members} other {# rules for members}}",
-      "rulesNote": "Break the rules and your messages may be deleted, or you may be blocked from the group.",
+      "rulesNote": "{scope, select, community {Break the rules and your messages may be deleted, or you may be blocked from the community.} channel {Break the rules and your messages may be deleted, or you may be blocked from the channel.} other {Break the rules and your messages may be deleted, or you may be blocked from the group.}}",
       "searchBots": "Search bots",
       "searchBotsWebhooks": "Search bots and webhooks",
       "searchGroupMembers": "Search group members",
@@ -1528,7 +1528,7 @@
         "webhooks": "Webhooks"
       },
       "webhooksHeading": "WEBHOOKS · {count}",
-      "webhooksNote": "Webhooks let your own tools post into this group over HTTP.",
+      "webhooksNote": "{scope, select, community {Webhooks let your own tools post into this community over HTTP.} channel {Webhooks let your own tools post into this channel over HTTP.} other {Webhooks let your own tools post into this group over HTTP.}}",
       "yourRole": "YOUR ROLE"
     },
     "groupSettingsDialog": {
@@ -1560,30 +1560,30 @@
       },
       "defaultValue": "Default · {value}",
       "description": "Description",
-      "descriptionPlaceholder": "Tell people what your group is about",
-      "diamondOnly": "Public groups are a Diamond feature.",
+      "descriptionPlaceholder": "{noun, select, community {Tell people what your community is about} channel {Tell people what your channel is about} other {Tell people what your group is about}}",
+      "diamondOnly": "{noun, select, community {Public communities are a Diamond feature.} channel {Public channels are a Diamond feature.} other {Public groups are a Diamond feature.}}",
       "disappearOffHint": "Messages are kept until someone deletes them.",
       "disappearing": "Disappearing messages",
       "discardChanges": "Discard changes",
-      "enableRules": "Enable rules for the group",
+      "enableRules": "{noun, select, community {Enable rules for the community} channel {Enable rules for the channel} other {Enable rules for the group}}",
       "enableRulesHint": "New members have to agree to the rules before they join.",
       "factDisappear": "Messages disappear after {duration}",
       "factHistory": "New members can see chat history",
       "factNoHistory": "New members only see messages from when they join",
       "factPrivate": "Private: people join by invite only",
-      "factPublic": "{noun, select, community {Public: anyone can find and join this community} other {Public: anyone can find and join this group}}",
+      "factPublic": "{noun, select, community {Public: anyone can find and join this community} channel {Public: anyone can find and join this channel} other {Public: anyone can find and join this group}}",
       "factRules": "{count, plural, one {# rule} other {# rules}}",
       "factRulesAccept": "{count, plural, one {# rule} other {# rules}} · new members must accept them",
       "favourite": "Favourite",
       "favourited": "Favourited",
-      "groupName": "Group name",
-      "groupPhoto": "Group photo",
-      "howItWorks": "{noun, select, community {How this community works} other {How this group works}}",
+      "groupName": "{noun, select, community {Community name} channel {Channel name} other {Group name}}",
+      "groupPhoto": "{noun, select, community {Community photo} channel {Channel photo} other {Group photo}}",
+      "howItWorks": "{noun, select, community {How this community works} channel {How this channel works} other {How this group works}}",
       "lowestRole": "Lowest role with this permission",
       "moveToCommunity": "Move to a community",
       "mute": "Mute",
       "muted": "Muted",
-      "nameError": "A group needs a name.",
+      "nameError": "{noun, select, community {A community needs a name.} channel {A channel needs a name.} other {A group needs a name.}}",
       "nameInvalid": "That name isn't allowed.",
       "nameNeeded": "Name needed",
       "nameTaken": "That name is already taken.",
@@ -1594,7 +1594,7 @@
       "perm": {
         "calls": "Start video calls",
         "delete": "Delete messages",
-        "edit": "Edit group info",
+        "edit": "{noun, select, community {Edit community info} channel {Edit channel info} other {Edit group info}}",
         "everyone": "Mention all members (@everyone)",
         "invite": "Invite users",
         "pin": "Pin messages",
@@ -1615,9 +1615,9 @@
       "permThreads": "Threads",
       "permsChanged": "{count, plural, one {# permission differs from the defaults} other {# permissions differ from the defaults}}",
       "photoHint": "Upload one, or pick a colour",
-      "publicGroup": "Public group",
-      "publicHintOff": "Private — only invited people can join. Public groups can be found and joined by anyone.",
-      "publicHintOn": "Anyone can find this group and join it.",
+      "publicGroup": "{noun, select, community {Public community} channel {Public channel} other {Public group}}",
+      "publicHintOff": "{noun, select, community {Private — only invited people can join. Public communities can be found and joined by anyone.} channel {Private — only invited people can join. Public channels can be found and joined by anyone.} other {Private — only invited people can join. Public groups can be found and joined by anyone.}}",
+      "publicHintOn": "{noun, select, community {Anyone can find this community and join it.} channel {Anyone can find this channel and join it.} other {Anyone can find this group and join it.}}",
       "removePhoto": "Remove photo",
       "resetDefaults": "Reset to defaults",
       "role": {
@@ -1642,7 +1642,7 @@
       "settings": "SETTINGS",
       "startFromTemplate": "START FROM A TEMPLATE",
       "tabGates": "Gates",
-      "tabGroup": "Group",
+      "tabGroup": "{noun, select, community {Community} channel {Channel} other {Group}}",
       "tabPermissions": "Permissions",
       "tabRules": "Rules",
       "template": {
@@ -1689,13 +1689,13 @@
           "rule3": "Disclose any position you hold in a token you post about"
         }
       },
-      "thisGroup": "This group",
+      "thisGroup": "{noun, select, community {This community} channel {This channel} other {This group}}",
       "threadsFollow": "Threads follow the message permissions",
       "threadsFollowHint": "Turn the switch on to give threads their own set.",
       "threadsOverride": "Use different permissions in threads",
       "threadsOverrideOff": "Threads currently follow whatever you set for messages.",
       "threadsOverrideOn": "Threads use the set below. Messages outside threads are unaffected.",
-      "title": "Group settings",
+      "title": "{noun, select, community {Community settings} channel {Channel settings} other {Group settings}}",
       "unsaved": "Unsaved changes",
       "uploadCover": "Upload cover",
       "value": {
