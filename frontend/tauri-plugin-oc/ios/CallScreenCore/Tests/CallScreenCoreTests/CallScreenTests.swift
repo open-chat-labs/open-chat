@@ -16,10 +16,14 @@ final class CallScreenTests: XCTestCase {
         XCTAssertEqual(
             CallStage.layout(others: ["a"], selfId: "me", video: false),
             CallStage(tiles: ["a", "me"], floatSelf: false, columns: 1))
-        // before the user's own tile exists there's nothing to float
+        // a broadcast viewer has no tile of their own (nor does the user before theirs exists), so
+        // nothing floats, and the people stack by the same count: the host fills the stage
         XCTAssertEqual(
             CallStage.layout(others: ["a"], selfId: nil, video: true),
-            CallStage(tiles: ["a"], floatSelf: false, columns: 2))
+            CallStage(tiles: ["a"], floatSelf: false, columns: 1))
+        XCTAssertEqual(
+            CallStage.layout(others: ["a", "b", "c", "d"], selfId: nil, video: true),
+            CallStage(tiles: ["a", "b", "c", "d"], floatSelf: false, columns: 2))
     }
 
     // #10529 invariant 2
@@ -101,5 +105,21 @@ final class CallScreenTests: XCTestCase {
         XCTAssertEqual(CallOutput.of(port: "Speaker"), .speaker)
         XCTAssertEqual(CallOutput.of(port: "Receiver"), .phone)
         XCTAssertEqual(CallOutput.of(port: nil), .phone)
+    }
+
+    // #10529 invariant 7
+    func testInvariant7TheCallFollowsTheRouteOnlyOnceItHoldsStill() {
+        let t0 = Date(timeIntervalSinceReferenceDate: 0)
+        var follower = RouteFollower<String>()
+        // the audio session flipping while it's set up, 200ms apart: nothing to follow
+        for i in 0..<10 {
+            let at = t0.addingTimeInterval(Double(i) * 0.2)
+            follower.moved(to: i % 2 == 0 ? "speaker" : "earpiece", at: at)
+            XCTAssertNil(follower.settled(at: at.addingTimeInterval(0.2)))
+        }
+        // it stops on the earpiece: followed once
+        let last = t0.addingTimeInterval(1.8)
+        XCTAssertEqual(follower.settled(at: last.addingTimeInterval(RouteFollower<String>.settleAfter)), "earpiece")
+        XCTAssertNil(follower.settled(at: last.addingTimeInterval(5)))
     }
 }
