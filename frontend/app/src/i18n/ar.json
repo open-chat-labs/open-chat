@@ -2452,7 +2452,11 @@
                 "lifetimeYes": "أنت عضو Diamond مدى الحياة",
                 "getDiamond": "احصل على Diamond",
                 "payAndJoin": "ادفع {amount} {symbol} وانضم",
-                "leaveAnyTime": "يمكنك المغادرة في أي وقت."
+                "leaveAnyTime": "يمكنك المغادرة في أي وقت.",
+                "membership": "العضوية",
+                "membershipYes": "لديك هذه العضوية",
+                "storeMembership": "عضوية لا يوفرها هذا التطبيق",
+                "storePayment": "دفعة لا يستطيع هذا التطبيق إجراءها"
             }
         }
     },

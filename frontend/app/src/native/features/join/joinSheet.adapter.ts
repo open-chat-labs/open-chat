@@ -74,16 +74,31 @@ function tokenRow(
     };
 }
 
-/** The rows for a gate's leaves (GateEvaluation's), with the user's tokens and their balances. */
+/**
+ * The rows for a gate's leaves (GateEvaluation's), with the user's tokens and their balances. A
+ * store build (`appStoreBuild`) makes no payment and never names or sells Diamond: a payment can't
+ * be met in it, and a Diamond gate is a "membership" the app can't provide (met if the user has it).
+ */
 export function sheetRows(
     leaves: EvaluatedLeafGate[],
     tokens: ReadonlyMap<string, EnhancedTokenDetails>,
     neuronConfirmed: boolean,
+    store: boolean,
 ): SheetRow[] {
     return leaves.map((leaf): SheetRow => {
         const base = { id: leaf.originalIndex, confirmable: false, getDiamond: false };
         switch (leaf.kind) {
             case "payment_gate":
+                if (store) {
+                    return {
+                        ...base,
+                        label: i18nKey("native.join.sheet.storePayment"),
+                        detail: undefined,
+                        state: "todo",
+                        icon: "wallet",
+                    };
+                }
+            // falls through
             case "token_balance_gate": {
                 const token = tokens.get(leaf.ledgerCanister);
                 if (token !== undefined) return tokenRow(leaf, token);
@@ -112,6 +127,21 @@ export function sheetRows(
             }
             case "diamond_gate":
             case "lifetime_diamond_gate": {
+                if (store) {
+                    return {
+                        ...base,
+                        label: i18nKey(
+                            leaf.satisfied
+                                ? "native.join.sheet.membership"
+                                : "native.join.sheet.storeMembership",
+                        ),
+                        detail: leaf.satisfied
+                            ? i18nKey("native.join.sheet.membershipYes")
+                            : undefined,
+                        state: leaf.satisfied ? "met" : "todo",
+                        icon: "lock",
+                    };
+                }
                 const lifetime = leaf.kind === "lifetime_diamond_gate";
                 return {
                     ...base,

@@ -26,6 +26,7 @@
         type JoinTarget,
     } from "@src/logic/join/joinFlow.svelte";
     import { recordGateChoice } from "@src/logic/join/joinGate";
+    import { appStoreBuild } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -60,7 +61,10 @@
     const level = $derived.by(() => {
         const gate = evaluation.gate;
         if (gate === undefined) return held;
-        held = { gate, rows: sheetRows(evaluation.leaves, $enhancedCryptoLookup, neuronConfirmed) };
+        held = {
+            gate,
+            rows: sheetRows(evaluation.leaves, $enhancedCryptoLookup, neuronConfirmed, appStoreBuild),
+        };
         return held;
     });
     const choice = $derived(

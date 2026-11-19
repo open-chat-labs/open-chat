@@ -2452,7 +2452,11 @@
                 "lifetimeYes": "Bạn là thành viên Diamond trọn đời",
                 "getDiamond": "Nhận Diamond",
                 "payAndJoin": "Trả {amount} {symbol} và tham gia",
-                "leaveAnyTime": "Bạn có thể rời đi bất cứ lúc nào."
+                "leaveAnyTime": "Bạn có thể rời đi bất cứ lúc nào.",
+                "membership": "Tư cách thành viên",
+                "membershipYes": "Bạn đã có",
+                "storeMembership": "Tư cách thành viên mà ứng dụng này không thể cung cấp",
+                "storePayment": "Khoản thanh toán mà ứng dụng này không thể thực hiện"
             }
         }
     },

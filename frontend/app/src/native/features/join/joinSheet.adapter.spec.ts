@@ -33,13 +33,18 @@ const pay = (amount: bigint, ledger = icp): LeafGate => ({
 });
 const diamond: LeafGate = { kind: "diamond_gate" };
 
-function sheet(gate: AccessGate, balances: { icp?: bigint; chat?: bigint }, diamondMember = false) {
+function sheet(
+    gate: AccessGate,
+    balances: { icp?: bigint; chat?: bigint },
+    diamondMember = false,
+    store = false,
+) {
     const evaluation = new GateEvaluation(client(diamondMember), [enhanced(gate)]);
     const tokens = new Map([
         [icp, token(icp, "ICP", balances.icp ?? 0n)],
         [chat, token(chat, "CHAT", balances.chat ?? 0n)],
     ]);
-    const rows = sheetRows(evaluation.leaves, tokens, false);
+    const rows = sheetRows(evaluation.leaves, tokens, false, store);
     const gateNow = evaluation.gate;
     if (gateNow === undefined) throw new Error("no gate");
     return { evaluation, rows, ...sheetChoice(gateNow, rows, false) };
@@ -85,5 +90,21 @@ describe("the requirements sheet (#10375)", () => {
         expect(sheet(pay(300_000_000n), { icp: 299_999_999n }).ready).toBe(false);
         expect(sheet(diamond, {}).ready).toBe(false);
         expect(sheet(diamond, {}).rows[0].getDiamond).toBe(true);
+    });
+
+    test("invariant 8: a store build's sheet never names or offers Diamond, and never pays", () => {
+        const all: AccessGate = { kind: "composite_gate", operator: "and", gates: [pay(1n), diamond] };
+        const unmet = sheet(all, { icp: 10n ** 12n }, false, true);
+        const either: AccessGate = { kind: "composite_gate", operator: "or", gates: [pay(1n), diamond] };
+        const met = sheet(either, { icp: 10n ** 12n }, true, true);
+        for (const row of [...unmet.rows, ...met.rows]) {
+            expect(JSON.stringify([row.label, row.detail])).not.toMatch(/diamond/i);
+            expect(row.getDiamond).toBe(false);
+            expect(row.payment).toBeUndefined();
+        }
+        expect(unmet.ready).toBe(false);
+        expect(unmet.payments).toEqual([]);
+        // a Diamond member still gets in ("Membership"), paying nothing
+        expect(met).toMatchObject({ ready: true, choice: { paid: [] } });
     });
 });

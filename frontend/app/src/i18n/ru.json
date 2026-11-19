@@ -2452,7 +2452,11 @@
                 "lifetimeYes": "Вы пожизненный участник Diamond",
                 "getDiamond": "Получить Diamond",
                 "payAndJoin": "Заплатить {amount} {symbol} и вступить",
-                "leaveAnyTime": "Вы можете выйти в любой момент."
+                "leaveAnyTime": "Вы можете выйти в любой момент.",
+                "membership": "Членство",
+                "membershipYes": "Оно у вас есть",
+                "storeMembership": "Членство, которое это приложение не может предоставить",
+                "storePayment": "Платёж, который это приложение не может выполнить"
             }
         }
     },

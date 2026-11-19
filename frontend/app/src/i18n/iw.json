@@ -2452,7 +2452,11 @@
                 "lifetimeYes": "יש לך מנוי Diamond לכל החיים",
                 "getDiamond": "קבלת Diamond",
                 "payAndJoin": "תשלום {amount} {symbol} והצטרפות",
-                "leaveAnyTime": "אפשר לעזוב בכל עת."
+                "leaveAnyTime": "אפשר לעזוב בכל עת.",
+                "membership": "מינוי",
+                "membershipYes": "יש לך אותו",
+                "storeMembership": "מינוי שהאפליקציה הזו לא יכולה לספק",
+                "storePayment": "תשלום שהאפליקציה הזו לא יכולה לבצע"
             }
         }
     },

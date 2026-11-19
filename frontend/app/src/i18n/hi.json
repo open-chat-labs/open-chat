@@ -2452,7 +2452,11 @@
                 "lifetimeYes": "आप आजीवन डायमंड सदस्य हैं",
                 "getDiamond": "डायमंड लें",
                 "payAndJoin": "{amount} {symbol} चुकाएँ और जुड़ें",
-                "leaveAnyTime": "आप कभी भी छोड़ सकते हैं।"
+                "leaveAnyTime": "आप कभी भी छोड़ सकते हैं।",
+                "membership": "सदस्यता",
+                "membershipYes": "आपके पास है",
+                "storeMembership": "ऐसी सदस्यता जो यह ऐप नहीं दे सकता",
+                "storePayment": "ऐसा भुगतान जो यह ऐप नहीं कर सकता"
             }
         }
     },
