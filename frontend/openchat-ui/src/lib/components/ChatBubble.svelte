@@ -272,6 +272,7 @@
     --msg-ink: var(--bubble-recv-text);
     --msg-soft: var(--ink-3);
     --msg-stamp: var(--meta);
+    --msg-link: var(--accent-bright);
     max-width: 675px;
     min-width: 0;
     display: flex;
@@ -282,6 +283,7 @@
       --msg-ink: var(--bubble-text);
       --msg-soft: var(--bubble-text-soft);
       --msg-stamp: var(--bubble-text-soft);
+      --msg-link: var(--bubble-text);
     }
 
     &.mirror {
@@ -422,6 +424,12 @@
     color: var(--msg-ink);
     text-wrap: pretty;
     overflow-wrap: anywhere;
+  }
+
+  /* links in the host's body (its markdown's <a>s), as LinkPreview's: accent-bright on received, the bubble's own
+     text colour on sent (every theme), underlined either way */
+  .bubble .text.body :global(a) {
+    @include message-link;
   }
 
   /* a host's body flows inline where it ends (its root, and a paragraph closing it), so the

@@ -314,10 +314,11 @@ describe('the conversation screen (data-chat-surface)', () => {
     ['orange', '#EB7C0A', '#963F06', '#FFD9BF'],
     ['blue', '#2B71D8', '#1855B5', '#D4E5FF'],
     ['green', '#00875A', '#076447', '#C8F5E3'],
-  ])('in native light (%s): sent bubbles solid accent, white text, no shadow, dark content inside', (accent, bg, reply, link) => {
+  ])('in native light (%s): sent bubbles solid accent, white text, no shadow, dark content inside', (accent, bg, reply, bright) => {
     const inside = resolve([lightRoot(accent), chat, sent]);
-    expect([inside.get('--bubble-send-bg'), inside.get('--bubble-reply'), inside.get('--accent-bright')]).toEqual([bg, reply, link]);
-    expect(inside.get('--bubble-link')).toBe(link);
+    expect([inside.get('--bubble-send-bg'), inside.get('--bubble-reply'), inside.get('--accent-bright')]).toEqual([bg, reply, bright]);
+    // links in sent bubbles take --bubble-text (the message-link mixin), not a link token of the light chat's own
+    expect(inside.get('--bubble-link')).toBeUndefined();
     expect([inside.get('--bubble-text'), inside.get('--bubble-text-soft'), inside.get('--bubble-tick')]).toEqual(['#FFFFFF', 'rgba(255,255,255,.82)', 'rgba(255,255,255,.9)']);
     expect(inside.get('--bubble-shadow')).toBe('0 0 transparent');
     const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': accent, 'data-platform': 'native' })]);

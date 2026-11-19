@@ -2104,12 +2104,6 @@
         text-shadow: var(--bubble-text-shadow);
     }
 
-    // links in a sent bubble of the light chat: its accent-bright (--bubble-link, set only there,
-    // 04); in dark, as before
-    :global([data-mode="light"]) .conversation :global([data-bubble-sent] a) {
-        color: var(--bubble-link);
-    }
-
     // the composer, 4px under the messages (05), then the safe area or the keyboard's slot under it
     // (ConversationComposer's)
     .composer {

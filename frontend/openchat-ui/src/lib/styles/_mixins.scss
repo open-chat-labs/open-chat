@@ -72,6 +72,22 @@
   }
 }
 
+/// A link in a message's text: underlined, bold, in `--msg-link`, which the message sets per side (received:
+/// `--accent-bright`; sent: `--bubble-text`, the bubble's own text colour in every theme, so the underline is what marks
+/// it). Hover, focus and visited keep that colour: the page's `a:hover` would put an accent on the accent bubble.
+@mixin message-link {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--msg-link);
+
+  &:hover,
+  &:visited,
+  &:focus-visible {
+    color: var(--msg-link);
+  }
+}
+
 /// A type size with no `--text-*` token of its own (the native prototype's 15px, 14.5px …), times `--text-scale` as the
 /// tokens are, so it follows the native interface size too.
 @function text-size($px) {

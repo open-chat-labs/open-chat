@@ -773,8 +773,12 @@ design export needs. Each entry says where it came up.
     white pill, white received bubbles without their ring and with a soft shadow (every kind,
     photos and videos included), and sent bubbles in a solid accent per `[data-accent]` with white
     text, no shadow and the dark theme's content tokens inside (`[data-bubble-sent]`; orange's text
-    with a shadow, an accepted contrast exception); links in sent bubbles take the scoped
-    `--accent-bright` (`--bubble-link`). The list's end padding grows from 10 to 30px while a
+    with a shadow, an accepted contrast exception). Links in sent bubbles: white (the bubble's
+    text colour) and underlined, as in every theme (2026-11-19, the user's rule), not 04's table's
+    pale tints (#FFD0D9 / #FFD9BF / #D4E5FF / #C8F5E3, its "Links inside" column), for
+    consistency; to go back to the tints for native light only, set `--msg-link:
+    var(--accent-bright)` on `[data-bubble-sent]` in that scope of `tokens.css` (the tints are
+    still its `--accent-bright` there). The list's end padding grows from 10 to 30px while a
     group's typing strip shows; the composer sits 4px under the list (05 (b)). The sheets' top line
     is `--sheet-edge` (`--line-2` in light). Not done: 04's recommendation to bring the received ring back when the
     OS's "Increase contrast" is on. Still open (06): the panels' rest height stays 304px over the
