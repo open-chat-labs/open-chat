@@ -453,6 +453,7 @@ import {
     communitiesStore,
     communityFiltersStore,
     confirmedThreadEventIndexesLoadedStore,
+    balanceUnavailableStore,
     cryptoBalanceStore,
     cryptoLookup,
     currentUserChatsLoadedStore,
@@ -8449,8 +8450,10 @@ export class OpenChat {
         }
     }
 
-    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. offline). Never rejects,
-    // and a failure leaves the cached balance as it was.
+    // Resolves with the balance, or undefined if it couldn't be refreshed. Never rejects, and the
+    // cached balance is left as it was. A ledger which didn't answer (eg. it is out of cycles) is
+    // marked in `balanceUnavailableStore` until a balance is next read from it; one which wasn't
+    // asked, being offline, is left as it was.
     refreshAccountBalance(
         ledger: string,
         allowCached: boolean = false,
@@ -8490,10 +8493,14 @@ export class OpenChat {
                                 principal: user.userId,
                             })
                             .then((val) => {
-                                cryptoBalanceStore.setBalance(ledger, val);
+                                // Undefined: the worker is offline, so didn't ask the ledger.
+                                // Nothing was learnt, so the balance and any mark stay as they are
+                                if (val !== undefined) {
+                                    cryptoBalanceStore.setBalance(ledger, val);
+                                }
                                 return val;
                             }),
-                        new Promise<bigint>((_, reject) =>
+                        new Promise<undefined>((_, reject) =>
                             window.setTimeout(
                                 () => reject(new Error("refreshAccountBalance timed out")),
                                 20_000,
@@ -8502,6 +8509,7 @@ export class OpenChat {
                     ])
                         .catch((err) => {
                             console.warn(`Couldn't refresh the balance of ${ledger}`, err);
+                            cryptoBalanceStore.setUnavailable(ledger);
                             return undefined;
                         })
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
@@ -8512,6 +8520,15 @@ export class OpenChat {
         this.#inflightBalanceRefreshPromises.set(ledger, promise);
 
         return promise;
+    }
+
+    // Asks again for each balance which couldn't be read, as the wallet does when it opens: a
+    // lookup which failed for a passing reason (a timeout, a moment offline) would otherwise leave
+    // its ledger marked until something else asked for that balance
+    async refreshUnavailableBalances(): Promise<void> {
+        await Promise.all(
+            [...balanceUnavailableStore.value].map((ledger) => this.refreshAccountBalance(ledger)),
+        );
     }
 
     // The balances left behind in the wallets of the canisters the user had before being migrated to
@@ -8614,6 +8631,7 @@ export class OpenChat {
                 ledger: LEDGER_CANISTER_CHAT,
                 principal: this.config.translationsCanister,
             })
+            .then((balance) => balance ?? 0n)
             .catch(() => 0n);
     }
 

@@ -1,8 +1,9 @@
 <script lang="ts">
     import type { EnhancedTokenDetails, OpenChat, ResourceKey } from "@client";
-    import { enhancedCryptoLookup as cryptoLookup } from "@client";
+    import { cryptoBalanceStore, enhancedCryptoLookup as cryptoLookup } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -82,14 +83,20 @@
     // wrong rather than missing. Show it as unknown instead.
     let tokenDetails = $derived($cryptoLookup.get(ledger));
     let symbol = $derived(tokenDetails?.symbol ?? "");
+    // The ledger didn't answer the last time the balance was asked for, eg. it is out of cycles.
+    // The balance last read is still shown, marked; with none ever read, a 0 would be a guess
+    let unavailable = $derived(tokenDetails?.balanceUnavailable ?? false);
+    let unknown = $derived(unavailable && !$cryptoBalanceStore.has(ledger));
     let formattedValue = $derived(
         tokenDetails === undefined
             ? "?????"
             : hideBalance
               ? "*****"
-              : conversion === "none"
-                ? client.formatTokens(value, tokenDetails.decimals)
-                : convertValue(conversion, tokenDetails),
+              : unknown
+                ? "???"
+                : conversion === "none"
+                  ? client.formatTokens(value, tokenDetails.decimals)
+                  : convertValue(conversion, tokenDetails),
     );
     $effect(() => {
         if (ledger) {
@@ -101,6 +108,11 @@
 <div class="container">
     {#if label !== undefined}
         <div class="label"><Translatable resourceKey={label} /></div>
+    {/if}
+    {#if unavailable && !refreshing}
+        <div class="unavailable" title={$_("cryptoAccount.balanceUnavailableInfo")}>
+            <AlertOutline size={"1em"} color={"var(--warn)"} />
+        </div>
     {/if}
     <div class="amount" class:bold>
         {formattedValue}
@@ -141,6 +153,11 @@
 
     .hideBalance {
         visibility: hidden;
+    }
+
+    .unavailable {
+        display: flex;
+        @include font-size(fs-100);
     }
 
     .refresh {
