@@ -1935,7 +1935,8 @@
                 "emptyTitle": "Không có tin nhắn đã ghim",
                 "emptyBody": "Nhấn giữ một tin nhắn trong cuộc trò chuyện và chọn Ghim để giữ nó ở trên cùng.",
                 "loadFailed": "Không thể tải các tin nhắn đã ghim"
-            }
+            },
+            "latestCall": "Đi đến tin nhắn mới nhất. Đang có cuộc gọi"
         },
         "shareUnavailable": "Chia sẻ vào OpenChat từ ứng dụng khác chưa có trong phiên bản này.",
         "start": {
@@ -2426,7 +2427,8 @@
             "startBroadcast": "Bắt đầu phát sóng",
             "unmute": "Bật tiếng",
             "you": "Bạn",
-            "yourCamera": "Camera của bạn. Kéo để di chuyển"
+            "yourCamera": "Camera của bạn. Kéo để di chuyển",
+            "speakRequests": "Yêu cầu phát biểu: {count}"
         }
     },
     "new": "Mới",

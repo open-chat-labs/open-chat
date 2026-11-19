@@ -1,10 +1,14 @@
 <!-- The minimised call (native design notes §3.5, N14): over every screen, draggable to six spots
      clear of the headers and the tab bar. A video call is a tile with the lead's video (or picture)
      and the time; a voice call, or any call on iOS where the native screen has the media, a pill
-     with the chat, the time, Mute and Leave. Tapping it opens the call again. -->
+     with the chat, the time, Mute and Leave. Tapping it opens the call again. A broadcast host's
+     waiting requests to speak are a count badge on it, popping as one arrives; the cards are on
+     the call screen. -->
 <script lang="ts">
+    import Badge from "@openchat/ui/src/lib/components/Badge.svelte";
     import SnapFloat from "@openchat/ui/src/lib/components/SnapFloat.svelte";
     import { stream as playStream } from "@openchat/ui/src/lib/behaviours/stream";
+    import { untrack } from "svelte";
     import { _ } from "svelte-i18n";
 
     type Spot = "tl" | "tr" | "ml" | "mr" | "bl" | "br";
@@ -15,6 +19,7 @@
         tile,
         lead,
         muted,
+        requests,
         position,
         safeTop,
         safeBottom,
@@ -37,6 +42,8 @@
             mirror: boolean;
         };
         muted: boolean;
+        /** A broadcast host's requests to speak, waiting (`miniCallRequests`). */
+        requests: number | undefined;
         position: Spot;
         safeTop: number;
         safeBottom: number;
@@ -48,6 +55,22 @@
 
     // the lead's picture that failed to load: the initial shows instead
     let failed = $state<string>();
+
+    // a new request to speak pops the badge
+    let pops = $state(0);
+    let seen = 0;
+    $effect(() => {
+        const count = requests ?? 0;
+        if (count > seen) untrack(() => pops++);
+        seen = count;
+    });
+
+    const label = $derived(
+        $_("native.call.returnTo", { values: { name: title } }) +
+            (requests
+                ? `. ${$_("native.call.speakRequests", { values: { count: requests } })}`
+                : ""),
+    );
 </script>
 
 {#snippet face(size: number)}
@@ -73,7 +96,7 @@
         {safeTop}
         {safeBottom}
         {position}
-        label={$_("native.call.returnTo", { values: { name: title } })}
+        {label}
         onSnap={(spot) => onSnap(spot as Spot)}
     >
         <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -82,7 +105,7 @@
             class:tile
             role="button"
             tabindex="0"
-            aria-label={$_("native.call.returnTo", { values: { name: title } })}
+            aria-label={label}
             onclick={onOpen}
             onkeydown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -140,10 +163,17 @@
                 </button>
             {/if}
         </div>
+        {#if requests}
+            {#key pops}
+                <span class="requests" aria-hidden="true"><Badge label={String(requests)} /></span>
+            {/key}
+        {/if}
     </SnapFloat>
 </div>
 
 <style lang="scss">
+    @use "@openchat/ui/src/lib/styles/mixins" as *;
+
     // over the screens and the tab bar, under the sheets and their veil
     .layer {
         position: fixed;
@@ -286,5 +316,29 @@
         width: 16px;
         height: 16px;
         background: #fff;
+    }
+
+    .requests {
+        position: absolute;
+        inset-block-start: -6px;
+        inset-inline-end: -6px;
+        pointer-events: none;
+        animation: pop 0.4s ease-out;
+
+        @include reduced-motion {
+            animation: none;
+        }
+    }
+
+    @keyframes pop {
+        0% {
+            transform: scale(0.6);
+        }
+        60% {
+            transform: scale(1.15);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
 </style>

@@ -1935,7 +1935,8 @@
                 "emptyTitle": "Aucun message épinglé",
                 "emptyBody": "Appuyez longuement sur un message de la discussion et choisissez Épingler pour le garder en haut.",
                 "loadFailed": "Impossible de charger les messages épinglés"
-            }
+            },
+            "latestCall": "Aller au dernier message. Un appel est en cours"
         },
         "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",
         "start": {
@@ -2426,7 +2427,8 @@
             "startBroadcast": "Lancer la diffusion",
             "unmute": "Réactiver",
             "you": "Vous",
-            "yourCamera": "Votre caméra. Faites glisser pour déplacer"
+            "yourCamera": "Votre caméra. Faites glisser pour déplacer",
+            "speakRequests": "Demandes de parole : {count}"
         }
     },
     "new": "Nouveau",

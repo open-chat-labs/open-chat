@@ -1935,7 +1935,8 @@
                 "emptyTitle": "No hay mensajes fijados",
                 "emptyBody": "Mantén pulsado un mensaje del chat y elige Fijar para tenerlo arriba.",
                 "loadFailed": "No se pudieron cargar los mensajes fijados"
-            }
+            },
+            "latestCall": "Ir al último mensaje. Hay una llamada en curso"
         },
         "shareUnavailable": "Compartir en OpenChat desde otras aplicaciones aún no está disponible en esta versión.",
         "start": {
@@ -2426,7 +2427,8 @@
             "startBroadcast": "Iniciar emisión",
             "unmute": "Activar sonido",
             "you": "Tú",
-            "yourCamera": "Tu cámara. Arrastra para mover"
+            "yourCamera": "Tu cámara. Arrastra para mover",
+            "speakRequests": "Solicitudes para hablar: {count}"
         }
     },
     "new": "nuevo",

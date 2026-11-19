@@ -74,7 +74,6 @@
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
-    import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import TypingIndicator from "@openchat/ui/src/lib/components/TypingIndicator.svelte";
@@ -192,7 +191,11 @@
     import { softKeyboard } from "../../aboveKeyboard.svelte";
     import { isAndroidTauriApp, isTauriApp } from "@client";
     import { activeVideoCall } from "@src/stores/video";
-    import { headerCallButtons, type HeaderCallButton } from "../call/call.adapter";
+    import {
+        headerCallButtons,
+        latestShowsCall,
+        type HeaderCallButton,
+    } from "../call/call.adapter";
     import type { ComposerBuilder } from "@src/logic/composer/composer";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "conversation" }>> =
@@ -346,7 +349,7 @@
             : undefined,
     );
 
-    const headerActions = $derived(
+    const callButtons = $derived(
         chat === undefined || readonly
             ? []
             : headerCallButtons({
@@ -356,13 +359,18 @@
                   isPublic: !client.isChatPrivate(chat),
                   chatCall: chat.videoCallInProgress?.callType,
                   ownCall: ownCall?.callType,
-              }).map((button) => ({
-                  icon: button.icon,
-                  label: $_(button.label),
-                  onClick: () => pressHeaderCall(button.request),
-                  live: button.live,
-              })),
+              }),
     );
+    const headerActions = $derived(
+        callButtons.map((button) => ({
+            icon: button.icon,
+            label: $_(button.label),
+            onClick: () => pressHeaderCall(button.request),
+            live: button.live,
+        })),
+    );
+    // the scroll-to-the-latest button shows the call too, green as the header's (plan 04)
+    const latestCall = $derived(latestShowsCall(callButtons));
 
     function pressHeaderCall(request: HeaderCallButton["request"]) {
         if (chat === undefined) return;
@@ -1563,15 +1571,24 @@
                     {/if}
                 {/snippet}
                 {#snippet fabs({ showGoToBottom, scrollToLast })}
-                    {#if showGoToBottom}
-                        <div class="to-bottom">
-                            <IconButton
-                                icon="arrow-down"
-                                label={$_("goToLatestMessage")}
-                                onClick={scrollToLast}
-                            />
-                        </div>
-                    {/if}
+                    <button
+                        type="button"
+                        class="to-latest"
+                        class:shown={showGoToBottom}
+                        class:call={latestCall}
+                        aria-label={$_(
+                            latestCall ? "native.conversation.latestCall" : "goToLatestMessage",
+                        )}
+                        aria-hidden={!showGoToBottom}
+                        tabindex={showGoToBottom ? 0 : -1}
+                        onclick={scrollToLast}
+                    >
+                        <span class="pulse"></span>
+                        <span class="arrow"></span>
+                        {#if latestCall}
+                            <span class="phone"></span>
+                        {/if}
+                    </button>
                 {/snippet}
             </ChatEventList>
         </div>
@@ -1903,10 +1920,88 @@
         color: #fff;
     }
 
-    .to-bottom {
+    // scroll to the latest (plan 04): a 40px round button, fading and rising 8px in; during a
+    // call here the user isn't in, green with a phone badge, pulsing three times as it appears
+    .to-latest {
         position: absolute;
         inset-block-end: var(--space-12);
         inset-inline-end: var(--space-16);
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-1);
+        box-shadow:
+            inset 0 0 0 1px var(--line-2),
+            0 4px 12px rgba(0, 0, 0, 0.18);
+        color: var(--ink-2);
+        opacity: 0;
+        transform: translateY(8px) scale(0.9);
+        pointer-events: none;
+        transition:
+            opacity 0.2s,
+            transform 0.2s;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &.shown {
+            opacity: 1;
+            transform: none;
+            pointer-events: auto;
+        }
+
+        &.call {
+            background: color-mix(in oklch, var(--status-online) 16%, var(--surface-1));
+            box-shadow:
+                inset 0 0 0 1.5px var(--status-online),
+                0 4px 12px rgba(0, 0, 0, 0.18);
+            color: var(--status-online);
+        }
+
+        &.shown.call .pulse {
+            animation: ocCallPulse 1.8s ease-out 3;
+
+            @include reduced-motion {
+                animation: none;
+            }
+        }
+
+        @include reduced-motion {
+            transition: none;
+        }
+    }
+
+    .pulse {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+    }
+
+    .arrow {
+        @include icon(arrow-down, 18px);
+    }
+
+    .phone {
+        position: absolute;
+        inset-block-start: -2px;
+        inset-inline-end: -2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--status-online);
+        box-shadow: 0 0 0 2px var(--surface-0);
+
+        &::after {
+            content: "";
+            @include icon(phone, 9px, #04241a);
+        }
     }
 
     // a DM's typing bubble (the library's: received style, no avatar, 34px tall, small corner top

@@ -539,12 +539,15 @@ design export needs. Each entry says where it came up.
     hiding after 4s in video; a broadcast host's requests to speak as the library's
     `SpeakRequests` cards under the top bar. Minimised: a video tile or voice pill at six spots,
     clear of the header and the tab bar; on iOS always the pill, as the native screen has the
-    media. Android's Back minimises the call screen. A call started elsewhere rings in a phone's
+    media. A host's waiting requests are a count badge on it (the library's `Badge`), popping as
+    one arrives; tapping it opens the cards (undesigned, decided 2026-11-19). While a call the user
+    isn't in is going on, the scroll-to-the-latest button is green with a phone badge and pulses
+    three times as it appears (plan 04), exactly while the header's button is live; it's the
+    design's 40px round button now in both states, not the square `IconButton`. Android's Back minimises the call screen. A call started elsewhere rings in a phone's
     browser as a card under the status bar (`IncomingCall`; the apps ring with the system's own
     screen), and the host ending a broadcast or refusing a request to speak is a toast. Left:
-    - Undesigned, built from the call screen's parts: the ringing card and the request cards.
-    - The minimised call doesn't show a host's requests; they wait on the call screen.
-    - The scroll-to-the-latest button doesn't show the call's state (plan 04).
+    - Undesigned, built from the call screen's parts: the ringing card, the request cards and the
+      minimised call's request badge.
     - PR 3 (needs a shell with it; an older one keeps the Speaker toggle and has no picture in
       picture): with headphones connected Speaker opens the output menu of what the Android shell
       lists (speaker, phone, a wired headset or a Bluetooth device, named where the call is
