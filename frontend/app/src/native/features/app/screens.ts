@@ -80,7 +80,10 @@ export const screens: Screens = {
     threads: undefined,
 
     // Explore (N8b)
-    explore: undefined,
+    explore: () => import("../explore/ExploreScreen.svelte"),
+
+    // an Explore shelf's View all (N8b)
+    explore_list: () => import("../explore/ExploreListScreen.svelte"),
 
     // a token's page (N10a)
     token: undefined,

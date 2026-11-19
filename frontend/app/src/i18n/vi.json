@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, other {Thành viên được kiểm tra lại mỗi # tuần.}}"
             }
             }
+        },
+        "explore": {
+            "title": "Khám phá",
+            "search": "Tìm cộng đồng",
+            "languages": "Ngôn ngữ",
+            "filterByLanguage": "Lọc theo ngôn ngữ",
+            "languagesPicked": "Ngôn ngữ: {languages}",
+            "removeLanguage": "Bỏ {language}",
+            "clear": "Xoá",
+            "featured": "Nổi bật",
+            "viewAll": "Xem tất cả",
+            "results": "Kết quả",
+            "communitiesIn": "Cộng đồng bằng {languages}",
+            "inLanguages": "Bằng {languages}.",
+            "none": "Không có cộng đồng phù hợp. Hãy thử tìm kiếm hoặc ngôn ngữ khác.",
+            "members": "{count} thành viên",
+            "joined": "Đã tham gia",
+            "failed": "Không tải được cộng đồng. Hãy kiểm tra kết nối và thử lại.",
+            "showLanguages": "{count, plural, =0 {Hiện mọi ngôn ngữ} other {Hiện # ngôn ngữ}}",
+            "shelf": {
+                "popular": "Phổ biến"
+            },
+            "shelfSub": {
+                "popular": "Nhiều thành viên nhất."
+            }
         }
     },
     "new": "Mới",

@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, one {I membri vengono ricontrollati ogni settimana.} other {I membri vengono ricontrollati ogni # settimane.}}"
             }
             }
+        },
+        "explore": {
+            "title": "Esplora",
+            "search": "Cerca community",
+            "languages": "Lingue",
+            "filterByLanguage": "Filtra per lingua",
+            "languagesPicked": "Lingue: {languages}",
+            "removeLanguage": "Rimuovi {language}",
+            "clear": "Cancella",
+            "featured": "In evidenza",
+            "viewAll": "Vedi tutto",
+            "results": "Risultati",
+            "communitiesIn": "Community in {languages}",
+            "inLanguages": "In {languages}.",
+            "none": "Nessuna community corrisponde. Prova un'altra ricerca o lingua.",
+            "members": "{count, plural, one {# membro} other {# membri}}",
+            "joined": "Iscritto",
+            "failed": "Impossibile caricare le community. Controlla la connessione e riprova.",
+            "showLanguages": "{count, plural, =0 {Mostra tutte le lingue} one {Mostra # lingua} other {Mostra # lingue}}",
+            "shelf": {
+                "popular": "Popolari"
+            },
+            "shelfSub": {
+                "popular": "Più membri."
+            }
         }
     },
     "new": "nuovo",

@@ -9,6 +9,7 @@ import {
     type WalletRoute,
 } from "@client";
 import type { ComposerBuilder } from "@src/logic/composer/composer";
+import type { ExploreShelfKey } from "../features/explore/explore.adapter";
 import { isLandingPageRoute } from "@src/utils/urls";
 
 // Where each URL is in the native tree (native design notes §1 Structure): which of the five tabs,
@@ -66,13 +67,7 @@ export type SettingsPage =
  * A group's or channel's settings page, from its details (native plan 10's Manage, the cover's Edit
  * group): N7's screens (plan 11), placeholders until then.
  */
-export type GroupSettingsPage =
-    | "edit"
-    | "gates"
-    | "rules"
-    | "permissions"
-    | "bots"
-    | "stats";
+export type GroupSettingsPage = "edit" | "gates" | "rules" | "permissions" | "bots" | "stats";
 
 /**
  * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen
@@ -98,7 +93,9 @@ export type LocalScreen =
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" }
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat
-    | { kind: "builder"; builder: ComposerBuilder; chatId: ChatIdentifier };
+    | { kind: "builder"; builder: ComposerBuilder; chatId: ChatIdentifier }
+    // an Explore shelf's View all (N8b)
+    | { kind: "explore_list"; shelf: ExploreShelfKey };
 
 /** A local screen's identity in its stack (StackStep.key, after "local:"). */
 export function localKey(screen: LocalScreen): string {

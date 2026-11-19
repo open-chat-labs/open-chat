@@ -1,18 +1,23 @@
 import type { RouteParams } from "@client";
 import type { ExploreQuery } from "@openchat/ui/src/features/components/ExploreCommunities.svelte";
+import type { ExploreSearchQuery as ExploreUrlQuery } from "@src/logic/explore/exploreSearch";
 import {
-    sameCommunitySearch,
     sameLanguages,
     type CommunitySearch,
-    type CommunitySearchKey,
     type CommunitySearchOutcome,
 } from "@src/stores/search.svelte";
 
+export {
+    exploreNeedsSearch,
+    exploreQueryAnswered,
+    exploreSearch,
+    exploreSearchKey,
+    languageToggles,
+    type ExploreSearchQuery as ExploreUrlQuery,
+} from "@src/logic/explore/exploreSearch";
+
 // Explore's query in the URL (ROUTES.md, "Explore query"): /communities?q=<text>&lang=<codes>, and
 // the decisions the screen makes around it.
-
-/** What Explore shows: the search text and the languages picked, by code. */
-export type ExploreUrlQuery = { text: string; languages: string[] };
 
 /** The page the library asks for (DATA.md): its own page size. */
 export const EXPLORE_PAGE_SIZE = 6;
@@ -68,63 +73,6 @@ export function sameExploreQuery(a: ExploreUrlQuery, b: ExploreUrlQuery): boolea
  */
 export function explorePage(query: Pick<ExploreQuery, "offset">): CommunitySearch["page"] {
     return query.offset === 0 ? "first" : "next";
-}
-
-/**
- * The search for a query. `flags` are the viewer's moderation flags
- * (`exploreCommunitiesFiltersStore`), so adult and offensive communities show only to those who
- * turned them on.
- */
-export function exploreSearch(
-    query: ExploreUrlQuery,
-    flags: number,
-    page: CommunitySearch["page"],
-    pageSize: number,
-): CommunitySearch {
-    return { ...exploreSearchKey(query, flags), page, pageSize };
-}
-
-/** What results for a query are filtered by (see exploreSearch). */
-export function exploreSearchKey(query: ExploreUrlQuery, flags: number): CommunitySearchKey {
-    return { term: query.text, languages: query.languages, flags };
-}
-
-/**
- * Whether Explore has to search on opening, or when the viewer's flags change: the results held
- * (kept across visits, with their scroll position) are kept unless there are none or they answer
- * another search.
- */
-export function exploreNeedsSearch(
-    held: CommunitySearchKey | undefined,
-    wanted: CommunitySearchKey,
-    resultsHeld: number,
-): boolean {
-    return resultsHeld === 0 || !exploreQueryAnswered(held, wanted);
-}
-
-/**
- * Whether the results held already answer a query: one the component asks for where only its sort
- * changed (the backend has one ranking, so every sort is the same page), or the text was changed
- * and changed back before the ask went out; or one the URL changes to (Back, a link) whose results
- * are still held. Asking again would fetch the same page.
- */
-export function exploreQueryAnswered(
-    held: CommunitySearchKey | undefined,
-    wanted: CommunitySearchKey,
-): boolean {
-    return held !== undefined && sameCommunitySearch(held, wanted);
-}
-
-/**
- * The languages to toggle in the saved filter (`toggleCommunityFilterLanguage`) so that it holds
- * exactly those picked, and Explore opens on them next time.
- */
-export function languageToggles(saved: Iterable<string>, picked: string[]): string[] {
-    const before = [...saved];
-    return [
-        ...before.filter((l) => !picked.includes(l)),
-        ...picked.filter((l, i) => !before.includes(l) && picked.indexOf(l) === i),
-    ];
 }
 
 /** Waiting for the first answer to the query shown; showing it; or its first page failed. */

@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, one {يُعاد التحقق من الأعضاء كل أسبوع.} two {يُعاد التحقق من الأعضاء كل أسبوعين.} few {يُعاد التحقق من الأعضاء كل # أسابيع.} other {يُعاد التحقق من الأعضاء كل # أسبوع.}}"
             }
             }
+        },
+        "explore": {
+            "title": "استكشاف",
+            "search": "ابحث عن مجتمعات",
+            "languages": "اللغات",
+            "filterByLanguage": "تصفية حسب اللغة",
+            "languagesPicked": "اللغات: {languages}",
+            "removeLanguage": "إزالة {language}",
+            "clear": "مسح",
+            "featured": "مميّزة",
+            "viewAll": "عرض الكل",
+            "results": "النتائج",
+            "communitiesIn": "مجتمعات باللغة {languages}",
+            "inLanguages": "باللغة {languages}.",
+            "none": "لا توجد مجتمعات مطابقة. جرّب بحثًا أو لغة أخرى.",
+            "members": "{count, plural, one {عضو واحد} two {عضوان} few {# أعضاء} many {# عضوًا} other {# عضو}}",
+            "joined": "منضم",
+            "failed": "تعذّر تحميل المجتمعات. تحقّق من اتصالك وحاول مرة أخرى.",
+            "showLanguages": "{count, plural, =0 {عرض كل اللغات} one {عرض لغة واحدة} two {عرض لغتين} few {عرض # لغات} other {عرض # لغة}}",
+            "shelf": {
+                "popular": "الأكثر شعبية"
+            },
+            "shelfSub": {
+                "popular": "الأكثر أعضاءً."
+            }
         }
     },
     "new": "جديد",

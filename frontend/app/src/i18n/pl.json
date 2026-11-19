@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, one {Członkowie są sprawdzani co tydzień.} few {Członkowie są sprawdzani co # tygodnie.} many {Członkowie są sprawdzani co # tygodni.} other {Członkowie są sprawdzani co # tygodnia.}}"
             }
             }
+        },
+        "explore": {
+            "title": "Odkrywaj",
+            "search": "Szukaj społeczności",
+            "languages": "Języki",
+            "filterByLanguage": "Filtruj według języka",
+            "languagesPicked": "Języki: {languages}",
+            "removeLanguage": "Usuń {language}",
+            "clear": "Wyczyść",
+            "featured": "Polecane",
+            "viewAll": "Zobacz wszystkie",
+            "results": "Wyniki",
+            "communitiesIn": "Społeczności w języku {languages}",
+            "inLanguages": "W języku {languages}.",
+            "none": "Brak pasujących społeczności. Spróbuj innego wyszukiwania lub języka.",
+            "members": "{count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",
+            "joined": "Dołączono",
+            "failed": "Nie udało się wczytać społeczności. Sprawdź połączenie i spróbuj ponownie.",
+            "showLanguages": "{count, plural, =0 {Pokaż wszystkie języki} one {Pokaż # język} few {Pokaż # języki} many {Pokaż # języków} other {Pokaż # języka}}",
+            "shelf": {
+                "popular": "Popularne"
+            },
+            "shelfSub": {
+                "popular": "Najwięcej członków."
+            }
         }
     },
     "new": "nowy",

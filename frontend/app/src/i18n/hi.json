@@ -2475,6 +2475,31 @@
                 "week": "{count, plural, one {सदस्यों की हर हफ़्ते दोबारा जाँच होती है।} other {सदस्यों की हर # हफ़्ते दोबारा जाँच होती है।}}"
             }
             }
+        },
+        "explore": {
+            "title": "खोजें",
+            "search": "समुदाय खोजें",
+            "languages": "भाषाएँ",
+            "filterByLanguage": "भाषा से छाँटें",
+            "languagesPicked": "भाषाएँ: {languages}",
+            "removeLanguage": "{language} हटाएँ",
+            "clear": "साफ़ करें",
+            "featured": "विशेष",
+            "viewAll": "सभी देखें",
+            "results": "नतीजे",
+            "communitiesIn": "{languages} में समुदाय",
+            "inLanguages": "{languages} में।",
+            "none": "कोई समुदाय मेल नहीं खाता। कोई दूसरी खोज या भाषा आज़माएँ।",
+            "members": "{count, plural, one {# सदस्य} other {# सदस्य}}",
+            "joined": "जुड़े हुए",
+            "failed": "समुदाय लोड नहीं हो सके। अपना कनेक्शन जाँचें और फिर कोशिश करें।",
+            "showLanguages": "{count, plural, =0 {सभी भाषाएँ दिखाएँ} one {# भाषा दिखाएँ} other {# भाषाएँ दिखाएँ}}",
+            "shelf": {
+                "popular": "लोकप्रिय"
+            },
+            "shelfSub": {
+                "popular": "सबसे ज़्यादा सदस्य।"
+            }
         }
     },
     "new": "नया",

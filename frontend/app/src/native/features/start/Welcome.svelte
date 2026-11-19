@@ -8,7 +8,7 @@
     import Avatar from "@openchat/ui/src/lib/components/Avatar.svelte";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Logo from "@openchat/ui/src/lib/components/Logo.svelte";
-    import { languageCode } from "@i18n/i18n";
+    import { languageCode, setLocale } from "@i18n/i18n";
     import type { OpenChat } from "@client";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { getContext, untrack } from "svelte";
@@ -168,7 +168,15 @@
 {#if sheet === "appearance"}
     <AppearanceMenu trigger={appearanceButton} onClose={() => (sheet = undefined)} />
 {/if}
-<LanguageSheet open={sheet === "language"} onClose={() => (sheet = undefined)} />
+<LanguageSheet
+    open={sheet === "language"}
+    onClose={() => (sheet = undefined)}
+    title={$_("native.start.language.title")}
+    selected={(code) => code === languageCode($locale)}
+    onPick={(code) => {
+        void setLocale(code);
+        sheet = undefined;
+    }} />
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
