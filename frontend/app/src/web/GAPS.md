@@ -3017,7 +3017,20 @@ design export needs. Each entry says where it came up.
     only while something can be attached (`canAttachNow`: not during an edit or a voice take), the
     ones that send too, since one sent mid-edit would reply to the edited message's reply. The
     composer stages each as its chip (`composerTransfer` …), whose Edit opens its builder again
-    on it, and × drops it. One whose token has left the registry has no chip: its send is refused
+    on it, and × drops it. Anything that would take a staged payment's place asks first (the
+    user's decision, 2026-11-19; the old trees replaced it silently): a photo, video or file
+    picked, dropped or pasted, a GIF picked, or another payment builder picked from the "+" menu
+    (asked before its dialog opens: the staged one stays until the new one is attached, so
+    closing the builder keeps it). A file the chat doesn't take is refused first, with the usual
+    toast and no question (`fileAttachStep`), and one it takes is prepared only once the answer is
+    Replace. "Replace the prize?" with what takes its place (`builders.replace.*`), Replace or
+    Cancel, which keeps the payment and drops what came; one decision for every path
+    (`replaceNeedsConfirm`, `logic/composer/replaceStaged`), asked in the dialog host
+    (`replace_staged`, `ReplaceStagedDialogScreen`, the plain `ConfirmDialog` over the dialogs'
+    veil): Replace hands off to the builder in its place over the same backdrop
+    (`DialogStack.handOff`), with no back arrow; Cancel, × and the backdrop close it. The design
+    has no such confirm (`TODO(design)`). A photo, video, file or GIF replacing another is still
+    replaced without asking. One whose token has left the registry has no chip: its send is refused
     (`attachmentToSend`) rather than the caption going without it. They pay from the OpenChat wallet only: the old
     builders' external wallet picker (`SourceWalletSelector`, and the approval at send) has no
     design and isn't offered. A draft that does carry an external wallet (`fromWallet`) is never

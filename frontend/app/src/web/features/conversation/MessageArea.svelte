@@ -92,6 +92,7 @@
         type FlattenedCommand,
         type Message,
         type VideoCallContent,
+        type GiphyContent,
         type MessageContext,
         type MessageMenu,
         type MessageMenuAction,
@@ -172,6 +173,12 @@
         submitEdit,
     } from "@src/logic/conversation/draftActions";
     import {
+        fileAttachStep,
+        incomingBuilder,
+        replaceNeedsConfirm,
+        type ReplaceQuestion,
+    } from "@src/logic/composer/replaceStaged";
+    import {
         followsThread,
         rowMessageContext,
         threadEventReadByMe,
@@ -211,6 +218,7 @@
     import { navigate } from "@src/utils/navigation";
     import { getContext, onMount, untrack, type ComponentProps, type Snippet } from "svelte";
     import { _, locale } from "svelte-i18n";
+    import type { LocalDialog, ReplaceNext } from "../app/dialogs";
     import type { ScreenContext } from "../app/screens";
     import Composer from "./Composer.svelte";
     import { messageMenuItems } from "./conversation.adapter";
@@ -630,34 +638,57 @@
         return [...pickableAttachments(permitted), ...composerBuilders(permitted, composerBuildersOff)];
     });
 
-    // a builder picked from the + menu opens its dialog, for this chat or thread
+    // a prize, transfer or swap offer staged asks before anything takes its place
+    // (replaceNeedsConfirm), in a dialog of the host's (ReplaceStagedDialogScreen): Replace goes
+    // on with `next`, Cancel keeps what's staged and drops what came; anything else staged is
+    // replaced at once
+    function askToReplace(question: ReplaceQuestion, next: ReplaceNext) {
+        screen.dialogs.open({ kind: "replace_staged", question, next });
+    }
+
+    // a builder picked from the + menu opens its dialog, for this chat or thread; one whose
+    // content would take a staged prize, transfer or swap offer's place asks first, and Replace
+    // hands off to it over the same backdrop (a poll and a meme are sent as they're made,
+    // replacing nothing)
     function build(context: MessageContext, builder: ComposerBuilder) {
+        // only a Diamond member makes an offer: anyone else gets the Diamond dialog
+        if (builder === "swap" && swapOfferStep($isDiamondStore, true) === "upgrade") {
+            publish("upgrade");
+            return;
+        }
+        openBuilder(context, builder);
+    }
+
+    // a builder's dialog, asking first where its content would take a staged payment's place (the
+    // "+" menu's builders, and /crypto's transfer dialog)
+    function openBuilder(context: MessageContext, builder: ComposerBuilder) {
+        const dialog = builderDialog(context, builder);
+        const incoming = incomingBuilder(builder);
+        const question =
+            incoming === undefined
+                ? undefined
+                : replaceNeedsConfirm(draftAttachment(draft), incoming);
+        if (question === undefined) screen.dialogs.open(dialog);
+        else askToReplace(question, { kind: "open", dialog });
+    }
+
+    function builderDialog(context: MessageContext, builder: ComposerBuilder): LocalDialog {
         switch (builder) {
             case "poll":
-                screen.dialogs.open({ kind: "poll_builder", context });
-                break;
+                return { kind: "poll_builder", context };
             case "prize":
-                screen.dialogs.open({ kind: "prize_builder", context });
-                break;
+                return { kind: "prize_builder", context };
             case "swap":
-                // only a Diamond member makes an offer: anyone else gets the Diamond dialog
-                if (swapOfferStep($isDiamondStore, true) === "upgrade") {
-                    publish("upgrade");
-                } else {
-                    screen.dialogs.open({ kind: "swap_offer", context });
-                }
-                break;
+                return { kind: "swap_offer", context };
             case "memeFighter":
-                screen.dialogs.open({ kind: "meme_fighter", context });
-                break;
+                return { kind: "meme_fighter", context };
             case "crypto":
                 // to the one being replied to, unless the user picks someone else
-                screen.dialogs.open({
+                return {
                     kind: "send_crypto",
                     context,
                     defaultReceiver: draft?.replyingTo?.sender?.userId,
-                });
-                break;
+                };
         }
     }
 
@@ -720,7 +751,8 @@
     // the composer's GIF tab: offered where GIFs may be sent and something can be attached now (not
     // mid-edit, where the GIF would reply to the edited message's reply, nor during a voice take,
     // nor in a bot DM); a GIF picked becomes the draft's attachment, in place of any, and goes with
-    // Send, the text its caption (attachGif)
+    // Send, the text its caption (attachGif), asking first in place of a staged prize, transfer or
+    // swap offer
     const gifsAllowed = $derived(attachable && permitted.has("giphy"));
 
     // bot commands: a "/" at the start of the composer's text lists those the reader may run here
@@ -799,13 +831,7 @@
     // TODO: the amount and token typed after /crypto aren't put in the transfer dialog yet (GAPS)
     $effect(() =>
         subscribe("tokenTransfer", ({ context: at }) => {
-            if (messageContextsEqual(at, context)) {
-                screen.dialogs.open({
-                    kind: "send_crypto",
-                    context: at,
-                    defaultReceiver: draft?.replyingTo?.sender?.userId,
-                });
-            }
+            if (messageContextsEqual(at, context)) openBuilder(at, "crypto");
         }),
     );
     $effect(() =>
@@ -838,8 +864,34 @@
     });
 
     // a file picked, pasted or dropped goes to the chat or thread it was picked in, if it may be
-    // sent there
-    async function attachFile(context: MessageContext, file: File) {
+    // sent there: one that may not is refused at once; one that may asks first in place of a
+    // staged prize, transfer or swap offer, and is prepared once that's answered (fileAttachStep)
+    function attachFile(context: MessageContext, file: File) {
+        const step = fileAttachStep(client, context, file.type, draftAttachment(draft));
+        switch (step.kind) {
+            case "refused":
+                toastStore.showFailureToast(attachRefusal(step.refusal, $_));
+                break;
+            case "confirm":
+                askToReplace(step.question, {
+                    kind: "attach",
+                    attach: () => void attachNow(context, file),
+                });
+                break;
+            case "attach":
+                void attachNow(context, file);
+                break;
+        }
+    }
+
+    // a GIF picked, asking first in place of a staged prize, transfer or swap offer
+    function pickGif(context: MessageContext, content: GiphyContent) {
+        const question = replaceNeedsConfirm(draftAttachment(draft), "gif");
+        if (question === undefined) attachGif(context, content);
+        else askToReplace(question, { kind: "attach", attach: () => attachGif(context, content) });
+    }
+
+    async function attachNow(context: MessageContext, file: File) {
         const outcome = await client.attachFile(file, context);
         if (outcome.kind !== "attached") {
             toastStore.showFailureToast(attachRefusal(outcome, $_));
@@ -869,7 +921,7 @@
         e.preventDefault();
         if (!droppable) return;
         const file = fileFromDataTransferItems([...e.dataTransfer.items]);
-        if (file !== undefined) void attachFile(context, file);
+        if (file !== undefined) attachFile(context, file);
     }
 
     // the client puts the draft back as the edit goes out, and undoes the edit if it fails
@@ -1884,7 +1936,7 @@
                     onMentionQuery={mentionQueried}
                     onVoiceActive={(active) => (voiceActive = active)}
                     {mentions}
-                    onGif={gifsAllowed ? (content) => attachGif(context, content) : undefined}
+                    onGif={gifsAllowed ? (content) => pickGif(context, content) : undefined}
                     onCommandQuery={commandQueried}
                     {commands}
                     onPickCommand={(command) => pickCommand(context, command)}

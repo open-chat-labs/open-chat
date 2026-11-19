@@ -82,6 +82,19 @@
         animation: none;
     }
 
+    /* the same where the screen wraps its dialog in a box that lays nothing out (the swap offer's,
+       kept under its confirmation), handed off to from the replace confirm */
+    .keep-backdrop
+        > :global(:first-child > .layer:first-child:not(.closing) > .scrim:not(.closing)) {
+        animation: none;
+    }
+
+    .keep-backdrop > :global(:first-child > .layer:first-child > .scrim) {
+        background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+        backdrop-filter: var(--oc-veil-blur, blur(4px));
+        -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    }
+
     /* a frame's lighter scrim (DialogShell) taking over the dialogs' backdrop wears the dialogs' veil,
        so the backdrop doesn't change as it does */
     .keep-backdrop > :global(:first-child > .scrim) {

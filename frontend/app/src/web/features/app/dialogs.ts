@@ -20,6 +20,7 @@ import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { JoinTarget } from "@src/logic/join/joinFlow.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { ProfileCardShown } from "@src/logic/profile/profileCardData.svelte";
+import type { ReplaceQuestion } from "@src/logic/composer/replaceStaged";
 import type { Component } from "svelte";
 
 // The app's dialogs, and the screen each one shows: plugged in here as screens are in screens.ts,
@@ -153,7 +154,19 @@ export type LocalDialog =
     // a swap offer, confirmed and attached to the draft; `editing` the staged one
     | { kind: "swap_offer"; context: MessageContext; editing?: P2PSwapContentInitial }
     // a Meme Fighter meme, made in the maker's frame and sent from the dialog
-    | { kind: "meme_fighter"; context: MessageContext };
+    | { kind: "meme_fighter"; context: MessageContext }
+    // asking before something takes a staged prize, transfer or swap offer's place in the draft
+    // (`replaceNeedsConfirm`): Replace goes on with `next`; Cancel, × and the backdrop keep what's
+    // staged and close it, with nothing to go back to
+    | { kind: "replace_staged"; question: ReplaceQuestion; next: ReplaceNext };
+
+/**
+ * What a replace confirmed goes on to: another builder, opened in the confirm's place over the
+ * same backdrop (DialogStack.handOff), or a file or GIF attached as the confirm closes.
+ */
+export type ReplaceNext =
+    | { kind: "open"; dialog: LocalDialog }
+    | { kind: "attach"; attach: () => void };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -264,6 +277,9 @@ export const dialogs: Dialogs = {
     prize_builder: () => import("../builders/PrizeBuilderDialogScreen.svelte"),
     swap_offer: () => import("../builders/SwapOfferDialogScreen.svelte"),
     meme_fighter: () => import("../builders/MemeFighterDialogScreen.svelte"),
+
+    // asking before a staged prize, transfer or swap offer is replaced (5c)
+    replace_staged: () => import("../conversation/ReplaceStagedDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

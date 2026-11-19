@@ -509,7 +509,24 @@
         "unlinkFailed": "Couldn't unlink the account"
     },
     "builders": {
-        "paymentRefused": "That can't be attached. Check the amount and your balance, then try again."
+        "paymentRefused": "That can't be attached. Check the amount and your balance, then try again.",
+        "replace": {
+            "confirm": "Replace",
+            "title": {
+                "prize": "Replace the prize?",
+                "transfer": "Replace the transfer?",
+                "swap": "Replace the swap offer?"
+            },
+            "with": {
+                "photo": "This photo will take its place, and what you set up for it will be lost.",
+                "video": "This video will take its place, and what you set up for it will be lost.",
+                "file": "This file will take its place, and what you set up for it will be lost.",
+                "gif": "This GIF will take its place, and what you set up for it will be lost.",
+                "prize": "A new prize will take its place once you've set it up, and what you set up for this one will be lost.",
+                "transfer": "A transfer will take its place once you've set it up, and what you set up for this one will be lost.",
+                "swap": "A new swap offer will take its place once you've set it up, and what you set up for this one will be lost."
+            }
+        }
     },
     "cashtag": {
         "chartLabel": "{symbol} price over the last 7 days",
