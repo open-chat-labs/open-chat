@@ -184,7 +184,11 @@ describe("renderMarkdown (full parse + sanitise pipeline)", () => {
 
     test("raw html in the source is neutralised", () => {
         const out = renderMarkdown(input(`<img src=x onerror=alert(1)> @UserId(abc-1)`), noop);
-        expect(out).not.toContain("onerror");
+        const div = document.createElement("div");
+        div.innerHTML = out;
+        // shown as the text it is (the old UI's way), never an element
+        expect(div.querySelector("img, [onerror]")).toBeNull();
+        expect(div.textContent).toContain("<img src=x onerror=alert(1)>");
         expect(out).toContain(`<profile-link`);
     });
 
@@ -227,5 +231,19 @@ describe("renderMarkdown (full parse + sanitise pipeline)", () => {
         const b = renderMarkdown(input("@UserId(abc-1)", { users: [] }), noop);
         expect(a).toContain("profile-link");
         expect(b).toBe("@UserId(abc-1)");
+    });
+});
+
+describe("links", () => {
+    // The native app's origin is never oc.app, so an absolute oc.app link would leave the app for
+    // the browser: it has to render as a path the app's router can follow, whichever tree renders it.
+    test("a link to OpenChat itself renders as an in-app path; others stay absolute", () => {
+        const div = document.createElement("div");
+        div.innerHTML = renderMarkdown(
+            input("https://oc.app/community/abc/channel/1 and https://example.com/x"),
+            noop,
+        );
+        const hrefs = [...div.querySelectorAll("a")].map((a) => a.getAttribute("href"));
+        expect(hrefs).toEqual(["/community/abc/channel/1", "https://example.com/x"]);
     });
 });

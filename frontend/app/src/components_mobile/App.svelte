@@ -12,7 +12,6 @@
     } from "@stores/androidInterfaceSizes";
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
-    import "@utils/markdown";
     import { followWindowInsets } from "@utils/native/notification_channels";
     import { followThemeInSystemBars } from "@utils/native/systemBarsStyle";
     import {
