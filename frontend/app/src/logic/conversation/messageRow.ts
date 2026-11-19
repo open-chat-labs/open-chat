@@ -21,6 +21,7 @@ import {
     swapActions,
     swapLabels,
     toLongDatetimeString,
+    twitchLiveThumbnailUrl,
     twitchPlayerUrl,
     twitchPoster,
     twitchWatchUrl,
@@ -297,10 +298,13 @@ export type PlayerProps = NonNullable<Extract<GroupMessage, { kind?: "text" }>["
 const TWITCH_LOGO = "/assets/twitch.svg";
 
 /**
- * A Twitch link's player (PlayerCard), as the old trees' TwitchPlayer shows it: its poster is the
- * link's preview, if the sender fetched one that says what it is, else where it's to
+ * A Twitch link's player (PlayerCard), as the old trees' TwitchPlayer shows it: its poster's title
+ * is the link's preview's, if the sender fetched one that says what it is, else where it's to
  * (`twitchPoster`); it plays here only where Twitch lets it (`twitchParent`), else it links to
- * Twitch.
+ * Twitch. Unlike the old trees, a channel's poster is what it's streaming now
+ * (`twitchLiveThumbnailUrl`), not its preview's image (the channel's avatar, and none at all when
+ * the sender's preview fetch failed); a video or clip has no picture to show (Twitch gives a
+ * preview fetch only its logo), so its poster is the black frame and its title.
  */
 export function twitchPlayer(
     player: TwitchPlayerPreview,
@@ -309,7 +313,10 @@ export function twitchPlayer(
     const poster = twitchPoster(player.embed, player.ogPreview);
     return {
         title: poster.title,
-        image: poster.image,
+        image:
+            player.embed.kind === "twitch_channel"
+                ? twitchLiveThumbnailUrl(player.embed.login)
+                : poster.image,
         src: ctx.twitchParent === undefined ? "" : twitchPlayerUrl(player.embed, ctx.twitchParent),
         href: twitchWatchUrl(player.embed),
         logo: TWITCH_LOGO,

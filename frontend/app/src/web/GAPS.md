@@ -2742,6 +2742,12 @@ design export needs. Each entry says where it came up.
   row linking to Twitch; the native tree always links (its context has no `twitchParent`). A card's
   X goes by the cards shown (`previewLink`), so a Twitch link's preview, which is no card, doesn't
   shift them. Checked on the local replica: a channel's poster, then its player on a click.
+  One change from the old trees: a channel's poster image is Twitch's picture of the channel now
+  (`twitchLiveThumbnailUrl`: the stream's latest frame while it's live, Twitch's offline picture
+  when not), not its preview's image, which is only the channel's avatar and is missing whenever
+  the sender's preview fetch failed (the old trees then show a black poster). A video or clip still
+  has a black poster with its title: Twitch gives a preview fetch only its logo, and its own
+  thumbnails need its API.
 - **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
   token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
   signs it by the bubble's side, which shows a transfer between two other people in a group as the

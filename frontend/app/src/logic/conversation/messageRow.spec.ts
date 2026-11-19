@@ -329,7 +329,13 @@ describe("link previews", () => {
         return (row as { previews: { url: string }[] }).previews.map((c) => c.url);
     };
 
-    test("a Twitch link plays in the bubble: its preview is the poster, the others stay cards", () => {
+    const players = (text: string, ogPreviews: Message["ogPreviews"] = []) =>
+        (
+            messageRow(message({ content: { kind: "text_content", text }, ogPreviews }), "sent", ctx)
+                .message as { players: PlayerProps[] }
+        ).players;
+
+    test("a Twitch link plays in the bubble: its preview titles the poster, the others stay cards", () => {
         const row = messageRow(
             message({
                 content: { kind: "text_content", text: "live now https://twitch.tv/ann" },
@@ -342,13 +348,62 @@ describe("link previews", () => {
         expect(row.players).toEqual([
             {
                 title: "T",
-                image: undefined,
+                image: "https://static-cdn.jtvnw.net/previews-ttv/live_user_ann-640x360.jpg",
                 src: "https://player.twitch.tv/?channel=ann&parent=oc.app&autoplay=true",
                 href: "https://www.twitch.tv/ann",
                 logo: "/assets/twitch.svg",
                 playLabel: "twitch.play",
                 watchLabel: "twitch.watchOnTwitch",
             },
+        ]);
+    });
+
+    test("a channel's poster is what it's streaming now, with or without a preview", () => {
+        // no preview: the sender's preview fetch failed (or was never made)
+        expect(players("https://www.twitch.tv/Aztecross")).toMatchObject([
+            {
+                title: "twitch.tv/aztecross",
+                image: "https://static-cdn.jtvnw.net/previews-ttv/live_user_aztecross-640x360.jpg",
+                src: "https://player.twitch.tv/?channel=aztecross&parent=oc.app&autoplay=true",
+            },
+        ]);
+        // its preview's image is the channel's avatar, not the stream
+        expect(
+            players("https://twitch.tv/ann", [
+                {
+                    ...preview("https://twitch.tv/ann"),
+                    image: { url: "https://cdn/avatar.png", width: 300, height: 300 },
+                },
+            ]),
+        ).toMatchObject([
+            { image: "https://static-cdn.jtvnw.net/previews-ttv/live_user_ann-640x360.jpg" },
+        ]);
+    });
+
+    test("a video or clip shows a poster with where it's to, and plays on its own player", () => {
+        expect(players("https://www.twitch.tv/videos/2500000000?t=1h2m3s")).toEqual([
+            expect.objectContaining({
+                title: "twitch.tv/videos/2500000000?t=1h2m3s",
+                image: undefined,
+                src: "https://player.twitch.tv/?video=v2500000000&time=1h2m3s&parent=oc.app&autoplay=true",
+                href: "https://www.twitch.tv/videos/2500000000?t=1h2m3s",
+            }),
+        ]);
+        // Twitch's generic preview (its logo) says nothing about the clip
+        expect(
+            players("https://clips.twitch.tv/AwkwardHelplessSalamander", [
+                {
+                    ...preview("https://clips.twitch.tv/AwkwardHelplessSalamander"),
+                    title: "Twitch",
+                    image: { url: "https://cdn/twitch_logo3.jpg", width: 262, height: 200 },
+                },
+            ]),
+        ).toEqual([
+            expect.objectContaining({
+                title: "clips.twitch.tv/AwkwardHelplessSalamander",
+                image: undefined,
+                src: "https://clips.twitch.tv/embed?clip=AwkwardHelplessSalamander&parent=oc.app&autoplay=true",
+            }),
         ]);
     });
 

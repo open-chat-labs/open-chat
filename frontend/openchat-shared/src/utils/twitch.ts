@@ -195,3 +195,12 @@ export function twitchPoster(embed: TwitchEmbed, ogPreview: OgPreview | undefine
     }
     return { title: twitchWatchUrl(embed).replace(/^https:\/\/(www\.)?/, ""), image: undefined };
 }
+
+// Twitch's picture of what a channel is showing now, at the size asked for: the stream's latest
+// frame (Twitch refreshes it every few minutes) while it's live, else Twitch's own offline
+// picture. It needs no preview fetch, so it's there whoever sent the link and whenever it's seen.
+const LIVE_THUMBNAIL_URL = "https://static-cdn.jtvnw.net/previews-ttv/live_user_";
+
+export function twitchLiveThumbnailUrl(login: string, width = 640, height = 360): string {
+    return `${LIVE_THUMBNAIL_URL}${encodeURIComponent(login.toLowerCase())}-${width}x${height}.jpg`;
+}
