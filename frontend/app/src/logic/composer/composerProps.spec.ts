@@ -2,6 +2,7 @@ import type {
     EventWrapper,
     GiphyContent,
     ImageContent,
+    KlipyObject,
     Message,
     MessageContent,
     VideoContent,
@@ -10,6 +11,8 @@ import type { ConversationContext } from "@src/logic/conversation/messageRow";
 import {
     composerAttachment,
     composerContext,
+    composerGif,
+    composerGifs,
     composerMention,
     composerStartText,
 } from "./composerProps";
@@ -366,5 +369,67 @@ describe("the text the composer starts from", () => {
             }),
         ).toBe("hello");
         expect(composerStartText({ editingEvent: editing, textContent: "old" })).toBe("");
+    });
+});
+
+describe("the GIFs the composer's GIF tab shows", () => {
+    const format = (url: string, dims: number[]) => ({ url, dims, duration: 0, size: 1 });
+    const found = (id: string, title = `GIF ${id}`, about = `about ${id}`): KlipyObject => ({
+        id,
+        title,
+        content_description: about,
+        created: 0,
+        flags: [],
+        hasaudio: false,
+        itemurl: "",
+        tags: [],
+        url: "",
+        media_formats: {
+            tinygif: format(`${id}.gif`, [220, 124]),
+            mp4: format(`${id}.mp4`, [480, 270]),
+        } as KlipyObject["media_formats"],
+    });
+
+    test("a GIF is its small rendition, shaped as it is, named by its title or description", () => {
+        expect(composerGif(found("a"), "GIF")).toEqual({
+            key: "a",
+            src: "a.gif",
+            width: 220,
+            height: 124,
+            title: "GIF a",
+        });
+        expect(composerGif(found("b", ""), "GIF").title).toBe("about b");
+    });
+
+    test("a GIF with neither a title nor a description is still named, generically", () => {
+        expect(composerGif(found("c", "", ""), "GIF").title).toBe("GIF");
+        const feed = { gifs: [found("c", "", "")], loading: false, failed: false };
+        expect(composerGifs({ ...feed, notFound: undefined }, "GIF").items[0].title).toBe("GIF");
+    });
+
+    test("says whether a page is on its way or failed", () => {
+        const feed = { gifs: [found("a")], loading: false, failed: false, notFound: undefined };
+        expect(composerGifs(feed, "GIF")).toEqual({
+            items: [composerGif(found("a"), "GIF")],
+            status: "idle",
+        });
+        expect(composerGifs({ ...feed, loading: true }, "GIF").status).toBe("loading");
+        expect(composerGifs({ ...feed, failed: true }, "GIF").status).toBe("failed");
+    });
+
+    test("a search that found none has its related terms, or none with the trending GIFs", () => {
+        const none = { gifs: [], loading: false, failed: false };
+        expect(
+            composerGifs(
+                {
+                    ...none,
+                    notFound: { kind: "suggestions", query: "zzz", terms: ["cats", "dogs"] },
+                },
+                "GIF",
+            ).notFound,
+        ).toEqual({ query: "zzz", terms: ["cats", "dogs"] });
+        expect(
+            composerGifs({ ...none, notFound: { kind: "trending", query: "zzz" } }, "GIF").notFound,
+        ).toEqual({ query: "zzz", terms: [] });
     });
 });

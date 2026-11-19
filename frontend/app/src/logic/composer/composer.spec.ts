@@ -4,6 +4,7 @@ import {
     type AttachmentContent,
     type ChatSummary,
     type DirectBotMessageOutcome,
+    type GiphyContent,
     type MessageContext,
     type MessagePermission,
     type SendMessageOutcome,
@@ -406,7 +407,11 @@ describe("what a send takes from the draft", () => {
     });
 
     test("never the text without a payment it can't show (its token gone from the registry)", () => {
-        for (const kind of ["crypto_content", "prize_content_initial", "p2p_swap_content_initial"]) {
+        for (const kind of [
+            "crypto_content",
+            "prize_content_initial",
+            "p2p_swap_content_initial",
+        ]) {
             expect(attachmentToSend({ kind }, false)).toEqual({ kind: "payment_not_shown" });
         }
     });
@@ -477,10 +482,21 @@ describe("sending what the composer holds", () => {
 
     test("is declined, keeping the draft quietly, when the rules or the PIN are turned down", async () => {
         for (const kind of ["rules_declined", "pin_cancelled"] as const) {
-            expect(await sendComposed(client({ kind }), chat, { chatId: chat.id }, "hi", none)).toEqual(
-                { kind: "declined" },
-            );
+            expect(
+                await sendComposed(client({ kind }), chat, { chatId: chat.id }, "hi", none),
+            ).toEqual({ kind: "declined" });
         }
+    });
+
+    test("a GIF picked and attached goes with Send, the text its caption, to the chat or thread", async () => {
+        const c = client();
+        const gif = { kind: "giphy_content", title: "cat" } as GiphyContent;
+        expect(
+            await sendComposed(c, chat, thread, "so true", { content: gif, shown: true }),
+        ).toEqual({ kind: "posted" });
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, "so true", false, gif);
+        await sendComposed(c, chat, thread, "", { content: gif, shown: true });
+        expect(c.sendMessage).toHaveBeenLastCalledWith(thread, undefined, false, gif);
     });
 
     test("tells the library's composer: nothing once posted, false when declined, a throw when refused", () => {
@@ -646,9 +662,7 @@ describe("what stands in for the entry", () => {
             key: "recipientSuspended",
             tone: "warning",
         });
-        expect(entryBlockBanner({ kind: "preview", lapsed: true }).key).toBe(
-            "access.lapsed.label",
-        );
+        expect(entryBlockBanner({ kind: "preview", lapsed: true }).key).toBe("access.lapsed.label");
         expect(entryBlockBanner({ kind: "read_only", key: "readOnlyThread" })).toEqual({
             key: "readOnlyThread",
             tone: "info",
@@ -662,7 +676,9 @@ describe("what stands in for the entry", () => {
             signIn: true,
         });
         expect(entryBlockBanner({ kind: "read_only", key: "readOnlyChat" }).signIn).toBeUndefined();
-        expect(entryBlockBanner({ kind: "read_only", key: "readOnlyThread" }).signIn).toBeUndefined();
+        expect(
+            entryBlockBanner({ kind: "read_only", key: "readOnlyThread" }).signIn,
+        ).toBeUndefined();
         expect(entryBlockBanner({ kind: "suspended" }).signIn).toBeUndefined();
     });
 });

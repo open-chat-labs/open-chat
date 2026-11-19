@@ -2018,6 +2018,50 @@
         "doc": ""
       },
       {
+        "name": "gifs",
+        "type": "ComposerProps['gifs']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onGifSearch",
+        "type": "ComposerProps['onGifSearch']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onMoreGifs",
+        "type": "ComposerProps['onMoreGifs']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onPickGif",
+        "type": "ComposerProps['onPickGif']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "onVoice",
         "type": "ComposerProps['onVoice']",
         "default": null,
@@ -3994,6 +4038,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Right-aligned sent messages (native): a sent run sits at the inline end, its bubbles' corners mirrored."
+      },
+      {
+        "name": "compactGifs",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": false,
+        "doc": "GIFs at three quarters (native, by choice; MediaMessage's `compactGif`)."
       },
       {
         "name": "avatarSize",
@@ -13938,6 +13993,17 @@
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
+        "name": "compactGif",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": false,
+        "doc": "A GIF at three quarters (native, by choice): 180 × 315 at most, where it's otherwise as big as a photo."
+      },
+      {
         "name": "onOpen",
         "type": "(index: number) => void",
         "default": null,
@@ -14349,7 +14415,51 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The placeholder GIF tiles' pick (the word on the tile), shown without `gifs` (docs)."
+      },
+      {
+        "name": "gifs",
+        "type": "ComposerGifs",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The GIF tab's results (`{ items, status: 'idle' | 'loading' | 'failed', notFound? }`), for the search `onGifSearch` last asked for: a masonry grid of `ComposerGif`s (`{ key, src, width, height, title }`), a spinner while a page is on its way, \"No GIFs found\" / \"GIFs couldn't load\", and for a search that found none \"No GIFs for …\" with its related terms to search for. Without it, placeholder tiles (docs) (by hand)."
+      },
+      {
+        "name": "onGifSearch",
+        "type": "(query: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What the GIF tab is to show, as it opens and as its search changes: \"\" for the trending GIFs, else the words typed (once typing pauses, 500ms, from 3 characters), a category's (Reactions → \"reactions\", Celebrate, Crypto, Thanks → \"thank you\") or a related term picked (by hand)."
+      },
+      {
+        "name": "onMoreGifs",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The GIF grid was scrolled near its end (not while a page is loading): the next page of the same search (by hand)."
+      },
+      {
+        "name": "onPickGif",
+        "type": "(gif: ComposerGif) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A GIF picked from `gifs`: the picker closes and the text box takes the focus (the host may attach it, the text its caption, or send it). With it, the picker has its GIF tab (by hand)."
       },
       {
         "name": "onVoice",

@@ -5,6 +5,7 @@ import {
     type ChatIdentifier,
     type EnhancedReplyContext,
     type EventWrapper,
+    type GiphyContent,
     type Message,
     type MessageContext,
     type OpenChat,
@@ -41,6 +42,17 @@ export function editMessage(
     users: UserLookup,
 ): void {
     localUpdates.draftMessages.setEditing({ chatId }, evt, users);
+}
+
+/**
+ * A GIF picked in the web composer's picker: the draft's attachment, in place of whatever was
+ * attached (as a file picked is), to go out with Send, the text its caption and as a reply to the
+ * draft's reply, like a photo. Not sent as it's picked (the user's decision, 2026-11-19, against
+ * web spec 06's "Picking sends the GIF"; the old desktop picker took a caption too). The native
+ * panel sends as it's tapped, by design.
+ */
+export function attachGif(context: MessageContext, content: GiphyContent): void {
+    localUpdates.draftMessages.setAttachment(context, content);
 }
 
 /**

@@ -152,6 +152,7 @@
         composerStartText,
     } from "@src/logic/composer/composerProps";
     import {
+        attachGif,
         cancelComposing,
         composingMessageIndex,
         submitEdit,
@@ -665,6 +666,12 @@
     ): Promise<false | undefined> {
         return composerAnswer(await sendVoiceRecording(client, context, recording, mimeType));
     }
+
+    // the composer's GIF tab: offered where GIFs may be sent and something can be attached now (not
+    // mid-edit, where the GIF would reply to the edited message's reply, nor during a voice take,
+    // nor in a bot DM); a GIF picked becomes the draft's attachment, in place of any, and goes with
+    // Send, the text its caption (attachGif)
+    const gifsAllowed = $derived(attachable && permitted.has("giphy"));
 
     // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
     // the reader; @everyone first), and, in a chat that holds only some of its members, those it
@@ -1724,6 +1731,7 @@
                     onMentionQuery={mentionQueried}
                     onVoiceActive={(active) => (voiceActive = active)}
                     {mentions}
+                    onGif={gifsAllowed ? (content) => attachGif(context, content) : undefined}
                 />
             {/key}
         </div>

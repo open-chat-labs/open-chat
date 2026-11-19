@@ -6,7 +6,10 @@
      or pasted and the voice recorded. Where the reader can't send, the old footer's reason shows
      instead (with Sign in for a guest), and for a preview its bar (CommunityPreviewBar: Join, or
      Sign in to join for a guest, and Back; 8b); a notice (the
-     throttle countdown, a video being prepared) shows over it. Mount it once per chat (keyed). -->
+     throttle countdown, a video being prepared) shows over it. The emoji picker's GIF tab searches
+     Klipy (GifFeed), where GIFs may be sent here and the build has a Klipy key; a GIF picked is
+     the draft's attachment, sent with Send, the text its caption (the user's decision of
+     2026-11-19, not 06's "Picking sends the GIF"). Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
@@ -15,8 +18,10 @@
         ComposerAttachKind,
         ComposerAttachment,
         ComposerContext,
+        ComposerGif,
         ComposerMention,
     } from "@openchat/ui/src/lib/types";
+    import type { GiphyContent } from "@client";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
     import {
@@ -25,7 +30,11 @@
         type ComposerBuilder,
         type EntryBlock,
     } from "@src/logic/composer/composer";
+    import { GifFeed } from "@src/logic/composer/gifFeed.svelte";
+    import { gifContent } from "@src/logic/composer/gifs";
+    import { composerGifs } from "@src/logic/composer/composerProps";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
+    import { klipyApiKey } from "@src/utils/features";
 
     let {
         block,
@@ -56,6 +65,7 @@
         onMentionQuery,
         mentions,
         onVoiceActive,
+        onGif,
         onSignIn,
     }: {
         // what stands in for the composer where the reader can't send
@@ -112,7 +122,23 @@
         // a voice message is being recorded or reviewed, or that's over (nothing can be attached
         // meanwhile: sending it posts the draft)
         onVoiceActive: (active: boolean) => void;
+        // takes a GIF picked from the emoji picker's GIF tab (the draft's attachment, sent with
+        // Send); none where no GIF may be attached now (no GIF tab then)
+        onGif: ((content: GiphyContent) => void) | undefined;
     } = $props();
+
+    // the GIF tab's search (Klipy's: trending, or what's typed), in a build with a Klipy key
+    const feed = klipyApiKey === undefined ? undefined : new GifFeed(klipyApiKey);
+    const gifs = $derived(
+        feed === undefined || onGif === undefined
+            ? undefined
+            : composerGifs(feed, $_("ui.messageComposer.gif")),
+    );
+
+    function pickGif(picked: ComposerGif) {
+        const gif = feed?.gifs.find((g) => g.id === picked.key);
+        if (gif !== undefined) onGif?.(gifContent(gif));
+    }
 
     let mediaInput = $state<HTMLInputElement>();
     let fileInput = $state<HTMLInputElement>();
@@ -184,7 +210,7 @@
             actionHandler={blocked.signIn ? onSignIn : undefined} />
     </div>
 {:else}
-    <!-- TODO(phase 5, 5c): GIFs and bot commands -->
+    <!-- TODO(phase 5, 5c): bot commands -->
     <div class="entry" onpaste={paste}>
         <ComposerBar
             {text}
@@ -211,7 +237,11 @@
             {voiceMaxBytes}
             {onMentionQuery}
             {onVoiceActive}
-            {mentions} />
+            {mentions}
+            {gifs}
+            onGifSearch={gifs === undefined ? undefined : (query) => void feed?.search(query)}
+            onMoreGifs={gifs === undefined ? undefined : () => void feed?.more()}
+            onPickGif={gifs === undefined ? undefined : pickGif} />
     </div>
     {#if onFile !== undefined}
         <input

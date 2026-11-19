@@ -5,6 +5,7 @@ import {
     type AttachmentContent,
     type EnhancedReplyContext,
     type EventWrapper,
+    type KlipyObject,
     type Message,
     type UserOrUserGroup,
     type UserSummary,
@@ -12,9 +13,12 @@ import {
 import type {
     ComposerAttachment,
     ComposerContext,
+    ComposerGif,
+    ComposerGifs,
     ComposerMention,
 } from "@openchat/ui/src/lib/types";
 import { cssUrl } from "@openchat/ui/src/lib/cssUrl";
+import type { GifFeed } from "@src/logic/composer/gifFeed.svelte";
 import {
     isMedia,
     mediaHeld,
@@ -163,4 +167,43 @@ export function composerMention(
                 avatar: avatarUrl(candidate),
             };
     }
+}
+
+/**
+ * A GIF found as the composer's GIF tab shows it: its small animated rendition, shaped as it is,
+ * named by its title or description, or `untitled` (a generic "GIF") when it has neither.
+ */
+export function composerGif(gif: KlipyObject, untitled: string): ComposerGif {
+    const tiny = gif.media_formats.tinygif;
+    return {
+        key: gif.id,
+        src: tiny.url,
+        width: Number(tiny.dims[0] ?? 0),
+        height: Number(tiny.dims[1] ?? 0),
+        title: gif.title || gif.content_description || untitled,
+    };
+}
+
+/**
+ * The GIFs a feed holds (`GifFeed`, logic/composer) as the composer's GIF tab shows them: a page on
+ * its way, or the last one failed; a search that found none with its related terms (none: the
+ * trending GIFs follow). A GIF with no title or description is named `untitled`.
+ */
+export function composerGifs(
+    feed: Pick<GifFeed, "gifs" | "loading" | "failed" | "notFound">,
+    untitled: string,
+): ComposerGifs {
+    const notFound = feed.notFound;
+    return {
+        items: feed.gifs.map((gif) => composerGif(gif, untitled)),
+        status: feed.loading ? "loading" : feed.failed ? "failed" : "idle",
+        ...(notFound === undefined
+            ? {}
+            : {
+                  notFound: {
+                      query: notFound.query,
+                      terms: notFound.kind === "suggestions" ? notFound.terms : [],
+                  },
+              }),
+    };
 }

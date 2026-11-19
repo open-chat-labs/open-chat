@@ -24,6 +24,8 @@
     lastInGroup?: boolean;
     /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
     mirror?: boolean;
+    /** A GIF at three quarters (native, by choice): 180 × 315 at most, where it's otherwise as big as a photo. */
+    compactGif?: boolean;
     onOpen?: (index: number) => void;
     onRetry?: () => void;
     onCancel?: () => void;
@@ -43,6 +45,7 @@
     failedText = 'ui.mediaMessage.couldNotSend',
     lastInGroup = true,
     mirror = false,
+    compactGif = false,
     onOpen,
     onRetry,
     onCancel,
@@ -50,8 +53,8 @@
   }: Props = $props();
   const t = useT();
 
-  // a GIF's caps: three quarters of what they were (240 × 420)
-  const GIF_MAX_W = 180, GIF_MAX_H = 315;
+  // a GIF is as big as a photo, or three quarters of the export's 240 × 420 with `compactGif` (native)
+  const COMPACT_GIF_W = 180, COMPACT_GIF_H = 315;
   const ALBUM: Record<number, [string, string, number]> = { 1: ['1fr', '1fr', 220], 2: ['1fr 1fr', '1fr', 200], 3: ['1fr 1fr', '1fr 1fr', 260], 4: ['1fr 1fr', '1fr 1fr', 280] };
 
   const list = $derived(items.length ? items : [{}]);
@@ -66,7 +69,7 @@
       const [cols, rows, height] = ALBUM[shown];
       return { width: '300px', height, cols, rows };
     }
-    const it = list[0], w = it.w || 4, h = it.h || 3, maxW = kind === 'gif' ? GIF_MAX_W : 360, maxH = kind === 'gif' ? GIF_MAX_H : 420;
+    const it = list[0], w = it.w || 4, h = it.h || 3, compact = kind === 'gif' && compactGif, maxW = compact ? COMPACT_GIF_W : 360, maxH = compact ? COMPACT_GIF_H : 420;
     const sc = Math.min(maxW / w, maxH / h);
     const W = Math.round(Math.max(160, Math.min(maxW, w * sc)));
     return { width: `${W + 8}px`, height: Math.round(Math.min(maxH, (W * h) / w)), cols: '1fr', rows: '1fr' };

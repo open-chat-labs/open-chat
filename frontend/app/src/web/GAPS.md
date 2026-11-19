@@ -1074,13 +1074,13 @@ design export needs. Each entry says where it came up.
   the last-in-group shape. The design composes whole runs in one group.
 - **Voice messages**: `VoiceMessage` draws a fixed waveform and has no `levels` prop, though every
   OpenChat voice note has one.
-- **GIFs**: `MessageComposer` shows placeholder GIF tiles (`GIF_WORDS`) and has no results prop;
-  only `onGif(query)` goes out. The app searches KLIPY today. Still so at 5c (2026-11-05), so the
-  composer has no GIF tab yet: it needs results (with a preview URL and size each, and more as the
-  list scrolls) and a pick handing one back. The old `GiphySelector`s' KLIPY search (paging, the
-  dedupe, the 500ms / 3-character wait, the last-page fix `c1a618b9bf`) moves to a client method
-  then, and a pick stages the GIF as the draft's attachment with the text as its caption (the
-  mobile app's way; the composer's media tray already shows a staged GIF).
+- **GIFs** (by hand, EXPORT-LOG 2026-11-16): `MessageComposer` takes the host's results (`gifs`:
+  `ComposerGif`s with a status and a search that found none), asks for a search (`onGifSearch`),
+  the next page (`onMoreGifs`) and hands a pick back (`onPickGif`); its placeholder tiles
+  (`GIF_WORDS`, `onGif`) are for the docs only. The design shows the categories but not what each
+  searches for (Trending is Klipy's featured GIFs, the others search their word, "Thanks" "thank
+  you"), nor the loading, empty, failed or nothing-found states: TODO(design). Typed words are
+  searched once typing stops for 500ms, from 3 characters, as the old `GiphySelector`s did.
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
@@ -2639,8 +2639,10 @@ design export needs. Each entry says where it came up.
   (by hand, EXPORT-LOG 2026-11-16). Checked on the local replica with calls added to the list on the
   page (no calls can be made there).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
-  `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
-  takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
+  `MediaMessage` tiles, a GIF as big as a photo (the native tree's are three quarters, by choice:
+  `compactGifs`, by hand, EXPORT-LOG 2026-11-19). They have no quote or edited mark yet
+  (`MediaMessage` takes none), so a reply sent as a photo, video or GIF doesn't show what it
+  replies to. In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
   first click, which loads it in the bubble; the old trees put a "load image" button on it, which
   `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
   still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
@@ -2719,8 +2721,8 @@ design export needs. Each entry says where it came up.
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
-  media, voice and the @mention picker came with 5c, the "+" menu's builders with 5d (below).
-  GIFs are still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
+  media, voice, the @mention picker and GIFs came with 5c, the "+" menu's builders with 5d (below).
+  There's no rich-text
   editor (the old one showed
   markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
   for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
@@ -2783,6 +2785,19 @@ design export needs. Each entry says where it came up.
   the client's typed mentions stop at them. Bots come after the members, as in the old pickers,
   whose comparator was inconsistent (a bot against a user compared "after" both ways). The list has no
   design (`TODO(design)`): it's drawn as the composer's other popups.
+- **GIFs in the composer** (5c): the emoji picker's GIF tab (web 06) searches Klipy, as the old
+  pickers and the native panel do (`GifFeed`, `logic/composer`): Trending (Klipy's featured GIFs)
+  as it opens, a category's word, or what's typed, a page at a time as the grid scrolls; a search
+  with no match says "No GIFs for …" with Klipy's related terms to search for, or the trending
+  GIFs under it (the native panel's decision, kept). A pick isn't sent: it closes the picker and
+  becomes the draft's attachment (`attachGif`), in place of anything attached (as a file picked
+  is), shown in the media tray with its ×, and goes out with Send like a photo, the text its
+  optional caption, as a reply to the draft's reply. That's the user's decision of 2026-11-19,
+  against web 06's "Picking sends the GIF" (the old desktop picker let the user add a caption
+  first too); the native panel still sends as it's tapped, by design. The tab is there only where
+  GIFs may be sent (`giphy`) and something can be attached now (not mid-edit, nor during a voice take, nor
+  in a bot DM), and in a build with a Klipy key (`OC_KLIPY_APIKEY`): without one, there's no GIF
+  tab. TODO(design): the loading, empty, failed and nothing-found states.
 - **Composer, not yet** (5c, left for later pieces of it):
   - bot commands: the old trees' `/` selector (the commands the reader's role, the chat's
     permissions and the bot's granted permissions allow, `restrictByBot` / `restrictByChat` /
@@ -2791,7 +2806,6 @@ design export needs. Each entry says where it came up.
     failure toasts (`bots.failed`, `bots.tooManyRequests`) and a bot's ephemeral reply (above);
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
-  - GIFs (the library's results, above);
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
   opens (`build` in the conversation), offered where the chat lets the reader send what it makes

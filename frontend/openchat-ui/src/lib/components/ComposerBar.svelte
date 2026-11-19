@@ -30,6 +30,10 @@
     onAttach?: ComposerProps['onAttach'];
     attachKinds?: ComposerProps['attachKinds'];
     onGif?: ComposerProps['onGif'];
+    gifs?: ComposerProps['gifs'];
+    onGifSearch?: ComposerProps['onGifSearch'];
+    onMoreGifs?: ComposerProps['onMoreGifs'];
+    onPickGif?: ComposerProps['onPickGif'];
     onVoice?: ComposerProps['onVoice'];
     voiceMimeType?: ComposerProps['voiceMimeType'];
     voiceMaxBytes?: ComposerProps['voiceMaxBytes'];

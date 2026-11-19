@@ -171,6 +171,7 @@
                     : row.message}
             <div class="panel" inert>
                 <MessageGroup
+                    compactGifs
                     side={row.side}
                     senderName={row.senderName}
                     color={row.color}
