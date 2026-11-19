@@ -84,10 +84,7 @@
   }
 
   .inline {
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    color: var(--msg-link);
+    @include message-link;
   }
 
   .meta {

@@ -199,8 +199,10 @@
   --ink:#ECECF1; --ink-2:#B9B9C6; --ink-3:#8A8A99; --ink-4:#6E6E7C;
   --overlay-1:rgba(255,255,255,.05); --overlay-2:rgba(255,255,255,.09); --overlay-3:rgba(255,255,255,.16);
   --line-1:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.1); --line-3:rgba(255,255,255,.24);
-  --bubble-wave-off:rgba(255,255,255,.35); --bubble-shadow:0 0 transparent; --accent-bright:#FFD0D9;
-  --bubble-link:var(--accent-bright);
+  --bubble-wave-off:rgba(255,255,255,.35); --bubble-shadow:0 0 transparent;
+  /* a pale accent-bright for anything inside that reads it (04's table gave these to links; links in sent bubbles now
+     take the bubble's text colour, underlined, as everywhere: the message-link mixin) */
+  --accent-bright:#FFD0D9;
 }
 [data-platform="native"][data-mode="light"][data-accent="orange"] [data-chat-surface] [data-bubble-sent]{
   --accent-bright:#FFD9BF;

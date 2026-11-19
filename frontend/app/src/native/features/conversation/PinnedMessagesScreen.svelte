@@ -567,8 +567,4 @@
     .pinned :global([data-bubble-sent]) {
         text-shadow: var(--bubble-text-shadow);
     }
-
-    :global([data-mode="light"]) .pinned :global([data-bubble-sent] a) {
-        color: var(--bubble-link);
-    }
 </style>
