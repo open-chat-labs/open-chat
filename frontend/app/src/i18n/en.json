@@ -2344,7 +2344,23 @@
             "notInChannel": "You're not in #{channel} yet. Join the channel to send messages.",
             "previewingGroup": "You're previewing {group}. Join to send messages.",
             "review": "Review and join",
-            "signIn": "Sign in to join"
+            "signIn": "Sign in to join",
+            "sheet": {
+                "title": "Join {name}",
+                "introAll": "Meet every requirement below to join.",
+                "introAny": "Meet any one requirement below to join.",
+                "pay": "Pay {amount} {symbol}",
+                "hold": "Hold {amount} {symbol}",
+                "charged": "Charged when you join",
+                "notEnough": "Not enough {symbol} in your wallet",
+                "youHold": "You hold {amount} {symbol}",
+                "diamondYes": "You're a Diamond member",
+                "diamondNo": "You're not a Diamond member yet",
+                "lifetimeYes": "You're a lifetime Diamond member",
+                "getDiamond": "Get Diamond",
+                "payAndJoin": "Pay {amount} {symbol} and join",
+                "leaveAnyTime": "You can leave at any time."
+            }
         }
     },
     "new": "new",

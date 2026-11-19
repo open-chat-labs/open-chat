@@ -2435,7 +2435,23 @@
             "notInChannel": "Bạn chưa ở trong #{channel}. Tham gia kênh để gửi tin nhắn.",
             "previewingGroup": "Bạn đang xem trước {group}. Tham gia để gửi tin nhắn.",
             "review": "Xem và tham gia",
-            "signIn": "Đăng nhập để tham gia"
+            "signIn": "Đăng nhập để tham gia",
+            "sheet": {
+                "title": "Tham gia {name}",
+                "introAll": "Đáp ứng tất cả yêu cầu bên dưới để tham gia.",
+                "introAny": "Đáp ứng một trong các yêu cầu bên dưới để tham gia.",
+                "pay": "Trả {amount} {symbol}",
+                "hold": "Giữ {amount} {symbol}",
+                "charged": "Bị trừ khi bạn tham gia",
+                "notEnough": "Không đủ {symbol} trong ví của bạn",
+                "youHold": "Bạn đang giữ {amount} {symbol}",
+                "diamondYes": "Bạn là thành viên Diamond",
+                "diamondNo": "Bạn chưa là thành viên Diamond",
+                "lifetimeYes": "Bạn là thành viên Diamond trọn đời",
+                "getDiamond": "Nhận Diamond",
+                "payAndJoin": "Trả {amount} {symbol} và tham gia",
+                "leaveAnyTime": "Bạn có thể rời đi bất cứ lúc nào."
+            }
         }
     },
     "new": "Mới",

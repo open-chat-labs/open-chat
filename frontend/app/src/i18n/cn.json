@@ -2435,7 +2435,23 @@
             "notInChannel": "你还没有加入 #{channel}。加入频道后即可发送消息。",
             "previewingGroup": "你正在预览 {group}。加入后即可发送消息。",
             "review": "查看并加入",
-            "signIn": "登录以加入"
+            "signIn": "登录以加入",
+            "sheet": {
+                "title": "加入 {name}",
+                "introAll": "满足以下所有要求即可加入。",
+                "introAny": "满足以下任一要求即可加入。",
+                "pay": "支付 {amount} {symbol}",
+                "hold": "持有 {amount} {symbol}",
+                "charged": "加入时扣款",
+                "notEnough": "你的钱包中 {symbol} 不足",
+                "youHold": "你持有 {amount} {symbol}",
+                "diamondYes": "你是钻石会员",
+                "diamondNo": "你还不是钻石会员",
+                "lifetimeYes": "你是终身钻石会员",
+                "getDiamond": "获取钻石会员",
+                "payAndJoin": "支付 {amount} {symbol} 并加入",
+                "leaveAnyTime": "你可以随时退出。"
+            }
         }
     },
     "new": "新的",

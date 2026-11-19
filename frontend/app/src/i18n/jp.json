@@ -2435,7 +2435,23 @@
             "notInChannel": "まだ #{channel} に参加していません。メッセージを送るにはチャンネルに参加してください。",
             "previewingGroup": "{group} をプレビュー中です。メッセージを送るには参加してください。",
             "review": "確認して参加",
-            "signIn": "サインインして参加"
+            "signIn": "サインインして参加",
+            "sheet": {
+                "title": "{name} に参加",
+                "introAll": "以下のすべての条件を満たすと参加できます。",
+                "introAny": "以下のいずれかの条件を満たすと参加できます。",
+                "pay": "{amount} {symbol} を支払う",
+                "hold": "{amount} {symbol} を保有",
+                "charged": "参加時に請求されます",
+                "notEnough": "ウォレットの {symbol} が不足しています",
+                "youHold": "{amount} {symbol} を保有しています",
+                "diamondYes": "ダイヤモンド会員です",
+                "diamondNo": "まだダイヤモンド会員ではありません",
+                "lifetimeYes": "生涯ダイヤモンド会員です",
+                "getDiamond": "ダイヤモンドを入手",
+                "payAndJoin": "{amount} {symbol} を支払って参加",
+                "leaveAnyTime": "いつでも退出できます。"
+            }
         }
     },
     "new": "new",

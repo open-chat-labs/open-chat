@@ -1624,6 +1624,7 @@
                         {os}
                         gallery={isTauriApp()}
                         toast={(message) => context.toast(message)}
+                        {overlays}
                         onBuild={build}
                         onJump={jumpTo}
                         onToastFloor={(px) => (toastFloor = px)}

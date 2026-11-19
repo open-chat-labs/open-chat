@@ -2435,7 +2435,23 @@
             "notInChannel": "Vous n'êtes pas encore dans #{channel}. Rejoignez le canal pour envoyer des messages.",
             "previewingGroup": "Vous prévisualisez {group}. Rejoignez pour envoyer des messages.",
             "review": "Vérifier et rejoindre",
-            "signIn": "Connectez-vous pour rejoindre"
+            "signIn": "Connectez-vous pour rejoindre",
+            "sheet": {
+                "title": "Rejoindre {name}",
+                "introAll": "Remplissez toutes les conditions ci-dessous pour rejoindre.",
+                "introAny": "Remplissez l'une des conditions ci-dessous pour rejoindre.",
+                "pay": "Payer {amount} {symbol}",
+                "hold": "Détenir {amount} {symbol}",
+                "charged": "Débité lorsque vous rejoignez",
+                "notEnough": "Pas assez de {symbol} dans votre portefeuille",
+                "youHold": "Vous détenez {amount} {symbol}",
+                "diamondYes": "Vous êtes membre Diamond",
+                "diamondNo": "Vous n'êtes pas encore membre Diamond",
+                "lifetimeYes": "Vous êtes membre Diamond à vie",
+                "getDiamond": "Obtenir Diamond",
+                "payAndJoin": "Payer {amount} {symbol} et rejoindre",
+                "leaveAnyTime": "Vous pouvez partir à tout moment."
+            }
         }
     },
     "new": "Nouveau",

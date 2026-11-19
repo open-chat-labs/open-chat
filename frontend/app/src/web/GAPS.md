@@ -376,8 +376,19 @@ design export needs. Each entry says where it came up.
     ("Join community") and joins both. A locked chat and a lapse keep the old footers' words
     (Locked, Re-join). Ours: the design has no words for a group, so it's the channel's
     ("You're previewing Pixel Art. Join to send messages.", "Join group"); a guest gets "Sign in to
-    join". Left: "Review and join" (a join with requirements the user doesn't meet yet) can't be
-    pressed until the requirements sheet (N8b PR 2).
+    join".
+  - **The requirements sheet** (N8b PR 2, `JoinSheet`): "Review and join" asks the client, which
+    answers with the requirements; the sheet shows them as the design's checklist, a level at a
+    time (a gated channel in a gated community: the community's, then the channel's), over Join
+    ("Pay 3.00 ICP and join"). It walks logic/access's `GateEvaluation` and records the choice with
+    logic/join's `recordGateChoice`, as the web's dialog does, so what's approved is the gates' own
+    amounts. Ours, where the design doesn't say: an "any" gate takes a requirement already met (paying
+    nothing), else the first payment the wallet covers, with no picking between them (the web's
+    dialog lets the user pick); the neuron row is a checkbox the user ticks; amounts are the old
+    trees' (`formatTokens`: "3.00"); the note under Join is the old words for where a payment goes
+    (`access.paymentDistributionMessage`). Left: "Get ICP" on a payment the wallet can't cover
+    (TODO(design), once the wallet is native, N10); a requirement the backend finds unmet says
+    "Access gate not met", not which one.
   - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
     `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't
     available):

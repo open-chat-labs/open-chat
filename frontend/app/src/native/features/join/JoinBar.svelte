@@ -10,24 +10,28 @@
         cryptoBalanceStore,
         currentUserStore,
         selectedCommunitySummaryStore,
+        type EnhancedAccessGate,
         type MultiUserChat,
         type OpenChat,
     } from "@client";
     import { interpolate } from "@i18n/i18n";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
-    import { dropJoin, isJoining, startJoin } from "@src/logic/join/joinFlow.svelte";
+    import { isJoining, startJoin, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
     import { chatPreviewBar } from "@src/logic/join/previewBar";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import type { Overlays } from "../../shell/overlays.svelte";
     import { joinBarView, joinStepToast } from "./joinBar.adapter";
+    import JoinSheet from "./JoinSheet.svelte";
 
     interface Props {
         chat: MultiUserChat;
+        overlays: Overlays;
         toast: (message: string) => void;
     }
 
-    let { chat, toast }: Props = $props();
+    let { chat, overlays, toast }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -43,10 +47,21 @@
     });
     const view = $derived(joinBarView(bar, chat));
 
+    // the requirements the client answered Join with; a closed sheet stays to slide away
+    let sheet = $state<{
+        id: number;
+        target: JoinTarget;
+        gates: EnhancedAccessGate[];
+        name: string;
+    }>();
+
     async function join() {
         const { target, name } = bar;
         const step = await startJoin(client, target);
-        if (step.kind === "evaluate_gates") dropJoin(target);
+        if (step.kind === "evaluate_gates") {
+            sheet = { id: (sheet?.id ?? 0) + 1, target, gates: step.gates, name };
+            return;
+        }
         const message = joinStepToast(step, name);
         if (message !== undefined) toast(interpolate($_, message));
     }
@@ -67,6 +82,12 @@
         onClick={join}
     />
 </div>
+
+{#if sheet !== undefined}
+    {#key sheet.id}
+        <JoinSheet join={sheet} {overlays} {toast} />
+    {/key}
+{/if}
 
 <style lang="scss">
     // the design's bar: a 1px rule on top, the note over a full-width Join

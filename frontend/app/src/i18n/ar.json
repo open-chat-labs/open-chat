@@ -2435,7 +2435,23 @@
             "notInChannel": "لست في #{channel} بعد. انضم إلى القناة لإرسال الرسائل.",
             "previewingGroup": "أنت تعاين {group}. انضم لإرسال الرسائل.",
             "review": "مراجعة وانضمام",
-            "signIn": "سجّل الدخول للانضمام"
+            "signIn": "سجّل الدخول للانضمام",
+            "sheet": {
+                "title": "الانضمام إلى {name}",
+                "introAll": "استوفِ جميع المتطلبات أدناه للانضمام.",
+                "introAny": "استوفِ أيًّا من المتطلبات أدناه للانضمام.",
+                "pay": "ادفع {amount} {symbol}",
+                "hold": "امتلك {amount} {symbol}",
+                "charged": "يُخصم عند الانضمام",
+                "notEnough": "لا يوجد {symbol} كافٍ في محفظتك",
+                "youHold": "لديك {amount} {symbol}",
+                "diamondYes": "أنت عضو Diamond",
+                "diamondNo": "لست عضو Diamond بعد",
+                "lifetimeYes": "أنت عضو Diamond مدى الحياة",
+                "getDiamond": "احصل على Diamond",
+                "payAndJoin": "ادفع {amount} {symbol} وانضم",
+                "leaveAnyTime": "يمكنك المغادرة في أي وقت."
+            }
         }
     },
     "new": "جديد",

@@ -2435,7 +2435,23 @@
             "notInChannel": "Aún no estás en #{channel}. Únete al canal para enviar mensajes.",
             "previewingGroup": "Estás viendo una vista previa de {group}. Únete para enviar mensajes.",
             "review": "Revisar y unirse",
-            "signIn": "Inicia sesión para unirte"
+            "signIn": "Inicia sesión para unirte",
+            "sheet": {
+                "title": "Unirse a {name}",
+                "introAll": "Cumple todos los requisitos siguientes para unirte.",
+                "introAny": "Cumple cualquiera de los requisitos siguientes para unirte.",
+                "pay": "Pagar {amount} {symbol}",
+                "hold": "Tener {amount} {symbol}",
+                "charged": "Se cobra al unirte",
+                "notEnough": "No tienes suficiente {symbol} en tu billetera",
+                "youHold": "Tienes {amount} {symbol}",
+                "diamondYes": "Eres miembro Diamond",
+                "diamondNo": "Aún no eres miembro Diamond",
+                "lifetimeYes": "Eres miembro Diamond de por vida",
+                "getDiamond": "Obtener Diamond",
+                "payAndJoin": "Pagar {amount} {symbol} y unirse",
+                "leaveAnyTime": "Puedes salir cuando quieras."
+            }
         }
     },
     "new": "nuevo",

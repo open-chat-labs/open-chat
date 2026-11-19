@@ -72,7 +72,7 @@ describe("the join bar (#10375)", () => {
         expect(ofGroup.view.disabled).toBe(false);
     });
 
-    test("invariant 2: a locked chat's Join can't be pressed, and nor can one with requirements before they're shown", () => {
+    test("invariant 2: a locked chat's Join can't be pressed, and one with requirements offers Review and join", () => {
         const lockedGroup = bar({ gates: [locked] });
         expect(lockedGroup.view).toMatchObject({
             label: { key: "access.lockedGate" },
@@ -80,13 +80,15 @@ describe("the join bar (#10375)", () => {
             disabled: true,
         });
 
-        const gated = bar({ gates: [diamond] });
-        expect(gated.view).toMatchObject({
+        // the client answers its Join with the requirements, which the sheet shows first
+        expect(bar({ gates: [diamond] }).view).toMatchObject({
             label: { key: "native.join.review" },
             icon: "lock",
-            disabled: true,
+            disabled: false,
         });
-        // met already: nothing to show first
-        expect(bar({ gates: [diamond], meets: () => true }).view.disabled).toBe(false);
+        // met already: a plain Join
+        expect(bar({ gates: [diamond], meets: () => true }).view.label).toMatchObject({
+            key: "joinGroup",
+        });
     });
 });
