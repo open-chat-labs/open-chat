@@ -7,7 +7,6 @@ const MENU_ITEMS = {
     edit: { desktop: "Edit", mobile: "Edit" },
     delete: { desktop: "Delete", mobile: "Delete" },
     forward: { desktop: "Forward", mobile: "Forward" },
-    copyLink: { desktop: "Copy message url", mobile: "Copy link" },
 } satisfies Record<string, Record<Tree, string>>;
 
 export type MessageMenuItem = keyof typeof MENU_ITEMS;
@@ -47,17 +46,13 @@ function menuItem(user: User, item: MessageMenuItem): Locator {
     });
 }
 
-/**
- * Picks `item` from the menu of the open chat's message `text`. With `confirmed`, waits first for
- * the backend to have confirmed the message (its link can be copied only then).
- */
+/** Picks `item` from the menu of the open chat's message `text`. */
 export async function messageAction(
     user: User,
     text: string,
     item: MessageMenuItem,
-    confirmed = false,
 ): Promise<void> {
-    await openMessageMenu(user, text, menuItem(user, confirmed ? "copyLink" : item));
+    await openMessageMenu(user, text, menuItem(user, item));
     await menuItem(user, item).click();
 }
 
@@ -80,11 +75,11 @@ export async function react(
 }
 
 /**
- * Edits the user's own message `text` to `edited`, from its menu, once the backend has confirmed
- * the message: an edit before then fails (#10568).
+ * Edits the user's own message `text` to `edited`, from its menu, as soon as the menu offers Edit
+ * (only once the backend has confirmed the message, #10568).
  */
 export async function editMessage(user: User, text: string, edited: string): Promise<void> {
-    await messageAction(user, text, "edit", true);
+    await messageAction(user, text, "edit");
     // the composer takes the message's text: wait for it, or it lands over what's typed next
     await expect(composer(user)).toHaveValue(text);
     await composer(user).fill(edited);

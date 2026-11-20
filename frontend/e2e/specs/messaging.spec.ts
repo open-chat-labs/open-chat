@@ -22,6 +22,7 @@ import { openDirectChat, openGroup } from "../fixtures/routes";
 const unique = (label: string) =>
     `${label} ${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
+// #10568 invariant 1: the edit goes in as soon as Edit is offered, without waiting, and is kept
 test("an edited message reaches the other person, marked as edited", async ({ pair }) => {
     const { a, b, idA, idB } = pair;
     const before = unique("before");
