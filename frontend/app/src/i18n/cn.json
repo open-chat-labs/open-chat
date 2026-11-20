@@ -1638,6 +1638,14 @@
     "membersHeader": "{level} 成员",
     "messageBlocked": "消息已隐藏",
     "messageUnsupported": "此消息需要更新版本的 OpenChat",
+    "deletedMessage": {
+        "by": "由{name}删除",
+        "byModerator": "由审核员删除",
+        "byYou": "由你删除",
+        "mine": "你删除了这条消息",
+        "theirs": "此消息已被删除",
+        "when": "{day} {time}"
+    },
     "messageDeleted": "消息被{username}在{timestamp}删除",
     "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}",
     "messages": "消息",

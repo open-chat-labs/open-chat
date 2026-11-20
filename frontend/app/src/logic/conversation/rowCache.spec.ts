@@ -1,4 +1,4 @@
-import type { EventWrapper, Message, ProposalContent } from "@client";
+import type { EventWrapper, Message, ProposalContent, ResourceKey } from "@client";
 import type { ConversationContext } from "./messageRow";
 import { namedInRow, RowCache } from "./rowCache";
 
@@ -11,6 +11,7 @@ const ctx: ConversationContext = {
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     longDate: (timestamp) => `L${timestamp}`,
+    dayAndTime: (timestamp) => `D${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -201,6 +202,18 @@ describe("the rows kept per event", () => {
         expect(second).not.toBe(first);
         expect(second.message).toMatchObject({ deletedText: "undeletingMessage" });
         expect(rows.row("k", evt, "sent", undeleting)).toBe(second);
+    });
+
+    test("are made again as the name of whoever deleted a message loads", () => {
+        const rows = new RowCache();
+        const evt = message({ kind: "deleted_content", deletedBy: "carol", timestamp: 1n });
+        const words = { ...ctx, text: (key: ResourceKey) => `${key.key} ${key.params?.name}` };
+        const first = rows.row("k", evt, "sent", words);
+        expect(first.message).toMatchObject({ deletedBy: "deletedMessage.by carol" });
+        const named = { ...words, userName: (id: string) => (id === "carol" ? "Carol" : id) };
+        const second = rows.row("k", evt, "sent", named);
+        expect(second).not.toBe(first);
+        expect(second.message).toMatchObject({ deletedBy: "deletedMessage.by Carol" });
     });
 
     test("are made again as the reader votes on a proposal", () => {

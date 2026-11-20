@@ -1,4 +1,4 @@
-import type { MessageMenuAction } from "@client";
+import type { MessageContent, MessageMenu, MessageMenuAction } from "@client";
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
 
 // A message's long-press menu (native design notes §3.3): what its menu offers (`messageMenu`,
@@ -84,4 +84,24 @@ export function myReactions(
     me: string,
 ): string[] {
     return reactions.filter((r) => r.userIds.has(me)).map((r) => r.reaction);
+}
+
+/**
+ * What a message in the native conversation offers: what `messageOffer` says, but a deleted
+ * message's placeholder offers no swipes and no reactions (the 2026-11-19 design), and a long-press
+ * menu only where `messageMenu` offers Reveal, with Reveal alone: a deletion of your own (the
+ * user's decision of 2026-11-20), within its five minutes, or a moderator's of someone else's
+ * message, which they can always reveal and then undelete. Revealed, it's a message again, with
+ * what `messageMenu` offers then (Undelete among it). Any other placeholder has no menu. A tap
+ * shows who deleted it and when.
+ */
+export function nativeMessageOffer(offered: MessageMenu, content: MessageContent): MessageMenu {
+    if (content.kind !== "deleted_content") return offered;
+    const reveal = offered.menu && offered.actions.has("reveal");
+    return {
+        ...offered,
+        menu: reveal,
+        react: false,
+        actions: new Set<MessageMenuAction>(reveal ? ["reveal"] : []),
+    };
 }

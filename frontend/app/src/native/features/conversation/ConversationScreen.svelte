@@ -178,6 +178,7 @@
     import { durationLabel } from "../details/details.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import MessageActions from "./MessageActions.svelte";
+    import { nativeMessageOffer } from "./messageMenu.adapter";
     import RulesSheet from "./RulesSheet.svelte";
     import SearchBar from "./SearchBar.svelte";
     import { onSearchRequest } from "./searchRequests";
@@ -1060,14 +1061,16 @@
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
     }
 
-    // what a message offers (messageOffer), which says what its swipes and Retry do
+    // what a message offers (messageOffer), which says what its swipes and Retry do; a deleted
+    // message's placeholder offers no swipes or reactions, and a menu only with Reveal, where it's
+    // offered (a deletion of your own: nativeMessageOffer); a tap shows who deleted it and when
     function offeredFor(
         current: ChatSummary,
         evt: EventWrapper<Message>,
         failed: boolean,
         confirmed: boolean,
     ): MessageMenu {
-        return messageOffer(client, current, evt, {
+        const offered = messageOffer(client, current, evt, {
             me,
             bridgedUsers: $bridgedUsersStore,
             failed,
@@ -1082,6 +1085,7 @@
             blocked: $selectedChatBlockedUsersStore,
             tipsEnabled: !disableTipsFeature,
         });
+        return nativeMessageOffer(offered, evt.event.content);
     }
 
     type RowOffers = {

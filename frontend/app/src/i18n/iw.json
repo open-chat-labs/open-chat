@@ -1638,6 +1638,14 @@
     "membersHeader": "חברי {level}",
     "messageBlocked": "הודעה מוסתרת",
     "messageUnsupported": "הודעה זו דורשת גרסה חדשה יותר של OpenChat",
+    "deletedMessage": {
+        "by": "נמחק על ידי {name}",
+        "byModerator": "נמחק על ידי מנחה",
+        "byYou": "נמחק על ידך",
+        "mine": "מחקת את ההודעה הזו",
+        "theirs": "ההודעה הזו נמחקה",
+        "when": "{day} בשעה {time}"
+    },
     "messageDeleted": "ההודעה נמחקה על ידי {username} ב-{timestamp}",
     "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }",
     "messages": "הודעות",

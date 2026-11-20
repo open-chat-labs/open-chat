@@ -1638,6 +1638,14 @@
     "membersHeader": "{level} участников",
     "messageBlocked": "Сообщение скрыто",
     "messageUnsupported": "Для этого сообщения нужна более новая версия OpenChat",
+    "deletedMessage": {
+        "by": "Удалено пользователем {name}",
+        "byModerator": "Удалено модератором",
+        "byYou": "Удалено вами",
+        "mine": "Вы удалили это сообщение",
+        "theirs": "Это сообщение было удалено",
+        "when": "{day} в {time}"
+    },
     "messageDeleted": "Сообщение удалено {username} в {timestamp}",
     "messageDeletedByOpenChatBot": "Об этом сообщении сначала сообщил пользователь OpenChat, затем он был отправлен в [Modclub]({modclub}), где было решено, что сообщение нарушает [правило платформы]({rules}), и наконец удалено пользователем {username} на {xyz }",
     "messages": "Сообщения",

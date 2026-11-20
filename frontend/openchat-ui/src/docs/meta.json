@@ -795,6 +795,28 @@
         "doc": ""
       },
       {
+        "name": "deletedBy",
+        "type": "string",
+        "default": "Deleted by Alice",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Who deleted it, the popover's first line as the host words it in its language (\"Deleted by Alice\"; by hand, 2026-11-20, a name until then). With it or `deletedAt`, the placeholder is a button whose popover says them (by hand, 2026-11-19)."
+      },
+      {
+        "name": "deletedAt",
+        "type": "string",
+        "default": "Today at 14:32",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "When it was deleted (\"Today at 14:32\"), the popover's second line (by hand, 2026-11-19)."
+      },
+      {
         "name": "quoteName",
         "type": "string",
         "default": "",
@@ -6776,6 +6798,28 @@
         "required": false,
         "componentDefault": "'top'",
         "doc": ""
+      },
+      {
+        "name": "detail",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a second line under the label (by hand, 2026-11-19)."
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The tooltip's id, for its target's aria-describedby (by hand, 2026-11-19)."
       }
     ],
     "group": "library"

@@ -461,6 +461,20 @@ design export needs. Each entry says where it came up.
       (the web's toggle turns it off at once, Cancel or not). The native tree has no setting
       screen for it, so once off it stays off on that device. A failed message's Delete just
       removes it.
+    - **A deleted message** (the design of 2026-11-19): its placeholder ("You deleted this
+      message" / "This message was deleted", as the web's) has no swipes and no reactions, and a
+      long-press menu only where `messageMenu` offers Reveal, with Reveal alone
+      (`nativeMessageOffer`): a deletion of your own, within five minutes, or a moderator's
+      deletion of someone else's message, which they can always reveal (the user's decision of
+      2026-11-20, against the design's "no long-press menu"; a review of #10553 kept the
+      moderator's, which gating on the sender had dropped). Any other has no menu. Revealed,
+      it's a message again, whose menu is what `messageMenu` offers then (Undelete among it). A tap toggles its popover (who deleted it and when, as the web's), and a press
+      elsewhere closes it; a long-press doesn't. Your own delete's Undo, in its toast, also
+      brings it back. The design's "deleting
+      your own message leaves the placeholder, with a 'Message deleted' toast and Undo" was already
+      so (the client marks it deleted at once, and your own deleted messages aren't folded into
+      the "N messages deleted" line). On the Pinned messages screen a deleted pin's placeholder has
+      no popover (`pinnedMessage`): a tap there goes to the pin.
     - **Words**: toasts for Copy ("Copied"), Copy link ("Link copied to clipboard"), Pin and Unpin
       (each with Undo: Pinned messages, below), Undelete, a delete and its Undo, a forward ("Forwarding to 2 chats…", then "Forwarded to 2
       chats") and a report; the web says nothing for Copy or Pin. Copy link and Share, like every
@@ -1123,6 +1137,17 @@ design export needs. Each entry says where it came up.
   (so `ChatBubble` and `MessageGroup`, and `GroupMessage`) takes `tips`, a chip per token before
   the reactions: the token's logo and the total, the viewer's own marked as their reactions are,
   who tipped as its tooltip. Not a button. The design has no tips.
+
+- **A deleted message's popover** (by hand, EXPORT-LOG 2026-11-19), from a Claude Design spec
+  not yet in the export or the plan files: `ChatBubble` (so `GroupMessage`) takes `deletedBy` and
+  `deletedAt`; with either, the placeholder is a button (its send time still inline) whose popover,
+  in `Tooltip`'s inverted style (`Tooltip` takes a second line, `detail`, and an `id`, by hand),
+  says who deleted it (`deletedBy`, the whole line in the app's words, "Deleted by Alice", so
+  every language words it in full; EXPORT-LOG 2026-11-20) and when, 8px above it at its start
+  edge (the end edge mirrored), linked by aria-describedby. Ours: it goes under the placeholder
+  where it wouldn't fit above inside the scroller, a press elsewhere closes it, a mouse click
+  keeps it open (a tap toggles it), a pen that can't hover taps as a touch does, a long-press
+  neither opens nor closes it (`lib/deletedPopover`), and it closes when its placeholder goes.
 
 - **Video players for links** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design
   export: `PlayerCard`, a link's click-to-play player (a poster with a play button and the title,
@@ -2881,12 +2906,26 @@ design export needs. Each entry says where it came up.
     needed"), the daily puzzle's result (#10236), a reported message's and a moderation report's
     cards (the platform moderators' review cards, left from L6: "Platform operators and
     moderators"), and calls and proposals until theirs are built;
-  - deleted: the tombstone (`ChatBubble`'s `deletedText`) says who deleted it and when, as the old
-    trees do ("Message deleted by Alice on …", `toLongDatetimeString`), "Undeleting message by …"
-    while it's being undeleted (`undeletingMessagesStore`; the row is made again as it starts and
-    stops, `RowCache`), and the OpenChat bot's removal for breaking a platform rule, whose rules
-    link the plain-text tombstone can't carry (its words only). Reveal and undelete are in its
-    menu (5b, "Message actions");
+  - deleted (the design of 2026-11-19, not yet in the plan files): the placeholder
+    (`ChatBubble`'s `deletedText`, `deletedText` in logic/conversation/messageRow) says "You
+    deleted this message" in your own bubble you deleted and "This message was deleted" in any
+    other (your own deleted by someone else too: ours, the design words it by side only), and
+    "Undeleting message by …" while it's being undeleted, as the old trees do
+    (`undeletingMessagesStore`; the row is made again as it starts and stops, `RowCache`). Who
+    deleted it and when are in its popover (`deletedBy`, `deletedAt`: `deletedInfo`), each line
+    whole in the app's words (`deletedMessage.byYou`, `byModerator`, `by`): "Deleted by you",
+    "Deleted by a moderator" for the OpenChat bot's removal for breaking a platform rule (the
+    platform moderators' deletions are the bot's; its old words and rules link are gone), or
+    "Deleted by" the deleter's name (the row is made again as it loads), with "Today at 14:32" under it (the
+    date pills' day, `formatMessageDate`, and `toShortTimeString`). `DeletedContent` always
+    carries both; a field that's empty (no deleter, a zero time) is left out, and with neither
+    there's no popover and the placeholder isn't a button. A group's moderator who deletes
+    someone's message is named, not "a moderator" (the backend says only who). Others' deleted
+    messages still fold into the "N messages deleted" line that shows them
+    (`expandDeletedMessages`), and Reveal and Undelete are in the menu of your own (5b, "Message
+    actions"): the placeholder's button takes only its own click, which opens the popover, so the
+    menu's hover bar, right-click and long-press are as they were. A long-press (the menu) doesn't
+    open the popover;
   - translated (5b's Translate): the translation shows in the message's place, as in the old trees
     (the client merges `translationsStore` into the events); there's no mark that it's translated,
     as there wasn't in the old trees. The old desktop's on-device translation of a whole chat (a

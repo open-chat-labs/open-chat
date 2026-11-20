@@ -1638,6 +1638,14 @@
     "membersHeader": "{level} सदस्य",
     "messageBlocked": "संदेश छुपाया गया",
     "messageUnsupported": "इस संदेश के लिए OpenChat का नया संस्करण चाहिए",
+    "deletedMessage": {
+        "by": "{name} द्वारा हटाया गया",
+        "byModerator": "मॉडरेटर द्वारा हटाया गया",
+        "byYou": "आपके द्वारा हटाया गया",
+        "mine": "आपने यह संदेश हटा दिया",
+        "theirs": "यह संदेश हटा दिया गया",
+        "when": "{day} {time} बजे"
+    },
     "messageDeleted": "{username} द्वारा {timestamp} पर संदेश हटाया गया",
     "messageDeletedByOpenChatBot": "यह संदेश सबसे पहले एक OpenChat उपयोगकर्ता द्वारा रिपोर्ट किया गया था, फिर [Modclub]({modclub}) को भेजा गया जहां यह निर्णय लिया गया कि संदेश ने [प्लेटफ़ॉर्म नियम]({rules}) को तोड़ा है, और अंततः {username} द्वारा {xyz पर हटा दिया गया }",
     "messages": "संदेशों",

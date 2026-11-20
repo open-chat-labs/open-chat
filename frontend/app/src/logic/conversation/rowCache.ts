@@ -80,7 +80,7 @@ export class RowCache {
 
 /**
  * The names a message's row shows besides its sender's and its quote's, which can load after the
- * row is made: whoever deleted it (its tombstone), a transfer's or a prize win's recipient, and
+ * row is made: whoever deleted it (its tombstone's popover), a transfer's or a prize win's recipient, and
  * whoever tipped it (its tip chips' tooltips).
  */
 export function namedInRow(msg: Message, ctx: Pick<ConversationContext, "userName">): string[] {

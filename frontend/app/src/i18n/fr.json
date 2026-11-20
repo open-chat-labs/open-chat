@@ -1638,6 +1638,14 @@
     "membersHeader": "{level} membres",
     "messageBlocked": "Message masqué",
     "messageUnsupported": "Ce message nécessite une version plus récente d'OpenChat",
+    "deletedMessage": {
+        "by": "Supprimé par {name}",
+        "byModerator": "Supprimé par un modérateur",
+        "byYou": "Supprimé par vous",
+        "mine": "Vous avez supprimé ce message",
+        "theirs": "Ce message a été supprimé",
+        "when": "{day} à {time}"
+    },
     "messageDeleted": "Message supprimé par {username} le {timestamp}",
     "messageDeletedByOpenChatBot": "Ce message a d'abord été signalé par un utilisateur d'OpenChat, puis envoyé au [Modclub]({modclub}) où il a été décidé que le message enfreignait une [règle de la plateforme]({rules}), et finalement supprimé par le {username} sur {xyz }",
     "messages": "messages",

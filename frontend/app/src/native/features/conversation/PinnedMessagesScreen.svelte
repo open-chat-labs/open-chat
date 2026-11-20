@@ -70,6 +70,7 @@
     import {
         offersUnpinAll,
         pinnedMenuActions,
+        pinnedMessage,
         shownDays,
         unpinAllIndexes,
         unpinKey,
@@ -327,10 +328,11 @@
                                 />
                             {/if}
                         {/snippet}
-                        {@const message =
+                        {@const message = pinnedMessage(
                             content.kind === "text_content" && textAsMarkdown(content.text)
                                 ? ({ ...row.message, body } as GroupMessage)
-                                : row.message}
+                                : row.message,
+                        )}
                         <div class="pin" class:sent={!received} class:room={!canPin}>
                             <!-- a tap goes to it (the long-press is its menu) -->
                             <div

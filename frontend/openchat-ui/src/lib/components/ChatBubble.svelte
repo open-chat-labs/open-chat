@@ -3,7 +3,12 @@
      cards flush to a 4px inset, the stamp in a footer under them), and an X on each card for the sender with onRemovePreview,
      failed + Retry line, reaction chips and the thread link under them. By hand (web 5a): video players for its links
      (PlayerCard, a Twitch link's) before the cards, in a wider bubble (534px, the least a player plays at and more). Emoji-only messages of one or two emoji render large.
-     Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
+     Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them.
+     By hand (2026-11-19): a deleted message's placeholder, with `deletedBy` or `deletedAt`, is a button whose popover
+     (the Tooltip's inverted style, 8px above it at its start edge, the end edge mirrored; under it where it wouldn't fit)
+     says who deleted it (`deletedBy`, the host's words: "Deleted by Alice") and when, linked by aria-describedby. It opens
+     on hover after 400ms (a mouse, or a pen that hovers), keyboard focus or a tap, and closes on leave, blur, Esc, a second
+     tap or a press elsewhere (lib/deletedPopover), and when the placeholder goes. Without either, no popover. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import type { ComponentProps, Snippet } from 'svelte';
@@ -12,6 +17,8 @@
   import ReactionChips, { type Reaction, type Tip } from './ReactionChips.svelte';
   import ReplyQuote from './ReplyQuote.svelte';
   import ThreadLink from './ThreadLink.svelte';
+  import Tooltip from './Tooltip.svelte';
+  import { DELETED_POPOVER_DELAY_MS, deletedPopoverBelow, deletedPopoverOpen, hoversIn, type DeletedPopoverEvent } from '../deletedPopover';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -47,6 +54,10 @@
     edited?: boolean;
     deleted?: boolean;
     deletedText?: string;
+    /** Who deleted it, the popover's first line as the host words it in its language ("Deleted by Alice"). */
+    deletedBy?: string;
+    /** When it was deleted ("Today at 14:32"), the popover's second line. */
+    deletedAt?: string;
     /** Reply quote: who wrote the quoted message ("You" for your own). */
     quoteName?: string;
     quoteText?: string;
@@ -91,6 +102,8 @@
     edited = false,
     deleted = false,
     deletedText = 'ui.chatBubble.deleted',
+    deletedBy = '',
+    deletedAt = '',
     quoteName = '',
     quoteText = '',
     onQuote,
@@ -121,16 +134,129 @@
   // the stamp's width, for a body ending in a list to keep its room (below)
   let stampWidth = $state(0);
 
+  // a deleted message's popover: who deleted it and when (lib/deletedPopover)
+  const popoverId = $props.id();
+  const hasDeletedInfo = $derived(deleted && (deletedBy !== '' || deletedAt !== ''));
+  let popoverOpen = $state(false);
+  let popoverBelow = $state(false);
+  let placeholder = $state<HTMLButtonElement>();
+  let popover = $state<HTMLDivElement>();
+  let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+  let press: { pointer: 'mouse' | 'touch' | 'pen'; at: number } | undefined;
+  // a pointer that hovered in (a mouse, a pen above the screen), whose leaving closes the popover; a tap's enter and
+  // leave (a touch, a pen that only touches) don't count
+  let hovering = false;
+
+  // the placeholder gone (revealed, undeleted, its info dropped), its popover is closed, so it doesn't come back open
+  $effect.pre(() => {
+    if (!hasDeletedInfo && popoverOpen) {
+      clearTimeout(hoverTimer);
+      hovering = false;
+      popoverOpen = false;
+    }
+  });
+
+  function popoverEvent(event: DeletedPopoverEvent) {
+    if (event.kind !== 'hover') clearTimeout(hoverTimer);
+    const open = deletedPopoverOpen(popoverOpen, event);
+    if (open && !popoverOpen) popoverBelow = placeBelow();
+    popoverOpen = open;
+  }
+
+  // under the placeholder only where, above it, it would leave what shows the conversation (its scroller)
+  function placeBelow(): boolean {
+    if (!placeholder || !popover) return false;
+    let bound = 0;
+    for (let el = placeholder.parentElement; el; el = el.parentElement) {
+      const overflow = getComputedStyle(el).overflowY;
+      if (overflow === 'auto' || overflow === 'scroll' || overflow === 'hidden') {
+        bound = Math.max(0, el.getBoundingClientRect().top);
+        break;
+      }
+    }
+    return deletedPopoverBelow(placeholder.getBoundingClientRect().top, popover.offsetHeight, bound);
+  }
+
+  function pointerEnter(e: PointerEvent) {
+    if (!hoversIn(e.pointerType, e.buttons)) return;
+    hovering = true;
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => popoverEvent({ kind: 'hover' }), DELETED_POPOVER_DELAY_MS);
+  }
+
+  function pointerLeave() {
+    if (!hovering) return;
+    hovering = false;
+    popoverEvent({ kind: 'leave' });
+  }
+
+  function placeholderClick(e: MouseEvent) {
+    // a click from Enter / Space has no press before it (detail 0)
+    const pressed = press;
+    press = undefined;
+    if (e.detail === 0 || !pressed) popoverEvent({ kind: 'click', pointer: 'keyboard', heldMs: 0 });
+    else popoverEvent({ kind: 'click', pointer: pressed.pointer, heldMs: Date.now() - pressed.at });
+  }
+
+  // a press anywhere else closes it, and so does Esc wherever the focus is (a hover opened it)
+  $effect(() => {
+    if (!popoverOpen) return;
+    const outside = (e: PointerEvent) => {
+      if (placeholder && !placeholder.contains(e.target as Node)) popoverEvent({ kind: 'outside' });
+    };
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') popoverEvent({ kind: 'escape' });
+    };
+    document.addEventListener('pointerdown', outside, true);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside, true);
+      document.removeEventListener('keydown', escape);
+    };
+  });
+
+  $effect(() => () => clearTimeout(hoverTimer));
+
 </script>
 
 {#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
 
 <div class="wrap" class:mirror>
-  {#if deleted}
+  {#snippet placeholderContent()}
+    <span class="trash"></span>
+    <span class="deleted-text">{t(deletedText)}</span>
+    <span class="deleted-time">{time}</span>
+  {/snippet}
+  {#if hasDeletedInfo}
+    <div class="deleted-anchor">
+      <button
+        bind:this={placeholder}
+        type="button"
+        class="deleted"
+        class:mirror
+        aria-describedby={popoverId}
+        onpointerenter={pointerEnter}
+        onpointerleave={pointerLeave}
+        onpointerdown={(e) => (press = { pointer: e.pointerType === 'touch' ? 'touch' : e.pointerType === 'pen' ? 'pen' : 'mouse', at: Date.now() })}
+        onclick={placeholderClick}
+        onfocus={(e) => popoverEvent({ kind: 'focus', keyboard: e.currentTarget.matches(':focus-visible') })}
+        onblur={() => popoverEvent({ kind: 'blur' })}
+        onkeydown={(e) => {
+          if (e.key === 'Escape' && popoverOpen) {
+            e.stopPropagation();
+            popoverEvent({ kind: 'escape' });
+          }
+        }}
+      >
+        {@render placeholderContent()}
+      </button>
+      <div class="deleted-popover" class:mirror class:below={popoverBelow} class:open={popoverOpen} bind:this={popover}>
+        <Tooltip id={popoverId} label={deletedBy} detail={deletedAt} />
+      </div>
+    </div>
+  {:else if deleted}
     <div class="deleted" class:mirror>
-      <span class="trash"></span>
-      <span class="deleted-text">{t(deletedText)}</span>
-      <span class="deleted-time">{time}</span>
+      {@render placeholderContent()}
     </div>
   {:else}
     <div class="column" class:sent class:mirror>
@@ -221,6 +347,72 @@
     &.mirror {
       border-start-start-radius: var(--radius-xl);
       border-start-end-radius: var(--radius-xs);
+    }
+  }
+
+  /* the placeholder as a button: the div's look, a button's behaviour */
+  button.deleted {
+    margin: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    text-align: start;
+    cursor: default;
+    -webkit-tap-highlight-color: transparent;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+
+  .deleted-anchor {
+    position: relative;
+    max-width: 675px;
+    min-width: 0;
+    display: flex;
+  }
+
+  /* the Tooltip's inverted label, 8px above the placeholder at its start edge (its end edge mirrored), under it where
+     it wouldn't fit above; kept in the page while hidden, so aria-describedby always finds it */
+  .deleted-popover {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    inset-inline-start: 0;
+    z-index: 20;
+    width: max-content;
+    max-width: 240px;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(2px);
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease,
+      visibility 0s linear 120ms;
+
+    &.mirror {
+      inset-inline-start: auto;
+      inset-inline-end: 0;
+    }
+
+    &.below {
+      bottom: auto;
+      top: calc(100% + 8px);
+      transform: translateY(-2px);
+    }
+
+    &.open {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition:
+        opacity 120ms ease,
+        transform 120ms ease;
+    }
+
+    :global(.tooltip) {
+      align-items: flex-start;
     }
   }
 

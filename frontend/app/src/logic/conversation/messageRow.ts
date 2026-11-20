@@ -99,6 +99,11 @@ export type ConversationContext = {
     date: (timestamp: bigint) => string;
     /** A date and time in full, as the old trees' deleted messages and event lines say it. */
     longDate: (timestamp: bigint | number) => string;
+    /**
+     * A day and time as the list's date pills name the day ("Today", "Yesterday", "Monday", else the
+     * date) with the time: "Today at 14:32" (when a message was deleted).
+     */
+    dayAndTime: (timestamp: bigint) => string;
     /** How media shows: low bandwidth, and the media URL as this device fetches it. */
     media: MediaView;
     /** Whether the conversation is a DM. */
@@ -418,10 +423,17 @@ export function messageRow(
                 msg.edited && !(msg.senderContext?.kind === "bot" && msg.senderContext.finalised),
             forwarded: msg.forwarded,
             deleted: msg.content.kind === "deleted_content",
-            deletedText:
-                msg.content.kind === "deleted_content"
-                    ? deletedText(msg.content, ctx.undeleting(msg.messageId), ctx)
-                    : undefined,
+            ...(msg.content.kind === "deleted_content"
+                ? {
+                      deletedText: deletedText(
+                          msg.content,
+                          mine,
+                          ctx.undeleting(msg.messageId),
+                          ctx,
+                      ),
+                      ...deletedInfo(msg.content, ctx),
+                  }
+                : {}),
             reactions: msg.reactions.map((r) => ({
                 emoji: r.reaction,
                 count: r.userIds.size,
@@ -480,25 +492,61 @@ export function tipChips(
 }
 
 /**
- * A deleted message's tombstone, as the old trees word it: who deleted it and when, "Undeleting…"
- * while it's being undeleted, or the OpenChat bot's removal for breaking a platform rule (whose
- * link the tombstone, plain text, can't carry: its words only).
+ * A deleted message's placeholder: "You deleted this message" in your own bubble deleted by you,
+ * else "This message was deleted" (who and when are in its popover, `deletedInfo`). While it's
+ * being undeleted it says so, as the old trees do ("Undeleting message by …").
  */
 export function deletedText(
     content: DeletedContent,
+    mine: boolean,
     undeleting: boolean,
-    ctx: Pick<ConversationContext, "userName" | "longDate" | "text">,
+    ctx: Pick<ConversationContext, "me" | "userName" | "longDate" | "text">,
 ): string {
-    const values = {
-        username: ctx.userName(content.deletedBy),
-        timestamp: ctx.longDate(content.timestamp),
-    };
-    if (undeleting) return ctx.text(i18nKey("undeletingMessage", values));
-    if (content.deletedBy === OPENCHAT_BOT_USER_ID) {
-        const text = ctx.text(i18nKey("messageDeletedByOpenChatBot", { ...values, rules: "" }));
-        return text.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+    if (undeleting) {
+        return ctx.text(
+            i18nKey("undeletingMessage", {
+                username: ctx.userName(content.deletedBy),
+                timestamp: ctx.longDate(content.timestamp),
+            }),
+        );
     }
-    return ctx.text(i18nKey("messageDeleted", values));
+    return ctx.text(
+        i18nKey(
+            mine && content.deletedBy === ctx.me ? "deletedMessage.mine" : "deletedMessage.theirs",
+        ),
+    );
+}
+
+/** Who deleted a message, as its placeholder's popover names them, and when. */
+export type DeletedInfo = {
+    /**
+     * The popover's first line, whole, in the app's language: "Deleted by you", "Deleted by a
+     * moderator" (the OpenChat bot's removal for breaking a platform rule), or "Deleted by Alice".
+     */
+    deletedBy?: string;
+    /** "Today at 14:32". */
+    deletedAt?: string;
+};
+
+/**
+ * Who deleted a message and when, for its placeholder's popover: the reader, the OpenChat bot,
+ * which removes messages for the platform's moderators ("a moderator"), or anyone else by their
+ * name, each a whole sentence of its own, so every language words it in full; and the day and
+ * time. Only what the message carries: none of either, no popover.
+ */
+export function deletedInfo(
+    content: DeletedContent,
+    ctx: Pick<ConversationContext, "me" | "userName" | "dayAndTime" | "text">,
+): DeletedInfo {
+    const info: DeletedInfo = {};
+    const by = content.deletedBy;
+    if (by === ctx.me) info.deletedBy = ctx.text(i18nKey("deletedMessage.byYou"));
+    else if (by === OPENCHAT_BOT_USER_ID)
+        info.deletedBy = ctx.text(i18nKey("deletedMessage.byModerator"));
+    else if (by !== "")
+        info.deletedBy = ctx.text(i18nKey("deletedMessage.by", { name: ctx.userName(by) }));
+    if (content.timestamp > 0n) info.deletedAt = ctx.dayAndTime(content.timestamp);
+    return info;
 }
 
 /** The kinds `kindText` words, shown as a text bubble with their text as markdown. */
@@ -1083,6 +1131,18 @@ export function conversationContext(input: ConversationContextInput): Conversati
                 true,
             ),
         longDate: (timestamp) => toLongDatetimeString(new Date(Number(timestamp)), input.locale),
+        dayAndTime: (timestamp) =>
+            interpolateNewUi(
+                formatter,
+                i18nKey("deletedMessage.when", {
+                    day: client.formatMessageDate(
+                        timestamp,
+                        formatter("today"),
+                        formatter("yesterday"),
+                    ),
+                    time: client.toShortTimeString(new Date(Number(timestamp))),
+                }),
+            ),
         media: {
             lowBandwidth: input.lowBandwidth,
             revealed: input.revealed,
