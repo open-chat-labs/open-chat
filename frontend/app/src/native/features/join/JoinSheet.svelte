@@ -6,6 +6,10 @@
      PIN dismissed, the approval or the join failed, a gate the backend found unmet) it stays, with a toast saying
      why. Closing drops the join. Get Diamond closes it for the Diamond screen; joining again after buying finds
      that requirement met.
+     A join with rules to agree to first (logic/join beginJoin) opens the sheet on them: the rules, then "Agree and
+     join" (agreeAndJoin), and requirements to meet next take their place in the same sheet. The client keeps what
+     was agreed to for the first message there to accept. Cancel, or closing, joins nothing.
+     TODO(design): no rules step in the design; the pre-send RulesSheet's look.
      TODO(design): "Get ICP" on a payment the wallet can't cover, once the wallet is native (N10). -->
 <script lang="ts">
     import {
@@ -18,10 +22,13 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
     import {
+        agreeAndJoin,
         dropJoin,
         joinFailure,
+        rulesToAcceptText,
         submitGates,
         type JoinTarget,
     } from "@src/logic/join/joinFlow.svelte";
@@ -33,11 +40,17 @@
     import { DIAMOND_URL } from "../../router/locations";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
     import { joinStepToast } from "./joinBar.adapter";
-    import { sheetChoice, sheetCopy, sheetRows, type SheetRow } from "./joinSheet.adapter";
+    import {
+        sheetChoice,
+        sheetCopy,
+        sheetRows,
+        type JoinSheetStart,
+        type SheetRow,
+    } from "./joinSheet.adapter";
 
     interface Props {
-        /** The join whose requirements these are (the client asked for them). */
-        join: { target: JoinTarget; gates: EnhancedAccessGate[]; name: string };
+        /** The join whose rules or requirements these are (the client asked for them). */
+        join: { target: JoinTarget; start: JoinSheetStart; name: string };
         overlays: Overlays;
         toast: (message: string) => void;
     }
@@ -48,9 +61,11 @@
     const client = getContext<OpenChat>("client");
     const text = (key: ResourceKey) => interpolateNewUi($_, key);
 
-    const evaluation = new GateEvaluation(
-        client,
-        untrack(() => join.gates),
+    // the rules agreed to, while they're showing; the requirements once the client asks for them
+    const start = untrack(() => join.start);
+    const rules = start.kind === "rules" ? rulesToAcceptText(start.rules) : undefined;
+    let evaluation = $state.raw<GateEvaluation | undefined>(
+        start.kind === "gates" ? new GateEvaluation(client, start.gates) : undefined,
     );
     let open = $state(true);
     let neuronConfirmed = $state(false);
@@ -59,6 +74,7 @@
     // the last level's, kept while the sheet slides away: the evaluation has moved past it then
     let held: { gate: EnhancedAccessGate; rows: SheetRow[] } | undefined;
     const level = $derived.by(() => {
+        if (evaluation === undefined) return undefined;
         const gate = evaluation.gate;
         if (gate === undefined) return held;
         held = {
@@ -93,8 +109,34 @@
         if (focused instanceof HTMLElement) untrack(() => focused.blur());
     });
 
+    // "Agree and join": the join, with the rules agreed to; requirements to meet take the rules'
+    // place, and a join that doesn't go through leaves the rules up, with a toast saying why
+    async function agree() {
+        if (start.kind !== "rules" || joining) return;
+        joining = true;
+        try {
+            const step = await agreeAndJoin(client, join.target, start.rules);
+            switch (step.kind) {
+                case "evaluate_gates":
+                    evaluation = new GateEvaluation(client, step.gates);
+                    return;
+                case "failed":
+                case "gate_check_failed":
+                    toast(text(joinFailure(step)));
+                    return;
+                case "cancelled":
+                    return;
+            }
+            const message = joinStepToast(step, join.name);
+            if (message !== undefined) toast(text(message));
+            open = false;
+        } finally {
+            joining = false;
+        }
+    }
+
     async function go() {
-        if (choice === undefined || !choice.ready || joining) return;
+        if (evaluation === undefined || choice === undefined || !choice.ready || joining) return;
         joining = true;
         try {
             const putBack = evaluation.checkpoint();
@@ -158,9 +200,30 @@
 <BottomSheet
     {open}
     onClose={close}
-    title={$_("native.join.sheet.title", { values: { name: level?.gate.collectionName ?? "" } })}
+    title={evaluation === undefined
+        ? $_("rules.joinTitle", { values: { name: join.name } })
+        : $_("native.join.sheet.title", { values: { name: level?.gate.collectionName ?? "" } })}
 >
-    {#if level !== undefined && choice !== undefined && copy !== undefined}
+    {#if evaluation === undefined && rules !== undefined}
+        <div class="rules">
+            <Markdown text={rules} inline={false} />
+        </div>
+        <div class="foot-buttons">
+            <Button
+                label={$_("cancel")}
+                variant="secondary"
+                size="lg"
+                fullWidth
+                disabled={joining}
+                onClick={close} />
+            <Button
+                label={$_("rules.agreeAndJoin")}
+                size="lg"
+                fullWidth
+                busy={joining}
+                onClick={agree} />
+        </div>
+    {:else if level !== undefined && choice !== undefined && copy !== undefined}
         <div class="body">
             <span class="intro">{text(copy.intro)}</span>
             <div class="list" role="list">
@@ -200,6 +263,25 @@
 </BottomSheet>
 
 <style lang="scss">
+    // the rules, as the pre-send RulesSheet shows them
+    .rules {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: var(--space-4) var(--space-16) var(--space-16);
+        font: var(--weight-regular) text-size(15px) / 1.5 var(--font-sans);
+        color: var(--ink-2);
+        overflow-wrap: anywhere;
+    }
+
+    .foot-buttons {
+        flex: none;
+        display: flex;
+        gap: var(--space-10);
+        padding: var(--space-8) var(--space-16) calc(var(--safe-bottom) + var(--space-16));
+    }
+
     // the design's sheet: the intro, the checklist in one rounded box, Join, a note under it
     .body {
         display: flex;

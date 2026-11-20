@@ -170,6 +170,7 @@ import {
     type ClientJoinGroupResponse,
     type GateCheckSucceeded,
     type JoinOutcome,
+    type RulesToAccept,
     type JoinCommunity,
     type JoinGroup,
     type CommunitiesRoute,
@@ -583,6 +584,11 @@ import { dailyPuzzleResultsCache } from "./stores/dailyPuzzleResults";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import {
+    forgetRulesAgreedOnJoining,
+    recordRulesAgreedOnJoining,
+    rulesAgreedOnJoiningStore,
+} from "./stores/rulesAgreedOnJoining";
 import { groupCreation } from "./utils/groupCreation";
 import {
     initialiseMostRecentSentMessageTimes,
@@ -714,6 +720,7 @@ import {
     swapMinimumOut,
 } from "./utils/swap";
 import { joinGroupFailureMessage, postLoginJoin } from "./utils/join";
+import { rulesAgreedOnJoining, rulesToAccept } from "./utils/rulesOnJoining";
 import { communityPreviewOriginStore, type CommunityPreviewFrom } from "./stores/previewOrigin";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
@@ -2664,11 +2671,71 @@ export class OpenChat {
     }
 
     /**
+     * The rules joining a group, channel or community asks the user to agree to first (the new UIs
+     * show them with "Agree and join", then pass them to `joinGroup` / `joinCommunity`): those of
+     * the group or channel, and of a channel's community when the user hasn't accepted them,
+     * each if it's enabled. None for a guest (asked once the join is replayed after sign-in), for
+     * rules already accepted, and for rules that couldn't be read: the user is asked before their
+     * first message there instead, as ever.
+     */
+    async rulesToAcceptBeforeJoining(
+        target: MultiUserChat | CommunitySummary,
+    ): Promise<RulesToAccept | undefined> {
+        if (anonUserStore.value) return undefined;
+
+        const communityId =
+            target.kind === "community"
+                ? target.id
+                : target.id.kind === "channel"
+                  ? ({ kind: "community", communityId: target.id.communityId } as const)
+                  : undefined;
+        const community =
+            communityId !== undefined ? communitiesStore.value.get(communityId) : undefined;
+        const communityAccepted =
+            community !== undefined &&
+            !isPreviewingCommunity(community) &&
+            community.membership.rulesAccepted;
+        const chatAccepted =
+            target.kind !== "community" &&
+            (allChatsStore.value.get(target.id)?.membership.rulesAccepted ?? false);
+
+        const [chatText, communityText] = await Promise.all([
+            target.kind === "community" || chatAccepted
+                ? undefined
+                : this.#rulesBeforeJoining(target.id),
+            communityId === undefined || communityAccepted
+                ? undefined
+                : this.#rulesBeforeJoining(communityId),
+        ]);
+        return rulesToAccept(chatText, communityText);
+    }
+
+    // the text of the rules, if they're enabled; none if they couldn't be read
+    async #rulesBeforeJoining(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+    ): Promise<string | undefined> {
+        try {
+            const resp = await this.#worker.send({ kind: "getRulesBeforeJoining", id });
+            if (resp.kind === "success") return resp.text;
+            console.warn("Unable to read the rules before joining", id, resp);
+        } catch (err) {
+            console.warn("Unable to read the rules before joining", id, err);
+        }
+        return undefined;
+    }
+
+    /**
      * Join a group or channel. Gates that can't be checked from the user's own data have to be
      * evaluated by the user first; the caller does that when told `needs_gate_evaluation` and
      * calls again with the result. Rejects if the user cancels the PIN prompt for a payment.
+     * `agreedRules`: the rules the user agreed to before joining (`rulesToAcceptBeforeJoining`),
+     * which their first message there accepts once joined.
      */
-    async joinGroup(chat: MultiUserChat, gateCheck?: GateCheckSucceeded): Promise<JoinOutcome> {
+    async joinGroup(
+        chat: MultiUserChat,
+        gateCheck?: GateCheckSucceeded,
+        agreedRules?: RulesToAccept,
+    ): Promise<JoinOutcome> {
         if (anonUserStore.value) {
             this.updateIdentityState({
                 kind: "logging_in",
@@ -2710,6 +2777,14 @@ export class OpenChat {
             case "success":
                 this.#gateApprovalsUsed(this.#gateCanisterId(chat));
                 this.#miniApps?.joinedChat(chat.id);
+                if (agreedRules !== undefined) {
+                    recordRulesAgreedOnJoining(
+                        chatIdentifierToString(chat.id),
+                        agreedRules.chat,
+                        chat.id.kind === "channel" ? chat.id.communityId : undefined,
+                        agreedRules.community,
+                    );
+                }
                 // a channel's join joins its community too
                 if (chat.id.kind === "channel") {
                     this.#dropPreviewOrigin({
@@ -6231,7 +6306,9 @@ export class OpenChat {
 
         let acceptedRules: AcceptedRules | undefined = undefined;
         if (this.#rulesNeedAccepting(chatId)) {
-            acceptedRules = await this.#promptForRuleAcceptance();
+            // rules the user agreed to as they joined are accepted without asking again
+            acceptedRules =
+                this.#rulesAgreedOnJoining(chatId) ?? (await this.#promptForRuleAcceptance());
             if (acceptedRules === undefined) {
                 hooks?.rulesDeclined();
                 return CommonResponses.failure();
@@ -6417,6 +6494,12 @@ export class OpenChat {
                 }
                 if (acceptedRules?.community !== undefined) {
                     this.#markCommunityRulesAcceptedLocally(true);
+                }
+                if (acceptedRules !== undefined) {
+                    forgetRulesAgreedOnJoining(
+                        chatIdentifierToString(chat.id),
+                        chat.id.kind === "channel" ? chat.id.communityId : undefined,
+                    );
                 }
             }
             return resp;
@@ -6674,6 +6757,31 @@ export class OpenChat {
         return (
             ((chatRules?.enabled ?? false) && !(chat.membership?.rulesAccepted ?? false)) ||
             ((communityRules?.enabled ?? false) && !(community?.membership?.rulesAccepted ?? false))
+        );
+    }
+
+    // What the selected chat's send accepts because the user agreed to its rules (and its
+    // community's) as they joined, if that covers every set still to be accepted
+    #rulesAgreedOnJoining(chatId: ChatIdentifier): AcceptedRules | undefined {
+        const agreed = rulesAgreedOnJoiningStore.value;
+        if (agreed.chats.size === 0 && agreed.communities.size === 0) return undefined;
+        const chat = selectedChatSummaryStore.value;
+        if (chat === undefined || !chatIdentifiersEqual(chat.id, chatId)) return undefined;
+        const community = selectedCommunitySummaryStore.value;
+        return rulesAgreedOnJoining(
+            {
+                rules: selectedChatRulesStore.value,
+                accepted: chat.membership?.rulesAccepted ?? false,
+                agreedOnJoining: agreed.chats.get(chatIdentifierToString(chatId)),
+            },
+            {
+                rules: selectedCommunityRulesStore.value,
+                accepted: community?.membership?.rulesAccepted ?? false,
+                agreedOnJoining:
+                    community !== undefined
+                        ? agreed.communities.get(community.id.communityId)
+                        : undefined,
+            },
         );
     }
 
@@ -13275,6 +13383,7 @@ export class OpenChat {
     async joinCommunity(
         community: CommunitySummary,
         gateCheck?: GateCheckSucceeded,
+        agreedRules?: RulesToAccept,
     ): Promise<JoinOutcome> {
         if (anonUserStore.value) {
             this.updateIdentityState({
@@ -13307,6 +13416,14 @@ export class OpenChat {
         if (resp.kind === "success") {
             this.#gateApprovalsUsed(this.#gateCanisterId(community));
             this.#dropPreviewOrigin(community.id);
+            if (agreedRules !== undefined) {
+                recordRulesAgreedOnJoining(
+                    undefined,
+                    undefined,
+                    community.id.communityId,
+                    agreedRules.community,
+                );
+            }
             return resp;
         }
         if (resp.kind === "gate_check_failed") {

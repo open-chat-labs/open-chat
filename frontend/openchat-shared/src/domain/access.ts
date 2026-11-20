@@ -1,5 +1,6 @@
 import type { ResourceKey } from "../utils/i18n";
-import type { Success } from "./response";
+import type { OCError } from "./error";
+import type { Offline, Success } from "./response";
 import type { Level } from "./structure";
 
 export type EnhancedAccessGate = {
@@ -224,6 +225,24 @@ export type Rules = {
 export type UpdatedRules = Rules & {
     newVersion: boolean;
 };
+
+/**
+ * A group's, channel's or community's rules as someone who isn't a member yet reads them: their
+ * text if they're enabled. A group's come without their version, so it's the text that's kept.
+ */
+export type RulesBeforeJoiningResponse =
+    | { kind: "success"; text: string | undefined }
+    | OCError
+    | Offline;
+
+/**
+ * The rules joining a group, channel or community asks the user to agree to first: the text of
+ * each set that's enabled and that the user hasn't accepted yet (a channel's own, and its
+ * community's when the user isn't a member of that yet). At least one is there.
+ */
+export type RulesToAccept =
+    | { chat: string; community: string | undefined }
+    | { chat: undefined; community: string };
 
 export function defaultChatRules(level: Level): VersionedRules {
     let text = "";

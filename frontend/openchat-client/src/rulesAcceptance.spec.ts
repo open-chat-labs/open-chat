@@ -56,6 +56,10 @@ import {
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import {
+    recordRulesAgreedOnJoining,
+    rulesAgreedOnJoiningStore,
+} from "./stores/rulesAgreedOnJoining";
 import { currentChatVisit, startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
 
@@ -255,6 +259,7 @@ describe("accepting the rules before sending a message", () => {
         vi.restoreAllMocks();
         currentUserStore.set(anonymousUser());
         captureRulesAcceptanceStore.set(undefined);
+        rulesAgreedOnJoiningStore.set({ chats: new Map(), communities: new Map() });
         currentChatVisit()?.setDetails(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
@@ -374,6 +379,45 @@ describe("accepting the rules before sending a message", () => {
             kind: "sendMessage",
             acceptedRules: { chat: undefined, community: 1 },
         });
+    });
+
+    test("rules agreed to on joining are accepted by the first send without asking", async () => {
+        setup(true, false);
+        channelRules = rules("the rules of the channel joined");
+        communityRules = rules("the rules there");
+        recordRulesAgreedOnJoining(
+            "bbbbb-bb_3",
+            "the rules of the channel joined",
+            elsewhere.communityId,
+            "the rules there",
+        );
+
+        await forwardToAnotherCommunity();
+
+        expect(rulesPrompt()).toBeUndefined();
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({
+            kind: "sendMessage",
+            acceptedRules: { chat: 1, community: 1 },
+        });
+    });
+
+    test("rules changed since they were agreed to on joining are asked about", async () => {
+        setup(true);
+        channelRules = rules("the rules of the channel, changed");
+        recordRulesAgreedOnJoining(
+            "bbbbb-bb_3",
+            "the rules of the channel joined",
+            undefined,
+            undefined,
+        );
+
+        const outcome = forwardToAnotherCommunity();
+        await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+        expect(sent).toEqual([]);
+        rulesPrompt()?.resolve(false);
+
+        expect((await outcome).kind).toBe("failure");
     });
 
     test("forwarding to a channel with no rules sends it without asking", async () => {

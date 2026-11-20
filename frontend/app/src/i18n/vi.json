@@ -3359,10 +3359,13 @@
     "rules": {
         "accept": "Chấp nhận",
         "acceptTitle": "Quy tắc trò chuyện",
+        "agreeAndJoin": "Đồng ý và tham gia",
         "channelRulesExplanation": "những điều này sẽ được đặt trước bất kỳ quy tắc cộng đồng nào",
         "communityRulesExplanation": "mọi quy tắc kênh sẽ được đặt trước các quy tắc này",
         "enable": "Bật quy tắc",
         "instructions": "Nếu được bật, thành viên mới phải đồng ý với các quy tắc trước khi họ có thể gửi tin nhắn.",
+        "joinIntro": "Đọc quy tắc của {name} và đồng ý để tham gia.",
+        "joinTitle": "Quy tắc của {name}",
         "levelRules": "quy tắc {level}",
         "placeholder": "các quy tắc {level} là gì?",
         "promptExistingUsers": "Nhắc nhở các thành viên hiện có",

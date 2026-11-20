@@ -10,6 +10,7 @@ import {
     i18nKey,
     type OpenChat,
     type ResourceKey,
+    type RulesToAccept,
 } from "@client";
 
 // Joining a group, channel or community from its preview, shared by every tree (it was
@@ -17,6 +18,12 @@ import {
 // the views show while it happens (the Join button's spinner, the gates to evaluate, the gates that
 // weren't met) and says what the view should do next as a `JoinStep`, which each tree renders its
 // own way (an evaluator, a toast, a dialog).
+//
+// The new trees start a join with `beginJoin`, which first reads the rules of what's joined: with
+// rules to agree to it answers `agree_to_rules`, the view shows them with "Agree and join", and
+// `agreeAndJoin` carries on (through the gates, if any). The client keeps what was agreed to, and
+// the first message sent there accepts it. The old trees join with `startJoin` and are asked to
+// accept the rules before their first message, as before.
 
 /** What to join: a group or channel, or a whole community. */
 export type JoinTarget =
@@ -35,6 +42,9 @@ export type JoinStep =
     | { kind: "failed"; message: ResourceKey }
     // the user dismissed the PIN prompt for a payment: nothing joined, nothing to say
     | { kind: "cancelled" };
+
+/** How a join from the new trees starts: the rules to agree to first, or as `JoinStep`. */
+export type JoinStart = { kind: "agree_to_rules"; rules: RulesToAccept } | JoinStep;
 
 /** What the view does with a join's outcome. Every outcome but success says something. */
 export function joinStep(outcome: JoinOutcome): JoinStep {
@@ -63,20 +73,25 @@ export function joinFailure(
 }
 
 type JoinClient = Pick<OpenChat, "joinGroup" | "joinCommunity">;
+type RulesClient = JoinClient & Pick<OpenChat, "rulesToAcceptBeforeJoining">;
 
 /**
  * One kind of join (groups and channels, or communities). `joining` is the one on its way to the
  * backend (through the PIN prompt and the payment approval too); `evaluating` the one whose gates
- * are being evaluated, which `continueJoin` carries on with and `reset` drops.
+ * are being evaluated, which `continueJoin` carries on with and `reset` drops. The rules agreed to
+ * before the join go with it, through the gates' evaluation too.
  */
 export class JoinFlow<T> {
     #request: (
         client: JoinClient,
         target: T,
         gateCheck?: GateCheckSucceeded,
+        agreedRules?: RulesToAccept,
     ) => Promise<JoinOutcome>;
+    #rules: (client: RulesClient, target: T) => Promise<RulesToAccept | undefined>;
     #joining = $state.raw<T | undefined>();
     #evaluating = $state.raw<T | undefined>();
+    #agreedRules: RulesToAccept | undefined;
     #gatesToEvaluate = $state.raw<EnhancedAccessGate[]>([]);
     #gateCheckFailed = $state.raw<EnhancedAccessGate[]>([]);
 
@@ -85,9 +100,12 @@ export class JoinFlow<T> {
             client: JoinClient,
             target: T,
             gateCheck?: GateCheckSucceeded,
+            agreedRules?: RulesToAccept,
         ) => Promise<JoinOutcome>,
+        rules: (client: RulesClient, target: T) => Promise<RulesToAccept | undefined>,
     ) {
         this.#request = request;
+        this.#rules = rules;
     }
 
     get joining(): T | undefined {
@@ -106,8 +124,30 @@ export class JoinFlow<T> {
         return this.#gateCheckFailed;
     }
 
-    join(client: JoinClient, target: T): Promise<JoinStep> {
+    /** Joins, `agreedRules` being the rules the user agreed to first (none from the old trees). */
+    join(client: JoinClient, target: T, agreedRules?: RulesToAccept): Promise<JoinStep> {
         this.reset();
+        this.#agreedRules = agreedRules;
+        return this.#send(client, target);
+    }
+
+    /**
+     * Starts a join from the new trees: the rules to agree to first if there are any (busy while
+     * they're read), else the join itself.
+     */
+    async begin(client: RulesClient, target: T): Promise<JoinStart> {
+        this.reset();
+        this.#joining = target;
+        let rules: RulesToAccept | undefined;
+        try {
+            rules = await this.#rules(client, target);
+        } catch {
+            // the client says nothing when it can't read them: the first send asks instead
+            rules = undefined;
+        } finally {
+            if (this.#joining === target) this.#joining = undefined;
+        }
+        if (rules !== undefined) return { kind: "agree_to_rules", rules };
         return this.#send(client, target);
     }
 
@@ -115,7 +155,9 @@ export class JoinFlow<T> {
     async continueJoin(client: JoinClient, gateCheck: GateCheckSucceeded): Promise<JoinStep> {
         const target = this.#evaluating;
         if (target === undefined) return { kind: "not_sent" };
+        const agreedRules = this.#agreedRules;
         this.reset();
+        this.#agreedRules = agreedRules;
         return this.#send(client, target, gateCheck);
     }
 
@@ -136,6 +178,7 @@ export class JoinFlow<T> {
     /** The gates' evaluation, or the gate check failure, was closed. */
     reset(): void {
         this.#evaluating = undefined;
+        this.#agreedRules = undefined;
         this.#gatesToEvaluate = [];
         this.#gateCheckFailed = [];
     }
@@ -144,7 +187,7 @@ export class JoinFlow<T> {
         this.#joining = target;
         let step: JoinStep;
         try {
-            step = joinStep(await this.#request(client, target, gateCheck));
+            step = joinStep(await this.#request(client, target, gateCheck, this.#agreedRules));
         } catch {
             // the client rejects only when the PIN prompt for a payment is dismissed
             step = { kind: "cancelled" };
@@ -163,13 +206,16 @@ export class JoinFlow<T> {
 }
 
 /** Joining groups and channels. */
-export const groupJoin = new JoinFlow<MultiUserChat>((client, chat, gateCheck) =>
-    client.joinGroup(chat, gateCheck),
+export const groupJoin = new JoinFlow<MultiUserChat>(
+    (client, chat, gateCheck, agreedRules) => client.joinGroup(chat, gateCheck, agreedRules),
+    (client, chat) => client.rulesToAcceptBeforeJoining(chat),
 );
 
 /** Joining communities. */
-export const communityJoin = new JoinFlow<CommunitySummary>((client, community, gateCheck) =>
-    client.joinCommunity(community, gateCheck),
+export const communityJoin = new JoinFlow<CommunitySummary>(
+    (client, community, gateCheck, agreedRules) =>
+        client.joinCommunity(community, gateCheck, agreedRules),
+    (client, community) => client.rulesToAcceptBeforeJoining(community),
 );
 
 /** Starts joining a group, channel or community. */
@@ -177,6 +223,27 @@ export function startJoin(client: JoinClient, target: JoinTarget): Promise<JoinS
     return target.kind === "group"
         ? groupJoin.join(client, target.chat)
         : communityJoin.join(client, target.community);
+}
+
+/**
+ * Starts joining from the new trees: the rules to agree to first (`agree_to_rules`, then
+ * `agreeAndJoin`), else as `startJoin`.
+ */
+export function beginJoin(client: RulesClient, target: JoinTarget): Promise<JoinStart> {
+    return target.kind === "group"
+        ? groupJoin.begin(client, target.chat)
+        : communityJoin.begin(client, target.community);
+}
+
+/** Joins once the user agreed to the rules `beginJoin` gave; the gates, if any, come next. */
+export function agreeAndJoin(
+    client: JoinClient,
+    target: JoinTarget,
+    rules: RulesToAccept,
+): Promise<JoinStep> {
+    return target.kind === "group"
+        ? groupJoin.join(client, target.chat, rules)
+        : communityJoin.join(client, target.community, rules);
 }
 
 /** Carries on with a join once its gates were evaluated. */
@@ -219,6 +286,11 @@ export function isJoining(target: JoinTarget): boolean {
 /** The name of what's being joined. */
 export function joinTargetName(target: JoinTarget): string {
     return target.kind === "group" ? target.chat.name : target.community.name;
+}
+
+/** The text of the rules to agree to before joining: a channel's own, then its community's. */
+export function rulesToAcceptText(rules: RulesToAccept): string {
+    return [rules.chat, rules.community].filter((text) => text !== undefined).join("\n\n");
 }
 
 /** A guest's join, recorded before sign-in (`client.takePostLoginJoin`), as a target. */

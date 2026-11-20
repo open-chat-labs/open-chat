@@ -3359,10 +3359,13 @@
     "rules": {
         "accept": "Zaakceptować",
         "acceptTitle": "Zasady czatu",
+        "agreeAndJoin": "Zaakceptuj i dołącz",
         "channelRulesExplanation": "będą one poprzedzane wszelkimi regułami społeczności",
         "communityRulesExplanation": "wszelkie reguły kanału będą poprzedzane tymi regułami",
         "enable": "Włącz reguły",
         "instructions": "Jeśli ta opcja jest włączona, nowi członkowie muszą zaakceptować zasady, zanim będą mogli wysyłać wiadomości.",
+        "joinIntro": "Przeczytaj zasady {name} i zaakceptuj je, aby dołączyć.",
+        "joinTitle": "Zasady {name}",
         "levelRules": "Zasady {level}",
         "placeholder": "jakie są zasady {level}?",
         "promptExistingUsers": "Monituj istniejących członków",

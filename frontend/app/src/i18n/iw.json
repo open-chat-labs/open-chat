@@ -3359,10 +3359,13 @@
     "rules": {
         "accept": "לְקַבֵּל",
         "acceptTitle": "כללי צ'אט",
+        "agreeAndJoin": "הסכם והצטרף",
         "channelRulesExplanation": "אלה יהיו קידומת לכל חוקי הקהילה",
         "communityRulesExplanation": "כל כללי ערוץ יקדמו לכללים אלה",
         "enable": "אפשר כללים",
         "instructions": "אם מופעל, חברים חדשים חייבים להסכים לכללים לפני שהם יכולים לשלוח הודעות.",
+        "joinIntro": "קרא את הכללים של {name} והסכם להם כדי להצטרף.",
+        "joinTitle": "הכללים של {name}",
         "levelRules": "{level} חוקים",
         "placeholder": "מה הם הכללים של {level}?",
         "promptExistingUsers": "בקש לחברים קיימים",
