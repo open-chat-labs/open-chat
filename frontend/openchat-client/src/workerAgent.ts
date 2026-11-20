@@ -213,6 +213,11 @@ export class WorkerAgent {
 
     #resolveError(data: WorkerError): void {
         const error = JSON.parse(data.error);
+        // The rejection's stack points into the worker, not at the caller, so name the request
+        // for the crash log and Rollbar
+        if (error !== null && typeof error === "object") {
+            error.requestKind = data.requestKind;
+        }
 
         // A request rejected because the session is gone only logged the user out if nobody
         // caught it and it reached the window's unhandledrejection handler. Background pollers

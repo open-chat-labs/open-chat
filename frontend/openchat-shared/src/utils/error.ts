@@ -310,6 +310,18 @@ export function shouldReportWorkerError(kind: string, error: unknown): boolean {
     return !(callerToleratedErrorKinds.has(kind) && isDeadLedgerError(error));
 }
 
+// Serialise a failed request's error for the trip from the worker to the client. Own properties
+// alone are not enough: WebKit's DOMException keeps `name`, `message` and `code` on its prototype,
+// so an IndexedDB failure arrived as `{line, column, sourceURL, stack}` and the reason was lost.
+export function serialiseWorkerError(error: unknown): string {
+    if (error === null || typeof error !== "object") return JSON.stringify(error ?? null);
+    const keys = new Set(Object.getOwnPropertyNames(error));
+    for (const key of ["name", "message", "code"]) {
+        if (key in error) keys.add(key);
+    }
+    return JSON.stringify(error, [...keys]);
+}
+
 // Whether a rejected promise means the user's session is no longer usable and they must be logged
 // out. These errors reach the client through the worker, so their prototype is gone and `name` is
 // all that survives - see the constants in ../domain/error.

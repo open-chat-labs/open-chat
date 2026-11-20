@@ -20,9 +20,15 @@ export function describeError(err: unknown): string {
     if (err instanceof Error) return `${err.name}: ${err.message}`;
     if (typeof err === "string") return err;
     if (err === null || typeof err !== "object") return String(err);
-    const { name, message } = err as { name?: unknown; message?: unknown };
+    const { name, message, requestKind } = err as {
+        name?: unknown;
+        message?: unknown;
+        requestKind?: unknown;
+    };
     if (typeof message === "string") {
-        return typeof name === "string" && name !== "" ? `${name}: ${message}` : message;
+        const text = typeof name === "string" && name !== "" ? `${name}: ${message}` : message;
+        // a failed worker request, tagged by WorkerAgent
+        return typeof requestKind === "string" ? `${text} (worker request: ${requestKind})` : text;
     }
     try {
         const seen = new WeakSet<object>();
