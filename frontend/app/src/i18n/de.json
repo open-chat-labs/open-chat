@@ -2753,6 +2753,7 @@
     "noVideo": "Ihr Browser unterstützt keine eingebetteten Videos",
     "nUsersJoined": "{number} Benutzer sind der {level} beigetreten",
     "offline": "Offline",
+    "offlineBanner": "Sie sind offline. Was Sie sehen, ist möglicherweise nicht aktuell.",
     "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline",
     "offlineMessage": "Offline",
     "oneDay": "1 Tag",

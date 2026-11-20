@@ -2753,6 +2753,7 @@
     "noVideo": "Twoja przeglądarka nie obsługuje osadzonego wideo",
     "nUsersJoined": "Użytkownicy {number} dołączyli do {level}",
     "offline": "Nieaktywny",
+    "offlineBanner": "Jesteś offline. To, co widzisz, może być nieaktualne.",
     "offlineError": "Przepraszamy – wygląda na to, że jesteś w tej chwili offline",
     "offlineMessage": "Nieaktywny",
     "oneDay": "1 dzień",

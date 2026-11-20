@@ -2753,6 +2753,7 @@
     "noVideo": "您的浏览器不支持视频",
     "nUsersJoined": "{number} 用户加入了 {level}",
     "offline": "离线",
+    "offlineBanner": "你已离线。显示的内容可能不是最新的。",
     "offlineError": "抱歉 - 您目前似乎处于离线状态",
     "offlineMessage": "离线",
     "oneDay": "1 天",
