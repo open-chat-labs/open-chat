@@ -42,7 +42,9 @@
         chatDetailsPermissions,
         chatRulesText,
     } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import { visibilityLabel } from "@src/logic/groupOrCommunity/visibility";
     import { toastStore } from "@src/stores/toast";
+    import { interpolate } from "@i18n/i18n";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -88,7 +90,7 @@
 
     const sub = $derived(
         t("native.conversation.members", {
-            visibility: t(chat.public ? "access.public" : "access.private"),
+            visibility: interpolate($_, visibilityLabel(chat)),
             count: chat.memberCount,
         }),
     );

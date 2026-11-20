@@ -12119,14 +12119,14 @@
       },
       {
         "name": "noun",
-        "type": "'group' | 'community'",
+        "type": "'group' | 'channel' | 'community'",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "'group'",
-        "doc": "\"community\" also allows a custom cover image (and a taller cover)."
+        "doc": "What it is, for the words that name it (\"Channel name\", \"How this community works\"). \"community\" also allows a custom cover image (and a taller cover), and has no history or messages of its own."
       },
       {
         "name": "onSave",

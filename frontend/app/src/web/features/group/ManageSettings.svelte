@@ -40,6 +40,7 @@
         type SaveCommunityOutcome,
     } from "@src/logic/groupOrCommunity/community.svelte";
     import { type ManageAccess } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import { visibilityLabel } from "@src/logic/groupOrCommunity/visibility";
     import {
         MAX_NAME_LENGTH,
         MIN_NAME_LENGTH,
@@ -230,7 +231,7 @@
     );
 
     const aboutMeta = $derived(
-        `${$_(target.public ? "access.public" : "access.private")} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
+        `${interpolate($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
 
     // a community mutes all its channels, which can't be undone from here (as in the old menus)
@@ -262,7 +263,7 @@
 {#if access.kind === "edit"}
     <GroupSettingsDialog
         value={editor.value}
-        noun={target.kind === "community" ? "community" : "group"}
+        noun={target.level}
         embedded
         {section}
         isDiamond={$isDiamondStore}
@@ -278,7 +279,7 @@
 {:else}
     <GroupSettingsDialog
         value={aboutValue}
-        noun={target.kind === "community" ? "community" : "group"}
+        noun={target.level}
         embedded
         readOnly
         {section}

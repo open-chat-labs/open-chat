@@ -1695,6 +1695,19 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
+  - by hand (2026-11-19, at the user's request): the words name what it is. The line under the
+    name (Manage's side and the About page) says "Public channel", "Private community", "Public
+    group" (`logic/groupOrCommunity/visibility`, also the native details; six `access.public*` /
+    `access.private*` keys, each translated as a whole phrase so the adjective agrees with the
+    noun), where the design has a bare "Public"/"Private"; `GroupSettingsDialog` takes `noun="channel"` ("How this channel
+    works", "Channel name", …) and `GroupPanel`'s member, rules, webhook and permission notes
+    follow `scope`, where the export said "group" for every kind (EXPORT-LOG 2026-11-19).
+  - left alone (old UIs): French `level.channel` is "Canaliser", the verb, not the noun "Canal".
+    The old UIs show it ("Supprimer Canaliser"), so it stays until they go. The new trees still
+    read it through a `ResourceKey`'s `level` (`interpolate` in `i18n/i18n.ts`, and
+    `logic/conversation/timelineEventText`): the timeline's join and change events, native join,
+    members and invite strings, ManageSettings' verified-name warning. Fixing those for the new
+    trees alone needs level nouns of their own; the details line already has them (`access.*`).
   - Bots: GroupPanel's bots view, its bots part: the installed bots (a group's, or a channel's
     community's) and, for someone who may manage them (`canManageBots`), up to 20 to add
     (`exploreBots`). Either opens `BotDialog` (`BotDialogScreen`): details, install, change

@@ -1313,7 +1313,7 @@
               <span class="member-error" role="alert">{actionError}</span>
             {/if}
             {#if MEMBER_NOTES[tabIdx]}
-              <span class="list-note">{t(MEMBER_NOTES[tabIdx])}</span>
+              <span class="list-note">{t(MEMBER_NOTES[tabIdx], { scope })}</span>
             {/if}
             <div class="rows">
               {#each memberRows as m}
@@ -1373,7 +1373,7 @@
           {#if allowHooks}
             <div class="bot-block">
               <span class="list-title">{t('ui.groupPanel.webhooksHeading', { count: hooks.length })}</span>
-              <span class="list-note small">{t('ui.groupPanel.webhooksNote')}</span>
+              <span class="list-note small">{t('ui.groupPanel.webhooksNote', { scope })}</span>
               {#if !(embedded && botsPart === 'webhooks')}
                 <div class="register" onclick={() => onDialog?.('webhook', { dialogMode: 'register' })} role="button" tabindex="0">
                   <span class="register-tile"><span class="hook-icon"></span></span>
@@ -1418,7 +1418,7 @@
               <span class="list-title" style:color={r.tint}>{t(r.label)}</span>
               <div class="caps">
                 {#each r.caps as cap}
-                  <span class="cap" style:background="color-mix(in srgb, {r.tint} 12%, transparent)" style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {r.tint} 30%, transparent)">{t(cap)}</span>
+                  <span class="cap" style:background="color-mix(in srgb, {r.tint} 12%, transparent)" style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {r.tint} 30%, transparent)">{t(cap, { scope })}</span>
                 {/each}
                 {#if r.none}
                   <span class="reading-only">{t('ui.groupPanel.readingOnly')}</span>
@@ -1435,7 +1435,7 @@
               <span class="list-title">{t('ui.groupPanel.offForEveryone')}</span>
               <div class="caps">
                 {#each disabledPerms as d}
-                  <span class="cap off">{t(d)}</span>
+                  <span class="cap off">{t(d, { scope })}</span>
                 {/each}
               </div>
             </div>
@@ -1488,7 +1488,7 @@
             {#each ruleLines as text, i}
               <div class="rule"><span class="rule-n">{i + 1}.</span><span class="rule-text">{text}</span></div>
             {/each}
-            <span class="rules-note">{t('ui.groupPanel.rulesNote')}</span>
+            <span class="rules-note">{t('ui.groupPanel.rulesNote', { scope })}</span>
           {:else}
             <div class="dashed">
               <span class="dashed-title">{t('ui.groupPanel.noRulesTitle')}</span>
