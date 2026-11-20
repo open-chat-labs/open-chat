@@ -6,6 +6,7 @@ import {
     CanisterUnavailableError,
     DestinationInvalidError,
     InstructionLimitExceededError,
+    offline,
     redactSecrets,
     ResponseTooLargeError,
     SessionExpiryError,
@@ -58,7 +59,10 @@ export abstract class CanisterAgent {
                     !(responseErr instanceof InstructionLimitExceededError) &&
                     !(responseErr instanceof AuthError) &&
                     !(responseErr instanceof TypeboxValidationError) &&
-                    retries < MAX_RETRIES
+                    retries < MAX_RETRIES &&
+                    // Offline, a retry can only fail too. Pollers stop while offline and run
+                    // again once the app is back, so nothing is lost by giving up now.
+                    !offline()
                 ) {
                     const delay = Math.min(RETRY_DELAY * Math.pow(2, retries), MAX_RETRY_DELAY);
 

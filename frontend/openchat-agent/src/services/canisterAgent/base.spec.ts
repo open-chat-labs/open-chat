@@ -6,7 +6,7 @@ import {
     type RequestId,
     UncertifiedRejectErrorCode,
 } from "@icp-sdk/core/agent";
-import { InstructionLimitExceededError } from "@shared";
+import { InstructionLimitExceededError, setConnectionUnusable } from "@shared";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { CanisterAgent } from "./base";
 
@@ -34,6 +34,7 @@ function reject(message: string, errorCode: string): Error {
 
 afterEach(() => {
     vi.useRealTimers();
+    setConnectionUnusable(false);
 });
 
 describe("executeQuery", () => {
@@ -53,6 +54,28 @@ describe("executeQuery", () => {
         const serviceCall = vi
             .fn<() => Promise<string>>()
             .mockRejectedValueOnce(reject("trapped", "IC0502"))
+            .mockResolvedValue("ok");
+
+        const result = new TestAgent().query(serviceCall);
+        await vi.runAllTimersAsync();
+
+        expect(await result).toBe("ok");
+        expect(serviceCall).toHaveBeenCalledTimes(2);
+    });
+
+    test("a query which fails while the app is offline isn't retried", async () => {
+        setConnectionUnusable(true);
+        const serviceCall = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
+
+        await expect(new TestAgent().query(serviceCall)).rejects.toBeDefined();
+        expect(serviceCall).toHaveBeenCalledTimes(1);
+    });
+
+    test("a query which fails while online is retried", async () => {
+        vi.useFakeTimers();
+        const serviceCall = vi
+            .fn<() => Promise<string>>()
+            .mockRejectedValueOnce(new TypeError("Failed to fetch"))
             .mockResolvedValue("ok");
 
         const result = new TestAgent().query(serviceCall);
