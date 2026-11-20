@@ -78,7 +78,7 @@ async function initializeAuthIdentity(
     const identity = await buildIdentityFromJson(authIdentity);
     authPrincipalString = identity.getPrincipal().toString();
 
-    identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, isIIPrincipal);
+    identityAgent = IdentityAgent.create(identity, identityCanister, icUrl, isIIPrincipal);
 
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
@@ -1064,7 +1064,7 @@ const handlers: Handlers = {
             config.identityCanister,
             config.icUrl,
             undefined,
-        ).then((ia) => ia.lookupWebAuthnPubKey(payload.credentialId)),
+        ).lookupWebAuthnPubKey(payload.credentialId),
     setCachedWebAuthnKey: (payload) => setCachedWebAuthnKey(payload.key),
     generateMagicLink: (payload, agent) =>
         agent.generateMagicLink(payload.email, payload.sessionKey),
@@ -1240,7 +1240,7 @@ async function verifyAccountLinkingCode(
     icUrl: string,
 ): Promise<VerifyAccountLinkingCodeResponse> {
     const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
-    const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
+    const identityAgent = IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
 
     return await identityAgent.verifyAccountLinkingCode(code);
 }
@@ -1254,7 +1254,7 @@ async function finaliseAccountLinkingWithCode(
     icUrl: string,
 ): Promise<FinaliseAccountLinkingResponse> {
     const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
-    const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
+    const identityAgent = IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
 
     const delegationIdentity = await identityAgent.finaliseAccountLinkingWithCode(
         principal,
@@ -1288,7 +1288,7 @@ async function linkIdentities(
         await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
         DelegationChain.fromJSON(initiatorDelegation),
     );
-    const initiatorAgent = await IdentityAgent.create(
+    const initiatorAgent = IdentityAgent.create(
         initiatorIdentity,
         identityCanister,
         icUrl,
@@ -1299,7 +1299,7 @@ async function linkIdentities(
         await ECDSAKeyIdentity.fromKeyPair(approverKey),
         DelegationChain.fromJSON(approverDelegation),
     );
-    const approverAgent = await IdentityAgent.create(
+    const approverAgent = IdentityAgent.create(
         approverIdentity,
         identityCanister,
         icUrl,
@@ -1341,7 +1341,7 @@ async function deleteUser(
         await ECDSAKeyIdentity.fromKeyPair(identityKey),
         DelegationChain.fromJSON(delegation),
     );
-    const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
+    const identityAgent = IdentityAgent.create(identity, identityCanister, icUrl, undefined);
     const response = await identityAgent.deleteUser();
     return response.kind === "success";
 }
@@ -1356,7 +1356,7 @@ async function getSignInProof(
         await ECDSAKeyIdentity.fromKeyPair(identityKey),
         DelegationChain.fromJSON(delegation),
     );
-    const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
+    const identityAgent = IdentityAgent.create(identity, identityCanister, icUrl, undefined);
     const sessionKey = await ECDSAKeyIdentity.generate();
 
     const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
