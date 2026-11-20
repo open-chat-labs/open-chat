@@ -81,7 +81,8 @@ describe("sending a voice message", () => {
             kind: "posted",
         });
         expect(audioContent).toHaveBeenCalledWith(bytes, "audio/mp4");
-        expect(send).toHaveBeenCalledWith(context, undefined, false, voice);
+        // only the new UIs send voice messages: one refused for the rules asks for them
+        expect(send).toHaveBeenCalledWith(context, undefined, false, voice, [], "prompt");
     });
 
     test("fails, sending nothing, when the recording can't be read as audio", async () => {
