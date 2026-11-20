@@ -370,17 +370,31 @@ function popTargetMatches(behind: string, to: string, toKind: RouteParams["kind"
     return toBase === undefined || chatBasePath(behind, toKind) === toBase;
 }
 
-function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
+/**
+ * How a navigation that leaves the dialogs open (navigateUnderDialogs) goes: as navigationMode
+ * says, but never a pop. A pop goes back through history (history.go), and the popstate that
+ * fires closes the dialogs, as Back does. So it pushes instead, or replaces within the same chat
+ * (closing a thread …).
+ */
+export function navigationModeUnderDialogs(to: string, from: RouteParams): NavigationMode {
+    const mode = navigationMode(to, from, "in-app");
+    if (mode !== "pop") return mode;
+    return isSameChat(from, to) ? "replace" : "push";
+}
+
+function doNavigate(to: string, intent: NavigationIntent, retries = 0, underDialogs = false) {
     if (!get(routerReadyStore)) {
         if (retries >= 10) {
             console.error("ROUTER: router not ready after 10 retries, giving up");
             return;
         }
         console.debug("ROUTER: router not ready, retrying in 100ms");
-        window.setTimeout(() => doNavigate(to, intent, retries + 1), 100);
+        window.setTimeout(() => doNavigate(to, intent, retries + 1, underDialogs), 100);
         return;
     }
-    const mode = navigationMode(to, routeStore.value, intent);
+    const mode = underDialogs
+        ? navigationModeUnderDialogs(to, routeStore.value)
+        : navigationMode(to, routeStore.value, intent);
     console.debug("ROUTER: navigating", { from: routeStore.value, to, mode, intent });
     switch (mode) {
         case "push":
@@ -478,10 +492,12 @@ export function replaceQuery(to: string): boolean {
  * closed first. For a dialog that hands off to one for another page (the new web UI's Manage for a
  * community opening a channel's, which reads the open chat). Nothing happens while a navigation
  * is waiting on the modal stack, as the page is about to change: false then, true when it goes.
+ * It never goes back through history, whose popstate would close them
+ * (navigationModeUnderDialogs).
  */
 export function navigateUnderDialogs(to: string): boolean {
     if (pendingNavigation !== null) return false;
-    doNavigate(to, "in-app");
+    doNavigate(to, "in-app", 0, true);
     return true;
 }
 

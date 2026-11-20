@@ -6,7 +6,7 @@ import type {
     WalletPage,
 } from "@shared";
 import { describe, expect, it } from "vitest";
-import { navigationMode, parentRoute } from "./navigation";
+import { navigationMode, navigationModeUnderDialogs, parentRoute } from "./navigation";
 
 // ---------------------------------------------------------------------------
 // Route fixtures — only `kind` (and required discriminated-union fields) matter
@@ -403,5 +403,22 @@ describe("overlays linked by a query param", () => {
         expect(navigationMode("/chats?profile", chats, "overlay")).toBe("push");
         expect(navigationMode(`${P.group}?profile`, chat, "overlay")).toBe("push");
         expect(navigationMode("/chats", chats, "dismiss")).toBe("pop");
+    });
+});
+
+describe("a navigation under the dialogs (navigateUnderDialogs)", () => {
+    it("pushes another channel from a thread, rather than popping, whose popstate closes them", () => {
+        expect(navigationMode(P.otherChannel, channelWithThread)).toBe("pop");
+        expect(navigationModeUnderDialogs(P.otherChannel, channelWithThread)).toBe("push");
+        expect(navigationModeUnderDialogs(P.otherChannel, channelWithOpenThread)).toBe("push");
+    });
+
+    it("replaces within the same chat, rather than popping", () => {
+        expect(navigationModeUnderDialogs(P.channel, channelWithThread)).toBe("replace");
+    });
+
+    it("goes as any other navigation otherwise", () => {
+        expect(navigationModeUnderDialogs(P.otherChannel, channel)).toBe("push");
+        expect(navigationModeUnderDialogs(P.channel, community)).toBe("push");
     });
 });
