@@ -244,15 +244,12 @@ describe("a reply's quote, tapped", () => {
         expect(quoteTarget(reply({ kind: "raw_reply_context" }), dm, "chats")).toBeUndefined();
     });
 
-    test("is the text bubble's onQuote, none for another kind or no target", () => {
+    test("is the reply's onQuote, whatever its kind; none without a target", () => {
         const go = vi.fn();
         const target = { kind: "here", messageIndex: 41 } as const;
-        quoteFor({ time: "", text: "yes" } as GroupMessage, target, go).onQuote?.();
+        quoteFor(target, go).onQuote?.();
         expect(go).toHaveBeenCalledWith(target);
-        expect(
-            quoteFor({ kind: "image", time: "", items: [] } as GroupMessage, target, go),
-        ).toEqual({});
-        expect(quoteFor({ time: "", text: "yes" } as GroupMessage, undefined, go)).toEqual({});
+        expect(quoteFor(undefined, go)).toEqual({});
     });
 });
 

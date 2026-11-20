@@ -358,6 +358,7 @@ export function showsSenderName(runStart: boolean, direct: boolean): boolean {
  * A message as MessageGroup shows it, with its sender: a kind with a bubble of its own in it
  * (`kindMessage`), any other as a text bubble, with its text (`kindText` in the app's words, else
  * `contentText`; GAPS.md, "Message kinds").
+ * A reply carries its quote whatever its kind.
  */
 export function messageRow(
     evt: EventWrapper<Message>,
@@ -369,6 +370,16 @@ export function messageRow(
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
     const links = linkPreviews(msg);
+    // every kind shows the quote at its top, as the text bubble does
+    const quote: QuoteFields = {
+        quoteName:
+            quoted === undefined
+                ? undefined
+                : quoted.senderId === ctx.me
+                  ? ctx.you
+                  : ctx.userName(quoted.senderId),
+        quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
+    };
     const kind = kindMessage(msg, status, ctx, {
         id: String(msg.messageId),
         time: ctx.time(evt.timestamp),
@@ -380,6 +391,7 @@ export function messageRow(
         })),
         tips: tipChips(msg.tips, ctx),
         ...threadFields(msg, ctx),
+        ...quote,
     });
     if (kind !== undefined) {
         return {
@@ -416,13 +428,7 @@ export function messageRow(
                 mine: r.userIds.has(ctx.me),
             })),
             tips: tipChips(msg.tips, ctx),
-            quoteName:
-                quoted === undefined
-                    ? undefined
-                    : quoted.senderId === ctx.me
-                      ? ctx.you
-                      : ctx.userName(quoted.senderId),
-            quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
+            ...quote,
             ...threadFields(msg, ctx),
             previews: previewCards(links.cards),
             players: links.players.map((player) => twitchPlayer(player, ctx)),
@@ -430,13 +436,20 @@ export function messageRow(
     };
 }
 
+/** A reply's quote: who wrote the quoted message ("You" for the reader's own) and its text. */
+type QuoteFields = {
+    quoteName: string | undefined;
+    quoteText: string | undefined;
+};
+
 type KindBase = {
     id: string;
     time: string;
     deleted: false;
     reactions: GroupMessage["reactions"];
     tips: GroupMessage["tips"];
-} & ThreadFields;
+} & ThreadFields &
+    QuoteFields;
 
 /**
  * The tips a message got, a chip per token (its logo and the total), the reader's own marked, with

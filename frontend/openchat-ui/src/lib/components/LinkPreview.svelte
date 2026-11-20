@@ -2,6 +2,7 @@
      size: large (image on top, domain, title, 2-line description) or compact (thumbnail row, for repos/profiles without a hero image). -->
 <script lang="ts">
   import LinkCard from './LinkCard.svelte';
+  import ReplyQuote from './ReplyQuote.svelte';
   interface Props {
     /** Message text; URLs inside it render as bold, underlined links. */
     text: string;
@@ -20,6 +21,11 @@
     lastInGroup?: boolean;
     /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
     mirror?: boolean;
+    /** Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message ("You" for your own), at the top of the message. */
+    quoteName?: string;
+    quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
   }
 
   let {
@@ -35,6 +41,9 @@
     time,
     lastInGroup = true,
     mirror = false,
+    quoteName = '',
+    quoteText = '',
+    onQuote,
   }: Props = $props();
 
   const URL_RE = /((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i;
@@ -50,6 +59,7 @@
 </script>
 
 <div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror data-bubble-sent={side === 'sent' ? '' : undefined}>
+  {#if quoteName}<ReplyQuote name={quoteName} text={quoteText} sent={side === 'sent'} tile {mirror} onOpen={onQuote} />{/if}
   <p class="text">{#each parts as part}{#if part.href}<a class="inline" href={part.href} target="_blank" rel="noopener">{part.text}</a>{:else}{part.text}{/if}{/each}</p>
   <LinkCard {url} {domain} {title} {description} {image} {imageBg} {size} {side} />
   <div class="meta">{time}<span class="tick"></span></div>

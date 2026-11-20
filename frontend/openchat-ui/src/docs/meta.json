@@ -1075,6 +1075,85 @@
     "group": "library"
   },
   {
+    "name": "ReplyQuote",
+    "source": "lib/ChatBubble.dc.html (its reply quote), by hand",
+    "hash": "",
+    "description": "A reply's quote (ChatBubble's): who wrote the quoted message and its text (up to three lines), behind an accent bar; on a sent message the bubble's reply shade. With onOpen it's a button that goes to the quoted message. Its own component, by hand, so every kind of message shows the same quote at its top: `tile` shapes it as the first tile of a card in a 4px-inset shell (media, file, transfer, swap, poll, prize, link).",
+    "preview": {
+      "width": 360,
+      "height": 72
+    },
+    "props": [
+      {
+        "name": "name",
+        "type": "string",
+        "default": "Alice",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Who wrote the quoted message (\"You\" for your own)."
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "default": "Are we still on for Friday?",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "sent",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "On a sent message: the sent bubble's reply shade."
+      },
+      {
+        "name": "tile",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The first tile of a card in a 4px-inset shell: the shell's top corners above, 6px below, 4px over the next tile."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "With `tile`, a mirrored shell's (native, your own at the inline end): the top corners mirrored."
+      },
+      {
+        "name": "onOpen",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "ThreadLink",
     "source": "lib/ChatBubble.dc.html (its thread link, pass 8), by hand (4c)",
     "hash": "",
@@ -6417,6 +6496,39 @@
         "doc": "Right-aligned layouts (native sent bubbles): the bubble at the inline end, its corners mirrored."
       },
       {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      },
+      {
         "name": "lastInGroup",
         "type": "boolean",
         "default": true,
@@ -11119,6 +11231,39 @@
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      },
+      {
         "name": "onDownload",
         "type": "() => void",
         "default": null,
@@ -14034,6 +14179,39 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
       }
     ],
     "group": "library"
@@ -14238,6 +14416,39 @@
         "required": false,
         "componentDefault": false,
         "doc": "A GIF at three quarters (native, by choice): 180 × 315 at most, where it's otherwise as big as a photo."
+      },
+      {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
       },
       {
         "name": "onOpen",
@@ -15980,6 +16191,39 @@
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      },
+      {
         "name": "onVote",
         "type": "(indexes: number[]) => void",
         "default": null,
@@ -16308,6 +16552,39 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
       },
       {
         "name": "onClaim",
@@ -18412,6 +18689,39 @@
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      },
+      {
         "name": "onAccept",
         "type": "() => void",
         "default": null,
@@ -19100,6 +19410,39 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message (\"You\" for your own), at the top of the message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
       },
       {
         "name": "onOpen",

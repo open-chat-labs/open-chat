@@ -4,6 +4,7 @@
      items: [{ src?, bg?, w?, h? }] — src is an image URL; bg a CSS background fallback (placeholders). -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import ReplyQuote from './ReplyQuote.svelte';
   import { cssUrl } from '../cssUrl';
   type Status = 'sending' | 'sent' | 'delivered' | 'read';
 
@@ -26,6 +27,11 @@
     mirror?: boolean;
     /** A GIF at three quarters (native, by choice): 180 × 315 at most, where it's otherwise as big as a photo. */
     compactGif?: boolean;
+    /** Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message ("You" for your own), at the top of the message. */
+    quoteName?: string;
+    quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
     onOpen?: (index: number) => void;
     onRetry?: () => void;
     onCancel?: () => void;
@@ -46,6 +52,9 @@
     lastInGroup = true,
     mirror = false,
     compactGif = false,
+    quoteName = '',
+    quoteText = '',
+    onQuote,
     onOpen,
     onRetry,
     onCancel,
@@ -83,6 +92,7 @@
 
 <div class="media-message" class:sent={side === 'sent'} class:mirror>
   <div class="shell" class:last={lastInGroup} class:mirror class:failed data-bubble-sent={side === 'sent' ? '' : undefined} style:width={box.width}>
+    {#if quoteName}<ReplyQuote name={quoteName} text={quoteText} sent={side === 'sent'} tile {mirror} onOpen={onQuote} />{/if}
     <div
       class="media"
       class:captioned={!!caption}
@@ -197,6 +207,12 @@
       border-end-end-radius: 6px;
       border-end-start-radius: 6px;
     }
+  }
+
+  /* under a reply quote (the card's first tile then), its top corners are a tile's */
+  .shell:has(> :global(.reply-quote)) > .media {
+    border-start-start-radius: 6px;
+    border-start-end-radius: 6px;
   }
 
   .tile {

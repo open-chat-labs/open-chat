@@ -4,6 +4,7 @@
      By hand: `sending`. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import ReplyQuote from './ReplyQuote.svelte';
   import Spinner from './Spinner.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
@@ -38,11 +39,16 @@
     lastInGroup?: boolean;
     /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
     mirror?: boolean;
+    /** Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message ("You" for your own), at the top of the message. */
+    quoteName?: string;
+    quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
     onAccept?: () => void;
     onCancel?: () => void;
   }
 
-  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, sending = false, time, lastInGroup = true, mirror = false, onAccept, onCancel }: Props = $props();
+  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, sending = false, time, lastInGroup = true, mirror = false, quoteName = '', quoteText = '', onQuote, onAccept, onCancel }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
@@ -55,6 +61,7 @@
 </script>
 
 <div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined} class:expired={state === 'expired' || state === 'cancelled'}>
+  {#if quoteName}<ReplyQuote name={quoteName} text={quoteText} sent={side === 'sent'} tile {mirror} onOpen={onQuote} />{/if}
   <div class="stack">
     <div class="head"><span class="label"><span class="swap-icon"></span><span class="grow">{t('ui.swapOffer.title')}</span><span class="when">{when}</span></span></div>
     <div class="legs">

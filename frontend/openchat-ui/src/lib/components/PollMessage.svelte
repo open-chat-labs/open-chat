@@ -3,6 +3,7 @@
      Controlled via `myVotes` + onVote(indexes), or uncontrolled; readonly locks it. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import ReplyQuote from './ReplyQuote.svelte';
   import AvatarStack from './AvatarStack.svelte';
 
   const RULES = {
@@ -32,6 +33,11 @@
     lastInGroup?: boolean;
     /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
     mirror?: boolean;
+    /** Reply quote (ReplyQuote, as ChatBubble's): who wrote the quoted message ("You" for your own), at the top of the message. */
+    quoteName?: string;
+    quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
     onVote?: (indexes: number[]) => void;
     onViewVotes?: () => void;
   }
@@ -51,6 +57,9 @@
     time,
     lastInGroup = true,
     mirror = false,
+    quoteName = '',
+    quoteText = '',
+    onQuote,
     onVote,
     onViewVotes,
   }: Props = $props();
@@ -83,6 +92,7 @@
 </script>
 
 <div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined}>
+  {#if quoteName}<ReplyQuote name={quoteName} text={quoteText} sent={side === 'sent'} tile {mirror} onOpen={onQuote} />{/if}
   <div class="stack">
     <div class="tile head">
       <span class="kicker"><span class="poll-icon"></span>{t('ui.pollMessage.poll')}</span>
@@ -173,6 +183,12 @@
       border-start-start-radius: 18px;
       border-start-end-radius: 2px;
     }
+  }
+
+  /* under a reply quote (the card's first tile then), its top corners are a tile's */
+  .shell:has(> :global(.reply-quote)) > .stack > .head {
+    border-start-start-radius: 6px;
+    border-start-end-radius: 6px;
   }
 
   .kicker {

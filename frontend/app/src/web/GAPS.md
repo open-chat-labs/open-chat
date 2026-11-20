@@ -1183,7 +1183,7 @@ design export needs. Each entry says where it came up.
   it has left is worked out when the row is made and doesn't count down. A prize still being sent
   (`prize_content_initial`) shows as the card it will be, with "Sending prize…" where Claim would
   go (a failed one stays a text bubble, which shows the failure); one in a ledger the registry
-  doesn't carry stays a text bubble. No quote yet.
+  doesn't carry stays a text bubble. A reply shows its quote on top (see Media messages).
 - **Thread panel and "N replies", by hand (4c, EXPORT-LOG 2026-11-07)**, to take back to the design
   export: `ThreadPanel` takes `list` and `composer` snippets (and `replyCount`): the app lists a
   thread's replies with the conversation's own list and composer (`MessageArea`), which the
@@ -2752,9 +2752,14 @@ design export needs. Each entry says where it came up.
   page (no calls can be made there).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
   `MediaMessage` tiles, a GIF as big as a photo (the native tree's are three quarters, by choice:
-  `compactGifs`, by hand, EXPORT-LOG 2026-11-19). They have no quote or edited mark yet
-  (`MediaMessage` takes none), so a reply sent as a photo, video or GIF doesn't show what it
-  replies to. In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
+  `compactGifs`, by hand, EXPORT-LOG 2026-11-19). A reply shows its quote at the top of the
+  bubble, as a text bubble's (`ReplyQuote`, by hand: every kind takes `quoteName` / `quoteText` /
+  `onQuote`, EXPORT-LOG 2026-11-19; a click goes to the quoted message, `quoteFor`), and so do
+  voice, file, transfer, poll, prize and swap messages (not a proposal's card, `ProposalMessage`,
+  which takes none: the proposals bot sends them, never as a reply). Like the text bubble's, the quote
+  shows the quoted message's text only: the old trees' quote of a photo, video or GIF shows its
+  picture. No edited mark yet (`MediaMessage` takes none). In low bandwidth an image shows its
+  thumbnail and a GIF an empty tile until the
   first click, which loads it in the bubble; the old trees put a "load image" button on it, which
   `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
   still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
@@ -2772,8 +2777,8 @@ design export needs. Each entry says where it came up.
   the next voice message doesn't play when one ends, and the speed is one for the whole chat. A
   voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
   neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
-  status). A file shows its name, size and type and downloads under its own name. Neither has
-  a quote or an edited mark yet.
+  status). A file shows its name, size and type and downloads under its own name. A reply shows
+  its quote (see Media messages). Neither has an edited mark yet.
 - **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
   its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
   `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
@@ -2806,8 +2811,8 @@ design export needs. Each entry says where it came up.
   signs it by the bubble's side, which shows a transfer between two other people in a group as the
   reader's own receipt. Outside a DM it says who got it ("to Bob") unless that's the reader. "View
   transaction" opens the ledger's explorer. The caption is plain text (no markdown), the card
-  shows no sent or delivered tick (`TransferMessage` takes no status), and it has no quote
-  yet. A failed transfer, or one in a ledger the registry
+  shows no sent or delivered tick (`TransferMessage` takes no status). A reply shows its quote
+  (see Media messages). A failed transfer, or one in a ledger the registry
   doesn't carry, stays a text bubble. The dollar value is worked out when the row is made (and
   again once the exchange rates first load); it doesn't follow the rates' later refreshes.
 - **Polls** (`features/conversation`, 5a): a poll shows as `PollMessage` and votes through
@@ -2816,7 +2821,7 @@ design export needs. Each entry says where it came up.
   design locks a poll only once it's closed or voted, and shows results only after a vote. A
   public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
   `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
-  doesn't count down. No tick or quote yet.
+  doesn't count down. No tick yet; a reply shows its quote (see Media messages).
   The library's `PollBuilderDialog` still offers "lock votes" with multiple choice, which the
   backend ignores: the poll is sent with `allowsVoteChange` (`newPollContent`, 5d), as the old
   builders send it, so a multiple-choice poll's votes can always change whatever was picked.
@@ -2832,7 +2837,8 @@ design export needs. Each entry says where it came up.
   shows as plain text under the card (`SwapOffer` takes `caption` and `canAct` by hand: no action
   while previewing). An offer still being sent (`p2p_swap_content_initial`) shows as the card it
   will be, with "Sending offer…" where the action would go (`sending`, by hand; a failed one stays
-  a text bubble, which shows the failure). Time left is worked out when the row is made. No tick or quote yet.
+  a text bubble, which shows the failure). Time left is worked out when the row is made. No tick yet; a reply shows its quote (see Media
+  messages).
 - **Message kinds** (`features/conversation`, 5a; `logic/conversation/messageRow`, shared with the
   native conversation): every kind of message, as `kindMessage` and `kindText` show it:
   - in a bubble of its own: images, memes, GIFs and videos (`MediaMessage`), voice and files,
@@ -2872,7 +2878,8 @@ design export needs. Each entry says where it came up.
     reader's own marked as their reactions are, who tipped in its tooltip; `ReactionChips` takes
     `tips` by hand (EXPORT-LOG 2026-11-16; the design has none: `TODO(design)`). A token the
     registry doesn't carry has no chip. Clicking one does nothing (tipping is 5b's, not built);
-  - reactions: chips under every kind (5b, "Message actions").
+  - reactions: chips under every kind (5b, "Message actions");
+  - a reply's quote: at the top of every kind (see Media messages).
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`logic/conversation/messageRow.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
