@@ -445,7 +445,7 @@ export default {
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
-                            <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>
+                            <template id="profile-link-template" style="cursor: pointer; font-weight: var(--msg-link-weight, 700); text-decoration: underline;"></template>
                             <body>
                                 ${analyticsNoscript}
                             </body>

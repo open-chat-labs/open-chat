@@ -246,7 +246,8 @@
     --msg-soft: var(--ink-3);
     --msg-stamp: var(--meta);
     --msg-link: var(--accent-bright);
-    /* the message-link mixin's weight, for a link the mixin can't reach (in a host's shadow root, e.g. a spoiler) */
+    /* the message-link mixin's weight, for a link the mixin can't reach (in a host's shadow root, e.g. a spoiler) and
+       an @user mention (the app's <profile-link>, whose inline style takes it, else bold) */
     --msg-link-weight: var(--weight-semibold);
     max-width: 675px;
     min-width: 0;
@@ -358,7 +359,7 @@
   }
 
   /* group mentions are links in the markdown (@everyone `?everyone`, a user group `?usergroup=…`) but mentions to the
-     eye: the text's colour, semibold and underlined, close to an @user mention (<profile-link>, bold) */
+     eye: the text's colour, semibold and underlined, as an @user mention (<profile-link>, semibold by --msg-link-weight) */
   .bubble .text.body :global(a:is([href^='?everyone'], [href^='?usergroup'])) {
     @include message-link(inherit);
   }

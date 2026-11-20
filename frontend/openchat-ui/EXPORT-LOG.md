@@ -1097,3 +1097,7 @@
 - `MediaMessage`, `VoiceMessage`, `FileMessage`, `TransferMessage`, `SwapOffer`, `PollMessage`, `PrizeMessage`, `LinkPreview`: `quoteName`, `quoteText` and `onQuote`, as `ChatBubble`'s: the quote at the top of the message, inside its shell (a tile over the media or card; in the voice bubble's padding as in a text bubble's). The tile under it takes 6px top corners. `MessageGroup` passes them through with the rest of the message. `meta.json` (the three props on each).
 - Used by the app's conversation (web and native): a reply sent as a photo, video, GIF, voice message, file, transfer, poll, prize or swap showed no quote.
 - Not in the design export: the design quotes only in text bubbles. TODO(design): a quote over media and cards (the app's `GAPS.md`, Media messages).
+
+## 2026-11-20 — @user mentions in a message semibold, as its links, by hand
+- `ChatBubble`: its `--msg-link-weight` (semibold, the message-link mixin's weight) now also weighs an @user mention in the body. The app's `<profile-link>` takes its weight from its inline style, now `var(--msg-link-weight, 700)` (the app's `index.html` template), so a mention in a bubble is semibold, as the bubble's links and group mentions are; anywhere that doesn't set it (the old UIs, the chat list's previews) stays bold. Comments only here; no props changed. At the user's request.
+- Not in the design export: to go back, drop `--msg-link-weight` from the template's weight (bold everywhere).

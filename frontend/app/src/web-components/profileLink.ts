@@ -49,7 +49,9 @@ class ProfileLink extends HTMLElement {
 
     // Called when the element is connected to the DOM
     connectedCallback() {
-        // The template in index.html is empty; only its inline style is used.
+        // The template in index.html is empty; only its inline style is used. Its weight is
+        // --msg-link-weight, else 700: @openchat/ui's message bubbles set it (semibold, as their
+        // links), the old UIs don't and keep bold.
         const template = document.querySelector("#profile-link-template") as HTMLTemplateElement;
         this.setAttribute("style", template.style.cssText);
         this.textContent = `@${this.text}`;
