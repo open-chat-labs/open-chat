@@ -1092,7 +1092,7 @@
 
     // Go to the route's message (a deep link), as the old list does: when it changes, and when the
     // chat does. A thread's own deep link (`/:tmi`) is loaded by the client as it opens
-    let list: ChatEventList | undefined = $state();
+    let list: ChatEventList | null | undefined = $state();
     let initialised = $state(false);
 
     // A new chat's list starts uninitialised, as the old UI's did, unless the chat has nothing to
@@ -1112,7 +1112,7 @@
         const chatId = $selectedChatIdStore;
         // until the list is there (the chat loading, a private preview), the link waits for it
         const current = list;
-        if (current === undefined) return;
+        if (current == null) return;
         const to = messageLink.next(chatId, idx, $chatsInitialisedStore);
         if (chatId !== undefined && to !== undefined) {
             untrack(() => current.scrollToMessageIndex({ chatId }, to, false));
@@ -1125,7 +1125,7 @@
         if (thread !== undefined) return;
         const jump = screen.jumps.wanted;
         const current = list;
-        if (jump === undefined || current === undefined) return;
+        if (jump === undefined || current == null) return;
         if (!chatIdentifiersEqual(jump.chatId, chat.id)) return;
         untrack(() => {
             screen.jumps.done(jump);
