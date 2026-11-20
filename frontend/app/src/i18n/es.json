@@ -2614,6 +2614,7 @@
                 "placeholder": "¿Qué deberían saber los miembros?",
                 "markdown": "Aquí funciona Markdown.",
                 "needed": "Escribe las normas o desactívalas.",
+                "tooLong": "Las reglas son demasiado largas.",
                 "newVersion": "Pedir a los miembros que las acepten de nuevo",
                 "newVersionHelp": "Para normas nuevas o un cambio real. Déjalo desactivado para una errata."
             },

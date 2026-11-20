@@ -21,7 +21,7 @@
         ROLE_NONE,
         routeForScope,
         selectedChatMembersStore,
-        selectedChatRulesStore,
+        selectedServerChatStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
         type GroupCreation,
@@ -51,6 +51,7 @@
     import type { ScreenContext } from "../app/screens";
     import { favouriteWithToast, muteWithToast } from "../chats/chatToasts";
     import { removeWithUndo } from "../chats/removeWithUndo";
+    import { savedRules } from "../groupSettings/savedRules.svelte";
     import { requestSearch } from "../conversation/searchRequests";
     import DetailsHead from "./DetailsHead.svelte";
     import DetailTiles from "./DetailTiles.svelte";
@@ -135,8 +136,10 @@
         })),
     );
 
+    // the server's rules, or those just saved here (savedRules)
+    const chatRules = $derived(savedRules.shown(chat.id, $selectedServerChatStore?.rules));
     const rules = $derived(
-        chatRulesText(client, chat, $selectedChatRulesStore, $selectedCommunityRulesStore),
+        chatRulesText(client, chat, chatRules, $selectedCommunityRulesStore),
     );
 
     // ---- leaving and deleting: each with Undo, as the conversation's menu

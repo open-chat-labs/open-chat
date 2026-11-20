@@ -36,8 +36,9 @@
     import GeneralPage from "./GeneralPage.svelte";
     import PermissionsPage from "./PermissionsPage.svelte";
     import RulesPage from "./RulesPage.svelte";
+    import { savedRules } from "./savedRules.svelte";
     import { savedThreadPermissions } from "./savedThreads";
-    import { draftSavable, hasSavableChanges, pageTitle } from "./settings.adapter";
+    import { draftSavable, hasSavableChanges, pageTitle, savedSettings } from "./settings.adapter";
 
     type Props = {
         chat: MultiUserChat;
@@ -104,13 +105,17 @@
         // the name as it's checked (draftSavable): trimmed
         const name = editor.candidateGroup.name.trim();
         if (name !== editor.candidateGroup.name) editor.candidateGroup.name = name;
+        // what the server will hold once it's saved, worked out from the draft as it's sent
+        const held = savedSettings(
+            $state.snapshot(editor.original),
+            $state.snapshot(editor.candidateGroup),
+            rules,
+        );
         const outcome = await editor.saveGroup(client, yes);
         switch (outcome.kind) {
             case "success":
-                savedThreadPermissions.remember(
-                    chat.id,
-                    $state.snapshot(editor.candidateGroup.permissions.threadPermissions),
-                );
+                savedThreadPermissions.remember(chat.id, held.threads);
+                if (held.rules !== undefined) savedRules.remember(chat.id, held.rules);
                 context.toast($_("native.groupSettings.saved"));
                 context.back?.();
                 return;

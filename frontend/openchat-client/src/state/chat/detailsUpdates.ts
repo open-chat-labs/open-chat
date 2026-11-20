@@ -131,15 +131,14 @@ export class ChatDetailsUpdatesManager {
         });
     }
 
-    // The undo takes off only these rules, and only while they're still the ones held: a later
-    // update's rules stay, and nothing earlier is put back. Putting back the rules this replaced
-    // let two saves inside the undo's timeout leave the first save's rules in place for good, once
-    // both undos had run, over the newer ones the server's details held.
     updateRules(id: ChatIdentifier, rules: VersionedRules): UndoLocalUpdate {
         return modifyWritable((map) => {
+            const prev = map.get(id);
             map.set(id, rules);
             return () => {
-                if (map.get(id) === rules) {
+                if (prev !== undefined) {
+                    map.set(id, prev);
+                } else {
                     map.delete(id);
                 }
             };

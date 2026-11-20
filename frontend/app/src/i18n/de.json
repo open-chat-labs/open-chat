@@ -2614,6 +2614,7 @@
                 "placeholder": "Was sollten Mitglieder wissen?",
                 "markdown": "Markdown funktioniert hier.",
                 "needed": "Schreib die Regeln oder schalte sie aus.",
+                "tooLong": "Die Regeln sind zu lang.",
                 "newVersion": "Mitglieder erneut zustimmen lassen",
                 "newVersionHelp": "Für neue Regeln oder eine echte Änderung. Bei einem Tippfehler aus lassen."
             },

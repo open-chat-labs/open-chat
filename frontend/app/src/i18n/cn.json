@@ -2614,6 +2614,7 @@
                 "placeholder": "成员需要知道什么？",
                 "markdown": "此处支持 Markdown。",
                 "needed": "请写下规则，或将其关闭。",
+                "tooLong": "规则太长了。",
                 "newVersion": "要求成员重新接受",
                 "newVersionHelp": "用于新规则或实质性修改。仅修正错字时保持关闭。"
             },

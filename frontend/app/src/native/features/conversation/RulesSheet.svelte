@@ -10,7 +10,7 @@
         captureRulesAcceptanceStore,
         pinNumberResolverStore,
         selectedChatIdStore,
-        selectedChatRulesStore,
+        selectedServerChatStore,
         selectedCommunityRulesStore,
         type OpenChat,
     } from "@client";
@@ -21,6 +21,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
+    import { savedRules } from "../groupSettings/savedRules.svelte";
 
     type Props = {
         /** This screen's chat is the selected one, whose rules the client asks about. */
@@ -35,11 +36,18 @@
     const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
     const request = $derived(shown && prompt.kind === "rules" ? prompt.request : undefined);
 
+    // the selected chat's rules: the server's, or those just saved here (savedRules)
+    const chatRules = $derived(
+        $selectedChatIdStore === undefined
+            ? undefined
+            : savedRules.shown($selectedChatIdStore, $selectedServerChatStore?.rules),
+    );
+
     // the last rules shown stay while the sheet slides away
     let lastRules = "";
     const rules = $derived.by(() => {
         if (request !== undefined) {
-            lastRules = client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore);
+            lastRules = client.combineRulesText(chatRules, $selectedCommunityRulesStore);
         }
         return lastRules;
     });

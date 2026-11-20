@@ -2614,6 +2614,7 @@
                 "placeholder": "Thành viên nên biết điều gì?",
                 "markdown": "Có thể dùng Markdown ở đây.",
                 "needed": "Hãy viết quy tắc hoặc tắt chúng.",
+                "tooLong": "Nội quy quá dài.",
                 "newVersion": "Yêu cầu thành viên chấp nhận lại",
                 "newVersionHelp": "Cho quy tắc mới hoặc thay đổi thực sự. Để tắt nếu chỉ sửa lỗi chính tả."
             },

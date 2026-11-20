@@ -26,6 +26,7 @@ import {
     MAX_NAME_LENGTH,
     MIN_NAME_LENGTH,
 } from "@src/logic/groupOrCommunity/group.svelte";
+import { MAX_RULES_LENGTH } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
 import { gateLabel } from "@src/utils/access";
 import type { GroupSettingsPage } from "../../router/locations";
 
@@ -426,6 +427,27 @@ export function withoutPerType(
     return next;
 }
 
+/**
+ * The permissions with the messages' set to `messages`. Threads of their own that aren't
+ * customised per type (`threadsCustomised` false, their rows hidden) keep their types in step
+ * with the messages', so no thread role the page doesn't show is saved.
+ */
+export function withMessages(
+    permissions: ChatPermissions,
+    messages: MessagePermissions,
+    threadsCustomised: boolean,
+): ChatPermissions {
+    const threads = permissions.threadPermissions;
+    return {
+        ...permissions,
+        messagePermissions: messages,
+        threadPermissions:
+            threads === undefined || threadsCustomised
+                ? threads
+                : withoutPerType(threads, messages),
+    };
+}
+
 /** How many permissions are other than the defaults; threads of their own count as one more. */
 export function changedPermissions(permissions: ChatPermissions): number {
     const defaults = defaultChatPermissions();
@@ -487,6 +509,55 @@ export function hasSavableChanges(
         delete changes.permissions;
     }
     return Object.keys(changes).length > 0;
+}
+
+/**
+ * What the server holds once the draft is saved, of what the pages read back for the minute after
+ * (savedThreads, savedRules): the threads' permissions (the original's where the update leaves
+ * them alone, as for threads given just "members send", which the client sends nothing for), and
+ * the rules where they change (`before`: the chat's, with their version; a new version where
+ * members are asked to accept them again).
+ */
+export function savedSettings(
+    original: CandidateGroupChat,
+    candidate: CandidateGroupChat,
+    before: VersionedRules | undefined,
+): { threads: MessagePermissions | undefined; rules: VersionedRules | undefined } {
+    const changes = groupChanges(original, candidate);
+    const threadsUpdate = changes.permissions?.threadPermissions;
+    const threads =
+        threadsUpdate === "set_to_none"
+            ? undefined
+            : threadsUpdate === undefined || messagesSetNothing(threadsUpdate.value)
+              ? original.permissions.threadPermissions
+              : candidate.permissions.threadPermissions;
+    const version = before?.version ?? 0;
+    const rules =
+        changes.rules === undefined
+            ? undefined
+            : {
+                  text: changes.rules.text,
+                  enabled: changes.rules.enabled,
+                  version:
+                      changes.rules.newVersion && changes.rules.text !== before?.text
+                          ? version + 1
+                          : version,
+              };
+    return { threads, rules };
+}
+
+/** Why the rules can't be saved: switched on with no text, or text too long; undefined if they can. */
+export function rulesProblem(rules: { enabled: boolean; text: string }): "needed" | "tooLong" | undefined {
+    if (!rules.enabled) return undefined;
+    if (rules.text.length === 0) return "needed";
+    return rules.text.length > MAX_RULES_LENGTH ? "tooLong" : undefined;
+}
+
+/** A rules problem's note: the Rules page's under the text, Create group's on its Rules row. */
+export function rulesProblemKey(problem: "needed" | "tooLong"): string {
+    return problem === "needed"
+        ? "native.groupSettings.rules.needed"
+        : "native.groupSettings.rules.tooLong";
 }
 
 /** Whether a name is as long as a group's may be, as it's saved: trimmed. */

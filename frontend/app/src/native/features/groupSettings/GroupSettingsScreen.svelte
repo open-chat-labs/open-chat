@@ -5,7 +5,7 @@
 <script lang="ts">
     import {
         chatIdentifiersEqual,
-        selectedChatRulesStore,
+        selectedServerChatStore,
         selectedChatSummaryStore,
         type MultiUserChat,
         type VersionedRules,
@@ -17,6 +17,7 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
     import GroupSettingsEditor from "./GroupSettingsEditor.svelte";
+    import { savedRules } from "./savedRules.svelte";
     import { pageTitle, settingsReady } from "./settings.adapter";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "group_settings" }>> =
@@ -38,7 +39,9 @@
     );
     // its rules, in with its details (a moment after it's selected), held as the chat is
     const heldRules = new HeldWhileLeaving<VersionedRules | undefined>(undefined);
-    const rules = $derived(heldRules.of(selected, $selectedChatRulesStore));
+    const rules = $derived(
+        heldRules.of(selected, savedRules.shown(screen.chatId, $selectedServerChatStore?.rules)),
+    );
     // the Rules page's draft is made from them, so it waits for them: made without, it would show
     // the default rules, and saving would put those in place of the group's
     const ready = $derived(settingsReady(screen.page, chat, rules));

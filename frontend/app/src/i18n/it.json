@@ -2614,6 +2614,7 @@
                 "placeholder": "Cosa dovrebbero sapere i membri?",
                 "markdown": "Qui funziona il Markdown.",
                 "needed": "Scrivi le regole o disattivale.",
+                "tooLong": "Le regole sono troppo lunghe.",
                 "newVersion": "Chiedi ai membri di accettarle di nuovo",
                 "newVersionHelp": "Per regole nuove o una modifica vera. Lascialo spento per un refuso."
             },

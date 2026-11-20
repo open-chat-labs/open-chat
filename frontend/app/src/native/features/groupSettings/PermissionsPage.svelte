@@ -32,6 +32,7 @@
         roleId,
         roleOf,
         roleOptions,
+        withMessages,
         withoutPerType,
         type GeneralPermission,
         type PermissionRow,
@@ -79,8 +80,14 @@
 
     type Scope = "messagePermissions" | "threadPermissions";
 
+    // the messages' changed: threads that aren't customised per type follow their types
+    // (withMessages), as their rows are hidden
     function setMessages(scope: Scope, next: MessagePermissions | undefined) {
-        setPermissions({ ...permissions, [scope]: next });
+        if (scope === "messagePermissions" && next !== undefined) {
+            setPermissions(withMessages(permissions, next, threadPerType));
+        } else {
+            setPermissions({ ...permissions, [scope]: next });
+        }
     }
 
     function setDefault(scope: Scope, current: MessagePermissions, id: string) {

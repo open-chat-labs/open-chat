@@ -2614,6 +2614,7 @@
                 "placeholder": "Co członkowie powinni wiedzieć?",
                 "markdown": "Działa tu Markdown.",
                 "needed": "Napisz zasady albo je wyłącz.",
+                "tooLong": "Zasady są za długie.",
                 "newVersion": "Poproś członków o ponowną akceptację",
                 "newVersionHelp": "Przy nowych zasadach lub prawdziwej zmianie. Przy literówce zostaw wyłączone."
             },

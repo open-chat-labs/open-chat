@@ -13,7 +13,12 @@
         type UpdateGroupOrCommunityState,
     } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import { _ } from "svelte-i18n";
-    import { RULE_TEMPLATES, templateText } from "./settings.adapter";
+    import {
+        RULE_TEMPLATES,
+        rulesProblem,
+        rulesProblemKey,
+        templateText,
+    } from "./settings.adapter";
 
     let { editor }: { editor: UpdateGroupOrCommunityState } = $props();
 
@@ -23,6 +28,8 @@
         RULE_TEMPLATES.map((key) => ({ key, text: templateText(key, t) })),
     );
     const tooLong = $derived(rules.text.length > MAX_RULES_LENGTH);
+    // why they can't be saved, said under the text
+    const problem = $derived(rulesProblem(rules));
 
     function grow(el: HTMLTextAreaElement) {
         el.style.height = "auto";
@@ -95,11 +102,11 @@
                 placeholder={$_("native.groupSettings.rules.placeholder")}
                 aria-label={$_("native.groupSettings.rules.text")}
                 disabled={editor.busy}></textarea>
-            <span class="note" class:warn={!editor.rulesValid}>
+            <span class="note" class:warn={problem !== undefined}>
                 {$_(
-                    editor.rulesValid
+                    problem === undefined
                         ? "native.groupSettings.rules.markdown"
-                        : "native.groupSettings.rules.needed",
+                        : rulesProblemKey(problem),
                 )}
             </span>
         </div>

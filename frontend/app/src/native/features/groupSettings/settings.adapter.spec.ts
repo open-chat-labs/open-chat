@@ -18,6 +18,7 @@ import {
 } from "@client";
 import type { GateLookups } from "@src/logic/access/gateValues";
 import { MAX_DESC_LENGTH, MAX_NAME_LENGTH } from "@src/logic/groupOrCommunity/group.svelte";
+import { MAX_RULES_LENGTH } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
 import { describe, expect, test } from "vitest";
 import {
     canAddEntry,
@@ -29,6 +30,10 @@ import {
     gateRows,
     generalRows,
     hasSavableChanges,
+    rulesProblem,
+    rulesProblemKey,
+    savedSettings,
+    withMessages,
     messageBaseline,
     messageTypeRows,
     nameLengthValid,
@@ -305,6 +310,27 @@ describe("the permissions", () => {
         // the messages' image role is one change, threads of their own another
         expect(changedPermissions(permissions)).toBe(2);
     });
+
+    // Invariant: no thread role the page doesn't show is saved
+    test("threads not customised per type follow the messages' types as they change", () => {
+        const messages: MessagePermissions = { default: ROLE_MEMBER, image: ROLE_ADMIN };
+        const permissions: ChatPermissions = {
+            ...defaultChatPermissions(),
+            messagePermissions: messages,
+            threadPermissions: { default: ROLE_MODERATOR, image: ROLE_ADMIN },
+        };
+        const next: MessagePermissions = { default: ROLE_MEMBER, video: ROLE_OWNER };
+        const followed = withMessages(permissions, next, false);
+        expect(followed.messagePermissions).toBe(next);
+        expect(followed.threadPermissions).toEqual({ default: ROLE_MODERATOR, video: ROLE_OWNER });
+        expect(customisedPerType(followed.threadPermissions!, next)).toBe(false);
+        // customised threads keep their own; none stay none
+        expect(withMessages(permissions, next, true).threadPermissions).toBe(
+            permissions.threadPermissions,
+        );
+        const none = { ...permissions, threadPermissions: undefined };
+        expect(withMessages(none, next, false).threadPermissions).toBeUndefined();
+    });
 });
 
 describe("what a save would change", () => {
@@ -382,6 +408,54 @@ describe("what a save would change", () => {
         );
         expect(nameLengthValid("x".repeat(MAX_NAME_LENGTH))).toBe(true);
         expect(nameLengthValid("x".repeat(MAX_NAME_LENGTH + 1))).toBe(false);
+    });
+
+    // Invariant: what's read back after a save is what the server holds
+    test("threads read back as the server holds them: the original's where nothing was sent", () => {
+        const plain: ChatPermissions = {
+            ...defaultChatPermissions(),
+            messagePermissions: { default: ROLE_MEMBER },
+        };
+        const original = group(plain);
+        // threads given just "members send", saved with another change: nothing sent for threads
+        const candidate = group({
+            ...plain,
+            pinMessages: ROLE_OWNER,
+            threadPermissions: { default: ROLE_MEMBER },
+        });
+        expect(savedSettings(original, candidate, undefined).threads).toBeUndefined();
+        // given a role of their own: sent
+        const own = group({ ...plain, threadPermissions: { default: ROLE_ADMIN } });
+        expect(savedSettings(original, own, undefined).threads).toEqual({ default: ROLE_ADMIN });
+        // taken off: none
+        expect(savedSettings(own, original, undefined).threads).toBeUndefined();
+        // left alone: the original's
+        const pinned = group({ ...own.permissions, pinMessages: ROLE_OWNER });
+        expect(savedSettings(own, pinned, undefined).threads).toEqual({ default: ROLE_ADMIN });
+    });
+
+    test("rules read back where they change, a new version where members accept them again", () => {
+        const before = { text: "old", enabled: false, version: 3 };
+        const original = { ...group(), rules: { text: "old", enabled: false, newVersion: false } };
+        expect(savedSettings(original, original, before).rules).toBeUndefined();
+        const on = { ...original, rules: { text: "old", enabled: true, newVersion: false } };
+        expect(savedSettings(original, on, before).rules).toEqual({
+            text: "old",
+            enabled: true,
+            version: 3,
+        });
+        const rewritten = { ...original, rules: { text: "new", enabled: true, newVersion: true } };
+        expect(savedSettings(original, rewritten, before).rules?.version).toBe(4);
+    });
+
+    test("why rules can't be saved: none, empty, or too long", () => {
+        expect(rulesProblem({ enabled: false, text: "" })).toBeUndefined();
+        expect(rulesProblem({ enabled: true, text: "Be kind" })).toBeUndefined();
+        expect(rulesProblem({ enabled: true, text: "" })).toBe("needed");
+        expect(rulesProblem({ enabled: true, text: "x".repeat(MAX_RULES_LENGTH + 1) })).toBe(
+            "tooLong",
+        );
+        expect(rulesProblemKey("tooLong")).toBe("native.groupSettings.rules.tooLong");
     });
 
     test("the Rules page waits for the rules; the others only for the chat", () => {
