@@ -565,11 +565,14 @@ export async function sendComposed(
     if (externalWalletPayment(taken.attachment) !== undefined) {
         return { kind: "refused", reason: "external_wallet" };
     }
+    // refused for rules changed since the last sync, the client asks for them and sends again
     const outcome = await client.sendMessage(
         context,
         text === "" ? undefined : text,
         markdown,
         taken.attachment,
+        [],
+        "prompt",
     );
     return composedSend(outcome);
 }

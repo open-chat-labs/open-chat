@@ -129,7 +129,7 @@ describe("a message's actions", () => {
     test("retrying resends the failed message itself", async () => {
         const client = fakeClient();
         await messageAction("retry", target(client, { failed: true }));
-        expect(client.retrySendMessage).toHaveBeenCalledWith({ chatId }, evt);
+        expect(client.retrySendMessage).toHaveBeenCalledWith({ chatId }, evt, "prompt");
     });
 
     test("pinning and unpinning go by the message's index", async () => {
@@ -148,7 +148,7 @@ describe("a message's actions", () => {
         await messageAction("delete", target(client, { context, failed: true }));
         expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, 9);
         await messageAction("retry", target(client, { context, failed: true }));
-        expect(client.retrySendMessage).toHaveBeenCalledWith(context, evt);
+        expect(client.retrySendMessage).toHaveBeenCalledWith(context, evt, "prompt");
     });
 
     test("in a thread, its root is deleted, undeleted and revealed in the chat", async () => {

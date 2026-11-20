@@ -1213,7 +1213,7 @@
     }
 
     function retry(evt: EventWrapper<Message>) {
-        if (chat !== undefined) void client.retrySendMessage({ chatId: chat.id }, evt);
+        if (chat !== undefined) void client.retrySendMessage({ chatId: chat.id }, evt, "prompt");
     }
 
     function react(evt: EventWrapper<Message>, emoji: string) {

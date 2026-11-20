@@ -1435,7 +1435,7 @@
             const forwarding = $messageToForwardStore;
             if (forwarding === undefined) return;
             messageToForwardStore.set(undefined);
-            client.forwardMessage({ chatId: current.id }, forwarding);
+            client.forwardMessage({ chatId: current.id }, forwarding, "prompt");
         });
     });
 

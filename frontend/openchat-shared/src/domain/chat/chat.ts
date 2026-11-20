@@ -2895,6 +2895,16 @@ export type SendMessageOutcome =
     | { kind: "failed" };
 
 /**
+ * What a send does when the chat refuses it because the user hasn't accepted its rules, or its
+ * community's, which the client took to be accepted (they were changed to need accepting again
+ * since it last synced). `fail`: the message shows as failed, with Retry, as the old UIs have it.
+ * `prompt`: the latest rules are loaded and the user is asked to accept them, as before any send
+ * that needs them; accepted, the message is sent again with the acceptance; declined, it stays
+ * failed.
+ */
+export type RulesRefusedSend = "fail" | "prompt";
+
+/**
  * How forwarding a message to several chats at once went. `forwarded`: every chat has it (and the
  * note). `throttled`: it would take more sends than the send throttle allows in the next minute, so
  * nothing was sent. `failed`: some chat didn't get it.
