@@ -557,6 +557,7 @@
         {#if barred(m) && hover === i && !touch && activeMenu !== i}
           <span
             class="bar"
+            class:beside={bar.top !== undefined}
             style:left={bar.left === undefined ? undefined : `${bar.left}px`}
             style:right={bar.right === undefined ? undefined : `${bar.right}px`}
             style:top={bar.top === undefined ? undefined : `${bar.top}px`}
@@ -814,6 +815,12 @@
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 8px 20px rgba(0, 0, 0, 0.4);
+
+    /* beside a deleted placeholder (lib/hoverBar): flat, in the page beside the bubble rather than floating over it,
+       its 1px line ring alone (2026-11-20) */
+    &.beside {
+      box-shadow: inset 0 0 0 1px var(--line-2);
+    }
   }
 
   .quick,
