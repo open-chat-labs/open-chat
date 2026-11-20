@@ -212,7 +212,24 @@
         "unlinkFailed": "Impossibile scollegare l'account"
     },
     "builders": {
-        "paymentRefused": "Impossibile allegarlo. Controlla l'importo e il tuo saldo, poi riprova."
+        "paymentRefused": "Impossibile allegarlo. Controlla l'importo e il tuo saldo, poi riprova.",
+        "replace": {
+            "confirm": "Sostituisci",
+            "title": {
+                "prize": "Sostituire il premio?",
+                "transfer": "Sostituire il trasferimento?",
+                "swap": "Sostituire l'offerta di scambio?"
+            },
+            "with": {
+                "photo": "Questa foto prenderà il suo posto e ciò che hai impostato andrà perso.",
+                "video": "Questo video prenderà il suo posto e ciò che hai impostato andrà perso.",
+                "file": "Questo file prenderà il suo posto e ciò che hai impostato andrà perso.",
+                "gif": "Questa GIF prenderà il suo posto e ciò che hai impostato andrà perso.",
+                "prize": "Un nuovo premio prenderà il suo posto una volta impostato e ciò che hai impostato per questo andrà perso.",
+                "transfer": "Un trasferimento prenderà il suo posto una volta impostato e ciò che hai impostato per questo andrà perso.",
+                "swap": "Una nuova offerta di scambio prenderà il suo posto una volta impostata e ciò che hai impostato per questa andrà perso."
+            }
+        }
     },
     "cashtag": {
         "chartLabel": "Prezzo di {symbol} negli ultimi 7 giorni",

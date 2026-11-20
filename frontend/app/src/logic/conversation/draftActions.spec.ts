@@ -7,7 +7,7 @@ import {
     type Message,
     type MessageContext,
 } from "@client";
-import { attachGif, composingMessageIndex, submitEdit } from "./draftActions";
+import { attachGif, attachPrepared, composingMessageIndex, submitEdit } from "./draftActions";
 
 const here: MessageContext = { chatId: { kind: "group_chat", groupId: "g1" } };
 const elsewhere: MessageContext = { chatId: { kind: "group_chat", groupId: "g2" } };
@@ -58,6 +58,55 @@ describe("a GIF picked in the web composer", () => {
     test("is attached in its own chat or thread only", () => {
         attachGif(here, gif);
         expect(localUpdates.draftMessages.value.get(elsewhere)?.attachment).toBeUndefined();
+    });
+});
+
+describe("a file prepared to attach", () => {
+    afterEach(() => localUpdates.draftMessages.delete(here));
+
+    const video = { kind: "video_content" } as AttachmentContent;
+    const prize = { kind: "prize_content_initial" } as AttachmentContent;
+    const transfer = { kind: "crypto_content" } as AttachmentContent;
+    const draft = () => localUpdates.draftMessages.value.get(here);
+
+    test("is attached in place of nothing, or of a photo, video, file or GIF", () => {
+        expect(attachPrepared(here, video, undefined)).toBeUndefined();
+        expect(draft()?.attachment).toBe(video);
+        const photo = { kind: "image_content" } as AttachmentContent;
+        expect(attachPrepared(here, photo, undefined)).toBeUndefined();
+        expect(draft()?.attachment).toBe(photo);
+    });
+
+    test("asks about a payment staged while it was prepared, leaving it staged", () => {
+        localUpdates.draftMessages.setAttachment(here, prize);
+        expect(attachPrepared(here, video, undefined)).toEqual({
+            staged: "prize",
+            incoming: "video",
+        });
+        expect(draft()?.attachment).toBe(prize);
+    });
+
+    test("replaces the payment the user agreed to replace as it was picked, without asking again", () => {
+        localUpdates.draftMessages.setAttachment(here, prize);
+        expect(attachPrepared(here, video, prize)).toBeUndefined();
+        expect(draft()?.attachment).toBe(video);
+    });
+
+    test("asks about another payment staged in that one's place meanwhile", () => {
+        localUpdates.draftMessages.setAttachment(here, transfer);
+        expect(attachPrepared(here, video, prize)).toEqual({
+            staged: "transfer",
+            incoming: "video",
+        });
+        expect(draft()?.attachment).toBe(transfer);
+    });
+
+    test("goes to its own chat or thread's draft, not the one open", () => {
+        localUpdates.draftMessages.setAttachment(elsewhere, prize);
+        expect(attachPrepared(here, video, undefined)).toBeUndefined();
+        expect(draft()?.attachment).toBe(video);
+        expect(localUpdates.draftMessages.value.get(elsewhere)?.attachment).toBe(prize);
+        localUpdates.draftMessages.delete(elsewhere);
     });
 });
 

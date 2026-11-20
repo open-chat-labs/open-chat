@@ -2,6 +2,7 @@ import {
     localUpdates,
     messageContextsEqual,
     messageReplyContext,
+    type AttachmentContent,
     type DirectChatIdentifier,
     type EnhancedReplyContext,
     type EventWrapper,
@@ -11,6 +12,12 @@ import {
     type OpenChat,
     type UserLookup,
 } from "@client";
+import { draftAttachment } from "@src/logic/composer/composer";
+import {
+    incomingContent,
+    replaceNeedsConfirm,
+    type ReplaceQuestion,
+} from "@src/logic/composer/replaceStaged";
 import { detectMarkdown } from "@src/utils/detectMarkdown";
 
 // What replying to a message and editing one do to the chat's draft, which the composer shows (a
@@ -75,6 +82,24 @@ export function privateReplyEndsEdit(
  */
 export function attachGif(context: MessageContext, content: GiphyContent): void {
     localUpdates.draftMessages.setAttachment(context, content);
+}
+
+/**
+ * A file prepared to attach (`content`; a video's transcode takes a while), made the draft's
+ * attachment at `context` unless what the draft stages now is a prize, transfer or swap offer the
+ * user hasn't agreed to replace (`agreed`, the one they were asked about as the file was picked):
+ * one staged meanwhile is asked about, and the question comes back for the composer to ask, its
+ * Replace attaching `content` as this would have.
+ */
+export function attachPrepared(
+    context: MessageContext,
+    content: AttachmentContent,
+    agreed: AttachmentContent | undefined,
+): ReplaceQuestion | undefined {
+    const staged = draftAttachment(localUpdates.draftMessages.value.get(context));
+    const question = replaceNeedsConfirm(staged, incomingContent(content), agreed);
+    if (question === undefined) localUpdates.draftMessages.setAttachment(context, content);
+    return question;
 }
 
 /**

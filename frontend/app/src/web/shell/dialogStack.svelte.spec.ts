@@ -68,6 +68,22 @@ describe("the app's own dialogs", () => {
         expect(stack.claimHandOff(card)).toBe(true);
     });
 
+    test("the one handed off to keeps the backdrop the other showed: the veil, or a scrim", () => {
+        const stack = new DialogStack<{ name: string }>();
+        const card = { name: "card" };
+        const suspend = { name: "suspend" };
+        const confirm = { name: "confirm" };
+        const builder = { name: "builder" };
+        stack.open(card);
+        stack.handOff(card, suspend);
+        expect(stack.claimHandOffBackdrop(suspend)).toBe("veil");
+        stack.open(confirm);
+        stack.handOff(confirm, builder, "scrim");
+        expect(stack.claimHandOffBackdrop(card)).toBeUndefined();
+        expect(stack.claimHandOffBackdrop(builder)).toBe("scrim");
+        expect(stack.claimHandOffBackdrop(builder)).toBeUndefined();
+    });
+
     test("a hand-off from a dialog already closed has no backdrop to keep", () => {
         const stack = new DialogStack<{ name: string }>();
         const card = { name: "card" };

@@ -212,7 +212,24 @@
         "unlinkFailed": "Nie udało się rozłączyć konta"
     },
     "builders": {
-        "paymentRefused": "Nie można tego dołączyć. Sprawdź kwotę i saldo, a potem spróbuj ponownie."
+        "paymentRefused": "Nie można tego dołączyć. Sprawdź kwotę i saldo, a potem spróbuj ponownie.",
+        "replace": {
+            "confirm": "Zastąp",
+            "title": {
+                "prize": "Zastąpić nagrodę?",
+                "transfer": "Zastąpić przelew?",
+                "swap": "Zastąpić ofertę wymiany?"
+            },
+            "with": {
+                "photo": "To zdjęcie zajmie jej miejsce, a to, co ustawiono, zostanie utracone.",
+                "video": "Ten film zajmie jej miejsce, a to, co ustawiono, zostanie utracone.",
+                "file": "Ten plik zajmie jej miejsce, a to, co ustawiono, zostanie utracone.",
+                "gif": "Ten GIF zajmie jej miejsce, a to, co ustawiono, zostanie utracone.",
+                "prize": "Nowa nagroda zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone.",
+                "transfer": "Przelew zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone.",
+                "swap": "Nowa oferta wymiany zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone."
+            }
+        }
     },
     "cashtag": {
         "chartLabel": "Cena {symbol} w ciągu ostatnich 7 dni",

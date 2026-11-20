@@ -13,6 +13,7 @@
     import { dialogs, type AppDialog, type DialogProps } from "./dialogs";
     import Placeholder from "./Placeholder.svelte";
     import { regionSummary, screenLoader } from "./screens";
+    import type { HandOffBackdrop } from "../../shell/dialogStack.svelte";
 
     let {
         dialog,
@@ -20,8 +21,9 @@
         dialogs: stack,
         claimInPlace,
     }: DialogProps<D> & {
-        // whether another dialog, its backdrop still showing, handed off to this one (once)
-        claimInPlace?: () => boolean;
+        // whether another dialog, its backdrop still showing, handed off to this one (once), and
+        // which backdrop that is: the dialogs' veil, or a plain dialog's scrim
+        claimInPlace?: () => HandOffBackdrop | undefined;
     } = $props();
 
     // the table is keyed by kind, and the entry for D's kind takes a D
@@ -32,9 +34,9 @@
     // as it opens: the backdrop's fade only ever plays (or doesn't) then. Only when the dialog
     // shows at once (loaded ahead, or a placeholder): a backdrop kept over a blank, still loading
     // screen would vanish, without a fade, if that's closed
-    const keepBackdrop = untrack(() => {
-        const handedOff = claimInPlace?.() ?? false;
-        return handedOff && (loader === undefined || loader.module !== undefined);
+    const keepBackdrop = untrack((): HandOffBackdrop | undefined => {
+        const kept = claimInPlace?.();
+        return loader === undefined || loader.module !== undefined ? kept : undefined;
     });
 
     $effect(() => {
@@ -43,7 +45,10 @@
     });
 </script>
 
-<div class="screen" class:keep-backdrop={keepBackdrop}>
+<div
+    class="screen"
+    class:keep-backdrop={keepBackdrop !== undefined}
+    class:keep-veil={keepBackdrop === "veil"}>
     {#if loader !== undefined && loader.module === undefined && !loader.failed && !loader.slow}
         <!-- loading, for a moment: nothing shows yet, but a click outside or Esc still closes it -->
         <div class="pending" onclick={onClose} use:modal={onClose} aria-hidden="true"></div>
@@ -82,9 +87,17 @@
         animation: none;
     }
 
+    /* the same where the screen wraps its dialog in a box that lays nothing out (the swap offer's,
+       kept under its confirmation), handed off to from the replace confirm */
+    .keep-backdrop
+        > :global(:first-child > .layer:first-child:not(.closing) > .scrim:not(.closing)) {
+        animation: none;
+    }
+
     /* a frame's lighter scrim (DialogShell) taking over the dialogs' backdrop wears the dialogs' veil,
-       so the backdrop doesn't change as it does */
-    .keep-backdrop > :global(:first-child > .scrim) {
+       so the backdrop doesn't change as it does; one taking over another scrim (the replace
+       confirm's) is the same already, and keeps its own */
+    .keep-veil > :global(:first-child > .scrim) {
         background: var(--oc-veil, rgba(3, 3, 6, 0.72));
         backdrop-filter: var(--oc-veil-blur, blur(4px));
         -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));

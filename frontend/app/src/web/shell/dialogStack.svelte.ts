@@ -1,5 +1,13 @@
 import { subscribe } from "@client";
 
+/**
+ * The backdrop a dialog handed off from showed, which the one handed off to keeps: the dialogs'
+ * veil (a user card's, the linked dialogs'), which a plain dialog's lighter scrim wears as it takes
+ * over; or the theme's scrim (a plain dialog's, as the replace confirm's), which a dialog keeps as
+ * its own.
+ */
+export type HandOffBackdrop = "veil" | "scrim";
+
 // The dialogs the app has opened itself (not the ones a URL opens), the newest on top. A navigation
 // closes them all, as the old UI's modal stack was (closeModalStack), and so does Back.
 export class DialogStack<D> {
@@ -7,6 +15,8 @@ export class DialogStack<D> {
     #items = $state.raw<D[]>([]);
     // the dialog one handed off to, until its screen claims the backdrop as it opens
     #handedOffTo: D | undefined;
+    // the backdrop the dialog handed off from showed, which the one handed off to keeps
+    #handOffBackdrop: HandOffBackdrop = "veil";
 
     get items(): readonly D[] {
         return this.#items;
@@ -27,16 +37,25 @@ export class DialogStack<D> {
      * was showing (claimHandOff) rather than fading in its own. With `from` already closed there's
      * no backdrop to keep, and `next` opens as any other.
      */
-    handOff(from: D, next: D): void {
+    handOff(from: D, next: D, backdrop: HandOffBackdrop = "veil"): void {
         this.#handedOffTo = this.#items.includes(from) ? next : undefined;
+        this.#handOffBackdrop = backdrop;
         this.replace(next, (open) => open === from);
     }
 
     /** Whether `dialog` was handed off to, once, as its screen opens. */
     claimHandOff(dialog: D): boolean {
-        const handedOff = this.#handedOffTo === dialog;
-        if (handedOff) this.#handedOffTo = undefined;
-        return handedOff;
+        return this.claimHandOffBackdrop(dialog) !== undefined;
+    }
+
+    /**
+     * The backdrop `dialog` keeps if it was handed off to (claimHandOff), once, as its screen
+     * opens: what the dialog it took the place of showed.
+     */
+    claimHandOffBackdrop(dialog: D): HandOffBackdrop | undefined {
+        if (this.#handedOffTo !== dialog) return undefined;
+        this.#handedOffTo = undefined;
+        return this.#handOffBackdrop;
     }
 
     close(dialog: D): void {

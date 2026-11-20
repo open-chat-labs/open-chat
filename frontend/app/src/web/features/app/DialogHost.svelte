@@ -183,7 +183,7 @@
     {#key linked.kind}
         <DialogScreen
             dialog={linked}
-            claimInPlace={() => claimInPlace(linked.kind)}
+            claimInPlace={() => (claimInPlace(linked.kind) ? "veil" : undefined)}
             onClose={() => closeLinked(linked)}
             dialogs={stack} />
     {/key}
@@ -194,7 +194,7 @@
     {#if dialog.kind !== "user" || profileCardShows($allUsersStore.get(dialog.userId))}
         <DialogScreen
             {dialog}
-            claimInPlace={() => stack.claimHandOff(dialog)}
+            claimInPlace={() => stack.claimHandOffBackdrop(dialog)}
             onClose={() => stack.close(dialog)}
             dialogs={stack} />
     {/if}
