@@ -231,7 +231,7 @@
     );
 
     const aboutMeta = $derived(
-        `${interpolate($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
+        `${interpolateNewUi($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
 
     // a community mutes all its channels, which can't be undone from here (as in the old menus)

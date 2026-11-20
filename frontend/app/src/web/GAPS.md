@@ -1703,11 +1703,9 @@ design export needs. Each entry says where it came up.
     works", "Channel name", …) and `GroupPanel`'s member, rules, webhook and permission notes
     follow `scope`, where the export said "group" for every kind (EXPORT-LOG 2026-11-19).
   - left alone (old UIs): French `level.channel` is "Canaliser", the verb, not the noun "Canal".
-    The old UIs show it ("Supprimer Canaliser"), so it stays until they go. The new trees still
-    read it through a `ResourceKey`'s `level` (`interpolate` in `i18n/i18n.ts`, and
-    `logic/conversation/timelineEventText`): the timeline's join and change events, native join,
-    members and invite strings, ManageSettings' verified-name warning. Fixing those for the new
-    trees alone needs level nouns of their own; the details line already has them (`access.*`).
+    The old UIs show it ("Supprimer Canaliser"), so it stays until they go. The new trees read
+    their own nouns instead (`levelNoun.*`, through `interpolateNewUi` and `timelineEventText`'s
+    `levelWords`; see "Wiring"), and the details line has whole phrases (`access.*`).
   - Bots: GroupPanel's bots view, its bots part: the installed bots (a group's, or a channel's
     community's) and, for someone who may manage them (`canManageBots`), up to 20 to add
     (`exploreBots`). Either opens `BotDialog` (`BotDialogScreen`): details, install, change
