@@ -545,8 +545,10 @@
         pendingToast: showPendingToast,
         removals,
     };
-    const rootContext: Omit<ScreenContext, "toastFloor"> = { back: undefined, ...shared };
-    const pushedContext: Omit<ScreenContext, "toastFloor"> = { back, ...shared };
+    const rootContext: Omit<ScreenContext, "toastFloor" | "onTop"> = { back: undefined, ...shared };
+    const pushedContext: Omit<ScreenContext, "toastFloor" | "onTop"> = { back, ...shared };
+    // the current tab's top screen, which each screen is told whether it is (ScreenContext.onTop)
+    const topKey = () => stacks.steps[stacks.steps.length - 1]?.key;
     // where toasts sit over a footer that grows: the top screen's say (ScreenContext.toastFloor)
     const floors = new ToastFloors();
     const toastFloor = $derived(floors.of(stacks.steps[stacks.steps.length - 1]?.key));
@@ -643,6 +645,7 @@
                                 step={root}
                                 root={{ title: labels[tab] }}
                                 context={rootContext}
+                                {topKey}
                                 {floors}
                             />
                         {/if}
@@ -660,7 +663,7 @@
                         in:pushIn={{ play: () => stacks.change !== "pop" }}
                         out:popOut={{ play: () => stacks.change === "pop" }}
                     >
-                        <ScreenHost {step} root={undefined} context={pushedContext} {floors} />
+                        <ScreenHost {step} root={undefined} context={pushedContext} {floors} {topKey} />
                     </section>
                 {/each}
             {/key}

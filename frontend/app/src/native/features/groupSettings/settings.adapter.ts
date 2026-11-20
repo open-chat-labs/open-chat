@@ -624,3 +624,20 @@ export function permissionsSummary(permissions: ChatPermissions, t: Translate): 
 export function invitable(user: { kind: string; userId: string }, me: string): boolean {
     return user.kind === "user" && user.userId !== me;
 }
+
+/**
+ * Whether Create group has anything entered, to ask before it's dropped: people picked, or
+ * anything set in the draft. The client's groupChanges leaves out whether new members see the
+ * history (only Create group sets it), so that's compared here too.
+ */
+export function newGroupEntered(
+    original: CandidateGroupChat,
+    candidate: CandidateGroupChat,
+    picked: number,
+): boolean {
+    return (
+        picked > 0 ||
+        candidate.historyVisible !== original.historyVisible ||
+        Object.keys(groupChanges(original, candidate)).length > 0
+    );
+}

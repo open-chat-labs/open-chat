@@ -39,6 +39,7 @@ import {
     invitable,
     messageTypeRows,
     nameLengthValid,
+    newGroupEntered,
     settingsReady,
     withLossesRestored,
     operatorApplies,
@@ -446,6 +447,17 @@ describe("what a save would change", () => {
             "tooLong",
         );
         expect(rulesProblemKey("tooLong")).toBe("native.groupSettings.rules.tooLong");
+    });
+
+    // Invariant: Create group asks before dropping anything entered
+    test("Create group has something entered: people, anything in the draft, history", () => {
+        const blank = group();
+        expect(newGroupEntered(blank, blank, 0)).toBe(false);
+        expect(newGroupEntered(blank, blank, 1)).toBe(true);
+        expect(newGroupEntered(blank, { ...blank, description: "About" }, 0)).toBe(true);
+        expect(newGroupEntered(blank, { ...blank, eventsTTL: 1000n }, 0)).toBe(true);
+        // not in the client's groupChanges
+        expect(newGroupEntered(blank, { ...blank, historyVisible: false }, 0)).toBe(true);
     });
 
     test("the Rules page waits for the rules; the others only for the chat", () => {

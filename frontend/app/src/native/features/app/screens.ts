@@ -40,6 +40,12 @@ export type ScreenContext = {
      */
     toastFloor: (px: number | undefined) => void;
     /**
+     * Whether this screen is its tab's top one (reactive): false from the moment another is
+     * pushed over it, and from the moment it's popped, while it slides out still mounted. Its own,
+     * so a screen under the top one can leave Android's back to the one on top.
+     */
+    onTop: () => boolean;
+    /**
      * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
      * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
      */

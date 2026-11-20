@@ -20,16 +20,22 @@
         step: StackStep;
         /** A tab's root, with its translated title. */
         root: { title: string } | undefined;
-        /** The shell's, but for the screen's own toast floor (`floors`). */
-        context: Omit<ScreenContext, "toastFloor">;
+        /** The shell's, but for the screen's own toast floor (`floors`) and whether it's on top. */
+        context: Omit<ScreenContext, "toastFloor" | "onTop">;
         floors: ToastFloors;
+        /** The key of the current tab's top screen. */
+        topKey: () => string | undefined;
     };
 
-    let { step, root, context, floors }: Props = $props();
+    let { step, root, context, floors, topKey }: Props = $props();
 
-    // the screen's own context: its toast floor is its step's
+    // the screen's own context: its toast floor is its step's, and it's on top while its step is
     const key = $derived(step.key);
-    const screenContext = $derived<ScreenContext>({ ...context, toastFloor: floors.for(key) });
+    const screenContext = $derived<ScreenContext>({
+        ...context,
+        toastFloor: floors.for(key),
+        onTop: () => topKey() === key,
+    });
 
     const built = $derived(screenModules.has(step.screen.kind));
     // its chunk, when it's in by the time the screen shows

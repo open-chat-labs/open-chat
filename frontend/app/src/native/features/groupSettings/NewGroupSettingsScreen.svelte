@@ -5,13 +5,12 @@
 <script lang="ts">
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
-    import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
     import { aboveKeyboard } from "../../aboveKeyboard.svelte";
     import type { NativeScreen } from "../../router/locations";
     import type { ScreenProps } from "../app/screens";
     import GatesPage from "./GatesPage.svelte";
-    import { newGroupDraft } from "./newGroupDraft.svelte";
+    import { newGroupDraft } from "./newGroupDraft";
     import PermissionsPage from "./PermissionsPage.svelte";
     import RulesPage from "./RulesPage.svelte";
     import { pageTitle } from "./settings.adapter";
@@ -21,11 +20,8 @@
 
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
 
-    // Create group's, open under this screen, which knows it's covered while this is open (so
-    // Android's back closes this page, not a step of Create group's under it)
-    const draft = newGroupDraft();
-    const editor = draft?.editor;
-    if (draft !== undefined) onDestroy(draft.openPage());
+    // Create group's, open under this screen
+    const editor = newGroupDraft();
 </script>
 
 <div class="new-group-settings">

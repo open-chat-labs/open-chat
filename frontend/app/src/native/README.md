@@ -91,7 +91,7 @@ native/
                      are still placeholders; Create group (NewGroupScreen,
                      new_group: Members, then Details), whose gates, rules and permissions are
                      the same pages on its draft (NewGroupSettingsScreen, new_group_settings,
-                     newGroupDraft.svelte)
+                     newGroupDraft)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -155,7 +155,9 @@ to one do.
   `{ screen, context }`, `context.back` being a pushed screen's Back, `context.push` a local push,
   and `context.toast` the native toast (with Undo for a destructive action), which takes the
   place of the app's (`toastStore`); `context.toastFloor` is where toasts sit over a footer that
-  grows (a conversation's composer), taken from the top screen only (`ToastFloors`). Only screens touch the client and the stores, as in
+  grows (a conversation's composer), taken from the top screen only (`ToastFloors`);
+  `context.onTop()` says whether the screen is its tab's top one (false once one is pushed over
+  it, and as soon as it's popped). Only screens touch the client and the stores, as in
   `src/web`.
 - **Signed out** there are no tabs: every URL but a marketing page is the signed-out start
   (`features/start`), with no guest mode, and the URL stays as it is for after sign-in. Its

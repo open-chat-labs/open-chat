@@ -44,9 +44,12 @@
     import { chipName } from "../details/invite.adapter";
     import InviteRow from "../details/InviteRow.svelte";
     import GeneralPage from "./GeneralPage.svelte";
-    import { holdNewGroup, NewGroupDraft } from "./newGroupDraft.svelte";
+    import { holdNewGroup } from "./newGroupDraft";
     import {
         draftSavable,
+        newGroupEntered,
+        rulesProblem,
+        rulesProblemKey,
         gatesSummary,
         invitable,
         permissionsSummary,
@@ -62,8 +65,7 @@
     // the draft: the client's blank group, held for the pages pushed over this screen
     const editor = new UpdateGroupState();
     editor.initialise(client.createCandidateGroup("group", false));
-    const draft = new NewGroupDraft(editor);
-    onDestroy(holdNewGroup(draft));
+    onDestroy(holdNewGroup(editor));
 
     let step = $state<"members" | "details">("members");
 
@@ -112,6 +114,9 @@
         ),
     );
 
+    // why the rules can't be created, said on their row
+    const rulesIssue = $derived(rulesProblem(editor.candidateGroup.rules));
+
     function linkValue(page: NewGroupSettingsPage): string {
         const group = editor.candidateGroup;
         switch (page) {
@@ -152,15 +157,17 @@
 
     // ---- Back: a step back, and from the first, away (asking first with something entered)
 
-    // anything picked or set: the people, or anything in the draft (the name, photo,
-    // description, disappearing messages, gates, rules, permissions)
-    const entered = $derived(picks.length > 0 || editor.hasChanges());
+    // anything picked or set: the people, or anything in the draft (newGroupEntered)
+    const entered = $derived(
+        newGroupEntered(editor.original, editor.candidateGroup, picks.length),
+    );
     let discarding = $state(false);
-    // Android's back is this screen's only while nothing is pushed over it (draft.covered), and
+    // Android's back is this screen's only while it's on top (not while one of its pages is
+    // pushed over it, from the moment it is until the moment it's popped: context.onTop), and
     // stays used up while the group is being created (as the header's back is)
     useOverlay(
         overlays,
-        () => !draft.covered && !discarding && (step === "details" || entered),
+        () => context.onTop() && !discarding && (step === "details" || entered),
         () => back(),
         () => editor.busy,
     );
@@ -253,8 +260,8 @@
                             icon={link.icon}
                             label={link.label}
                             value={linkValue(link.page)}
-                            help={link.page === "rules" && !editor.rulesValid
-                                ? $_("native.groupSettings.rules.needed")
+                            help={link.page === "rules" && rulesIssue !== undefined
+                                ? $_(rulesProblemKey(rulesIssue))
                                 : ""}
                             onClick={() => context.push({ kind: "new_group_settings", page: link.page })} />
                     {/each}
