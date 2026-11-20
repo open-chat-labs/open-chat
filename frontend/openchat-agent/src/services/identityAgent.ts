@@ -33,13 +33,14 @@ export class IdentityAgent {
         this._isIIPrincipal = isIIPrincipal;
     }
 
-    static async create(
+    // Doesn't wait on the network: off mainnet the agent's first request waits for the root key
+    static create(
         identity: Identity,
         identityCanister: string,
         icUrl: string,
         isIIPrincipal: boolean | undefined,
-    ): Promise<IdentityAgent> {
-        const agent = await createHttpAgent(identity, icUrl);
+    ): IdentityAgent {
+        const agent = createHttpAgent(identity, icUrl);
         return new IdentityAgent(identity, agent, identityCanister, isIIPrincipal);
     }
 
