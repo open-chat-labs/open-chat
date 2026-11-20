@@ -1736,8 +1736,11 @@ design export needs. Each entry says where it came up.
     `ConvertToCommunityDialog` / `ImportToCommunityDialog` over Manage, then the community, as the
     old pages did. Import lists the communities you own; with none it says so and doesn't open.
   - a community's Channels page lists the channels you're in (the community's summary holds
-    no others), each opening that channel's Manage with a back arrow to Channels. Manage reads the
-    open chat, so a channel that isn't open is opened first.
+    no others), each opening that channel's Manage with a back arrow to Channels, in the
+    community's Manage's place over the same backdrop (`DialogStack.handOff`; so does the back
+    arrow, and a channel's members' link to the community's). Manage reads the open chat, so a
+    channel that isn't open is opened first, under the community's Manage
+    (`navigateUnderDialogs`), and handed off to once it's open.
   - New channel (Channels, and the community menu's New channel / Add embedded channel) opens
     `CreateGroupDialog` in channel mode, not the design's bare `NewChannelDialog`, by Julian's
     choice: it has what editing a channel has (photo, switches, members, gates, rules,
@@ -1774,8 +1777,6 @@ design export needs. Each entry says where it came up.
   - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the picker is
     built, 4d, but this item isn't wired to it yet) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
     The community menu has no Stats or Add a bot until those pages land, and no longer mutes every channel (the community's About page does).
-  - a channel's Manage has no back arrow to its community yet (the community has no Channels
-    page).
   - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has
     no narrow layout for it. Below 768px a browser gets the old mobile UI (10b), so it only shows
     in a window narrowed after load.

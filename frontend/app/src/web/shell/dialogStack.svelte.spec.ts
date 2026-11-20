@@ -1,5 +1,5 @@
 import { routerReadyStore, subscribe } from "@client";
-import { flushPendingNavigation, navigate } from "@src/utils/navigation";
+import { flushPendingNavigation, navigate, navigateUnderDialogs } from "@src/utils/navigation";
 import { closeOnNavigation, DialogStack } from "./dialogStack.svelte";
 
 // page.js itself, apart from its navigations (pushed or replaced, as navigationMode decides), which
@@ -129,6 +129,22 @@ describe("the dialogs and a navigation", () => {
         navigate("/notifications");
 
         expect(navigated).toEqual(["/notifications with 0 open"]);
+        stopFlushing();
+        stopClosing();
+    });
+
+    test("navigateUnderDialogs() leaves them open, and makes the navigation asked for", () => {
+        routerReadyStore.set(true);
+        const stack = new DialogStack<{ name: string }>();
+        stack.open({ name: "community's manage" });
+        const stopClosing = closeOnNavigation(stack);
+        const stopFlushing = subscribe("closeModalStack", flushPendingNavigation);
+        const navigated: string[] = [];
+        navigation.went = (path) => navigated.push(`${path} with ${stack.items.length} open`);
+
+        expect(navigateUnderDialogs("/community/abc/channel/1")).toBe(true);
+
+        expect(navigated).toEqual(["/community/abc/channel/1 with 1 open"]);
         stopFlushing();
         stopClosing();
     });
