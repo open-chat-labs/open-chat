@@ -74,12 +74,13 @@ const GUEST_PERMISSIONS: MessageMenuInput["permissions"] = {
 };
 
 // What a guest can do with a message signed out: copy its text or its link, share it (the
-// device's share sheet), and fold a proposal away
-const SIGNED_OUT_ACTIONS: ReadonlySet<MessageMenuAction> = new Set<MessageMenuAction>([
+// device's share sheet), fold a proposal away, and hide a revealed message again (on this device)
+const SIGNED_OUT_ACTIONS: ReadonlySet<OfferedAction> = new Set<OfferedAction>([
     "copy",
     "copy_url",
     "share",
     "collapse_proposal",
+    "hide",
 ]);
 
 /**
@@ -88,7 +89,7 @@ const SIGNED_OUT_ACTIONS: ReadonlySet<MessageMenuAction> = new Set<MessageMenuAc
  * translation, which is for Diamond members), so they're asked to sign in and stay on the chat.
  * A reaction always asks.
  */
-export function guestMessageAction(action: MessageMenuAction): "run" | "sign_in" {
+export function guestMessageAction(action: OfferedAction): "run" | "sign_in" {
     return SIGNED_OUT_ACTIONS.has(action) ? "run" : "sign_in";
 }
 
@@ -102,14 +103,14 @@ export function messageOffer(
     chat: ChatSummary,
     evt: EventWrapper<Message>,
     state: MessageOfferState,
-): MessageMenu {
+): MessageOffer {
     const msg = evt.event;
     const chatId = chat.id;
     const thread = state.thread;
     const isRoot = thread !== undefined && msg.messageId === thread.root.messageId;
     // where the message is: in a thread, its root is the chat's
     const context = rowMessageContext(chatId, thread?.root, msg);
-    return messageMenu({
+    const offered = messageMenu({
         message: msg,
         userId: state.me,
         showAsMe: isOwnMessage(msg, state.me, state.bridgedUsers),
@@ -143,4 +144,45 @@ export function messageOffer(
                   startThread: client.canSendMessage(chatId, "thread"),
               },
     });
+    return peekOffer(offered, msg);
+}
+
+/**
+ * What a message's menu, hover bar and swipes can do in the new UIs: `messageMenu`'s actions, and
+ * Hide, which puts a revealed deleted message back behind its placeholder (`hideRevealedMessage`).
+ */
+export type OfferedAction = MessageMenuAction | "hide";
+
+/** What a message offers in the new UIs (`messageMenu`'s, with `OfferedAction`s). */
+export type MessageOffer = Omit<MessageMenu, "actions"> & { actions: ReadonlySet<OfferedAction> };
+
+/**
+ * Whether a message is a deleted one revealed (`revealDeletedMessage`): its content back, still
+ * deleted.
+ */
+export function isRevealedDeleted(msg: Pick<Message, "deleted" | "content">): boolean {
+    return msg.deleted && msg.content.kind !== "deleted_content";
+}
+
+// what a revealed deleted message's menu keeps of `messageMenu`'s (Hide is added)
+const PEEK_ACTIONS: ReadonlySet<MessageMenuAction> = new Set<MessageMenuAction>([
+    "undelete",
+    "copy",
+]);
+
+/**
+ * A revealed deleted message is only peeked at (the user's decision of 2026-11-20): its menu
+ * offers Undelete and Copy where `messageMenu` does, and Hide; no reactions (its own stay, read
+ * only), no reply, edit, forward, pin, thread, reminder, report or tip, and no Info (native: it's
+ * inert). `messageMenu`, which the old trees read, still offers them all there. Any other message
+ * offers what `messageMenu` says.
+ */
+export function peekOffer(
+    offered: MessageMenu,
+    msg: Pick<Message, "deleted" | "content">,
+): MessageOffer {
+    if (!isRevealedDeleted(msg)) return offered;
+    const actions = new Set<OfferedAction>([...offered.actions].filter((a) => PEEK_ACTIONS.has(a)));
+    if (offered.menu) actions.add("hide");
+    return { ...offered, inert: true, react: false, canEdit: false, canTip: false, actions };
 }

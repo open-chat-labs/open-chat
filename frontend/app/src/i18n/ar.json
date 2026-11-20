@@ -1638,6 +1638,15 @@
     "membersHeader": "أعضاء {level}",
     "messageBlocked": "الرسالة مخفية",
     "messageUnsupported": "تتطلب هذه الرسالة إصدارًا أحدث من OpenChat",
+    "deletedMessage": {
+        "by": "حذفه {name}",
+        "byModerator": "حذفه مشرف",
+        "byYou": "حذفته أنت",
+        "label": "محذوف",
+        "mine": "لقد حذفت هذه الرسالة",
+        "theirs": "تم حذف هذه الرسالة",
+        "when": "{day} في {time}"
+    },
     "messageDeleted": "تم حذف الرسالة بواسطة {username} في {timestamp}",
     "messageDeletedByOpenChatBot": "تم الإبلاغ عن هذه الرسالة أولاً بواسطة مستخدم OpenChat، ثم تم إرسالها إلى [Modclub]({modclub}) حيث تم تحديد أن الرسالة انتهكت [قاعدة النظام الأساسي]({rules})، وأخيرًا تم حذفها بواسطة {username} على {timestamp}",
     "messages": "رسائل",
@@ -3143,6 +3152,7 @@
     "restrictedContent": "المحتوى المحظور",
     "restrictedContentInfo": "اختر ما إذا كنت ترغب في رؤية المجموعات والمجتمعات التي تم تطبيق علامات التعديل التالية عليها.",
     "retryMessage": "إعادة محاولة الرسالة",
+    "hideRevealedMessage": "إخفاء",
     "revealDeletedMessage": "كشف الرسالة",
     "roadmap": "خريطة الطريق",
     "role": {

@@ -5,6 +5,7 @@ import {
     OPENCHAT_BOT_USER_ID,
     type ResourceKey,
     type ChatSummary,
+    type DeletedContent,
     type EventWrapper,
     type Message,
     type UserGroupDetails,
@@ -13,11 +14,14 @@ import {
 } from "@client";
 import {
     conversationContext,
+    deletedInfo,
+    deletedText,
+    revealedFields,
     hasProposals,
-    proposalVoting,
     mediaHeld,
     messageRow,
     messageStatus,
+    proposalVoting,
     senderColor,
     showsSenderName,
     untilNextDay,
@@ -35,6 +39,8 @@ const ctx: ConversationContext = {
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     longDate: (timestamp) => `L${timestamp}`,
+    dayAndTime: (timestamp) => `D${timestamp}`,
+    deletion: () => undefined,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -372,8 +378,11 @@ describe("link previews", () => {
 
     const players = (text: string, ogPreviews: Message["ogPreviews"] = []) =>
         (
-            messageRow(message({ content: { kind: "text_content", text }, ogPreviews }), "sent", ctx)
-                .message as { players: PlayerProps[] }
+            messageRow(
+                message({ content: { kind: "text_content", text }, ogPreviews }),
+                "sent",
+                ctx,
+            ).message as { players: PlayerProps[] }
         ).players;
 
     test("a Twitch link plays in the bubble: its preview titles the poster, the others stay cards", () => {
@@ -675,36 +684,164 @@ describe("swap offers", () => {
 describe("deleted messages", () => {
     const words = {
         ...ctx,
-        text: (key: ResourceKey) => `${key.key} ${JSON.stringify(key.params)}`,
+        text: (key: ResourceKey) =>
+            key.params === undefined ? key.key : `${key.key} ${JSON.stringify(key.params)}`,
     };
-    const deleted = (deletedBy: string) =>
+    const deleted = (deletedBy: string, sender = "alice", timestamp = 9n) =>
         message({
-            content: { kind: "deleted_content", deletedBy, timestamp: 9n },
+            sender,
+            content: { kind: "deleted_content", deletedBy, timestamp },
         } as Partial<Message>);
 
-    test("say who deleted them and when, as the old trees do", () => {
-        expect(messageRow(deleted("bob"), "sent", words).message).toMatchObject({
+    test('say "You deleted this message" in your own bubble you deleted', () => {
+        expect(messageRow(deleted("me", "me"), "sent", words).message).toMatchObject({
             deleted: true,
-            deletedText: 'messageDeleted {"username":"Bob","timestamp":"L9"}',
+            deletedText: "deletedMessage.mine",
         });
     });
 
-    test("say while they're being undeleted", () => {
+    test('say "This message was deleted" in someone else\'s bubble, whoever deleted it', () => {
+        for (const by of ["alice", "me", "bob", OPENCHAT_BOT_USER_ID]) {
+            expect(messageRow(deleted(by), "sent", words).message).toMatchObject({
+                deletedText: "deletedMessage.theirs",
+            });
+        }
+    });
+
+    test("say so plainly in your own bubble someone else deleted", () => {
+        expect(messageRow(deleted("bob", "me"), "sent", words).message).toMatchObject({
+            deletedText: "deletedMessage.theirs",
+        });
+    });
+
+    test("say while they're being undeleted, as the old trees do", () => {
         const undeleting = { ...words, undeleting: (id: bigint) => id === 42n };
         expect(messageRow(deleted("bob"), "sent", undeleting).message).toMatchObject({
             deletedText: 'undeletingMessage {"username":"Bob","timestamp":"L9"}',
         });
     });
 
-    test("removed by the OpenChat bot, keep the rule link's words only (the tombstone is plain text)", () => {
-        const bot = {
-            ...ctx,
-            userName: () => "OpenChat Bot",
-            text: () => "Removed by OpenChat Bot for breaking a [platform rule]() on L9",
-        };
-        expect(messageRow(deleted(OPENCHAT_BOT_USER_ID), "sent", bot).message).toMatchObject({
-            deletedText: "Removed by OpenChat Bot for breaking a platform rule on L9",
+    test("carry who deleted them and when, for the popover", () => {
+        expect(messageRow(deleted("bob"), "sent", words).message).toMatchObject({
+            deletedBy: 'deletedMessage.by {"name":"Bob"}',
+            deletedAt: "D9",
         });
+    });
+
+    test("aren't deleted messages' fields on any other message", () => {
+        const row = messageRow(message(), "sent", words).message;
+        expect(row).not.toHaveProperty("deletedBy");
+        expect(row).not.toHaveProperty("deletedAt");
+        expect(row).not.toHaveProperty("deletedText");
+    });
+});
+
+describe("who deleted a message, and when", () => {
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) =>
+            key.params === undefined ? key.key : `${key.key} ${JSON.stringify(key.params)}`,
+    };
+    const content = (deletedBy: string, timestamp = 9n): DeletedContent => ({
+        kind: "deleted_content",
+        deletedBy,
+        timestamp,
+    });
+
+    test("is a whole sentence: by you, by a moderator for the OpenChat bot's removal, or by name", () => {
+        expect(deletedInfo(content("me"), words).deletedBy).toBe("deletedMessage.byYou");
+        expect(deletedInfo(content(OPENCHAT_BOT_USER_ID), words).deletedBy).toBe(
+            "deletedMessage.byModerator",
+        );
+        expect(deletedInfo(content("alice"), words).deletedBy).toBe(
+            'deletedMessage.by {"name":"Alice"}',
+        );
+    });
+
+    test("says the day and time", () => {
+        expect(deletedInfo(content("alice", 1700n), words).deletedAt).toBe("D1700");
+    });
+
+    test("leaves out what the message doesn't carry, and is empty with neither", () => {
+        expect(deletedInfo(content(""), words)).toEqual({ deletedAt: "D9" });
+        expect(deletedInfo(content("alice", 0n), words)).toEqual({
+            deletedBy: 'deletedMessage.by {"name":"Alice"}',
+        });
+        expect(deletedInfo(content("", 0n), words)).toEqual({});
+    });
+});
+
+describe("a revealed deleted message", () => {
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) =>
+            key.params === undefined ? key.key : `${key.key} ${JSON.stringify(key.params)}`,
+        deletion: (id: bigint) =>
+            id === 42n
+                ? ({ kind: "deleted_content", deletedBy: "bob", timestamp: 9n } as const)
+                : undefined,
+    };
+    const revealed = message({ deleted: true, content: { kind: "text_content", text: "hi" } });
+
+    test("shows its content, marked revealed, with who deleted it and when from the server's copy", () => {
+        expect(messageRow(revealed, "sent", words).message).toMatchObject({
+            kind: "text",
+            text: "hi",
+            deleted: false,
+            revealed: true,
+            barNote: "deletedMessage.label",
+            deletedBy: 'deletedMessage.by {"name":"Bob"}',
+            deletedAt: "D9",
+        });
+    });
+
+    test("is marked without who or when where the server's copy isn't deleted (yet)", () => {
+        expect(revealedFields({ ...revealed.event, messageId: 1n }, words)).toEqual({
+            revealed: true,
+            barNote: "deletedMessage.label",
+        });
+    });
+
+    test("a media message is marked as a text one is", () => {
+        const image = message({
+            deleted: true,
+            content: {
+                kind: "image_content",
+                width: 10,
+                height: 10,
+                mimeType: "image/png",
+                blobReference: undefined,
+                blobUrl: "u",
+                thumbnailData: "",
+            },
+        } as Partial<Message>);
+        expect(messageRow(image, "sent", words).message).toMatchObject({
+            kind: "image",
+            revealed: true,
+            deletedAt: "D9",
+        });
+    });
+
+    test("no other message is", () => {
+        expect(revealedFields(message().event, words)).toEqual({});
+        expect(messageRow(message(), "sent", words).message).not.toHaveProperty("revealed");
+    });
+});
+
+describe("the placeholder's words", () => {
+    const words = { ...ctx, text: (key: ResourceKey) => key.key };
+    const content: DeletedContent = { kind: "deleted_content", deletedBy: "me", timestamp: 9n };
+
+    test("are yours only in your own message you deleted", () => {
+        expect(deletedText(content, true, false, words)).toBe("deletedMessage.mine");
+        expect(deletedText(content, false, false, words)).toBe("deletedMessage.theirs");
+        expect(deletedText({ ...content, deletedBy: "bob" }, true, false, words)).toBe(
+            "deletedMessage.theirs",
+        );
+    });
+
+    test("say it's being undeleted while it is", () => {
+        expect(deletedText(content, true, true, words)).toBe("undeletingMessage");
     });
 });
 
@@ -1074,6 +1211,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            deletion: () => undefined,
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
@@ -1119,6 +1257,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            deletion: () => undefined,
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
@@ -1176,6 +1315,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            deletion: () => undefined,
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),

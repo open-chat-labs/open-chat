@@ -3,7 +3,14 @@
      cards flush to a 4px inset, the stamp in a footer under them), and an X on each card for the sender with onRemovePreview,
      failed + Retry line, reaction chips and the thread link under them. By hand (web 5a): video players for its links
      (PlayerCard, a Twitch link's) before the cards, in a wider bubble (534px, the least a player plays at and more). Emoji-only messages of one or two emoji render large.
-     Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
+     Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them.
+     By hand (2026-11-19): a deleted message's placeholder, with `deletedBy` or `deletedAt`, is a button whose popover
+     (the Tooltip's inverted style, 8px above it at its start edge, the end edge mirrored; under it where it wouldn't fit)
+     says who deleted it (`deletedBy`, the host's words: "Deleted by Alice") and when, linked by aria-describedby. It opens
+     on hover after 400ms (a mouse, or a pen that hovers), keyboard focus or a tap, and closes on leave, blur, Esc, a second
+     tap or a press elsewhere (lib/deletedPopover), and when the placeholder goes. Without either, no popover. By hand
+     (2026-11-20): `revealed`, a deleted message's content shown, has a bin in its ticks' place with the same popover;
+     both are DeletedPopover's. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import type { ComponentProps, Snippet } from 'svelte';
@@ -12,6 +19,7 @@
   import ReactionChips, { type Reaction, type Tip } from './ReactionChips.svelte';
   import ReplyQuote from './ReplyQuote.svelte';
   import ThreadLink from './ThreadLink.svelte';
+  import DeletedPopover from './DeletedPopover.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -47,6 +55,15 @@
     edited?: boolean;
     deleted?: boolean;
     deletedText?: string;
+    /** Who deleted it, the popover's first line as the host words it in its language ("Deleted by Alice"). */
+    deletedBy?: string;
+    /** When it was deleted ("Today at 14:32"), the popover's second line. */
+    deletedAt?: string;
+    /**
+     * A deleted message revealed (by hand, 2026-11-20): its content shows, with a bin in its ticks' place (any side),
+     * whose popover says who deleted it and when (`deletedBy`, `deletedAt`), as the placeholder's does.
+     */
+    revealed?: boolean;
     /** Reply quote: who wrote the quoted message ("You" for your own). */
     quoteName?: string;
     quoteText?: string;
@@ -91,6 +108,9 @@
     edited = false,
     deleted = false,
     deletedText = 'ui.chatBubble.deleted',
+    deletedBy = '',
+    deletedAt = '',
+    revealed = false,
     quoteName = '',
     quoteText = '',
     onQuote,
@@ -123,15 +143,16 @@
 
 </script>
 
-{#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
+<!-- `live`: the stamp in the corner, whose revealed bin opens its popover (the spacer's copy only keeps its room) -->
+{#snippet stamp(live: boolean)}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if revealed}{#if live}<DeletedPopover variant="mark" {deletedBy} {deletedAt} label="ui.chatBubble.deletedMark"><span class="bin"></span></DeletedPopover>{:else}<span class="bin"></span>{/if}{:else if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
 
 <div class="wrap" class:mirror>
   {#if deleted}
-    <div class="deleted" class:mirror>
+    <DeletedPopover variant="placeholder" {deletedBy} {deletedAt} {mirror}>
       <span class="trash"></span>
       <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
-    </div>
+    </DeletedPopover>
   {:else}
     <div class="column" class:sent class:mirror>
       <div class="bubble" class:last={lastInGroup} class:mirror class:carded class:players={players.length > 0} data-oc-bubble data-bubble-sent={side === 'sent' ? '' : undefined}>
@@ -145,9 +166,9 @@
           <pre class="code">{code}</pre>
         {/if}
         {#if body}
-          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span>{/if}</div>
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp(false)}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp(true)}</span>{/if}</div>
         {:else}
-          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span>{/if}</p>
+          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp(false)}</span><span class="stamp corner">{@render stamp(true)}</span>{/if}</p>
         {/if}
         {#if carded}
           <div class="previews">
@@ -163,7 +184,7 @@
               </div>
             {/each}
           </div>
-          <div class="meta"><span class="stamp">{@render stamp()}</span></div>
+          <div class="meta"><span class="stamp">{@render stamp(true)}</span></div>
         {/if}
       </div>
       {#if status === 'failed'}
@@ -203,25 +224,20 @@
     }
   }
 
-  .deleted {
-    max-width: 675px;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    padding: var(--space-12) var(--space-14);
-    box-sizing: border-box;
-    /* the bubble's shape whoever sent it, as every bubble on the web (all on the inline-start side) */
-    border-radius: var(--radius-xl);
-    border-start-start-radius: var(--radius-xs);
-    box-shadow: inset 0 0 0 1px var(--line-2);
+  /* a revealed deleted message's bin, in its ticks' place */
+  .bin {
+    display: block;
+    width: 13px;
+    height: 13px;
+    margin-bottom: -1px;
+    /* apart from the time on either side (a sent stamp's own gap is 4px) */
+    margin-inline-start: 4px;
 
-    /* mirrored, like the bubble (your own on the inline-end side: mobile, native): the grouped
-       corner on the inline-end side */
-    &.mirror {
-      border-start-start-radius: var(--radius-xl);
-      border-start-end-radius: var(--radius-xs);
+    .sent & {
+      margin-inline-start: 0;
     }
+    background: var(--msg-stamp);
+    mask: var(--icon-trash) center/contain no-repeat;
   }
 
   .trash {

@@ -494,6 +494,7 @@
       "addReaction": "Add {emoji} · {count}",
       "couldNotLoad": "Couldn't load",
       "deleted": "This message was deleted",
+      "deletedMark": "Deleted message",
       "edited": "edited",
       "forwarded": "Forwarded",
       "lastReply": "Last reply {when}",

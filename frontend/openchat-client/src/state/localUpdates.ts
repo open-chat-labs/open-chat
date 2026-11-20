@@ -927,6 +927,14 @@ export class GlobalLocalState {
         return this.#markMessageDeletedUndeleted(messageId, undefined, undefined, content);
     }
 
+    /**
+     * A revealed deleted message hidden again (the new UIs' Hide): the revealed content dropped,
+     * and the message shown deleted (`deleted`, who deleted it and when) until the server says so.
+     */
+    markMessageContentHidden(messageId: bigint, deleted: MessageDeleted | undefined) {
+        return this.#markMessageDeletedUndeleted(messageId, deleted, undefined, undefined);
+    }
+
     markBlockedMessageRevealed(messageId: bigint) {
         return this.#modifyMessageUpdates(
             messageId,

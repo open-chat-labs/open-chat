@@ -1638,6 +1638,15 @@
     "membersHeader": "{level} membri",
     "messageBlocked": "Messaggio nascosto",
     "messageUnsupported": "Questo messaggio richiede una versione più recente di OpenChat",
+    "deletedMessage": {
+        "by": "Eliminato da {name}",
+        "byModerator": "Eliminato da un moderatore",
+        "byYou": "Eliminato da te",
+        "label": "Eliminato",
+        "mine": "Hai eliminato questo messaggio",
+        "theirs": "Questo messaggio è stato eliminato",
+        "when": "{day} alle {time}"
+    },
     "messageDeleted": "Messaggio eliminato da {username} il {timestamp}",
     "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }",
     "messages": "Messaggi",
@@ -3143,6 +3152,7 @@
     "restrictedContent": "Contenuto limitato",
     "restrictedContentInfo": "Scegli se desideri visualizzare i gruppi e le community a cui sono stati applicati i seguenti contrassegni di moderazione.",
     "retryMessage": "Riprova messaggio",
+    "hideRevealedMessage": "Nascondi",
     "revealDeletedMessage": "Rivela messaggio",
     "roadmap": "Tabella di marcia",
     "role": {

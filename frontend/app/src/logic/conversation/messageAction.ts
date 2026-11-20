@@ -6,7 +6,6 @@ import {
     type Message,
     type MessageContext,
     type MessageFormatter,
-    type MessageMenuAction,
     type OpenChat,
     type ResourceKey,
     type UserLookup,
@@ -15,6 +14,7 @@ import { buildMessageUrl, shareMessageOrFail } from "@src/utils/share";
 import { copyToClipboard } from "@src/utils/urls";
 import { copyableMessageText, type CopyableTextLookups } from "./copyableMessageText";
 import { editMessage, privateReplyEndsEdit, replyToMessage } from "./draftActions";
+import type { OfferedAction } from "./messageOffer";
 import type { MentionLookups } from "./typedMentions";
 import { translateMessage } from "./translateMessage";
 
@@ -30,11 +30,12 @@ export type MessageActionClient = Pick<
     | "deleteFailedMessage"
     | "deleteMessage"
     | "followThread"
+    | "hideRevealedMessage"
     | "pinMessage"
     | "replyPrivately"
     | "retrySendMessage"
     | "revealBlockedMessage"
-    | "revealDeletedMessage"
+    | "peekDeletedMessage"
     | "translateMessage"
     | "undeleteMessage"
     | "unpinMessage"
@@ -113,7 +114,7 @@ const DONE: MessageActionOutcome = { kind: "done" };
  * only run where `messageMenu` offered it.
  */
 export async function messageAction(
-    action: MessageMenuAction,
+    action: OfferedAction,
     target: MessageActionTarget,
 ): Promise<MessageActionOutcome> {
     const { client, context, evt } = target;
@@ -206,8 +207,12 @@ export async function messageAction(
             if (msg.content.kind === "blocked_content") {
                 client.revealBlockedMessage(msg.messageId);
             } else {
-                void client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
+                // keeping who deleted it and when, for its mark and its Hide
+                void client.peekDeletedMessage(chatId, msg, threadRootMessageIndex);
             }
+            return DONE;
+        case "hide":
+            client.hideRevealedMessage(msg.messageId);
             return DONE;
         case "undelete":
             return (await client.undeleteMessage(chatId, threadRootMessageIndex, msg))

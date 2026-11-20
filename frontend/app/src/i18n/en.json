@@ -1623,6 +1623,15 @@
     "membersHeader": "{level} members",
     "messageBlocked": "Message hidden",
     "messageUnsupported": "This message needs a newer version of OpenChat",
+    "deletedMessage": {
+        "by": "Deleted by {name}",
+        "byModerator": "Deleted by a moderator",
+        "byYou": "Deleted by you",
+        "label": "Deleted",
+        "mine": "You deleted this message",
+        "theirs": "This message was deleted",
+        "when": "{day} at {time}"
+    },
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "messageDeletedByOpenChatBot": "This message was removed by {username} for breaking a [platform rule]({rules}) on {timestamp}",
     "messages": "Messages",
@@ -3207,6 +3216,7 @@
     "restrictedContent": "Restricted Content",
     "restrictedContentInfo": "Choose whether you would like to see groups and communities that have had the following moderation flags applied.",
     "retryMessage": "Retry message",
+    "hideRevealedMessage": "Hide",
     "revealDeletedMessage": "Reveal message",
     "roadmap": "Roadmap",
     "role": {

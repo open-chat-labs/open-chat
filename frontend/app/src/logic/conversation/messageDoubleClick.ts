@@ -1,4 +1,4 @@
-import type { MessageMenuAction } from "@client";
+import type { OfferedAction } from "./messageOffer";
 
 /**
  * What double-clicking a message does, with the "double-click to reply" setting on: edits the
@@ -8,7 +8,7 @@ import type { MessageMenuAction } from "@client";
 export function messageDoubleClickAction(
     enabled: boolean,
     message: { mine: boolean; deleted: boolean },
-    actions: ReadonlySet<MessageMenuAction>,
+    actions: ReadonlySet<OfferedAction>,
 ): "edit" | "reply" | undefined {
     if (!enabled || message.deleted) return undefined;
     if (message.mine) return actions.has("edit") ? "edit" : undefined;

@@ -32,6 +32,17 @@ describe("a message's menu", () => {
         });
     });
 
+    test("a revealed deleted message's: Copy, Undelete and Hide", () => {
+        const items = messageMenuItems(new Set(["undelete", "copy", "hide"] as const));
+        expect(items.map((i) => i.action)).toEqual(["copy", "undelete", "hide"]);
+        expect(items.find((i) => i.action === "hide")).toEqual({
+            action: "hide",
+            label: "hideRevealedMessage",
+            mask: "var(--icon-eye-off)",
+            variant: "regular",
+        });
+    });
+
     test("has no separator when only one side has anything", () => {
         expect(messageMenuItems(offers("copy")).map((i) => i.action)).toEqual(["copy"]);
         expect(messageMenuItems(offers("delete_for_me")).map((i) => i.action)).toEqual([

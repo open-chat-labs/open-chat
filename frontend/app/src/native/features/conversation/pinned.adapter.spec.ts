@@ -12,6 +12,7 @@ import {
     nextPin,
     offersUnpinAll,
     pinnedMenuActions,
+    pinnedMessage,
     shownDays,
     stripBar,
     stripCurrent,
@@ -129,5 +130,28 @@ describe("the Pinned messages screen", () => {
     test("offers Unpin in a pin's menu only to those who can pin", () => {
         expect(pinnedMenuActions(true)).toEqual(["go_to", "unpin"]);
         expect(pinnedMenuActions(false)).toEqual(["go_to"]);
+    });
+});
+
+describe("a pin's message on the Pinned messages screen", () => {
+    test("a deleted one's placeholder has no popover there, as a tap goes to it", () => {
+        const deleted = {
+            time: "12:00",
+            text: "",
+            deleted: true,
+            deletedText: "This message was deleted",
+            deletedBy: "Alice",
+            deletedAt: "Today at 14:32",
+        };
+        expect(pinnedMessage(deleted)).toEqual({
+            ...deleted,
+            deletedBy: undefined,
+            deletedAt: undefined,
+        });
+    });
+
+    test("any other is as the conversation shows it", () => {
+        const message = { time: "12:00", text: "hi" };
+        expect(pinnedMessage(message)).toBe(message);
     });
 });

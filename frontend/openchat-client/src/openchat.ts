@@ -592,6 +592,7 @@ import {
 import { isTyping, typing } from "./stores/typing";
 import { unconfirmedReadByThem } from "./stores/unconfirmed";
 import { proposalVotesStore } from "./stores/proposalVotes";
+import { revealedDeletionsStore } from "./stores/revealedDeletions";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
     airdropBotUser,
@@ -3517,6 +3518,43 @@ export class OpenChat {
 
     revealBlockedMessage(messageId: bigint) {
         localUpdates.markBlockedMessageRevealed(messageId);
+    }
+
+    /**
+     * Reveals a deleted message for the new UIs (their Reveal): as `revealDeletedMessage`, keeping
+     * who deleted it and when (`revealedDeletionsStore`), which the revealed content replaces in the
+     * merged message, for its mark and for `hideRevealedMessage`. False if it couldn't be revealed.
+     */
+    async peekDeletedMessage(
+        chatId: ChatIdentifier,
+        message: Message,
+        threadRootMessageIndex: number | undefined,
+    ): Promise<boolean> {
+        const content = message.content;
+        if (content.kind === "deleted_content") {
+            revealedDeletionsStore.insert(message.messageId, {
+                deletedBy: content.deletedBy,
+                timestamp: content.timestamp,
+            });
+        }
+        const revealed = await this.revealDeletedMessage(
+            chatId,
+            message.messageId,
+            threadRootMessageIndex,
+        );
+        if (!revealed) revealedDeletionsStore.delete(message.messageId);
+        return revealed;
+    }
+
+    /**
+     * Hides a message revealed with `peekDeletedMessage` again, on this device (the new UIs' Hide):
+     * its revealed content is dropped and it shows deleted, by whoever deleted it at its time, so
+     * its placeholder is back until the server's copy says so.
+     */
+    hideRevealedMessage(messageId: bigint): void {
+        const deleted = revealedDeletionsStore.get(messageId);
+        revealedDeletionsStore.delete(messageId);
+        localUpdates.markMessageContentHidden(messageId, deleted);
     }
 
     /**

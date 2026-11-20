@@ -90,16 +90,21 @@
       >
     {/each}
     {#each shown as r}
-      <span
-        class="chip"
-        class:mine={r.mine}
-        data-oc-chip
-        onclick={() => onToggle?.(r.emoji)}
-        role="button"
-        tabindex="0"
-        aria-pressed={!!r.mine}
-        aria-label={t(r.mine ? 'ui.chatBubble.removeReaction' : 'ui.chatBubble.addReaction', { emoji: r.emoji, count: r.count })}>{r.emoji} {r.count}</span
-      >
+      {#if onToggle}
+        <span
+          class="chip"
+          class:mine={r.mine}
+          data-oc-chip
+          onclick={() => onToggle(r.emoji)}
+          role="button"
+          tabindex="0"
+          aria-pressed={!!r.mine}
+          aria-label={t(r.mine ? 'ui.chatBubble.removeReaction' : 'ui.chatBubble.addReaction', { emoji: r.emoji, count: r.count })}>{r.emoji} {r.count}</span
+        >
+      {:else}
+        <!-- read only (no onToggle): shown, not pressed (by hand, 2026-11-20) -->
+        <span class="chip read-only" class:mine={r.mine} data-oc-chip>{r.emoji} {r.count}</span>
+      {/if}
     {/each}
     {#if hidden > 0}
       <span
@@ -151,6 +156,10 @@
   }
 
   /* chips overlap the bubble's bottom edge, so their backgrounds are opaque */
+  .chip.read-only {
+    cursor: default;
+  }
+
   .chip {
     display: flex;
     align-items: center;

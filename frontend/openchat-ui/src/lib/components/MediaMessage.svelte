@@ -1,9 +1,12 @@
 <!-- Image, album, video and GIF messages. Media is inset 4px in the bubble; caption + time below, or time floats on media when there's no caption.
      Natural ratio capped at 360×420 (single; a GIF at 180×315), fixed grids for albums (2, 3, 4, 5+ → "+N"). Clicking a tile calls onOpen(index) → fullscreen viewer.
      `mirror` (native, your own at the inline end) mirrors the corners as ChatBubble's does.
-     items: [{ src?, bg?, w?, h? }] — src is an image URL; bg a CSS background fallback (placeholders). -->
+     items: [{ src?, bg?, w?, h? }] — src is an image URL; bg a CSS background fallback (placeholders).
+     By hand (2026-11-20): `revealed`, a deleted message's content shown, has a bin in its ticks' place, whose popover
+     (DeletedPopover) says who deleted it and when (`deletedBy`, `deletedAt`), as ChatBubble's. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import DeletedPopover from './DeletedPopover.svelte';
   import ReplyQuote from './ReplyQuote.svelte';
   import { cssUrl } from '../cssUrl';
   type Status = 'sending' | 'sent' | 'delivered' | 'read';
@@ -32,6 +35,12 @@
     quoteText?: string;
     /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
     onQuote?: () => void;
+    /** A deleted message revealed (by hand, 2026-11-20): a bin in its ticks' place (any side), with who deleted it and when. */
+    revealed?: boolean;
+    /** Who deleted it, the bin's popover's first line as the host words it ("Deleted by Alice"). */
+    deletedBy?: string;
+    /** When it was deleted ("Today at 14:32"), the popover's second line. */
+    deletedAt?: string;
     onOpen?: (index: number) => void;
     onRetry?: () => void;
     onCancel?: () => void;
@@ -55,6 +64,9 @@
     quoteName = '',
     quoteText = '',
     onQuote,
+    revealed = false,
+    deletedBy = '',
+    deletedAt = '',
     onOpen,
     onRetry,
     onCancel,
@@ -88,7 +100,8 @@
     it.src ? `center/cover no-repeat ${cssUrl(it.src)}` : it.bg || 'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)';
 </script>
 
-{#snippet stamp()}{time}{#if side === 'sent' && tick}<span class="tick" class:double={tick === 'read' || tick === 'delivered'}></span>{/if}{/snippet}
+<!-- `live`: the stamp shown, whose revealed bin opens its popover (the spacer's copy only keeps its room) -->
+{#snippet stamp(live: boolean)}{time}{#if revealed}{#if live}<DeletedPopover variant="mark" {deletedBy} {deletedAt} label="ui.chatBubble.deletedMark"><span class="bin"></span></DeletedPopover>{:else}<span class="bin"></span>{/if}{:else if side === 'sent' && tick}<span class="tick" class:double={tick === 'read' || tick === 'delivered'}></span>{/if}{/snippet}
 
 <div class="media-message" class:sent={side === 'sent'} class:mirror>
   <div class="shell" class:last={lastInGroup} class:mirror class:failed data-bubble-sent={side === 'sent' ? '' : undefined} style:width={box.width}>
@@ -129,10 +142,10 @@
       {#if failed}
         <span class="veil dark"><span class="retry" onclick={onRetry} role="button" tabindex="0"><span class="retry-icon"></span>{t('ui.common.retry')}</span></span>
       {/if}
-      {#if !caption && !uploading && !failed}<span class="chip on-media">{@render stamp()}</span>{/if}
+      {#if !caption && !uploading && !failed}<span class="chip on-media">{@render stamp(true)}</span>{/if}
     </div>
     {#if caption}
-      <p class="caption">{caption}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+      <p class="caption">{caption}<span class="stamp spacer" aria-hidden="true">{@render stamp(false)}</span><span class="stamp corner">{@render stamp(true)}</span></p>
     {/if}
   </div>
   {#if failed}<span class="failed-line"><span class="failed-icon"></span>{t(failedText)}{#if onDelete} · <span class="delete" onclick={onDelete} role="button" tabindex="0">{t('ui.common.delete')}</span>{/if}</span>{/if}
@@ -341,6 +354,19 @@
 
   .retry-icon {
     @include icon(refresh, 14px, #fff, $flex: null);
+  }
+
+  /* a revealed deleted message's bin, in its ticks' place */
+  .bin {
+    display: block;
+    width: 13px;
+    height: 13px;
+    background: var(--msg-tick);
+    mask: var(--icon-trash) center/contain no-repeat;
+
+    .on-media & {
+      background: #fff;
+    }
   }
 
   .tick {

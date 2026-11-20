@@ -18,6 +18,7 @@
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
+  import { barBeside, barPlacement, overBubble, type BarPlacement } from '../hoverBar';
   import ReactionChips from './ReactionChips.svelte';
   import FileMessage from './FileMessage.svelte';
   import LinkPreview from './LinkPreview.svelte';
@@ -129,14 +130,13 @@
   const SWIPE_MAX_INSET = 90;
   // the inset hint: its gap from the row's edge
   const INSET_GAP = 4;
-  const BAR_W = 196; // hover bar width (3 reactions, picker, divider, reply/edit, more)
 
   const rows: HTMLDivElement[] = $state([]);
   const mores: HTMLSpanElement[] = $state([]);
   const emojis: HTMLSpanElement[] = $state([]);
 
   let hover = $state(-1);
-  let barLeft = $state('8px');
+  let bar = $state<BarPlacement>({ left: 8 });
 
   // gesture bookkeeping (never rendered)
   let touch = false;
@@ -190,20 +190,20 @@
     );
     for (let n = 0; el && n < 8; n++) {
       const r = el.getBoundingClientRect();
-      if (r.width > 0 && r.width < W.width - 1) return { left: r.left - W.left, width: r.width };
+      if (r.width > 0 && r.width < W.width - 1) return { left: r.left - W.left, top: r.top - W.top, width: r.width, height: r.height };
       el = el.firstElementChild;
     }
-    return { left: 0, width: W.width };
+    return { left: 0, top: 0, width: W.width, height: W.height };
   }
 
-  function barLeftFor(i: number) {
-    const b = bubbleOf(rows[i]);
-    if (!b) return '8px';
-    return `${b.width >= BAR_W + 16 ? b.left + b.width - BAR_W - 8 : b.left}px`;
-  }
+  // a deleted message's placeholder, and a revealed one, have their bar beside them (lib/hoverBar), clear of the
+  // bubble and its popover
+  const besideBar = (m: GroupMessage) => barBeside(m);
 
   function showBar(i: number) {
-    barLeft = barLeftFor(i);
+    const b = bubbleOf(rows[i]);
+    const m = messages[i];
+    bar = b && m ? barPlacement(b, rows[i].getBoundingClientRect().width, besideBar(m), mirrored) : { left: 8 };
     hover = i;
   }
 
@@ -347,7 +347,7 @@
       const w = rows[i], b = bubbleOf(w);
       if (w && b) {
         const x = e.clientX - w.getBoundingClientRect().left;
-        over = x >= b.left && x <= b.left + b.width;
+        over = overBubble(x, b, besideBar(m), mirrored);
       }
     }
     if (over && hover !== i) {
@@ -538,11 +538,11 @@
         {:else if m.kind === 'proposal'}
           <ProposalMessage {...m} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
-          <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
+          <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={onReact ? (c) => onReact(i, c) : undefined} />
         {/if}
         <!-- every other kind's reactions and thread, under it as under a text bubble (ChatBubble draws its own) -->
         {#if m.kind && m.kind !== 'text' && (m.reactions?.length || m.tips?.length)}
-          <ReactionChips reactions={m.reactions ?? []} tips={m.tips} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
+          <ReactionChips reactions={m.reactions ?? []} tips={m.tips} mirror={mirrored} onToggle={onReact ? (c) => onReact(i, c) : undefined} />
         {/if}
         {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
           <ThreadLink
@@ -556,7 +556,13 @@
           />
         {/if}
         {#if barred(m) && hover === i && !touch && activeMenu !== i}
-          <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
+          <span
+            class="bar"
+            class:beside={bar.top !== undefined}
+            style:left={bar.left === undefined ? undefined : `${bar.left}px`}
+            style:right={bar.right === undefined ? undefined : `${bar.right}px`}
+            style:top={bar.top === undefined ? undefined : `${bar.top}px`}
+            data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
             {#each onReact ? quickReactions : [] as c}
               {@const on = mine.includes(c)}
               <span
@@ -600,6 +606,10 @@
                 data-tip={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}><span class="tool-icon" style:mask="var(--icon-{canEdit ? 'edit' : 'reply'}) center/contain no-repeat"></span></span
               >
             {/if}
+            {#if m.barNote}
+              <!-- informational, not a button: plain text in the toolbar, read with it -->
+              <span class="note">{t(m.barNote)}</span>
+            {/if}
             <span
               class="tool"
               class:active={activeMenu === i}
@@ -635,6 +645,13 @@
        stacking context: the group showing a bar comes forward so nothing paints over it */
     &.raised {
       z-index: 1;
+    }
+
+    /* a message's open popover (a deleted placeholder's, ChatBubble) reaches over its neighbours, before or after it
+       in the document: its group comes forward past a raised group's hover bar and a host's sticky date pill
+       (z-index 1 and 2 over the list), staying under dialogs and toasts (2026-11-20) */
+    &:has(:global([data-oc-popover-open])) {
+      z-index: 3;
     }
     width: 100%;
     box-sizing: border-box;
@@ -803,6 +820,21 @@
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 8px 20px rgba(0, 0, 0, 0.4);
+
+    /* beside a deleted placeholder (lib/hoverBar): flat, in the page beside the bubble rather than floating over it,
+       its 1px line ring alone (2026-11-20) */
+    &.beside {
+      box-shadow: inset 0 0 0 1px var(--line-2);
+    }
+  }
+
+  /* a short note before the ⋯ (a revealed message's "Deleted"): muted, in the bar's own type */
+  .note {
+    padding: 0 var(--space-6) 0 var(--space-8);
+    font: var(--weight-medium) var(--text-xs) / 1 var(--font-sans);
+    color: var(--ink-3);
+    white-space: nowrap;
+    user-select: none;
   }
 
   .quick,

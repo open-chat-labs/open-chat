@@ -1638,6 +1638,15 @@
     "membersHeader": "{level} メンバー",
     "messageBlocked": "メッセージが隠されています",
     "messageUnsupported": "このメッセージを表示するには新しいバージョンの OpenChat が必要です",
+    "deletedMessage": {
+        "by": "{name}が削除",
+        "byModerator": "モデレーターが削除",
+        "byYou": "あなたが削除",
+        "label": "削除済み",
+        "mine": "このメッセージを削除しました",
+        "theirs": "このメッセージは削除されました",
+        "when": "{day} {time}"
+    },
     "messageDeleted": "このメッセージは{timestamp}に、{username}によって消去されました",
     "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }",
     "messages": "メッセージ",
@@ -3143,6 +3152,7 @@
     "restrictedContent": "制限されたコンテンツ",
     "restrictedContentInfo": "次のモデレーションフラグが適用されているグループとコミュニティを表示するか選択してください。",
     "retryMessage": "再試行メッセージ",
+    "hideRevealedMessage": "非表示",
     "revealDeletedMessage": "メッセージを表示",
     "roadmap": "ロードマップ",
     "role": {

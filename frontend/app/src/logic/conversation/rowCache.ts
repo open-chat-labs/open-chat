@@ -80,13 +80,21 @@ export class RowCache {
 
 /**
  * The names a message's row shows besides its sender's and its quote's, which can load after the
- * row is made: whoever deleted it (its tombstone), a transfer's or a prize win's recipient, and
- * whoever tipped it (its tip chips' tooltips).
+ * row is made: whoever deleted it (its placeholder's popover, or a revealed message's bin's), a
+ * transfer's or a prize win's recipient, and whoever tipped it (its tip chips' tooltips).
  */
-export function namedInRow(msg: Message, ctx: Pick<ConversationContext, "userName">): string[] {
+export function namedInRow(
+    msg: Message,
+    ctx: Pick<ConversationContext, "userName" | "deletion">,
+): string[] {
     const content = msg.content;
     const names: string[] = [];
     if (content.kind === "deleted_content") names.push(ctx.userName(content.deletedBy));
+    else if (msg.deleted) {
+        // revealed: who deleted it is the server's copy's
+        const deletion = ctx.deletion(msg.messageId);
+        if (deletion !== undefined) names.push(ctx.userName(deletion.deletedBy));
+    }
     if (content.kind === "crypto_content") names.push(ctx.userName(content.transfer.recipient));
     if (content.kind === "prize_winner_content") {
         names.push(ctx.userName(content.transaction.recipient));

@@ -1,8 +1,9 @@
-import type { MessageMenuAction } from "@client";
+import type { MessageContent, MessageMenu, MessageMenuAction } from "@client";
 import {
     messageMenuItems,
     myReactions,
     nativeMessageAction,
+    nativeMessageOffer,
     quickReactions,
 } from "./messageMenu.adapter";
 
@@ -11,6 +12,21 @@ const ids = (actions: MessageMenuAction[], info = true) =>
     messageMenuItems(new Set(actions), info, label).map((i) => i.id);
 
 describe("a message's long-press menu", () => {
+    test("a revealed deleted message's: Copy, Undelete and Hide, no Info (it's inert)", () => {
+        const items = messageMenuItems(
+            new Set(["undelete", "copy", "hide"] as const),
+            false,
+            label,
+        );
+        expect(items.map((i) => i.id)).toEqual(["copy", "undelete", "hide"]);
+        expect(items.at(-1)).toEqual({
+            id: "hide",
+            label: "t:hideRevealedMessage",
+            icon: "eye-off",
+        });
+        expect(nativeMessageAction("hide")).toBe("hide");
+    });
+
     test("the design's items first, in its order, whatever order they're offered in", () => {
         expect(ids(["edit", "delete", "copy", "forward", "reply", "pin"])).toEqual([
             "reply",
@@ -80,5 +96,49 @@ describe("the reactions bar", () => {
             { reaction: "😂", userIds: new Set(["them"]) },
         ];
         expect(myReactions(reactions, "me")).toEqual(["👍"]);
+    });
+});
+
+describe("what a message offers in the native conversation", () => {
+    const offered: MessageMenu = {
+        inert: true,
+        menu: true,
+        react: true,
+        canEdit: false,
+        canTip: false,
+        actions: new Set<MessageMenuAction>(["reveal", "reply"]),
+    };
+
+    const deleted: MessageContent = { kind: "deleted_content", deletedBy: "me", timestamp: 1n };
+
+    test("a placeholder you deleted offers Reveal alone, and no swipes or reactions", () => {
+        // your own message, or someone else's you deleted as a moderator: messageMenu offers Reveal
+        expect(nativeMessageOffer(offered, deleted)).toEqual({
+            ...offered,
+            menu: true,
+            react: false,
+            actions: new Set(["reveal"]),
+        });
+    });
+
+    test("a placeholder without Reveal (someone else's deletion, or past its five minutes) has no menu", () => {
+        const noMenu = { ...offered, menu: false, actions: new Set<MessageMenuAction>() };
+        expect(nativeMessageOffer(noMenu, deleted)).toEqual({
+            ...noMenu,
+            react: false,
+            actions: new Set(),
+        });
+        const noReveal = { ...offered, actions: new Set<MessageMenuAction>(["reply"]) };
+        expect(nativeMessageOffer(noReveal, deleted)).toEqual({
+            ...noReveal,
+            menu: false,
+            react: false,
+            actions: new Set(),
+        });
+    });
+
+    test("any other message offers what messageOffer says", () => {
+        const text: MessageContent = { kind: "text_content", text: "hi" };
+        expect(nativeMessageOffer(offered, text)).toBe(offered);
     });
 });

@@ -1,4 +1,5 @@
 import type { EventWrapper, Message } from "@client";
+import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { escapeMarkdown } from "@src/core/markdownRender";
 import {
     messageAuthorName,
@@ -111,4 +112,14 @@ export type PinnedMenuAction = "go_to" | "unpin";
 
 export function pinnedMenuActions(canPin: boolean): PinnedMenuAction[] {
     return canPin ? ["go_to", "unpin"] : ["go_to"];
+}
+
+/**
+ * A pin's message as the Pinned messages screen shows it: a tap on a pin goes to it, so a deleted
+ * one's placeholder is plain there, without the popover a tap shows in the chat.
+ */
+export function pinnedMessage(message: GroupMessage): GroupMessage {
+    if (message.kind !== undefined && message.kind !== "text") return message;
+    if (message.deletedBy === undefined && message.deletedAt === undefined) return message;
+    return { ...message, deletedBy: undefined, deletedAt: undefined };
 }

@@ -1638,6 +1638,15 @@
     "membersHeader": "اعضای {level}",
     "messageBlocked": "پیام پنهان شد",
     "messageUnsupported": "این پیام به نسخه جدیدتری از OpenChat نیاز دارد",
+    "deletedMessage": {
+        "by": "حذف‌شده توسط {name}",
+        "byModerator": "حذف‌شده توسط یک ناظر",
+        "byYou": "حذف‌شده توسط شما",
+        "label": "حذف‌شده",
+        "mine": "شما این پیام را حذف کردید",
+        "theirs": "این پیام حذف شد",
+        "when": "{day} ساعت {time}"
+    },
     "messageDeleted": "پیام توسط {username} در {timestamp} حذف شد",
     "messageDeletedByOpenChatBot": "این پیام ابتدا توسط یک کاربر OpenChat گزارش شد، سپس به [Modclub]({modclub}) ارسال شد، جایی که تصمیم بر این شد که پیام [قانون پلتفرم] ({rules}) را زیر پا گذاشته و در نهایت توسط {username} در {xyz حذف شد. }",
     "messages": "پیام ها",
@@ -3143,6 +3152,7 @@
     "restrictedContent": "محتوای محدود شده",
     "restrictedContentInfo": "انتخاب کنید که آیا می‌خواهید گروه‌ها و جوامعی را ببینید که پرچم‌های نظارت زیر اعمال شده است یا خیر.",
     "retryMessage": "پیام را دوباره امتحان کنید",
+    "hideRevealedMessage": "پنهان کردن",
     "revealDeletedMessage": "فاش کردن پیام",
     "roadmap": "نقشه راه",
     "role": {

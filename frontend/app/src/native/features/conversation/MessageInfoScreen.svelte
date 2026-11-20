@@ -24,6 +24,8 @@
         messageReadByThem,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
+        revealedDeletionsStore,
+        serverEventsStore,
         undeletingMessagesStore,
         userGroupSummariesStore,
         selectedServerChatStore,
@@ -50,6 +52,7 @@
         messageStatus,
         senderColor,
     } from "@src/logic/conversation/messageRow";
+    import { revealedDeletion } from "@src/logic/conversation/revealedDeletion";
     import { lowBandwidth } from "@src/stores/settings";
     import { getContext } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -125,6 +128,13 @@
             threads: false,
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            // a revealed deleted message's deletion, as the server has it
+            deletion: (messageId) =>
+                revealedDeletion(
+                    revealedDeletionsStore.get(messageId),
+                    serverEventsStore.value,
+                    messageId,
+                ),
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,

@@ -5,6 +5,7 @@ export * from "./network";
 export * from "./previewOrigin";
 export * from "./profiling";
 export * from "./proposalVotes";
+export * from "./revealedDeletions";
 export * from "./rules";
 export * from "./throttling";
 export * from "./typing";

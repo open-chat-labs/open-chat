@@ -55,6 +55,9 @@
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
+        revealedDeletionsStore,
+        serverEventsStore,
+        serverThreadEventsStore,
         selectedChatPinnedMessagesStore,
         selectedChatWebhooksStore,
         selectedCommunityBotsStore,
@@ -94,8 +97,6 @@
         type VideoCallContent,
         type GiphyContent,
         type MessageContext,
-        type MessageMenu,
-        type MessageMenuAction,
         type OpenChat,
         type P2PSwapContent,
         type PollContent,
@@ -252,7 +253,13 @@
         previewLink,
         removeLinkPreview,
     } from "@src/logic/conversation/linkPreview";
-    import { guestMessageAction, messageOffer } from "@src/logic/conversation/messageOffer";
+    import {
+        guestMessageAction,
+        messageOffer,
+        type MessageOffer,
+        type OfferedAction,
+    } from "@src/logic/conversation/messageOffer";
+    import { revealedDeletion } from "@src/logic/conversation/revealedDeletion";
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { askToSignIn, signInFirst } from "@src/logic/auth/guestPass";
     import { observeRead } from "@src/core/observeRead";
@@ -398,6 +405,7 @@
             threads: true,
             locale: $locale ?? "en",
             undeleting: (messageId) => undeleting.has(messageId),
+            deletion,
             // a Twitch link plays here, unless this page is framed by another site
             twitchParent: twitchPlayerParent({
                 hostname: window.location.hostname,
@@ -1262,12 +1270,21 @@
     // what a message offers (messageMenu, as the old trees decide it): read as it renders, so a
     // row follows the chat's permissions and the message's state. In a thread, its root can't be
     // edited or replied to there, and nothing is pinned
+    // a revealed deleted message's deletion: as kept when it was revealed, else the server's copy's
+    function deletion(messageId: bigint) {
+        return revealedDeletion(
+            revealedDeletionsStore.get(messageId),
+            thread === undefined ? serverEventsStore.value : serverThreadEventsStore.value,
+            messageId,
+        );
+    }
+
     function offeredFor(
         current: ChatSummary,
         evt: EventWrapper<Message>,
         failed: boolean,
         confirmed: boolean,
-    ): MessageMenu {
+    ): MessageOffer {
         return messageOffer(client, current, evt, {
             me,
             bridgedUsers: $bridgedUsersStore,
@@ -1288,7 +1305,7 @@
         context: MessageContext,
         evt: EventWrapper<Message>,
         failed: boolean,
-        offered: MessageMenu,
+        offered: MessageOffer,
     ): RowOffers {
         return {
             menu: offered.menu,
@@ -1302,7 +1319,7 @@
         context: MessageContext;
         evt: EventWrapper<Message>;
         failed: boolean;
-        offered: MessageMenu;
+        offered: MessageOffer;
         pos: MenuPos;
         pickerOnly: boolean;
     }>();
@@ -1359,7 +1376,7 @@
     // a guest is asked to sign in for what needs an account, and stays here (guestMessageAction)
     async function run(
         context: MessageContext,
-        action: MessageMenuAction,
+        action: OfferedAction,
         evt: EventWrapper<Message>,
         failed: boolean,
     ) {
@@ -1443,7 +1460,7 @@
         e: MouseEvent,
         evt: EventWrapper<Message>,
         failed: boolean,
-        offered: MessageMenu,
+        offered: MessageOffer,
     ) {
         const target = e.target;
         // a guest's double-click is theirs (selecting a word), not a reply that asks to sign in

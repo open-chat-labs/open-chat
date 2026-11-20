@@ -35,6 +35,12 @@ interface GroupMessageBase {
   time: string;
   /** Deleted messages render as a tombstone and get no menu (unless `menu`). */
   deleted?: boolean;
+  /** A deleted message revealed: its content shows (a bin in its ticks' place, for the kinds that draw one), and its
+   *  hover bar sits beside it, as a deleted one's does (by hand, 2026-11-20). */
+  revealed?: boolean;
+  /** A short note in the hover bar before its ⋯, plain text (a revealed message's "Deleted"); resource key or literal
+   *  text (by hand, 2026-11-20). */
+  barNote?: string;
   /** Whether it has a menu and hover bar (with the group's onMessageMenu); by default all but a deleted message. */
   menu?: boolean;
   /** What a left swipe does, as the host decides it: it calls onSwipeLeft, and a right swipe replies. Unset, the
