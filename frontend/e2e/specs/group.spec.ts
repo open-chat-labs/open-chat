@@ -38,8 +38,10 @@ test("a group joined just before a reload opens as a member, not a preview", asy
 
     let releasePreview!: () => void;
     const previewReleased = new Promise<void>((resolve) => (releasePreview = resolve));
+    let held = 0;
     await guest.context.route(`**/canister/${groupId}/**`, async (route) => {
         if (route.request().postDataBuffer()?.includes("public_summary")) {
+            held++;
             await previewReleased;
         }
         await route.continue();
@@ -61,6 +63,9 @@ test("a group joined just before a reload opens as a member, not a preview", asy
 
     // the chat list's updates have brought the group in, with the guest a member
     await expect(guest.page.getByPlaceholder(/message/i)).toBeVisible();
+    // the race was forced: the preview's request was held back (renaming the method, or the page
+    // no longer previewing the group, would otherwise leave this passing without testing anything)
+    expect(held).toBeGreaterThan(0);
     releasePreview();
     await guest.page.evaluate(() => window.__ocSelecting);
 
