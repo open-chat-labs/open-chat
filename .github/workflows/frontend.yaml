@@ -109,6 +109,10 @@ jobs:
           OC_METERED_APIKEY: DUMMY_METERED_APIKEY
           OC_VAPID_PUBLIC_KEY: DUMMY_VAPID_PUBLIC_KEY
 
+        # Only the e2e suite's dev server exposes the client to tests (#10550 invariant 3)
+      - name: The e2e test hook isn't in the build
+        run: "! grep -rl --include='*.js' __ocTest app/build"
+
   # The required status check. It runs even when the jobs above fail or are skipped (`always()`),
   # because a skipped job satisfies branch protection and this one must not be skipped just
   # because a check failed.

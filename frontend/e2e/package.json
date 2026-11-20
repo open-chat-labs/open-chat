@@ -1,0 +1,13 @@
+{
+    "name": "openchat-e2e",
+    "private": true,
+    "type": "module",
+    "description": "End-to-end tests of the new UI against a local replica (PRD #10550). See README.md.",
+    "scripts": {
+        "test": "playwright test",
+        "report": "playwright show-report report"
+    },
+    "devDependencies": {
+        "@playwright/test": "1.65.0"
+    }
+}

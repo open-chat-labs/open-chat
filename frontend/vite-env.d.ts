@@ -21,6 +21,8 @@ interface ImportMetaEnv {
     readonly OC_BUILD_ENV: string;
     readonly OC_CANISTER_URL_PATH: string;
     readonly OC_DFX_NETWORK: string;
+    // "true" on the e2e suite's dev server (frontend/e2e): the app exposes its client to the tests
+    readonly OC_E2E: string | undefined;
     readonly OC_GROUP_INDEX_CANISTER: string;
     readonly OC_IC_URL: string;
     readonly OC_IDENTITY_CANISTER: string;
