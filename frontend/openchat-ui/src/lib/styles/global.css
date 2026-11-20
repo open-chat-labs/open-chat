@@ -1,6 +1,13 @@
 /* Keyframes and global rules collected from component <helmet> blocks. */
 html,body{margin:0}
 body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surface-0)}
+/* the weight of what a message's link rules can't reach: the host's @user mentions (the app's <profile-link>, whose
+   inline style reads it, else bold) and links in its shadow roots (a spoiler): semibold, as a message's links, wherever
+   the library's UI shows message text (bubbles, the chat list's previews, pinned lines, dialogs). In a bold run (strong,
+   b, a heading) the readers' own fallback instead (initial: the mention bold, a spoiler's link the run's weight), so a
+   mention is never lighter than the text around it */
+body{--msg-link-weight:var(--weight-semibold)}
+:is(strong,b,h1,h2,h3,h4,h5,h6){--msg-link-weight:initial}
 /* scrollbars: thin, a grey thumb on no track, as the design's docs show them (Docs.svelte). Firefox and
    Chrome read scrollbar-color; Safari reads the ::-webkit-scrollbar rules. Safari (18.2 on) reads scrollbar-width
    too, and then drops the ::-webkit-scrollbar rules for its own bar, but not scrollbar-color: so only a browser
