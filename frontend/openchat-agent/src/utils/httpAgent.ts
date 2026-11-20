@@ -287,13 +287,18 @@ export async function createHttpAgent(identity: Identity, icUrl: string): Promis
 }
 
 function createHttpAgentInternal(identity: Identity, icUrl: string): [HttpAgent, Promise<void>] {
+    // Off mainnet the agent starts without a root key, and every request waits until it has
+    // fetched the replica's. Otherwise it holds mainnet's key until then, a response checked
+    // against that is rejected, and an update the replica carried out is reported as failed (#10580)
+    const localReplica = !isMainnet(icUrl);
     const agent = ResyncingHttpAgent.createSync({
         identity,
         host: icUrl,
         verifyQuerySignatures: false,
         fetch: createQueryAwareFetch(),
+        shouldFetchRootKey: localReplica,
     });
-    const fetchRootKey = !isMainnet(icUrl) && !offline();
+    const fetchRootKey = localReplica && !offline();
     const fetchRootKeyPromise = fetchRootKey
         ? agent.fetchRootKey().then((_) => {})
         : Promise.resolve();
