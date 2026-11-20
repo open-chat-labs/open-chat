@@ -82,6 +82,8 @@
         tabSlide,
         type SwipeAxis,
     } from "./tabSwipe";
+    import { useOfflineIndicator } from "@src/logic/network/offlineIndicator.svelte";
+    import OfflineStrip from "./OfflineStrip.svelte";
     import { ToastFloors } from "./toastFloors.svelte";
     import Toasts from "./Toasts.svelte";
 
@@ -96,6 +98,8 @@
     // the screens' own toasts (Undo), in place of the app's (Toasts)
     const toasts = new ToastQueue();
     onMount(() => () => toasts.dispose());
+    // the offline strip across the top, while the app is offline (#10564)
+    const offline = useOfflineIndicator();
 
     // The Communities tab's community when a URL doesn't name one (Explore): the one the tab shows,
     // else the default (the last selected, else the first)
@@ -618,7 +622,7 @@
 {/snippet}
 
 {#if location.area === "tabs"}
-    <div class="shell" style:--underneath-ms={underneath}>
+    <div class="shell" class:offline={offline.shown} style:--underneath-ms={underneath}>
         <div class="stage">
             <!-- the swipe is a touch shortcut for the tab bar, which keyboards and screen readers use -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -676,6 +680,10 @@
         <div class="bar" class:covered inert={!barShown}>
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
+
+        {#if offline.shown}
+            <OfflineStrip text={$_("offlineBanner")} />
+        {/if}
 
         <Toasts above={toastsAbove(stacks.steps)} floor={toastFloor} queue={toasts} />
     </div>
@@ -753,6 +761,19 @@
         position: absolute;
         inset: 0;
         overflow: hidden;
+    }
+
+    // Offline, the strip (OfflineStrip) takes the top of the window, under the status bar, and the
+    // screens keep clear of it as they do of the status bar: everything in the stage that minds
+    // --safe-top (the headers, menus) moves down by the strip's height. The shell's own
+    // --safe-top is read into --status-bar-top first, as a property can't refer to itself
+    .shell {
+        --offline-strip-h: 28px;
+        --status-bar-top: var(--safe-top);
+    }
+
+    .shell.offline .stage {
+        --safe-top: calc(var(--status-bar-top) + var(--offline-strip-h));
     }
 
     // The screen under the top one moves 28% of the way out to the start side as a screen is

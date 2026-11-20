@@ -162,6 +162,12 @@ After everything else (decided 2026-11-07):
 | The recovery phrase: Recover account (Welcome back's "Recover with phrase"), the Recovery phrase screen in You → Account, and the Getting started card's backup step | The backend has no recovery phrase yet (none is made at sign-up, nothing signs in with one). The native tree is finished and cut over without it; the design's screens wait for the backend (GAPS.md, "Native sign in and onboarding", "Native You tab") |
 | Clear history in a conversation's menu (the prototype has it) | The backend can't clear a chat's history; dropped from N5b's menu until it can (decided 2026-11-07) |
 
+Waiting for design:
+
+| What | Why it waits |
+|---|---|
+| [#10566](https://github.com/open-chat-labs/open-chat/issues/10566): a progress bar for over-the-air updates of the web bundle (downloading, ready to restart, failed) | Needs the update mechanism (how updates are delivered and applied, what progress events the shell sends) and a design round (GAPS.md, "Native app tree", Over-the-air updates) |
+
 ## Invariants
 
 1. Logic the native tree needs is never copied from a legacy component or from `src/web`. It's

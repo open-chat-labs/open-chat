@@ -2757,6 +2757,7 @@
     "noVideo": "Trình duyệt của bạn không hỗ trợ nhúng video (embedded video)",
     "nUsersJoined": "{number} người dùng đã tham gia {level}",
     "offline": "Offine",
+    "offlineBanner": "Bạn đang ngoại tuyến. Nội dung bạn thấy có thể chưa được cập nhật.",
     "offlineError": "Xin lỗi - có vẻ như bạn đang ngoại tuyến vào lúc này",
     "offlineMessage": "Ngoại tuyến",
     "oneDay": "1 ngày",

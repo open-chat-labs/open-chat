@@ -2757,6 +2757,7 @@
     "noVideo": "Votre navigateur ne prend pas en charge la vidéo intégrée",
     "nUsersJoined": "{number} utilisateurs ont rejoint le {level}",
     "offline": "Hors ligne",
+    "offlineBanner": "Vous êtes hors ligne. Ce que vous voyez n'est peut-être pas à jour.",
     "offlineError": "Désolé, il semble que vous soyez hors ligne pour le moment",
     "offlineMessage": "Hors ligne",
     "oneDay": "Un jour",
