@@ -2065,7 +2065,7 @@ export class OpenChat {
                             return CommonResponses.failure();
                         }
                         if (resp.kind === "success" && !resp.group.frozen) {
-                            localUpdates.addGroupPreview(resp.group);
+                            this.#addGroupPreview(resp.group);
                             this.#getLatestMessagesBridgedUsers([resp.group]);
                             return CommonResponses.success();
                         } else if (resp.kind === "group_moved") {
@@ -2093,7 +2093,7 @@ export class OpenChat {
                                     return CommonResponses.failure();
                                 }
                             }
-                            localUpdates.addGroupPreview(resp);
+                            this.#addGroupPreview(resp);
                             this.#getLatestMessagesBridgedUsers([resp]);
                             return CommonResponses.success();
                         }
@@ -2101,6 +2101,15 @@ export class OpenChat {
                     })
                     .catch(CommonResponses.failure);
         }
+    }
+
+    // The chat list's updates can bring the chat in, with the user a member, while its preview is
+    // in flight: a group joined just before a reload, say. A preview takes precedence over the
+    // server's summary, and nothing would remove it, so the member would be shown a preview (#10579)
+    #addGroupPreview(chat: MultiUserChat): void {
+        const held = chatSummariesStore.value.get(chat.id);
+        if (held !== undefined && !isPreviewing(held)) return;
+        localUpdates.addGroupPreview(chat);
     }
 
     toggleMuteNotifications(
