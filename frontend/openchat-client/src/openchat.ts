@@ -9735,6 +9735,13 @@ export class OpenChat {
 
         // Held so the fold's answer can be compared with it: see `answerTouchesChat`
         const selectedBeforeFold = selectedServerChatSummaryStore.value;
+        // Only a selected chat the list held before the fold can have been taken away by it. One
+        // the route names that the list doesn't hold yet (a DM whose user is being looked up, a
+        // group being previewed) is still being set up by setSelectedChat (#10557)
+        const selectedIdBeforeFold = selectedChatIdStore.value;
+        const selectedHeldBeforeFold =
+            selectedIdBeforeFold !== undefined &&
+            chatSummariesStore.value.has(selectedIdBeforeFold);
 
         withPausedStores(() => {
             this.#updateReadUpToStore(chatsAddedUpdated);
@@ -9852,7 +9859,7 @@ export class OpenChat {
         const selectedChatId = selectedChatIdStore.value;
         if (selectedChatId !== undefined) {
             if (chatSummariesStore.value.get(selectedChatId) === undefined) {
-                publish("selectedChatInvalid");
+                if (selectedHeldBeforeFold) publish("selectedChatInvalid");
             } else {
                 const updatedEvents =
                     ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
