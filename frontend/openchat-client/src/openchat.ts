@@ -803,6 +803,7 @@ import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
+import { usersForFold } from "./utils/foldUsers";
 import { routeForMovedDirectChat } from "./utils/movedDirectChatRoute";
 import {
     movePreviousWalletFunds,
@@ -1037,6 +1038,9 @@ export class OpenChat {
     readonly #miniApps: MiniAppService | undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
     #notificationSubscriptionPoller: Poller | undefined = undefined;
+    // The users cached on this device, in the user store once this settles: the first chats
+    // fold waits for it, not for the network (see `usersForFold`)
+    #cachedUsersLoaded: Promise<void> = Promise.resolve();
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -1717,14 +1721,18 @@ export class OpenChat {
         this.#worker.send({ kind: "createUserClient", userId: user.userId });
         startSwCheckPoller();
 
+        // Asked for before the chats poller starts, so the first fold finds it set
+        this.#cachedUsersLoaded = this.#worker
+            .send({ kind: "getAllCachedUsers" })
+            .then((u) => userStore.addMany(u))
+            .catch((err) => console.warn("Failed to load the cached users", err));
+
         this.#startChatsPoller();
         this.#startBotsPoller();
         this.#startUserUpdatePoller();
         this.#stopWatchingForResume ??= watchForResume((reason, suspendedMs) =>
             this.#onResume(reason, suspendedMs),
         );
-        this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
-
         initNotificationStores();
         if (!anonUserStore.value) {
             this.#startOnlinePoller();
@@ -9769,7 +9777,11 @@ export class OpenChat {
             userIds.add(currentUserIdStore.value);
         }
 
-        await this.getMissingUsers(userIds);
+        // The first chats, from the cached snapshot, don't wait on the network for users the
+        // cache doesn't hold: they show as they load (#10563)
+        await usersForFold(initialLoad, this.#cachedUsersLoaded, () =>
+            this.getMissingUsers(userIds),
+        );
 
         // Held so the fold's answer can be compared with it: see `answerTouchesChat`
         const selectedBeforeFold = selectedServerChatSummaryStore.value;
