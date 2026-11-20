@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { OpenChatConfig } from "./config";
 import { connectionUnusableChanged } from "./stores/network";
 import { WorkerAgent } from "./workerAgent";
-import { offline } from "@shared";
+import { offline, serialiseWorkerError } from "@shared";
 
 class FakeWorker {
     static instance: FakeWorker | undefined;
@@ -43,25 +43,32 @@ describe("WorkerAgent", () => {
         window.OC_PRESTARTED_WORKER = undefined;
     });
 
-    test("a worker_error for an in-flight request rejects its promise with the parsed error", async () => {
+    // A WebKit DOMException keeps name and message on its prototype; serialising own properties
+    // only lost them, so a worker IndexedDB failure reached the crash log as {line, column, ...}
+    test("a worker_error rejects its request with the error's name, message and request kind", async () => {
         const agent = createAgent();
         const worker = FakeWorker.instance!;
 
         const promise = agent.send({ kind: "getUser" } as never);
         const sent = worker.posted.at(-1) as { correlationId: number };
 
-        const error = new Error("Worker has no agent to handle request: getUser");
+        const error = new DOMException(
+            "Attempt to check index constraints without an in-progress transaction",
+            "UnknownError",
+        );
         worker.onmessage!({
             data: {
                 kind: "worker_error",
                 requestKind: "getUser",
                 correlationId: sent.correlationId,
-                error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+                error: serialiseWorkerError(error),
             },
         } as MessageEvent);
 
         await expect(promise).rejects.toMatchObject({
-            message: "Worker has no agent to handle request: getUser",
+            name: "UnknownError",
+            message: "Attempt to check index constraints without an in-progress transaction",
+            requestKind: "getUser",
         });
     });
 

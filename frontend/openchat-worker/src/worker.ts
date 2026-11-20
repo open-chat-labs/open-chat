@@ -25,6 +25,7 @@ import {
     inititaliseLogger,
     MessagesReadFromServer,
     redactSecrets,
+    serialiseWorkerError,
     setMinLogLevel,
     shouldReportWorkerError,
     StorageUpdated,
@@ -174,7 +175,7 @@ const sendError = (kind: string, correlationId: number, payload?: unknown) => {
             kind: "worker_error",
             requestKind: kind,
             correlationId,
-            error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+            error: serialiseWorkerError(error),
         });
     };
 };
@@ -373,7 +374,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 kind: "worker_error",
                 requestKind: kind,
                 correlationId,
-                error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+                error: serialiseWorkerError(error),
             });
             return;
         }

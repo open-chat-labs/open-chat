@@ -134,9 +134,8 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /failed to delete record from object store/i,
     /unable to store record in object store/i,
     // "Attempt to delete range / get a record / open a cursor / get an index record ..." (#27293,
-    // #10401), "Attempt to check index constraints ..." (#32187): the same failure whichever
-    // operation happened to hit it
-    /attempt to .* without an in-progress transaction/i,
+    // #10401): the same failure whichever operation happened to hit it
+    /database without an in-progress transaction/i,
     // Chrome's IndexedDB lost the blob file behind a record (#28921)
     /data lost due to missing file/i,
     // Safari / Firefox-on-iOS dropping the IndexedDB connection; only a reload recovers it
@@ -309,6 +308,18 @@ export function shouldReportMessage(name: string, message: string): boolean {
 export function shouldReportWorkerError(kind: string, error: unknown): boolean {
     if (!shouldReportError(error)) return false;
     return !(callerToleratedErrorKinds.has(kind) && isDeadLedgerError(error));
+}
+
+// Serialise a failed request's error for the trip from the worker to the client. Own properties
+// alone are not enough: WebKit's DOMException keeps `name`, `message` and `code` on its prototype,
+// so an IndexedDB failure arrived as `{line, column, sourceURL, stack}` and the reason was lost.
+export function serialiseWorkerError(error: unknown): string {
+    if (error === null || typeof error !== "object") return JSON.stringify(error ?? null);
+    const keys = new Set(Object.getOwnPropertyNames(error));
+    for (const key of ["name", "message", "code"]) {
+        if (key in error) keys.add(key);
+    }
+    return JSON.stringify(error, [...keys]);
 }
 
 // Whether a rejected promise means the user's session is no longer usable and they must be logged
