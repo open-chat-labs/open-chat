@@ -288,6 +288,11 @@ export default defineConfig([
             "@typescript-eslint/no-explicit-any": "off",
         },
     },
+    // The e2e suite's scripts (#10550) run in Node.
+    {
+        files: ["e2e/**/*.mjs"],
+        languageOptions: { globals: globals.node },
+    },
     globalIgnores([
         "**/candid/*.ts",
         "**/candid/*.js",
