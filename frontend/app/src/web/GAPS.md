@@ -424,7 +424,10 @@ design export needs. Each entry says where it came up.
       privately, Translate / Untranslate, Pin / Unpin, Copy link, Share, Cancel reminder, Retry,
       Reveal, Undelete, and Block (a group's) after the divider. Not offered yet: starting or
       following a thread (N8a), a reminder (no native sheet for its time yet: the web has
-      `ReminderDialogScreen`), tipping (the web hasn't it either). Info isn't offered on what
+      `ReminderDialogScreen`; when it comes, its toast says when with View to the OpenChat Bot's
+      DM, as the web's does: `reminderSetText`, decided 2026-11-19. A message's pending-reminder
+      marker and a list of pending reminders wait for the user's design round, as on the web:
+      "Message actions" under App), tipping (the web hasn't it either). Info isn't offered on what
       can't be acted on (deleted, blocked). The card is 240px with 48px rows, measured as it lays
       out. Past the notes' four placements round the message (ours): the whole card at the
       screen's bottom, over the message, the reactions above it (or at the screen's top); it
@@ -3168,7 +3171,26 @@ design export needs. Each entry says where it came up.
   alone; delete it too where the reader can delete others' messages) and remind
   (`ReminderDialogScreen`: the old desktop dialog's presets, `reminderTime`, or the browser's date
   and time field for a custom time, and a note; no design for either: `TODO(design)`, the reasons
-  and presets as `DurationChips`). Each runs in `features/conversation/messageMenu.ts`. Not yet:
+  and presets as `DurationChips`). Once set, its toast says when it goes off ("I'll remind you
+  today at 14:32", tomorrow, or on a date: `reminderSetText` in `logic/conversation/reminderSet`)
+  with View, which opens the OpenChat Bot's DM, where the bot's own "I will remind you about this
+  message at …" with Cancel reminder lands (decided 2026-11-19: that message was all the old UIs
+  had, and it's easy to miss). The bot's message arrives after `setMessageReminder` returns, so
+  its index isn't known: View opens the DM at its latest message as the chat list has it then
+  (`reminderConfirmationRoute`), normally that message, never at the DM's first unread (older
+  reminders that went off). If it hasn't synced yet, View lands one message short of it.
+  Each runs in `features/conversation/messageMenu.ts`. Not yet:
+  - **a message's pending reminder isn't marked** (waiting for the user's design round,
+    2026-11-19): a small ⏰ on a message with a reminder still to go off, its time in the
+    tooltip, and Cancel reminder in that message's menu (today Cancel reminder is only on the
+    bot's "I will remind you…" message in its DM). The client keeps no index of pending reminders
+    by message: they'd be collected from the OpenChat Bot DM's `message_reminder_created_content`
+    messages (each has `remindAt` and `reminderId`, is `hidden` once cancelled, and points at the
+    message through its reply context; a `message_reminder_content` with the same `reminderId`
+    means it has gone off), which means loading that DM's events, not only its latest;
+  - **no list of pending reminders** (waiting for the user's design round, 2026-11-19): somewhere
+    to see, and cancel, every reminder still to go off, in the profile or the OpenChat Bot DM's
+    header. It needs the same collection from the bot's DM as the marker above;
   - tip (`TODO(phase 5, 5b)`): the old trees' `TipBuilder` (a token, $0.01 / $0.10 / $1 steps
     or a custom amount, the fee, paying from an external wallet with its approval, the PIN; not in
     the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
