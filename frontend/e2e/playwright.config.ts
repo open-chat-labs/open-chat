@@ -23,13 +23,15 @@ export default defineConfig({
         screenshot: "only-on-failure",
     },
     projects: [
-        // src/web: a desktop viewport
+        // src/web: a desktop viewport. A test for one tree only is tagged @desktop-only or @mobile-only, so
+        // that `playwright test --list` (parity:ledger) shows where each test runs
         {
             name: "v3-desktop",
             use: { browserName: "chromium", viewport: { width: 1400, height: 900 } },
+            grepInvert: /@mobile-only/,
         },
         // src/native in a phone's browser: touch, no hover, a phone's width
-        { name: "v4-phone", use: { ...devices["Pixel 7"] } },
+        { name: "v3-mobile", use: { ...devices["Pixel 7"] }, grepInvert: /@desktop-only/ },
     ],
     webServer: process.env.OC_E2E_URL
         ? undefined

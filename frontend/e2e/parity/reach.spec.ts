@@ -43,7 +43,7 @@ describe("the reach report (#10554)", () => {
         };
         const old = reach(path.join(root, "old/App.svelte"), options);
         const fresh = reach(path.join(root, "new/App.svelte"), options);
-        const byTree = { v1: old, v2: old, v3: fresh, v4: fresh };
+        const byTree = { v1: old, v2: old, "v3 desktop": fresh, "v3 mobile": fresh };
 
         const report = reachReport(byTree, {});
         expect(report.gaps.map(([m]) => m)).toEqual(["tipMessage"]);

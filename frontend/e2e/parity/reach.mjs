@@ -22,11 +22,11 @@ const frontend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 export const TREES = {
     v1: "app/src/components/App.svelte",
     v2: "app/src/components_mobile/App.svelte",
-    v3: "app/src/web/App.svelte",
-    v4: "app/src/native/App.svelte",
+    "v3 desktop": "app/src/web/App.svelte",
+    "v3 mobile": "app/src/native/App.svelte",
 };
 export const OLD = ["v1", "v2"];
-export const NEW = ["v3", "v4"];
+export const NEW = ["v3 desktop", "v3 mobile"];
 
 // UI code lives here; anything else (the client, the agent, npm) ends the walk
 const UI_ROOTS = ["app/src", "openchat-ui", "component-lib"];

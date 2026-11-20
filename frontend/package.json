@@ -26,6 +26,7 @@
         "lint": "eslint . --fix",
         "test": "vitest --run",
         "parity:reach": "node e2e/parity/reach.mjs",
+        "parity:ledger": "node e2e/parity/ledger.mjs",
         "update:passkey-providers": "node openchat-client/scripts/update-passkey-providers.mjs",
         "check:ci": "npm run lint && node ./build-ci.mjs typecheck typecheck:agent typecheck:packages test",
         "build:ci": "npm run check:ci && npm run build:prod",

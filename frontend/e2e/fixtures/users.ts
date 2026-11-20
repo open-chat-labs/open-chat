@@ -9,8 +9,8 @@ import {
     type TestInfo,
 } from "@playwright/test";
 
-/** The new UI's two trees: src/web (desktop) and src/native (phones and the native apps). */
-export type Tree = "v3" | "v4";
+/** The new UI's two trees: src/web (desktop) and src/native (mobile: phones and the native apps). */
+export type Tree = "desktop" | "mobile";
 
 /** A passkey, as the virtual authenticator holds it. */
 type Credential = {
@@ -38,18 +38,21 @@ export type Users = {
     add(label: string): Promise<User>;
 };
 
-export function treeOf(testInfo: TestInfo): Tree {
-    return testInfo.project.name.startsWith("v4") ? "v4" : "v3";
+// a test's or a worker's info: both say which project it's running in
+type ProjectInfo = Pick<TestInfo, "project">;
+
+export function treeOf(info: ProjectInfo): Tree {
+    return info.project.name.endsWith("mobile") ? "mobile" : "desktop";
 }
 
 // the project's device, for a context the test makes itself
-function contextOptions(testInfo: TestInfo): BrowserContextOptions {
+export function contextOptions(info: ProjectInfo): BrowserContextOptions {
     const { baseURL, viewport, isMobile, hasTouch, userAgent, deviceScaleFactor } =
-        testInfo.project.use;
+        info.project.use;
     return { baseURL, viewport, isMobile, hasTouch, userAgent, deviceScaleFactor };
 }
 
-async function newUser(
+export async function newUser(
     browser: Browser,
     options: BrowserContextOptions,
     label: string,
@@ -85,7 +88,7 @@ export function freshUsername(prefix: string): string {
 /** Signs a new user up with a passkey, through the tree's own sign-up, and waits for the app. */
 export async function signUp(user: User, username: string): Promise<void> {
     const page = user.page;
-    if (user.tree === "v3") {
+    if (user.tree === "desktop") {
         await page.goto("/home");
         await page.getByRole("button", { name: "Create account" }).first().click();
         const dialog = page.getByRole("dialog", { name: "Create your account" });
@@ -110,7 +113,7 @@ export async function signIn(user: User, passkey: Credential): Promise<void> {
         credential: passkey,
     });
     const page = user.page;
-    if (user.tree === "v3") {
+    if (user.tree === "desktop") {
         await page.goto("/home");
         await page.getByRole("button", { name: "Sign in" }).first().click();
         await page.getByRole("button", { name: "Sign in with Passkey" }).click();
