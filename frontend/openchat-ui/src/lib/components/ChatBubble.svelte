@@ -228,7 +228,7 @@
     <span class="deleted-time">{time}</span>
   {/snippet}
   {#if hasDeletedInfo}
-    <div class="deleted-anchor">
+    <div class="deleted-anchor" data-oc-popover-open={popoverOpen ? '' : undefined}>
       <button
         bind:this={placeholder}
         type="button"

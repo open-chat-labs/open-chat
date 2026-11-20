@@ -18,6 +18,7 @@
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
+  import { barPlacement, overBubble, type BarPlacement } from '../hoverBar';
   import ReactionChips from './ReactionChips.svelte';
   import FileMessage from './FileMessage.svelte';
   import LinkPreview from './LinkPreview.svelte';
@@ -129,14 +130,13 @@
   const SWIPE_MAX_INSET = 90;
   // the inset hint: its gap from the row's edge
   const INSET_GAP = 4;
-  const BAR_W = 196; // hover bar width (3 reactions, picker, divider, reply/edit, more)
 
   const rows: HTMLDivElement[] = $state([]);
   const mores: HTMLSpanElement[] = $state([]);
   const emojis: HTMLSpanElement[] = $state([]);
 
   let hover = $state(-1);
-  let barLeft = $state('8px');
+  let bar = $state<BarPlacement>({ left: 8 });
 
   // gesture bookkeeping (never rendered)
   let touch = false;
@@ -190,20 +190,19 @@
     );
     for (let n = 0; el && n < 8; n++) {
       const r = el.getBoundingClientRect();
-      if (r.width > 0 && r.width < W.width - 1) return { left: r.left - W.left, width: r.width };
+      if (r.width > 0 && r.width < W.width - 1) return { left: r.left - W.left, top: r.top - W.top, width: r.width, height: r.height };
       el = el.firstElementChild;
     }
-    return { left: 0, width: W.width };
+    return { left: 0, top: 0, width: W.width, height: W.height };
   }
 
-  function barLeftFor(i: number) {
-    const b = bubbleOf(rows[i]);
-    if (!b) return '8px';
-    return `${b.width >= BAR_W + 16 ? b.left + b.width - BAR_W - 8 : b.left}px`;
-  }
+  // a deleted message's placeholder has its bar beside it (lib/hoverBar), clear of the bubble and its popover
+  const besideBar = (m: GroupMessage) => !!m.deleted;
 
   function showBar(i: number) {
-    barLeft = barLeftFor(i);
+    const b = bubbleOf(rows[i]);
+    const m = messages[i];
+    bar = b && m ? barPlacement(b, rows[i].getBoundingClientRect().width, besideBar(m), mirrored) : { left: 8 };
     hover = i;
   }
 
@@ -347,7 +346,7 @@
       const w = rows[i], b = bubbleOf(w);
       if (w && b) {
         const x = e.clientX - w.getBoundingClientRect().left;
-        over = x >= b.left && x <= b.left + b.width;
+        over = overBubble(x, b, besideBar(m), mirrored);
       }
     }
     if (over && hover !== i) {
@@ -556,7 +555,12 @@
           />
         {/if}
         {#if barred(m) && hover === i && !touch && activeMenu !== i}
-          <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
+          <span
+            class="bar"
+            style:left={bar.left === undefined ? undefined : `${bar.left}px`}
+            style:right={bar.right === undefined ? undefined : `${bar.right}px`}
+            style:top={bar.top === undefined ? undefined : `${bar.top}px`}
+            data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
             {#each onReact ? quickReactions : [] as c}
               {@const on = mine.includes(c)}
               <span
@@ -635,6 +639,13 @@
        stacking context: the group showing a bar comes forward so nothing paints over it */
     &.raised {
       z-index: 1;
+    }
+
+    /* a message's open popover (a deleted placeholder's, ChatBubble) reaches over its neighbours, before or after it
+       in the document: its group comes forward past a raised group's hover bar and a host's sticky date pill
+       (z-index 1 and 2 over the list), staying under dialogs and toasts (2026-11-20) */
+    &:has(:global([data-oc-popover-open])) {
+      z-index: 3;
     }
     width: 100%;
     box-sizing: border-box;

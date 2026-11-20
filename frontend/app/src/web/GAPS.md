@@ -1148,6 +1148,11 @@ design export needs. Each entry says where it came up.
   where it wouldn't fit above inside the scroller, a press elsewhere closes it, a mouse click
   keeps it open (a tap toggles it), a pen that can't hover taps as a touch does, a long-press
   neither opens nor closes it (`lib/deletedPopover`), and it closes when its placeholder goes.
+  The open popover's group comes forward over its neighbours (`z-index: 3`, EXPORT-LOG 2026-11-20:
+  each group is a stacking context, and the list puts the earlier message later in the document),
+  and a deleted placeholder's hover bar sits beside it, at its end, centred on it, clear of the
+  bubble and the popover (`lib/hoverBar`), where web 05 puts the bar over a narrow bubble's start;
+  every other message keeps web 05's placement.
 
 - **Video players for links** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design
   export: `PlayerCard`, a link's click-to-play player (a poster with a play button and the title,
