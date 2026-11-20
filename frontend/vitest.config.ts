@@ -49,6 +49,7 @@ export default defineConfig({
             "openchat-agent/src/**/*.{test,spec}.ts",
             "src-tauri/tests/**/*.{test,spec}.ts",
             "eslint-rules/**/*.{test,spec}.ts",
+            "e2e/parity/**/*.{test,spec}.ts",
         ],
         // build output of the sub-packages (openchat-*/lib); openchat-ui/src/lib is source and is tested
         exclude: ["**/node_modules/**", "*/lib/**"],
