@@ -109,6 +109,17 @@ describe("shouldReportError", () => {
         expect(shouldReportError(lost)).toBe(false);
     });
 
+    // Rollbar #32187: the same WebKit failure, hit by a put on an indexed store
+    test("silences WebKit's index-constraint form of the missing transaction", () => {
+        const indexCheck = new Error(
+            "Attempt to check index constraints without an in-progress transaction",
+        );
+        indexCheck.name = "UnknownError";
+        expect(shouldReportError(indexCheck)).toBe(false);
+        // our own transaction errors still report
+        expect(shouldReportError(new Error("Transaction is not of type 'Pending'"))).toBe(true);
+    });
+
     test("silences a wrong client clock in both directions", () => {
         // the client's clock is ahead, so the certificate the replica signed looks like the future
         expect(
