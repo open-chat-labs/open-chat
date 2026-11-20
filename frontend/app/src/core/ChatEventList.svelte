@@ -530,6 +530,11 @@
                 (args) => !scrollingToMessage && onLoadedPreviousMessages(args),
             ),
         ];
+        // An update can come in before the list is there to hear its "chatUpdated": a DM opened
+        // by its URL before the chat list has it is selected as an empty placeholder (so its list
+        // starts initialised, with nothing to load), and the real chat's first update can land
+        // before the list mounts (#10572). Catch up on anything newer once it's listening.
+        void loadNewMessagesIfRequired();
         return () => {
             unsubs.forEach((u) => u());
             destroyed = true;
