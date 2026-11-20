@@ -3,6 +3,14 @@
 // message's placeholder is a short bubble with a popover above its start edge: there the bar sits beside it, at its
 // end (its start for a mirrored, right-aligned bubble), centred on it, so it covers neither (by hand, 2026-11-20).
 
+/**
+ * Whether a message's bar sits beside its bubble: a deleted message's placeholder, and a revealed one's bubble, whose
+ * bin's popover is above it (the user's decision of 2026-11-20); every other message's sits over its bubble.
+ */
+export function barBeside(m: { deleted?: boolean; revealed?: boolean }): boolean {
+  return !!m.deleted || !!m.revealed;
+}
+
 /** The hover bar's width as laid out with all it can hold (3 reactions, picker, divider, reply / edit, more). */
 export const BAR_W = 196;
 /** The hover bar's height. */

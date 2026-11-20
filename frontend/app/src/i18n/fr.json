@@ -1642,6 +1642,7 @@
         "by": "Supprimé par {name}",
         "byModerator": "Supprimé par un modérateur",
         "byYou": "Supprimé par vous",
+        "label": "Supprimé",
         "mine": "Vous avez supprimé ce message",
         "theirs": "Ce message a été supprimé",
         "when": "{day} à {time}"

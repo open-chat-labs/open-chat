@@ -1642,6 +1642,7 @@
         "by": "Gelöscht von {name}",
         "byModerator": "Von einem Moderator gelöscht",
         "byYou": "Von dir gelöscht",
+        "label": "Gelöscht",
         "mine": "Du hast diese Nachricht gelöscht",
         "theirs": "Diese Nachricht wurde gelöscht",
         "when": "{day} um {time}"

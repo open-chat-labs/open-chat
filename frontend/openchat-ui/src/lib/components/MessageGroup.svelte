@@ -18,7 +18,7 @@
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
-  import { barPlacement, overBubble, type BarPlacement } from '../hoverBar';
+  import { barBeside, barPlacement, overBubble, type BarPlacement } from '../hoverBar';
   import ReactionChips from './ReactionChips.svelte';
   import FileMessage from './FileMessage.svelte';
   import LinkPreview from './LinkPreview.svelte';
@@ -196,8 +196,9 @@
     return { left: 0, top: 0, width: W.width, height: W.height };
   }
 
-  // a deleted message's placeholder has its bar beside it (lib/hoverBar), clear of the bubble and its popover
-  const besideBar = (m: GroupMessage) => !!m.deleted;
+  // a deleted message's placeholder, and a revealed one, have their bar beside them (lib/hoverBar), clear of the
+  // bubble and its popover
+  const besideBar = (m: GroupMessage) => barBeside(m);
 
   function showBar(i: number) {
     const b = bubbleOf(rows[i]);
@@ -605,6 +606,10 @@
                 data-tip={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}><span class="tool-icon" style:mask="var(--icon-{canEdit ? 'edit' : 'reply'}) center/contain no-repeat"></span></span
               >
             {/if}
+            {#if m.barNote}
+              <!-- informational, not a button: plain text in the toolbar, read with it -->
+              <span class="note">{t(m.barNote)}</span>
+            {/if}
             <span
               class="tool"
               class:active={activeMenu === i}
@@ -821,6 +826,15 @@
     &.beside {
       box-shadow: inset 0 0 0 1px var(--line-2);
     }
+  }
+
+  /* a short note before the ⋯ (a revealed message's "Deleted"): muted, in the bar's own type */
+  .note {
+    padding: 0 var(--space-6) 0 var(--space-8);
+    font: var(--weight-medium) var(--text-xs) / 1 var(--font-sans);
+    color: var(--ink-3);
+    white-space: nowrap;
+    user-select: none;
   }
 
   .quick,

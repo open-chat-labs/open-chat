@@ -2940,7 +2940,8 @@ design export needs. Each entry says where it came up.
     chat's or thread's server events, the client having merged the revealed content over them;
     none where the server's copy isn't deleted yet). It's only peeked at (`peekOffer`, over
     `messageMenu`, which the old trees read and still offer everything on): its menu offers Copy and
-    Undelete where `messageMenu` does, and Hide; no reactions (the hover bar's, the picker, native's
+    Undelete where `messageMenu` does, and Hide; its hover bar sits beside its bubble, as a
+    placeholder's, with "Deleted" before its ⋯ (`barNote`, `deletedMessage.label`); no reactions (the hover bar's, the picker, native's
     quick ones; its own show read only), no reply (the bar's, the menu's, a swipe, a double-click),
     edit, forward, pin, thread, reminder, report or tip, and on native no Info. Hide puts it back
     behind its placeholder on this device (`hideRevealedMessage`: the revealed content dropped, the

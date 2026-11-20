@@ -1642,6 +1642,7 @@
         "by": "由{name}删除",
         "byModerator": "由审核员删除",
         "byYou": "由你删除",
+        "label": "已删除",
         "mine": "你删除了这条消息",
         "theirs": "此消息已被删除",
         "when": "{day} {time}"

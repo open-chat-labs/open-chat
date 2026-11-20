@@ -1642,6 +1642,7 @@
         "by": "Usunięte przez {name}",
         "byModerator": "Usunięte przez moderatora",
         "byYou": "Usunięte przez ciebie",
+        "label": "Usunięte",
         "mine": "Ta wiadomość została przez ciebie usunięta",
         "theirs": "Ta wiadomość została usunięta",
         "when": "{day} o {time}"

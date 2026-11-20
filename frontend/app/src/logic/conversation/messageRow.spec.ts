@@ -789,6 +789,7 @@ describe("a revealed deleted message", () => {
             text: "hi",
             deleted: false,
             revealed: true,
+            barNote: "deletedMessage.label",
             deletedBy: 'deletedMessage.by {"name":"Bob"}',
             deletedAt: "D9",
         });
@@ -797,6 +798,7 @@ describe("a revealed deleted message", () => {
     test("is marked without who or when where the server's copy isn't deleted (yet)", () => {
         expect(revealedFields({ ...revealed.event, messageId: 1n }, words)).toEqual({
             revealed: true,
+            barNote: "deletedMessage.label",
         });
     });
 

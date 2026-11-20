@@ -1642,6 +1642,7 @@
         "by": "Eliminado por {name}",
         "byModerator": "Eliminado por un moderador",
         "byYou": "Eliminado por ti",
+        "label": "Eliminado",
         "mine": "Eliminaste este mensaje",
         "theirs": "Este mensaje fue eliminado",
         "when": "{day} a las {time}"

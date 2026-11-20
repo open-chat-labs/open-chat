@@ -1627,6 +1627,7 @@
         "by": "Deleted by {name}",
         "byModerator": "Deleted by a moderator",
         "byYou": "Deleted by you",
+        "label": "Deleted",
         "mine": "You deleted this message",
         "theirs": "This message was deleted",
         "when": "{day} at {time}"

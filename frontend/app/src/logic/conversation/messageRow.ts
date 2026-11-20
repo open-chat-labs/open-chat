@@ -467,6 +467,7 @@ type KindBase = {
     time: string;
     deleted: false;
     revealed?: true;
+    barNote?: string;
     deletedBy?: string;
     deletedAt?: string;
     reactions: GroupMessage["reactions"];
@@ -531,15 +532,21 @@ export function deletedText(
 /**
  * A revealed deleted message's mark (`isRevealedDeleted`): `revealed`, a bin in its ticks' place
  * (the old desktop's), whose popover says who deleted it and when, as the placeholder's did
- * (`deletedInfo`, from the server's copy: `ctx.deletion`). None for any other message.
+ * (`deletedInfo`, as kept when revealed or the server's copy's: `ctx.deletion`), and "Deleted" in
+ * its hover bar (`barNote`). None for any other message.
  */
 export function revealedFields(
     msg: Pick<Message, "messageId" | "deleted" | "content">,
     ctx: Pick<ConversationContext, "me" | "userName" | "dayAndTime" | "text" | "deletion">,
-): { revealed?: true } & DeletedInfo {
+): { revealed?: true; barNote?: string } & DeletedInfo {
     if (!isRevealedDeleted(msg)) return {};
     const deletion = ctx.deletion(msg.messageId);
-    return { revealed: true, ...(deletion === undefined ? {} : deletedInfo(deletion, ctx)) };
+    return {
+        revealed: true,
+        // its hover bar says so before its ⋯ (the user's decision of 2026-11-20)
+        barNote: ctx.text(i18nKey("deletedMessage.label")),
+        ...(deletion === undefined ? {} : deletedInfo(deletion, ctx)),
+    };
 }
 
 /** Who deleted a message, as its placeholder's popover names them, and when. */

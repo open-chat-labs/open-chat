@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { BAR_GAP, BAR_H, BAR_W, barPlacement, overBubble } from './hoverBar';
+import { BAR_GAP, BAR_H, BAR_W, barBeside, barPlacement, overBubble } from './hoverBar';
 
 const short = { left: 40, top: 10, width: 260, height: 44 };
 
@@ -41,5 +41,17 @@ describe('overBubble', () => {
     const right = { ...short, left: 600 };
     expect(overBubble(600 - BAR_GAP, right, true, true)).toBe(true);
     expect(overBubble(861, right, true, true)).toBe(false);
+  });
+});
+
+describe('barBeside', () => {
+  test("a deleted message's placeholder and a revealed one's bubble have their bar beside them", () => {
+    expect(barBeside({ deleted: true })).toBe(true);
+    expect(barBeside({ revealed: true })).toBe(true);
+  });
+
+  test("every other message's sits over its bubble", () => {
+    expect(barBeside({})).toBe(false);
+    expect(barBeside({ deleted: false, revealed: false })).toBe(false);
   });
 });
