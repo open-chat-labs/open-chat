@@ -108,6 +108,15 @@ describe("a message's actions", () => {
         }
     });
 
+    // an edit sent before the backend has the message fails with MessageNotFound and is undone
+    test("1 (#10568): Edit isn't offered until the message is confirmed", () => {
+        const unconfirmed = messageMenu(mine({ confirmed: false }));
+        expect(unconfirmed.actions.has("edit")).toBe(false);
+        // the old trees' double-click and swipe read canEdit
+        expect(unconfirmed.canEdit).toBe(false);
+        expect(messageMenu(mine()).actions.has("edit")).toBe(true);
+    });
+
     test("someone else's message in a DM is deleted for you only", () => {
         const actions = messageMenu(
             input({

@@ -117,7 +117,8 @@ const DELETED_REVEAL_WINDOW_MS = 5 * 60 * 1000;
  * Pin is never offered in a thread or a DM, tip never on the user's own, an unconfirmed, failed
  * or inert message, or one with no one to pay. Undelete and reveal are offered only for the
  * user's own deletion within five minutes (a moderator's deletion of someone else's message can
- * always be revealed), and delete never on a call still in progress.
+ * always be revealed), and delete never on a call still in progress. Edit is offered only on the
+ * user's own confirmed message.
  */
 export function messageMenu(input: MessageMenuInput): MessageMenu {
     const { message: msg, userId, confirmed, failed, permissions } = input;
@@ -141,7 +142,9 @@ export function messageMenu(input: MessageMenuInput): MessageMenu {
     const canRevealBlocked = content.kind === "blocked_content";
     const canUndelete = msg.deleted && content.kind !== "deleted_content";
 
-    const canEdit = me && input.supportsEdit && !msg.deleted && isEditableContent(content.kind);
+    // an edit before the backend has the message fails with MessageNotFound (#10568)
+    const canEdit =
+        me && confirmed && input.supportsEdit && !msg.deleted && isEditableContent(content.kind);
     const canTip =
         input.tipsEnabled &&
         permissions.tip &&
