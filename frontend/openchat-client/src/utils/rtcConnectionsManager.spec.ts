@@ -23,6 +23,11 @@ const peers = vi.hoisted(() => ({ instances: [] as FakePeer[] }));
 class FakePeer {
     destroyed = false;
     disconnected = false;
+    reconnects = 0;
+    reconnect() {
+        this.reconnects += 1;
+        this.disconnected = false;
+    }
     handlers = new Map<string, Handler>();
     connections: FakeConn[] = [];
     constructor(
@@ -46,6 +51,27 @@ class FakePeer {
 
 vi.mock("peerjs", () => ({ default: FakePeer }));
 
+// whether the app is offline, as the client's store says
+const network = vi.hoisted(() => {
+    let offline = false;
+    const subscribers = new Set<(offline: boolean) => void>();
+    return {
+        setOffline(value: boolean) {
+            offline = value;
+            subscribers.forEach((s) => s(value));
+        },
+        offlineStore: {
+            subscribe(fn: (offline: boolean) => void) {
+                subscribers.add(fn);
+                fn(offline);
+                return () => subscribers.delete(fn);
+            },
+        },
+    };
+});
+
+vi.mock("../stores/network", () => ({ offlineStore: network.offlineStore }));
+
 const iceServers = [{ urls: "turn:example" }];
 
 describe("RtcConnectionsManager", () => {
@@ -59,6 +85,8 @@ describe("RtcConnectionsManager", () => {
 
     afterEach(() => {
         vi.unstubAllGlobals();
+        vi.useRealTimers();
+        network.setOffline(false);
     });
 
     async function setup() {
@@ -199,5 +227,78 @@ describe("RtcConnectionsManager", () => {
         peer.emit("connection", incoming);
         incoming.emit("data", { hello: 1 });
         expect(received).toEqual([{ hello: 1 }]);
+    });
+
+    describe("reconnecting to the signalling server", () => {
+        function disconnect(peer: FakePeer) {
+            peer.disconnected = true;
+            peer.emit("disconnected", peer.id);
+        }
+
+        it("backs off between attempts while online, and starts again once open", async () => {
+            const { peer } = await setup();
+            vi.useFakeTimers();
+
+            disconnect(peer);
+            expect(peer.reconnects).toBe(0);
+            vi.advanceTimersByTime(1_000);
+            expect(peer.reconnects).toBe(1);
+
+            // the attempt failed
+            disconnect(peer);
+            vi.advanceTimersByTime(1_999);
+            expect(peer.reconnects).toBe(1);
+            vi.advanceTimersByTime(1);
+            expect(peer.reconnects).toBe(2);
+
+            peer.emit("open", peer.id);
+            disconnect(peer);
+            vi.advanceTimersByTime(1_000);
+            expect(peer.reconnects).toBe(3);
+        });
+
+        it("waits while offline, then reconnects as soon as the app is back", async () => {
+            const { peer } = await setup();
+            vi.useFakeTimers();
+            network.setOffline(true);
+
+            disconnect(peer);
+            vi.advanceTimersByTime(10 * 60_000);
+            expect(peer.reconnects).toBe(0);
+
+            network.setOffline(false);
+            vi.advanceTimersByTime(0);
+            expect(peer.reconnects).toBe(1);
+        });
+
+        it("waits for the app to be back when it goes offline during the backoff", async () => {
+            const { peer } = await setup();
+            vi.useFakeTimers();
+
+            disconnect(peer);
+            vi.advanceTimersByTime(1_000);
+            network.setOffline(true);
+            // the attempt failed, offline
+            disconnect(peer);
+            vi.advanceTimersByTime(10 * 60_000);
+            expect(peer.reconnects).toBe(1);
+
+            network.setOffline(false);
+            vi.advanceTimersByTime(0);
+            expect(peer.reconnects).toBe(2);
+        });
+
+        it("drops a pending reconnect when the peer closes", async () => {
+            const { peer } = await setup();
+            vi.useFakeTimers();
+            network.setOffline(true);
+
+            disconnect(peer);
+            peer.destroyed = true;
+            peer.emit("close");
+            network.setOffline(false);
+            vi.advanceTimersByTime(60_000);
+            expect(peer.reconnects).toBe(0);
+        });
     });
 });

@@ -16,6 +16,7 @@ import { vi } from "vitest";
 import {
     abortInFlightQueries,
     createQueryAwareFetch,
+    offlineAwareBackoff,
     QUERY_EXPIRY_SAFE_AGE_MS,
     ResyncingHttpAgent,
     TIME_RESYNC_MIN_INTERVAL_MS,
@@ -173,6 +174,78 @@ describe("createQueryAwareFetch", () => {
 
         // The stale signed request never went out again. Any later query is a new request.
         expect(sentBodies.slice(1)).not.toContain(sentBodies[0]);
+    });
+});
+
+describe("offlineAwareBackoff", () => {
+    function failingAgent(offline: () => boolean) {
+        const base = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
+        const agent = HttpAgent.createSync({
+            identity: new AnonymousIdentity(),
+            host: "https://icp-api.io",
+            verifyQuerySignatures: false,
+            retryTimes: 3,
+            backoffStrategy: offlineAwareBackoff(offline),
+            fetch: base as unknown as typeof fetch,
+        });
+        return { agent, base };
+    }
+
+    async function settle(promise: Promise<unknown>) {
+        const settled = promise.then(
+            () => "resolved",
+            () => "rejected",
+        );
+        await vi.runAllTimersAsync();
+        return settled;
+    }
+
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    test("follows the inner backoff while online", () => {
+        const delays = [700, 1_100, null];
+        const backoff = offlineAwareBackoff(
+            () => false,
+            () => ({ next: () => delays.shift() ?? null }),
+        )();
+        expect([backoff.next(), backoff.next(), backoff.next()]).toEqual([700, 1_100, null]);
+    });
+
+    test("stops as soon as the app is offline", () => {
+        let offline = false;
+        const backoff = offlineAwareBackoff(
+            () => offline,
+            () => ({ next: () => 500 }),
+        )();
+        expect(backoff.next()).toBe(500);
+        offline = true;
+        expect(backoff.next()).toBeNull();
+    });
+
+    test("the agent sends a failing query once while offline", async () => {
+        const { agent, base } = failingAgent(() => true);
+        const result = agent.query(CANISTER_ID, { methodName: "m", arg: new Uint8Array() });
+        expect(await settle(result)).toBe("rejected");
+        expect(base).toHaveBeenCalledTimes(1);
+    });
+
+    test("the agent sends a failing update call once while offline", async () => {
+        const { agent, base } = failingAgent(() => true);
+        const result = agent.call(CANISTER_ID, {
+            methodName: "m",
+            arg: new Uint8Array(),
+            effectiveCanisterId: CANISTER_ID,
+        });
+        expect(await settle(result)).toBe("rejected");
+        expect(base).toHaveBeenCalledTimes(1);
+    });
+
+    test("the agent still retries a failing query while online", async () => {
+        const { agent, base } = failingAgent(() => false);
+        const result = agent.query(CANISTER_ID, { methodName: "m", arg: new Uint8Array() });
+        expect(await settle(result)).toBe("rejected");
+        expect(base).toHaveBeenCalledTimes(4);
     });
 });
 

@@ -824,6 +824,7 @@ import {
 } from "./utils/rtc";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { Semaphore } from "./utils/semaphore";
+import { runWhenOnline } from "./utils/online";
 import { withPausedStores } from "./utils/stores";
 import {
     durationFromMilliseconds,
@@ -1732,8 +1733,8 @@ export class OpenChat {
             this.#startOneSecBalanceUpdateJob();
             this.#startSolBalanceUpdateJob();
             this.#startDailyPuzzlePoller();
-            this.#worker
-                .send({ kind: "getUserStorageLimits" })
+            // Asked for once, so a start-up offline asks once it's back rather than failing
+            runWhenOnline(() => this.#worker.send({ kind: "getUserStorageLimits" }))
                 .then((storage) => {
                     storageStore.set(storage);
                 })
@@ -8050,16 +8051,19 @@ export class OpenChat {
         return this.#worker.send({ kind: "fcmTokenExists", fcmToken });
     }
 
+    // Registered once the app is online: offline, the call can only fail, and nothing would make
+    // it again until the next login
     addFcmToken(fcmToken: string): Promise<void> {
-        return this.#worker.send({ kind: "addFcmToken", fcmToken });
+        return runWhenOnline(() => this.#worker.send({ kind: "addFcmToken", fcmToken }));
     }
 
     removeFcmToken(fcmToken: string): Promise<void> {
         return this.#worker.send({ kind: "removeFcmToken", fcmToken });
     }
 
+    // Registered once the app is online, as `addFcmToken` is
     addApnsDevice(device: ApnsDevice): Promise<void> {
-        return this.#worker.send({ kind: "addApnsDevice", device });
+        return runWhenOnline(() => this.#worker.send({ kind: "addApnsDevice", device }));
     }
 
     removeApnsDevice(device: ApnsDevice): Promise<void> {

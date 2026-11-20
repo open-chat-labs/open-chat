@@ -1,6 +1,7 @@
 import {
     AgentError,
     HttpAgent,
+    type HttpAgentOptions,
     type Identity,
     IngressExpiryInvalidErrorCode,
 } from "@icp-sdk/core/agent";
@@ -275,6 +276,43 @@ export class ResyncingHttpAgent extends HttpAgent {
     }
 }
 
+// How many times the agent resends a request which failed, as its default
+const AGENT_RETRY_TIMES = 3;
+
+type BackoffStrategyFactory = NonNullable<HttpAgentOptions["backoffStrategy"]>;
+type BackoffStrategy = ReturnType<BackoffStrategyFactory>;
+
+// The agent's own default backoff (`ExponentialBackoff`, which it doesn't export): the first wait
+// around 750ms, each one half as long again as the last, each spread by up to half either way
+function agentDefaultBackoff(): BackoffStrategy {
+    let interval = 500;
+    let count = 0;
+    return {
+        next: () => {
+            if (count >= AGENT_RETRY_TIMES) return null;
+            count += 1;
+            interval = Math.min(interval * 1.5, 60_000);
+            return interval * (0.5 + Math.random());
+        },
+    };
+}
+
+/**
+ * The agent's retry backoff, except that it gives up while the app is offline. Offline, each
+ * query was sent up to four times by the agent, inside each of the retries `executeQuery` makes
+ * itself, and each update call up to four times, every attempt bound to fail.
+ */
+export function offlineAwareBackoff(
+    isOffline: () => boolean = offline,
+    makeBackoff: () => BackoffStrategy = agentDefaultBackoff,
+): BackoffStrategyFactory {
+    return () => {
+        const backoff = makeBackoff();
+        // A null delay tells the agent to stop retrying
+        return { next: () => (isOffline() ? null : backoff.next()) };
+    };
+}
+
 export function createHttpAgentSync(identity: Identity, icUrl: string): HttpAgent {
     const [agent] = createHttpAgentInternal(identity, icUrl);
     return agent;
@@ -291,6 +329,8 @@ function createHttpAgentInternal(identity: Identity, icUrl: string): [HttpAgent,
         identity,
         host: icUrl,
         verifyQuerySignatures: false,
+        retryTimes: AGENT_RETRY_TIMES,
+        backoffStrategy: offlineAwareBackoff(),
         fetch: createQueryAwareFetch(),
     });
     const fetchRootKey = !isMainnet(icUrl) && !offline();
