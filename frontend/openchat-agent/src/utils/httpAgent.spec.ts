@@ -15,6 +15,7 @@ import { utf8ToBytes } from "@noble/hashes/utils";
 import { vi } from "vitest";
 import {
     abortInFlightQueries,
+    createHttpAgentSync,
     createQueryAwareFetch,
     QUERY_EXPIRY_SAFE_AGE_MS,
     ResyncingHttpAgent,
@@ -555,5 +556,49 @@ describe("ResyncingHttpAgent", () => {
         await expect(result).resolves.toMatchObject({ status: "replied" });
         expect(replica.queriesAnswered).toBe(1);
         expect(replica.timeReads).toBe(0);
+    });
+});
+
+// Invariant 2 (#10580): off mainnet, no request goes out before the agent holds the replica's root
+// key. Sent sooner, the response is checked against mainnet's key and rejected, so an update the
+// replica carried out (registering a user) is reported as failed.
+describe("an agent for a local replica", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    test("sends an update only once it holds the replica's root key", async () => {
+        const replicaRootKey = new Uint8Array([1, 2, 3]);
+        let answerStatus!: () => void;
+        const statusAnswered = new Promise<void>((resolve) => (answerStatus = resolve));
+        let rootKeyWhenCallSent: Uint8Array | null | undefined;
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async (input: RequestInfo | URL) => {
+                const path = new URL(input.toString()).pathname;
+                if (path === "/api/v2/status") {
+                    await statusAnswered;
+                    return new Response(
+                        Cbor.encode({ root_key: replicaRootKey }) as Uint8Array<ArrayBuffer>,
+                    );
+                }
+                rootKeyWhenCallSent = agent.rootKey;
+                return new Response(null, { status: 202 });
+            }),
+        );
+        const agent = createHttpAgentSync(new AnonymousIdentity(), "http://localhost:8080");
+
+        const call = agent.call(CANISTER_ID, {
+            methodName: "m",
+            arg: new Uint8Array(),
+            effectiveCanisterId: CANISTER_ID,
+        });
+        // the replica is slow to give its root key: the call waits
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(rootKeyWhenCallSent).toBeUndefined();
+
+        answerStatus();
+        expect((await call).response.status).toBe(202);
+        expect(rootKeyWhenCallSent).toEqual(replicaRootKey);
     });
 });
