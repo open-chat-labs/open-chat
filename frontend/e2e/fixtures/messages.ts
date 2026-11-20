@@ -3,11 +3,11 @@ import type { Tree, User } from "./users";
 
 /** A message's menu items, by what they do, as each tree labels them. */
 const MENU_ITEMS = {
-    reply: { v3: "Quote reply", v4: "Reply" },
-    edit: { v3: "Edit", v4: "Edit" },
-    delete: { v3: "Delete", v4: "Delete" },
-    forward: { v3: "Forward", v4: "Forward" },
-    copyLink: { v3: "Copy message url", v4: "Copy link" },
+    reply: { desktop: "Quote reply", mobile: "Reply" },
+    edit: { desktop: "Edit", mobile: "Edit" },
+    delete: { desktop: "Delete", mobile: "Delete" },
+    forward: { desktop: "Forward", mobile: "Forward" },
+    copyLink: { desktop: "Copy message url", mobile: "Copy link" },
 } satisfies Record<string, Record<Tree, string>>;
 
 export type MessageMenuItem = keyof typeof MENU_ITEMS;
@@ -23,7 +23,7 @@ export function messageRow(user: User, text: string): Locator {
 /** The message menu of the open chat's message `text` (right-click, which both trees take). */
 function messageMenu(user: User): Locator {
     return user.page.getByRole("menu", {
-        name: user.tree === "v3" ? "Message actions" : "Message options",
+        name: user.tree === "desktop" ? "Message actions" : "Message options",
     });
 }
 
@@ -71,8 +71,8 @@ export async function react(
     emoji: string,
     remove = false,
 ): Promise<void> {
-    // v3's reactions are in the menu; v4's in a bar above it
-    const reaction = user.page.getByRole(user.tree === "v3" ? "menuitemcheckbox" : "button", {
+    // desktop's reactions are in the menu; mobile's in a bar above it
+    const reaction = user.page.getByRole(user.tree === "desktop" ? "menuitemcheckbox" : "button", {
         name: `${remove ? "Remove" : "React"} ${emoji}`,
     });
     await openMessageMenu(user, text, reaction);
@@ -104,10 +104,10 @@ export async function forwardTo(user: User, chatName: string): Promise<void> {
     const dialog = user.page.getByRole("dialog", { name: "Forward" });
     await dialog.getByRole("searchbox", { name: "Search chats" }).fill(chatName);
     await dialog.getByRole("option", { name: chatName }).click();
-    // v4 forwards to several chats at once
+    // mobile forwards to several chats at once
     await dialog
         .getByRole("button", {
-            name: user.tree === "v3" ? "Forward" : "Forward to 1 chat",
+            name: user.tree === "desktop" ? "Forward" : "Forward to 1 chat",
             exact: true,
         })
         .click();
@@ -124,7 +124,7 @@ export async function sendPhoto(user: User, caption: string): Promise<void> {
     const page = user.page;
     await page.getByRole("button", { name: "Add to message" }).click();
     const chooser = page.waitForEvent("filechooser");
-    if (user.tree === "v3") {
+    if (user.tree === "desktop") {
         await page.getByRole("menuitem", { name: "Photo or video" }).click();
     } else {
         await page.getByRole("button", { name: "Photos & videos" }).click();
@@ -132,7 +132,7 @@ export async function sendPhoto(user: User, caption: string): Promise<void> {
     await (await chooser).setFiles({ name: "photo.png", mimeType: "image/png", buffer: PHOTO });
     const box = page.getByPlaceholder(/caption/i);
     await box.fill(caption);
-    if (user.tree === "v3") {
+    if (user.tree === "desktop") {
         await box.press("Enter");
     } else {
         await page.getByRole("button", { name: "Send message" }).click();
@@ -141,7 +141,7 @@ export async function sendPhoto(user: User, caption: string): Promise<void> {
 
 /** Confirms deleting a message. */
 export async function confirmDelete(user: User): Promise<void> {
-    const dialog = user.page.getByRole(user.tree === "v3" ? "dialog" : "alertdialog", {
+    const dialog = user.page.getByRole(user.tree === "desktop" ? "dialog" : "alertdialog", {
         name: "Do you really want to delete this message?",
     });
     await dialog.getByRole("button", { name: "Delete", exact: true }).click();
@@ -166,9 +166,9 @@ export function composer(user: User): Locator {
     return user.page.getByPlaceholder(/message/i);
 }
 
-/** Sends what's in the composer: Enter on v3, the send (or save) button on a phone. */
+/** Sends what's in the composer: Enter on desktop, the send (or save) button on a phone. */
 export async function submit(user: User, editing = false): Promise<void> {
-    if (user.tree === "v3") {
+    if (user.tree === "desktop") {
         await composer(user).press("Enter");
     } else {
         await user.page

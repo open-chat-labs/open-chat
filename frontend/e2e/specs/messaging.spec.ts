@@ -47,7 +47,7 @@ test("a deleted message is gone for the other person", async ({ pair }) => {
     await messageAction(a, text, "delete");
     await confirmDelete(a);
 
-    // each tree says so in its own way (v3 folds deleted messages into "1 message deleted")
+    // each tree says so in its own way (desktop folds deleted messages into "1 message deleted")
     await expect(b.page.getByText(text, { exact: true })).toHaveCount(0);
 });
 

@@ -2,7 +2,7 @@
 // the app, what the old UI can do there and, for each new tree, either the test that shows the tree
 // does it too or why it doesn't:
 //
-//   { id, capability, legacy: ["file:line", …], v3: <entry>, v4: <entry> }
+//   { id, capability, legacy: ["file:line", …], desktop: <entry>, mobile: <entry> }
 //
 // where an entry is
 //   - a test's title: the test must run on that tree's project (playwright test --list)
@@ -23,7 +23,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const e2e = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The Playwright project each new tree's tests run in. */
-export const PROJECTS = { v3: "v3-desktop", v4: "v4-phone" };
+export const PROJECTS = { desktop: "v3-desktop", mobile: "v3-mobile" };
 
 /**
  * Checks `rows` against `testsByProject` (project → the titles of the tests that run in it).

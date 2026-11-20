@@ -12,7 +12,7 @@ const FORWARD = "a forwarded message reaches the chat it was forwarded to, marke
 const MENTION = "someone mentioned in a group sees the mention by their name";
 const PHOTO = "a photo reaches the other person with its caption";
 
-const both = (entry) => ({ v3: entry, v4: entry });
+const both = (entry) => ({ desktop: entry, mobile: entry });
 
 export const rows = [
     {
@@ -91,8 +91,10 @@ export const rows = [
         id: "msg-dblclick",
         capability: "Double-click a message: edit your own, reply to someone else's",
         legacy: ["components/home/ChatMessage.svelte:295"],
-        v3: { untested: "not yet" },
-        v4: { missing: "no double-click on a phone; v2 had none either (difference to decide)" },
+        desktop: { untested: "not yet" },
+        mobile: {
+            missing: "no double-click on a phone; v2 had none either (difference to decide)",
+        },
     },
     {
         id: "msg-react",
@@ -110,7 +112,7 @@ export const rows = [
             "components/home/ChatMessage.svelte:514",
             "components_mobile/home/ChatMessage.svelte:556",
         ],
-        ...both({ untested: "not yet (v3's picker is about 56 fixed emoji, GAPS.md)" }),
+        ...both({ untested: "not yet (desktop's picker is about 56 fixed emoji, GAPS.md)" }),
     },
     {
         id: "msg-forward",
@@ -200,7 +202,7 @@ export const rows = [
         id: "msg-rich-composer",
         capability: "Formatting shown live while writing (rich-text composer)",
         legacy: ["components_shared/RichTextEditor.svelte"],
-        ...both({ missing: "a plain text box; formatting shows once sent (difference to decide)" }),
+        ...both({ missing: "a plain text box; to be ported, Julian 2026-11-20 (#10576)" }),
     },
     {
         id: "msg-emoji-insert",
@@ -254,8 +256,8 @@ export const rows = [
         id: "msg-attach-drop",
         capability: "Drop a file on the conversation",
         legacy: ["components/home/DropTarget.svelte"],
-        v3: { untested: "not yet" },
-        v4: { missing: "no drop on a phone; v2 had none either (difference to decide)" },
+        desktop: { untested: "not yet" },
+        mobile: { missing: "no drop on a phone; v2 had none either (difference to decide)" },
     },
     {
         id: "msg-voice",
@@ -288,8 +290,8 @@ export const rows = [
             "components/home/TimeAndTicks.svelte:78",
             "components_mobile/home/message/MessageMetadata.svelte:50",
         ],
-        v3: { untested: "not yet (no tick on voice or file messages, GAPS.md)" },
-        v4: { untested: "not yet" },
+        desktop: { untested: "not yet (no tick on voice or file messages, GAPS.md)" },
+        mobile: { untested: "not yet" },
     },
     {
         id: "msg-expand-deleted",
@@ -301,8 +303,8 @@ export const rows = [
         id: "msg-download",
         capability: "Download a message's media from its menu",
         legacy: ["components_mobile/home/ChatMessageOptions.svelte:660"],
-        v3: { missing: "files download from their card; no menu item for media" },
-        v4: { missing: "files download; no menu item for media" },
+        desktop: { missing: "files download from their card; no menu item for media" },
+        mobile: { missing: "files download; no menu item for media" },
     },
     {
         id: "msg-throttle",
