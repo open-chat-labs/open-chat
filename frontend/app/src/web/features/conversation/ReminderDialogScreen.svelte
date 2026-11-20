@@ -5,12 +5,11 @@
      old dialog's words, and the browser's own date and time field for a custom time. -->
 <script lang="ts">
     import {
+        allChatsStore,
         i18nKey,
-        OPENCHAT_BOT_USER_ID,
         REMINDER_PRESETS,
         reminderPresetText,
         reminderTime,
-        routeForChatIdentifier,
         type OpenChat,
         type ReminderPreset,
     } from "@client";
@@ -20,7 +19,11 @@
     import TextArea from "@openchat/ui/src/lib/components/TextArea.svelte";
     import { getToastHost } from "@openchat/ui/src/lib/toasts.svelte";
     import { interpolateNewUi } from "@src/i18n/i18n";
-    import { reminderSetText } from "@src/logic/conversation/reminderSet";
+    import {
+        OPENCHAT_BOT_DM,
+        reminderConfirmationRoute,
+        reminderSetText,
+    } from "@src/logic/conversation/reminderSet";
     import { now } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
@@ -65,8 +68,9 @@
 
     // set, and the dialog closed: a toast says how it went, as the old dialog did. Set, it says when
     // it goes off, with View: the OpenChat Bot's DM, where its "I will remind you about this
-    // message at …" (with Cancel reminder) lands. That message arrives after the call returns, so
-    // the DM opens where a chat opens (its first unread, else its latest), not at the message.
+    // message at …" (with Cancel reminder) lands. The DM opens at its latest message, not at its
+    // first unread (reminderConfirmationRoute): that message arrives after the call returns, so
+    // its index isn't known here, but by the time View is used it's normally the latest.
     async function create(at: number) {
         // the words, read while the dialog is still mounted
         const formatter = $_;
@@ -97,13 +101,10 @@
             actionLabel: formatter("reminders.view"),
             // as long as a toast offering Undo, so there's time to use View
             duration: UNDO_TOAST_MS,
+            // the DM as the chat list has it when View is used, by then usually with the bot's
+            // confirmation as its latest message
             onAction: () =>
-                navigate(
-                    routeForChatIdentifier("chats", {
-                        kind: "direct_chat",
-                        userId: OPENCHAT_BOT_USER_ID,
-                    }),
-                ),
+                navigate(reminderConfirmationRoute(allChatsStore.value.get(OPENCHAT_BOT_DM))),
         });
     }
 </script>

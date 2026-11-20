@@ -3176,7 +3176,9 @@ design export needs. Each entry says where it came up.
   with View, which opens the OpenChat Bot's DM, where the bot's own "I will remind you about this
   message at …" with Cancel reminder lands (decided 2026-11-19: that message was all the old UIs
   had, and it's easy to miss). The bot's message arrives after `setMessageReminder` returns, so
-  View opens the DM where a chat opens (its first unread, else its latest), not at that message.
+  its index isn't known: View opens the DM at its latest message as the chat list has it then
+  (`reminderConfirmationRoute`), normally that message, never at the DM's first unread (older
+  reminders that went off). If it hasn't synced yet, View lands one message short of it.
   Each runs in `features/conversation/messageMenu.ts`. Not yet:
   - **a message's pending reminder isn't marked** (waiting for the user's design round,
     2026-11-19): a small ⏰ on a message with a reminder still to go off, its time in the
