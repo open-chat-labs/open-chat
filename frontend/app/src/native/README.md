@@ -91,7 +91,7 @@ native/
                      are still placeholders; Create group (NewGroupScreen,
                      new_group: Members, then Details), whose gates, rules and permissions are
                      the same pages on its draft (NewGroupSettingsScreen, new_group_settings,
-                     newGroupDraft)
+                     newGroupDraft.svelte)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when

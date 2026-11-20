@@ -1157,6 +1157,12 @@ design export needs. Each entry says where it came up.
     group is Diamond's to make, as on the web and the old pages (the switch says so, off).
     Leaving with something entered asks "Discard this group?". TODO(design): the steps' header
     ("New group" over "Add people" / "Details"), Next, Done and the discard question are ours.
+    Review (2026-11-20): Android's back on a page pushed over Create group closes that page (the
+    draft knows it's covered, `newGroupDraft.svelte.ts`), and is used up while the group is
+    being created; anything set in the draft counts as entered for the discard question; the new
+    group opens under Chats whatever the list shows (it isn't a favourite); Create goes by the
+    same checks as Save (`draftSavable`), and the Rules row says why when the rules can't be
+    saved (switched on, empty).
   - **Not built**: Bots and webhooks and Stats (Manage's last two rows) are still placeholders:
     the plan has "Bots: list + Add a bot; webhooks: Add webhook. Stats: as in the prototype", and
     the web has no Stats page either (the backend keeps only all-time counters). A community's

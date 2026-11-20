@@ -13,7 +13,6 @@
 <script lang="ts">
     import {
         allUsersStore,
-        chatListScopeStore,
         currentUserIdStore,
         directChatUsers,
         isDiamondStore,
@@ -45,8 +44,9 @@
     import { chipName } from "../details/invite.adapter";
     import InviteRow from "../details/InviteRow.svelte";
     import GeneralPage from "./GeneralPage.svelte";
-    import { holdNewGroup } from "./newGroupDraft";
+    import { holdNewGroup, NewGroupDraft } from "./newGroupDraft.svelte";
     import {
+        draftSavable,
         gatesSummary,
         invitable,
         permissionsSummary,
@@ -62,7 +62,8 @@
     // the draft: the client's blank group, held for the pages pushed over this screen
     const editor = new UpdateGroupState();
     editor.initialise(client.createCandidateGroup("group", false));
-    onDestroy(holdNewGroup(editor));
+    const draft = new NewGroupDraft(editor);
+    onDestroy(holdNewGroup(draft));
 
     let step = $state<"members" | "details">("members");
 
@@ -124,6 +125,9 @@
     }
 
     async function create() {
+        // the name as it's checked (draftSavable): trimmed
+        const name = editor.candidateGroup.name.trim();
+        if (name !== editor.candidateGroup.name) editor.candidateGroup.name = name;
         const outcome = await editor.saveGroup(client);
         switch (outcome.kind) {
             case "created_without_invites":
@@ -132,14 +136,15 @@
                     context.toast(interpolateNewUi($_, outcome.message));
                 }
                 // the new group is in the chat list by the next tick; it opens in this screen's
-                // place (the URL is still the list's)
+                // place (the URL is still the list's), under Chats whatever the list shows: a
+                // new group isn't a favourite (nor in a community)
                 await tick();
-                navigate(routeForChatIdentifier($chatListScopeStore.kind, outcome.chatId));
+                navigate(routeForChatIdentifier("chats", outcome.chatId));
                 return;
             case "failed":
                 context.toast(interpolateNewUi($_, outcome.message));
                 return;
-            // not valid: why is under the field
+            // not valid: why is under the field, or on the Rules row
             default:
                 return;
         }
@@ -147,12 +152,17 @@
 
     // ---- Back: a step back, and from the first, away (asking first with something entered)
 
-    const entered = $derived(picks.length > 0 || editor.candidateGroup.name.trim() !== "");
+    // anything picked or set: the people, or anything in the draft (the name, photo,
+    // description, disappearing messages, gates, rules, permissions)
+    const entered = $derived(picks.length > 0 || editor.hasChanges());
     let discarding = $state(false);
+    // Android's back is this screen's only while nothing is pushed over it (draft.covered), and
+    // stays used up while the group is being created (as the header's back is)
     useOverlay(
         overlays,
-        () => !editor.busy && !discarding && (step === "details" || entered),
+        () => !draft.covered && !discarding && (step === "details" || entered),
         () => back(),
+        () => editor.busy,
     );
     useOverlay(
         overlays,
@@ -243,6 +253,9 @@
                             icon={link.icon}
                             label={link.label}
                             value={linkValue(link.page)}
+                            help={link.page === "rules" && !editor.rulesValid
+                                ? $_("native.groupSettings.rules.needed")
+                                : ""}
                             onClick={() => context.push({ kind: "new_group_settings", page: link.page })} />
                     {/each}
                 {/snippet}
@@ -266,7 +279,7 @@
                 )}
                 size="lg"
                 fullWidth
-                disabled={!editor.valid || editor.busy}
+                disabled={!draftSavable(editor.candidateGroup, editor.valid) || editor.busy}
                 onClick={() => void create()} />
         {/if}
     </div>
