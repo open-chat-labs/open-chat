@@ -38,18 +38,21 @@ export type Users = {
     add(label: string): Promise<User>;
 };
 
-export function treeOf(testInfo: TestInfo): Tree {
-    return testInfo.project.name.startsWith("v4") ? "v4" : "v3";
+// a test's or a worker's info: both say which project it's running in
+type ProjectInfo = Pick<TestInfo, "project">;
+
+export function treeOf(info: ProjectInfo): Tree {
+    return info.project.name.startsWith("v4") ? "v4" : "v3";
 }
 
 // the project's device, for a context the test makes itself
-function contextOptions(testInfo: TestInfo): BrowserContextOptions {
+export function contextOptions(info: ProjectInfo): BrowserContextOptions {
     const { baseURL, viewport, isMobile, hasTouch, userAgent, deviceScaleFactor } =
-        testInfo.project.use;
+        info.project.use;
     return { baseURL, viewport, isMobile, hasTouch, userAgent, deviceScaleFactor };
 }
 
-async function newUser(
+export async function newUser(
     browser: Browser,
     options: BrowserContextOptions,
     label: string,

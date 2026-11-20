@@ -1,4 +1,4 @@
-import { expectMessage, sendText } from "../fixtures/conversation";
+import { expectMessage, sendText } from "../fixtures/messages";
 import { createPrivateGroup } from "../fixtures/groups";
 import { openGroup } from "../fixtures/routes";
 import { freshUsername, signUp, test, userIdOf } from "../fixtures/users";

@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import { openGroup } from "./routes";
 import type { User } from "./users";
 
 /**
@@ -20,4 +21,21 @@ export async function createPrivateGroup(
     );
     expect(outcome.kind).toBe("created");
     return outcome.chatId!.groupId;
+}
+
+/**
+ * A private group `owner` makes for the two of them, which `member` joins through the app (an
+ * invited user's Join). Returns its id.
+ */
+export async function groupOfTwo(
+    owner: User,
+    member: User,
+    memberId: string,
+    name: string,
+): Promise<string> {
+    const groupId = await createPrivateGroup(owner, name, [memberId]);
+    await openGroup(member, groupId);
+    await member.page.getByRole("button", { name: /^Join/ }).first().click();
+    await expect(member.page.getByPlaceholder(/message/i)).toBeVisible();
+    return groupId;
 }

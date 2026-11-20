@@ -36,8 +36,9 @@ The first load of a fresh server takes 10–20s while Vite builds. A sign-up tak
 
 - **Act** through roles, names and placeholders (`getByRole("button", { name: "Join" })`), the way a screen reader sees the page. Don't use CSS classes or ids.
 - **Check** what the other person sees: B's screen shows what A sent. For setup that isn't what the spec is about, and to read state back, use the user's own client through the `OC_E2E` hook (`window.__ocTest.client`, typed in `fixtures/window.d.ts`). `createPrivateGroup` is an example.
-- **Make your own users and data.** Every test signs up the people it needs (`users.add`, `signUp`, `freshUsername`). Nothing depends on another test or on a fixed account. The local backend allows each user 10 communities, so a spec that creates them uses fresh users.
-- Put anything that differs between the trees in a helper in `fixtures/`, never in the spec.
+- **Make your own users and data.** Every test signs up the people it needs (`users.add`, `signUp`, `freshUsername`), or uses the worker's `pair` (`fixtures/pair.ts`): two people a worker's tests share, for tests that can't disturb each other through them, each working on messages with its own unique text. Nothing depends on another test or on a fixed account. The local backend allows each user 10 communities, so a spec that creates them uses fresh users.
+- Put anything that differs between the trees in a helper in `fixtures/`, never in the spec. `fixtures/messages.ts` has the message menu, reactions, the composer and attachments.
+- A test for one tree only is tagged `@v3-only` or `@v4-only` (`test("…", { tag: "@v3-only" }, …)`), and the other project leaves it out.
 - Wait with `expect(...)` and `expect.poll(...)`, never with `waitForTimeout`.
 
 ## Parity with the old UI
@@ -45,7 +46,7 @@ The first load of a fresh server takes 10–20s while Vite builds. A sign-up tak
 `frontend/e2e/parity` holds the switchover checks (#10550). They're run from `frontend/`:
 
 - `npm run parity:reach` lists the client methods the old trees call that the new ones don't (#10554).
-- The capability ledger arrives with the area PRs.
+- `npm run parity:ledger` checks the capability ledger (`parity/ledger/<area>.mjs`): for each thing the old UI does, each new tree names a test that runs on it, a difference someone decided, or says it's `missing` (not built) or `untested`. It lists every row that isn't covered yet. A test that's renamed without its ledger rows fails it.
 
 ## The hook
 
