@@ -16,6 +16,7 @@ import {
     initEnv,
     sassModulesAndMixins,
     nativeLayoutFlag,
+    PROFILE_LINK_TEMPLATE,
     WEB_FONTS_URL,
     webLayoutFlag,
 } from "./rollup.extras.mjs";
@@ -247,6 +248,7 @@ export default defineConfig({
             inject: {
                 data: {
                     fonts: fontsLink(webLayout || nativeLayout),
+                    profileLinkTemplate: PROFILE_LINK_TEMPLATE,
                     injectScript: inlineScripts.map((s) => `<script>${s}</script>`).join(""),
                     csp: `<meta http-equiv="Content-Security-Policy" content="${generateCspForScripts(
                         inlineScripts,

@@ -247,7 +247,8 @@
     --msg-stamp: var(--meta);
     --msg-link: var(--accent-bright);
     /* the message-link mixin's weight, for a link the mixin can't reach (in a host's shadow root, e.g. a spoiler) and
-       an @user mention (the app's <profile-link>, whose inline style takes it, else bold) */
+       an @user mention (the app's <profile-link>, whose inline style takes it, else bold); global.css sets it for the
+       whole page too, and lets a bold run (strong, b, a heading) keep its own weight */
     --msg-link-weight: var(--weight-semibold);
     max-width: 675px;
     min-width: 0;
@@ -362,6 +363,12 @@
      eye: the text's colour, semibold and underlined, as an @user mention (<profile-link>, semibold by --msg-link-weight) */
   .bubble .text.body :global(a:is([href^='?everyone'], [href^='?usergroup'])) {
     @include message-link(inherit);
+  }
+
+  /* a link in a bold run (strong, b, a heading) keeps the run's weight: semibold would be lighter than the text around
+     it (a group mention is a link in a strong of the host's own, and stays semibold) */
+  .bubble .text.body :global(:is(strong, b, h1, h2, h3, h4, h5, h6) a:not([href^='?everyone'], [href^='?usergroup'])) {
+    font-weight: inherit;
   }
 
   /* a host's body flows inline where it ends (its root, and a paragraph closing it), so the

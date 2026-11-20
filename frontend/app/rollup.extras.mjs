@@ -304,6 +304,12 @@ export function fontsLink(newLayouts) {
     return newLayouts ? "" : `<link href="${APP_FONTS_URL}" rel="stylesheet" />`;
 }
 
+// The template <profile-link> (web-components/profileLink.ts) copies its inline style from: one
+// copy for both builds' HTML (index.html through vite, the production page in rollup.config.mjs).
+// Its weight is --msg-link-weight, which only the new UIs set (semibold, as their message links);
+// the old UIs don't, so their mentions stay bold (700).
+export const PROFILE_LINK_TEMPLATE = `<template id="profile-link-template" style="cursor: pointer; font-weight: var(--msg-link-weight, 700); text-decoration: underline;"></template>`;
+
 // OC_WEB_LAYOUT as the build sees it. Native builds leave the new web UI out whatever it says: the
 // new UI doesn't handle the native apps' events yet (it never signals `svelteReady`).
 export function webLayoutFlag() {

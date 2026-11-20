@@ -33,6 +33,7 @@ import {
     manualChunks,
     maybeStringify,
     nativeLayoutFlag,
+    PROFILE_LINK_TEMPLATE,
     resetManualChunksCache,
     WEB_FONTS_URL,
     webLayoutFlag,
@@ -445,7 +446,7 @@ export default {
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
-                            <template id="profile-link-template" style="cursor: pointer; font-weight: var(--msg-link-weight, 700); text-decoration: underline;"></template>
+                            ${PROFILE_LINK_TEMPLATE}
                             <body>
                                 ${analyticsNoscript}
                             </body>

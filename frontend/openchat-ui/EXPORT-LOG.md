@@ -1098,6 +1098,8 @@
 - Used by the app's conversation (web and native): a reply sent as a photo, video, GIF, voice message, file, transfer, poll, prize or swap showed no quote.
 - Not in the design export: the design quotes only in text bubbles. TODO(design): a quote over media and cards (the app's `GAPS.md`, Media messages).
 
-## 2026-11-20 — @user mentions in a message semibold, as its links, by hand
-- `ChatBubble`: its `--msg-link-weight` (semibold, the message-link mixin's weight) now also weighs an @user mention in the body. The app's `<profile-link>` takes its weight from its inline style, now `var(--msg-link-weight, 700)` (the app's `index.html` template), so a mention in a bubble is semibold, as the bubble's links and group mentions are; anywhere that doesn't set it (the old UIs, the chat list's previews) stays bold. Comments only here; no props changed. At the user's request.
-- Not in the design export: to go back, drop `--msg-link-weight` from the template's weight (bold everywhere).
+## 2026-11-20 — @user mentions semibold, as a message's links, by hand
+- The app's `<profile-link>` takes its weight from its inline style, now `var(--msg-link-weight, 700)` (one template for both builds: `PROFILE_LINK_TEMPLATE` in the app's `rollup.extras.mjs`, which vite puts in `index.html` and rollup in the production page).
+- `global.css`: `body` sets `--msg-link-weight` to semibold, so a mention is semibold wherever the new UIs show message text (bubbles, the chat list's previews, pinned lines, dialogs), as a bubble's links and group mentions are; a spoiler's link (shadow root) reads it too. A bold run (`strong`, `b`, `h1`–`h6`) resets it (`initial`), so a mention there falls back to bold and a spoiler's link to the run's weight: never lighter than the text around it. The old UIs don't load `global.css` and keep bold.
+- `ChatBubble`: a link in a bold run keeps the run's weight (`font-weight: inherit`) rather than the message-link mixin's semibold; a group mention (a link in the host's own `strong`) stays semibold. Its `--msg-link-weight` stays, for the component used without `global.css`. No props changed. At the user's request.
+- Not in the design export: to go back, drop `--msg-link-weight` from the template's weight (bold everywhere) and the two `global.css` rules.
