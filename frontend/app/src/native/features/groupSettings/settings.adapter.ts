@@ -1,6 +1,7 @@
 import {
     defaultChatPermissions,
     editableGates,
+    groupChanges,
     isCompositeGate,
     ROLE_ADMIN,
     ROLE_MEMBER,
@@ -9,12 +10,22 @@ import {
     ROLE_OWNER,
     type AccessGateConfig,
     type ActiveLeafGate,
+    type CandidateGroupChat,
     type ChatPermissionRole,
     type ChatPermissions,
     type MessagePermission,
     type MessagePermissions,
+    type MultiUserChat,
+    type VersionedRules,
+    type OptionalChatPermissions,
+    type OptionalMessagePermissions,
 } from "@client";
 import { DAY_MS, gateAmountText, type GateLookups } from "@src/logic/access/gateValues";
+import {
+    MAX_DESC_LENGTH,
+    MAX_NAME_LENGTH,
+    MIN_NAME_LENGTH,
+} from "@src/logic/groupOrCommunity/group.svelte";
 import { gateLabel } from "@src/utils/access";
 import type { GroupSettingsPage } from "../../router/locations";
 
@@ -33,6 +44,19 @@ export function pageTitle(page: GroupSettingsPage, channel: boolean, t: Translat
         default:
             return t(`native.details.manage.${page}`);
     }
+}
+
+/**
+ * Whether a settings page can make its draft: once the chat is in, and for Rules once its rules
+ * are too (they come with its details). A Rules draft made without them would hold the default
+ * rules, and saving it would put those in place of the group's.
+ */
+export function settingsReady(
+    page: GroupSettingsPage,
+    chat: MultiUserChat | undefined,
+    rules: VersionedRules | undefined,
+): boolean {
+    return chat !== undefined && (page !== "rules" || rules !== undefined);
 }
 
 // ── access gates ──
@@ -349,28 +373,57 @@ export function generalRows(
     }));
 }
 
-/** Whether any message type has a role of its own. */
-export function customisedPerType(permissions: MessagePermissions): boolean {
-    return MESSAGE_TYPES.some((type) => permissions[type] !== undefined);
+/**
+ * What a set of message permissions is compared with: the messages' with the defaults
+ * (defaultChatPermissions, whose swap offers are for nobody), and threads' of their own with the
+ * chat's messages', which they follow without them. The accent, the count (changedPermissions)
+ * and the per-type switches all go by it.
+ */
+export function messageBaseline(
+    scope: "messagePermissions" | "threadPermissions",
+    permissions: ChatPermissions,
+): MessagePermissions {
+    return scope === "messagePermissions"
+        ? defaultChatPermissions().messagePermissions
+        : permissions.messagePermissions;
 }
 
-/** The message types' rows, each with its own role or Same as default. */
+/** Whether any message type's role is other than its baseline's (a role of its own, or none). */
+export function customisedPerType(
+    permissions: MessagePermissions,
+    baseline: MessagePermissions,
+): boolean {
+    return MESSAGE_TYPES.some((type) => permissions[type] !== baseline[type]);
+}
+
+/** The message types' rows, each with its own role or Same as default, marked where it's not the baseline's. */
 export function messageTypeRows(
     permissions: MessagePermissions,
-    defaults: MessagePermissions,
+    baseline: MessagePermissions,
     t: Translate,
 ): PermissionRow[] {
     return MESSAGE_TYPES.map((type) => ({
         key: type,
         label: t(`native.groupSettings.permissions.type.${type}`),
         value: roleId(permissions[type]),
-        changed: permissions[type] !== defaults[type],
+        changed: permissions[type] !== baseline[type],
     }));
 }
 
-/** Message permissions with every type following the default. */
-export function withoutPerType(permissions: MessagePermissions): MessagePermissions {
-    return { default: permissions.default };
+/**
+ * Message permissions with no customising of their own: the default kept, each type as the
+ * baseline has it. The baseline's own types stay (the defaults' swap offers for nobody), so
+ * switching customising off never opens one to everyone unseen.
+ */
+export function withoutPerType(
+    permissions: MessagePermissions,
+    baseline: MessagePermissions,
+): MessagePermissions {
+    const next: MessagePermissions = { default: permissions.default };
+    for (const type of MESSAGE_TYPES) {
+        if (baseline[type] !== undefined) next[type] = baseline[type];
+    }
+    return next;
 }
 
 /** How many permissions are other than the defaults; threads of their own count as one more. */
@@ -385,8 +438,110 @@ export function changedPermissions(permissions: ChatPermissions): number {
     const threads =
         permissions.threadPermissions === undefined
             ? 0
-            : 1 + messages(permissions.threadPermissions, permissions.messagePermissions);
+            : 1 +
+              messages(
+                  permissions.threadPermissions,
+                  messageBaseline("threadPermissions", permissions),
+              );
     return (
-        general + messages(permissions.messagePermissions, defaults.messagePermissions) + threads
+        general +
+        messages(
+            permissions.messagePermissions,
+            messageBaseline("messagePermissions", permissions),
+        ) +
+        threads
     );
+}
+
+// ── saving ──
+
+// A message permissions update that sets nothing: every field undefined
+function messagesSetNothing(update: OptionalMessagePermissions | undefined): boolean {
+    return update === undefined || Object.values(update).every((v) => v === undefined);
+}
+
+// A permissions update that sets nothing: no role, and message and thread updates that set
+// nothing ("set_to_none" for threads sets something)
+function setsNothing(update: OptionalChatPermissions): boolean {
+    const { messagePermissions, threadPermissions, ...roles } = update;
+    return (
+        Object.values(roles).every((v) => v === undefined) &&
+        messagesSetNothing(messagePermissions) &&
+        (threadPermissions === undefined ||
+            (threadPermissions !== "set_to_none" && messagesSetNothing(threadPermissions.value)))
+    );
+}
+
+/**
+ * Whether the draft has anything a save would change: the client's groupChanges, less a
+ * permissions update that sets nothing. That's one the client can't express, as threads given
+ * permissions of their own that are just "members send" (the client compares them with that, so
+ * sends nothing): Save would say "Changes saved" and the switch be off again on reopening.
+ */
+export function hasSavableChanges(
+    original: CandidateGroupChat,
+    candidate: CandidateGroupChat,
+): boolean {
+    const changes = groupChanges(original, candidate);
+    if (changes.permissions !== undefined && setsNothing(changes.permissions)) {
+        delete changes.permissions;
+    }
+    return Object.keys(changes).length > 0;
+}
+
+/** Whether a name is as long as a group's may be, as it's saved: trimmed. */
+export function nameLengthValid(name: string): boolean {
+    const length = name.trim().length;
+    return length >= MIN_NAME_LENGTH && length <= MAX_NAME_LENGTH;
+}
+
+/**
+ * Whether the draft can be saved (or created): the shared editor's checks (`editorValid`: the
+ * rules, the name untrimmed, the link), the name trimmed as the page shows it, and a description
+ * no longer than a group's may be, which the editor doesn't check.
+ */
+export function draftSavable(group: CandidateGroupChat, editorValid: boolean): boolean {
+    return (
+        editorValid &&
+        nameLengthValid(group.name) &&
+        group.description.length <= MAX_DESC_LENGTH
+    );
+}
+
+// ── a gate taken off, and its Undo ──
+
+/** What taking a gate off lost besides it: how the gates combined (down to one), the re-check (down to none). */
+export type GateRemovalLosses = { operator?: "and" | "or"; expiry?: bigint };
+
+export function gateRemovalLosses(
+    before: AccessGateConfig,
+    after: AccessGateConfig,
+): GateRemovalLosses {
+    return {
+        operator:
+            isCompositeGate(before.gate) && !isCompositeGate(after.gate)
+                ? before.gate.operator
+                : undefined,
+        expiry: before.expiry !== undefined && after.expiry === undefined ? before.expiry : undefined,
+    };
+}
+
+/**
+ * The gate config once Undo has put a gate back (`config` has it again; `wasComposite`, whether
+ * it combined gates before): what the removal lost, unless set again since (the gates combine
+ * again only through the gate put back, the re-check is still unset).
+ */
+export function withLossesRestored(
+    config: AccessGateConfig,
+    losses: GateRemovalLosses,
+    wasComposite: boolean,
+): AccessGateConfig {
+    let next = config;
+    if (losses.operator !== undefined && !wasComposite && isCompositeGate(next.gate)) {
+        next = { ...next, gate: { ...next.gate, operator: losses.operator } };
+    }
+    if (losses.expiry !== undefined && next.expiry === undefined) {
+        next = { ...next, expiry: losses.expiry };
+    }
+    return next;
 }

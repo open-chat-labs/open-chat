@@ -21,7 +21,7 @@
     import SettingsValue from "@openchat/ui/src/native/SettingsValue.svelte";
     import type { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import { navigate } from "@src/utils/navigation";
-    import { untrack } from "svelte";
+    import { onDestroy, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import { DIAMOND_URL } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
@@ -31,6 +31,7 @@
         canAddEntry,
         gateKey,
         gateOperator,
+        gateRemovalLosses,
         gateRows,
         operatorApplies,
         recheckDays,
@@ -38,6 +39,7 @@
         recheckOptions,
         shownGates,
         switchGate,
+        withLossesRestored,
         withoutStaleExpiry,
         type SetupGateKind,
         type SwitchGateKind,
@@ -57,7 +59,6 @@
     const days = $derived(recheckDays(config));
     const level = $derived(editor.candidate.level);
 
-    // the gate config as a whole: an entry taken off comes back as it was with Undo
     function setConfig(next: AccessGateConfig) {
         editor.candidate.gateConfig = next;
     }
@@ -73,12 +74,30 @@
         }
     }
 
+    // An entry taken off, with Undo: Undo puts back that gate alone, and what taking it off lost
+    // (how the gates combined, the re-check) unless that's been set again, so what was done in
+    // between stays. Its Undo goes once the page does, with the draft it would change.
+    let takeDownUndo: (() => void) | undefined;
+    onDestroy(() => takeDownUndo?.());
+
     function remove(gate: ActiveLeafGate, text: string) {
         const before = $state.snapshot(editor.gateConfig);
+        const removed = $state.snapshot(gate);
         editor.deleteGate(gate);
         setConfig(withoutStaleExpiry($state.snapshot(editor.gateConfig)));
-        context.toast($_("native.groupSettings.gates.removed", { values: { gate: text } }), () =>
-            setConfig(before),
+        const losses = gateRemovalLosses(before, $state.snapshot(editor.gateConfig));
+        takeDownUndo = context.toast(
+            $_("native.groupSettings.gates.removed", { values: { gate: text } }),
+            () => {
+                const current = $state.snapshot(editor.gateConfig);
+                // put back already (from its row)
+                if (shownGates(current).some((g) => gateKey(g) === gateKey(removed))) return;
+                const wasComposite = operatorApplies(current);
+                editor.addLeaf(removed);
+                setConfig(
+                    withLossesRestored($state.snapshot(editor.gateConfig), losses, wasComposite),
+                );
+            },
         );
     }
 

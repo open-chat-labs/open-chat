@@ -2,7 +2,6 @@ import {
     CommunityMap,
     defaultChatPermissions,
     defaultChatRules,
-    defaultOptionalChatPermissions,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
@@ -15,7 +14,6 @@ import {
     type CandidateGroupChat,
     type ChannelIdentifier,
     type ChannelSummary,
-    type ChatPermissions,
     type ChatEvent,
     type ChatIdentifier,
     type CommunitySummary,
@@ -45,7 +43,6 @@ import {
     groupChatFromCandidate,
     isPreviewingOrLapsed,
     mergeChatMetrics,
-    mergePermissions,
     mergeUnconfirmedThreadsIntoSummary,
     messageReadByThem,
     navigationAfterArchivingOpenChat,
@@ -973,53 +970,5 @@ describe("a message read by them", () => {
         expect(readByThemNowConfirmed([dm(4)], [], [message(4)], unconfirmed)).toEqual([104n]);
         // not loaded: the index it had is all there is
         expect(readByThemNowConfirmed([dm(3)], [], [], unconfirmed)).toEqual([104n]);
-    });
-});
-
-describe("merging a permissions update", () => {
-    // Invariant: threads that follow the messages' permissions keep following them through an
-    // update that doesn't touch them (a role changed in the settings gave them a set of their own)
-    test("threads without their own permissions keep none", () => {
-        const merged = mergePermissions(defaultChatPermissions(), {
-            ...defaultOptionalChatPermissions(),
-            pinMessages: ROLE_MODERATOR,
-        });
-        expect(merged.pinMessages).toBe(ROLE_MODERATOR);
-        expect(merged.threadPermissions).toBeUndefined();
-    });
-
-    test("threads given permissions of their own start from everyone's", () => {
-        const merged = mergePermissions(defaultChatPermissions(), {
-            ...defaultOptionalChatPermissions(),
-            threadPermissions: {
-                value: {
-                    default: ROLE_ADMIN,
-                    text: undefined,
-                    image: undefined,
-                    video: undefined,
-                    audio: undefined,
-                    file: undefined,
-                    poll: undefined,
-                    crypto: undefined,
-                    giphy: undefined,
-                    prize: undefined,
-                    memeFighter: undefined,
-                    p2pSwap: undefined,
-                },
-            },
-        });
-        expect(merged.threadPermissions?.default).toBe(ROLE_ADMIN);
-    });
-
-    test("threads' own permissions can go", () => {
-        const current: ChatPermissions = {
-            ...defaultChatPermissions(),
-            threadPermissions: { default: ROLE_ADMIN },
-        };
-        const merged = mergePermissions(current, {
-            ...defaultOptionalChatPermissions(),
-            threadPermissions: "set_to_none",
-        });
-        expect(merged.threadPermissions).toBeUndefined();
     });
 });

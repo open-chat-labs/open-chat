@@ -39,6 +39,7 @@
     } from "../details/details.adapter";
     import FactRow from "../details/FactRow.svelte";
     import AvatarCropSheet from "../start/AvatarCropSheet.svelte";
+    import { nameLengthValid } from "./settings.adapter";
 
     type Props = {
         editor: UpdateGroupState;
@@ -96,10 +97,8 @@
 
     // ---- the fields
 
-    const nameLength = $derived(group.name.trim().length);
-    const nameBad = $derived(
-        group.name.length > 0 && (nameLength < MIN_NAME_LENGTH || nameLength > MAX_NAME_LENGTH),
-    );
+    // the rule Save goes by (draftSavable): the name trimmed, as it's saved
+    const nameBad = $derived(group.name.length > 0 && !nameLengthValid(group.name));
     const descriptionTooLong = $derived(group.description.length > MAX_DESC_LENGTH);
 
     function grow(el: HTMLTextAreaElement) {

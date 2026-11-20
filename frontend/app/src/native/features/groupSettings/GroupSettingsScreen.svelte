@@ -1,12 +1,14 @@
 <!-- A group's or channel's settings page (native plan 11), pushed from its details without a URL:
      Edit group from the cover, and Manage's Access gates, Rules and Permissions (Bots and webhooks
      and Stats aren't built: GAPS.md). The chat is the selected one, held while the screen slides
-     out once it isn't; its page is GroupSettingsEditor's, mounted once the chat is in. -->
+     out once it isn't; its page is GroupSettingsEditor's, mounted once the chat is in (and for Rules, its rules). -->
 <script lang="ts">
     import {
         chatIdentifiersEqual,
+        selectedChatRulesStore,
         selectedChatSummaryStore,
         type MultiUserChat,
+        type VersionedRules,
     } from "@client";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { _ } from "svelte-i18n";
@@ -15,7 +17,7 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
     import GroupSettingsEditor from "./GroupSettingsEditor.svelte";
-    import { pageTitle } from "./settings.adapter";
+    import { pageTitle, settingsReady } from "./settings.adapter";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "group_settings" }>> =
         $props();
@@ -34,6 +36,12 @@
             $selectedChatSummaryStore?.kind === "direct_chat" ? undefined : $selectedChatSummaryStore,
         ),
     );
+    // its rules, in with its details (a moment after it's selected), held as the chat is
+    const heldRules = new HeldWhileLeaving<VersionedRules | undefined>(undefined);
+    const rules = $derived(heldRules.of(selected, $selectedChatRulesStore));
+    // the Rules page's draft is made from them, so it waits for them: made without, it would show
+    // the default rules, and saving would put those in place of the group's
+    const ready = $derived(settingsReady(screen.page, chat, rules));
 </script>
 
 <div class="group-settings">
@@ -45,10 +53,10 @@
             root={false}
             back={context.back}
             links={[]} />
-    {:else if chat !== undefined}
-        <GroupSettingsEditor {chat} page={screen.page} {context} />
+    {:else if ready && chat !== undefined}
+        <GroupSettingsEditor {chat} {rules} page={screen.page} {context} />
     {:else}
-        <!-- the chat isn't in yet (a moment after a cold start): Back stays -->
+        <!-- the chat (for Rules, its rules too) isn't in yet (a moment after a cold start): Back stays -->
         <NativePageHeader title="" onBack={context.back} />
     {/if}
 </div>

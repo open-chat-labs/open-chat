@@ -1,25 +1,39 @@
 import {
     defaultChatPermissions,
+    defaultChatRules,
+    nullMembership,
     ROLE_ADMIN,
+    ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_NONE,
     ROLE_OWNER,
     type AccessGateConfig,
+    type CandidateGroupChat,
     type ChatPermissionRole,
     type ChatPermissions,
     type CryptocurrencyDetails,
+    type MessagePermissions,
+    type MultiUserChat,
     type NervousSystemDetails,
 } from "@client";
 import type { GateLookups } from "@src/logic/access/gateValues";
+import { MAX_DESC_LENGTH, MAX_NAME_LENGTH } from "@src/logic/groupOrCommunity/group.svelte";
 import { describe, expect, test } from "vitest";
 import {
     canAddEntry,
     changedPermissions,
     customisedPerType,
+    draftSavable,
     gateOperator,
+    gateRemovalLosses,
     gateRows,
     generalRows,
+    hasSavableChanges,
+    messageBaseline,
     messageTypeRows,
+    nameLengthValid,
+    settingsReady,
+    withLossesRestored,
     operatorApplies,
     pageTitle,
     recheckDays,
@@ -230,11 +244,12 @@ describe("the permissions", () => {
         expect(rows.filter((r) => r.changed)).toHaveLength(1);
     });
 
-    // the defaults have swap offers for nobody, so they read as customised per type
+    // the defaults have swap offers for nobody: that's not customising, and a swap offer that
+    // follows the default is
     test("message types: their own role or Same as default, against the defaults", () => {
         const defaults = defaultChatPermissions().messagePermissions;
-        expect(customisedPerType(defaults)).toBe(true);
-        expect(customisedPerType(withoutPerType(defaults))).toBe(false);
+        expect(customisedPerType(defaults, defaults)).toBe(false);
+        expect(customisedPerType({ default: ROLE_MEMBER }, defaults)).toBe(true);
         const rows = messageTypeRows({ default: 1, image: ROLE_ADMIN }, defaults, t);
         expect(rows.find((r) => r.key === "image")).toMatchObject({
             value: "admin",
@@ -255,5 +270,166 @@ describe("the permissions", () => {
             threadPermissions: { ...defaultChatPermissions().messagePermissions },
         };
         expect(changedPermissions(changed)).toBe(2);
+    });
+
+    // Invariant: switching customising off never opens swap offers to everyone unseen
+    test("customising off keeps the default and the baseline's own types", () => {
+        const defaults = defaultChatPermissions().messagePermissions;
+        const custom: MessagePermissions = {
+            default: ROLE_ADMIN,
+            image: ROLE_OWNER,
+            p2pSwap: ROLE_MEMBER,
+        };
+        expect(withoutPerType(custom, defaults)).toEqual({
+            default: ROLE_ADMIN,
+            p2pSwap: ROLE_NONE,
+        });
+        expect(customisedPerType(withoutPerType(custom, defaults), defaults)).toBe(false);
+    });
+
+    test("threads go by the chat's messages, as the count does; the messages by the defaults", () => {
+        const permissions: ChatPermissions = {
+            ...defaultChatPermissions(),
+            messagePermissions: { default: ROLE_MEMBER, p2pSwap: ROLE_NONE, image: ROLE_ADMIN },
+            threadPermissions: { default: ROLE_MEMBER, p2pSwap: ROLE_NONE, image: ROLE_ADMIN },
+        };
+        const threads = messageBaseline("threadPermissions", permissions);
+        expect(threads).toBe(permissions.messagePermissions);
+        expect(messageBaseline("messagePermissions", permissions)).toEqual(
+            defaultChatPermissions().messagePermissions,
+        );
+        // threads the same as the messages: nothing marked, nothing counted but threads of their own
+        const rows = messageTypeRows(permissions.threadPermissions!, threads, t);
+        expect(rows.filter((r) => r.changed)).toEqual([]);
+        expect(customisedPerType(permissions.threadPermissions!, threads)).toBe(false);
+        // the messages' image role is one change, threads of their own another
+        expect(changedPermissions(permissions)).toBe(2);
+    });
+});
+
+describe("what a save would change", () => {
+    const group = (permissions: ChatPermissions = defaultChatPermissions()): CandidateGroupChat =>
+        ({
+            id: { kind: "group_chat", groupId: "g" },
+            kind: "candidate_group_chat",
+            name: "Group",
+            description: "",
+            historyVisible: true,
+            public: false,
+            frozen: false,
+            members: [],
+            permissions,
+            rules: { ...defaultChatRules("group"), newVersion: false },
+            gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+            level: "group",
+            membership: { ...nullMembership(), role: ROLE_OWNER },
+            eventsTTL: undefined,
+            messagesVisibleToNonMembers: false,
+            externalUrl: undefined,
+            verified: false,
+        }) as CandidateGroupChat;
+
+    test("nothing changed, nothing to save", () => {
+        expect(hasSavableChanges(group(), group())).toBe(false);
+    });
+
+    test("a role changed is saved", () => {
+        const changed = group({ ...defaultChatPermissions(), pinMessages: ROLE_OWNER });
+        expect(hasSavableChanges(group(), changed)).toBe(true);
+    });
+
+    // the client compares threads of their own with "members send", so these send nothing
+    test("threads given just members send aren't a change; given more, they are", () => {
+        const plain: ChatPermissions = {
+            ...defaultChatPermissions(),
+            messagePermissions: { default: ROLE_MEMBER },
+        };
+        const original = group(plain);
+        expect(
+            hasSavableChanges(
+                original,
+                group({ ...plain, threadPermissions: { default: ROLE_MEMBER } }),
+            ),
+        ).toBe(false);
+        expect(
+            hasSavableChanges(
+                original,
+                group({
+                    ...plain,
+                    threadPermissions: { default: ROLE_MEMBER, p2pSwap: ROLE_NONE },
+                }),
+            ),
+        ).toBe(true);
+    });
+
+    test("threads of their own taken off is a change", () => {
+        const withThreads: ChatPermissions = {
+            ...defaultChatPermissions(),
+            threadPermissions: { default: ROLE_ADMIN },
+        };
+        expect(hasSavableChanges(group(withThreads), group())).toBe(true);
+    });
+
+    test("a draft saves with a name of the right length trimmed, and a description that fits", () => {
+        const draft = group();
+        expect(draftSavable(draft, true)).toBe(true);
+        expect(draftSavable(draft, false)).toBe(false);
+        expect(draftSavable({ ...draft, name: "  ab " }, true)).toBe(false);
+        expect(draftSavable({ ...draft, name: "     " }, true)).toBe(false);
+        expect(draftSavable({ ...draft, name: " abc " }, true)).toBe(true);
+        expect(draftSavable({ ...draft, description: "x".repeat(MAX_DESC_LENGTH + 1) }, true)).toBe(
+            false,
+        );
+        expect(nameLengthValid("x".repeat(MAX_NAME_LENGTH))).toBe(true);
+        expect(nameLengthValid("x".repeat(MAX_NAME_LENGTH + 1))).toBe(false);
+    });
+
+    test("the Rules page waits for the rules; the others only for the chat", () => {
+        const chat = {} as MultiUserChat;
+        const rules = { text: "", enabled: false, version: 0 };
+        expect(settingsReady("rules", chat, undefined)).toBe(false);
+        expect(settingsReady("rules", chat, rules)).toBe(true);
+        expect(settingsReady("edit", chat, undefined)).toBe(true);
+        expect(settingsReady("edit", undefined, rules)).toBe(false);
+    });
+});
+
+describe("a gate taken off, and its Undo", () => {
+    const diamond = { kind: "diamond_gate" } as const;
+    const locked = { kind: "locked_gate" } as const;
+    const chit = { kind: "chit_earned_gate", minEarned: 5 } as const;
+    const WEEK = BigInt(7 * DAY);
+
+    test("taking the second of two off loses how they combined", () => {
+        const before = config(
+            { kind: "composite_gate", operator: "or", gates: [diamond, locked] },
+            WEEK,
+        );
+        const after = config(diamond, WEEK);
+        expect(gateRemovalLosses(before, after)).toEqual({ operator: "or", expiry: undefined });
+    });
+
+    test("taking the last off loses the re-check", () => {
+        expect(gateRemovalLosses(config(diamond, WEEK), config({ kind: "no_gate" }))).toEqual({
+            operator: undefined,
+            expiry: WEEK,
+        });
+    });
+
+    test("Undo restores what the removal lost", () => {
+        const back = config({ kind: "composite_gate", operator: "and", gates: [diamond, locked] });
+        expect(withLossesRestored(back, { operator: "or", expiry: WEEK }, false)).toEqual(
+            config({ kind: "composite_gate", operator: "or", gates: [diamond, locked] }, WEEK),
+        );
+    });
+
+    // Invariant: what was set after the removal stays
+    test("Undo leaves an operator and a re-check set since alone", () => {
+        const since = config(
+            { kind: "composite_gate", operator: "and", gates: [diamond, chit, locked] },
+            BigInt(30 * DAY),
+        );
+        // the gates already combined (another was added since): their operator is the user's
+        expect(withLossesRestored(since, { operator: "or", expiry: WEEK }, true)).toEqual(since);
     });
 });

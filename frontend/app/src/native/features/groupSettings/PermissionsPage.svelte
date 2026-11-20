@@ -1,8 +1,10 @@
 <!-- A group's or channel's permissions (native plan 11): the Members and Moderation cards, a row
      per permission with the lowest role that has it at the end (in the accent where it's not the
      default) opening the role menu; the Messages card, who can send by default, with "Customise per
-     message type" (the types' rows, each its own role or Same as default, under the switch); the
-     Threads card with "Separate thread permissions" (the same rows for threads under it); and
+     message type" (the types' rows, each its own role or Same as default, under the switch; off,
+     the types are as the defaults have them, so swap offers stay with nobody); the Threads card
+     with "Separate thread permissions" (the same rows for threads under it, against the
+     messages'); and
      Reset to defaults (the client's defaultChatPermissions). It edits the draft until it's saved.
      Someone whose role can't change them (`readOnly`: the owner's, as the backend has it) sees the
      roles only. -->
@@ -24,6 +26,7 @@
         changedPermissions,
         customisedPerType,
         generalRows,
+        messageBaseline,
         messageTypeRows,
         PERMISSION_CARDS,
         roleId,
@@ -39,20 +42,29 @@
     let { editor, readOnly }: Props = $props();
 
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
-    const defaults = defaultChatPermissions();
     const permissions = $derived(editor.candidateGroup.permissions);
     const roles = $derived(roleOptions(t, false));
     const typeRoles = $derived(roleOptions(t, true));
     const label = (id: string) => roles.find((r) => r.id === id)?.label ?? "";
     const typeLabel = (id: string) => typeRoles.find((r) => r.id === id)?.label ?? "";
 
-    // whether the types' rows show: on where any type has a role of its own; off clears them
-    let perType = $state(untrack(() => customisedPerType(permissions.messagePermissions)));
+    // what each set is compared with (messageBaseline): the defaults for the messages', the
+    // messages' for threads'
+    const messagesBaseline = $derived(messageBaseline("messagePermissions", permissions));
+    const threadsBaseline = $derived(messageBaseline("threadPermissions", permissions));
+    const baselineOf = (scope: Scope) =>
+        scope === "messagePermissions" ? messagesBaseline : threadsBaseline;
+
+    // whether the types' rows show: on where any type's role is other than the baseline's; off
+    // puts them back as the baseline has them (withoutPerType)
+    let perType = $state(
+        untrack(() => customisedPerType(permissions.messagePermissions, messagesBaseline)),
+    );
     let threadPerType = $state(
         untrack(() =>
             permissions.threadPermissions === undefined
                 ? false
-                : customisedPerType(permissions.threadPermissions),
+                : customisedPerType(permissions.threadPermissions, threadsBaseline),
         ),
     );
 
@@ -83,17 +95,18 @@
     function customise(scope: Scope, current: MessagePermissions, on: boolean) {
         if (scope === "messagePermissions") perType = on;
         else threadPerType = on;
-        if (!on) setMessages(scope, withoutPerType(current));
+        if (!on) setMessages(scope, withoutPerType(current, baselineOf(scope)));
     }
 
+    // threads start as the messages' (so not customised against them)
     function separateThreads(on: boolean) {
-        threadPerType = on && perType;
+        threadPerType = false;
         setMessages("threadPermissions", on ? { ...permissions.messagePermissions } : undefined);
     }
 
     function reset() {
         setPermissions(defaultChatPermissions());
-        perType = customisedPerType(defaults.messagePermissions);
+        perType = false;
         threadPerType = false;
     }
 
@@ -123,7 +136,7 @@
                     : "native.groupSettings.permissions.send",
             ),
             value: roleId(current.default),
-            changed: current.default !== defaults.messagePermissions.default,
+            changed: current.default !== baselineOf(scope).default,
         },
         (id) => setDefault(scope, current, id),
     )}
@@ -136,7 +149,7 @@
             onChange={(next) => customise(scope, current, next)} />
     {/if}
     {#if on || readOnly}
-        {#each messageTypeRows(current, defaults.messagePermissions, t) as row (row.key)}
+        {#each messageTypeRows(current, baselineOf(scope), t) as row (row.key)}
             {#if !readOnly || current[row.key as keyof MessagePermissions] !== undefined}
                 {@render roleRow(row, (id) => setType(scope, current, row.key, id), true)}
             {/if}

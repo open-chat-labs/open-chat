@@ -11,10 +11,10 @@
         anonUserStore,
         candidateGroupFromChat,
         chatIdentifierToString,
-        selectedChatRulesStore,
         selectedCommunitySummaryStore,
         type MultiUserChat,
         type OpenChat,
+        type VersionedRules,
     } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import NativeAlert from "@openchat/ui/src/native/NativeAlert.svelte";
@@ -36,15 +36,18 @@
     import GeneralPage from "./GeneralPage.svelte";
     import PermissionsPage from "./PermissionsPage.svelte";
     import RulesPage from "./RulesPage.svelte";
-    import { pageTitle } from "./settings.adapter";
+    import { savedThreadPermissions } from "./savedThreads";
+    import { draftSavable, hasSavableChanges, pageTitle } from "./settings.adapter";
 
     type Props = {
         chat: MultiUserChat;
+        /** The chat's rules: undefined until its details are in (GroupSettingsScreen waits for them on the Rules page). */
+        rules: VersionedRules | undefined;
         page: Exclude<GroupSettingsPage, "bots" | "stats">;
         context: ScreenContext;
     };
 
-    let { chat, page, context }: Props = $props();
+    let { chat, rules, page, context }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
@@ -59,17 +62,23 @@
         access.kind === "edit" && !(page === "permissions" && readOnly.includes("permissions")),
     );
 
-    // the draft: the chat as the page opened, which a save moves on
+    // the draft: the chat and its rules as the page opened, which a save moves on; the threads'
+    // permissions as saved last, while the client's local update would misread them (savedThreads)
     const editor = new UpdateGroupState();
-    editor.initialise(
-        candidateGroupFromChat(
-            untrack(() => chat),
-            untrack(() => $selectedChatRulesStore),
-        ),
+    const opened = candidateGroupFromChat(
+        untrack(() => chat),
+        untrack(() => rules),
     );
+    editor.initialise({
+        ...opened,
+        permissions: savedThreadPermissions.apply(opened.id, opened.permissions),
+    });
 
-    const changed = $derived(editor.hasChanges());
-    const canSave = $derived(changed && editor.valid && !editor.busy);
+    // only what a save would send counts as a change (hasSavableChanges)
+    const changed = $derived(hasSavableChanges(editor.original, editor.candidateGroup));
+    const canSave = $derived(
+        changed && draftSavable(editor.candidateGroup, editor.valid) && !editor.busy,
+    );
 
     // ---- saving, and the questions a change can need
 
@@ -92,9 +101,19 @@
     );
 
     async function save(yes: boolean = true) {
+        // the name as it's checked (draftSavable): trimmed
+        const name = editor.candidateGroup.name.trim();
+        if (name !== editor.candidateGroup.name) editor.candidateGroup.name = name;
         const outcome = await editor.saveGroup(client, yes);
         switch (outcome.kind) {
             case "success":
+                savedThreadPermissions.remember(
+                    chat.id,
+                    $state.snapshot(editor.candidateGroup.permissions.threadPermissions),
+                );
+                context.toast($_("native.groupSettings.saved"));
+                context.back?.();
+                return;
             case "unchanged":
                 context.toast($_("native.groupSettings.saved"));
                 context.back?.();

@@ -1110,13 +1110,29 @@ design export needs. Each entry says where it came up.
     the lowest role on the right in the accent where it isn't the client's default; the kit's
     `SettingsValue` gained `accent`, EXPORT-LOG 2026-11-16), the Messages card (who can send, then
     Customise per message type: the types' rows under the switch, each its own role or Same as
-    default; switching it off clears them; the defaults have swap offers for nobody, so it starts
-    on), the Threads card (Separate thread permissions, the same rows for threads under it), and
-    Reset to defaults (`defaultChatPermissions`) while anything differs. Someone whose role can't
-    change them (not the owner) sees the roles only, with no Save.
-  - **Found testing**: saving any permission gave threads a set of their own on the device (the
-    client's `mergePermissions` read "threads unchanged" as "threads like everyone"), so the next
-    Permissions page showed Separate thread permissions on; fixed in the client, for every tree.
+    default, against the defaults: the defaults' swap offers for nobody aren't customising, and
+    switching it off puts the types back as the defaults have them, so swap offers never open to
+    everyone unseen), the Threads card (Separate thread permissions, the same rows for threads
+    under it, marked and counted against the messages'), and Reset to defaults
+    (`defaultChatPermissions`) while anything differs. Someone whose role can't change them (not
+    the owner) sees the roles only, with no Save. Save counts only what a save would send
+    (`hasSavableChanges`): threads given just "members send" send nothing (the client compares
+    them with that), so they read as no change.
+  - **Found testing**: saving any permission gives threads a set of their own in the client's
+    local update (its `mergePermissions` reads "threads unchanged" as "threads like everyone"),
+    so the next Permissions page showed Separate thread permissions on. That merge is every
+    tree's, and the old trees' behaviour stays, so the native pages read the threads as they were
+    saved for the local update's minute (`savedThreads.ts`).
+  - **Review (2026-11-20)**: Save also needs a description that fits and a name of the right
+    length trimmed (as it's saved; the shared editor checks it untrimmed); the Rules page waits
+    for the rules (they come with the details), so its draft is never the default rules; a gate's
+    Undo puts back that gate alone (and the operator or re-check its removal lost, unless set
+    again since), and its toast's Undo goes when the page does.
+  - **Rules after leaving and coming back** (found on the device, 2026-11-20): two rules saves
+    within a minute left the first's rules showing for good once the client's local updates were
+    undone (each undo put back the rules it had replaced). The client's chat rules local update
+    now takes off only its own rules (`chat/detailsUpdates.ts`), for every tree: the old trees
+    showed the same stale rules after two saves, and now show the saved ones.
   - **Not built**: Bots and webhooks and Stats (Manage's last two rows) are still placeholders:
     the plan has "Bots: list + Add a bot; webhooks: Add webhook. Stats: as in the prototype", and
     the web has no Stats page either (the backend keeps only all-time counters). A community's
