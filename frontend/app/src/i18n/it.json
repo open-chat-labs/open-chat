@@ -3402,6 +3402,10 @@
     "showVideo": "Mostra filmato",
     "skip": "Salta",
     "startNewChat": "Avvia una nuova chat",
+    "startUpFailed": {
+        "body": "OpenChat non è riuscito a caricare il tuo account. Controlla la connessione, poi riprova.",
+        "title": "Impossibile connettersi a OpenChat"
+    },
     "stats": {
         "audioMessages": "messaggi audio",
         "cryptoTransfers": "messaggi con cryptovaluta",

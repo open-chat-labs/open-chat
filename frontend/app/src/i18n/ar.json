@@ -3402,6 +3402,10 @@
     "showVideo": "عرض الفيديو",
     "skip": "يتخطى",
     "startNewChat": "ابدأ محادثة جديدة",
+    "startUpFailed": {
+        "body": "تعذّر على OpenChat تحميل حسابك. تحقّق من اتصالك، ثم حاول مرة أخرى.",
+        "title": "تعذّر الاتصال بـ OpenChat"
+    },
     "stats": {
         "audioMessages": "رسالة صوتية",
         "cryptoTransfers": "رسالة مشفرة",

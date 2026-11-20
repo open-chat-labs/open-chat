@@ -3402,6 +3402,10 @@
     "showVideo": "वीडियो दिखाओ",
     "skip": "छोडना",
     "startNewChat": "एक नई चैट प्रारंभ करें",
+    "startUpFailed": {
+        "body": "OpenChat आपका खाता लोड नहीं कर सका। अपना कनेक्शन जांचें, फिर दोबारा कोशिश करें।",
+        "title": "OpenChat से कनेक्ट नहीं हो सका"
+    },
     "stats": {
         "audioMessages": "ऑडियो संदेश",
         "cryptoTransfers": "क्रिप्टो संदेश",

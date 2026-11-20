@@ -472,6 +472,7 @@ import {
     favouritesStore,
     hasFlag,
     identityStateStore,
+    startUpFailedStore,
     initNotificationStores,
     isDiamondStore,
     isLifetimeDiamondStore,
@@ -809,6 +810,7 @@ import {
     PREVIOUS_WALLETS_RETRY_INTERVAL,
 } from "./utils/previousWalletFunds";
 import { openChatIdentityOrSignOut } from "./utils/openChatIdentity";
+import { startUpSucceeded, type IdentityLoad } from "./utils/startUp";
 import { jwtExpiryMs } from "./utils/jwt";
 import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
 import { SyncPuller } from "./utils/syncPuller";
@@ -1100,9 +1102,7 @@ export class OpenChat {
             storage: this.#authIdentityStorage.storage,
         });
 
-        this.#authClient
-            .then((_) => this.#authIdentityStorage.getKeyAndChain())
-            .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
+        void this.#startUp();
 
         this.#setMinLogLevel((localStorage.getItem(configKeys.minLogLevel) ?? "warn") as LogLevel);
     }
@@ -1241,11 +1241,32 @@ export class OpenChat {
         });
     }
 
+    // Loads the session the last visit left (or the anonymous one). If that fails, the identity
+    // stays loading_user and startUpFailedStore says so, for the new UIs' Retry; nothing signs out
+    // (#10562).
+    async #startUp(): Promise<void> {
+        startUpFailedStore.set(false);
+        const succeeded = await startUpSucceeded(
+            async () => {
+                await this.#authClient;
+                const authIdentity = await this.#authIdentityStorage.getKeyAndChain();
+                return this.#loadedAuthenticationIdentity(authIdentity, undefined);
+            },
+            (err) => this.logError("Start-up couldn't load the identity", err),
+        );
+        startUpFailedStore.set(!succeeded);
+    }
+
+    /** Loads the session again after start-up failed (startUpFailedStore), with the same identity. */
+    retryStartUp(): Promise<void> {
+        return this.#startUp();
+    }
+
     async #loadedAuthenticationIdentity(
         identityKeyAndChain: IdentityKeyAndChain | undefined,
         authProvider: AuthProvider | undefined,
         registering: boolean = false,
-    ) {
+    ): Promise<IdentityLoad> {
         const anon = identityKeyAndChain === undefined;
         const identity = anon
             ? new AnonymousIdentity()
@@ -1280,6 +1301,8 @@ export class OpenChat {
         this.#startRegistryPoller();
 
         let createdUser: CreatedUser | undefined;
+        let signedOut = false;
+        let userLoadFailed = false;
         if (!anon) {
             const ocIdentity = await openChatIdentityOrSignOut(
                 setAuthIdentityResponse,
@@ -1296,7 +1319,7 @@ export class OpenChat {
                     this.logout();
                 },
             );
-            if (ocIdentity === undefined) return;
+            if (ocIdentity === undefined) return "signed_out";
 
             this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
             this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
@@ -1316,12 +1339,18 @@ export class OpenChat {
                         // This happens locally if you run a new instance of the IC and have an identity based on the
                         // previous version's root key in the cache
                         this.logout();
+                        signedOut = true;
+                    } else {
+                        // the network, with no cached user: the identity stays loading_user
+                        console.warn("Unable to load the current user", e);
+                        userLoadFailed = true;
                     }
                     return undefined;
                 });
         }
 
         this.onCreatedUser(createdUser ?? anonymousUser());
+        return signedOut ? "signed_out" : userLoadFailed ? "user_load_failed" : "loaded";
     }
 
     #reportEmptyChat(reason: string, context: Record<string, unknown>): void {

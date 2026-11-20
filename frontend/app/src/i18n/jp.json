@@ -3402,6 +3402,10 @@
     "showVideo": "ビデオを表示",
     "skip": "スキップ",
     "startNewChat": "新規チャットを開始する",
+    "startUpFailed": {
+        "body": "OpenChat がアカウントを読み込めませんでした。接続を確認してから、もう一度お試しください。",
+        "title": "OpenChat に接続できませんでした"
+    },
     "stats": {
         "audioMessages": "音声メッセージ",
         "cryptoTransfers": "暗号メッセージ",

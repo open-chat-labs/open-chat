@@ -3402,6 +3402,10 @@
     "showVideo": "הצג וידאו",
     "skip": "לדלג",
     "startNewChat": "התחל צ'אט חדש",
+    "startUpFailed": {
+        "body": "OpenChat לא הצליח לטעון את החשבון שלך. בדקו את החיבור ונסו שוב.",
+        "title": "לא ניתן להתחבר ל-OpenChat"
+    },
     "stats": {
         "audioMessages": "הודעות שמע",
         "cryptoTransfers": "הודעת קריפטו",

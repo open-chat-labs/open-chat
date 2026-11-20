@@ -3466,6 +3466,10 @@
     "showVideo": "Show video",
     "skip": "Skip",
     "startNewChat": "Start a new chat",
+    "startUpFailed": {
+        "body": "OpenChat couldn't load your account. Check your connection, then try again.",
+        "title": "Couldn't connect to OpenChat"
+    },
     "stats": {
         "audioMessages": "Audio message",
         "cryptoTransfers": "Crypto message",

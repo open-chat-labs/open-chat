@@ -3402,6 +3402,10 @@
     "showVideo": "Pokaż wideo",
     "skip": "Pominąć",
     "startNewChat": "Rozpocznij nowy czat",
+    "startUpFailed": {
+        "body": "OpenChat nie mógł wczytać Twojego konta. Sprawdź połączenie i spróbuj ponownie.",
+        "title": "Nie udało się połączyć z OpenChat"
+    },
     "stats": {
         "audioMessages": "Wiadomość dźwiękowa",
         "cryptoTransfers": "Wiadomość kryptograficzna",

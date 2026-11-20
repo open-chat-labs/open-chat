@@ -3402,6 +3402,10 @@
     "showVideo": "Hiển thị video",
     "skip": "Bỏ qua",
     "startNewChat": "Bắt đầu cuộc trò chuyện mới",
+    "startUpFailed": {
+        "body": "OpenChat không thể tải tài khoản của bạn. Hãy kiểm tra kết nối rồi thử lại.",
+        "title": "Không thể kết nối với OpenChat"
+    },
     "stats": {
         "audioMessages": "tin nhắn âm thanh",
         "cryptoTransfers": "Tin nhắn tiền điện tử",

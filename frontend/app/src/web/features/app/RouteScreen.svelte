@@ -7,16 +7,23 @@
         identityStateStore,
         querystringStore,
         routeStore,
+        startUpFailedStore,
+        type OpenChat,
     } from "@client";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { regionsFor } from "../../router/regions";
-    import { showsSignedOut, withoutAccount } from "@src/logic/auth/authFlow";
+    import { showsSignedOut } from "@src/logic/auth/authFlow";
     import AuthScreen from "../auth/AuthScreen.svelte";
     import { pageSignIns } from "@src/logic/auth/authDialog.svelte";
     import MarketingScreen from "../marketing/MarketingScreen.svelte";
     import AppScreen from "./AppScreen.svelte";
+    import { appGate } from "./appGate";
+
+    const client = getContext<OpenChat>("client");
 
     const signedOut = $derived(
         showsSignedOut(
@@ -31,9 +38,8 @@
         regionsFor($routeStore, signedOut, $querystringStore, $anonUserStore),
     );
 
-    const registering = $derived(withoutAccount($identityStateStore));
-    const loading = $derived(
-        !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
+    const gate = $derived(
+        appGate($identityStateStore, $chatsInitialisedStore, $startUpFailedStore),
     );
 </script>
 
@@ -49,9 +55,20 @@
             actionLabel="ui.navRail.home"
             actionHandler={() => navigate("/")} />
     </div>
-{:else if loading}
+{:else if gate === "loading"}
     <div class="page">
         <Spinner />
+    </div>
+{:else if gate === "failed"}
+    <!-- start-up couldn't load the session from before; still signed in, so Retry loads it again
+         (#10562) -->
+    <div class="page">
+        <EmptyState
+            preset="error"
+            title={$_("startUpFailed.title")}
+            body={$_("startUpFailed.body")}
+            actionLabel="ui.common.retry"
+            actionHandler={() => client.retryStartUp()} />
     </div>
 {:else}
     <AppScreen {regions} />

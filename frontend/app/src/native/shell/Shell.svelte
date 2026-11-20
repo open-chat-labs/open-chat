@@ -29,6 +29,7 @@
         routeStore,
         selectedChatSummaryStore,
         sortedCommunitiesStore,
+        startUpFailedStore,
         unreadDirectAndGroupCountsStore,
         chatIdentifierToString,
         type ChatIdentifier,
@@ -120,12 +121,14 @@
     // identity without an account, at Pick a username).
     const start = new StartStack();
     let onStart = $state(false);
-    const entry = $derived(startEntry($identityStateStore, $anonUserStore, onStart));
+    const entry = $derived(
+        startEntry($identityStateStore, $anonUserStore, onStart, $startUpFailedStore),
+    );
     $effect(() => {
         const now = entry;
         untrack(() => {
             if (now === "start" && !onStart) start.reset(startStepFor($identityStateStore));
-            if (now !== "loading") onStart = now === "start";
+            if (now !== "loading" && now !== "failed") onStart = now === "start";
         });
     });
 
@@ -679,6 +682,16 @@
     <div class="outside">
         {#if entry === "loading"}
             <Spinner />
+        {:else if entry === "failed"}
+            <!-- start-up couldn't load the session from before; still signed in, so Retry loads it
+                 again (#10562) -->
+            <EmptyState
+                preset="error"
+                title={$_("startUpFailed.title")}
+                body={$_("startUpFailed.body")}
+                actionLabel="ui.common.retry"
+                actionHandler={() => client.retryStartUp()}
+            />
         {:else}
             {#await import("../features/start/SignedOutStart.svelte") then { default: SignedOutStart }}
                 <SignedOutStart {start} {overlays} />

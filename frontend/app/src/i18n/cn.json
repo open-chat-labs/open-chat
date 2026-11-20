@@ -3402,6 +3402,10 @@
     "showVideo": "显示视频",
     "skip": "跳过",
     "startNewChat": "新建聊天",
+    "startUpFailed": {
+        "body": "OpenChat 无法加载您的账户。请检查网络连接，然后重试。",
+        "title": "无法连接到 OpenChat"
+    },
     "stats": {
         "audioMessages": "语音信息",
         "cryptoTransfers": "加密信息",
