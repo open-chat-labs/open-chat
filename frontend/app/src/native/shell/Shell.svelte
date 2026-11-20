@@ -12,6 +12,7 @@
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
+    import { Presence } from "@openchat/ui/src/native/presence.svelte";
     import { disableWalletFeature } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
     import {
@@ -67,9 +68,10 @@
     import { backAction } from "./back";
     import { listenForSystemBack } from "./systemBack";
     import { openOnWeb } from "./onWeb";
-    import { popOut, pushIn, underneathMs } from "./motion";
+    import { popOut, pushIn, TAB_BAR_HIDE_MS, underneathMs } from "./motion";
     import { Overlays } from "./overlays.svelte";
     import { tabBarTabs } from "./tabBar.adapter";
+    import { TabBarHides } from "./tabBarHides.svelte";
     import { TabStacks } from "./tabStacks.svelte";
     import {
         startsSwipe,
@@ -237,8 +239,21 @@
     });
 
     const pushed = $derived(stacks.steps.slice(1));
+    // A tab's root that takes the whole window for now (the Chats tab's search): the top
+    // screen's say (ScreenContext.hideTabBar)
+    const hides = new TabBarHides();
+    const barHidden = $derived(hides.hidden(stacks.steps[stacks.steps.length - 1]?.key));
     // the tab bar stays under pushed screens, but not inside a conversation
-    const barShown = $derived(showsTabBar(stacks.steps));
+    const barShown = $derived(showsTabBar(stacks.steps, barHidden));
+    // The root reaches the window's bottom as soon as the bar starts down, so what it shows takes
+    // the room at once (the bar slides off over it, nothing opens up behind), and keeps it until
+    // the bar is back up over it again (`TAB_BAR_HIDE_MS`): no gap either way
+    const rootFull = new Presence(TAB_BAR_HIDE_MS);
+    $effect.pre(() => {
+        const hidden = barHidden;
+        untrack(() => rootFull.set(hidden));
+    });
+    onDestroy(() => rootFull.dispose());
     // a tab's root and its bar, under a pushed screen, move out as one as it's pushed
     const covered = $derived(pushed.length > 0);
     // how long the screen under the top one takes to move, with the top one's slide
@@ -545,8 +560,9 @@
         pendingToast: showPendingToast,
         removals,
     };
-    const rootContext: Omit<ScreenContext, "toastFloor"> = { back: undefined, ...shared };
-    const pushedContext: Omit<ScreenContext, "toastFloor"> = { back, ...shared };
+    type HostContext = Omit<ScreenContext, "toastFloor" | "hideTabBar">;
+    const rootContext: HostContext = { back: undefined, ...shared };
+    const pushedContext: HostContext = { back, ...shared };
     // where toasts sit over a footer that grows: the top screen's say (ScreenContext.toastFloor)
     const floors = new ToastFloors();
     const toastFloor = $derived(floors.of(stacks.steps[stacks.steps.length - 1]?.key));
@@ -612,13 +628,18 @@
 {/snippet}
 
 {#if location.area === "tabs"}
-    <div class="shell" style:--underneath-ms={underneath}>
+    <div
+        class="shell"
+        style:--underneath-ms={underneath}
+        style:--tab-bar-hide-ms="{TAB_BAR_HIDE_MS}ms"
+    >
         <div class="stage">
             <!-- the swipe is a touch shortcut for the tab bar, which keyboards and screen readers use -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="root"
                 class:covered
+                class:full={rootFull.mounted}
                 inert={pushed.length > 0}
                 onpointerdown={onPointerDown}
                 onpointermove={onPointerMove}
@@ -644,6 +665,7 @@
                                 root={{ title: labels[tab] }}
                                 context={rootContext}
                                 {floors}
+                                {hides}
                             />
                         {/if}
                     </section>
@@ -660,17 +682,17 @@
                         in:pushIn={{ play: () => stacks.change !== "pop" }}
                         out:popOut={{ play: () => stacks.change === "pop" }}
                     >
-                        <ScreenHost {step} root={undefined} context={pushedContext} {floors} />
+                        <ScreenHost {step} root={undefined} context={pushedContext} {floors} {hides} />
                     </section>
                 {/each}
             {/key}
         </div>
 
-        <div class="bar" class:covered inert={!barShown}>
+        <div class="bar" class:covered class:hidden={barHidden} inert={!barShown}>
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <Toasts above={toastsAbove(stacks.steps)} floor={toastFloor} queue={toasts} />
+        <Toasts above={toastsAbove(stacks.steps, barHidden)} floor={toastFloor} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">
@@ -761,6 +783,22 @@
         position: absolute;
         inset: auto 0 0;
         z-index: 1;
+        // Hidden by a tab's root (the Chats tab's search: user's request, 2026-11-20), it slides
+        // down off the window's bottom and back, with the search's field lifting and settling
+        // (motion.ts: TAB_BAR_HIDE_MS on --ease-out). `translate`, so it doesn't share
+        // `transform`'s timing (the push's). TODO(design): the plan (native 01, 03) doesn't
+        // say the bar goes in search, nor how
+        transition:
+            transform var(--underneath-ms) var(--ease-out),
+            translate var(--tab-bar-hide-ms) var(--ease-out);
+
+        &.hidden {
+            translate: 0 100%;
+        }
+
+        @include reduced-motion {
+            transition: none;
+        }
     }
 
     // a tab's root, over the tab bar. Sideways drags are ours (the swipe between tabs), up-and-down
@@ -770,6 +808,11 @@
         inset: 0 0 var(--tab-bar-h);
         overflow: hidden;
         touch-action: pan-y;
+
+        // the tab bar hidden, or on its way back up over it: the whole window
+        &.full {
+            bottom: 0;
+        }
     }
 
     // the tabs' roots, one over the other: the one showing, and while a swipe drags, its neighbour

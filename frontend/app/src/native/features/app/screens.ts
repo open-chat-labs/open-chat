@@ -40,6 +40,12 @@ export type ScreenContext = {
      */
     toastFloor: (px: number | undefined) => void;
     /**
+     * Whether a tab's root takes the whole window for now, the tab bar sliding down out of the
+     * way (the Chats tab's search). Its own, so another tab's root or a screen pushed over it
+     * has the bar as its kind does (TabBarHides). A pushed screen has no bar to hide.
+     */
+    hideTabBar: (hidden: boolean) => void;
+    /**
      * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
      * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
      */

@@ -17,6 +17,13 @@ export const PUSH_MS = 340;
 export const POP_MS = 240;
 
 /**
+ * The tab bar sliding down off the window as a tab's root hides it (the Chats tab's search), and
+ * back up: on --ease-out, with the search's field lifting and settling (ChatSearch's
+ * SEARCH_LEAVE_MS). None with reduced motion.
+ */
+export const TAB_BAR_HIDE_MS = 320;
+
+/**
  * How long the screen under the top one takes to move out or back as the stack changes: with the
  * top one's push or pop; at once when nothing slides (another tab's stack, or nothing that shows).
  */
