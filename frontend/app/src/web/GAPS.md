@@ -3020,15 +3020,19 @@ design export needs. Each entry says where it came up.
     on it, and × drops it. Anything that would take a staged payment's place asks first (the
     user's decision, 2026-11-19; the old trees replaced it silently): a photo, video or file
     picked, dropped or pasted, a GIF picked, or another payment builder picked from the "+" menu
-    (asked before its dialog opens: the staged one stays until the new one is attached, so
-    closing the builder keeps it). A file the chat doesn't take is refused first, with the usual
-    toast and no question (`fileAttachStep`), and one it takes is prepared only once the answer is
-    Replace. "Replace the prize?" with what takes its place (`builders.replace.*`), Replace or
-    Cancel, which keeps the payment and drops what came; one decision for every path
-    (`replaceNeedsConfirm`, `logic/composer/replaceStaged`), asked in the dialog host
-    (`replace_staged`, `ReplaceStagedDialogScreen`, the plain `ConfirmDialog` over the dialogs'
-    veil): Replace hands off to the builder in its place over the same backdrop
-    (`DialogStack.handOff`), with no back arrow; Cancel, × and the backdrop close it. The design
+    or opened by `/crypto` (asked before its dialog opens: the staged one stays until the new one
+    is attached, so closing the builder keeps it). A file the chat doesn't take is refused first,
+    with the usual toast and no question (`fileAttachStep`), and one it takes is prepared only
+    once the answer is Replace; a payment staged while it's prepared (a video's transcode) is
+    asked about as it's done, the draft as it is then (`attachPrepared`, the one already agreed
+    to not asked about twice). "Replace the prize?" with what takes its place
+    (`builders.replace.*`, every locale), Replace or Cancel, which keeps the payment and drops
+    what came; one decision for every path (`replaceNeedsConfirm`,
+    `logic/composer/replaceStaged`), asked in the dialog host (`replace_staged`,
+    `ReplaceStagedDialogScreen`, the plain `ConfirmDialog`, the theme's scrim): Replace hands off
+    to the builder in its place over the same backdrop (`DialogStack.handOff` with the `scrim`
+    backdrop, which the builder keeps as its own scrim, its swap offer's confirmation too), with no
+    back arrow; Cancel, × and the backdrop close it. The design
     has no such confirm (`TODO(design)`). A photo, video, file or GIF replacing another is still
     replaced without asking. One whose token has left the registry has no chip: its send is refused
     (`attachmentToSend`) rather than the caption going without it. They pay from the OpenChat wallet only: the old

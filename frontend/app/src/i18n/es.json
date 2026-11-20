@@ -212,7 +212,24 @@
         "unlinkFailed": "No se pudo desvincular la cuenta"
     },
     "builders": {
-        "paymentRefused": "No se puede adjuntar. Comprueba el importe y tu saldo e inténtalo de nuevo."
+        "paymentRefused": "No se puede adjuntar. Comprueba el importe y tu saldo e inténtalo de nuevo.",
+        "replace": {
+            "confirm": "Reemplazar",
+            "title": {
+                "prize": "¿Reemplazar el premio?",
+                "transfer": "¿Reemplazar la transferencia?",
+                "swap": "¿Reemplazar la oferta de intercambio?"
+            },
+            "with": {
+                "photo": "Esta foto ocupará su lugar y se perderá lo que configuraste.",
+                "video": "Este vídeo ocupará su lugar y se perderá lo que configuraste.",
+                "file": "Este archivo ocupará su lugar y se perderá lo que configuraste.",
+                "gif": "Este GIF ocupará su lugar y se perderá lo que configuraste.",
+                "prize": "Un nuevo premio ocupará su lugar cuando lo configures, y se perderá lo que configuraste para este.",
+                "transfer": "Una transferencia ocupará su lugar cuando la configures, y se perderá lo que configuraste para esto.",
+                "swap": "Una nueva oferta de intercambio ocupará su lugar cuando la configures, y se perderá lo que configuraste para esta."
+            }
+        }
     },
     "cashtag": {
         "chartLabel": "Precio de {symbol} en los últimos 7 días",

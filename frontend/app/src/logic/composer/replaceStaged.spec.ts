@@ -4,6 +4,7 @@ import en from "@src/i18n/en.json";
 import {
     fileAttachStep,
     incomingBuilder,
+    incomingContent,
     incomingFile,
     replaceNeedsConfirm,
     replaceQuestionText,
@@ -65,6 +66,18 @@ describe("replaceNeedsConfirm", () => {
         }
     });
 
+    test("not about the payment already agreed to, but about another staged in its place", () => {
+        expect(replaceNeedsConfirm(prize, "video", prize)).toBeUndefined();
+        expect(replaceNeedsConfirm(transfer, "video", prize)).toEqual({
+            staged: "transfer",
+            incoming: "video",
+        });
+        expect(replaceNeedsConfirm({ ...prize }, "video", prize)).toEqual({
+            staged: "prize",
+            incoming: "video",
+        });
+    });
+
     test("nothing staged, nothing to ask", () => {
         expect(replaceNeedsConfirm(undefined, "gif")).toBeUndefined();
         expect(replaceNeedsConfirm(undefined, "prize")).toBeUndefined();
@@ -79,6 +92,16 @@ describe("incomingFile", () => {
         expect(incomingFile("application/pdf")).toBe("file");
         expect(incomingFile("audio/mpeg")).toBe("file");
         expect(incomingFile("")).toBe("file");
+    });
+});
+
+describe("incomingContent", () => {
+    test("from what a file was made into", () => {
+        expect(incomingContent(image)).toBe("photo");
+        expect(incomingContent(video)).toBe("video");
+        expect(incomingContent(gif)).toBe("gif");
+        expect(incomingContent(file)).toBe("file");
+        expect(incomingContent({ kind: "audio_content" })).toBe("file");
     });
 });
 

@@ -168,6 +168,7 @@
     } from "@src/logic/composer/composerProps";
     import {
         attachGif,
+        attachPrepared,
         cancelComposing,
         composingMessageIndex,
         submitEdit,
@@ -872,14 +873,16 @@
             case "refused":
                 toastStore.showFailureToast(attachRefusal(step.refusal, $_));
                 break;
-            case "confirm":
+            case "confirm": {
+                const agreed = draftAttachment(draft);
                 askToReplace(step.question, {
                     kind: "attach",
-                    attach: () => void attachNow(context, file),
+                    attach: () => void attachNow(context, file, agreed),
                 });
                 break;
+            }
             case "attach":
-                void attachNow(context, file);
+                void attachNow(context, file, undefined);
                 break;
         }
     }
@@ -891,10 +894,26 @@
         else askToReplace(question, { kind: "attach", attach: () => attachGif(context, content) });
     }
 
-    async function attachNow(context: MessageContext, file: File) {
-        const outcome = await client.attachFile(file, context);
-        if (outcome.kind !== "attached") {
-            toastStore.showFailureToast(attachRefusal(outcome, $_));
+    // prepared (a video's transcode takes a while), then attached to the draft where it was picked
+    // as it is then: a payment staged meanwhile is asked about too, not one already agreed to
+    // (`agreed`), and Replace attaches it (attachPrepared)
+    async function attachNow(
+        context: MessageContext,
+        file: File,
+        agreed: AttachmentContent | undefined,
+    ) {
+        const prepared = await client.prepareAttachment(file, context);
+        if (prepared.kind !== "prepared") {
+            toastStore.showFailureToast(attachRefusal(prepared, $_));
+            return;
+        }
+        const content = prepared.content;
+        const question = attachPrepared(context, content, agreed);
+        if (question !== undefined) {
+            askToReplace(question, {
+                kind: "attach",
+                attach: () => localUpdates.draftMessages.setAttachment(context, content),
+            });
         }
     }
 

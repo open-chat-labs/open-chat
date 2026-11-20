@@ -19,10 +19,12 @@
 
     const text = $derived(replaceQuestionText(dialog.question));
 
+    // the builder keeps this dialog's backdrop, the theme's scrim as its own is, so it doesn't
+    // change under the hand-off (nor under the swap offer's confirmation, its scrim too)
     function replace() {
         const next = dialog.next;
         if (next.kind === "open") {
-            dialogs.handOff(dialog, next.dialog);
+            dialogs.handOff(dialog, next.dialog, "scrim");
         } else {
             onClose();
             next.attach();
@@ -30,25 +32,9 @@
     }
 </script>
 
-<!-- the backdrop the builder keeps as it takes over (DialogScreen's keep-backdrop gives a handed-off
-     dialog's scrim the dialogs' veil), so it doesn't change under the hand-off -->
-<div class="veil">
-    <ConfirmDialog
-        title={interpolate($_, text.title)}
-        message={interpolate($_, text.message)}
-        confirmLabel={$_("builders.replace.confirm")}
-        onConfirm={replace}
-        {onClose} />
-</div>
-
-<style lang="scss">
-    .veil {
-        display: contents;
-    }
-
-    .veil > :global(.layer > .scrim) {
-        background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-        backdrop-filter: var(--oc-veil-blur, blur(4px));
-        -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    }
-</style>
+<ConfirmDialog
+    title={interpolate($_, text.title)}
+    message={interpolate($_, text.message)}
+    confirmLabel={$_("builders.replace.confirm")}
+    onConfirm={replace}
+    {onClose} />

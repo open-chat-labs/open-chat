@@ -47,6 +47,20 @@ export function incomingFile(mimeType: string): IncomingAttachment {
     }
 }
 
+/** A file once it's prepared, from what it was made into (a GIF file is a photo, as it's sent). */
+export function incomingContent(content: { kind: string }): IncomingAttachment {
+    switch (content.kind) {
+        case "image_content":
+            return "photo";
+        case "video_content":
+            return "video";
+        case "giphy_content":
+            return "gif";
+        default:
+            return "file";
+    }
+}
+
 /**
  * What a builder picked from the "+" menu would attach, if anything: a poll and a meme are sent as
  * they're made, leaving the draft's attachment as it is.
@@ -70,12 +84,16 @@ export type ReplaceQuestion = { staged: StagedBuilder; incoming: IncomingAttachm
 
 /**
  * Whether attaching `incoming` in place of the draft's attachment (`staged`) asks first: only when
- * what's staged is a builder's content. The question, if so.
+ * what's staged is a builder's content, and not the one the user has already agreed to replace
+ * (`agreed`, asked about before a file was prepared: one staged while it was is asked about
+ * again). The question, if so.
  */
 export function replaceNeedsConfirm(
     staged: { kind: string } | undefined,
     incoming: IncomingAttachment,
+    agreed?: { kind: string },
 ): ReplaceQuestion | undefined {
+    if (staged !== undefined && staged === agreed) return undefined;
     const builder = stagedBuilder(staged);
     return builder === undefined ? undefined : { staged: builder, incoming };
 }

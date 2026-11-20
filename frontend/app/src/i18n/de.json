@@ -212,7 +212,24 @@
         "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
     },
     "builders": {
-        "paymentRefused": "Das kann nicht angehängt werden. Prüfe den Betrag und dein Guthaben und versuche es erneut."
+        "paymentRefused": "Das kann nicht angehängt werden. Prüfe den Betrag und dein Guthaben und versuche es erneut.",
+        "replace": {
+            "confirm": "Ersetzen",
+            "title": {
+                "prize": "Den Preis ersetzen?",
+                "transfer": "Die Überweisung ersetzen?",
+                "swap": "Das Tauschangebot ersetzen?"
+            },
+            "with": {
+                "photo": "Dieses Foto tritt an seine Stelle, und was du dafür eingerichtet hast, geht verloren.",
+                "video": "Dieses Video tritt an seine Stelle, und was du dafür eingerichtet hast, geht verloren.",
+                "file": "Diese Datei tritt an seine Stelle, und was du dafür eingerichtet hast, geht verloren.",
+                "gif": "Dieses GIF tritt an seine Stelle, und was du dafür eingerichtet hast, geht verloren.",
+                "prize": "Ein neuer Preis tritt an seine Stelle, sobald du ihn eingerichtet hast, und was du für diesen eingerichtet hast, geht verloren.",
+                "transfer": "Eine Überweisung tritt an seine Stelle, sobald du sie eingerichtet hast, und was du hierfür eingerichtet hast, geht verloren.",
+                "swap": "Ein neues Tauschangebot tritt an seine Stelle, sobald du es eingerichtet hast, und was du für dieses eingerichtet hast, geht verloren."
+            }
+        }
     },
     "cashtag": {
         "chartLabel": "{symbol}-Preis in den letzten 7 Tagen",

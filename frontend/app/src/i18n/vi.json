@@ -212,7 +212,24 @@
         "unlinkFailed": "Không thể hủy liên kết tài khoản"
     },
     "builders": {
-        "paymentRefused": "Không thể đính kèm. Hãy kiểm tra số tiền và số dư của bạn rồi thử lại."
+        "paymentRefused": "Không thể đính kèm. Hãy kiểm tra số tiền và số dư của bạn rồi thử lại.",
+        "replace": {
+            "confirm": "Thay thế",
+            "title": {
+                "prize": "Thay thế giải thưởng?",
+                "transfer": "Thay thế giao dịch chuyển?",
+                "swap": "Thay thế đề nghị hoán đổi?"
+            },
+            "with": {
+                "photo": "Ảnh này sẽ thế chỗ, và những gì bạn đã thiết lập sẽ bị mất.",
+                "video": "Video này sẽ thế chỗ, và những gì bạn đã thiết lập sẽ bị mất.",
+                "file": "Tệp này sẽ thế chỗ, và những gì bạn đã thiết lập sẽ bị mất.",
+                "gif": "GIF này sẽ thế chỗ, và những gì bạn đã thiết lập sẽ bị mất.",
+                "prize": "Một giải thưởng mới sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất.",
+                "transfer": "Một giao dịch chuyển sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất.",
+                "swap": "Một đề nghị hoán đổi mới sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất."
+            }
+        }
     },
     "cashtag": {
         "chartLabel": "Giá {symbol} trong 7 ngày qua",
