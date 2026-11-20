@@ -16,6 +16,7 @@
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
+  import { claimMadeToday, milestoneReachedToday, ringFill, streakRingProgress } from '../../lib/streakRing';
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
@@ -33,8 +34,16 @@
     daily: number;
     /** Whether today's claim is open (defaults to false). */
     claimable?: boolean;
+    /** Whether today's claim has been made, here or elsewhere, for the ring and the "milestone reached" heading.
+     *  Defaults to `!claimable`; pass it when nothing is claimable for another reason (CHIT turned off). */
+    claimedToday?: boolean;
     /** Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365. */
     milestones?: number[];
+    /** How full the streak ring is, 0 to 1 (not a finite number: the default). Defaults to the way from the last
+     *  milestone reached (or 0) to the next: empty at 0, full on the day a milestone is reached, then empty on the next
+     *  segment once the next claim opens, full from the last one on. Pass the same rule (@client's
+     *  `streakRingProgress`) so the milestone heading agrees with it. */
+    progress?: number;
     /** Achievements for the "Ways to earn" row; the count is hidden without it. */
     achievements?: { total: number; left: number };
     /** Time until the next claim (and the next puzzle). */
@@ -70,7 +79,9 @@
     earned,
     daily,
     claimable = false,
+    claimedToday,
     milestones,
+    progress,
     achievements,
     countdown = '',
     insured = 0,
@@ -125,13 +136,13 @@
     return t('ui.chitDialog.boardRank', { rank: boardRank, ord, hasScore: boardScore != null ? 'yes' : 'no', score: boardScore != null ? fmt(boardScore) : '' });
   });
 
-  // progress runs tier to tier so the ring means "distance to the next rate"
   const nextTier = $derived(TIERS.find((t) => t > days) ?? TIERS[TIERS.length - 1]);
-  const within = $derived.by(() => {
-    const prev = TIERS.filter((t) => t <= days).pop() ?? 0;
-    const span = Math.max(nextTier - prev, 1);
-    return Math.min(Math.max(days - prev, 0), span) / span;
-  });
+  // the ring runs tier to tier so it means "distance to the next rate": empty at 0, full on the day a milestone is
+  // reached (the heading then names it), and on the next segment, empty, once the next claim opens (the heading
+  // counts the days to the next), so a claim never empties it; full from the last one on (lib/streakRing)
+  const madeToday = $derived(claimMadeToday(claimedHere, claimedToday, claimable));
+  const within = $derived(ringFill(progress, () => streakRingProgress(days, madeToday, TIERS)));
+  const reachedToday = $derived(milestoneReachedToday(days, madeToday, TIERS));
 
   // the streak sits between its two bracketing milestones, in their spacing
   const barPct = $derived.by(() => {
@@ -144,9 +155,10 @@
     return loPos + (TIER_POS[hi] - loPos) * ((days - lo) / (hi - lo));
   });
 
+  // the filled arc is exactly `within` of the turn: none at 0, the whole ring at 1
   const ring = $derived(
-    `conic-gradient(var(--accent) 0turn, var(--status-chit) ${(0.15 + within * 0.7).toFixed(3)}turn, ` +
-      `var(--overlay-2) ${(0.16 + within * 0.7).toFixed(3)}turn, var(--overlay-2) 1turn)`,
+    `conic-gradient(var(--accent) 0turn, var(--status-chit) ${within.toFixed(3)}turn, ` +
+      `var(--overlay-2) ${within.toFixed(3)}turn, var(--overlay-2) 1turn)`,
   );
 
   async function claim() {
@@ -209,7 +221,11 @@
       <div class="milestones">
         <div class="milestone-head">
           <span class="milestone-title"
-            >{days >= TIERS[TIERS.length - 1] ? t('ui.chitDialog.allMilestones', { daily: fmt(daily) }) : t('ui.chitDialog.toNextMilestone', { count: nextTier - days, tier: nextTier })}</span
+            >{days >= TIERS[TIERS.length - 1]
+              ? t('ui.chitDialog.allMilestones', { daily: fmt(daily) })
+              : reachedToday != null
+                ? t('ui.chitDialog.milestoneReached', { tier: reachedToday })
+                : t('ui.chitDialog.toNextMilestone', { count: nextTier - days, tier: nextTier })}</span
           >
           <span class="rate">{t('ui.chitDialog.perDay', { amount: fmt(daily) })}</span>
         </div>
