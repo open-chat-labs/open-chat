@@ -46,7 +46,9 @@ const port = Number(process.env.OC_DEV_PORT ?? 5001);
 // Directory (gitignored, under node_modules) where the dev worker bundles are
 // emitted before being served at /worker.js, /transcode_worker.js and
 // /service_worker.js.
-const workerBuildDir = path.resolve(__dirname, "node_modules/.oc-worker");
+// The e2e suite's server (frontend/e2e) keeps its caches apart from a developer's running one.
+const cacheDir = process.env.OC_VITE_CACHE_DIR;
+const workerBuildDir = path.resolve(__dirname, cacheDir ?? "node_modules", ".oc-worker");
 const workerEntries: Record<string, string> = {
     "worker.js": path.resolve(__dirname, "../openchat-worker/src/worker.ts"),
     "transcode_worker.js": path.resolve(__dirname, "../openchat-worker/src/transcodeWorker.ts"),
@@ -185,6 +187,7 @@ function ocWorkerPlugin(): Plugin {
 // TODO use vite for prod build!
 // https://vite.dev/config/
 export default defineConfig({
+    cacheDir,
     envPrefix: "OC_",
     define: {
         "import.meta.env.OC_AIRDROP_BOT_CANISTER": JSON.stringify(

@@ -222,6 +222,8 @@ export default {
                 JSON.stringify(process.env.OC_OTA_UPDATES),
             ),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
+            // Only the e2e suite's dev server exposes the client (#10550): never a built bundle
+            "import.meta.env.OC_E2E": JSON.stringify("false"),
             "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
                 process.env.OC_INTERNET_IDENTITY_URL,

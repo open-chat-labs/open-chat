@@ -15,7 +15,7 @@ export function createOpenChatClient(
     i18nFormatter: OpenChatConfig["i18nFormatter"],
     logger: OpenChatConfig["logger"],
 ): OpenChat {
-    return new OpenChat({
+    const client = new OpenChat({
         mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
         icUrl: import.meta.env.OC_IC_URL,
         webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
@@ -57,4 +57,16 @@ export function createOpenChatClient(
         accountLinkingCodesEnabled: import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
     });
+    // The e2e suite (frontend/e2e, #10550) checks what a user did through their client. Only an
+    // e2e dev server sets OC_E2E; production builds fold this branch away (rollup.config.mjs).
+    if (import.meta.env.OC_E2E === "true") {
+        window.__ocTest = { client };
+    }
+    return client;
+}
+
+declare global {
+    interface Window {
+        __ocTest?: { client: OpenChat };
+    }
 }
