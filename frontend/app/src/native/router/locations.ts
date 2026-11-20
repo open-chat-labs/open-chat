@@ -222,19 +222,23 @@ export function locationFor(
 /**
  * Whether the tab bar shows over this stack: only on a tab's root (the five pages the bar names),
  * as the prototype has it. Every pushed screen (a conversation, a thread, Followed threads, a
- * token page …) has the whole window, and Back is the way out of it.
+ * token page …) has the whole window, and Back is the way out of it. A root takes the whole
+ * window too while it says so (`hiddenByTop`: the Chats tab's search, TabBarHides).
  */
-export function showsTabBar(steps: readonly StackStep[]): boolean {
-    return steps.length <= 1;
+export function showsTabBar(steps: readonly StackStep[], hiddenByTop = false): boolean {
+    return steps.length <= 1 && !hiddenByTop;
 }
 
 /**
  * What a toast sits above on this stack (native design notes §1: toasts sit above the tab bar):
  * the tab bar on a tab's root, the composer on a conversation (its footer), and the safe area on
- * any other pushed screen.
+ * any other pushed screen, or a root that has hidden the tab bar (`hiddenByTop`).
  */
-export function toastsAbove(steps: readonly StackStep[]): "tabBar" | "footer" | "none" {
-    if (showsTabBar(steps)) return "tabBar";
+export function toastsAbove(
+    steps: readonly StackStep[],
+    hiddenByTop = false,
+): "tabBar" | "footer" | "none" {
+    if (showsTabBar(steps, hiddenByTop)) return "tabBar";
     return steps[steps.length - 1]?.screen.kind === "conversation" ? "footer" : "none";
 }
 

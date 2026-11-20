@@ -13,6 +13,7 @@
     import { _ } from "svelte-i18n";
     import type { NativeScreen, StackStep } from "../../router/locations";
     import Placeholder from "./Placeholder.svelte";
+    import type { TabBarHides } from "../../shell/tabBarHides.svelte";
     import type { ToastFloors } from "../../shell/toastFloors.svelte";
     import { screenModules, type ScreenContext } from "./screens";
 
@@ -20,16 +21,21 @@
         step: StackStep;
         /** A tab's root, with its translated title. */
         root: { title: string } | undefined;
-        /** The shell's, but for the screen's own toast floor (`floors`). */
-        context: Omit<ScreenContext, "toastFloor">;
+        /** The shell's, but for the screen's own toast floor (`floors`) and tab bar (`hides`). */
+        context: Omit<ScreenContext, "toastFloor" | "hideTabBar">;
         floors: ToastFloors;
+        hides: TabBarHides;
     };
 
-    let { step, root, context, floors }: Props = $props();
+    let { step, root, context, floors, hides }: Props = $props();
 
-    // the screen's own context: its toast floor is its step's
+    // the screen's own context: its toast floor and its hiding the tab bar are its step's
     const key = $derived(step.key);
-    const screenContext = $derived<ScreenContext>({ ...context, toastFloor: floors.for(key) });
+    const screenContext = $derived<ScreenContext>({
+        ...context,
+        toastFloor: floors.for(key),
+        hideTabBar: hides.for(key),
+    });
 
     const built = $derived(screenModules.has(step.screen.kind));
     // its chunk, when it's in by the time the screen shows
