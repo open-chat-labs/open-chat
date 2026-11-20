@@ -9,8 +9,10 @@ import {
 import { describe, expect, test } from "vitest";
 import {
     aggregateEventText,
+    aggregateEventTextNewUi,
     isTextEvent,
     timelineEventText,
+    timelineEventTextNewUi,
     type EventTextContext,
     type TextEvent,
 } from "./timelineEventText";
@@ -33,7 +35,6 @@ const ctx: EventTextContext = {
     displayName: (userId, kind) =>
         kind === "me" ? "**you**" : `**${users.get(userId)?.username ?? "unknownUser"}**`,
     level: "channel",
-    levelWords: "level",
     canInvite: false,
     botName: (botId) => (botId === "b1" ? "Echo" : undefined),
 };
@@ -129,16 +130,33 @@ describe("the level's word", () => {
     };
     const formatter: EventTextContext["formatter"] = (key, options) =>
         words[key] ?? `${key}${JSON.stringify(options?.values ?? {})}`;
-    const added: Partial<TextEvent> = { kind: "members_added", userIds: ["bob"], addedBy: "alice" };
+    const added = { kind: "members_added", userIds: ["bob"], addedBy: "alice" } as TextEvent;
+    const joined: AggregateCommonEvents = {
+        kind: "aggregate_common_events",
+        usersJoined: new Set(["bob"]),
+        usersLeft: new Set(),
+        rolesChanged: new Map(),
+        messagesDeleted: [],
+    };
+    const fr: EventTextContext = { ...ctx, formatter };
+    const de: EventTextContext = { ...ctx, formatter, level: "group" };
 
     test("the old trees' timeline is unchanged", () => {
-        expect(text(added, { ...ctx, formatter })).toContain('"level":"canaliser"');
-        expect(text(added, { ...ctx, formatter, level: "group" })).toContain('"level":"gruppe"');
+        expect(timelineEventText(added, fr)).toContain('"level":"canaliser"');
+        expect(timelineEventText(added, de)).toContain('"level":"gruppe"');
+        expect(aggregateEventText(joined, fr).joined).toContain('"level":"canaliser"');
+        expect(aggregateEventText(joined, de).joined).toContain('"level":"gruppe"');
     });
 
     test("the new UIs' timeline uses the noun as it reads mid-sentence", () => {
-        const newUi: EventTextContext = { ...ctx, formatter, levelWords: "levelNoun" };
-        expect(text(added, newUi)).toContain('"level":"canal"');
-        expect(text(added, { ...newUi, level: "group" })).toContain('"level":"Gruppe"');
+        expect(timelineEventTextNewUi(added, fr)).toContain('"level":"canal"');
+        expect(timelineEventTextNewUi(added, de)).toContain('"level":"Gruppe"');
+        expect(aggregateEventTextNewUi(joined, fr).joined).toContain('"level":"canal"');
+        expect(aggregateEventTextNewUi(joined, de).joined).toContain('"level":"Gruppe"');
+    });
+
+    test("only the level's word differs between the two", () => {
+        const swap = (s: string | undefined) => s?.replace("canaliser", "canal");
+        expect(swap(timelineEventText(added, fr))).toBe(timelineEventTextNewUi(added, fr));
     });
 });

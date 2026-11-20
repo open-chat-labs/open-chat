@@ -2066,9 +2066,10 @@ design export needs. Each entry says where it came up.
   `logic/conversation/messageRow`) fill a message's `{level}` from `levelNoun.*`, nouns reviewed
   in all 15 locales and stored as they read mid-sentence (French "canal", German "Gruppe"),
   capitalised only where a key wants it: `interpolateNewUi` (`i18n/i18n.ts`) and
-  `timelineEventText`'s `levelWords` (required: the new UIs pass "levelNoun", the old ChatEvents
-  "level"). Lint stops src/web, src/native and `messageRow` importing `interpolate` (eslint's
-  `newUiOnlyLogic` lists new-UI-only logic), but only a static import: a dynamic
+  `timelineEventTextNewUi` / `aggregateEventTextNewUi` (`logic/conversation/timelineEventText`);
+  the old trees' `interpolate`, `timelineEventText` and `aggregateEventText` are unchanged, and no
+  old-UI file is touched. Lint stops src/web, src/native and `messageRow` importing the old three
+  (eslint's `oldLevelWords`; `newUiOnlyLogic` lists new-UI-only logic), but only a static import: a dynamic
   `import("@i18n/i18n")` hands over the whole module, and `app/src/core` serves both trees, so
   neither can be checked. Chinese keeps 群聊 for a group, the word ~30 other cn strings use. The
   old `level.*` (French `level.channel` is the verb "Canaliser"; German nouns lower-cased

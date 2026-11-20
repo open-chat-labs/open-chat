@@ -211,9 +211,9 @@
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { buildDisplayName } from "@src/utils/user";
     import {
-        aggregateEventText,
+        aggregateEventTextNewUi,
         isTextEvent,
-        timelineEventText,
+        timelineEventTextNewUi,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
     import { navigate } from "@src/utils/navigation";
@@ -437,7 +437,6 @@
             users,
             displayName: (userId, kind) => buildDisplayName(users, userId, kind),
             level,
-            levelWords: "levelNoun",
             canInvite: client.canInviteUsers(chat.id),
             botName: (botId) => botState.externalBots.get(botId)?.name,
         };
@@ -1851,7 +1850,7 @@
                 />
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}
-            {@const text = aggregateEventText(evt.event, eventCtx)}
+            {@const text = aggregateEventTextNewUi(evt.event, eventCtx)}
             {@const deleted = evt.event.messagesDeleted}
             {#if text.joined !== undefined || text.deleted !== undefined || text.rolesChanged.length > 0}
                 <!-- TODO(design): no event line in the design; the old UI's -->
@@ -1887,7 +1886,7 @@
                 </div>
             {/if}
         {:else if isTextEvent(evt.event)}
-            {@const text = timelineEventText(evt.event, eventCtx)}
+            {@const text = timelineEventTextNewUi(evt.event, eventCtx)}
             {#if text !== undefined}
                 <!-- TODO(design): no event line in the design or web/05; the old UI's, with its
                      date and time under it -->

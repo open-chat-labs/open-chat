@@ -109,7 +109,6 @@
         users: $allUsersStore,
         displayName: (userId, kind) => buildDisplayName($allUsersStore, userId, kind),
         level: levelType,
-        levelWords: "level",
         canInvite,
         botName: (botId) => botState.externalBots.get(botId)?.name,
     });

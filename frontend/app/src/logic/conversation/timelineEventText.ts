@@ -21,11 +21,6 @@ export type EventTextContext = {
     displayName: (userId: string, kind: "user" | "me") => string;
     /** "group" or "channel". */
     level: Level;
-    /**
-     * Which words name the level: "levelNoun" in the new UIs; "level" (`level.*`, lower-cased) in the
-     * old trees, as they always had. Required, so a new-UI timeline can't fall back to the old words.
-     */
-    levelWords: LevelWords;
     /** Whether the reader can invite users: only they see changes to the invite link. */
     canInvite: boolean;
     /** An installed bot's name (botState.externalBots). */
@@ -80,18 +75,33 @@ function members(ctx: EventTextContext, userIds: string[], truncate: boolean): s
     );
 }
 
-function levelText(ctx: EventTextContext): string {
-    return levelWord(ctx.formatter, ctx.level, true, ctx.levelWords);
+function levelText(ctx: EventTextContext, words: LevelWords): string {
+    return levelWord(ctx.formatter, ctx.level, true, words);
 }
 
 /**
  * The line an event other than a message shows in the timeline (markdown, names in bold), the
- * same in every tree; none for a change the reader isn't shown (rules left off, a visibility
- * change with nothing in it, an invite link the reader can't share).
+ * same in every tree but for the level's word; none for a change the reader isn't shown (rules
+ * left off, a visibility change with nothing in it, an invite link the reader can't share).
+ *
+ * The old trees call `timelineEventText` (the level from `level.*`, lower-cased, as always); the
+ * new UIs `timelineEventTextNewUi` (`levelNoun.*`), which lint holds them to.
  */
 export function timelineEventText(event: TextEvent, ctx: EventTextContext): string | undefined {
+    return eventText(event, ctx, "level");
+}
+
+/** `timelineEventText` for the new UIs: the level named with `levelNoun.*`. */
+export function timelineEventTextNewUi(
+    event: TextEvent,
+    ctx: EventTextContext,
+): string | undefined {
+    return eventText(event, ctx, "levelNoun");
+}
+
+function eventText(event: TextEvent, ctx: EventTextContext, words: LevelWords): string | undefined {
     const t = ctx.formatter;
-    const level = levelText(ctx);
+    const level = levelText(ctx, words);
     const membersChanged = (key: string, userIds: string[], changedBy: string) =>
         t(key, {
             values: { changed: members(ctx, userIds, true), changedBy: by(ctx, changedBy), level },
@@ -195,13 +205,32 @@ export type AggregateEventText = {
     rolesChanged: string[];
 };
 
-/** The lines a run of joins, deletions and role changes shows in the timeline, in every tree. */
+/**
+ * The lines a run of joins, deletions and role changes shows in the timeline, in the old trees
+ * (the level from `level.*`); the new UIs call `aggregateEventTextNewUi`.
+ */
 export function aggregateEventText(
     event: AggregateCommonEvents,
     ctx: EventTextContext,
 ): AggregateEventText {
+    return aggregateText(event, ctx, "level");
+}
+
+/** `aggregateEventText` for the new UIs: the level named with `levelNoun.*`. */
+export function aggregateEventTextNewUi(
+    event: AggregateCommonEvents,
+    ctx: EventTextContext,
+): AggregateEventText {
+    return aggregateText(event, ctx, "levelNoun");
+}
+
+function aggregateText(
+    event: AggregateCommonEvents,
+    ctx: EventTextContext,
+    words: LevelWords,
+): AggregateEventText {
     const t = ctx.formatter;
-    const level = levelText(ctx);
+    const level = levelText(ctx, words);
     const joined = event.usersJoined;
     const deleted = event.messagesDeleted.length;
     return {
