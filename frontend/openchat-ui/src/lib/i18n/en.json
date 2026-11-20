@@ -583,6 +583,7 @@
       "insuredFor": "Insured for {count, plural, one {# day} other {# days}}",
       "insuredHint": "Miss a day and one is spent — the streak carries on",
       "leaderboard": "Leaderboard",
+      "milestoneReached": "{tier}-day milestone reached!",
       "noInsurance": "No insurance",
       "perDay": "{amount} / day",
       "settings": "CHIT settings",

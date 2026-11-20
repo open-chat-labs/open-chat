@@ -38,11 +38,19 @@ describe("today's CHIT claim", () => {
     test("once made, counts down to the next", () => {
         const claim = dailyClaim(inputs({ nextDailyChitClaim: BigInt(NOW + 60 * MINUTE) }));
         expect(claim?.claimable).toBe(false);
+        expect(claim?.claimedToday).toBe(true);
         expect(claim?.countdown).not.toBe("");
     });
 
     test("isn't offered while CHIT is off", () => {
         expect(dailyClaim(inputs({}, { disabled: true }))?.claimable).toBe(false);
+    });
+
+    test("says whether today's claim is made, whether CHIT is on or off", () => {
+        expect(dailyClaim(inputs())?.claimedToday).toBe(false);
+        expect(dailyClaim(inputs({}, { disabled: true }))?.claimedToday).toBe(false);
+        const made = { nextDailyChitClaim: BigInt(NOW + 60 * MINUTE) };
+        expect(dailyClaim(inputs(made, { disabled: true }))?.claimedToday).toBe(true);
     });
 
     test("a streak that has ended is none", () => {

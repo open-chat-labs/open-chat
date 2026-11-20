@@ -14,6 +14,9 @@ export type DailyClaim = {
     /** What today's claim pays, or paid. */
     daily: number;
     claimable: boolean;
+    /** Today's claim has been made (here or on another device). Not `!claimable`: with CHIT off
+     *  nothing is claimable, made or not. */
+    claimedToday: boolean;
     /** Until the next claim, once today's is made; empty while one is due. */
     countdown: string;
 };
@@ -37,6 +40,7 @@ export function dailyClaim({
         earned: chit.totalChitEarned,
         daily: dailyChitAmount(claimedToday ? Math.max(streak, 1) : streak + 1),
         claimable: !disabled && !claimedToday,
+        claimedToday,
         countdown: claimedToday
             ? formatTimeRemaining(now, Number(chit.nextDailyChitClaim), true)
             : "",

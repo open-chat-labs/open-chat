@@ -8811,6 +8811,17 @@
         "doc": "Whether today's claim is open (defaults to false)."
       },
       {
+        "name": "claimedToday",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether today's claim has been made, here or elsewhere, for the ring and the \"milestone reached\" heading. Defaults to `!claimable`; pass it when nothing is claimable for another reason (CHIT turned off)."
+      },
+      {
         "name": "milestones",
         "type": "number[]",
         "default": null,
@@ -8820,6 +8831,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365."
+      },
+      {
+        "name": "progress",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How full the streak ring is, 0 to 1 (not a finite number: the default). Defaults to the way from the last milestone reached (or 0) to the next: empty at 0, full on the day a milestone is reached, then empty on the next segment once the next claim opens, full from the last one on. Pass the same rule (@client's `streakRingProgress`) so the milestone heading agrees with it."
       },
       {
         "name": "achievements",

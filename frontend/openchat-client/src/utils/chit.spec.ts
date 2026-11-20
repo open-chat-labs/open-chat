@@ -6,6 +6,7 @@ import {
     dailyChitClaimable,
     mergeChitEvents,
     newestFirstChitEvents,
+    streakRingProgress,
 } from "./chit";
 
 describe("the current streak", () => {
@@ -128,5 +129,50 @@ describe("what a daily claim pays", () => {
         for (const m of CHIT_STREAK_MILESTONES) {
             expect(dailyChitAmount(m)).toBeGreaterThan(dailyChitAmount(m - 1));
         }
+    });
+});
+
+describe("the streak ring", () => {
+    test("is empty with no streak", () => {
+        expect(streakRingProgress(0, false)).toBe(0);
+        expect(streakRingProgress(0, true)).toBe(0);
+    });
+
+    test("fills by thirds towards the first milestone, and is full on the day it's reached", () => {
+        expect(streakRingProgress(1, true)).toBeCloseTo(1 / 3);
+        expect(streakRingProgress(2, false)).toBeCloseTo(2 / 3);
+        expect(streakRingProgress(3, true)).toBe(1);
+    });
+
+    test("is full on each milestone the day it's claimed, then starts the next segment empty", () => {
+        for (const m of CHIT_STREAK_MILESTONES.slice(0, -1)) {
+            expect(streakRingProgress(m, true)).toBe(1);
+            expect(streakRingProgress(m, false)).toBe(0);
+        }
+    });
+
+    test("a claim never empties the ring: 3 with the claim open, then 4", () => {
+        expect(streakRingProgress(3, false)).toBe(0);
+        expect(streakRingProgress(4, true)).toBe(1 / 4);
+    });
+
+    test("measures from the last milestone reached to the next", () => {
+        expect(streakRingProgress(4, false)).toBe(1 / 4);
+        expect(streakRingProgress(6, true)).toBe(3 / 4);
+        expect(streakRingProgress(8, true)).toBe(1 / 7);
+        expect(streakRingProgress(65, false)).toBe(35 / 70);
+    });
+
+    test("stays full from the last milestone on", () => {
+        expect(streakRingProgress(365, false)).toBe(1);
+        expect(streakRingProgress(366, false)).toBe(1);
+        expect(streakRingProgress(1000, true)).toBe(1);
+    });
+
+    test("follows the milestones it's given, in any order; an empty list means the default ones, as ChitDialog's does", () => {
+        expect(streakRingProgress(5, true, [10, 4])).toBe(1 / 6);
+        expect(streakRingProgress(4, false, [10, 4])).toBe(0);
+        expect(streakRingProgress(5, true, [])).toBe(streakRingProgress(5, true));
+        expect(streakRingProgress(5, true, [])).toBe(2 / 4);
     });
 });

@@ -15,6 +15,7 @@ import {
     streakInsurancePrice,
     walletApprovalFee,
     CHIT_STREAK_MILESTONES,
+    streakRingProgress,
     type Achievement,
     type AchievementEntry,
     type ChitLeaderboardResponse,
@@ -38,7 +39,9 @@ export type ChitDialogProps = Pick<
     | "earned"
     | "daily"
     | "claimable"
+    | "claimedToday"
     | "milestones"
+    | "progress"
     | "countdown"
     | "insured"
     | "used"
@@ -67,7 +70,9 @@ export function chitDialogProps(
         earned: claim.earned,
         daily: claim.daily,
         claimable: claim.claimable,
+        claimedToday: claim.claimedToday,
         milestones: CHIT_STREAK_MILESTONES,
+        progress: streakRingProgress(claim.streak, claim.claimedToday, CHIT_STREAK_MILESTONES),
         countdown: claim.countdown,
         insured: insurance.daysInsured,
         used: insurance.daysMissed,

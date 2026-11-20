@@ -66,6 +66,9 @@ jobs:
       - name: Lint, type check and test
         run: npm run check:ci
         env:
+          # svelte-check over the whole app runs alongside the other checks and outgrew Node's
+          # default heap (it ran out of memory on PR CI); the runner has room for more
+          NODE_OPTIONS: --max-old-space-size=6144
           NODE_ENV: ci
           OC_USERGEEK_APIKEY: DUMMY_USERGEEK_APIKEY
           OC_ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
