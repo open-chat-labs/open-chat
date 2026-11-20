@@ -33,6 +33,7 @@ const ctx: EventTextContext = {
     displayName: (userId, kind) =>
         kind === "me" ? "**you**" : `**${users.get(userId)?.username ?? "unknownUser"}**`,
     level: "channel",
+    levelWords: "level",
     canInvite: false,
     botName: (botId) => (botId === "b1" ? "Echo" : undefined),
 };

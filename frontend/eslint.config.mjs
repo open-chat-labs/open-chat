@@ -52,6 +52,17 @@ const logicSideEffects = [
     { regex: "^@(client|shared)$", importNames: ["publish"], message: logicMessage },
 ];
 
+// The new UIs name groups, channels and communities with levelNoun.* (interpolateNewUi); the old
+// trees' interpolate keeps level.*, whose words are wrong in some languages. Static imports only:
+// a dynamic import() hands over the whole module, so it can't be restricted by name.
+const oldLevelWords = {
+    regex: "(^|[/@])i18n/i18n$",
+    importNames: ["interpolate"],
+    message: "The new UIs use interpolateNewUi: its {level} words are levelNoun.*.",
+};
+// app/src/logic modules only the new UIs use that word a {level}: they get oldLevelWords too.
+const newUiOnlyLogic = ["app/src/logic/conversation/messageRow.ts"];
+
 const svelteStoreMessage =
     "Use runes or the custom stores in openchat-client/src/utils/stores.ts (see frontend/CLAUDE.md).";
 
@@ -114,8 +125,7 @@ export default defineConfig([
         files: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
         rules: restrictAppImports(agentOrWorker),
     },
-    // The new UIs name groups, channels and communities with levelNoun.* (interpolateNewUi); the old
-    // trees' interpolate keeps level.*, whose words are wrong in some languages.
+    // The new UIs' {level} words: interpolateNewUi, not interpolate (oldLevelWords).
     {
         files: [
             "app/src/web/**/*.ts",
@@ -131,11 +141,7 @@ export default defineConfig([
                     patterns: [
                         agentOrWorker,
                         insideClient,
-                        {
-                            regex: "(^|[/@])i18n/i18n$",
-                            importNames: ["interpolate"],
-                            message: "The new UIs use interpolateNewUi: its {level} words are levelNoun.*.",
-                        },
+                        oldLevelWords,
                     ],
                 },
             ],
@@ -160,6 +166,24 @@ export default defineConfig([
             "local/no-restricted-dynamic-imports": [
                 "error",
                 { patterns: [agentOrWorker, insideClient, logicViews, logicSideEffects[0]] },
+            ],
+        },
+    },
+    // The logic only the new UIs use words a {level} as they do: the logic rules plus oldLevelWords.
+    {
+        files: newUiOnlyLogic,
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        agentOrWorker,
+                        insideClient,
+                        { ...logicViews, caseSensitive: true },
+                        ...logicSideEffects,
+                        oldLevelWords,
+                    ],
+                },
             ],
         },
     },

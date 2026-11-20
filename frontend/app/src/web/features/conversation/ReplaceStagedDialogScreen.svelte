@@ -5,7 +5,7 @@
      held back and closes; Cancel, × and the backdrop keep what's staged.
      TODO(design): the design has no such confirm; ConfirmDialog, as Delete message's. -->
 <script lang="ts">
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { replaceQuestionText } from "@src/logic/composer/replaceStaged";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
@@ -33,8 +33,8 @@
 </script>
 
 <ConfirmDialog
-    title={interpolate($_, text.title)}
-    message={interpolate($_, text.message)}
+    title={interpolateNewUi($_, text.title)}
+    message={interpolateNewUi($_, text.message)}
     confirmLabel={$_("builders.replace.confirm")}
     onConfirm={replace}
     {onClose} />

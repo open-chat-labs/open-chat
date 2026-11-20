@@ -2065,13 +2065,17 @@ design export needs. Each entry says where it came up.
 - **Words for group, channel and community** (2026-11-19): the new UIs (src/web, src/native and
   `logic/conversation/messageRow`) fill a message's `{level}` from `levelNoun.*`, nouns reviewed
   in all 15 locales and stored as they read mid-sentence (French "canal", German "Gruppe"),
-  capitalised only where a key wants it: `interpolateNewUi` (`i18n/i18n.ts`, lint stops the new
-  trees importing `interpolate`) and `timelineEventText`'s `levelWords: "levelNoun"`. The old
-  `level.*` (French `level.channel` is the verb "Canaliser"; German nouns lower-cased mid-sentence)
-  is left for the old UIs, which show exactly what they did. Not fixed: many `{level}` sentences
-  can't agree with the noun (gender, case: Russian "к {level}у", French "au {level}" for a
-  feminine "communauté", Polish "do {level}" wants the genitive); fixing those means whole-phrase
-  keys per level.
+  capitalised only where a key wants it: `interpolateNewUi` (`i18n/i18n.ts`) and
+  `timelineEventText`'s `levelWords` (required: the new UIs pass "levelNoun", the old ChatEvents
+  "level"). Lint stops src/web, src/native and `messageRow` importing `interpolate` (eslint's
+  `newUiOnlyLogic` lists new-UI-only logic), but only a static import: a dynamic
+  `import("@i18n/i18n")` hands over the whole module, and `app/src/core` serves both trees, so
+  neither can be checked. Chinese keeps 群聊 for a group, the word ~30 other cn strings use. The
+  old `level.*` (French `level.channel` is the verb "Canaliser"; German nouns lower-cased
+  mid-sentence) is left for the old UIs, which show exactly what they did. Not fixed: many
+  `{level}` sentences can't agree with the noun (gender, case: Russian "к {level}у", French
+  "au {level}" for a feminine "communauté", Polish "do {level}" wants the genitive); fixing those
+  means whole-phrase keys per level.
 
 - **Wallet** (6a #10120, `features/wallet`, the design's changes of 2026-10-27): `WalletPanel` on
   the left and `WalletMain` in the middle, on `/wallet` and `/wallet/:ledger`, over the wallet's

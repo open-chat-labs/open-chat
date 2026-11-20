@@ -22,10 +22,10 @@ export type EventTextContext = {
     /** "group" or "channel". */
     level: Level;
     /**
-     * Which words name the level: the new UIs pass "levelNoun"; left out, the old trees' `level.*`
-     * (lower-cased), as before.
+     * Which words name the level: "levelNoun" in the new UIs; "level" (`level.*`, lower-cased) in the
+     * old trees, as they always had. Required, so a new-UI timeline can't fall back to the old words.
      */
-    levelWords?: LevelWords;
+    levelWords: LevelWords;
     /** Whether the reader can invite users: only they see changes to the invite link. */
     canInvite: boolean;
     /** An installed bot's name (botState.externalBots). */
@@ -81,7 +81,7 @@ function members(ctx: EventTextContext, userIds: string[], truncate: boolean): s
 }
 
 function levelText(ctx: EventTextContext): string {
-    return levelWord(ctx.formatter, ctx.level, true, ctx.levelWords ?? "level");
+    return levelWord(ctx.formatter, ctx.level, true, ctx.levelWords);
 }
 
 /**
