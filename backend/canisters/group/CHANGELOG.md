@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- A Meme Fighter permission set for the first time is saved, not dropped ([#10588](https://github.com/open-chat-labs/open-chat/pull/10588))
+
 ## [[2.0.2236](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2236-group)] - 2026-11-16
 
 ### Changed
