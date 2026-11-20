@@ -12,7 +12,9 @@
         selectedChatIdStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        type ChannelIdentifier,
         type CommunityIdentifier,
+        type MultiUserChatIdentifier,
         type OpenChat,
     } from "@client";
     import ManageDialog from "@openchat/ui/src/features/components/ManageDialog.svelte";
@@ -44,7 +46,7 @@
     import ManageInvite from "./ManageInvite.svelte";
     import ManageSettings from "./ManageSettings.svelte";
     import ManageChannels from "@openchat/ui/src/features/components/ManageChannels.svelte";
-    import { navigate } from "@src/utils/navigation";
+    import { navigateUnderDialogs } from "@src/utils/navigation";
 
     let { dialog, onClose, dialogs }: DialogProps<Extract<LocalDialog, { kind: "manage" }>> =
         $props();
@@ -158,31 +160,48 @@
         target?.kind === "community" && communityMenuPermissions(client, target).canCreateChannel,
     );
 
-    // Manage for another of the community's pages, in this one's place (asking first if there are
-    // unsaved edits)
-    function openCommunityPage(communityId: CommunityIdentifier, section: ManageSection) {
-        manage.close(() =>
-            dialogs.replace(
-                { kind: "manage", target: communityId, section },
-                (open) => open === dialog,
-            ),
-        );
+    // Another Manage (the community's from a channel's, a channel's from its community's) takes
+    // this one's place over the same backdrop (DialogStack.handOff), asking first if there are
+    // unsaved edits: only the card changes
+    function handOffTo(next: MultiUserChatIdentifier | CommunityIdentifier, section: ManageSection) {
+        manage.close(() => dialogs.handOff(dialog, { kind: "manage", target: next, section }));
     }
 
-    // A channel's Manage. It reads the open chat, so a channel that isn't open is opened first
-    // (which closes this Manage, as any navigation does)
+    // Manage for another of the community's pages, in this one's place
+    function openCommunityPage(communityId: CommunityIdentifier, section: ManageSection) {
+        handOffTo(communityId, section);
+    }
+
+    // A channel's Manage, in this one's place. It reads the open chat, so a channel that isn't open
+    // is opened first, under this Manage (navigate() would close it, and its backdrop with it), and
+    // handed off to once it's the open chat
+    let openingChannel = $state<ChannelIdentifier | undefined>();
     function openChannel(key: string) {
         if (target?.kind !== "community") return;
         const channel = target.channels.find((c) => chatIdentifierToString(c.id) === key);
         if (channel === undefined) return;
-        if (!chatIdentifiersEqual(channel.id, $selectedChatIdStore)) {
-            navigate(routeForChatIdentifier("community", channel.id));
+        if (
+            dialogTarget(channel.id, $selectedChatSummaryStore, community) === undefined &&
+            navigateUnderDialogs(routeForChatIdentifier("community", channel.id))
+        ) {
+            openingChannel = channel.id;
+        } else {
+            handOffTo(channel.id, "main");
         }
-        dialogs.replace(
-            { kind: "manage", target: channel.id, section: "main" },
-            (open) => open === dialog,
-        );
     }
+    $effect(() => {
+        const channelId = openingChannel;
+        if (
+            channelId === undefined ||
+            dialogTarget(channelId, $selectedChatSummaryStore, community) === undefined
+        ) {
+            return;
+        }
+        untrack(() => {
+            openingChannel = undefined;
+            handOffTo(channelId, "main");
+        });
+    });
     const dirty = (d: boolean) => manage.setDirty(d);
 </script>
 
@@ -228,11 +247,7 @@
                 onManage={(section) => manage.go(section)}
                 onOpenCommunity={(view) =>
                     community &&
-                    dialogs.open({
-                        kind: "manage",
-                        target: community.id,
-                        section: view === "members" ? "members" : "main",
-                    })}
+                    openCommunityPage(community.id, view === "members" ? "members" : "main")}
                 onClose={close}
             />
         {:else if manage.section === "bots"}

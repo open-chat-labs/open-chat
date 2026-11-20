@@ -474,6 +474,18 @@ export function replaceQuery(to: string): boolean {
 }
 
 /**
+ * Navigates leaving open the dialogs over the page: unlike navigate(), the modal stack isn't
+ * closed first. For a dialog that hands off to one for another page (the new web UI's Manage for a
+ * community opening a channel's, which reads the open chat). Nothing happens while a navigation
+ * is waiting on the modal stack, as the page is about to change: false then, true when it goes.
+ */
+export function navigateUnderDialogs(to: string): boolean {
+    if (pendingNavigation !== null) return false;
+    doNavigate(to, "in-app");
+    return true;
+}
+
+/**
  * Called by Modals.svelte when the modal stack has fully drained.
  * Fires any navigation that was deferred by navigate().
  */
