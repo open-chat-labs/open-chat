@@ -1,5 +1,7 @@
 <!-- The Chats tab's search (native design notes §3.2): tapping the list's field lifts it into the title
-     row, Cancel slides in beside it and the results fade in; Cancel reverses it. Empty, it says what
+     row, Cancel slides in beside it as the field narrows from the list's full width to make room
+     (its width animates, user's request 2026-11-20) and the results fade in; Cancel reverses it.
+     It has the whole window, the tab bar out of the way (ChatsScreen). Empty, it says what
      it searches; then the results in sections (Chats, People), each its first few with Show all. A
      layer over the Chats root, which swipes between tabs leave alone. Reduced motion: no slide or
      fade. -->
@@ -116,7 +118,12 @@
                     </button>
                 {/if}
             </label>
-            <button type="button" class="cancel" onclick={onCancel}>{text.cancel}</button>
+            <!-- it opens up beside the field, which narrows as it does -->
+            <div class="cancel-slot">
+                <button type="button" class="cancel" onclick={onCancel}>
+                    <span class="cancel-label">{text.cancel}</span>
+                </button>
+            </div>
         </div>
 
         <div class="results">
@@ -197,18 +204,40 @@
         }
     }
 
+    // The field starts where the list's is, its full width (16px from both sides), and narrows as
+    // Cancel's slot opens up beside it, while it lifts; closing, it widens back as it settles. The
+    // slot's width goes 0fr → 1fr (Cancel's own width, whatever its language), and the bar's end
+    // padding 16px → 8px (Cancel's hit area reaches nearer the edge), all on the lift's .32s
+    // --ease-out
     .bar {
         position: relative;
         flex: none;
         display: flex;
         align-items: center;
-        gap: var(--space-6);
         padding: calc(var(--safe-top) + 8px) var(--space-8) 0 var(--space-16);
         animation: lift 0.32s var(--ease-out);
 
         .leaving & {
             transform: translateY($lift);
-            transition: transform 0.32s var(--ease-out);
+            padding-inline-end: var(--space-16);
+            transition:
+                transform 0.32s var(--ease-out),
+                padding-inline-end 0.32s var(--ease-out);
+        }
+    }
+
+    .cancel-slot {
+        flex: none;
+        display: grid;
+        grid-template-columns: 1fr;
+        animation: cancel-in 0.32s var(--ease-out);
+
+        .leaving & {
+            grid-template-columns: 0fr;
+            opacity: 0;
+            transition:
+                grid-template-columns 0.32s var(--ease-out),
+                opacity 0.2s ease-out;
         }
     }
 
@@ -275,27 +304,33 @@
         }
     }
 
+    // clipped to the slot as it opens: its word comes in from the inline end, as the slot's end is
     .cancel {
-        flex: none;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        overflow: hidden;
         height: 44px;
-        padding: 0 var(--space-8);
+        padding: 0;
         border: 0;
         background: none;
         color: var(--accent-bright);
         font: var(--weight-semibold) text-size(15px) / 1 var(--font-sans);
+        white-space: nowrap;
         cursor: pointer;
-        // it comes in from the inline end
-        --away: 64px;
-        animation: cancel-in 0.32s var(--ease-out);
+        // a tap draws nothing (the highlight showed at the slot's edge as it closed)
+        -webkit-tap-highlight-color: transparent;
 
-        &:dir(rtl) {
-            --away: -64px;
+        &:focus-visible {
+            @include focus-ring;
         }
+    }
 
-        .leaving & {
-            transform: translateX(var(--away));
-            transition: transform 0.32s var(--ease-out);
-        }
+    // 6px from the field: its start padding, inside the button, so the slot at 0 leaves none
+    .cancel-label {
+        flex: none;
+        padding: 0 var(--space-8) 0 calc(var(--space-6) + var(--space-8));
     }
 
     .results {
@@ -304,7 +339,8 @@
         min-height: 0;
         overflow-y: auto;
         scrollbar-width: none;
-        padding: var(--space-16) var(--space-6) var(--space-24);
+        // to the window's bottom, the tab bar out of the way: clear of the safe area
+        padding: var(--space-16) var(--space-6) calc(var(--space-24) + var(--safe-bottom));
         // after the field has lifted
         animation: fade-in 0.2s ease-out 0.12s backwards;
 
@@ -411,13 +447,14 @@
     @keyframes lift {
         from {
             transform: translateY($lift);
+            padding-inline-end: var(--space-16);
         }
     }
 
     @keyframes cancel-in {
         from {
             opacity: 0;
-            transform: translateX(var(--away));
+            grid-template-columns: 0fr;
         }
     }
 
@@ -430,16 +467,21 @@
     @include reduced-motion {
         .bg,
         .bar,
-        .cancel,
+        .cancel-slot,
         .results {
             animation: none;
             transition: none;
         }
 
-        .leaving .bar,
-        .leaving .cancel {
+        // no width change either: closing, the bar keeps its shape and fades with the rest
+        .leaving .bar {
             transform: none;
+            padding-inline-end: var(--space-8);
             opacity: 0;
+        }
+
+        .leaving .cancel-slot {
+            grid-template-columns: 1fr;
         }
     }
 </style>

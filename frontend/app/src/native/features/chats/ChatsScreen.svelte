@@ -2,7 +2,8 @@
      kebab (New group, Mark all as read), the search field that lifts into a search, the compact
      filter, and the chats, pinned first. A row opens its conversation; a long-press opens its menu
      (Pin, Favourite, Mute, Mark as read, Archive, Leave group / Delete chat, the destructive ones
-     with Undo). The FAB opens New chat, and fades out while the list scrolls down. It lists the
+     with Undo). The search has the whole window: the tab bar slides down while it's open
+     (context.hideTabBar). The FAB opens New chat, and fades out while the list scrolls down. It lists the
      scope it's the root of (Chats, or Favourites), whatever the route's scope is while another tab
      shows. -->
 <script lang="ts">
@@ -350,6 +351,15 @@
         () => closeSearch(),
     );
 
+    // the search has the whole window: the tab bar goes down from the field's tap until Cancel
+    // or back (and comes back if the screen goes)
+    $effect(() => {
+        if (!searchOpen) return;
+        const hide = context.hideTabBar;
+        hide(true);
+        return () => hide(false);
+    });
+
     const people = new TermSearch((term) => client.searchUsers(term, 20));
     onDestroy(() => people.dispose());
 
@@ -456,7 +466,9 @@
         else if (delta < -6) fabHidden = false;
     }
 
-    const fabShown = $derived(!fabHidden && !searchOpen);
+    // and while the search is still closing, with the tab bar coming back up: the screen reaches
+    // the window's bottom until it's up, and the FAB would come in there, then jump
+    const fabShown = $derived(!fabHidden && !fieldHidden);
 </script>
 
 <!-- the latest message's markdown, on one line, as the old trees' rows render it -->
@@ -541,6 +553,7 @@
         type="button"
         class="fab"
         class:hidden={!fabShown}
+        class:lifted={fieldHidden}
         aria-label={$_("newChat")}
         aria-hidden={fabShown ? undefined : "true"}
         tabindex={fabShown ? 0 : -1}
@@ -722,6 +735,12 @@
         &.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+
+        // the search open (and closing): the screen reaches the window's bottom, the tab bar
+        // gone, so the FAB stays where it was as it fades, rather than dropping
+        &.lifted {
+            bottom: calc(var(--space-16) + var(--tab-bar-h));
         }
 
         &:focus-visible {
