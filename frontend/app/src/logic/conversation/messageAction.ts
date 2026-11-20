@@ -201,7 +201,8 @@ export async function messageAction(
                 : failed("reminders.cancelFailure");
         }
         case "retry":
-            void client.retrySendMessage(context, evt);
+            // refused for rules changed since the last sync, the client asks for them
+            void client.retrySendMessage(context, evt, "prompt");
             return DONE;
         case "reveal":
             if (msg.content.kind === "blocked_content") {

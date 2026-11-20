@@ -469,7 +469,7 @@ describe("sending what the composer holds", () => {
     test("4c invariant 1: a thread's composer posts to the thread, never the chat", async () => {
         const c = client();
         expect(await sendComposed(c, chat, thread, "hi", none)).toEqual({ kind: "posted" });
-        expect(c.sendMessage).toHaveBeenCalledWith(thread, "hi", false, undefined);
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, "hi", false, undefined, [], "prompt");
     });
 
     test("is refused, keeping the draft, when the client doesn't post it", async () => {
@@ -494,9 +494,9 @@ describe("sending what the composer holds", () => {
         expect(
             await sendComposed(c, chat, thread, "so true", { content: gif, shown: true }),
         ).toEqual({ kind: "posted" });
-        expect(c.sendMessage).toHaveBeenCalledWith(thread, "so true", false, gif);
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, "so true", false, gif, [], "prompt");
         await sendComposed(c, chat, thread, "", { content: gif, shown: true });
-        expect(c.sendMessage).toHaveBeenLastCalledWith(thread, undefined, false, gif);
+        expect(c.sendMessage).toHaveBeenLastCalledWith(thread, undefined, false, gif, [], "prompt");
     });
 
     test("tells the library's composer: nothing once posted, false when declined, a throw when refused", () => {
@@ -509,7 +509,14 @@ describe("sending what the composer holds", () => {
         const c = client();
         const file = { kind: "file_content" } as AttachmentContent;
         await sendComposed(c, chat, { chatId: chat.id }, "", { content: file, shown: true });
-        expect(c.sendMessage).toHaveBeenCalledWith({ chatId: chat.id }, undefined, false, file);
+        expect(c.sendMessage).toHaveBeenCalledWith(
+            { chatId: chat.id },
+            undefined,
+            false,
+            file,
+            [],
+            "prompt",
+        );
     });
 
     test("sends nothing for a payment the composer doesn't show", async () => {
@@ -528,7 +535,7 @@ describe("sending what the composer holds", () => {
         await sendComposed(c, chat, { chatId: chat.id }, "/go", none);
         expect(c.sendDirectBotMessage).toHaveBeenCalledWith({ chatId: chat.id }, "/go", false);
         await sendComposed(c, chat, thread, "/go", none);
-        expect(c.sendMessage).toHaveBeenCalledWith(thread, "/go", false, undefined);
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, "/go", false, undefined, [], "prompt");
     });
 });
 
