@@ -2262,13 +2262,15 @@ impl GroupChatCore {
         removed: Vec<String>,
         old: Vec<CustomPermission>,
     ) -> Vec<CustomPermission> {
-        let mut new: Vec<CustomPermission> = old
-            .into_iter()
-            .map(|cp| match updated.iter().find(|up| up.subtype == cp.subtype) {
-                Some(np) => np.clone(),
-                None => cp,
-            })
-            .collect();
+        let mut new = old;
+        // A custom permission the group doesn't have yet (Meme Fighter's, set for the first time)
+        // is added, not dropped
+        for up in updated {
+            match new.iter_mut().find(|cp| cp.subtype == up.subtype) {
+                Some(cp) => *cp = up,
+                None => new.push(up),
+            }
+        }
 
         new.retain(|cp| !removed.contains(&cp.subtype));
         new
@@ -2561,6 +2563,55 @@ mod tests {
         ] {
             assert!(check_tip_can_be_held(&transfer(symbol, 10_001), 8).is_err(), "{symbol}");
         }
+    }
+
+    fn custom(subtype: &str, role: types::GroupPermissionRole) -> CustomPermission {
+        CustomPermission {
+            subtype: subtype.to_string(),
+            role,
+        }
+    }
+
+    fn roles(permissions: &[CustomPermission]) -> Vec<(String, types::GroupPermissionRole)> {
+        permissions.iter().map(|cp| (cp.subtype.clone(), cp.role)).collect()
+    }
+
+    #[test]
+    fn a_custom_permission_set_for_the_first_time_is_kept() {
+        use types::GroupPermissionRole::Admins;
+
+        let merged = GroupChatCore::merge_custom_permissions(vec![custom("meme_fighter", Admins)], Vec::new(), Vec::new());
+
+        assert_eq!(roles(&merged), vec![("meme_fighter".to_string(), Admins)]);
+    }
+
+    #[test]
+    fn a_custom_permission_updated_replaces_the_old_one_and_others_stay() {
+        use types::GroupPermissionRole::{Admins, Members, Owner};
+
+        let merged = GroupChatCore::merge_custom_permissions(
+            vec![custom("meme_fighter", Owner)],
+            Vec::new(),
+            vec![custom("meme_fighter", Admins), custom("other", Members)],
+        );
+
+        assert_eq!(
+            roles(&merged),
+            vec![("meme_fighter".to_string(), Owner), ("other".to_string(), Members)]
+        );
+    }
+
+    #[test]
+    fn a_custom_permission_deleted_is_removed() {
+        use types::GroupPermissionRole::{Admins, Members};
+
+        let merged = GroupChatCore::merge_custom_permissions(
+            Vec::new(),
+            vec!["meme_fighter".to_string()],
+            vec![custom("meme_fighter", Admins), custom("other", Members)],
+        );
+
+        assert_eq!(roles(&merged), vec![("other".to_string(), Members)]);
     }
     use chat_events::TextContentInternal;
     use ic_stable_structures::DefaultMemoryImpl;
