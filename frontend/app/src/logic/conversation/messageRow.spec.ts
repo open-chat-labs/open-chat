@@ -16,6 +16,7 @@ import {
     conversationContext,
     deletedInfo,
     deletedText,
+    revealedFields,
     hasProposals,
     mediaHeld,
     messageRow,
@@ -39,6 +40,7 @@ const ctx: ConversationContext = {
     date: (timestamp) => `d${timestamp}`,
     longDate: (timestamp) => `L${timestamp}`,
     dayAndTime: (timestamp) => `D${timestamp}`,
+    deletion: () => undefined,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -769,6 +771,61 @@ describe("who deleted a message, and when", () => {
     });
 });
 
+describe("a revealed deleted message", () => {
+    const words = {
+        ...ctx,
+        text: (key: ResourceKey) =>
+            key.params === undefined ? key.key : `${key.key} ${JSON.stringify(key.params)}`,
+        deletion: (id: bigint) =>
+            id === 42n
+                ? ({ kind: "deleted_content", deletedBy: "bob", timestamp: 9n } as const)
+                : undefined,
+    };
+    const revealed = message({ deleted: true, content: { kind: "text_content", text: "hi" } });
+
+    test("shows its content, marked revealed, with who deleted it and when from the server's copy", () => {
+        expect(messageRow(revealed, "sent", words).message).toMatchObject({
+            kind: "text",
+            text: "hi",
+            deleted: false,
+            revealed: true,
+            deletedBy: 'deletedMessage.by {"name":"Bob"}',
+            deletedAt: "D9",
+        });
+    });
+
+    test("is marked without who or when where the server's copy isn't deleted (yet)", () => {
+        expect(revealedFields({ ...revealed.event, messageId: 1n }, words)).toEqual({
+            revealed: true,
+        });
+    });
+
+    test("a media message is marked as a text one is", () => {
+        const image = message({
+            deleted: true,
+            content: {
+                kind: "image_content",
+                width: 10,
+                height: 10,
+                mimeType: "image/png",
+                blobReference: undefined,
+                blobUrl: "u",
+                thumbnailData: "",
+            },
+        } as Partial<Message>);
+        expect(messageRow(image, "sent", words).message).toMatchObject({
+            kind: "image",
+            revealed: true,
+            deletedAt: "D9",
+        });
+    });
+
+    test("no other message is", () => {
+        expect(revealedFields(message().event, words)).toEqual({});
+        expect(messageRow(message(), "sent", words).message).not.toHaveProperty("revealed");
+    });
+});
+
 describe("the placeholder's words", () => {
     const words = { ...ctx, text: (key: ResourceKey) => key.key };
     const content: DeletedContent = { kind: "deleted_content", deletedBy: "me", timestamp: 9n };
@@ -1152,6 +1209,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            deletion: () => undefined,
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
@@ -1197,6 +1255,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            deletion: () => undefined,
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
@@ -1254,6 +1313,7 @@ describe("a conversation's context", () => {
             threads: true,
             locale: "en",
             undeleting: () => false,
+            deletion: () => undefined,
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),

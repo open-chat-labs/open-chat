@@ -1,4 +1,4 @@
-import type { MessageMenuAction } from "@client";
+import type { OfferedAction } from "@src/logic/conversation/messageOffer";
 
 export type MessageSwipeAction = "edit" | "forward" | "reply";
 
@@ -27,9 +27,7 @@ export function messageSwipeAction(
  * so that swipe isn't taken. Not the old mobile tree's rule (`messageSwipeAction`), where your own
  * message swipes left to edit.
  */
-export function webMessageSwipeLeft(
-    actions: ReadonlySet<MessageMenuAction>,
-): "forward" | undefined {
+export function webMessageSwipeLeft(actions: ReadonlySet<OfferedAction>): "forward" | undefined {
     return actions.has("forward") ? "forward" : undefined;
 }
 
@@ -40,7 +38,7 @@ export function webMessageSwipeLeft(
  */
 export function nativeMessageSwipes(
     mine: boolean,
-    actions: ReadonlySet<MessageMenuAction>,
+    actions: ReadonlySet<OfferedAction>,
 ): { right: "reply" | undefined; left: "edit" | undefined } {
     return {
         right: actions.has("reply") ? "reply" : undefined,

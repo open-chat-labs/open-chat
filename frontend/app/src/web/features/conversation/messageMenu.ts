@@ -1,9 +1,10 @@
-import { i18nKey, publish, routeForChatIdentifier, type MessageMenuAction } from "@client";
+import { i18nKey, publish, routeForChatIdentifier } from "@client";
 import {
     messageAction,
     type MessageActionTarget,
     type MessageMenuDialog,
 } from "@src/logic/conversation/messageAction";
+import type { OfferedAction } from "@src/logic/conversation/messageOffer";
 import { toastStore } from "@src/stores/toast";
 import { navigate } from "@src/utils/navigation";
 
@@ -23,7 +24,7 @@ export type MessageMenuTarget = MessageActionTarget & {
  * only run where `messageMenu` offered it.
  */
 export async function runMessageAction(
-    action: MessageMenuAction,
+    action: OfferedAction,
     target: MessageMenuTarget,
 ): Promise<MessageMenuDialog | undefined> {
     const outcome = await messageAction(action, target);

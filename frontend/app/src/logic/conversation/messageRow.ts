@@ -69,6 +69,7 @@ import { NamedNeurons } from "@src/stores/namedNeurons";
 import { threadUnreadCount } from "@src/logic/threads/threadRead";
 import { typedMentions, type MentionLookups } from "./typedMentions";
 import { linkPreviews } from "./linkPreview";
+import { isRevealedDeleted } from "./messageOffer";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -104,6 +105,11 @@ export type ConversationContext = {
      * date) with the time: "Today at 14:32" (when a message was deleted).
      */
     dayAndTime: (timestamp: bigint) => string;
+    /**
+     * A revealed deleted message's deletion as the server has it (`deletionOf`, its content
+     * having been revealed over it); none where the server's copy isn't deleted or loaded.
+     */
+    deletion: (messageId: bigint) => DeletedContent | undefined;
     /** How media shows: low bandwidth, and the media URL as this device fetches it. */
     media: MediaView;
     /** Whether the conversation is a DM. */
@@ -385,10 +391,12 @@ export function messageRow(
                   : ctx.userName(quoted.senderId),
         quoteText: quoted === undefined ? undefined : quoteText(quoted.content, ctx),
     };
+    const revealed = revealedFields(msg, ctx);
     const kind = kindMessage(msg, status, ctx, {
         id: String(msg.messageId),
         time: ctx.time(evt.timestamp),
         deleted: false,
+        ...revealed,
         reactions: msg.reactions.map((r) => ({
             emoji: r.reaction,
             count: r.userIds.size,
@@ -433,7 +441,7 @@ export function messageRow(
                       ),
                       ...deletedInfo(msg.content, ctx),
                   }
-                : {}),
+                : revealed),
             reactions: msg.reactions.map((r) => ({
                 emoji: r.reaction,
                 count: r.userIds.size,
@@ -458,6 +466,9 @@ type KindBase = {
     id: string;
     time: string;
     deleted: false;
+    revealed?: true;
+    deletedBy?: string;
+    deletedAt?: string;
     reactions: GroupMessage["reactions"];
     tips: GroupMessage["tips"];
 } & ThreadFields &
@@ -515,6 +526,20 @@ export function deletedText(
             mine && content.deletedBy === ctx.me ? "deletedMessage.mine" : "deletedMessage.theirs",
         ),
     );
+}
+
+/**
+ * A revealed deleted message's mark (`isRevealedDeleted`): `revealed`, a bin in its ticks' place
+ * (the old desktop's), whose popover says who deleted it and when, as the placeholder's did
+ * (`deletedInfo`, from the server's copy: `ctx.deletion`). None for any other message.
+ */
+export function revealedFields(
+    msg: Pick<Message, "messageId" | "deleted" | "content">,
+    ctx: Pick<ConversationContext, "me" | "userName" | "dayAndTime" | "text" | "deletion">,
+): { revealed?: true } & DeletedInfo {
+    if (!isRevealedDeleted(msg)) return {};
+    const deletion = ctx.deletion(msg.messageId);
+    return { revealed: true, ...(deletion === undefined ? {} : deletedInfo(deletion, ctx)) };
 }
 
 /** Who deleted a message, as its placeholder's popover names them, and when. */
@@ -1099,6 +1124,8 @@ export type ConversationContextInput = {
     /** The app's language, for dates said in full. */
     locale: string;
     /** Whether a deleted message is being undeleted (`undeletingMessagesStore`). */
+    /** A revealed deleted message's deletion as the server has it (`deletionOf` over the server events). */
+    deletion: (messageId: bigint) => DeletedContent | undefined;
     undeleting: (messageId: bigint) => boolean;
     /** Where a Twitch link's player can play (`twitchPlayerParent`); none, a link to Twitch. */
     twitchParent: string | undefined;
@@ -1158,6 +1185,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         avatar: (userId) => ownUserAvatarUrl(findUser(userId, users, webhooks)),
         threads: input.threads,
         undeleting: input.undeleting,
+        deletion: input.deletion,
         referralLink: referralLink(client.canonicalOrigin(), input.me),
         twitchParent: input.twitchParent,
         proposalTopics: input.proposalTopics,

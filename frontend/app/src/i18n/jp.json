@@ -3151,6 +3151,7 @@
     "restrictedContent": "制限されたコンテンツ",
     "restrictedContentInfo": "次のモデレーションフラグが適用されているグループとコミュニティを表示するか選択してください。",
     "retryMessage": "再試行メッセージ",
+    "hideRevealedMessage": "非表示",
     "revealDeletedMessage": "メッセージを表示",
     "roadmap": "ロードマップ",
     "role": {

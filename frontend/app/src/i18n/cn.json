@@ -3151,6 +3151,7 @@
     "restrictedContent": "受限内容",
     "restrictedContentInfo": "选择您是否希望查看已应用以下审核标志的群组和社区。",
     "retryMessage": "重试消息",
+    "hideRevealedMessage": "隐藏",
     "revealDeletedMessage": "显示消息",
     "roadmap": "路线图",
     "role": {

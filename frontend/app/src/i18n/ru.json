@@ -3151,6 +3151,7 @@
     "restrictedContent": "Ограниченный контент",
     "restrictedContentInfo": "Выберите, хотите ли вы видеть группы и сообщества, к которым применены следующие флаги модерации.",
     "retryMessage": "Повторить сообщение",
+    "hideRevealedMessage": "Скрыть",
     "revealDeletedMessage": "Показать сообщение",
     "roadmap": "Дорожная карта",
     "role": {

@@ -3215,6 +3215,7 @@
     "restrictedContent": "Restricted Content",
     "restrictedContentInfo": "Choose whether you would like to see groups and communities that have had the following moderation flags applied.",
     "retryMessage": "Retry message",
+    "hideRevealedMessage": "Hide",
     "revealDeletedMessage": "Reveal message",
     "roadmap": "Roadmap",
     "role": {

@@ -12,6 +12,21 @@ const ids = (actions: MessageMenuAction[], info = true) =>
     messageMenuItems(new Set(actions), info, label).map((i) => i.id);
 
 describe("a message's long-press menu", () => {
+    test("a revealed deleted message's: Copy, Undelete and Hide, no Info (it's inert)", () => {
+        const items = messageMenuItems(
+            new Set(["undelete", "copy", "hide"] as const),
+            false,
+            label,
+        );
+        expect(items.map((i) => i.id)).toEqual(["copy", "undelete", "hide"]);
+        expect(items.at(-1)).toEqual({
+            id: "hide",
+            label: "t:hideRevealedMessage",
+            icon: "eye-off",
+        });
+        expect(nativeMessageAction("hide")).toBe("hide");
+    });
+
     test("the design's items first, in its order, whatever order they're offered in", () => {
         expect(ids(["edit", "delete", "copy", "forward", "reply", "pin"])).toEqual([
             "reply",

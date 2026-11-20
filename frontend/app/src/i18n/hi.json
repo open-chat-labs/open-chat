@@ -3151,6 +3151,7 @@
     "restrictedContent": "प्रतिबंधित सामग्री",
     "restrictedContentInfo": "चुनें कि क्या आप उन समूहों और समुदायों को देखना चाहेंगे जिन पर निम्नलिखित मॉडरेशन फ़्लैग लागू हैं।",
     "retryMessage": "संदेश पुनः प्रयास करें",
+    "hideRevealedMessage": "छिपाएँ",
     "revealDeletedMessage": "संदेश प्रकट करें",
     "roadmap": "रोडमैप",
     "role": {

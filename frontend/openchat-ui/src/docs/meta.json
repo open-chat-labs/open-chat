@@ -817,6 +817,17 @@
         "doc": "When it was deleted (\"Today at 14:32\"), the popover's second line (by hand, 2026-11-19)."
       },
       {
+        "name": "revealed",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A deleted message revealed: its content shows, with a bin in its ticks' place (any side) whose popover says who deleted it and when (`deletedBy`, `deletedAt`), as the placeholder's does (by hand, 2026-11-20)."
+      },
+      {
         "name": "quoteName",
         "type": "string",
         "default": "",
@@ -1171,6 +1182,88 @@
         "required": false,
         "componentDefault": null,
         "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "DeletedPopover",
+    "source": "by hand (2026-11-19, a mark from 2026-11-20)",
+    "hash": "",
+    "description": "A deleted message's \"who deleted it and when\": what it wraps is a button whose popover (the Tooltip's inverted style) says `deletedBy` over `deletedAt`, linked by aria-describedby; it opens on hover after 400ms, keyboard focus or a tap and closes on leave, blur, Esc, a second tap, a press elsewhere or when the info goes. `placeholder`: a deleted message's whole placeholder (ChatBubble), the popover above its start edge. `mark`: a revealed deleted message's bin in its ticks' place (ChatBubble, MediaMessage), the popover placed on the page above it. Without `deletedBy` or `deletedAt`, the content shows plain.",
+    "preview": {
+      "width": 360,
+      "height": 120
+    },
+    "props": [
+      {
+        "name": "variant",
+        "type": "'placeholder' | 'mark'",
+        "default": "placeholder",
+        "editor": "enum",
+        "options": [
+          "placeholder",
+          "mark"
+        ],
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "What it wraps: a deleted message's placeholder, or a revealed one's bin."
+      },
+      {
+        "name": "deletedBy",
+        "type": "string",
+        "default": "Deleted by Alice",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Who deleted it, the popover's first line as the host words it (\"Deleted by Alice\")."
+      },
+      {
+        "name": "deletedAt",
+        "type": "string",
+        "default": "Today at 14:32",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "When it was deleted (\"Today at 14:32\"), the popover's second line."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The placeholder at the inline end (native, your own): its popover at its end edge."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the mark's accessible name."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "What it wraps: the placeholder's contents, or the bin."
       }
     ],
     "group": "library"
@@ -14493,6 +14586,39 @@
         "required": false,
         "componentDefault": null,
         "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      },
+      {
+        "name": "revealed",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A deleted message revealed: a bin in its ticks' place (any side), with who deleted it and when (by hand, 2026-11-20)."
+      },
+      {
+        "name": "deletedBy",
+        "type": "string",
+        "default": "Deleted by Alice",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Who deleted it, the bin's popover's first line as the host words it (\"Deleted by Alice\")."
+      },
+      {
+        "name": "deletedAt",
+        "type": "string",
+        "default": "Today at 14:32",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "When it was deleted (\"Today at 14:32\"), the popover's second line."
       },
       {
         "name": "onOpen",

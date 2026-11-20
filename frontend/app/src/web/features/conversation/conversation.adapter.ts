@@ -1,4 +1,4 @@
-import type { MessageMenuAction } from "@client";
+import type { OfferedAction } from "@src/logic/conversation/messageOffer";
 import type { MenuItem } from "@openchat/ui/src/lib/types";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import type { ModeratorChatAction } from "@src/logic/moderation/chatModeration";
@@ -150,10 +150,10 @@ function actionItem(action: ChatMenuAction, state: HeaderMenuState): HeaderMenuI
 
 /** One of a message's actions as MessageActions lists it; `label` is the app's resource key. */
 export type MessageMenuItem =
-    | { action: MessageMenuAction; label: string; mask: string; variant: "regular" | "danger" }
+    | { action: OfferedAction; label: string; mask: string; variant: "regular" | "danger" }
     | { action: "separator"; label: ""; variant: "separator" };
 
-type MessageMenuEntry = { action: MessageMenuAction; label: string; icon: string };
+type MessageMenuEntry = { action: OfferedAction; label: string; icon: string };
 
 // what a message's menu lists, in order: what's done with the message, then (after a separator)
 // what acts on its sender or removes it
@@ -177,6 +177,8 @@ const MESSAGE_MENU: MessageMenuEntry[] = [
     { action: "retry", label: "retryMessage", icon: "refresh" },
     { action: "reveal", label: "revealDeletedMessage", icon: "eye" },
     { action: "undelete", label: "undeleteMessage", icon: "rotate-back" },
+    // a revealed deleted message back behind its placeholder (`hideRevealedMessage`)
+    { action: "hide", label: "hideRevealedMessage", icon: "eye-off" },
 ];
 
 const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
@@ -190,7 +192,7 @@ const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
  * A message's menu (MessageActions' items) for what it offers (`messageMenu`). Only the actions
  * this screen carries out are listed (a proposal's, tipping and the rest wait for theirs).
  */
-export function messageMenuItems(actions: ReadonlySet<MessageMenuAction>): MessageMenuItem[] {
+export function messageMenuItems(actions: ReadonlySet<OfferedAction>): MessageMenuItem[] {
     const item =
         (variant: "regular" | "danger") =>
         (entry: MessageMenuEntry): MessageMenuItem => ({

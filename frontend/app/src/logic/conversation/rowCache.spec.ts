@@ -12,6 +12,7 @@ const ctx: ConversationContext = {
     date: (timestamp) => `d${timestamp}`,
     longDate: (timestamp) => `L${timestamp}`,
     dayAndTime: (timestamp) => `D${timestamp}`,
+    deletion: () => undefined,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,
@@ -296,7 +297,7 @@ describe("the rows kept per event", () => {
 
 describe("the names a row shows besides its sender's", () => {
     test("are the deleter's, a transfer's or prize win's recipient's, and the tippers'", () => {
-        const name = { userName: (id: string) => id.toUpperCase() };
+        const name = { userName: (id: string) => id.toUpperCase(), deletion: () => undefined };
         const msg = (content: object, tips: Message["tips"] = {}): Message => ({
             ...message(content as Message["content"]).event,
             tips,

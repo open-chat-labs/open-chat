@@ -3151,6 +3151,7 @@
     "restrictedContent": "محتوای محدود شده",
     "restrictedContentInfo": "انتخاب کنید که آیا می‌خواهید گروه‌ها و جوامعی را ببینید که پرچم‌های نظارت زیر اعمال شده است یا خیر.",
     "retryMessage": "پیام را دوباره امتحان کنید",
+    "hideRevealedMessage": "پنهان کردن",
     "revealDeletedMessage": "فاش کردن پیام",
     "roadmap": "نقشه راه",
     "role": {

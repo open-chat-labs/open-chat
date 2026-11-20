@@ -56,6 +56,8 @@
         translationsStore,
         unconfirmedReadByThem,
         unconfirmedStore,
+        revealedDeletionsStore,
+        serverEventsStore,
         undeletingMessagesStore,
         webhookUserIdsStore,
         type ChatEvent,
@@ -64,7 +66,6 @@
         type FileContent,
         type LeaveOrDelete,
         type Message,
-        type MessageMenu,
         type MultiUserChatIdentifier,
         type OpenChat,
         type PollContent,
@@ -117,7 +118,7 @@
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
-    import { messageOffer } from "@src/logic/conversation/messageOffer";
+    import { messageOffer, type MessageOffer } from "@src/logic/conversation/messageOffer";
     import {
         conversationContext,
         hasProposals,
@@ -132,6 +133,7 @@
         type MediaContent,
         type MessageRow,
     } from "@src/logic/conversation/messageRow";
+    import { revealedDeletion } from "@src/logic/conversation/revealedDeletion";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { RowCache } from "@src/logic/conversation/rowCache";
@@ -292,6 +294,13 @@
             threads: false,
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            // a revealed deleted message's deletion, as the server has it
+            deletion: (messageId) =>
+                revealedDeletion(
+                    revealedDeletionsStore.get(messageId),
+                    serverEventsStore.value,
+                    messageId,
+                ),
             // Twitch doesn't play in the native apps: its links open Twitch
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
@@ -1069,7 +1078,7 @@
         evt: EventWrapper<Message>,
         failed: boolean,
         confirmed: boolean,
-    ): MessageMenu {
+    ): MessageOffer {
         const offered = messageOffer(client, current, evt, {
             me,
             bridgedUsers: $bridgedUsersStore,
@@ -1094,7 +1103,7 @@
         retry: (() => void) | undefined;
     };
 
-    function rowOffers(evt: EventWrapper<Message>, offered: MessageMenu): RowOffers {
+    function rowOffers(evt: EventWrapper<Message>, offered: MessageOffer): RowOffers {
         return {
             menu: offered.menu,
             swipes: nativeMessageSwipes(evt.event.sender === me, offered.actions),
@@ -1147,7 +1156,7 @@
     function openMessageMenu(
         evt: EventWrapper<Message>,
         el: HTMLElement | undefined,
-        offered: MessageMenu,
+        offered: MessageOffer,
         failed: boolean,
     ) {
         if (messageActions?.open(evt, el, offered, failed) === true) {

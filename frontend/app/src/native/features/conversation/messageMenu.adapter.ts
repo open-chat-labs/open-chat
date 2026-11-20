@@ -1,4 +1,5 @@
-import type { MessageContent, MessageMenu, MessageMenuAction } from "@client";
+import type { MessageContent } from "@client";
+import type { MessageOffer, OfferedAction } from "@src/logic/conversation/messageOffer";
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
 
 // A message's long-press menu (native design notes §3.3): what its menu offers (`messageMenu`,
@@ -6,7 +7,7 @@ import type { NativeMenuItem } from "@openchat/ui/src/native/types";
 // message there has but one that can't be acted on (deleted, blocked).
 
 /** What a native message menu's rows do: one of the message's actions, or its info. */
-export type NativeMessageAction = MessageMenuAction | "info";
+export type NativeMessageAction = OfferedAction | "info";
 
 type Entry = { id: NativeMessageAction; label: string; icon: string };
 
@@ -29,6 +30,8 @@ const ITEMS: Entry[] = [
     { id: "retry", label: "retryMessage", icon: "refresh" },
     { id: "reveal", label: "revealDeletedMessage", icon: "eye" },
     { id: "undelete", label: "undeleteMessage", icon: "rotate-back" },
+    // a revealed deleted message back behind its placeholder (`hideRevealedMessage`)
+    { id: "hide", label: "hideRevealedMessage", icon: "eye-off" },
 ];
 
 // what removes the message or acts on its sender, after the one divider (notes §3.3)
@@ -45,7 +48,7 @@ const DANGER: Entry[] = [
  * here yet (GAPS.md, "Native conversation").
  */
 export function messageMenuItems(
-    actions: ReadonlySet<MessageMenuAction>,
+    actions: ReadonlySet<OfferedAction>,
     withInfo: boolean,
     label: (key: string) => string,
 ): NativeMenuItem[] {
@@ -95,13 +98,13 @@ export function myReactions(
  * what `messageMenu` offers then (Undelete among it). Any other placeholder has no menu. A tap
  * shows who deleted it and when.
  */
-export function nativeMessageOffer(offered: MessageMenu, content: MessageContent): MessageMenu {
+export function nativeMessageOffer(offered: MessageOffer, content: MessageContent): MessageOffer {
     if (content.kind !== "deleted_content") return offered;
     const reveal = offered.menu && offered.actions.has("reveal");
     return {
         ...offered,
         menu: reveal,
         react: false,
-        actions: new Set<MessageMenuAction>(reveal ? ["reveal"] : []),
+        actions: new Set<OfferedAction>(reveal ? ["reveal"] : []),
     };
 }

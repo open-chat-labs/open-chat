@@ -468,7 +468,9 @@ design export needs. Each entry says where it came up.
       deletion of someone else's message, which they can always reveal (the user's decision of
       2026-11-20, against the design's "no long-press menu"; a review of #10553 kept the
       moderator's, which gating on the sender had dropped). Any other has no menu. Revealed,
-      it's a message again, whose menu is what `messageMenu` offers then (Undelete among it). A tap toggles its popover (who deleted it and when, as the web's), and a press
+      it's only peeked at, as on the web (below, "Message kinds": revealed): its bin in the ticks'
+      place, its long-press menu Copy, Undelete and Hide (no Info, no quick reactions, no swipes),
+      its reactions read only. A tap toggles its popover (who deleted it and when, as the web's), and a press
       elsewhere closes it; a long-press doesn't. Your own delete's Undo, in its toast, also
       brings it back. The design's "deleting
       your own message leaves the placeholder, with a 'Message deleted' toast and Undo" was already
@@ -2931,6 +2933,22 @@ design export needs. Each entry says where it came up.
     actions"): the placeholder's button takes only its own click, which opens the popover, so the
     menu's hover bar, right-click and long-press are as they were. A long-press (the menu) doesn't
     open the popover;
+  - revealed (the user's decisions of 2026-11-20): a deleted message revealed (its content back,
+    still deleted: `isRevealedDeleted`) shows its content with a bin in its ticks' place, the old
+    desktop's (`TimeAndTicks`), on either side, whose popover says who deleted it and when, as the
+    placeholder's (`revealedFields`; who and when are the server's copy's, `deletionOf` over the
+    chat's or thread's server events, the client having merged the revealed content over them;
+    none where the server's copy isn't deleted yet). It's only peeked at (`peekOffer`, over
+    `messageMenu`, which the old trees read and still offer everything on): its menu offers Copy and
+    Undelete where `messageMenu` does, and Hide; no reactions (the hover bar's, the picker, native's
+    quick ones; its own show read only), no reply (the bar's, the menu's, a swipe, a double-click),
+    edit, forward, pin, thread, reminder, report or tip, and on native no Info. Hide puts it back
+    behind its placeholder on this device (`hideRevealedMessage`: the revealed content dropped, the
+    message shown deleted by the server's copy's deleter at its time until the server says so);
+    the placeholder then behaves as any (its popover, its Reveal). The bin is on text and media
+    messages (`ChatBubble`, `MediaMessage`); a revealed voice message, file, transfer, swap offer,
+    poll, prize, proposal or link preview card shows its ticks as before, no bin (their components
+    take no `revealed` yet), though its menu is the peek's;
   - translated (5b's Translate): the translation shows in the message's place, as in the old trees
     (the client merges `translationsStore` into the events); there's no mark that it's translated,
     as there wasn't in the old trees. The old desktop's on-device translation of a whole chat (a

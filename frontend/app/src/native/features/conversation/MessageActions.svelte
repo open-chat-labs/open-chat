@@ -25,12 +25,11 @@
         type ChatSummary,
         type EventWrapper,
         type Message,
-        type MessageMenu as MessageOffer,
-        type MessageMenuAction,
         type OpenChat,
         type ReportReason,
     } from "@client";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
+    import type { MessageOffer, OfferedAction } from "@src/logic/conversation/messageOffer";
     import { haptic } from "@openchat/ui/src/native/haptics";
     import MessageLongPressMenu from "@openchat/ui/src/native/MessageLongPressMenu.svelte";
     import NativeAlert from "@openchat/ui/src/native/NativeAlert.svelte";
@@ -329,12 +328,12 @@
         }
     }
 
-    function isDelete(action: MessageMenuAction): action is DeleteAction {
+    function isDelete(action: OfferedAction): action is DeleteAction {
         return action === "delete" || action === "delete_for_me";
     }
 
     // what came of an action, shown
-    function show(at: Pressed, action: MessageMenuAction, outcome: MessageActionOutcome) {
+    function show(at: Pressed, action: OfferedAction, outcome: MessageActionOutcome) {
         switch (outcome.kind) {
             case "ask":
                 if (outcome.dialog.kind === "forward") {

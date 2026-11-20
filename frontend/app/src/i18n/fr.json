@@ -3151,6 +3151,7 @@
     "restrictedContent": "Contenu restreint",
     "restrictedContentInfo": "Choisissez si vous souhaitez voir les groupes et les communautés auxquels les indicateurs de modération suivants ont été appliqués.",
     "retryMessage": "Réessayer le message",
+    "hideRevealedMessage": "Masquer",
     "revealDeletedMessage": "Révéler le message",
     "roadmap": "Feuille de route",
     "role": {

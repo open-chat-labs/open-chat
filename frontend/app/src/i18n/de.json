@@ -3151,6 +3151,7 @@
     "restrictedContent": "Eingeschränkter Inhalt",
     "restrictedContentInfo": "Wählen Sie aus, ob Sie Gruppen und Communities sehen möchten, auf die die folgenden Moderationsflags angewendet wurden.",
     "retryMessage": "Nachricht erneut versuchen",
+    "hideRevealedMessage": "Ausblenden",
     "revealDeletedMessage": "Nachricht enthüllen",
     "roadmap": "Fahrplan",
     "role": {

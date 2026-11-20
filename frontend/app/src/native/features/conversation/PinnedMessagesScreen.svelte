@@ -27,6 +27,8 @@
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
+        revealedDeletionsStore,
+        serverEventsStore,
         undeletingMessagesStore,
         userGroupSummariesStore,
         selectedServerChatStore,
@@ -57,6 +59,7 @@
         messageStatus,
         senderColor,
     } from "@src/logic/conversation/messageRow";
+    import { revealedDeletion } from "@src/logic/conversation/revealedDeletion";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
     import { lowBandwidth } from "@src/stores/settings";
     import { navigate } from "@src/utils/navigation";
@@ -172,6 +175,13 @@
             threads: false,
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
+            // a revealed deleted message's deletion, as the server has it
+            deletion: (messageId) =>
+                revealedDeletion(
+                    revealedDeletionsStore.get(messageId),
+                    serverEventsStore.value,
+                    messageId,
+                ),
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,

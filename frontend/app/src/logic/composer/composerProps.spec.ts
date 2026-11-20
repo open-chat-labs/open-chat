@@ -27,6 +27,7 @@ const ctx: ConversationContext = {
     date: (timestamp) => `d${timestamp}`,
     longDate: (timestamp) => `L${timestamp}`,
     dayAndTime: (timestamp) => `D${timestamp}`,
+    deletion: () => undefined,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
     readonly: false,

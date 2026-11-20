@@ -43,13 +43,14 @@ function fakeClient() {
         deleteFailedMessage: vi.fn(async () => {}),
         deleteMessage: vi.fn(async () => true),
         followThread: vi.fn(async () => true),
+        hideRevealedMessage: vi.fn(),
         pinMessage: vi.fn(async () => true),
         replyPrivately: vi.fn(
             async (_: EnhancedReplyContext): Promise<DirectChatIdentifier | undefined> => undefined,
         ),
         retrySendMessage: vi.fn(async () => ({ kind: "failure" as const })),
         revealBlockedMessage: vi.fn(),
-        revealDeletedMessage: vi.fn(async () => true),
+        peekDeletedMessage: vi.fn(async () => true),
         translateMessage: vi.fn(async () => true),
         undeleteMessage: vi.fn(async () => true),
         unpinMessage: vi.fn(async () => true),
@@ -161,7 +162,16 @@ describe("a message's actions", () => {
         expect(client.undeleteMessage).toHaveBeenCalledWith(chatId, undefined, evt.event);
         const deleted = { ...evt, event: { ...evt.event, deleted: true } };
         await messageAction("reveal", target(client, { ...inThread, evt: deleted }));
-        expect(client.revealDeletedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
+        expect(client.peekDeletedMessage).toHaveBeenCalledWith(chatId, deleted.event, undefined);
+    });
+
+    test("Hide puts a revealed message back behind its placeholder", async () => {
+        const client = fakeClient();
+        const revealed = { ...evt, event: { ...evt.event, deleted: true } };
+        expect(await messageAction("hide", target(client, { evt: revealed }))).toEqual({
+            kind: "done",
+        });
+        expect(client.hideRevealedMessage).toHaveBeenCalledWith(42n);
     });
 
     test("following from a thread's message follows the thread's root", async () => {

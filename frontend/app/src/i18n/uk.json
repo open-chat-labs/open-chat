@@ -3151,6 +3151,7 @@
     "restrictedContent": "Обмежений вміст",
     "restrictedContentInfo": "Виберіть, чи бажаєте ви бачити групи та спільноти, до яких застосовано такі позначки модерування.",
     "retryMessage": "Повторити повідомлення",
+    "hideRevealedMessage": "Приховати",
     "revealDeletedMessage": "Відкрити повідомлення",
     "roadmap": "Дорожня карта",
     "role": {
