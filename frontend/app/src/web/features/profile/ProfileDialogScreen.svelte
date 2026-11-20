@@ -110,7 +110,7 @@
     } from "@src/logic/auth/identityLinking.svelte";
     import { shareLink } from "@src/utils/share";
     import { websiteVersion } from "@src/utils/openchatClient";
-    import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { readImageFile, type CropArea } from "@src/utils/imageCrop";
     import {
@@ -125,7 +125,7 @@
     let { dialog, onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
 
     const client = getContext<OpenChat>("client");
-    const translate = (key: ResourceKey) => interpolate($_, key);
+    const translate = (key: ResourceKey) => interpolateNewUi($_, key);
 
     // Tokens sent to a user id are lost, so warn before copying it: the copy waiting on that answer
     let copyUserId: (() => void) | undefined = $state(undefined);

@@ -6,7 +6,7 @@
     import { chitStateStore, PremiumItem, type OpenChat } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { PremiumItemPayment } from "@src/logic/premium/premiumItemPayment.svelte";
     import { getContext } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -39,7 +39,7 @@
     async function pay() {
         const outcome = await payment.pay();
         if (outcome.kind === "paid") paid = true;
-        else onFailed(interpolate($_, outcome.reason));
+        else onFailed(interpolateNewUi($_, outcome.reason));
     }
 
     function close() {

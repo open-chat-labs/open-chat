@@ -11,7 +11,7 @@
     import type { OpenChat } from "@client";
     import ListSectionLabel from "@openchat/ui/src/lib/components/ListSectionLabel.svelte";
     import TextArea from "@openchat/ui/src/lib/components/TextArea.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import {
         FREEZE_REASON_MAX_LENGTH,
         freeze as freezeTarget,
@@ -51,7 +51,7 @@
         if (outcome === undefined) return;
         onClose();
         toastHost?.({
-            message: interpolate($_, outcome.message),
+            message: interpolateNewUi($_, outcome.message),
             duration: UNDO_TOAST_MS,
             onAction: () => undo(target, name),
         });
@@ -63,19 +63,19 @@
 </script>
 
 <ConfirmDialog
-    title={interpolate($_, text.title)}
-    message={interpolate($_, text.body)}
+    title={interpolateNewUi($_, text.title)}
+    message={interpolateNewUi($_, text.body)}
     confirmLabel={$_("freezeConfirm.confirm")}
     disabled={reason.kind !== "ok"}
     busy={action.busy}
-    error={action.error === undefined ? undefined : interpolate($_, action.error)}
+    error={action.error === undefined ? undefined : interpolateNewUi($_, action.error)}
     onConfirm={freeze}
     {onClose}>
     <div class="reason">
         <ListSectionLabel label={$_("freezeConfirm.reasonLabel")} />
         <TextArea
             value={typed}
-            placeholder={interpolate($_, text.reasonHint)}
+            placeholder={interpolateNewUi($_, text.reasonHint)}
             maxLength={FREEZE_REASON_MAX_LENGTH}
             onInput={(e) => (typed = e.currentTarget.value)} />
     </div>

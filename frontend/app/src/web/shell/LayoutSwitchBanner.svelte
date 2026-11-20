@@ -2,7 +2,7 @@
      for desktop widths only, and a reload of the same URL gets the phone layout. The decision, the
      dismissal and following the width are logic/layout's, shared with the old trees. -->
 <script lang="ts">
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import { useLayoutSwitchBanner } from "@src/logic/layout/layoutSwitchBanner.svelte";
     import { _ } from "svelte-i18n";
@@ -15,7 +15,7 @@
          over the app but under its dialogs -->
     <div class="layout-switch" role="status">
         <Banner
-            text={interpolate($_, banner.message)}
+            text={interpolateNewUi($_, banner.message)}
             actionLabel={$_("layoutSwitch.reload")}
             actionHandler={() => window.location.reload()}
             onDismiss={() => banner.dismiss()} />

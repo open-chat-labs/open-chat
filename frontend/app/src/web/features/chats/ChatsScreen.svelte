@@ -52,7 +52,7 @@
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
     import Markdown from "@src/core/Markdown.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import { now } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
@@ -266,7 +266,7 @@
     }
 
     function menuItem(action: ChatRowAction, chat: ChatSummary, row: ChatListRow): MenuItem {
-        const label = interpolate($_, chatRowActionLabel(action, chat));
+        const label = interpolateNewUi($_, chatRowActionLabel(action, chat));
         switch (action) {
             case "favourite":
                 return { label, onSelect: () => client.addToFavourites(chat.id) };

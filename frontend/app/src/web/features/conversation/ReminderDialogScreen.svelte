@@ -16,7 +16,7 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import DurationChips from "@openchat/ui/src/lib/components/DurationChips.svelte";
     import TextArea from "@openchat/ui/src/lib/components/TextArea.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { now } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { getContext } from "svelte";
@@ -33,7 +33,7 @@
     let custom = $state("");
     let note = $state("");
 
-    const presets = $derived(REMINDER_PRESETS.map((p) => interpolate($_, reminderPresetText(p))));
+    const presets = $derived(REMINDER_PRESETS.map((p) => interpolateNewUi($_, reminderPresetText(p))));
     const customLabel = $derived($_("reminders.custom"));
 
     function pick(label: string) {

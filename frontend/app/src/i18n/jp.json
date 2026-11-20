@@ -1567,6 +1567,11 @@
         "community": "コミュニティ",
         "group": "グループ"
     },
+    "levelNoun": {
+        "channel": "チャンネル",
+        "community": "コミュニティ",
+        "group": "グループ"
+    },
     "light": "ライト",
     "linkCopiedToClipboard": "リンクをクリップボードにコピー",
     "loadGif": "gifを表示",

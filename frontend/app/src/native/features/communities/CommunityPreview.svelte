@@ -16,7 +16,7 @@
         type OpenChat,
         type ResourceKey,
     } from "@client";
-    import { interpolate, supportedLanguagesByCode } from "@i18n/i18n";
+    import { interpolateNewUi, supportedLanguagesByCode } from "@i18n/i18n";
     import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import { communityPreviewBar } from "@src/logic/join/previewBar";
@@ -37,7 +37,7 @@
     let { community, context }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const text = (key: ResourceKey) => interpolate($_, key);
+    const text = (key: ResourceKey) => interpolateNewUi($_, key);
 
     // what the client's calls read through `.value`, so these follow it: a lapse or a join (the
     // communities), Diamond bought or CHIT earned (the user), a top-up (balances)

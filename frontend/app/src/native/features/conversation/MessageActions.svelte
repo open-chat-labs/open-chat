@@ -34,7 +34,7 @@
     import { haptic } from "@openchat/ui/src/native/haptics";
     import MessageLongPressMenu from "@openchat/ui/src/native/MessageLongPressMenu.svelte";
     import NativeAlert from "@openchat/ui/src/native/NativeAlert.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import {
         messageAction,
         undeleteMessage,
@@ -347,7 +347,7 @@
                 }
                 return;
             case "succeeded":
-                context.toast(interpolate($_, outcome.message));
+                context.toast(interpolateNewUi($_, outcome.message));
                 return;
             case "failed":
                 toastStore.showFailureToast(outcome.message);

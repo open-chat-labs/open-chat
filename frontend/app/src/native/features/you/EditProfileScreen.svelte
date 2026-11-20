@@ -19,7 +19,7 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import ListSectionLabel from "@openchat/ui/src/lib/components/ListSectionLabel.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
     import { ProfileImages, type ProfileImage } from "@src/logic/profile/profileImages.svelte";
     import { BANNER_SIZE, readImageFile, type CropArea } from "@src/utils/imageCrop";
@@ -153,7 +153,7 @@
                 context.back?.();
                 break;
             case "failed":
-                context.toast(interpolate($_, outcome.reason));
+                context.toast(interpolateNewUi($_, outcome.reason));
                 break;
             // rejected: why is under the field; nothing: there was nothing to save
         }

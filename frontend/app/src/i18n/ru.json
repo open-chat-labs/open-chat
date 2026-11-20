@@ -1567,6 +1567,11 @@
         "community": "Сообщество",
         "group": "Группа"
     },
+    "levelNoun": {
+        "channel": "канал",
+        "community": "сообщество",
+        "group": "группа"
+    },
     "light": "светлая",
     "linkCopiedToClipboard": "Ссылка скопирована в буфер обмена",
     "loadGif": "Показать гифку",

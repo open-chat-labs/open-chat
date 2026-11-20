@@ -31,7 +31,7 @@
         type ManageSection,
     } from "@src/logic/groupOrCommunity/manage.svelte";
     import { visibilityLabel } from "@src/logic/groupOrCommunity/visibility";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { swatchFor } from "@src/logic/swatch";
@@ -113,7 +113,7 @@
     const subtitle = $derived(
         target === undefined
             ? ""
-            : `${interpolate($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
+            : `${interpolateNewUi($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
     // its own picture only: its swatch stands in otherwise, as in GroupPanel
     const avatarUrl = $derived(

@@ -12,7 +12,7 @@
     } from "@client";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { navigate } from "@src/utils/navigation";
     import { BUG_REPORT_CHANNEL } from "@src/utils/support";
     import { getContext, onMount } from "svelte";
@@ -39,7 +39,7 @@
         signInMethodRows(
             linked ?? [],
             (key) => $_(key),
-            (lastUsed) => interpolate($_, signInLastUsed(lastUsed, $locale ?? "en")),
+            (lastUsed) => interpolateNewUi($_, signInLastUsed(lastUsed, $locale ?? "en")),
         ),
     );
 </script>

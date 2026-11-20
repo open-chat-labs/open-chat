@@ -1567,6 +1567,11 @@
         "community": "Спільнота",
         "group": "Група"
     },
+    "levelNoun": {
+        "channel": "канал",
+        "community": "спільнота",
+        "group": "група"
+    },
     "light": "світло",
     "linkCopiedToClipboard": "Посилання скопійовано в буфер обміну",
     "loadGif": "Показати gif",

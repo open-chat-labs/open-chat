@@ -1703,11 +1703,9 @@ design export needs. Each entry says where it came up.
     works", "Channel name", …) and `GroupPanel`'s member, rules, webhook and permission notes
     follow `scope`, where the export said "group" for every kind (EXPORT-LOG 2026-11-19).
   - left alone (old UIs): French `level.channel` is "Canaliser", the verb, not the noun "Canal".
-    The old UIs show it ("Supprimer Canaliser"), so it stays until they go. The new trees still
-    read it through a `ResourceKey`'s `level` (`interpolate` in `i18n/i18n.ts`, and
-    `logic/conversation/timelineEventText`): the timeline's join and change events, native join,
-    members and invite strings, ManageSettings' verified-name warning. Fixing those for the new
-    trees alone needs level nouns of their own; the details line already has them (`access.*`).
+    The old UIs show it ("Supprimer Canaliser"), so it stays until they go. The new trees read
+    their own nouns instead (`levelNoun.*`, through `interpolateNewUi` and `timelineEventText`'s
+    `levelWords`; see "Wiring"), and the details line has whole phrases (`access.*`).
   - Bots: GroupPanel's bots view, its bots part: the installed bots (a group's, or a channel's
     community's) and, for someone who may manage them (`canManageBots`), up to 20 to add
     (`exploreBots`). Either opens `BotDialog` (`BotDialogScreen`): details, install, change
@@ -2063,6 +2061,22 @@ design export needs. Each entry says where it came up.
   Wiring).
 
 ### Wiring
+
+- **Words for group, channel and community** (2026-11-19): the new UIs (src/web, src/native and
+  `logic/conversation/messageRow`) fill a message's `{level}` from `levelNoun.*`, nouns reviewed
+  in all 15 locales and stored as they read mid-sentence (French "canal", German "Gruppe"),
+  capitalised only where a key wants it: `interpolateNewUi` (`i18n/i18n.ts`) and
+  `timelineEventTextNewUi` / `aggregateEventTextNewUi` (`logic/conversation/timelineEventText`);
+  the old trees' `interpolate`, `timelineEventText` and `aggregateEventText` are unchanged, and no
+  old-UI file is touched. Lint stops src/web, src/native and `messageRow` importing the old three
+  (eslint's `oldLevelWords`; `newUiOnlyLogic` lists new-UI-only logic), but only a static import: a dynamic
+  `import("@i18n/i18n")` hands over the whole module, and `app/src/core` serves both trees, so
+  neither can be checked. Chinese keeps 群聊 for a group, the word ~30 other cn strings use. The
+  old `level.*` (French `level.channel` is the verb "Canaliser"; German nouns lower-cased
+  mid-sentence) is left for the old UIs, which show exactly what they did. Not fixed: many
+  `{level}` sentences can't agree with the noun (gender, case: Russian "к {level}у", French
+  "au {level}" for a feminine "communauté", Polish "do {level}" wants the genitive); fixing those
+  means whole-phrase keys per level.
 
 - **Wallet** (6a #10120, `features/wallet`, the design's changes of 2026-10-27): `WalletPanel` on
   the left and `WalletMain` in the middle, on `/wallet` and `/wallet/:ledger`, over the wallet's

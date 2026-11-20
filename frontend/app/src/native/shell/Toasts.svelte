@@ -4,7 +4,7 @@
      other's place. The app's failure stays until it's closed, as in the other trees, and its success
      goes by itself (toastStore); a screen's goes by itself (ToastQueue: 2.6s, 5s with Undo). -->
 <script lang="ts">
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import NativeToasts from "@openchat/ui/src/native/Toasts.svelte";
     import type { NativeToast, ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
     import { toastStore } from "@src/stores/toast";
@@ -49,7 +49,7 @@
         }
         return {
             id: shownId,
-            message: interpolate($_, resourceKey),
+            message: interpolateNewUi($_, resourceKey),
             undoable: false,
             pending: false,
         };

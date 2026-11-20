@@ -17,7 +17,7 @@
     import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { closeRightColumn } from "../app/rightPanel";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "../conversation/chatMenu";
@@ -110,7 +110,7 @@
                       anon: $anonUserStore,
                       unblockLabel: $_("unblockUser"),
                       platformModerator: $platformModeratorStore,
-                      translate: (key) => interpolate($_, key),
+                      translate: (key) => interpolateNewUi($_, key),
                   }),
               ).map((item) => ({
                   ...item,

@@ -49,7 +49,7 @@
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import type { NativeMenuItem } from "@openchat/ui/src/native/types";
-    import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { chatInviteAccess } from "@src/logic/members/invitePeople";
@@ -262,7 +262,7 @@
                 ? [
                       {
                           id: "remove",
-                          label: interpolate(
+                          label: interpolateNewUi(
                               $_,
                               i18nKey("native.details.members.removeFrom", undefined, chat.level, true),
                           ),
@@ -400,7 +400,7 @@
         {#if tab === "lapsed" || tab === "blocked"}
             {@const on = tab}
             <p class="note">
-                {interpolate(
+                {interpolateNewUi(
                     $_,
                     i18nKey(`native.details.members.${on}Note`, undefined, chat?.level, true),
                 )}

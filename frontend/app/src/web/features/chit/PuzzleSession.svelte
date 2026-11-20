@@ -17,7 +17,7 @@
     import GameDemo from "@src/core/dailyPuzzle/GameDemo.svelte";
     import { toastingPuzzleHost } from "@src/core/dailyPuzzle/puzzleHost";
     import { openDailyPuzzle } from "@src/core/dailyPuzzle/registry";
-    import { interpolate, i18nKey } from "@src/i18n/i18n";
+    import { interpolateNewUi, i18nKey } from "@src/i18n/i18n";
     import { formatSolveTime, hintButtonKeys } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
     import { now500 } from "@src/stores/time";
     import { getContext, onDestroy, untrack } from "svelte";
@@ -36,7 +36,7 @@
     let { gameId, how, onPuzzle, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const tr = (key: ResourceKey) => interpolate($_, key);
+    const tr = (key: ResourceKey) => interpolateNewUi($_, key);
 
     // the game the link names, or the first on today's rota; no `game` for a puzzle this build
     // can't draw

@@ -11,7 +11,7 @@ import {
     type MessageFormatter,
     type OpenChat,
 } from "@client";
-import { interpolate } from "@src/i18n/i18n";
+import { interpolateNewUi } from "@src/i18n/i18n";
 import { chatsToShareTo } from "@src/logic/share/chatsToShareTo";
 import { createSubscriber, SvelteMap } from "svelte/reactivity";
 import { pickerChats, pickerIds, type PickerChat } from "./share.adapter";
@@ -76,7 +76,7 @@ export class SharePicker {
             sub: (chat) =>
                 chat.kind === "direct_chat"
                     ? (this.#lastSeen.get(chat.them.userId) ?? "")
-                    : chat.description || interpolate(this.translate, groupMembersLine(chat)),
+                    : chat.description || interpolateNewUi(this.translate, groupMembersLine(chat)),
         });
         for (const [id, chatId] of pickerIds(targets)) this.#ids.set(id, chatId);
         return list;

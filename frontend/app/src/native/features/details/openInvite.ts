@@ -1,5 +1,5 @@
 import type { CommunitySummary, MessageFormatter, MultiUserChat, OpenChat } from "@client";
-import { i18nKey, interpolate } from "@src/i18n/i18n";
+import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
 import { chatInviteAccess, inviteRole } from "@src/logic/members/invitePeople";
 import type { ScreenContext } from "../app/screens";
 
@@ -22,7 +22,7 @@ export function openInvite(
     }
     const role = inviteRole(chat.permissions.inviteUsers);
     context.toast(
-        interpolate(
+        interpolateNewUi(
             formatter,
             i18nKey(`native.invite.notAllowed.${role}`, undefined, chat.level, true),
         ),

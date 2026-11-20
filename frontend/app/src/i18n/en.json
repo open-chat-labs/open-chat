@@ -1552,6 +1552,11 @@
         "community": "Community",
         "group": "Group"
     },
+    "levelNoun": {
+        "channel": "channel",
+        "community": "community",
+        "group": "group"
+    },
     "light": "light",
     "linkCopiedToClipboard": "Link copied to clipboard",
     "loadGif": "Show gif",

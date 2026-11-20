@@ -30,7 +30,7 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import type { GroupSettings } from "@openchat/ui/src/lib/types";
-    import { i18nKey, interpolate } from "@i18n/i18n";
+    import { i18nKey, interpolateNewUi } from "@i18n/i18n";
     import { muteChat } from "@src/logic/chats/muteChat";
     import { signInFirstOrCancel } from "@src/logic/auth/guestPass";
     import {
@@ -231,7 +231,7 @@
     );
 
     const aboutMeta = $derived(
-        `${interpolate($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
+        `${interpolateNewUi($_, visibilityLabel(target))} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
 
     // a community mutes all its channels, which can't be undone from here (as in the old menus)
@@ -299,7 +299,7 @@
     <!-- TODO(design): GroupSettingsDialog has no confirm step for a verified rename or a change of
          who can see the chat -->
     <DialogShell title={$_("areYouSure")} width={400} height="auto" z={90} onClose={() => answer(false)}>
-        <p class="confirm-text">{interpolate($_, confirmText)}</p>
+        <p class="confirm-text">{interpolateNewUi($_, confirmText)}</p>
         <div class="actions">
             <Button variant="secondary" label={$_("noThanks")} onClick={() => answer(false)} />
             <Button label={$_("yesPlease")} onClick={() => answer(true)} />

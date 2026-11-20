@@ -10,7 +10,7 @@
     import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
     import Markdown from "@src/core/Markdown.svelte";
-    import { interpolate } from "@src/i18n/i18n";
+    import { interpolateNewUi } from "@src/i18n/i18n";
     import { _ } from "svelte-i18n";
 
     type Props = {
@@ -54,7 +54,7 @@
                     role="radio"
                     aria-checked={reason === r}
                     onclick={() => (reason = r)}>
-                    <span class="text">{interpolate($_, reportReasonText(r))}</span>
+                    <span class="text">{interpolateNewUi($_, reportReasonText(r))}</span>
                     <span class="dot" aria-hidden="true"></span>
                 </button>
             {/each}

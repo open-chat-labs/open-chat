@@ -7,7 +7,7 @@
      action, nor what shows beside the activity feed. -->
 <script lang="ts">
     import { chatSummariesListStore } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import { middleWithoutChatText } from "@src/logic/chats/noChatSelected";
     import { _ } from "svelte-i18n";
@@ -25,8 +25,8 @@
     <MiddleToolbar {context} />
     {#if text !== undefined}
         <EmptyState
-            title={interpolate($_, text.title)}
-            body={interpolate($_, text.body)}
+            title={interpolateNewUi($_, text.title)}
+            body={interpolateNewUi($_, text.body)}
             actionLabel="" />
     {/if}
 </div>

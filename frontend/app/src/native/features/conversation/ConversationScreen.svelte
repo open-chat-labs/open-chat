@@ -85,7 +85,7 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
     import { stickyDateTop } from "@src/core/stickyDateTop";
@@ -136,9 +136,9 @@
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { RowCache } from "@src/logic/conversation/rowCache";
     import {
-        aggregateEventText,
+        aggregateEventTextNewUi,
         isTextEvent,
-        timelineEventText,
+        timelineEventTextNewUi,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
     import {
@@ -1370,8 +1370,8 @@
         <div class="state">
             <EmptyState
                 preset="no-conversations"
-                title={interpolate($_, hiddenNotice.title)}
-                body={interpolate($_, hiddenNotice.body)}
+                title={interpolateNewUi($_, hiddenNotice.title)}
+                body={interpolateNewUi($_, hiddenNotice.body)}
                 actionLabel=""
             />
         </div>
@@ -1589,7 +1589,7 @@
                                 </div>
                             {/if}
                         {:else if evt.event.kind === "aggregate_common_events"}
-                            {@const text = aggregateEventText(evt.event, eventCtx)}
+                            {@const text = aggregateEventTextNewUi(evt.event, eventCtx)}
                             {@const deleted = evt.event.messagesDeleted}
                             {#if text.joined !== undefined || text.deleted !== undefined || text.rolesChanged.length > 0}
                                 <div
@@ -1627,7 +1627,7 @@
                                 </div>
                             {/if}
                         {:else if isTextEvent(evt.event)}
-                            {@const text = timelineEventText(evt.event, eventCtx)}
+                            {@const text = timelineEventTextNewUi(evt.event, eventCtx)}
                             {#if text !== undefined}
                                 <div class="event">
                                     <p class="event-line">

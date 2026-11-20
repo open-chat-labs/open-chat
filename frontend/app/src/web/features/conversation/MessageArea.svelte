@@ -211,9 +211,9 @@
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { buildDisplayName } from "@src/utils/user";
     import {
-        aggregateEventText,
+        aggregateEventTextNewUi,
         isTextEvent,
-        timelineEventText,
+        timelineEventTextNewUi,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
     import { navigate } from "@src/utils/navigation";
@@ -279,7 +279,7 @@
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { claimsStore } from "@src/stores/claims";
     import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { RowCache } from "@src/logic/conversation/rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
@@ -491,7 +491,7 @@
             bar.community !== undefined
                 ? bar.community.avatar.blobUrl
                 : ownGroupAvatarUrl(chat, groupAvatarLookups(client, community));
-        return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolate($_, key)) };
+        return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolateNewUi($_, key)) };
     });
 
     // "You joined …" names what the bar does
@@ -572,7 +572,7 @@
         });
         if (shown === undefined) return undefined;
         const words = entryNoticeText(shown);
-        return { text: interpolate($_, words.key), tone: words.tone };
+        return { text: interpolateNewUi($_, words.key), tone: words.tone };
     });
 
     // the draft's photo, video or file, or a builder's payment (5d), staged above the text (only
@@ -717,7 +717,7 @@
     const placeholder = $derived(
         rootAuthor !== undefined
             ? $_("ui.threadPanel.replyTo", { values: { name: rootAuthor } })
-            : interpolate($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
+            : interpolateNewUi($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
     );
 
     // a voice message is recorded in a format every device plays (no mic where the browser can't),
@@ -1653,8 +1653,8 @@
         <div class="state">
             <EmptyState
                 preset="no-conversations"
-                title={interpolate($_, hiddenNotice.title)}
-                body={interpolate($_, hiddenNotice.body)}
+                title={interpolateNewUi($_, hiddenNotice.title)}
+                body={interpolateNewUi($_, hiddenNotice.body)}
                 actionLabel=""
             />
         </div>
@@ -1850,7 +1850,7 @@
                 />
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}
-            {@const text = aggregateEventText(evt.event, eventCtx)}
+            {@const text = aggregateEventTextNewUi(evt.event, eventCtx)}
             {@const deleted = evt.event.messagesDeleted}
             {#if text.joined !== undefined || text.deleted !== undefined || text.rolesChanged.length > 0}
                 <!-- TODO(design): no event line in the design; the old UI's -->
@@ -1886,7 +1886,7 @@
                 </div>
             {/if}
         {:else if isTextEvent(evt.event)}
-            {@const text = timelineEventText(evt.event, eventCtx)}
+            {@const text = timelineEventTextNewUi(evt.event, eventCtx)}
             {#if text !== undefined}
                 <!-- TODO(design): no event line in the design or web/05; the old UI's, with its
                      date and time under it -->

@@ -52,6 +52,26 @@ const logicSideEffects = [
     { regex: "^@(client|shared)$", importNames: ["publish"], message: logicMessage },
 ];
 
+// The new UIs name groups, channels and communities with levelNoun.* (interpolateNewUi, and the
+// timeline's ...NewUi functions); the old trees' interpolate and timeline text keep level.*, whose
+// words are wrong in some languages. Static imports only: a dynamic import() hands over the whole
+// module, so it can't be restricted by name.
+const oldLevelWords = [
+    {
+        regex: "(^|[/@])i18n/i18n$",
+        importNames: ["interpolate"],
+        message: "The new UIs use interpolateNewUi: its {level} words are levelNoun.*.",
+    },
+    {
+        regex: "(^|/)logic/conversation/timelineEventText$",
+        importNames: ["timelineEventText", "aggregateEventText"],
+        message:
+            "The new UIs use timelineEventTextNewUi / aggregateEventTextNewUi: their {level} words are levelNoun.*.",
+    },
+];
+// app/src/logic modules only the new UIs use that word a {level}: they get oldLevelWords too.
+const newUiOnlyLogic = ["app/src/logic/conversation/messageRow.ts"];
+
 const svelteStoreMessage =
     "Use runes or the custom stores in openchat-client/src/utils/stores.ts (see frontend/CLAUDE.md).";
 
@@ -114,6 +134,28 @@ export default defineConfig([
         files: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
         rules: restrictAppImports(agentOrWorker),
     },
+    // The new UIs' {level} words: interpolateNewUi and the timeline's ...NewUi (oldLevelWords).
+    {
+        files: [
+            "app/src/web/**/*.ts",
+            "app/src/web/**/*.svelte",
+            "app/src/native/**/*.ts",
+            "app/src/native/**/*.svelte",
+        ],
+        ignores: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        agentOrWorker,
+                        insideClient,
+                        ...oldLevelWords,
+                    ],
+                },
+            ],
+        },
+    },
     // app/src/logic stays view-agnostic. Its specs may reach inside the client like the others.
     {
         files: ["app/src/logic/**/*.ts"],
@@ -133,6 +175,24 @@ export default defineConfig([
             "local/no-restricted-dynamic-imports": [
                 "error",
                 { patterns: [agentOrWorker, insideClient, logicViews, logicSideEffects[0]] },
+            ],
+        },
+    },
+    // The logic only the new UIs use words a {level} as they do: the logic rules plus oldLevelWords.
+    {
+        files: newUiOnlyLogic,
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        agentOrWorker,
+                        insideClient,
+                        { ...logicViews, caseSensitive: true },
+                        ...logicSideEffects,
+                        ...oldLevelWords,
+                    ],
+                },
             ],
         },
     },

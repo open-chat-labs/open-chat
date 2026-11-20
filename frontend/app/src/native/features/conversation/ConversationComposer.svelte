@@ -39,7 +39,7 @@
         type MessageContext,
         type OpenChat,
     } from "@client";
-    import { interpolate } from "@i18n/i18n";
+    import { interpolateNewUi } from "@i18n/i18n";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import MessageComposer from "@openchat/ui/src/lib/components/MessageComposer.svelte";
     import {
@@ -182,7 +182,7 @@
         });
         if (shown === undefined) return undefined;
         const words = entryNoticeText(shown);
-        return { text: interpolate($_, words.key), tone: words.tone };
+        return { text: interpolateNewUi($_, words.key), tone: words.tone };
     });
 
     // the chat's draft: its text, the reply or edit (an edit starts from the message's text with its
@@ -235,7 +235,7 @@
     });
 
     const placeholder = $derived(
-        interpolate($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
+        interpolateNewUi($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
     );
 
     // a voice message, recorded in a format every device plays, where the reader may send one
@@ -349,7 +349,7 @@
     // a file picked or pasted goes to the draft, in place of what's attached, if it may be sent here
     async function attachFile(file: File) {
         const outcome = await client.attachFile(file, context);
-        if (outcome.kind !== "attached") toast(interpolate($_, attachRefusal(outcome, $_)));
+        if (outcome.kind !== "attached") toast(interpolateNewUi($_, attachRefusal(outcome, $_)));
         else picks.clear();
     }
 
@@ -378,7 +378,7 @@
                     picks.prepared(key, prepared.content);
                     return;
                 }
-                if (picks.unprepared(key)) toast(interpolate($_, attachRefusal(prepared, $_)));
+                if (picks.unprepared(key)) toast(interpolateNewUi($_, attachRefusal(prepared, $_)));
             } catch (err) {
                 console.warn("Couldn't read a photo or video picked", err);
                 if (picks.unprepared(key)) toast($_("attachFileFailed"));
