@@ -134,9 +134,8 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /failed to delete record from object store/i,
     /unable to store record in object store/i,
     // "Attempt to delete range / get a record / open a cursor / get an index record ..." (#27293,
-    // #10401), "Attempt to check index constraints ..." (#32187): the same failure whichever
-    // operation happened to hit it
-    /attempt to .* without an in-progress transaction/i,
+    // #10401): the same failure whichever operation happened to hit it
+    /database without an in-progress transaction/i,
     // Chrome's IndexedDB lost the blob file behind a record (#28921)
     /data lost due to missing file/i,
     // Safari / Firefox-on-iOS dropping the IndexedDB connection; only a reload recovers it
