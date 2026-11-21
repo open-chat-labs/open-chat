@@ -82,7 +82,13 @@ native/
                      the disappearing messages, the library's TimedToggle (DisappearingRow), one
                      setting with the conversation menu's submenu; the Search tile goes back to
                      the conversation and opens its search (conversation/searchRequests);
-                     Manage's pages and Edit group are N7's (group_settings, placeholders)
+                     Manage's pages and Edit group are groupSettings'
+    groupSettings/   a group's or channel's settings pages (N7), pushed from its details
+                     (group_settings): Edit group (GeneralPage), Access gates (GatesPage and the
+                     gate sheet, GateSheet), Rules and Permissions, each on its own draft
+                     (GroupSettingsEditor: the shared UpdateGroupState, a pinned Save, the
+                     questions a save can need, Discard changes); Bots and webhooks and Stats
+                     are still placeholders
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -121,7 +127,10 @@ DM's settings in `logic/chats/dmSettings`, a group's disappearing messages in
 `logic/chats/disappearingMessages` (on the library's `lib/durations`, TimedToggle's), and the one
 setting the details' switch and the conversation menu's submenu both read and save in
 `logic/chats/chatDisappearing`, with the length switching it on goes back to in the client's
-`disappearingLengthsStore`), and the theme the web and Welcome's menu keep
+`disappearingLengthsStore`), a group's settings (`logic/groupOrCommunity`'s
+UpdateGroupState, the old pages' and the web's draft, with `chatManageAccess` for what the
+viewer's role can change; the gates' values in `logic/access/gateValues`, the web's AccessGates'
+too), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link

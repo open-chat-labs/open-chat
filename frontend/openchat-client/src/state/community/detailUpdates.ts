@@ -111,14 +111,15 @@ export class CommunityDetailsUpdatesManager {
         return this.#updateForCommunity(id, this.bots, localMap, (s) => s.addOrUpdate(botId, perm));
     }
 
+    // The undo takes off only these rules, and only while they're still the ones held: a later
+    // update's rules stay, and nothing earlier is put back. Putting back the rules this replaced
+    // let two saves inside the undo's timeout leave the first save's rules in place for good, once
+    // both undos had run, over the newer ones the server's details held (as for a chat's rules).
     updateRules(id: CommunityIdentifier, rules: VersionedRules): UndoLocalUpdate {
         return modifyWritable((map) => {
-            const prev = map.get(id);
             map.set(id, rules);
             return () => {
-                if (prev !== undefined) {
-                    map.set(id, prev);
-                } else {
+                if (map.get(id) === rules) {
                     map.delete(id);
                 }
             };

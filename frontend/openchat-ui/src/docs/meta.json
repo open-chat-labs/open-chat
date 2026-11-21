@@ -23098,6 +23098,17 @@
         "doc": "right: opens a screen. down: opens a menu of values."
       },
       {
+        "name": "accent",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The value in the accent: a setting changed from its default."
+      },
+      {
         "name": "onClick",
         "type": "(row: HTMLElement) => void",
         "default": null,
@@ -23403,6 +23414,17 @@
         "required": true,
         "componentDefault": null,
         "doc": "The current option's id."
+      },
+      {
+        "name": "accent",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The value in the accent: a setting changed from its default."
       },
       {
         "name": "onChange",

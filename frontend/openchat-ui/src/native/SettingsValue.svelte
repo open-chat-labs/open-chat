@@ -15,15 +15,17 @@
     options: { id: string; label: string }[];
     /** The current option's id. */
     value: string;
+    /** The value in the accent: a setting changed from its default. */
+    accent?: boolean;
     onChange: (id: string) => void;
   }
 
-  let { label, help = '', options, value, onChange }: Props = $props();
+  let { label, help = '', options, value, accent = false, onChange }: Props = $props();
 
   let anchor = $state<HTMLElement | null>(null);
   const current = $derived(options.find((o) => o.id === value)?.label ?? '');
   const items = $derived<NativeMenuItem[]>(options.map((o) => ({ id: o.id, label: o.label, selected: o.id === value })));
 </script>
 
-<SettingsLink {label} {help} value={current} chevron="down" onClick={(row) => (anchor = row)} />
+<SettingsLink {label} {help} value={current} {accent} chevron="down" onClick={(row) => (anchor = row)} />
 <AnchoredMenu {anchor} {items} {label} onSelect={onChange} onClose={() => (anchor = null)} />

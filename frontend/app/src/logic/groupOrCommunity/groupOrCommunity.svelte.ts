@@ -260,6 +260,16 @@ export abstract class UpdateGroupOrCommunityState {
         }
     }
 
+    /** Puts `next` in the place of the gate matching `old`, keeping how the gates combine. */
+    replaceGate(old: LeafGate, next: LeafGate) {
+        const gate = this.#gateConfig.gate;
+        if (isCompositeGate(gate)) {
+            gate.gates = gate.gates.map((g) => (this.gatesMatch(g, old) ? next : g));
+        } else if (isLeafGate(gate) && this.gatesMatch(gate, old)) {
+            this.#gateConfig.gate = next;
+        }
+    }
+
     #findMatchBy(fn: (g: LeafGate) => boolean) {
         if (isCompositeGate(this.#gateConfig.gate)) {
             return this.#gateConfig.gate.gates.find(fn);
@@ -329,6 +339,13 @@ export abstract class UpdateGroupOrCommunityState {
             } else {
                 this.addLeaf(gate);
             }
+        }
+    }
+
+    /** How two or more gates combine: all of them, or any one. */
+    setOperator(operator: "and" | "or") {
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            this.#gateConfig.gate.operator = operator;
         }
     }
 

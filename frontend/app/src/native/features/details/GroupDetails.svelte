@@ -1,11 +1,11 @@
 <!-- A group's or channel's details (native plan 10, Design Notes §3.6): the cover (a channel's is its
-     community's banner) with back, favourite and Edit (N7's page, for those who may edit it; its
+     community's banner) with back, favourite and Edit (N7's Edit group, for those who may edit it; its
      link is shared from Invite people); the avatar, the name and "Private · 48 members"; the tiles Mute
      / Search / Invite; About (the description, when it was created, whether new members see the
      history); Members, a few faces and View all, to the Members screen; This chat (the
      disappearing messages, the library's TimedToggle for those its settings let change them
      (DisappearingRow), read only for the rest, then muting @everyone); the rules, read only; Manage for owners and admins (Access gates, Rules,
-     Permissions, Bots and webhooks, Stats: N7's screens); Leave and Delete, each with Undo. What
+     Permissions, Bots and webhooks, Stats: N7's group_settings); Leave and Delete, each with Undo. What
      the viewer may do is the web panel's (logic/groupOrCommunity/detailsPermissions). -->
 <script lang="ts">
     import {
@@ -174,7 +174,7 @@
         );
     }
 
-    // ---- the cover's Edit (N7's page), for those who may edit the group; sharing its link is
+    // ---- the cover's Edit (N7's Edit group), for those who may edit the group; sharing its link is
     // Invite people's (the Invite tile)
     function onEdit() {
         context.push({ kind: "group_settings", chatId: chat.id, page: "edit" });
