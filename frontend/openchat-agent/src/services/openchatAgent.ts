@@ -302,7 +302,7 @@ import {
     mergeCommunities,
     mergeCommunityUpdates,
 } from "../utils/community";
-import { createHttpAgentSync } from "../utils/httpAgent";
+import { createHttpAgent } from "../utils/httpAgent";
 import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
@@ -468,7 +468,7 @@ export class OpenChatAgent extends EventTarget {
         super();
         this._logger = config.logger;
         console.log("url", config.icUrl);
-        this._agent = createHttpAgentSync(identity, config.icUrl);
+        this._agent = createHttpAgent(identity, config.icUrl);
         this._chatsDb = new ChatsDb(this.principal, config.websiteVersion);
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();

@@ -17,6 +17,13 @@ import { queryOutcomes, SLOW_QUERY_MS, type QueryOutcomes } from "./connectionHe
 // coming back after a suspension, is handled sooner by `abortInFlightQueries`.
 export const QUERY_RESPONSE_TIMEOUT_MS = 30_000;
 
+// How long a request for the replica's status, which is how the agent fetches the root key off
+// mainnet, may wait for its response to start arriving. A replica answers it straight away, so one
+// that hasn't by then is down or stuck, and without a limit every request waiting on the root key
+// (and the app's start-up with them) would wait forever. The agent retries the fetch a few times
+// before giving up, and tries again on the next request.
+export const ROOT_KEY_RESPONSE_TIMEOUT_MS = 5_000;
+
 // A query sent at least this long ago may have passed its ingress expiry, which the agent sets
 // to between 4 and 5 minutes after sending (it rounds down to the minute). Kept below that so
 // clock drift cannot push a resend past the replica's check.
@@ -77,20 +84,77 @@ export function abortInFlightQueries(now: number = Date.now()): number {
     return queries.length;
 }
 
-function isQueryRequest(input: RequestInfo | URL): boolean {
+function requestPath(input: RequestInfo | URL): string | undefined {
     const url = input instanceof Request ? input.url : input.toString();
     try {
-        return /^\/api\/v\d+\/canister\/[^/]+\/query$/.test(new URL(url, "http://_").pathname);
+        return new URL(url, "http://_").pathname;
     } catch {
-        return false;
+        return undefined;
+    }
+}
+
+function isQueryRequest(input: RequestInfo | URL): boolean {
+    return /^\/api\/v\d+\/canister\/[^/]+\/query$/.test(requestPath(input) ?? "");
+}
+
+function isStatusRequest(input: RequestInfo | URL): boolean {
+    return /^\/api\/v\d+\/status$/.test(requestPath(input) ?? "");
+}
+
+// Makes `controller` abort when the caller's `signal` does. Returns a function which stops
+// following it, so that a signal which outlives the request doesn't keep one listener per request.
+function followSignal(
+    signal: AbortSignal | null | undefined,
+    controller: AbortController,
+): () => void {
+    if (!signal) {
+        return () => undefined;
+    }
+    if (signal.aborted) {
+        controller.abort(signal.reason);
+        return () => undefined;
+    }
+    const onAbort = () => controller.abort(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+    return () => signal.removeEventListener("abort", onAbort);
+}
+
+function timeoutError(timeoutMs: number): DOMException {
+    return new DOMException(`No response after ${timeoutMs}ms`, "TimeoutError");
+}
+
+// Aborts the request unless its whole response, body included, arrives within `timeoutMs`. Only
+// for requests whose response is small: the body is read here, and a replica which sends the
+// headers and then stalls would otherwise leave the agent's read of the body waiting forever.
+async function fetchWithTimeout(
+    baseFetch: typeof fetch,
+    input: RequestInfo | URL,
+    init: RequestInit | undefined,
+    timeoutMs: number,
+): Promise<Response> {
+    const controller = new AbortController();
+    const unfollow = followSignal(init?.signal, controller);
+    const timer = setTimeout(() => controller.abort(timeoutError(timeoutMs)), timeoutMs);
+    try {
+        const response = await baseFetch(input, { ...init, signal: controller.signal });
+        const body = await response.arrayBuffer();
+        return new Response(body.byteLength > 0 ? body : null, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        });
+    } finally {
+        clearTimeout(timer);
+        unfollow();
     }
 }
 
 /**
  * Wraps `fetch` so that query requests can be aborted, either by `abortInFlightQueries` or by
- * waiting longer than `timeoutMs` for the response to start. Other requests pass straight through.
- * The timeout stops once the response headers arrive, so a large response on a slow connection
- * is not cut off while its body downloads.
+ * waiting longer than `timeoutMs` for the response to start. That timeout stops once the response
+ * headers arrive, so a large response on a slow connection is not cut off while its body
+ * downloads. A request for the replica's status (the root key), whose response is tiny, is
+ * aborted unless all of it arrives within `statusTimeoutMs`. Other requests pass straight through.
  *
  * Each query also tells `outcomes` how the connection is doing: good once its response starts
  * arriving, bad if it fails or has waited `SLOW_QUERY_MS`. A query aborted here or by the caller
@@ -100,8 +164,12 @@ export function createQueryAwareFetch(
     baseFetch: typeof fetch = (input, init) => fetch(input, init),
     timeoutMs: number = QUERY_RESPONSE_TIMEOUT_MS,
     outcomes: QueryOutcomes = queryOutcomes,
+    statusTimeoutMs: number = ROOT_KEY_RESPONSE_TIMEOUT_MS,
 ): typeof fetch {
     return async (input, init) => {
+        if (isStatusRequest(input)) {
+            return fetchWithTimeout(baseFetch, input, init, statusTimeoutMs);
+        }
         if (!isQueryRequest(input)) {
             return baseFetch(input, init);
         }
@@ -115,31 +183,13 @@ export function createQueryAwareFetch(
         }
 
         const controller = new AbortController();
-        const callerSignal = init?.signal;
-        if (callerSignal) {
-            if (callerSignal.aborted) {
-                controller.abort(callerSignal.reason);
-            } else {
-                callerSignal.addEventListener(
-                    "abort",
-                    () => controller.abort(callerSignal.reason),
-                    {
-                        once: true,
-                    },
-                );
-            }
-        }
+        const unfollow = followSignal(init?.signal, controller);
 
         const query: InFlightQuery = { controller, sentAt: Date.now(), body };
         // After a suspension this can fire late, at the same time as the resume abort, so it
         // applies the same expiry check
         const timer = setTimeout(
-            () =>
-                abortQuery(
-                    query,
-                    new DOMException(`No response after ${timeoutMs}ms`, "TimeoutError"),
-                    Date.now(),
-                ),
+            () => abortQuery(query, timeoutError(timeoutMs), Date.now()),
             timeoutMs,
         );
         // Each query counts once, as good or bad
@@ -167,6 +217,7 @@ export function createQueryAwareFetch(
         } finally {
             clearTimeout(timer);
             clearTimeout(slowTimer);
+            unfollow();
             inFlightQueries.delete(query);
         }
     };
@@ -275,28 +326,36 @@ export class ResyncingHttpAgent extends HttpAgent {
     }
 }
 
-export function createHttpAgentSync(identity: Identity, icUrl: string): HttpAgent {
-    const [agent] = createHttpAgentInternal(identity, icUrl);
-    return agent;
-}
-
-export async function createHttpAgent(identity: Identity, icUrl: string): Promise<HttpAgent> {
-    const [agent, fetchRootKeyPromise] = createHttpAgentInternal(identity, icUrl);
-    await fetchRootKeyPromise;
-    return agent;
-}
-
-function createHttpAgentInternal(identity: Identity, icUrl: string): [HttpAgent, Promise<void>] {
+/**
+ * Creates the agent for `icUrl` without waiting on the network.
+ *
+ * On mainnet the agent verifies everything with the IC's root key, which it has built in. Any other
+ * network (a local replica, a testnet) has its own root key, which has to be fetched from the
+ * replica first. The agent is then created without one, so every request it makes waits for the
+ * key to be fetched (the agent's own guard) and nothing is sent before it can be verified. The
+ * fetch is started here, in the background, so the key is usually there before the first request,
+ * and anything that doesn't need the network (reading the cache) needn't wait for it. If the fetch
+ * fails, or takes longer than `ROOT_KEY_RESPONSE_TIMEOUT_MS`, the next request tries again.
+ */
+export function createHttpAgent(identity: Identity, icUrl: string): HttpAgent {
+    const fetchRootKey = !isMainnet(icUrl);
     const agent = ResyncingHttpAgent.createSync({
         identity,
         host: icUrl,
         verifyQuerySignatures: false,
         fetch: createQueryAwareFetch(),
+        shouldFetchRootKey: fetchRootKey,
     });
-    const fetchRootKey = !isMainnet(icUrl) && !offline();
-    const fetchRootKeyPromise = fetchRootKey
-        ? agent.fetchRootKey().then((_) => {})
-        : Promise.resolve();
+    if (fetchRootKey && !offline()) {
+        void prefetchRootKey(agent);
+    }
+    return agent;
+}
 
-    return [agent, fetchRootKeyPromise];
+async function prefetchRootKey(agent: HttpAgent): Promise<void> {
+    try {
+        await agent.fetchRootKey();
+    } catch (err) {
+        console.warn("Unable to fetch the root key, it will be fetched again when needed", err);
+    }
 }
