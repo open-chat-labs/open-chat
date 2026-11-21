@@ -2757,6 +2757,7 @@
     "noVideo": "Tu navegador no admite video incrustado",
     "nUsersJoined": "{number} usuarios se unieron a {level}",
     "offline": "Desconectado",
+    "offlineBanner": "Estás sin conexión. Lo que ves puede no estar actualizado.",
     "offlineError": "Lo sentimos, parece que estás desconectado en este momento.",
     "offlineMessage": "Desconectado",
     "oneDay": "1 día",

@@ -498,6 +498,51 @@
     "group": "library"
   },
   {
+    "name": "OfflineStrip",
+    "source": "by hand (2026-11-20)",
+    "hash": "",
+    "description": "A slim full-width notice across the top of an app while it's offline: the offline Banner's tone and icon, its text centred and wrapping to a second line rather than losing its end. Its height is the host's `--offline-strip` (0 closed), which the host sets on the root from `height` and keeps its frame clear of; registered as a length, it opens and closes over 0.2s (none with reduced motion). The host positions it. Its `role=\"status\"` text is always in the page, set only while `shown`.",
+    "preview": {
+      "width": 390,
+      "height": 40
+    },
+    "props": [
+      {
+        "name": "shown",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Whether it's saying it: the live region's text (the host opens it with `--offline-strip`)."
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "default": "You're offline. What you see may be out of date.",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "height",
+        "type": "number",
+        "default": 0,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Bindable: its height open, in CSS pixels, for the host's `--offline-strip`."
+      }
+    ]
+  },
+  {
     "name": "Button",
     "source": "lib/Button.dc.html",
     "hash": "8b5cf575",

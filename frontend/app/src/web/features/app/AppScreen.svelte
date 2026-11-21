@@ -44,6 +44,7 @@
     import { openCommunityCreation } from "./createCommunity";
     import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
+    import OfflineBanner from "../../shell/OfflineBanner.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import DialogHost from "./DialogHost.svelte";
@@ -319,6 +320,9 @@
         />
     {/snippet}
 </Shell>
+
+<!-- above the whole app, which moves down under it, while the app is offline (#10564) -->
+<OfflineBanner />
 
 <!-- over a middle placeholder, or a screen still loading or that failed to: the back and panel
      buttons its screen will have (ConversationHeader's) -->

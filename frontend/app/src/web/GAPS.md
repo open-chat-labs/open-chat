@@ -11,6 +11,19 @@ design export needs. Each entry says where it came up.
   library's `--text-*` tokens yet (L4). Profile's control writes it (8c): the design's four sizes
   are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
   stays until another size is picked. The store's fifth step has no size in the design.
+- **Offline** (#10564): done, TODO(design) (the web plan has no offline indicator). While the
+  client's `offlineStore` says the app is offline, the library's `OfflineStrip` (the native
+  shell's too: the offline Banner's tone and icon) runs full width across the top of the window,
+  above the whole app, saying so and that what shows may be out of date (`offlineBanner`), its text
+  wrapping to a second line on a narrow window. The app moves down under it rather than going under
+  it: its height goes on the root as `--offline-strip` and Shell's frame starts below it, so it
+  covers nothing (decided 2026-11-21: a banner floating at the top had covered the open
+  conversation's header). It opens and closes over 0.2s with the app (none with reduced motion).
+  The layout switch's banner and a ringing call's card sit under it; dialogs and their veils may
+  cover it. No action or dismiss: it goes once the connection is back (`shell/OfflineBanner`, in
+  `AppScreen`, so the marketing pages have none). It shows after 1.5s offline (at once when the
+  app starts offline) and goes 0.5s after the connection is back (`logic/network/offlineIndicator`,
+  shared with the native strip). Confirm with design.
 - **Native platform tokens** (native N1, #10364): the library has the native layer
   (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`;
   `--safe-*`, `--scroll-end` and `--text-scale` on `:root`; `[data-always-dark]` for calls;
@@ -143,6 +156,29 @@ design export needs. Each entry says where it came up.
     grant, `components_mobile` explains once per launch why a locked phone gets a heads-up instead
     of the full-screen ring, and opens the settings toggle (`utils/native/fullScreenIntent.ts`
     decides when, `FullScreenIntentPrompt.svelte` asks). This tree doesn't mount it yet.
+  - **Offline** (#10564): done, TODO(design) (the native plan has no offline indicator). While the
+    client's `offlineStore` says the app is offline (the browser's offline event, or the worker
+    finding the connection unusable), a slim strip across the top of the window, under the status
+    bar, says so and that what shows may be out of date (`offlineBanner`): the library's offline
+    Banner's tone and icon as a strip of at least 28px (the library's `OfflineStrip`, the web's too), whose text wraps to
+    a second line rather than lose its end, with no action, as the app reconnects by itself. The
+    shell moves its screens down under it: its height goes on the root as `--offline-strip`, which
+    the stage adds to `--safe-top`, so it covers neither a header, the tab bar, a composer nor the
+    toasts, which is why it isn't components_mobile's `OfflineFooter` at the bottom. It opens and
+    closes over 0.2s with the screens coming down and back up with it (none with reduced motion);
+    a conversation keeps its newest message where it was. The call's overlays outside the shell
+    keep clear of it too (the minimised call's top, the ring card). Sheets and menus, portalled to
+    `<body>`, can still reach up over it (they're over everything while they're open). It shows after
+    1.5s offline (at once when the app starts offline) and goes 0.5s after the connection is back,
+    so a blip doesn't flash it (`logic/network/offlineIndicator`, shared with the web's banner).
+    Only in the tabs: the signed-out start has none. Confirm with design: the strip, its words, and
+    whether sends and other actions should say they wait for the connection.
+  - **Over-the-air updates** (#10566): not built, needs design. The native apps will take updates
+    of the web bundle that don't go through the app stores; while one downloads or applies, the
+    user needs a progress bar, then what happens next (restart now, or it applies on the next
+    launch), and a failed one. Needs the update mechanism (how updates are delivered and applied,
+    what progress events the shell sends) and the design (the bar, and the downloading, ready to
+    restart and failed states).
 - **Native sign in and onboarding** (native N4, #10367; `src/native/features/start`). Built: Welcome
   (the lockup, the Appearance | language pill, the headline, the proof cards, Create account / I
   already have an account, the terms), Pick a username (the live check, the recovery email, the

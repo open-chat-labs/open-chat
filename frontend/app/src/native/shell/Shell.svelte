@@ -82,6 +82,8 @@
         tabSlide,
         type SwipeAxis,
     } from "./tabSwipe";
+    import { useOfflineIndicator } from "@src/logic/network/offlineIndicator.svelte";
+    import OfflineStrip from "@openchat/ui/src/lib/components/OfflineStrip.svelte";
     import { ToastFloors } from "./toastFloors.svelte";
     import Toasts from "./Toasts.svelte";
 
@@ -96,6 +98,11 @@
     // the screens' own toasts (Undo), in place of the app's (Toasts)
     const toasts = new ToastQueue();
     onMount(() => () => toasts.dispose());
+    // the offline strip across the top, while the app is offline (#10564): its height, 0 while
+    // it's closed, goes on the root as --offline-strip, so the screens under it (the stage's
+    // --safe-top) and the call's overlays outside the shell keep clear of it
+    const offline = useOfflineIndicator();
+    let offlineStripHeight = $state(0);
 
     // The Communities tab's community when a URL doesn't name one (Explore): the one the tab shows,
     // else the default (the last selected, else the first)
@@ -140,6 +147,15 @@
             community: untrack(communityShown) ?? defaultCommunityId,
         }),
     );
+
+    // the offline strip's height while it's open, in the tabs only
+    const offlineStrip = $derived(
+        location.area === "tabs" && offline.shown ? offlineStripHeight : 0,
+    );
+    $effect(() => {
+        document.documentElement.style.setProperty("--offline-strip", `${offlineStrip}px`);
+    });
+    onDestroy(() => document.documentElement.style.removeProperty("--offline-strip"));
 
     // The stacks go where the URL is once the screens it shows can show at once (their chunks in:
     // screenModules), so the screen before stays until then rather than a blank one or a spinner.
@@ -677,6 +693,15 @@
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
+        <!-- TODO(design): the native plan has no offline indicator (#10564; GAPS.md) -->
+        <div class="offline-strip">
+            <OfflineStrip
+                shown={offline.shown}
+                text={$_("offlineBanner")}
+                bind:height={offlineStripHeight}
+            />
+        </div>
+
         <Toasts above={toastsAbove(stacks.steps)} floor={toastFloor} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
@@ -722,7 +747,7 @@
 
 <!-- the call, over every tab and screen, for the shell's lifetime: a route that leaves the tabs
      (a marketing page opening in the browser) mustn't end it (N14) -->
-<CallHost {overlays} barShown={location.area === "tabs" && barShown} />
+<CallHost {overlays} barShown={location.area === "tabs" && barShown} {offlineStrip} />
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
@@ -753,6 +778,28 @@
         position: absolute;
         inset: 0;
         overflow: hidden;
+    }
+
+    // Offline, the strip (the library's OfflineStrip) takes the top of the window, under the status
+    // bar, and the screens keep clear of it as they do of the status bar: everything in the stage
+    // that minds --safe-top (the headers) moves down by the strip's height, the root's
+    // --offline-strip (0 while online; the strip makes it a length, which moves). The shell's own
+    // --safe-top is read into --status-bar-top first, as a property can't refer to itself. What's
+    // outside the stage and minds the top adds --offline-strip itself (the call's pill and ring,
+    // CallHost)
+    .shell {
+        --status-bar-top: var(--safe-top);
+    }
+
+    .stage {
+        --safe-top: calc(var(--status-bar-top) + var(--offline-strip, 0px));
+    }
+
+    .offline-strip {
+        position: absolute;
+        inset: var(--safe-top) 0 auto;
+        // over every screen, pushed ones too
+        z-index: 3;
     }
 
     // The screen under the top one moves 28% of the way out to the start side as a screen is

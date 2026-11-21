@@ -88,7 +88,8 @@
 <style lang="scss">
     .ring {
         position: fixed;
-        top: 20px;
+        /* under the offline strip, while it's open (OfflineBanner) */
+        top: calc(var(--offline-strip, 0px) + 20px);
         right: 20px;
         z-index: 90;
         display: flex;

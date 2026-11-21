@@ -2816,6 +2816,7 @@
     "noVideo": "You browser does not support embedded video",
     "nUsersJoined": "{number} users joined the {level}",
     "offline": "Offline",
+    "offlineBanner": "You're offline. What you see may be out of date.",
     "offlineError": "Sorry - it looks like you are offline at the moment",
     "offlineMessage": "Offline",
     "oneDay": "1 day",

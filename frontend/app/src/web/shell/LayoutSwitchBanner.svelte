@@ -25,7 +25,8 @@
 <style lang="scss">
     .layout-switch {
         position: fixed;
-        top: var(--space-8);
+        /* under the offline strip, while it's open (OfflineBanner) */
+        top: calc(var(--offline-strip, 0px) + var(--space-8));
         left: 50%;
         transform: translateX(-50%);
         width: min(640px, calc(100vw - 2 * var(--space-16)));
