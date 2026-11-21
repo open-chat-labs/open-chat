@@ -196,7 +196,7 @@ fn make_private_group_public_succeeds() {
 }
 
 #[test]
-fn meme_fighter_permission_set_for_the_first_time_is_saved() {
+fn meme_fighter_permission_set_for_the_first_time_is_saved_and_can_be_removed() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -207,9 +207,52 @@ fn meme_fighter_permission_set_for_the_first_time_is_saved() {
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, &random_string());
 
-    client::group::happy_path::update_group(
+    // Set for the first time, alongside a subtype the backend doesn't know
+    update_custom_permissions(
         env,
         user1.principal,
+        group_id,
+        vec![
+            CustomPermission {
+                subtype: "meme_fighter".to_string(),
+                role: GroupPermissionRole::Admins,
+            },
+            CustomPermission {
+                subtype: random_string(),
+                role: GroupPermissionRole::Admins,
+            },
+        ],
+        Vec::new(),
+    );
+
+    // A member reads it back: the group kept Meme Fighter's and dropped the unknown one
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
+    let custom = summary.permissions_v2.message_permissions.custom;
+    assert_eq!(custom.len(), 1, "{custom:?}");
+    assert_eq!(custom[0].subtype, "meme_fighter");
+    assert_eq!(custom[0].role, GroupPermissionRole::Admins);
+
+    // Back to "Same as default"
+    update_custom_permissions(env, user1.principal, group_id, Vec::new(), vec!["meme_fighter".to_string()]);
+
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
+    assert!(
+        summary.permissions_v2.message_permissions.custom.is_empty(),
+        "{:?}",
+        summary.permissions_v2.message_permissions.custom
+    );
+}
+
+fn update_custom_permissions(
+    env: &mut PocketIc,
+    sender: Principal,
+    group_id: ChatId,
+    custom_updated: Vec<CustomPermission>,
+    custom_deleted: Vec<String>,
+) {
+    client::group::happy_path::update_group(
+        env,
+        sender,
         group_id,
         &group_canister::update_group_v2::Args {
             name: None,
@@ -218,10 +261,8 @@ fn meme_fighter_permission_set_for_the_first_time_is_saved() {
             avatar: NoChange,
             permissions_v2: Some(OptionalGroupPermissions {
                 message_permissions: Some(OptionalMessagePermissions {
-                    custom_updated: vec![CustomPermission {
-                        subtype: "meme_fighter".to_string(),
-                        role: GroupPermissionRole::Admins,
-                    }],
+                    custom_updated,
+                    custom_deleted,
                     ..Default::default()
                 }),
                 ..Default::default()
@@ -232,13 +273,6 @@ fn meme_fighter_permission_set_for_the_first_time_is_saved() {
             messages_visible_to_non_members: None,
         },
     );
-
-    // A member reads it back: the group kept it
-    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
-    let custom = summary.permissions_v2.message_permissions.custom;
-    assert_eq!(custom.len(), 1, "{custom:?}");
-    assert_eq!(custom[0].subtype, "meme_fighter");
-    assert_eq!(custom[0].role, GroupPermissionRole::Admins);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, group_name: &str) -> TestData {

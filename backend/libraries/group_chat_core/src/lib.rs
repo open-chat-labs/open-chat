@@ -2264,11 +2264,13 @@ impl GroupChatCore {
     ) -> Vec<CustomPermission> {
         let mut new = old;
         // A custom permission the group doesn't have yet (Meme Fighter's, set for the first time)
-        // is added, not dropped
+        // is added, not dropped. Only a subtype the backend knows is added, so the list (stored in
+        // every PermissionsChanged event and sent in every summary) can't be grown without limit.
         for up in updated {
             match new.iter_mut().find(|cp| cp.subtype == up.subtype) {
                 Some(cp) => *cp = up,
-                None => new.push(up),
+                None if CustomPermission::is_known_subtype(&up.subtype) => new.push(up),
+                None => {}
             }
         }
 
@@ -2524,6 +2526,10 @@ pub fn check_tip_can_be_held(transfer: &types::PendingCryptoTransaction, decimal
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chat_events::TextContentInternal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::{BotCaller, BotInitiator};
 
     fn transfer(token_symbol: &str, amount: u128) -> types::PendingCryptoTransaction {
         types::PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
@@ -2602,6 +2608,29 @@ mod tests {
     }
 
     #[test]
+    fn an_unknown_custom_permission_is_not_added() {
+        use types::GroupPermissionRole::{Admins, Members};
+
+        let merged = GroupChatCore::merge_custom_permissions(
+            vec![custom("meme_fighter", Admins), custom("anything_else", Members)],
+            Vec::new(),
+            Vec::new(),
+        );
+
+        assert_eq!(roles(&merged), vec![("meme_fighter".to_string(), Admins)]);
+    }
+
+    #[test]
+    fn an_unknown_custom_permission_the_group_already_has_can_still_be_updated() {
+        use types::GroupPermissionRole::{Admins, Members};
+
+        let merged =
+            GroupChatCore::merge_custom_permissions(vec![custom("other", Admins)], Vec::new(), vec![custom("other", Members)]);
+
+        assert_eq!(roles(&merged), vec![("other".to_string(), Admins)]);
+    }
+
+    #[test]
     fn a_custom_permission_deleted_is_removed() {
         use types::GroupPermissionRole::{Admins, Members};
 
@@ -2613,10 +2642,6 @@ mod tests {
 
         assert_eq!(roles(&merged), vec![("other".to_string(), Members)]);
     }
-    use chat_events::TextContentInternal;
-    use ic_stable_structures::DefaultMemoryImpl;
-    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::{BotCaller, BotInitiator};
 
     #[test]
     fn finalising_bot_message_which_mentions_everyone_notifies_everyone() {

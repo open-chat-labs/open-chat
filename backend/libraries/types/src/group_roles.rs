@@ -97,6 +97,16 @@ pub struct CustomPermission {
     pub role: GroupPermissionRole,
 }
 
+impl CustomPermission {
+    /// The custom message subtypes a group can hold a permission for. An update only adds a
+    /// permission for one of these, so the list can't be grown with arbitrary subtypes.
+    pub const KNOWN_SUBTYPES: [&'static str; 1] = ["meme_fighter"];
+
+    pub fn is_known_subtype(subtype: &str) -> bool {
+        Self::KNOWN_SUBTYPES.contains(&subtype)
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalGroupPermissions {
