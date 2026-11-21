@@ -174,6 +174,20 @@ export type MediaView = {
 
 export type MessageStatus = "sending" | "sent" | "delivered" | "failed";
 
+/** The ids of the messages queued for the connection, in each chat or thread (`queuedMessagesStore`). */
+export type QueuedMessageIds = { values(): Iterable<ReadonlySet<bigint>> };
+
+/**
+ * Whether a message is queued: sent without a connection, it shows as sending, with no Retry,
+ * until it goes once the app is back online (#10591). Message ids are unique, so any chat's will do.
+ */
+export function queuedMessage(queued: QueuedMessageIds, messageId: bigint): boolean {
+    for (const ids of queued.values()) {
+        if (ids.has(messageId)) return true;
+    }
+    return false;
+}
+
 /**
  * The old bubbles' ticks as the design's status: failed, still on its way (not yet accepted;
  * the old trees show a sent tick once it is, confirmed or not), read by the other person in a DM
@@ -181,9 +195,12 @@ export type MessageStatus = "sending" | "sent" | "delivered" | "failed";
  */
 export function messageStatus(state: {
     failed: boolean;
+    /** Failed only for want of a connection, and to be sent once it's back (`queuedMessage`). */
+    queued?: boolean;
     accepted: boolean;
     readByThem: boolean;
 }): MessageStatus {
+    if (state.queued) return "sending";
     if (state.failed) return "failed";
     if (!state.accepted) return "sending";
     return state.readByThem ? "delivered" : "sent";

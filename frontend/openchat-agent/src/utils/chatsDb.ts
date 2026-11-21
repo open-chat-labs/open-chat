@@ -30,6 +30,7 @@ import type {
     GroupChatDetails,
     IndexRange,
     Message,
+    StoredFailedMessage,
     MessageActivityEvent,
     MessageContent,
     MessageContext,
@@ -83,6 +84,8 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     chatId: ChatIdentifier;
     messageKey: string | undefined;
     dirty?: boolean;
+    // A failed message which is waiting for the app to be online instead (`StoredFailedMessage`)
+    queued?: boolean;
     // The website version that couldn't read the content, when it couldn't
     unsupportedIn?: string;
 };
@@ -770,10 +773,12 @@ export class ChatsDb {
         await db.delete(store, createFailedCacheKey({ chatId, threadRootMessageIndex }, messageId));
     }
 
+    // `queued`: sent without a connection, to be sent once the app is back online, not failed
     async recordFailedMessage<T extends Message>(
         chatId: ChatIdentifier,
         event: EventWrapper<T>,
         threadRootMessageIndex?: number,
+        queued = false,
     ): Promise<void> {
         if (!canRetryMessage(event.event.content)) {
             return;
@@ -796,12 +801,13 @@ export class ChatsDb {
                     threadRootMessageIndex,
                 ),
                 messageKey: key,
+                ...(queued ? { queued: true } : {}),
             },
             key,
         );
     }
 
-    async loadFailedMessages(): Promise<MessageContextMap<Record<string, EventWrapper<Message>>>> {
+    async loadFailedMessages(): Promise<MessageContextMap<Record<string, StoredFailedMessage>>> {
         const chatMessages = await (await this.getDb()).getAll("failed_chat_messages");
         const threadMessages = await (await this.getDb()).getAll("failed_thread_messages");
         return [...chatMessages, ...threadMessages].reduce((res, ev) => {
@@ -816,7 +822,7 @@ export class ChatsDb {
             val[ev.event.messageId.toString()] = ev;
             res.set(context, val);
             return res;
-        }, new MessageContextMap<Record<string, EventWrapper<Message>>>());
+        }, new MessageContextMap<Record<string, StoredFailedMessage>>());
     }
 
     async setCachedEvents(

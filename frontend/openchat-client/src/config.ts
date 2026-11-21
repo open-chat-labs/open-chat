@@ -5,6 +5,9 @@ export type OpenChatConfig = {
     // Whether the first chat list may show before every user it names has loaded, the names
     // filling in as they arrive (`FoldUsers`). Only the new trees (src/web, src/native) set it.
     chatsBeforeUsers?: boolean;
+    // Whether a message sent without a connection waits, shown as sending, and goes once the app is
+    // back online (`OfflineSendQueue`), rather than failing with Retry. Only the new trees set it.
+    queueOfflineSends?: boolean;
     icUrl?: string;
     webAuthnOrigin: string | undefined;
     iiDerivationOrigin?: string;

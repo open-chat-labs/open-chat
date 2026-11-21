@@ -44,7 +44,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "@shared";
-import { writable } from "../utils/stores";
+import { withPausedStores, writable } from "../utils/stores";
 import { revokeObjectUrls } from "../utils/url";
 import { chatDetailsLocalUpdates } from "./chat/detailsUpdates";
 import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "./chat/summaryUpdates";
@@ -97,6 +97,13 @@ export class GlobalLocalState {
         undefined,
         notEq,
     );
+    // The failed messages which are queued rather than failed: sent without a connection, they're
+    // sent again once the app is back online (`OfflineSendQueue`), and show as sending meanwhile
+    #queuedMessages = writable<MessageContextMap<Set<bigint>>>(
+        new MessageContextMap(),
+        undefined,
+        notEq,
+    );
     readonly draftMessages = createDraftMessagesStore();
     readonly chats = writable<LocalChatMap<ChatSummary>>(new LocalChatMap(), undefined, notEq);
     readonly communities = writable<LocalCommunityMap<CommunitySummary>>(
@@ -129,6 +136,7 @@ export class GlobalLocalState {
     clearAll() {
         this.#blockedDirectUsers.set(new LocalSet());
         this.#failedMessages.set(new MessageContextMap());
+        this.#queuedMessages.set(new MessageContextMap());
         this.#recentlySentMessages.set(new SafeMap());
         this.#ephemeral.set(new MessageContextMap());
         this.#unconfirmed.set(new MessageContextMap());
@@ -165,8 +173,67 @@ export class GlobalLocalState {
         return this.#unconfirmed;
     }
 
-    initialiseFailedMessages(messages: MessageContextMap<FailedMessageState>) {
+    initialiseFailedMessages(
+        messages: MessageContextMap<FailedMessageState>,
+        queued: MessageContextMap<Set<bigint>> = new MessageContextMap(),
+    ) {
         this.#failedMessages.set(messages);
+        this.#queuedMessages.set(queued);
+    }
+
+    /**
+     * A message sent without a connection: kept with the failed ones, but queued, not failed. It
+     * leaves the unconfirmed ones, keeping its pictures' object URLs, which it goes on showing.
+     */
+    addQueuedMessage(key: MessageContext, message: EventWrapper<Message>) {
+        const messageId = message.event.messageId;
+        withPausedStores(() => {
+            if (this.isUnconfirmed(key, messageId)) {
+                this.#unconfirmed.update((map) => {
+                    map.get(key)?.delete(messageId);
+                    return map;
+                });
+            }
+            this.addFailedMessage(key, message);
+            this.#queuedMessages.update((map) => {
+                const ids = map.get(key) ?? new Set<bigint>();
+                ids.add(messageId);
+                map.set(key, ids);
+                return map;
+            });
+        });
+    }
+
+    isQueued(key: MessageContext, messageId: bigint): boolean {
+        return this.#queuedMessages.value.get(key)?.has(messageId) ?? false;
+    }
+
+    get queuedMessages() {
+        return this.#queuedMessages;
+    }
+
+    /** The queued messages, each with where it is. */
+    allQueuedMessages(): { context: MessageContext; event: EventWrapper<Message> }[] {
+        const queued: { context: MessageContext; event: EventWrapper<Message> }[] = [];
+        for (const [context, ids] of this.#queuedMessages.value.entries()) {
+            const failed = this.#failedMessages.value.get(context);
+            for (const id of ids) {
+                const event = failed?.get(id);
+                if (event !== undefined) queued.push({ context, event });
+            }
+        }
+        return queued;
+    }
+
+    /** A queued message which is to show as failed instead, with Retry. */
+    unqueue(key: MessageContext, messageId: bigint) {
+        if (!this.isQueued(key, messageId)) return;
+        this.#queuedMessages.update((map) => {
+            const ids = map.get(key);
+            ids?.delete(messageId);
+            if (ids !== undefined && ids.size === 0) map.delete(key);
+            return map;
+        });
     }
 
     addFailedMessage(key: MessageContext, message: EventWrapper<Message>) {
@@ -196,6 +263,7 @@ export class GlobalLocalState {
     }
 
     deleteFailedMessage(key: MessageContext, messageId: bigint) {
+        this.unqueue(key, messageId);
         let deleted = false;
         this.#failedMessages.update((map) => {
             const state = map.get(key);

@@ -22,6 +22,7 @@ import {
     messageRow,
     messageStatus,
     proposalVoting,
+    queuedMessage,
     senderColor,
     showsSenderName,
     untilNextDay,
@@ -112,6 +113,24 @@ describe("a message's status", () => {
     test("is delivered (the double tick) once read by them, else sent", () => {
         expect(messageStatus(state)).toBe("sent");
         expect(messageStatus({ ...state, readByThem: true })).toBe("delivered");
+    });
+
+    test("queued for the connection, it shows as sending, not failed (#10591)", () => {
+        expect(messageStatus({ ...state, failed: true, queued: true })).toBe("sending");
+    });
+});
+
+describe("a queued message", () => {
+    const queued = new Map([
+        ["chat", new Set([1n, 2n])],
+        ["thread", new Set([3n])],
+    ]);
+
+    test("is one queued in any chat or thread", () => {
+        expect(queuedMessage(queued, 2n)).toBe(true);
+        expect(queuedMessage(queued, 3n)).toBe(true);
+        expect(queuedMessage(queued, 4n)).toBe(false);
+        expect(queuedMessage(new Map(), 1n)).toBe(false);
     });
 });
 

@@ -752,6 +752,13 @@ const handlers: Handlers = {
         agent
             .deleteFailedMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
             .then(() => undefined),
+    recordFailedMessage: (payload, agent) =>
+        agent.recordFailedMessage(
+            payload.chatId,
+            payload.event,
+            payload.threadRootMessageIndex,
+            payload.queued,
+        ),
     claimPrize: (payload, agent) => agent.claimPrize(payload.chatId, payload.messageId),
     payForDiamondMembership: (payload, agent) =>
         agent.payForDiamondMembership(

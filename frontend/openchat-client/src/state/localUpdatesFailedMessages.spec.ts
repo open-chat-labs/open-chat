@@ -71,3 +71,37 @@ describe("failed messages", () => {
         expect(localUpdates.isFailed(chatContext, 1n)).toBe(false);
     });
 });
+
+describe("queued messages (sent without a connection)", () => {
+    beforeEach(() => {
+        localUpdates.clearAll();
+    });
+
+    test("a queued message leaves the unconfirmed ones for the failed ones, marked queued", () => {
+        const msg = message(1n);
+        localUpdates.addUnconfirmed(chatContext, msg);
+        localUpdates.addQueuedMessage(chatContext, msg);
+
+        expect(localUpdates.isUnconfirmed(chatContext, 1n)).toBe(false);
+        expect(localUpdates.isFailed(chatContext, 1n)).toBe(true);
+        expect(localUpdates.isQueued(chatContext, 1n)).toBe(true);
+        expect(localUpdates.isQueued(threadContext, 1n)).toBe(false);
+        expect(localUpdates.allQueuedMessages()).toEqual([{ context: chatContext, event: msg }]);
+    });
+
+    test("deleting it (or sending it again) takes it off the queue", () => {
+        localUpdates.addQueuedMessage(threadContext, message(1n));
+
+        expect(localUpdates.deleteFailedMessage(threadContext, 1n)).toBe(true);
+        expect(localUpdates.isQueued(threadContext, 1n)).toBe(false);
+        expect(localUpdates.allQueuedMessages()).toEqual([]);
+    });
+
+    test("one taken off the queue stays, failed", () => {
+        localUpdates.addQueuedMessage(chatContext, message(1n));
+        localUpdates.unqueue(chatContext, 1n);
+
+        expect(localUpdates.isFailed(chatContext, 1n)).toBe(true);
+        expect(localUpdates.isQueued(chatContext, 1n)).toBe(false);
+    });
+});

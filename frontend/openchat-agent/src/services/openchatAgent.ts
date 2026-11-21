@@ -116,6 +116,7 @@ import type {
     MarkReadResponse,
     MemberRole,
     Message,
+    StoredFailedMessage,
     MessageActivityEvent,
     MessageActivityFeedResponse,
     MessageActivitySummary,
@@ -866,7 +867,10 @@ export class OpenChatAgent extends EventTarget {
         pin: string | undefined,
         newAchievement: boolean,
     ): Stream<"accepted" | [SendMessageResponse, Message]> {
-        return new Stream(async (resolve, reject) => {
+        // `fromAsync`: built in the constructor, the offline answer came before the worker had
+        // subscribed and was dropped, and a failed send threw where nothing caught it, so the
+        // message showed as sending until it timed out and vanished (#10591)
+        return Stream.fromAsync(async (resolve, reject) => {
             const onRequestAccepted = () => resolve("accepted", false);
             const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -4313,13 +4317,21 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
+    loadFailedMessages(): Promise<Map<string, Record<number, StoredFailedMessage>>> {
         return this._chatsDb
             .loadFailedMessages()
             .then(
-                (messages) =>
-                    messages.toMap() as Map<string, Record<number, EventWrapper<Message>>>,
+                (messages) => messages.toMap() as Map<string, Record<number, StoredFailedMessage>>,
             );
+    }
+
+    recordFailedMessage(
+        chatId: ChatIdentifier,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex: number | undefined,
+        queued: boolean,
+    ): Promise<void> {
+        return this._chatsDb.recordFailedMessage(chatId, event, threadRootMessageIndex, queued);
     }
 
     deleteFailedMessage(

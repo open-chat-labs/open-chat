@@ -48,6 +48,7 @@ function state(guest: boolean): MessageOfferState {
         me: guest ? "anon" : "me",
         bridgedUsers: new Map(),
         failed: false,
+        queued: new Map<string, Set<bigint>>(),
         confirmed: true,
         readonly: true,
         guest,
@@ -169,5 +170,36 @@ describe("a revealed deleted message", () => {
 
     test("hiding it works signed out (it's this device's only)", () => {
         expect(guestMessageAction("hide")).toBe("run");
+    });
+});
+
+describe("a message queued for the connection", () => {
+    const mine: EventWrapper<Message> = { ...theirs, event: { ...theirs.event, sender: "me" } };
+    const member = {
+        canSendMessage: () => true,
+        canReactToMessages: () => true,
+        canPinMessages: () => false,
+        canTipMessages: () => false,
+        canDeleteOtherUsersMessages: () => false,
+        canBlockUsers: () => false,
+    };
+    const failedState = (queued: boolean): MessageOfferState => ({
+        ...state(false),
+        readonly: false,
+        failed: true,
+        confirmed: false,
+        queued: new Map([["chat", new Set(queued ? [mine.event.messageId] : [])]]),
+    });
+
+    test("offers no Retry: it goes on its own once the app is back online", () => {
+        const offer = messageOffer(member, group, mine, failedState(true));
+        expect(offer.actions).not.toContain("retry");
+        expect(offer.actions).toContain("delete");
+    });
+
+    test("a failed one (a backend failure) offers Retry", () => {
+        const offer = messageOffer(member, group, mine, failedState(false));
+        expect(offer.actions).toContain("retry");
+        expect(offer.actions).toContain("delete");
     });
 });

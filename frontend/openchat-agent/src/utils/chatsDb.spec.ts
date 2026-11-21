@@ -1,6 +1,6 @@
 import type { ChatIdentifier, GroupChatIdentifier } from "@shared";
 import type { Principal } from "@icp-sdk/core/principal";
-import { beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { ChatsDb, createCacheKey } from "./chatsDb";
 
 const chatId: GroupChatIdentifier = { kind: "group_chat", groupId: "gid" };
@@ -288,5 +288,70 @@ describe("the timestamps of cached details", () => {
         await chatsDb.getCachedGroupDetails("g");
 
         expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBeUndefined();
+    });
+});
+
+describe("failed messages kept on the device", () => {
+    // A failed message's key holds its id, which the worker serialises (see worker.ts)
+    type WithToJson = { toJSON?: () => string };
+    const proto = BigInt.prototype as WithToJson;
+    const original = proto.toJSON;
+    beforeAll(() => {
+        proto.toJSON = function (this: bigint) {
+            return this.toString();
+        };
+    });
+    afterAll(() => {
+        proto.toJSON = original;
+    });
+
+    function chatsDbWithFailed() {
+        const stores: Record<string, Map<string, unknown>> = {
+            failed_chat_messages: new Map(),
+            failed_thread_messages: new Map(),
+        };
+        const db = {
+            put: (store: string, value: unknown, key: string) => {
+                stores[store].set(key, value);
+                return Promise.resolve(key);
+            },
+            getAll: (store: string) => Promise.resolve([...stores[store].values()]),
+        };
+        const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal, WEBSITE_VERSION);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (chatsDb as any).getDb = () => Promise.resolve(db);
+        return chatsDb;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const textMessage = (messageId: bigint): any => ({
+        index: 0,
+        timestamp: 1n,
+        expiresAt: undefined,
+        event: {
+            kind: "message",
+            messageIndex: 0,
+            messageId,
+            content: { kind: "text_content", text: "hi" },
+        },
+    });
+
+    test("one queued for the connection loads queued; one failed doesn't (#10591)", async () => {
+        const chatsDb = chatsDbWithFailed();
+        await chatsDb.recordFailedMessage(chatId, textMessage(1n), undefined, true);
+        await chatsDb.recordFailedMessage(chatId, textMessage(2n));
+
+        const loaded = (await chatsDb.loadFailedMessages()).get({ chatId });
+        expect(loaded?.["1"].queued).toBe(true);
+        expect(loaded?.["2"].queued).toBeUndefined();
+    });
+
+    test("recorded again as failed, a queued one is no longer queued", async () => {
+        const chatsDb = chatsDbWithFailed();
+        await chatsDb.recordFailedMessage(chatId, textMessage(1n), undefined, true);
+        await chatsDb.recordFailedMessage(chatId, textMessage(1n), undefined, false);
+
+        const loaded = (await chatsDb.loadFailedMessages()).get({ chatId });
+        expect(loaded?.["1"].queued).toBeUndefined();
     });
 });

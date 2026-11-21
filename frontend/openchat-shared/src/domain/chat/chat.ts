@@ -429,6 +429,11 @@ export function canRetryMessage(content: MessageContent): boolean {
     );
 }
 
+// A failed message as it's kept on the device. `queued`: it was sent without a connection and is
+// waiting to go once the app is back online, rather than failed (only the new UIs queue them, see
+// `OpenChatConfig.queueOfflineSends`).
+export type StoredFailedMessage = EventWrapper<Message> & { queued?: boolean };
+
 export type IndexRange = [number, number];
 
 export const PlaceholderContentSchema = Type.Object({

@@ -17,6 +17,7 @@
         eventsStore,
         exchangeRatesLookupStore,
         failedMessagesStore,
+        queuedMessagesStore,
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
@@ -50,6 +51,7 @@
         conversationContext,
         messageRow,
         messageStatus,
+        queuedMessage,
         senderColor,
     } from "@src/logic/conversation/messageRow";
     import { revealedDeletion } from "@src/logic/conversation/revealedDeletion";
@@ -146,7 +148,10 @@
             chat !== undefined &&
             messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
     );
-    const status = $derived(messageStatus({ failed, accepted, readByThem: theirsRead }));
+    const queued = $derived(
+        failed && evt !== undefined && queuedMessage($queuedMessagesStore, evt.event.messageId),
+    );
+    const status = $derived(messageStatus({ failed, queued, accepted, readByThem: theirsRead }));
     const row = $derived(evt === undefined ? undefined : messageRow(evt, status, ctx));
 
     const mine = $derived(evt?.event.sender === me);

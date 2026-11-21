@@ -19,7 +19,7 @@
         initialiseAppLogger,
         subscribeToSessionEvents,
     } from "@utils/appRoot.svelte";
-    import { createOpenChatClient } from "@utils/openchatClient";
+    import { createOpenChatClient, NEW_UI_BEHAVIOUR } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import { installConsoleHooks } from "@src/logic/moderation/consoleHooks";
     import { botState, OpenChat } from "@client";
@@ -41,7 +41,7 @@
     const logger = initialiseAppLogger();
 
     // the chat list's rows follow the user store, so the first list needn't wait for every name
-    const client: OpenChat = createOpenChatClient($_, logger, true);
+    const client: OpenChat = createOpenChatClient($_, logger, NEW_UI_BEHAVIOUR);
     setContext<OpenChat>("client", client);
 
     // the app's one call, which outlives every screen and route (web 7b)
