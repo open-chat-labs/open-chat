@@ -10,13 +10,16 @@ export const websiteVersion: string = import.meta.env.OC_WEBSITE_VERSION!;
 export const videoBridgeUrl: string | undefined = import.meta.env.OC_VIDEO_BRIDGE_URL || undefined;
 
 // The one OpenChat client config, built from the OC_* build env. Each App tree (components,
-// components_mobile, web) creates its client with this once at startup.
+// components_mobile, web) creates its client with this once at startup. `chatsBeforeUsers`: only
+// the new trees (web, native) pass it (see OpenChatConfig).
 export function createOpenChatClient(
     i18nFormatter: OpenChatConfig["i18nFormatter"],
     logger: OpenChatConfig["logger"],
+    chatsBeforeUsers: boolean = false,
 ): OpenChat {
     const client = new OpenChat({
         mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
+        chatsBeforeUsers,
         icUrl: import.meta.env.OC_IC_URL,
         webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
         iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
