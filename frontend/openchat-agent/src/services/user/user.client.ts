@@ -568,8 +568,9 @@ export class UserClient
         pin: string | undefined,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
-        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
-
+        // A failed (or queued) message sent again stays on the device until it has gone
+        // (setCachedMessageFromSendResponse): removed before the send, as it was, a reload or the
+        // app closing while it was on its way lost it (#10591)
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(

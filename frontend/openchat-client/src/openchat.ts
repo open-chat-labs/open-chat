@@ -6454,11 +6454,13 @@ export class OpenChat {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex, draftAfterSend);
             hooks?.posted();
         } else {
-            // remove the *original* event from the failed store
-            await this.deleteFailedMessage(chatId, message.messageId, threadRootMessageIndex);
-
-            // add the *new* event to unconfirmed
-            localUpdates.addUnconfirmed(messageContext, messageEvent);
+            // the *original* event leaves the failed store, and the *new* one is unconfirmed. The
+            // device keeps the failed one until the send has gone (the agent removes it then), so
+            // a reload or the app closing meanwhile doesn't lose it (#10591).
+            withPausedStores(() => {
+                localUpdates.deleteFailedMessage(messageContext, message.messageId);
+                localUpdates.addUnconfirmed(messageContext, messageEvent);
+            });
         }
 
         // Fetch og previews lazily so the message appears in the UI immediately.

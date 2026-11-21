@@ -316,10 +316,16 @@ describe("failed messages kept on the device", () => {
                 return Promise.resolve(key);
             },
             getAll: (store: string) => Promise.resolve([...stores[store].values()]),
+            delete: (store: string, key: string) => {
+                stores[store].delete(key);
+                return Promise.resolve();
+            },
         };
         const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal, WEBSITE_VERSION);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (chatsDb as any).getDb = () => Promise.resolve(db);
+        // the sent message's own cache write isn't what's tested here
+        chatsDb.setCachedMessageIfNotExists = () => Promise.resolve();
         return chatsDb;
     }
 
@@ -353,5 +359,21 @@ describe("failed messages kept on the device", () => {
 
         const loaded = (await chatsDb.loadFailedMessages()).get({ chatId });
         expect(loaded?.["1"].queued).toBeUndefined();
+    });
+
+    test("one sent again stays until the send has gone, then goes (#10591)", async () => {
+        const chatsDb = chatsDbWithFailed();
+        const msg = textMessage(1n);
+        await chatsDb.recordFailedMessage(chatId, msg, undefined, true);
+
+        const failure = { kind: "error", code: 1, message: undefined } as const;
+        chatsDb.setCachedMessageFromSendResponse(chatId, msg)([failure, msg.event]);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect((await chatsDb.loadFailedMessages()).get({ chatId })?.["1"]).toBeDefined();
+
+        const success = { kind: "success", timestamp: 2n, messageIndex: 0, eventIndex: 1 } as const;
+        chatsDb.setCachedMessageFromSendResponse(chatId, msg)([success, msg.event]);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect((await chatsDb.loadFailedMessages()).get({ chatId })).toBeUndefined();
     });
 });

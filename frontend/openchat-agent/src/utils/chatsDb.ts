@@ -950,6 +950,8 @@ export class ChatsDb {
 
             const event = messageToEvent(message, resp);
 
+            // sent: no longer one to send again
+            this.removeFailedMessage(chatId, sentEvent.event.messageId, threadRootMessageIndex);
             this.setCachedMessageIfNotExists(chatId, event, threadRootMessageIndex);
 
             return [resp, event.event];
