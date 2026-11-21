@@ -1130,17 +1130,13 @@ design export needs. Each entry says where it came up.
     again since), and its toast's Undo goes when the page does.
   - **Rules after leaving and coming back** (found on the device, 2026-11-20): two rules saves
     within a minute left the first's rules showing for good once the client's local updates were
-    undone (the client's `chatDetailsLocalUpdates.updateRules`: each undo puts back the rules it
-    had replaced). That's every tree's client, and the old trees' behaviour stays, so the native
-    pages (details, the settings pages, the rules sheet) read the server's details' rules, or
-    those just saved for the minute after (`savedRules.svelte.ts`), not `selectedChatRulesStore`.
-    Still open, outside the native tree: the stuck override is the client's own, so the web's
-    `selectedChatRulesStore` readers and the client's rules check before sending (it decides
-    whether to ask members to accept the rules) can still see the first save's rules; the
-    client fix (the undo taking off only its own rules) waits on a decision about shared-client
-    changes the old trees would see.
+    undone (the client's `updateRules` local update: each undo put back the rules it had
+    replaced). Fixed in the client, for every tree (the user's call, 2026-11-21: a pure bug fix
+    the old trees get too): the undo takes off only its own rules (`chat/detailsUpdates.ts`, and
+    a community's the same, `community/detailUpdates.ts`), so `selectedChatRulesStore` is right
+    for the native and web pages and for the client's rules check before sending.
   - **Second review (2026-11-20)**: what's read back after a save is what the server holds (the
-    threads the original's where nothing was sent for them; savedSettings); threads not
+    threads the original's where nothing was sent for them; threadsAsSaved); threads not
     customised per type keep their types in step with the messages' as those change, so no
     hidden thread role is saved (withMessages); rules too long say so (a new string,
     `native.groupSettings.rules.tooLong`, in every language).

@@ -512,38 +512,20 @@ export function hasSavableChanges(
 }
 
 /**
- * What the server holds once the draft is saved, of what the pages read back for the minute after
- * (savedThreads, savedRules): the threads' permissions (the original's where the update leaves
- * them alone, as for threads given just "members send", which the client sends nothing for), and
- * the rules where they change (`before`: the chat's, with their version; a new version where
- * members are asked to accept them again).
+ * The threads' permissions the server holds once the draft is saved, which the pages read back
+ * for the minute after (savedThreads): the original's where the update leaves them alone (as for
+ * threads given just "members send", which the client sends nothing for), none where it takes
+ * them off, else the draft's.
  */
-export function savedSettings(
+export function threadsAsSaved(
     original: CandidateGroupChat,
     candidate: CandidateGroupChat,
-    before: VersionedRules | undefined,
-): { threads: MessagePermissions | undefined; rules: VersionedRules | undefined } {
-    const changes = groupChanges(original, candidate);
-    const threadsUpdate = changes.permissions?.threadPermissions;
-    const threads =
-        threadsUpdate === "set_to_none"
-            ? undefined
-            : threadsUpdate === undefined || messagesSetNothing(threadsUpdate.value)
-              ? original.permissions.threadPermissions
-              : candidate.permissions.threadPermissions;
-    const version = before?.version ?? 0;
-    const rules =
-        changes.rules === undefined
-            ? undefined
-            : {
-                  text: changes.rules.text,
-                  enabled: changes.rules.enabled,
-                  version:
-                      changes.rules.newVersion && changes.rules.text !== before?.text
-                          ? version + 1
-                          : version,
-              };
-    return { threads, rules };
+): MessagePermissions | undefined {
+    const update = groupChanges(original, candidate).permissions?.threadPermissions;
+    if (update === "set_to_none") return undefined;
+    return update === undefined || messagesSetNothing(update.value)
+        ? original.permissions.threadPermissions
+        : candidate.permissions.threadPermissions;
 }
 
 /** Why the rules can't be saved: switched on with no text, or text too long; undefined if they can. */

@@ -32,7 +32,7 @@ import {
     hasSavableChanges,
     rulesProblem,
     rulesProblemKey,
-    savedSettings,
+    threadsAsSaved,
     withMessages,
     messageBaseline,
     messageTypeRows,
@@ -423,29 +423,15 @@ describe("what a save would change", () => {
             pinMessages: ROLE_OWNER,
             threadPermissions: { default: ROLE_MEMBER },
         });
-        expect(savedSettings(original, candidate, undefined).threads).toBeUndefined();
+        expect(threadsAsSaved(original, candidate)).toBeUndefined();
         // given a role of their own: sent
         const own = group({ ...plain, threadPermissions: { default: ROLE_ADMIN } });
-        expect(savedSettings(original, own, undefined).threads).toEqual({ default: ROLE_ADMIN });
+        expect(threadsAsSaved(original, own)).toEqual({ default: ROLE_ADMIN });
         // taken off: none
-        expect(savedSettings(own, original, undefined).threads).toBeUndefined();
+        expect(threadsAsSaved(own, original)).toBeUndefined();
         // left alone: the original's
         const pinned = group({ ...own.permissions, pinMessages: ROLE_OWNER });
-        expect(savedSettings(own, pinned, undefined).threads).toEqual({ default: ROLE_ADMIN });
-    });
-
-    test("rules read back where they change, a new version where members accept them again", () => {
-        const before = { text: "old", enabled: false, version: 3 };
-        const original = { ...group(), rules: { text: "old", enabled: false, newVersion: false } };
-        expect(savedSettings(original, original, before).rules).toBeUndefined();
-        const on = { ...original, rules: { text: "old", enabled: true, newVersion: false } };
-        expect(savedSettings(original, on, before).rules).toEqual({
-            text: "old",
-            enabled: true,
-            version: 3,
-        });
-        const rewritten = { ...original, rules: { text: "new", enabled: true, newVersion: true } };
-        expect(savedSettings(original, rewritten, before).rules?.version).toBe(4);
+        expect(threadsAsSaved(own, pinned)).toEqual({ default: ROLE_ADMIN });
     });
 
     test("why rules can't be saved: none, empty, or too long", () => {
