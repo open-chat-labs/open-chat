@@ -5162,6 +5162,17 @@
         "required": false,
         "componentDefault": "'Loading'",
         "doc": ""
+      },
+      {
+        "name": "delay",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "ms it stays hidden before fading in (0: shown at once)."
       }
     ],
     "group": "library"

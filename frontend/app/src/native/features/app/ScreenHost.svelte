@@ -79,7 +79,8 @@
         <Ready screen={step.screen} context={screenContext} />
     {:else if built}
         {#await screenModules.load(step.screen.kind)}
-            <div class="state waiting"><Spinner /></div>
+            <!-- a chunk that loads within a second (the usual case) shows no spinner -->
+            <div class="state waiting"><Spinner delay={1000} /></div>
         {:then Screen}
             {#if Screen !== undefined}
                 <Screen screen={step.screen} context={screenContext} />
