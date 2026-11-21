@@ -14,6 +14,9 @@ export function connectionUnusableChanged(unusable: boolean): void {
 }
 
 const networkOffline = writable<boolean>(!navigator.onLine, (set) => {
+    // Read again on the first subscriber: the value read when this module loaded can be stale by
+    // now (the page was frozen meanwhile, say), and no event says so
+    set(!navigator.onLine);
     const online = () => set(false);
     const offline = () => set(true);
     window.addEventListener("online", online);

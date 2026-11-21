@@ -1,5 +1,6 @@
 import type { WebRtcMessage } from "@shared";
 import type { DataConnection, default as Peer } from "peerjs";
+import { reconnectDelay, whenOnline } from "./online";
 
 export class RtcConnectionsManager {
     private connections: Map<string, DataConnection> = new Map<string, DataConnection>();
@@ -13,6 +14,11 @@ export class RtcConnectionsManager {
     private _starting: Promise<Peer> | undefined;
 
     private _mobile: boolean;
+
+    // A reconnect of the peer to the signalling server, waiting for the app to be online or for
+    // its backoff, and the attempts made since the peer was last open
+    private cancelReconnect: (() => void) | undefined;
+    private reconnectAttempts = 0;
 
     constructor() {
         this._mobile = this.isMobileDevice();
@@ -115,7 +121,9 @@ export class RtcConnectionsManager {
             });
 
             this._peer.on("open", (_id) => {
+                // on reconnecting too
                 opened = true;
+                this.reconnectAttempts = 0;
                 if (this._peer) {
                     resolve(this._peer);
                 }
@@ -128,16 +136,7 @@ export class RtcConnectionsManager {
 
             this._peer.on("disconnected", () => {
                 console.debug("RTC: peer lost connection will try to reconnect");
-
-                // reconnect() throws if the peer has already re-established the connection
-                // by the time this handler runs
-                if (this._peer && !this._peer.destroyed && this._peer.disconnected) {
-                    try {
-                        this._peer.reconnect();
-                    } catch (err) {
-                        console.debug("RTC: peer reconnect failed: ", err);
-                    }
-                }
+                this.scheduleReconnect();
             });
 
             this._peer.on("close", () => {
@@ -152,6 +151,42 @@ export class RtcConnectionsManager {
                 console.debug("RTC: peer connection error: ", err);
             });
         });
+    }
+
+    // A failed reconnect disconnects the peer again, and reconnecting straight away each time
+    // made a loop of websocket connections to the signalling server for as long as the app was
+    // offline. Offline, the reconnect waits for the app to be back and goes as soon as it is;
+    // online, the first goes straight away, as before, and later ones back off.
+    private scheduleReconnect(): void {
+        this.cancelReconnect?.();
+        let waitedForOnline = false;
+        let cancelTimer: (() => void) | undefined;
+        const cancelWait = whenOnline(() => {
+            const delay = waitedForOnline ? 0 : reconnectDelay(this.reconnectAttempts);
+            const timer = setTimeout(() => {
+                this.cancelReconnect = undefined;
+                this.reconnectAttempts += 1;
+                this.reconnectNow();
+            }, delay);
+            cancelTimer = () => clearTimeout(timer);
+        });
+        // If the app is online, the callback has already run, with this still false
+        waitedForOnline = true;
+        this.cancelReconnect = () => {
+            cancelWait();
+            cancelTimer?.();
+        };
+    }
+
+    private reconnectNow(): void {
+        // reconnect() throws if the peer has already re-established the connection by now
+        if (this._peer && !this._peer.destroyed && this._peer.disconnected) {
+            try {
+                this._peer.reconnect();
+            } catch (err) {
+                console.debug("RTC: peer reconnect failed: ", err);
+            }
+        }
     }
 
     public subscribe(onMessage: (message: unknown) => void): void {
@@ -201,6 +236,9 @@ export class RtcConnectionsManager {
     };
 
     private resetAfterConnectionClosed() {
+        this.cancelReconnect?.();
+        this.cancelReconnect = undefined;
+        this.reconnectAttempts = 0;
         this.connections.clear();
         this._peer = undefined;
     }

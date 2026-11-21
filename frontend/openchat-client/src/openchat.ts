@@ -824,6 +824,7 @@ import {
 } from "./utils/rtc";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { Semaphore } from "./utils/semaphore";
+import { isAbortError, runWhenOnline } from "./utils/online";
 import { withPausedStores } from "./utils/stores";
 import {
     durationFromMilliseconds,
@@ -1732,14 +1733,7 @@ export class OpenChat {
             this.#startOneSecBalanceUpdateJob();
             this.#startSolBalanceUpdateJob();
             this.#startDailyPuzzlePoller();
-            this.#worker
-                .send({ kind: "getUserStorageLimits" })
-                .then((storage) => {
-                    storageStore.set(storage);
-                })
-                .catch((err) => {
-                    console.warn("Unable to retrieve user storage limits", err);
-                });
+            this.#loadStorageLimits();
             this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
                 localUpdates.initialiseFailedMessages(
                     MessageContextMap.fromMap(res).map((_, rec) => {
@@ -1879,6 +1873,43 @@ export class OpenChat {
 
     #preLogoutTasks: (() => Promise<unknown>)[] = [];
 
+    // Background calls waiting for the app to be online (see `runWhenOnline`). Aborted when logout
+    // starts, so that a push registration parked while offline can't run after the pre-logout
+    // tasks have removed the token, binding it to the signed-out user again.
+    #onlineWaits = new AbortController();
+
+    // The storage limits fetch still waiting for the app to be online, replaced by a newer one
+    #storageLimitsWait: AbortController | undefined;
+
+    // Asked for once per login, so a start-up offline asks once it's back rather than failing
+    async #loadStorageLimits(): Promise<void> {
+        this.#storageLimitsWait?.abort();
+        const wait = new AbortController();
+        this.#storageLimitsWait = wait;
+        try {
+            const storage = await runWhenOnline(
+                () => this.#worker.send({ kind: "getUserStorageLimits" }),
+                { signal: wait.signal },
+            );
+            storageStore.set(storage);
+        } catch (err) {
+            if (!isAbortError(err)) {
+                console.warn("Unable to retrieve user storage limits", err);
+            }
+        } finally {
+            if (this.#storageLimitsWait === wait) this.#storageLimitsWait = undefined;
+        }
+    }
+
+    // A push registration, made once the app is online. One dropped by logout resolves quietly.
+    async #registerPushWhenOnline(register: () => Promise<void>): Promise<void> {
+        try {
+            await runWhenOnline(register, { signal: this.#onlineWaits.signal });
+        } catch (err) {
+            if (!isAbortError(err)) throw err;
+        }
+    }
+
     /**
      * Registers a task to run at the start of logout, while the caller's
      * identity is still valid — e.g. removing this device's push token from
@@ -1915,6 +1946,8 @@ export class OpenChat {
     }
 
     async #doLogout(): Promise<void> {
+        // Before the pre-logout tasks, which remove the push token
+        this.#onlineWaits.abort();
         // Run any registered pre-logout tasks (e.g. push-token cleanup) while
         // the identity is still valid. Best-effort: Promise.resolve().then wraps
         // each task so a synchronous throw becomes a rejection that allSettled
@@ -8050,16 +8083,23 @@ export class OpenChat {
         return this.#worker.send({ kind: "fcmTokenExists", fcmToken });
     }
 
+    // Registered once the app is online, with retries: offline the call can only fail, and
+    // nothing would make it again until the next login
     addFcmToken(fcmToken: string): Promise<void> {
-        return this.#worker.send({ kind: "addFcmToken", fcmToken });
+        return this.#registerPushWhenOnline(() =>
+            this.#worker.send({ kind: "addFcmToken", fcmToken }),
+        );
     }
 
     removeFcmToken(fcmToken: string): Promise<void> {
         return this.#worker.send({ kind: "removeFcmToken", fcmToken });
     }
 
+    // Registered once the app is online, as `addFcmToken` is
     addApnsDevice(device: ApnsDevice): Promise<void> {
-        return this.#worker.send({ kind: "addApnsDevice", device });
+        return this.#registerPushWhenOnline(() =>
+            this.#worker.send({ kind: "addApnsDevice", device }),
+        );
     }
 
     removeApnsDevice(device: ApnsDevice): Promise<void> {
