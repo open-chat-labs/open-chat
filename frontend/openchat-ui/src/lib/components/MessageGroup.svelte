@@ -702,6 +702,7 @@
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-3);
+    @include glyph-room;
 
     &.sender:hover {
       text-decoration: underline;

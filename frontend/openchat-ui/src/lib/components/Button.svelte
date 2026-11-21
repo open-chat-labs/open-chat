@@ -157,6 +157,8 @@
   .label {
     min-width: 0;
     @include truncate;
+    // the button's line-height is 1: without it the ink of "g", "y" and accents is cut off
+    @include glyph-room;
   }
 
   .full,

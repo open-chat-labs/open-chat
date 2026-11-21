@@ -354,6 +354,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .rail {
     position: relative;
     height: 100%;
@@ -433,6 +435,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
     opacity: 0;
     transition: opacity var(--duration-base) ease;
   }
@@ -553,6 +556,7 @@
     max-width: 0px;
     overflow: hidden;
     white-space: nowrap;
+    @include glyph-room;
     font: var(--weight-medium) var(--text-2xs) / 1 var(--font-mono);
     letter-spacing: 0.06em;
     color: var(--ink-4);
@@ -845,6 +849,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .profile-name {

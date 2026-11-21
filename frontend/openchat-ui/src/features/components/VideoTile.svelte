@@ -65,6 +65,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .tile {
     position: relative;
     width: 100%;
@@ -168,5 +170,6 @@
   .label {
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 </style>

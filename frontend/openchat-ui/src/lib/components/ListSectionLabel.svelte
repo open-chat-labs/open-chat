@@ -41,6 +41,7 @@
     text-transform: uppercase;
     color: var(--ink-4);
     @include truncate;
+    @include glyph-room;
   }
 
   .meta {
