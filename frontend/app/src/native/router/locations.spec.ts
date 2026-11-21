@@ -239,7 +239,9 @@ describe("the tab bar", () => {
     // the Chats tab's search, until Cancel or back
     test("hides on a tab's root that hides it", () => {
         const location = at("/chats");
-        expect(location.area === "tabs" && showsTabBar(location.steps, true)).toBe(false);
+        if (location.area !== "tabs") throw new Error(`/chats is ${location.area}`);
+        expect(showsTabBar(location.steps, false)).toBe(true);
+        expect(showsTabBar(location.steps, true)).toBe(false);
     });
 });
 
@@ -316,7 +318,8 @@ describe("a toast", () => {
 
     test("sits above the safe area on a tab's root that has hidden the tab bar", () => {
         const location = at("/chats");
-        expect(location.area === "tabs" && toastsAbove(location.steps, true)).toBe("none");
+        if (location.area !== "tabs") throw new Error(`/chats is ${location.area}`);
+        expect(toastsAbove(location.steps, true)).toBe("none");
     });
 
     test("sits above the tab bar on a tab's root", () => {

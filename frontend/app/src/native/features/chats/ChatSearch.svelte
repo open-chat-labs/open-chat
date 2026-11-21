@@ -214,7 +214,9 @@
         flex: none;
         display: flex;
         align-items: center;
-        padding: calc(var(--safe-top) + 8px) var(--space-8) 0 var(--space-16);
+        // logical, as the end padding that animates is (in RTL the end is the left)
+        padding-block: calc(var(--safe-top) + 8px) 0;
+        padding-inline: var(--space-16) var(--space-8);
         animation: lift 0.32s var(--ease-out);
 
         .leaving & {
@@ -330,7 +332,7 @@
     // 6px from the field: its start padding, inside the button, so the slot at 0 leaves none
     .cancel-label {
         flex: none;
-        padding: 0 var(--space-8) 0 calc(var(--space-6) + var(--space-8));
+        padding-inline: calc(var(--space-6) + var(--space-8)) var(--space-8);
     }
 
     .results {

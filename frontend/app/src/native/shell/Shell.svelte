@@ -40,6 +40,7 @@
     import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
     import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import { MediaQuery } from "svelte/reactivity";
     import { _ } from "svelte-i18n";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
@@ -274,6 +275,9 @@
         untrack(() => rootFull.set(hidden));
     });
     onDestroy(() => rootFull.dispose());
+    // with reduced motion the bar snaps back at once, so the root gives its room back at once too
+    const reducedMotionQuery = new MediaQuery("(prefers-reduced-motion: reduce)");
+    const rootIsFull = $derived(barHidden || (rootFull.mounted && !reducedMotionQuery.current));
     // a tab's root and its bar, under a pushed screen, move out as one as it's pushed
     const covered = $derived(pushed.length > 0);
     // how long the screen under the top one takes to move, with the top one's slide
@@ -661,7 +665,7 @@
             <div
                 class="root"
                 class:covered
-                class:full={rootFull.mounted}
+                class:full={rootIsFull}
                 inert={pushed.length > 0}
                 onpointerdown={onPointerDown}
                 onpointermove={onPointerMove}
@@ -890,9 +894,12 @@
         overflow: hidden;
         touch-action: pan-y;
 
-        // the tab bar hidden, or on its way back up over it: the whole window
+        // the tab bar hidden, or on its way back up over it: the whole window. What keeps its
+        // place over the bar meanwhile (the Chats FAB) adds --tab-bar-room, so it moves only
+        // when the root does
         &.full {
             bottom: 0;
+            --tab-bar-room: var(--tab-bar-h);
         }
     }
 

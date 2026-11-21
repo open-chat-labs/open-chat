@@ -45,6 +45,7 @@
     import LongPressMenu from "@openchat/ui/src/native/LongPressMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { longPress } from "@openchat/ui/src/native/longPress";
+    import { Presence } from "@openchat/ui/src/native/presence.svelte";
     import Markdown from "@src/core/Markdown.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { chatRowActionLabel, chatRowMenu, type ChatRowAction } from "@src/logic/chats/chatMenu";
@@ -341,8 +342,11 @@
     // ---- search: the user's chats that match, and people who aren't a chat yet
 
     let searchOpen = $state(false);
-    // the list's field stays hidden while the search's moves back down onto it
-    let fieldHidden = $state(false);
+    // the list's field stays hidden while the search's moves back down onto it: one timer, so
+    // a quick open again takes the field back and a later close starts it afresh
+    const field = new Presence(SEARCH_LEAVE_MS);
+    onDestroy(() => field.dispose());
+    const fieldHidden = $derived(field.mounted);
     let query = $state("");
     let expanded = $state<Record<string, boolean>>({});
     useOverlay(
@@ -372,13 +376,14 @@
     }
 
     function openSearch() {
-        searchOpen = fieldHidden = true;
+        searchOpen = true;
+        field.set(true);
     }
 
     function closeSearch() {
         searchOpen = false;
         onQuery("");
-        setTimeout(() => (fieldHidden = searchOpen), SEARCH_LEAVE_MS);
+        field.set(false);
     }
 
     const CHATS_SHOWN = 3;
@@ -553,7 +558,6 @@
         type="button"
         class="fab"
         class:hidden={!fabShown}
-        class:lifted={fieldHidden}
         aria-label={$_("newChat")}
         aria-hidden={fabShown ? undefined : "true"}
         tabindex={fabShown ? 0 : -1}
@@ -718,7 +722,10 @@
     .fab {
         position: absolute;
         inset-inline-end: var(--space-16);
-        bottom: var(--space-16);
+        // The tab bar hidden, or coming back up (the search open, and closing): the screen
+        // reaches the window's bottom (the shell's --tab-bar-room), so the FAB stays where it
+        // was as it fades, rather than dropping
+        bottom: calc(var(--space-16) + var(--tab-bar-room, 0px));
         z-index: 2;
         width: 56px;
         height: 56px;
@@ -735,12 +742,6 @@
         &.hidden {
             opacity: 0;
             pointer-events: none;
-        }
-
-        // the search open (and closing): the screen reaches the window's bottom, the tab bar
-        // gone, so the FAB stays where it was as it fades, rather than dropping
-        &.lifted {
-            bottom: calc(var(--space-16) + var(--tab-bar-h));
         }
 
         &:focus-visible {
