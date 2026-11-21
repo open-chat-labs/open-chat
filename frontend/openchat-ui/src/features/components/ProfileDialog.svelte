@@ -1888,6 +1888,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .inline-error {
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--status-danger);
@@ -2420,6 +2422,7 @@
 
   .kv-value.mono {
     font: var(--weight-medium) 12.5px/1 var(--font-mono);
+    @include glyph-room;
   }
 
   .kv-value.area {
@@ -2600,6 +2603,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .copy {
@@ -3173,6 +3177,7 @@
     color: var(--ink-4);
     white-space: nowrap;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .locked {

@@ -616,6 +616,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
 
   .pricing-note {
     display: flex;
@@ -1202,6 +1204,7 @@
     white-space: nowrap;
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
     color: var(--ink);
+    @include glyph-room;
   }
 
   .pay-error {

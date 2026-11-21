@@ -125,6 +125,7 @@
 
   .shown {
     @include truncate;
+    @include glyph-room;
   }
 
   .token {

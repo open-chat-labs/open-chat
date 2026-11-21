@@ -353,6 +353,8 @@
 </DialogShell>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .content {
     min-height: 0;
     overflow-y: auto;
@@ -658,6 +660,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .recheck-row {

@@ -484,9 +484,9 @@
   <div class="column">
     {#if showName}
       {#if onSenderClick}
-        <span class="name sender" data-group-head onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0">{senderName}</span>
+        <span class="name sender" data-group-head onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0"><span class="name-text">{senderName}</span></span>
       {:else}
-        <span class="name" data-group-head>{senderName}</span>
+        <span class="name" data-group-head><span class="name-text">{senderName}</span></span>
       {/if}
     {/if}
     {#each messages as m, i (m.id ?? i)}
@@ -696,9 +696,6 @@
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-3);
@@ -706,6 +703,16 @@
     &.sender:hover {
       text-decoration: underline;
     }
+  }
+
+  /* the name's text, truncated in its own box, so the room its glyphs need (glyph-room) reaches past the name's
+     box without growing it: the hit target, focus ring and the rect a profile popover anchors to stay the name's
+     line; the room takes no pointer events, so clicks just outside the name don't land on it */
+  .name-text {
+    display: block;
+    @include truncate;
+    @include glyph-room;
+    pointer-events: none;
   }
 
   .sender {

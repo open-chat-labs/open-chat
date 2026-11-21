@@ -508,6 +508,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .call {
     position: relative;
     width: 100%;
@@ -727,6 +729,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .top-meta {

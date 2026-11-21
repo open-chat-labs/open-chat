@@ -159,5 +159,6 @@
     text-overflow: ellipsis;
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-4);
+    @include glyph-room;
   }
 </style>

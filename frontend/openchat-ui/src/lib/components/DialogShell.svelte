@@ -166,6 +166,7 @@
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
     color: var(--ink);
     @include truncate;
+    @include glyph-room;
   }
 
   .close,
