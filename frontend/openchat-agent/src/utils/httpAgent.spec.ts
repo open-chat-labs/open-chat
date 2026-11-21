@@ -97,6 +97,60 @@ describe("createQueryAwareFetch", () => {
         expect(abortInFlightQueries()).toBe(0);
     });
 
+    test("aborts a request for the status whose body stalls after the headers arrive", async () => {
+        // Sends the headers at once, then never finishes the body until the request is aborted
+        const base = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+            const body = new ReadableStream<Uint8Array>({
+                start(stream) {
+                    stream.enqueue(new Uint8Array([1]));
+                    init?.signal?.addEventListener("abort", () =>
+                        stream.error(init.signal?.reason),
+                    );
+                },
+            });
+            return Promise.resolve(new Response(body));
+        });
+        const wrapped = createQueryAwareFetch(
+            base as unknown as typeof fetch,
+            60_000,
+            undefined,
+            1000,
+        );
+        const result = wrapped(STATUS_URL);
+        const assertion = expect(result).rejects.toMatchObject({ name: "TimeoutError" });
+        await vi.advanceTimersByTimeAsync(1000);
+        await assertion;
+    });
+
+    test("hands back the status response whole once it has arrived", async () => {
+        const base = vi.fn(() =>
+            Promise.resolve(new Response(new Uint8Array([1, 2, 3]), { status: 200 })),
+        );
+        const wrapped = createQueryAwareFetch(
+            base as unknown as typeof fetch,
+            60_000,
+            undefined,
+            1000,
+        );
+        const response = await wrapped(STATUS_URL);
+        expect(response.status).toBe(200);
+        expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test("stops following the caller's signal once the request is done", async () => {
+        const base = vi.fn(() => Promise.resolve(new Response(new Uint8Array([1]))));
+        const wrapped = createQueryAwareFetch(base as unknown as typeof fetch, 60_000);
+        for (const url of [QUERY_URL, STATUS_URL]) {
+            const caller = new AbortController();
+            const add = vi.spyOn(caller.signal, "addEventListener");
+            const remove = vi.spyOn(caller.signal, "removeEventListener");
+            await wrapped(url, { signal: caller.signal });
+            expect(add).toHaveBeenCalledTimes(1);
+            expect(remove).toHaveBeenCalledWith("abort", add.mock.calls[0][1]);
+        }
+    });
+
     test("still honours a signal passed by the caller", async () => {
         const { fn } = hangingFetch();
         const wrapped = createQueryAwareFetch(fn, 60_000);
