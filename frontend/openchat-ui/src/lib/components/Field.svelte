@@ -98,6 +98,7 @@
     font: var(--weight-regular) var(--text-base) / 1 var(--font-sans);
     color: var(--ink-4);
     @include truncate;
+    @include glyph-room;
   }
 
   input {

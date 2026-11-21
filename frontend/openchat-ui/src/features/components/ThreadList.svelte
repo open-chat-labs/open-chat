@@ -76,6 +76,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .threads {
     width: 100%;
     height: 100%;
@@ -119,6 +121,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .filter {
@@ -168,6 +171,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .group-count {

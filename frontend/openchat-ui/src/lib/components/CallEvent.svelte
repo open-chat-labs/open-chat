@@ -215,6 +215,7 @@
     font: 600 14px/1.1 var(--font-sans);
     color: var(--ink);
     @include truncate;
+    @include glyph-room;
 
     .pill.missed & {
       color: var(--status-danger);
@@ -225,6 +226,7 @@
     font: 500 12px/1 var(--font-mono);
     color: var(--ink-4);
     @include truncate;
+    @include glyph-room;
 
     .pill.live & {
       color: var(--status-online);

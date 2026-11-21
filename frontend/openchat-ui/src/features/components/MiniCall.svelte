@@ -171,6 +171,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .layer {
     position: absolute;
     inset: 0;
@@ -282,6 +284,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    @include glyph-room;
   }
 
   .meta {

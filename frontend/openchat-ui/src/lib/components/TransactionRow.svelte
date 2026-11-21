@@ -157,6 +157,7 @@
   .sub-text {
     min-width: 0;
     @include truncate;
+    @include glyph-room;
   }
 
   .figures {
