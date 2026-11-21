@@ -1,57 +1,129 @@
 import { describe, expect, test, vi } from "vitest";
-import { usersForFold } from "./foldUsers";
+import { FEW_MISSING_USERS, FIRST_LIST_USERS_WAIT_MS, FoldUsers } from "./foldUsers";
 
-const never = () => new Promise<never>(() => {});
+type Deferred = { promise: Promise<void>; resolve: () => void };
+function deferred(): Deferred {
+    let resolve!: () => void;
+    const promise = new Promise<void>((r) => (resolve = r));
+    return { promise, resolve };
+}
 
-describe("usersForFold", () => {
-    test("the initial load doesn't wait for the missing users to arrive", async () => {
-        const fetchMissing = vi.fn(never);
-        await usersForFold(true, Promise.resolve(), fetchMissing);
-        expect(fetchMissing).toHaveBeenCalledOnce();
+// A user store, a cache and a network the tests drive by hand
+function setUp(chatsBeforeUsers = true, cachedIds: string[] = []) {
+    const store = new Set<string>();
+    const cached = new Set(cachedIds);
+    const fetches: { userIds: string[]; done: Deferred }[] = [];
+    const delays: { ms: number; done: Deferred }[] = [];
+    const foldUsers = new FoldUsers({
+        chatsBeforeUsers,
+        missing: (userIds) => [...userIds].filter((u) => !store.has(u)),
+        lookUpCached: vi.fn(async (userIds: string[]) => {
+            for (const u of userIds) if (cached.has(u)) store.add(u);
+        }),
+        fetch: (userIds) => {
+            const done = deferred();
+            fetches.push({ userIds, done });
+            return done.promise.then(() => userIds.forEach((u) => store.add(u)));
+        },
+        delay: (ms) => {
+            const done = deferred();
+            delays.push({ ms, done });
+            return done.promise;
+        },
+    });
+    return { foldUsers, store, fetches, delays };
+}
+
+// Whether `promise` has settled once pending callbacks have run
+async function settled(promise: Promise<unknown>): Promise<boolean> {
+    let done = false;
+    promise.then(
+        () => (done = true),
+        () => (done = true),
+    );
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    return done;
+}
+
+const ids = (n: number, prefix = "u") => Array.from({ length: n }, (_, i) => `${prefix}${i}`);
+
+describe("FoldUsers", () => {
+    test("the old trees wait for every missing user, on the first fold too", async () => {
+        const { foldUsers, fetches, store } = setUp(false, ["a"]);
+        store.add("me");
+        const load = foldUsers.load(new Set(["me", "a", "b"]), true, "me");
+        expect(await settled(load)).toBe(false);
+        expect(fetches.map((f) => f.userIds)).toEqual([["a", "b"]]);
+        fetches[0].done.resolve();
+        expect(await settled(load)).toBe(true);
     });
 
-    test("the initial load looks for missing users only once the cached users are in", async () => {
-        let loadCached!: () => void;
-        const cachedUsersLoaded = new Promise<void>((resolve) => (loadCached = resolve));
-        const fetchMissing = vi.fn(() => Promise.resolve());
-        let settled = false;
-        const fold = usersForFold(true, cachedUsersLoaded, fetchMissing).then(
-            () => (settled = true),
-        );
-        await Promise.resolve();
-        expect(fetchMissing).not.toHaveBeenCalled();
-        expect(settled).toBe(false);
-        loadCached();
-        await fold;
-        expect(fetchMissing).toHaveBeenCalledOnce();
+    test("the first list shows straight away when the cache holds everyone", async () => {
+        const { foldUsers, fetches } = setUp(true, ["me", "a", "b"]);
+        await foldUsers.load(new Set(["me", "a", "b"]), true, "me");
+        expect(fetches).toEqual([]);
     });
 
-    test("the initial load goes on when the cached users fail to load", async () => {
-        const fetchMissing = vi.fn(() => Promise.resolve());
-        await usersForFold(true, Promise.reject(new Error("no cache")), fetchMissing);
-        expect(fetchMissing).toHaveBeenCalledOnce();
+    test("the first list doesn't wait for a few users the cache lacks", async () => {
+        const { foldUsers, fetches, store } = setUp(true, ["me"]);
+        const { arrived } = await foldUsers.load(new Set(["me", "a", "b"]), true, "me");
+        expect(fetches.map((f) => f.userIds)).toEqual([["a", "b"]]);
+        expect(await settled(arrived)).toBe(false);
+        fetches[0].done.resolve();
+        await arrived;
+        expect(store.has("a")).toBe(true);
     });
 
-    test("a failed fetch on the initial load doesn't fail the fold", async () => {
+    test("the first list waits, for a while at most, when many users aren't cached", async () => {
+        const { foldUsers, fetches, delays } = setUp(true, ["me"]);
+        const load = foldUsers.load(new Set(["me", ...ids(FEW_MISSING_USERS + 1)]), true, "me");
+        expect(await settled(load)).toBe(false);
+        expect(delays.map((d) => d.ms)).toEqual([FIRST_LIST_USERS_WAIT_MS]);
+        delays[0].done.resolve();
+        expect(await settled(load)).toBe(true);
+        expect(await settled((await load).arrived)).toBe(false);
+        fetches[0].done.resolve();
+    });
+
+    test("the first list waits no longer than the users take to arrive", async () => {
+        const { foldUsers, fetches } = setUp(true, []);
+        const load = foldUsers.load(new Set(["me"]), true, "me");
+        expect(await settled(load)).toBe(false);
+        fetches[0].done.resolve();
+        expect(await settled(load)).toBe(true);
+    });
+
+    test("the first list waits for the current user when the cache lacks them", async () => {
+        const { foldUsers, delays } = setUp(true, ["a"]);
+        const load = foldUsers.load(new Set(["me", "a"]), true, "me");
+        expect(await settled(load)).toBe(false);
+        expect(delays).toHaveLength(1);
+    });
+
+    test("a later fold waits for its users, reusing a fetch still in flight", async () => {
+        const { foldUsers, fetches } = setUp(true, ["me"]);
+        await foldUsers.load(new Set(["me", "a"]), true, "me");
+        const later = foldUsers.load(new Set(["a", "b"]), false, "me");
+        expect(await settled(later)).toBe(false);
+        expect(fetches.map((f) => f.userIds)).toEqual([["a"], ["b"]]);
+        fetches[1].done.resolve();
+        expect(await settled(later)).toBe(false);
+        fetches[0].done.resolve();
+        expect(await settled(later)).toBe(true);
+    });
+
+    test("a failed fetch or cache look-up doesn't fail the fold", async () => {
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-        await expect(
-            usersForFold(true, Promise.resolve(), () => Promise.reject(new Error("offline"))),
-        ).resolves.toBeUndefined();
-        await Promise.resolve();
-        expect(warn).toHaveBeenCalled();
+        const foldUsers = new FoldUsers({
+            chatsBeforeUsers: true,
+            missing: (userIds) => [...userIds],
+            lookUpCached: () => Promise.reject(new Error("no cache")),
+            fetch: () => Promise.reject(new Error("offline")),
+            delay: () => new Promise(() => {}),
+        });
+        const { arrived } = await foldUsers.load(new Set(["me"]), true, "me");
+        await expect(arrived).resolves.toBeUndefined();
+        expect(warn).toHaveBeenCalledTimes(2);
         warn.mockRestore();
-    });
-
-    test("a later answer waits for its missing users", async () => {
-        let deliver!: () => void;
-        const fetchMissing = vi.fn(() => new Promise<void>((resolve) => (deliver = resolve)));
-        let settled = false;
-        const fold = usersForFold(false, never(), fetchMissing).then(() => (settled = true));
-        await Promise.resolve();
-        expect(fetchMissing).toHaveBeenCalledOnce();
-        expect(settled).toBe(false);
-        deliver();
-        await fold;
-        expect(settled).toBe(true);
     });
 });

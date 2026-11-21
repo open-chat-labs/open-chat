@@ -750,6 +750,11 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
+    async getCachedUsers(userIds: string[]): Promise<UserSummary[]> {
+        const users = await this._userDb.getCachedUsers(userIds);
+        return users.map((u) => this.rehydrateUserSummary(u));
+    }
+
     logError(message?: unknown, ...optionalParams: unknown[]): void {
         this._logger.error(message, optionalParams);
     }
