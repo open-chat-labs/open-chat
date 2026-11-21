@@ -33,24 +33,34 @@ export function startStepFor(state: IdentityState): StartStep {
     return withoutAccount(state) ? "sign_up" : "welcome";
 }
 
-/** What the native tree shows, from who's signed in: the start, a spinner, or the app. */
-export type StartEntry = "start" | "loading" | "app";
+/**
+ * What the native tree shows, from who's signed in: the start, a spinner, the app, or an error
+ * with Retry when the session from before couldn't be loaded.
+ */
+export type StartEntry = "start" | "loading" | "failed" | "app";
 
 /**
  * The start for someone signed out, and through a sign-in or sign-up started there until there's
  * a user; a spinner while a session from before loads (a cold start signed in), so Welcome doesn't
- * flash first; and the app once there's a user. `onStart`: the start is showing.
+ * flash first, or an error with Retry in its place if that load failed (`loadFailed`, #10562);
+ * and the app once there's a user. `onStart`: the start is showing.
  */
-export function startEntry(state: IdentityState, anonUser: boolean, onStart: boolean): StartEntry {
+export function startEntry(
+    state: IdentityState,
+    anonUser: boolean,
+    onStart: boolean,
+    loadFailed: boolean,
+): StartEntry {
+    const waiting = loadFailed ? "failed" : "loading";
     switch (state.kind) {
         case "logged_in":
-            return anonUser ? (onStart ? "start" : "loading") : "app";
+            return anonUser ? (onStart ? "start" : waiting) : "app";
         case "anon":
         case "logging_in":
         case "registering":
             return "start";
         case "loading_user":
-            return state.registering || onStart ? "start" : "loading";
+            return state.registering || onStart ? "start" : waiting;
     }
 }
 

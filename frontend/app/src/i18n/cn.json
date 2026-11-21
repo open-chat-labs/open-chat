@@ -1456,6 +1456,10 @@
         "tryAgain": "再试一次",
         "unlinkIdentity": "解除身份关联"
     },
+    "identityLoadFailed": {
+        "body": "OpenChat 无法加载。请检查网络连接，然后重试。",
+        "title": "无法连接到 OpenChat"
+    },
     "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",
     "install": {

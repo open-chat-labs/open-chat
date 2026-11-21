@@ -45,21 +45,33 @@ describe("the signed-out start's stack", () => {
 
 describe("what the native tree shows", () => {
     test("the start for someone signed out, or signing in or up there", () => {
-        expect(startEntry({ kind: "anon" }, true, false)).toBe("start");
-        expect(startEntry({ kind: "registering" }, true, false)).toBe("start");
-        expect(startEntry({ kind: "loading_user", registering: true }, true, false)).toBe("start");
+        expect(startEntry({ kind: "anon" }, true, false, false)).toBe("start");
+        expect(startEntry({ kind: "registering" }, true, false, false)).toBe("start");
+        expect(startEntry({ kind: "loading_user", registering: true }, true, false, false)).toBe("start");
         // a passkey sign-in from the start loads the user with the start still showing
-        expect(startEntry({ kind: "loading_user", registering: false }, true, true)).toBe("start");
+        expect(startEntry({ kind: "loading_user", registering: false }, true, true, false)).toBe("start");
     });
 
     test("a spinner while a session from before loads, rather than Welcome", () => {
-        expect(startEntry({ kind: "loading_user", registering: false }, true, false)).toBe(
+        expect(startEntry({ kind: "loading_user", registering: false }, true, false, false)).toBe(
             "loading",
         );
     });
 
+    test("an error with Retry in the spinner's place when that load failed", () => {
+        expect(startEntry({ kind: "loading_user", registering: false }, true, false, true)).toBe(
+            "failed",
+        );
+        // a sign-in or sign-up from the start isn't the start-up's: the start stays
+        expect(startEntry({ kind: "loading_user", registering: false }, true, true, true)).toBe(
+            "start",
+        );
+        expect(startEntry({ kind: "anon" }, true, false, true)).toBe("start");
+        expect(startEntry({ kind: "logged_in" }, false, false, true)).toBe("app");
+    });
+
     test("the app once there's a user", () => {
-        expect(startEntry({ kind: "logged_in" }, false, true)).toBe("app");
-        expect(startEntry({ kind: "logged_in" }, false, false)).toBe("app");
+        expect(startEntry({ kind: "logged_in" }, false, true, false)).toBe("app");
+        expect(startEntry({ kind: "logged_in" }, false, false, false)).toBe("app");
     });
 });

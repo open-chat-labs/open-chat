@@ -1456,6 +1456,10 @@
         "tryAgain": "Versuchen Sie es erneut",
         "unlinkIdentity": "Identitätsverknüpfung aufheben"
     },
+    "identityLoadFailed": {
+        "body": "OpenChat konnte nicht geladen werden. Prüfe deine Verbindung und versuche es dann erneut.",
+        "title": "Keine Verbindung zu OpenChat"
+    },
     "identityMigrationMessage": "Bitte warten Sie, während Ihr Konto auf unser neues System aktualisiert wird. Dadurch können wir in Zukunft viele weitere Anmeldeoptionen unterstützen, einschließlich der optionalen E-Mail-Wiederherstellung für den Fall, dass Sie den Zugriff auf Ihr Gerät verlieren.",
     "inheritSystem": "Systemthema erben",
     "install": {

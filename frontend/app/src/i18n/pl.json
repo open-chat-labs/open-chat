@@ -1456,6 +1456,10 @@
         "tryAgain": "Spróbuj ponownie",
         "unlinkIdentity": "Odłącz tożsamość"
     },
+    "identityLoadFailed": {
+        "body": "Nie udało się wczytać OpenChat. Sprawdź połączenie i spróbuj ponownie.",
+        "title": "Nie udało się połączyć z OpenChat"
+    },
     "identityMigrationMessage": "Poczekaj, aż Twoje konto zostanie zaktualizowane do nowego systemu. Dzięki temu będziemy mogli w przyszłości obsługiwać znacznie więcej opcji logowania, w tym opcjonalne odzyskiwanie poczty e-mail w przypadku utraty dostępu do urządzenia.",
     "inheritSystem": "Dziedzicz motyw systemu",
     "install": {
