@@ -1456,6 +1456,10 @@
         "tryAgain": "もう一度やり直してください",
         "unlinkIdentity": "アイデンティティのリンクを解除"
     },
+    "identityLoadFailed": {
+        "body": "OpenChat を読み込めませんでした。接続を確認してから、もう一度お試しください。",
+        "title": "OpenChat に接続できませんでした"
+    },
     "identityMigrationMessage": "アカウントが新しいシステムにアップグレードされるまでお待ちください。これにより、デバイスにアクセスできなくなった場合に備えたオプションのメール回復など、今後さらに多くのサインイン オプションをサポートできるようになります。",
     "inheritSystem": "システムテーマを適用",
     "install": {
@@ -3402,10 +3406,6 @@
     "showVideo": "ビデオを表示",
     "skip": "スキップ",
     "startNewChat": "新規チャットを開始する",
-    "startUpFailed": {
-        "body": "OpenChat がアカウントを読み込めませんでした。接続を確認してから、もう一度お試しください。",
-        "title": "OpenChat に接続できませんでした"
-    },
     "stats": {
         "audioMessages": "音声メッセージ",
         "cryptoTransfers": "暗号メッセージ",

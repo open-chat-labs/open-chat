@@ -472,7 +472,7 @@ import {
     favouritesStore,
     hasFlag,
     identityStateStore,
-    startUpFailedStore,
+    identityLoadFailedStore,
     initNotificationStores,
     isDiamondStore,
     isLifetimeDiamondStore,
@@ -810,7 +810,7 @@ import {
     PREVIOUS_WALLETS_RETRY_INTERVAL,
 } from "./utils/previousWalletFunds";
 import { openChatIdentityOrSignOut } from "./utils/openChatIdentity";
-import { startUpSucceeded, type IdentityLoad } from "./utils/startUp";
+import { identityLoadFailed, type IdentityLoad } from "./utils/identityLoad";
 import { jwtExpiryMs } from "./utils/jwt";
 import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
 import { SyncPuller } from "./utils/syncPuller";
@@ -970,6 +970,10 @@ export class OpenChat {
     #ocIdentityPrincipal: string | undefined;
     #authClient: Promise<AuthClient>;
     #webAuthnKey: WebAuthnKey | undefined = undefined;
+    // identity loads so far, so only the latest one reports a failure; and the stored identity's
+    // load while it's going on (#startUp)
+    #identityLoads = 0;
+    #startingUp: Promise<void> | undefined = undefined;
     #userLocation: string | undefined;
     #logger: Logger;
     // Diagnostics for the "selected chat renders empty" report. Every path that can leave a
@@ -1242,30 +1246,62 @@ export class OpenChat {
     }
 
     // Loads the session the last visit left (or the anonymous one). If that fails, the identity
-    // stays loading_user and startUpFailedStore says so, for the new UIs' Retry; nothing signs out
-    // (#10562).
-    async #startUp(): Promise<void> {
-        startUpFailedStore.set(false);
-        const succeeded = await startUpSucceeded(
-            async () => {
-                await this.#authClient;
-                const authIdentity = await this.#authIdentityStorage.getKeyAndChain();
-                return this.#loadedAuthenticationIdentity(authIdentity, undefined);
-            },
-            (err) => this.logError("Start-up couldn't load the identity", err),
-        );
-        startUpFailedStore.set(!succeeded);
+    // stays loading and identityLoadFailedStore says so, for the new UIs' Retry; nothing signs out
+    // (#10562). One at a time: a second call while one is going on gets that one.
+    #startUp(): Promise<void> {
+        this.#startingUp ??= this.#loadStoredIdentity().finally(() => {
+            this.#startingUp = undefined;
+        });
+        return this.#startingUp;
     }
 
-    /** Loads the session again after start-up failed (startUpFailedStore), with the same identity. */
-    retryStartUp(): Promise<void> {
+    async #loadStoredIdentity(): Promise<void> {
+        const attempt = ++this.#identityLoads;
+        identityLoadFailedStore.set(false);
+        try {
+            await this.#authClient;
+            const authIdentity = await this.#authIdentityStorage.getKeyAndChain();
+            await this.#loadedAuthenticationIdentity(authIdentity, undefined, false, attempt);
+        } catch (err) {
+            this.logError("Couldn't load the stored identity", err);
+            if (identityLoadFailed("threw", attempt, this.#identityLoads)) {
+                identityLoadFailedStore.set(true);
+            }
+        }
+    }
+
+    /**
+     * Loads the stored identity again after loading it failed (identityLoadFailedStore), at
+     * start-up or after a sign-in.
+     */
+    retryIdentityLoad(): Promise<void> {
         return this.#startUp();
     }
 
+    // Every identity load clears identityLoadFailedStore, and sets it if it fails while still the
+    // latest load (`attempt`): one a sign-in has since replaced isn't what's showing.
     async #loadedAuthenticationIdentity(
         identityKeyAndChain: IdentityKeyAndChain | undefined,
         authProvider: AuthProvider | undefined,
         registering: boolean = false,
+        attempt: number = ++this.#identityLoads,
+    ): Promise<IdentityLoad> {
+        identityLoadFailedStore.set(false);
+        let result: IdentityLoad | "threw" = "threw";
+        try {
+            result = await this.#loadIdentity(identityKeyAndChain, authProvider, registering);
+            return result;
+        } finally {
+            if (identityLoadFailed(result, attempt, this.#identityLoads)) {
+                identityLoadFailedStore.set(true);
+            }
+        }
+    }
+
+    async #loadIdentity(
+        identityKeyAndChain: IdentityKeyAndChain | undefined,
+        authProvider: AuthProvider | undefined,
+        registering: boolean,
     ): Promise<IdentityLoad> {
         const anon = identityKeyAndChain === undefined;
         const identity = anon
@@ -1494,7 +1530,8 @@ export class OpenChat {
                                 this.#loadedAuthenticationIdentity(identity, authProvider),
                             )
                             .then(
-                                () => resolve("loaded"),
+                                (load) =>
+                                    resolve(load === "user_load_failed" ? "load_failed" : "loaded"),
                                 (err) => {
                                     this.logError("Unable to load the signed-in identity", err);
                                     resolve("load_failed");
@@ -1780,6 +1817,8 @@ export class OpenChat {
                     }),
                 ),
             );
+            // a user is loaded (a sign-up that went on after the load failed included)
+            identityLoadFailedStore.set(false);
             this.updateIdentityState({ kind: "logged_in" });
             publish("userLoggedIn", user.userId);
         }

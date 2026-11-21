@@ -1435,6 +1435,10 @@
         "tryAgain": "Try again",
         "unlinkIdentity": "Unlink Identity"
     },
+    "identityLoadFailed": {
+        "body": "OpenChat couldn't load. Check your connection, then try again.",
+        "title": "Couldn't connect to OpenChat"
+    },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",
     "install": {
@@ -3466,10 +3470,6 @@
     "showVideo": "Show video",
     "skip": "Skip",
     "startNewChat": "Start a new chat",
-    "startUpFailed": {
-        "body": "OpenChat couldn't load your account. Check your connection, then try again.",
-        "title": "Couldn't connect to OpenChat"
-    },
     "stats": {
         "audioMessages": "Audio message",
         "cryptoTransfers": "Crypto message",

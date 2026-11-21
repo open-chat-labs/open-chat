@@ -35,23 +35,23 @@ export function startStepFor(state: IdentityState): StartStep {
 
 /**
  * What the native tree shows, from who's signed in: the start, a spinner, the app, or an error
- * with Retry when start-up couldn't load the session from before.
+ * with Retry when the session from before couldn't be loaded.
  */
 export type StartEntry = "start" | "loading" | "failed" | "app";
 
 /**
  * The start for someone signed out, and through a sign-in or sign-up started there until there's
  * a user; a spinner while a session from before loads (a cold start signed in), so Welcome doesn't
- * flash first, or an error with Retry in its place if that load failed (`startUpFailed`, #10562);
+ * flash first, or an error with Retry in its place if that load failed (`loadFailed`, #10562);
  * and the app once there's a user. `onStart`: the start is showing.
  */
 export function startEntry(
     state: IdentityState,
     anonUser: boolean,
     onStart: boolean,
-    startUpFailed: boolean,
+    loadFailed: boolean,
 ): StartEntry {
-    const waiting = startUpFailed ? "failed" : "loading";
+    const waiting = loadFailed ? "failed" : "loading";
     switch (state.kind) {
         case "logged_in":
             return anonUser ? (onStart ? "start" : waiting) : "app";

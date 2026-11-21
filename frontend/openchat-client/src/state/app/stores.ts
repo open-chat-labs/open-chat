@@ -1451,11 +1451,11 @@ export const identityStateStore = writable<IdentityState>(
     notEq,
 );
 
-// Start-up couldn't load the session the last visit left (the identity's set-up threw, or the user
-// couldn't be loaded with nothing cached), so identityStateStore stays loading_user until a retry
-// (OpenChat.retryStartUp). The new UIs show an error with Retry for it; the old ones keep their
-// spinner.
-export const startUpFailedStore = writable<boolean>(false);
+// The latest identity load failed, at start-up or after a sign-in: the identity's set-up threw, or
+// the user couldn't be loaded with nothing cached. The identity stays loading until a retry
+// (OpenChat.retryIdentityLoad) or another load. The new UIs show an error with Retry for it; the
+// old ones keep their spinner (#10562).
+export const identityLoadFailedStore = writable<boolean>(false);
 
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;

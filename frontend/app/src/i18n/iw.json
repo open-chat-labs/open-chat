@@ -1456,6 +1456,10 @@
         "tryAgain": "נסה שוב",
         "unlinkIdentity": "בטל קישור של זהות"
     },
+    "identityLoadFailed": {
+        "body": "לא ניתן לטעון את OpenChat. בדקו את החיבור ונסו שוב.",
+        "title": "לא ניתן להתחבר ל-OpenChat"
+    },
     "identityMigrationMessage": "אנא המתן בזמן שחשבונך ישודרג למערכת החדשה שלנו. זה יאפשר לנו לתמוך באפשרויות כניסה רבות נוספות בעתיד, כולל שחזור דוא\"ל אופציונלי למקרה שתאבד את הגישה למכשיר שלך.",
     "inheritSystem": "יורש את נושא המערכת",
     "install": {
@@ -3402,10 +3406,6 @@
     "showVideo": "הצג וידאו",
     "skip": "לדלג",
     "startNewChat": "התחל צ'אט חדש",
-    "startUpFailed": {
-        "body": "OpenChat לא הצליח לטעון את החשבון שלך. בדקו את החיבור ונסו שוב.",
-        "title": "לא ניתן להתחבר ל-OpenChat"
-    },
     "stats": {
         "audioMessages": "הודעות שמע",
         "cryptoTransfers": "הודעת קריפטו",

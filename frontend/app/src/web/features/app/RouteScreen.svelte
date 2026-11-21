@@ -7,9 +7,10 @@
         identityStateStore,
         querystringStore,
         routeStore,
-        startUpFailedStore,
+        identityLoadFailedStore,
         type OpenChat,
     } from "@client";
+    import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
@@ -39,7 +40,7 @@
     );
 
     const gate = $derived(
-        appGate($identityStateStore, $chatsInitialisedStore, $startUpFailedStore),
+        appGate($identityStateStore, $chatsInitialisedStore, $identityLoadFailedStore),
     );
 </script>
 
@@ -60,15 +61,20 @@
         <Spinner />
     </div>
 {:else if gate === "failed"}
-    <!-- start-up couldn't load the session from before; still signed in, so Retry loads it again
-         (#10562) -->
+    <!-- the identity couldn't be loaded: Retry loads the stored one again, and someone signed in
+         can sign out if it never loads (#10562) -->
     <div class="page">
-        <EmptyState
-            preset="error"
-            title={$_("startUpFailed.title")}
-            body={$_("startUpFailed.body")}
-            actionLabel="ui.common.retry"
-            actionHandler={() => client.retryStartUp()} />
+        <div class="load-failed">
+            <EmptyState
+                preset="error"
+                title={$_("identityLoadFailed.title")}
+                body={$_("identityLoadFailed.body")}
+                actionLabel="ui.common.retry"
+                actionHandler={() => client.retryIdentityLoad()} />
+            {#if $identityStateStore.kind !== "anon"}
+                <Button label={$_("logout")} variant="ghost" onClick={() => client.logout()} />
+            {/if}
+        </div>
     </div>
 {:else}
     <AppScreen {regions} />
@@ -87,5 +93,11 @@
         height: 100dvh;
         background: var(--surface-0);
         color: var(--ink);
+    }
+
+    .load-failed {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 </style>

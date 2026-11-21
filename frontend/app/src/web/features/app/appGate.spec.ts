@@ -10,7 +10,7 @@ describe("appGate", () => {
         expect(appGate({ kind: "logged_in" }, false, false)).toBe("loading");
     });
 
-    test("an error with Retry in its place when start-up failed", () => {
+    test("an error with Retry in its place when loading the identity failed", () => {
         expect(appGate({ kind: "loading_user", registering: false }, false, true)).toBe("failed");
         // an anonymous session whose set-up failed never gets its chats either
         expect(appGate({ kind: "anon" }, false, true)).toBe("failed");

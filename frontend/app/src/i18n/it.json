@@ -1456,6 +1456,10 @@
         "tryAgain": "Riprova",
         "unlinkIdentity": "Scollega identità"
     },
+    "identityLoadFailed": {
+        "body": "Impossibile caricare OpenChat. Controlla la connessione, poi riprova.",
+        "title": "Impossibile connettersi a OpenChat"
+    },
     "identityMigrationMessage": "Attendi mentre il tuo account viene aggiornato al nostro nuovo sistema. Ciò ci consentirà di supportare molte più opzioni di accesso in futuro, incluso il recupero facoltativo della posta elettronica nel caso in cui perdi l'accesso al tuo dispositivo.",
     "inheritSystem": "Eredita il tema del sistema",
     "install": {
@@ -3402,10 +3406,6 @@
     "showVideo": "Mostra filmato",
     "skip": "Salta",
     "startNewChat": "Avvia una nuova chat",
-    "startUpFailed": {
-        "body": "OpenChat non è riuscito a caricare il tuo account. Controlla la connessione, poi riprova.",
-        "title": "Impossibile connettersi a OpenChat"
-    },
     "stats": {
         "audioMessages": "messaggi audio",
         "cryptoTransfers": "messaggi con cryptovaluta",

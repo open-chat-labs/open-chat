@@ -9,6 +9,7 @@
      Signed out, it's the signed-out start instead (features/start), whatever the URL; the
      marketing pages are the web tree's, outside the tabs. -->
 <script lang="ts">
+    import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
@@ -29,7 +30,7 @@
         routeStore,
         selectedChatSummaryStore,
         sortedCommunitiesStore,
-        startUpFailedStore,
+        identityLoadFailedStore,
         unreadDirectAndGroupCountsStore,
         chatIdentifierToString,
         type ChatIdentifier,
@@ -122,7 +123,7 @@
     const start = new StartStack();
     let onStart = $state(false);
     const entry = $derived(
-        startEntry($identityStateStore, $anonUserStore, onStart, $startUpFailedStore),
+        startEntry($identityStateStore, $anonUserStore, onStart, $identityLoadFailedStore),
     );
     $effect(() => {
         const now = entry;
@@ -683,15 +684,18 @@
         {#if entry === "loading"}
             <Spinner />
         {:else if entry === "failed"}
-            <!-- start-up couldn't load the session from before; still signed in, so Retry loads it
-                 again (#10562) -->
-            <EmptyState
-                preset="error"
-                title={$_("startUpFailed.title")}
-                body={$_("startUpFailed.body")}
-                actionLabel="ui.common.retry"
-                actionHandler={() => client.retryStartUp()}
-            />
+            <!-- the session from before couldn't be loaded; still signed in, so Retry loads it again,
+                 and Sign out is the way out if it never loads (#10562) -->
+            <div class="load-failed">
+                <EmptyState
+                    preset="error"
+                    title={$_("identityLoadFailed.title")}
+                    body={$_("identityLoadFailed.body")}
+                    actionLabel="ui.common.retry"
+                    actionHandler={() => client.retryIdentityLoad()}
+                />
+                <Button label={$_("logout")} variant="ghost" onClick={() => client.logout()} />
+            </div>
         {:else}
             {#await import("../features/start/SignedOutStart.svelte") then { default: SignedOutStart }}
                 <SignedOutStart {start} {overlays} />
@@ -736,6 +740,12 @@
     .outside {
         display: grid;
         place-items: center;
+    }
+
+    .load-failed {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     // the whole window: the tabs' roots over the tab bar, the pushed screens over everything
