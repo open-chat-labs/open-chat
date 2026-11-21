@@ -101,7 +101,31 @@ function isStatusRequest(input: RequestInfo | URL): boolean {
     return /^\/api\/v\d+\/status$/.test(requestPath(input) ?? "");
 }
 
-// Aborts the request if its response hasn't started arriving within `timeoutMs`
+// Makes `controller` abort when the caller's `signal` does. Returns a function which stops
+// following it, so that a signal which outlives the request doesn't keep one listener per request.
+function followSignal(
+    signal: AbortSignal | null | undefined,
+    controller: AbortController,
+): () => void {
+    if (!signal) {
+        return () => undefined;
+    }
+    if (signal.aborted) {
+        controller.abort(signal.reason);
+        return () => undefined;
+    }
+    const onAbort = () => controller.abort(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+    return () => signal.removeEventListener("abort", onAbort);
+}
+
+function timeoutError(timeoutMs: number): DOMException {
+    return new DOMException(`No response after ${timeoutMs}ms`, "TimeoutError");
+}
+
+// Aborts the request unless its whole response, body included, arrives within `timeoutMs`. Only
+// for requests whose response is small: the body is read here, and a replica which sends the
+// headers and then stalls would otherwise leave the agent's read of the body waiting forever.
 async function fetchWithTimeout(
     baseFetch: typeof fetch,
     input: RequestInfo | URL,
@@ -109,33 +133,28 @@ async function fetchWithTimeout(
     timeoutMs: number,
 ): Promise<Response> {
     const controller = new AbortController();
-    const callerSignal = init?.signal;
-    if (callerSignal) {
-        if (callerSignal.aborted) {
-            controller.abort(callerSignal.reason);
-        } else {
-            callerSignal.addEventListener("abort", () => controller.abort(callerSignal.reason), {
-                once: true,
-            });
-        }
-    }
-    const timer = setTimeout(
-        () => controller.abort(new DOMException(`No response after ${timeoutMs}ms`, "TimeoutError")),
-        timeoutMs,
-    );
+    const unfollow = followSignal(init?.signal, controller);
+    const timer = setTimeout(() => controller.abort(timeoutError(timeoutMs)), timeoutMs);
     try {
-        return await baseFetch(input, { ...init, signal: controller.signal });
+        const response = await baseFetch(input, { ...init, signal: controller.signal });
+        const body = await response.arrayBuffer();
+        return new Response(body.byteLength > 0 ? body : null, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        });
     } finally {
         clearTimeout(timer);
+        unfollow();
     }
 }
 
 /**
  * Wraps `fetch` so that query requests can be aborted, either by `abortInFlightQueries` or by
- * waiting longer than `timeoutMs` for the response to start. A request for the replica's status
- * (the root key) is aborted after `statusTimeoutMs`. Other requests pass straight through.
- * The timeout stops once the response headers arrive, so a large response on a slow connection
- * is not cut off while its body downloads.
+ * waiting longer than `timeoutMs` for the response to start. That timeout stops once the response
+ * headers arrive, so a large response on a slow connection is not cut off while its body
+ * downloads. A request for the replica's status (the root key), whose response is tiny, is
+ * aborted unless all of it arrives within `statusTimeoutMs`. Other requests pass straight through.
  *
  * Each query also tells `outcomes` how the connection is doing: good once its response starts
  * arriving, bad if it fails or has waited `SLOW_QUERY_MS`. A query aborted here or by the caller
@@ -164,31 +183,13 @@ export function createQueryAwareFetch(
         }
 
         const controller = new AbortController();
-        const callerSignal = init?.signal;
-        if (callerSignal) {
-            if (callerSignal.aborted) {
-                controller.abort(callerSignal.reason);
-            } else {
-                callerSignal.addEventListener(
-                    "abort",
-                    () => controller.abort(callerSignal.reason),
-                    {
-                        once: true,
-                    },
-                );
-            }
-        }
+        const unfollow = followSignal(init?.signal, controller);
 
         const query: InFlightQuery = { controller, sentAt: Date.now(), body };
         // After a suspension this can fire late, at the same time as the resume abort, so it
         // applies the same expiry check
         const timer = setTimeout(
-            () =>
-                abortQuery(
-                    query,
-                    new DOMException(`No response after ${timeoutMs}ms`, "TimeoutError"),
-                    Date.now(),
-                ),
+            () => abortQuery(query, timeoutError(timeoutMs), Date.now()),
             timeoutMs,
         );
         // Each query counts once, as good or bad
@@ -216,6 +217,7 @@ export function createQueryAwareFetch(
         } finally {
             clearTimeout(timer);
             clearTimeout(slowTimer);
+            unfollow();
             inFlightQueries.delete(query);
         }
     };
