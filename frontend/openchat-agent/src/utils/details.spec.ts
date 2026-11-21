@@ -96,7 +96,11 @@ describe("loadGroupDetails", () => {
         const updatesSince = vi.fn((_since: bigint) =>
             Promise.resolve(updates ?? { kind: "failure" as const }),
         );
-        const load = (detailsLastUpdated: bigint, detailsSyncedUpTo?: bigint) =>
+        const load = (
+            detailsLastUpdated: bigint,
+            detailsSyncedUpTo?: bigint,
+            fromCanister = false,
+        ) =>
             loadGroupDetails(
                 cache,
                 key,
@@ -104,6 +108,7 @@ describe("loadGroupDetails", () => {
                 detailsSyncedUpTo,
                 initial,
                 updatesSince,
+                fromCanister,
             );
         // Loads the details so that the caller holds them, as they were cached
         const loadToHold = async () => {
@@ -293,6 +298,77 @@ describe("loadGroupDetails", () => {
         const resp = await load(20n, 10n);
 
         expect(memberIds(resp)).toEqual(["a", "b"]);
+    });
+
+    // A send refused because the rules changed: the summary is out of date too, so what it says of
+    // when the details last changed can't be trusted
+    describe("when the canister is to be asked whatever the summary says", () => {
+        test("cached details as new as the summary are brought up to date", async () => {
+            const { load, stored, updatesSince } = setup(
+                details(10n, ["a"]),
+                membersAdded(20n, ["b"]),
+            );
+
+            const resp = await load(10n, undefined, true);
+
+            expect(updatesSince).toHaveBeenCalledWith(10n);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(stored.get(key)?.timestamp).toBe(20n);
+        });
+
+        test("details another tab has cached since are brought up to date too", async () => {
+            const { load, loadToHold, stored, updatesSince } = setup(
+                details(10n, ["a"]),
+                membersAdded(30n, ["b"]),
+            );
+            await loadToHold();
+            stored.set(key, details(20n, ["a"]));
+
+            const resp = await load(10n, 10n, true);
+
+            expect(updatesSince).toHaveBeenLastCalledWith(20n);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+        });
+
+        test("a caller holding the details is told they haven't changed only by the canister", async () => {
+            const { load, loadToHold, updatesSince } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                timestamp: 30n,
+            });
+            await loadToHold();
+
+            expect(await load(10n, 20n, true)).toEqual({
+                kind: "success_no_updates",
+                timestamp: 30n,
+            });
+            expect(updatesSince.mock.calls).toEqual([[10n]]);
+        });
+
+        test("the load fails, rather than confirming the details held, if the canister can't say", async () => {
+            const { load, loadToHold } = setup(details(10n, ["a"]), { kind: "failure" });
+            await loadToHold();
+
+            expect(await load(10n, 20n, true)).toEqual({ kind: "failure" });
+        });
+
+        test("the load fails, rather than returning those cached, if the canister can't say", async () => {
+            const { load } = setup(details(10n, ["a"]), { kind: "failure" });
+
+            expect(await load(10n, undefined, true)).toEqual({ kind: "failure" });
+        });
+
+        test("the load fails while offline", async () => {
+            const { load, loadToHold, updatesSince } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                timestamp: 30n,
+            });
+            await loadToHold();
+            vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+            expect(await load(10n, 10n, true)).toEqual({ kind: "failure" });
+            expect(await load(10n, undefined, true)).toEqual({ kind: "failure" });
+            expect(updatesSince).not.toHaveBeenCalled();
+        });
     });
 
     // The canister keeps the updates to the details for 31 days, and returns the details in full
@@ -494,7 +570,11 @@ describe("loadCommunityDetails", () => {
         const updatesSince = vi.fn((_since: bigint) =>
             Promise.resolve(updates ?? { kind: "failure" as const }),
         );
-        const load = (detailsLastUpdated: bigint, detailsSyncedUpTo?: bigint) =>
+        const load = (
+            detailsLastUpdated: bigint,
+            detailsSyncedUpTo?: bigint,
+            fromCanister = false,
+        ) =>
             loadCommunityDetails(
                 cache,
                 id,
@@ -502,6 +582,7 @@ describe("loadCommunityDetails", () => {
                 detailsSyncedUpTo,
                 initial,
                 updatesSince,
+                fromCanister,
             );
         const loadToHold = async () => {
             await load(stored.get(id)?.lastUpdated ?? 0n);
@@ -603,6 +684,54 @@ describe("loadCommunityDetails", () => {
         const resp = await load(20n, 5n);
 
         expect(memberIds(resp)).toEqual(["a", "b"]);
+    });
+
+    describe("when the canister is to be asked whatever the summary says", () => {
+        test("cached details as new as the summary are brought up to date", async () => {
+            const { load, stored, updatesSince } = setup(
+                details(10n, ["a"]),
+                membersAdded(20n, ["b"]),
+            );
+
+            const resp = await load(10n, undefined, true);
+
+            expect(updatesSince).toHaveBeenCalledWith(10n);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(stored.get(id)?.lastUpdated).toBe(20n);
+        });
+
+        test("a caller holding the details is told they haven't changed only by the canister", async () => {
+            const { load, loadToHold, updatesSince } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                lastUpdated: 30n,
+            });
+            await loadToHold();
+
+            expect(await load(10n, 20n, true)).toEqual({
+                kind: "success_no_updates",
+                lastUpdated: 30n,
+            });
+            expect(updatesSince.mock.calls).toEqual([[10n]]);
+        });
+
+        test("the load fails, rather than returning the details held or cached, if the canister can't say", async () => {
+            const { load, loadToHold } = setup(details(10n, ["a"]), { kind: "failure" });
+
+            expect(await load(10n, undefined, true)).toEqual({ kind: "failure" });
+            await loadToHold();
+            expect(await load(10n, 20n, true)).toEqual({ kind: "failure" });
+        });
+
+        test("the load fails while offline", async () => {
+            const { load, updatesSince } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                lastUpdated: 30n,
+            });
+            vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+            expect(await load(10n, undefined, true)).toEqual({ kind: "failure" });
+            expect(updatesSince).not.toHaveBeenCalled();
+        });
     });
 
     describe("when the canister returns the details in full instead of the updates", () => {

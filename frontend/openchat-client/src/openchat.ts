@@ -429,13 +429,14 @@ import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import { claimPrizeFailedMessage, isTrustedClick } from "./utils/prizes";
-import {
-    detailsChangedAfterHeld,
-    promptsForRefusedRules,
-    rulesRefusal,
-    type RulesRefusal,
-} from "./utils/rulesRefusal";
+import { promptsForRefusedRules, rulesRefusal, type RulesRefusal } from "./utils/rulesRefusal";
 import { isCsamReport, type ReportReason } from "./utils/report";
+import {
+    failedCopy,
+    resendsRefusedMessage,
+    resendTakesCopy,
+    type FailedCopy,
+} from "./utils/resendCopy";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
     CHAT_LIST_SEARCH_MAX,
@@ -1005,8 +1006,10 @@ export class OpenChat {
     #emptyChatIncidents = new Set<number>();
     // The loads of the selected chat's and community's details, which hold their rules. A message
     // forwarded before these finish waits for them (see #sendMessageCommon).
-    #chatDetailsLoad: { chatId: ChatIdentifier; loaded: Promise<void> } | undefined;
-    #communityDetailsLoad: { communityId: CommunityIdentifier; loaded: Promise<void> } | undefined;
+    #chatDetailsLoad: { chatId: ChatIdentifier; loaded: Promise<boolean | undefined> } | undefined;
+    #communityDetailsLoad:
+        | { communityId: CommunityIdentifier; loaded: Promise<boolean | undefined> }
+        | undefined;
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     #dailyResultsPending = new Map<
@@ -2014,6 +2017,12 @@ export class OpenChat {
     // The chats and threads (messageContextToString) with a queued message being sent again: a
     // new message there waits behind it (#sendMessageCommon)
     #resendsInFlight = new Map<string, number>();
+    // The chats (chatIdentifierToString) whose latest rules are loading after a send refused for
+    // them, to be asked for (#promptForRulesAndResend): whether they were loaded
+    #latestRulesLoads = new Map<string, Promise<boolean>>();
+    // The same chats' sends refused for the rules, each being asked for and sent again
+    // (#promptForRulesAndResend), which the offline queue waits for (#rulesRefusalsSettled)
+    #rulesRefusals = new Map<string, Set<Promise<void>>>();
 
     // Background calls waiting for the app to be online (see `runWhenOnline`). Aborted when logout
     // starts, so that a push registration parked while offline can't run after the pre-logout
@@ -5712,7 +5721,12 @@ export class OpenChat {
         );
     }
 
-    async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
+    // Whether the details held are now up to date, as far as the summary says (or, `fromCanister`,
+    // as far as the canister says, whatever the summary does: it's out of date too)
+    async #loadCommunityDetails(
+        community: CommunitySummary,
+        fromCanister = false,
+    ): Promise<boolean> {
         const id = community.id;
         const held = selectedServerCommunityStore.value;
         const detailsSyncedUpTo =
@@ -5720,9 +5734,9 @@ export class OpenChat {
                 ? held.timestamp
                 : undefined;
         const lastUpdated = detailsLastUpdated(community);
-        if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+        if (!fromCanister && detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
             // The details held are already up to date
-            return;
+            return true;
         }
         // If the details are already held the worker only says whether they have changed, rather
         // than sending every member across to be rebuilt into the stores
@@ -5732,6 +5746,7 @@ export class OpenChat {
                 id,
                 detailsLastUpdated: lastUpdated,
                 detailsSyncedUpTo,
+                fromCanister,
             })
             .catch(() => ({ kind: "failure" }));
         if (resp.kind !== "failure") {
@@ -5741,7 +5756,7 @@ export class OpenChat {
                     community.id,
                     selectedCommunityIdStore.value,
                 );
-                return;
+                return false;
             }
             const currentStoreValue = selectedServerCommunityStore.value;
             if (
@@ -5750,7 +5765,7 @@ export class OpenChat {
                 resp.lastUpdated <= currentStoreValue.timestamp
             ) {
                 // The store already has the latest updates, exiting
-                return;
+                return true;
             }
 
             if (resp.kind === "success_no_updates") {
@@ -5783,16 +5798,20 @@ export class OpenChat {
                 );
                 this.#updateUserStoreFromCommunityState();
             }
+            return true;
         }
+        return false;
     }
 
     // `visit` is the selection the details are loaded for: they go nowhere once it has gone
+    // Whether they're now up to date, as for the community's (`fromCanister` too)
     async #loadChatDetails(
         visit: SelectedChat | undefined,
         serverChat: ChatSummary,
-    ): Promise<void> {
+        fromCanister = false,
+    ): Promise<boolean> {
         if (get(offlineStore) || visit === undefined) {
-            return;
+            return false;
         }
         switch (serverChat.kind) {
             case "group_chat":
@@ -5803,9 +5822,13 @@ export class OpenChat {
                         ? held.timestamp
                         : undefined;
                 const lastUpdated = detailsLastUpdated(serverChat);
-                if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+                if (
+                    !fromCanister &&
+                    detailsSyncedUpTo !== undefined &&
+                    detailsSyncedUpTo >= lastUpdated
+                ) {
                     // The details held are already up to date
-                    return;
+                    return true;
                 }
                 // As for the community's details, if these are already held the worker only says
                 // whether they have changed
@@ -5815,6 +5838,7 @@ export class OpenChat {
                         chatId: serverChat.id,
                         detailsLastUpdated: lastUpdated,
                         detailsSyncedUpTo,
+                        fromCanister,
                     })
                     .catch(CommonResponses.failure);
                 if ("members" in resp || resp.kind === "success_no_updates") {
@@ -5824,7 +5848,7 @@ export class OpenChat {
                             serverChat.id,
                             selectedChatIdStore.value,
                         );
-                        return;
+                        return false;
                     }
                     const currentStoreValue = selectedServerChatStore.value;
                     if (
@@ -5833,7 +5857,7 @@ export class OpenChat {
                         resp.timestamp <= currentStoreValue.timestamp
                     ) {
                         // The store already has the latest updates, exiting
-                        return;
+                        return true;
                     }
                     if (!("members" in resp)) {
                         // Set without the store telling its subscribers, as for the community
@@ -5843,7 +5867,7 @@ export class OpenChat {
                         ) {
                             currentStoreValue.timestamp = resp.timestamp;
                         }
-                        return;
+                        return true;
                     }
                     const members = resp.members.filter((m) => !m.lapsed);
                     const lapsed = new Set(
@@ -5882,11 +5906,12 @@ export class OpenChat {
                     );
                     // Not awaited, since a forwarded message may be waiting for the details
                     void this.#updateUserStoreFromEvents(visit, serverChat.id, []);
+                    return true;
                 }
-                break;
+                return false;
             case "direct_chat":
                 visit.setDetails(undefined);
-                break;
+                return true;
         }
     }
 
@@ -6416,6 +6441,14 @@ export class OpenChat {
         return this.#resendFailed(chat, messageContext, failed.event, [], rulesRefused);
     }
 
+    // Where a message's failed copy is kept, if it is: shown failed, or queued for the connection
+    #failedCopy(context: MessageContext, messageId: bigint): FailedCopy {
+        return failedCopy(
+            localUpdates.isFailed(context, messageId),
+            localUpdates.isQueued(context, messageId),
+        );
+    }
+
     // A failed message sent again under its own id, in its place
     #resendFailed(
         chat: ChatSummary,
@@ -6466,6 +6499,9 @@ export class OpenChat {
         rulesRefused: RulesRefusedSend = "fail",
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
+        // Where the copy of a message sent again is kept, which another send may take first (see
+        // below)
+        const copyAtStart = retrying ? this.#failedCopy(messageContext, message.messageId) : "none";
 
         // A forwarded message is sent as soon as the chat it's forwarded to opens, before the
         // details of that chat and its community, which hold their rules, have loaded. So it waits
@@ -6487,7 +6523,7 @@ export class OpenChat {
 
         let acceptedRules: AcceptedRules | undefined = rulesAcceptedBefore;
         if (acceptedRules === undefined && this.#rulesNeedAccepting(chatId)) {
-            acceptedRules = await this.#promptForRuleAcceptance();
+            acceptedRules = await this.#promptForRuleAcceptance(chatId);
             if (acceptedRules === undefined) {
                 hooks?.rulesDeclined();
                 return CommonResponses.failure();
@@ -6540,6 +6576,14 @@ export class OpenChat {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex, draftAfterSend);
             hooks?.posted();
         } else {
+            // Sent again already, by another retry while this one waited (on the rules, say), or
+            // queued since for the connection, which the offline queue sends itself: this one
+            // would add a second copy, which the chat refuses, showing the sent one failed
+            if (
+                !resendTakesCopy(copyAtStart, this.#failedCopy(messageContext, message.messageId))
+            ) {
+                return CommonResponses.failure();
+            }
             // the *original* event leaves the failed store, and the *new* one is unconfirmed. The
             // device keeps the failed one until the send has gone (the agent removes it then), so
             // a reload or the app closing meanwhile doesn't lose it (#10591).
@@ -6960,8 +7004,8 @@ export class OpenChat {
 
     // Those loads of the selected chat's and community's details which are for the given chat and
     // haven't yet put its details in the stores
-    #selectedDetailsLoading(chatId: ChatIdentifier): Promise<void>[] {
-        const loading: Promise<void>[] = [];
+    #selectedDetailsLoading(chatId: ChatIdentifier): Promise<boolean | undefined>[] {
+        const loading: Promise<boolean | undefined>[] = [];
         const chatLoad = this.#chatDetailsLoad;
         if (
             chatId.kind !== "direct_chat" &&
@@ -7012,69 +7056,97 @@ export class OpenChat {
     /**
      * A send refused because the user hasn't accepted the chat's or its community's rules, which
      * the client took to be accepted: they were changed to need accepting again since it last
-     * synced, so what it holds of them is out of date too. Their latest are loaded, then the
-     * failed message is sent again in its place, which asks the user to accept them first as any
-     * send that needs them does. Declined (or the rules couldn't be loaded, or the user has moved
-     * to another chat) the message stays failed, with Retry.
+     * synced, so what it holds of them is out of date too. Their latest are loaded from the
+     * canister, then the failed message is sent again in its place, which asks the user to accept
+     * them first as any send that needs them does (one prompt for every send waiting on it).
+     * Declined, or the latest rules couldn't be loaded (offline, say), or the user has moved to
+     * another chat, or the message was sent again meanwhile (Retry) or queued for the connection
+     * (the offline queue sends it), it's left as it is.
      */
-    async #promptForRulesAndResend(
+    #promptForRulesAndResend(
         chat: ChatSummary,
         messageContext: MessageContext,
         failed: Message,
         mentioned: User[],
         refusal: RulesRefusal,
     ): Promise<void> {
-        await this.#loadLatestRules(chat.id, refusal);
-        if (!this.#rulesNeedAccepting(chat.id)) return;
+        const key = chatIdentifierToString(messageContext.chatId);
+        const refusals = this.#rulesRefusals.get(key) ?? new Set<Promise<void>>();
+        this.#rulesRefusals.set(key, refusals);
+        const settled = this.#askForRulesAndResend(
+            chat,
+            messageContext,
+            failed,
+            mentioned,
+            refusal,
+        ).finally(() => {
+            refusals.delete(settled);
+            if (refusals.size === 0 && this.#rulesRefusals.get(key) === refusals) {
+                this.#rulesRefusals.delete(key);
+            }
+        });
+        refusals.add(settled);
+        return settled;
+    }
+
+    // Whether any of the chat's sends refused for the rules were being asked for and sent again
+    // (#promptForRulesAndResend), once they've all settled
+    async #rulesRefusalsSettled(chatId: ChatIdentifier): Promise<boolean> {
+        const refusals = this.#rulesRefusals.get(chatIdentifierToString(chatId));
+        if (refusals === undefined || refusals.size === 0) return false;
+        while (refusals.size > 0) {
+            await Promise.allSettled([...refusals]);
+        }
+        return true;
+    }
+
+    async #askForRulesAndResend(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        failed: Message,
+        mentioned: User[],
+        refusal: RulesRefusal,
+    ): Promise<void> {
+        const { chatId } = messageContext;
+        // one load for the chat's refusals that arrive together (several photos, the queue's)
+        const key = chatIdentifierToString(chatId);
+        const loading = this.#latestRulesLoads.get(key) ?? this.#loadLatestRules(chatId, refusal);
+        this.#latestRulesLoads.set(key, loading);
+        let loaded: boolean;
+        try {
+            loaded = await loading;
+        } finally {
+            if (this.#latestRulesLoads.get(key) === loading) this.#latestRulesLoads.delete(key);
+        }
+        if (!loaded) return;
+        if (!this.#rulesNeedAccepting(chatId)) return;
+        if (!resendsRefusedMessage(this.#failedCopy(messageContext, failed.messageId))) return;
         // "fail": asked once; refused again, it stays failed rather than asking again
         await this.#resendFailed(chat, messageContext, failed, mentioned, "fail");
     }
 
-    // The selected chat's (or its community's) details, rules included, loaded again whatever the
-    // summary says of when they last changed: the summary is out of date too
-    async #loadLatestRules(chatId: ChatIdentifier, refusal: RulesRefusal): Promise<void> {
+    // The selected chat's (or its community's) details, rules included, brought up to date by the
+    // canister whatever the summary says of when they last changed: the summary is out of date too.
+    // Whether they were: not if the canister couldn't be asked, or the user has moved on.
+    async #loadLatestRules(chatId: ChatIdentifier, refusal: RulesRefusal): Promise<boolean> {
         switch (refusal) {
             case "chat": {
                 const serverChat = selectedServerChatSummaryStore.value;
-                const held = selectedServerChatStore.value;
                 if (serverChat === undefined || !chatIdentifiersEqual(serverChat.id, chatId)) {
-                    return;
+                    return false;
                 }
-                const heldTimestamp =
-                    held !== undefined && chatIdentifiersEqual(held.chatId, chatId)
-                        ? held.timestamp
-                        : undefined;
-                await this.#loadChatDetails(selectedChatFor(chatId), {
-                    ...serverChat,
-                    detailsLastUpdated: detailsChangedAfterHeld(
-                        detailsLastUpdated(serverChat),
-                        heldTimestamp,
-                    ),
-                });
-                return;
+                return this.#loadChatDetails(selectedChatFor(chatId), serverChat, true);
             }
             case "community": {
                 const community = selectedCommunitySummaryStore.value;
-                const held = selectedServerCommunityStore.value;
                 if (
                     chatId.kind !== "channel" ||
                     community === undefined ||
                     community.id.communityId !== chatId.communityId
                 ) {
-                    return;
+                    return false;
                 }
-                const heldTimestamp =
-                    held !== undefined && communityIdentifiersEqual(held.communityId, community.id)
-                        ? held.timestamp
-                        : undefined;
-                await this.#loadCommunityDetails({
-                    ...community,
-                    detailsLastUpdated: detailsChangedAfterHeld(
-                        detailsLastUpdated(community),
-                        heldTimestamp,
-                    ),
-                });
-                return;
+                return this.#loadCommunityDetails(community, true);
             }
         }
     }
@@ -7464,10 +7536,29 @@ export class OpenChat {
             this.#queuedMessageFailed(context, event);
             return "sent";
         }
+        // Another of the chat's sends was refused for rules changed since: this one waits until
+        // that's settled (their latest loaded, asked for, and that message sent again), so the
+        // chat's messages still go in the order they were written, then goes with that answer.
+        // Accepted, they no longer need accepting; declined, or not loaded, it shows failed, or
+        // stays queued while offline, rather than going with rules the chat no longer takes.
+        const waitedForRules = await this.#rulesRefusalsSettled(context.chatId);
+        if (waitedForRules) {
+            // deleted meanwhile
+            if (!localUpdates.isQueued(context, messageId)) return "sent";
+            if (this.#rulesNeedAccepting(context.chatId)) {
+                if (offline()) return "queued";
+                this.#queuedMessageFailed(context, event);
+                return "sent";
+            }
+        }
         // Rules to accept, with none accepted for it (it was queued before a reload): it shows
         // failed, for the user to send it with Retry, which asks for the rules, rather than being
         // asked out of the blue when the connection is back
-        if (extras?.acceptedRules === undefined && this.#rulesNeedAccepting(context.chatId)) {
+        if (
+            !waitedForRules &&
+            extras?.acceptedRules === undefined &&
+            this.#rulesNeedAccepting(context.chatId)
+        ) {
             this.#queuedMessageFailed(context, event);
             return "sent";
         }
@@ -7499,7 +7590,10 @@ export class OpenChat {
                 msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
                 undefined,
                 "clear",
-                extras?.acceptedRules,
+                // the rules accepted before, unless they've been asked for again since
+                waitedForRules ? undefined : extras?.acceptedRules,
+                // only the new UIs queue: refused for rules changed since, it asks for them
+                "prompt",
             );
         } finally {
             const left = (this.#resendsInFlight.get(key) ?? 1) - 1;
@@ -14376,10 +14470,40 @@ export class OpenChat {
         });
     }
 
-    #promptForRuleAcceptance(): Promise<AcceptedRules | undefined> {
-        return new Promise((resolve, _) => {
-            captureRulesAcceptanceStore.set({
+    // The rules prompt showing, if one is: the chat it asks about, its answer, and declining it
+    #rulesPrompt:
+        | {
+              chatId: ChatIdentifier;
+              answer: Promise<AcceptedRules | undefined>;
+              decline: () => void;
+          }
+        | undefined;
+
+    /**
+     * Asks the user to accept the selected chat's rules (and its community's), one prompt at a time.
+     * A send that needs them accepted while they're being asked about in the same chat (another
+     * send, a Retry, the resend after a send refused for the rules) waits for that answer, rather
+     * than replacing the prompt and leaving the first send waiting forever. One showing for another
+     * chat is declined first.
+     */
+    #promptForRuleAcceptance(chatId: ChatIdentifier): Promise<AcceptedRules | undefined> {
+        const showing = this.#rulesPrompt;
+        if (showing !== undefined) {
+            if (chatIdentifiersEqual(showing.chatId, chatId)) {
+                return showing.answer;
+            }
+            showing.decline();
+        }
+        let decline = () => {};
+        const answer = new Promise<AcceptedRules | undefined>((resolve) => {
+            let answered = false;
+            const request = {
                 resolve: (accepted: boolean) => {
+                    if (answered) return;
+                    answered = true;
+                    if (this.#rulesPrompt?.answer === answer) {
+                        this.#rulesPrompt = undefined;
+                    }
                     let acceptedRules: AcceptedRules | undefined = undefined;
 
                     if (accepted) {
@@ -14400,8 +14524,12 @@ export class OpenChat {
                     captureRulesAcceptanceStore.set(undefined);
                     resolve(acceptedRules);
                 },
-            });
+            };
+            decline = () => request.resolve(false);
+            captureRulesAcceptanceStore.set(request);
         });
+        this.#rulesPrompt = { chatId, answer, decline };
+        return answer;
     }
 
     getStreak(userId: string | undefined) {

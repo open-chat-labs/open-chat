@@ -603,11 +603,13 @@ export class GroupClient
     }
 
     // A caller which already holds the details passes the time up to which they are known to be up
-    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
+    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed.
+    // `fromCanister`: see `loadGroupDetails`
     getGroupDetails(
         groupId: string,
         detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
+        fromCanister = false,
     ): Promise<GroupChatDetailsResponse> {
         return loadGroupDetails(
             this.chatsDb,
@@ -639,6 +641,7 @@ export class GroupClient
                     GroupSelectedUpdatesArgs,
                     GroupSelectedUpdatesResponse,
                 ),
+            fromCanister,
         );
     }
 

@@ -43,6 +43,12 @@ type Updated<T> = Extract<T, { kind: "success" }>;
  * earlier than their timestamp. It was given them when they were cached, and may since have been
  * told they were still up to date at some later time. Otherwise it holds something else (the
  * response with the cached details never reached it, say) and is given the details in full.
+ *
+ * With `fromCanister` the canister is asked whatever `detailsLastUpdated` says, for when the summary
+ * is known to be out of date too (a send refused because the rules changed since it was synced).
+ * Details cached by another tab, however new, are brought up to date the same way. If the canister
+ * can't be asked (offline, or the query fails) the load fails rather than returning the details
+ * held or cached, so the caller knows it doesn't have the latest.
  */
 export async function loadGroupDetails(
     cache: GroupDetailsCache,
@@ -51,7 +57,10 @@ export async function loadGroupDetails(
     detailsSyncedUpTo: bigint | undefined,
     initial: () => Promise<GroupChatDetailsResponse>,
     updatesSince: (since: bigint) => Promise<GroupChatDetailsUpdatesResponse>,
+    fromCanister = false,
 ): Promise<GroupChatDetailsResponse> {
+    // Whether details as new as `timestamp` are to be brought up to date
+    const behind = (timestamp: bigint) => fromCanister || timestamp < detailsLastUpdated;
     const updatesOrInFull = (since: bigint) =>
         updatesOrDetailsInFull(
             () => updatesSince(since),
@@ -70,12 +79,17 @@ export async function loadGroupDetails(
         cachedTimestamp !== undefined &&
         detailsSyncedUpTo >= cachedTimestamp
     ) {
-        if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
+        if (fromCanister && offline()) {
+            return { kind: "failure" };
+        }
+        if (!behind(detailsSyncedUpTo) || offline()) {
             return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
         const updates = await updatesOrInFull(cachedTimestamp);
         if (updates.kind === "failure") {
-            return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
+            return fromCanister
+                ? { kind: "failure" }
+                : { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
         if (updates.kind === "success_no_updates") {
             return {
@@ -118,12 +132,15 @@ export async function loadGroupDetails(
         } else {
             // Either no updates have been fetched, or another tab has written the cached details
             // since they were last read here, so that those fetched aren't the updates since these
-            if (cached.timestamp >= detailsLastUpdated || offline()) {
+            if (fromCanister && offline()) {
+                return { kind: "failure" };
+            }
+            if (!behind(cached.timestamp) || offline()) {
                 return cached;
             }
             const updates = await updatesOrInFull(cached.timestamp);
             if (updates.kind === "failure") {
-                return cached;
+                return fromCanister ? { kind: "failure" } : cached;
             }
             if (updates.kind === "snapshot") {
                 return replace(updates.details);
@@ -151,7 +168,9 @@ export async function loadCommunityDetails(
     detailsSyncedUpTo: bigint | undefined,
     initial: () => Promise<CommunityDetailsResponse>,
     updatesSince: (since: bigint) => Promise<CommunityDetailsUpdatesResponse>,
+    fromCanister = false,
 ): Promise<CommunityDetailsResponse> {
+    const behind = (timestamp: bigint) => fromCanister || timestamp < detailsLastUpdated;
     const updatesOrInFull = (since: bigint) =>
         updatesOrDetailsInFull(
             () => updatesSince(since),
@@ -168,12 +187,17 @@ export async function loadCommunityDetails(
         cachedTimestamp !== undefined &&
         detailsSyncedUpTo >= cachedTimestamp
     ) {
-        if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
+        if (fromCanister && offline()) {
+            return { kind: "failure" };
+        }
+        if (!behind(detailsSyncedUpTo) || offline()) {
             return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
         const updates = await updatesOrInFull(cachedTimestamp);
         if (updates.kind === "failure") {
-            return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
+            return fromCanister
+                ? { kind: "failure" }
+                : { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
         if (updates.kind === "success_no_updates") {
             return {
@@ -212,12 +236,15 @@ export async function loadCommunityDetails(
         if (fetched !== undefined && cached.lastUpdated === cachedTimestamp) {
             details = mergeCommunityDetails(cached, fetched);
         } else {
-            if (cached.lastUpdated >= detailsLastUpdated || offline()) {
+            if (fromCanister && offline()) {
+                return { kind: "failure" };
+            }
+            if (!behind(cached.lastUpdated) || offline()) {
                 return cached;
             }
             const updates = await updatesOrInFull(cached.lastUpdated);
             if (updates.kind === "failure") {
-                return cached;
+                return fromCanister ? { kind: "failure" } : cached;
             }
             if (updates.kind === "snapshot") {
                 return replace(updates.details);

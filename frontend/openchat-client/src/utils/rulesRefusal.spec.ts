@@ -1,6 +1,6 @@
 import { ErrorCode, type SendMessageResponse } from "@shared";
 import { describe, expect, test } from "vitest";
-import { detailsChangedAfterHeld, promptsForRefusedRules, rulesRefusal } from "./rulesRefusal";
+import { promptsForRefusedRules, rulesRefusal } from "./rulesRefusal";
 
 const error = (code: number): SendMessageResponse => ({ kind: "error", code, message: undefined });
 
@@ -19,21 +19,6 @@ describe("rulesRefusal", () => {
 
     test("a failure without a code isn't either", () => {
         expect(rulesRefusal({ kind: "failure" })).toBeUndefined();
-    });
-});
-
-describe("detailsChangedAfterHeld", () => {
-    test("just after the details held when the summary says they're as new", () => {
-        expect(detailsChangedAfterHeld(10n, 10n)).toBe(11n);
-        expect(detailsChangedAfterHeld(10n, 20n)).toBe(21n);
-    });
-
-    test("the summary's time when that's later", () => {
-        expect(detailsChangedAfterHeld(30n, 20n)).toBe(30n);
-    });
-
-    test("the summary's time when no details are held", () => {
-        expect(detailsChangedAfterHeld(30n, undefined)).toBe(30n);
     });
 });
 

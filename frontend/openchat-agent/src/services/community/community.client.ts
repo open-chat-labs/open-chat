@@ -781,11 +781,13 @@ export class CommunityClient
     }
 
     // A caller which already holds the details passes the time up to which they are known to be up
-    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
+    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed.
+    // `fromCanister`: see `loadCommunityDetails`
     getCommunityDetails(
         communityId: string,
         detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
+        fromCanister = false,
     ): Promise<CommunityDetailsResponse> {
         return loadCommunityDetails(
             this.chatsDb,
@@ -819,15 +821,17 @@ export class CommunityClient
                     CommunitySelectedUpdatesArgs,
                     CommunitySelectedUpdatesResponse,
                 ),
+            fromCanister,
         );
     }
 
     // As for `getCommunityDetails`, a caller which already holds the details passes
-    // `detailsSyncedUpTo`
+    // `detailsSyncedUpTo`. `fromCanister`: see `loadGroupDetails`
     getChannelDetails(
         chatId: ChannelIdentifier,
         detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
+        fromCanister = false,
     ): Promise<GroupChatDetailsResponse> {
         return loadGroupDetails(
             this.chatsDb,
@@ -875,6 +879,7 @@ export class CommunityClient
                     CommunitySelectedChannelUpdatesArgs,
                     CommunitySelectedChannelUpdatesResponse,
                 ),
+            fromCanister,
         );
     }
 
