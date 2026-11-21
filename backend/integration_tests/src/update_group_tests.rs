@@ -5,7 +5,9 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
-use types::{ChatId, OptionUpdate::*};
+use types::{
+    ChatId, CustomPermission, GroupPermissionRole, OptionUpdate::*, OptionalGroupPermissions, OptionalMessagePermissions,
+};
 
 #[test]
 fn update_group_name_succeeds() {
@@ -191,6 +193,52 @@ fn make_private_group_public_succeeds() {
     assert!(group_summary.is_public);
     assert_eq!(group_summary.min_visible_event_index, 6.into());
     assert_eq!(group_summary.min_visible_message_index, 5.into());
+}
+
+#[test]
+fn meme_fighter_permission_set_for_the_first_time_is_saved() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, &random_string());
+
+    client::group::happy_path::update_group(
+        env,
+        user1.principal,
+        group_id,
+        &group_canister::update_group_v2::Args {
+            name: None,
+            description: None,
+            rules: None,
+            avatar: NoChange,
+            permissions_v2: Some(OptionalGroupPermissions {
+                message_permissions: Some(OptionalMessagePermissions {
+                    custom_updated: vec![CustomPermission {
+                        subtype: "meme_fighter".to_string(),
+                        role: GroupPermissionRole::Admins,
+                    }],
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            events_ttl: NoChange,
+            gate_config: NoChange,
+            public: None,
+            messages_visible_to_non_members: None,
+        },
+    );
+
+    // A member reads it back: the group kept it
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
+    let custom = summary.permissions_v2.message_permissions.custom;
+    assert_eq!(custom.len(), 1, "{custom:?}");
+    assert_eq!(custom[0].subtype, "meme_fighter");
+    assert_eq!(custom[0].role, GroupPermissionRole::Admins);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, group_name: &str) -> TestData {
