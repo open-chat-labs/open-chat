@@ -2,6 +2,9 @@ import type { CommunityInvite, GroupInvite, Logger, MessageFormatter } from "@sh
 
 export type OpenChatConfig = {
     mobileLayout: "v1" | "v2";
+    // Whether the first chat list may show before every user it names has loaded, the names
+    // filling in as they arrive (`FoldUsers`). Only the new trees (src/web, src/native) set it.
+    chatsBeforeUsers?: boolean;
     icUrl?: string;
     webAuthnOrigin: string | undefined;
     iiDerivationOrigin?: string;

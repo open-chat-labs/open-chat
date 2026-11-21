@@ -207,6 +207,7 @@
       avatarUrl={row.avatarUrl}
       online={row.online}
       suspended={row.suspended}
+      titleLoading={row.titleLoading}
       verified={row.verified}
       locked={row.locked}
       pinned={row.pinned}

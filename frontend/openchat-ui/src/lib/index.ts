@@ -62,6 +62,7 @@ export { default as SegmentedTabs } from './components/SegmentedTabs.svelte';
 export { default as ShareBar } from './components/ShareBar.svelte';
 export { default as SideCard } from './components/SideCard.svelte';
 export { default as Skeleton } from './components/Skeleton.svelte';
+export { default as SkeletonText } from './components/SkeletonText.svelte';
 export { default as SnapFloat } from './components/SnapFloat.svelte';
 export { default as SortableInputList } from './components/SortableInputList.svelte';
 export { default as Spinner } from './components/Spinner.svelte';

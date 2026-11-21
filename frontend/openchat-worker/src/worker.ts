@@ -449,6 +449,7 @@ const handlers: Handlers = {
         ),
     getUsers: (payload, agent) => agent.getUsers(payload.users, payload.allowStale),
     getAllCachedUsers: (_payload, agent) => agent.getAllCachedUsers(),
+    getCachedUsers: (payload, agent) => agent.getCachedUsers(payload.userIds),
     markMessagesRead: (payload, agent) => agent.markMessagesRead(payload.payload),
     getGroupDetails: (payload, agent) =>
         agent.getGroupDetails(

@@ -28,6 +28,7 @@
         routeForChatIdentifier,
         translationsStore,
         userGroupSummariesStore,
+        usersLoadingStore,
         type ChatSummary,
         type DirectChatIdentifier,
         type LeaveOrDelete,
@@ -116,6 +117,7 @@
             translations: $translationsStore,
             bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
             pinned: $pinnedChatsStore.get(scope.kind) ?? [],
+            usersLoading: $usersLoadingStore,
         });
     });
 

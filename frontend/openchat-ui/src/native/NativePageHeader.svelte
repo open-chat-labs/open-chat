@@ -7,11 +7,14 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { useT } from '../lib/i18n';
+  import SkeletonText from '../lib/components/SkeletonText.svelte';
   import type { NativeHeaderAction } from './types';
 
   interface Props {
     /** Resource key (or literal text): the page title, or the name beside the avatar. */
     title: string;
+    /** The title (a user's name) is still loading: Skeleton's shimmer in its place, read as "Loading…". */
+    titleLoading?: boolean;
     /** Resource key (or literal text): the line under the name (a status, a member count). */
     sub?: string;
     /** md: a pushed page's 17px title. lg: a tab root's 21px title, without back. */
@@ -38,7 +41,7 @@
   }
 
   let {
-    title, sub = '', size = 'md', avatar, onBack, backLabel = 'ui.common.back', onTitleClick, titleLabel = '', actions = [],
+    title, titleLoading = false, sub = '', size = 'md', avatar, onBack, backLabel = 'ui.common.back', onTitleClick, titleLabel = '', actions = [],
     onMore, moreLabel = 'ui.common.moreOptions', divider = false, children,
   }: Props = $props();
   const t = useT();
@@ -49,7 +52,7 @@
 {#snippet heading()}
   {#if avatar}{@render avatar()}{/if}
   <span class="text">
-    <span class="title">{t(title)}</span>
+    {#if titleLoading}<SkeletonText />{:else}<span class="title">{t(title)}</span>{/if}
     {#if sub}<span class="sub">{t(sub)}</span>{/if}
   </span>
 {/snippet}

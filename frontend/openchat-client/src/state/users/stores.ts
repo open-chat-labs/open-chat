@@ -13,6 +13,10 @@ export const blockedUsersStore = derived(
 export const allUsersStore = writable(new Map<string, UserSummary>(), undefined, notEq);
 export const suspendedUsersStore = writable(new Set<string>(), undefined, notEq);
 export const webhookUserIdsStore = writable(new Set<string>(), undefined, notEq);
+// The users being fetched for the chat list, which the new trees (src/web, src/native) let show
+// before them: a name still loading rather than an unknown user (`FoldUsers`). Always empty for
+// the old trees, whose chat list waits for its users.
+export const usersLoadingStore = writable<ReadonlySet<string>>(new Set<string>(), undefined, notEq);
 // The profiles of the accounts on other platforms, eg. Discord, which messages were relayed from,
 // keyed by `bridgedUserKey`
 export const bridgedUsersStore = writable(new Map<string, BridgedUserSummary>(), undefined, notEq);

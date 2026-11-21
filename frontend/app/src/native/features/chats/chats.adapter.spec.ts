@@ -21,6 +21,7 @@ const row: ChatListRow = {
     liveCall: "",
     selected: false,
     suspended: false,
+    titleLoading: false,
 };
 
 describe("a row's long-press menu", () => {
@@ -52,8 +53,14 @@ describe("a native chat row", () => {
             pinned: true,
             liveCall: "",
             suspended: false,
+            titleLoading: false,
             fav: true,
         });
+    });
+
+    test("shows a DM whose other user is still loading as loading, as the web's row", () => {
+        const dm: ChatListRow = { ...row, kind: "user", locked: false, titleLoading: true };
+        expect(nativeChatRow(dm, false).titleLoading).toBe(true);
     });
 
     test("marks a DM whose other user is suspended, as the web's row", () => {

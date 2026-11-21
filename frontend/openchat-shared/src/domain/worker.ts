@@ -338,6 +338,7 @@ export type WorkerRequest = Cloneable<
     | SearchCommunityMembers
     | MarkMessagesRead
     | GetAllCachedUsers
+    | GetCachedUsers
     | GetUsers
     | ChatEvents
     | CreateUserClient
@@ -1792,6 +1793,12 @@ type GetAllCachedUsers = {
     kind: "getAllCachedUsers";
 };
 
+// Those of these users the cache holds, without going to the network
+type GetCachedUsers = {
+    kind: "getCachedUsers";
+    userIds: string[];
+};
+
 type LastOnline = {
     userIds: string[];
     kind: "lastOnline";
@@ -2688,6 +2695,7 @@ export type WorkerResults = ResultsByKind<{
     searchCommunityMembers: LookupMembersResponse;
     getCurrentUser: CurrentUserResponse;
     getAllCachedUsers: UserSummary[];
+    getCachedUsers: UserSummary[];
     lastOnline: Record<string, number>;
     markAsOnline: MinutesOnline;
     chatEventsWindow: EventsResponse<ChatEvent>;

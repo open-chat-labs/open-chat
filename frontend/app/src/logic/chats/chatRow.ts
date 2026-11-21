@@ -59,10 +59,17 @@ export type ChatListRow = {
      * avatar, marks it and tags the name. Never a group or channel (they're frozen, not suspended).
      */
     suspended: boolean;
+    /**
+     * A DM whose other user is still being fetched (the chats can show before their users,
+     * usersLoadingStore): ChatRow shows a shimmer for the name and the avatar, not "Unknown user".
+     */
+    titleLoading: boolean;
 };
 
 export type RowContext = {
     userName: (userId: string) => string;
+    /** Whether a user is still being fetched, not yet in the user store (`usersLoading`). */
+    userLoading: (userId: string) => boolean;
     /** Whether a user's account is suspended (their UserSummary's `suspended`). */
     userSuspended: (userId: string) => boolean;
     /** The latest message as the row shows it, as markdown (logic/chats/latestMessagePreview). */
@@ -110,6 +117,11 @@ export type RowContextInputs = Pick<
      * native Chats tab doesn't show them yet).
      */
     withMentionsAndAvatars?: boolean;
+    /**
+     * The users being fetched for the chat list (usersLoadingStore): a DM with one of them, not yet
+     * in `users`, shows as loading. None by default.
+     */
+    usersLoading?: ReadonlySet<string>;
 };
 
 /**
@@ -144,6 +156,7 @@ export function rowContext(
         selected,
         community,
         withMentionsAndAvatars = false,
+        usersLoading,
     }: RowContextInputs,
 ): RowContext {
     const groupAvatars = groupAvatarLookups(client, community);
@@ -162,6 +175,7 @@ export function rowContext(
         : {};
     return {
         userName: (userId) => client.displayName(users.get(userId)),
+        userLoading: (userId) => userLoading(userId, users, usersLoading),
         // the list is built again as allUsersStore changes, so a suspension shows as it loads
         userSuspended: (userId) => users.get(userId)?.suspended ?? false,
         preview: (chat) =>
@@ -224,6 +238,18 @@ export function chatAvatarUrl(
     return chat.kind === "direct_chat"
         ? ownUserAvatarUrl(users.get(chat.them.userId))
         : ownGroupAvatarUrl(chat, groups);
+}
+
+/**
+ * Whether a user is still loading: being fetched (`usersLoading`) and not in the user store yet. A
+ * user who has arrived, or whose fetch has finished without them, isn't.
+ */
+export function userLoading(
+    userId: string,
+    users: UserLookup,
+    usersLoading: ReadonlySet<string> | undefined,
+): boolean {
+    return (usersLoading?.has(userId) ?? false) && users.get(userId) === undefined;
 }
 
 /** A call going on in the chat: voice for an audio call, video for the others. */
@@ -295,6 +321,7 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
         liveCall: liveCall(chat),
         selected: ctx.selected === id,
         suspended: chat.kind === "direct_chat" && ctx.userSuspended(chat.them.userId),
+        titleLoading: chat.kind === "direct_chat" && ctx.userLoading(chat.them.userId),
     };
 }
 

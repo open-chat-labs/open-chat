@@ -25,6 +25,7 @@
         selectedChatDraftMessageStore,
         selectedChatMembersStore,
         selectedChatRecipientStore,
+        usersLoadingStore,
         selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
@@ -156,6 +157,7 @@
                 community: $selectedCommunitySummaryStore,
                 recipient: $selectedChatRecipientStore,
                 permissions,
+                usersLoading: $usersLoadingStore,
             }),
         ),
     );

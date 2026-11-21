@@ -11,6 +11,7 @@
   import Badge from '../../lib/components/Badge.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import Menu from '../../lib/components/Menu.svelte';
+  import SkeletonText from '../../lib/components/SkeletonText.svelte';
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   // built-in menu labels are resource keys; onMenu reports an item's id
@@ -36,6 +37,8 @@
     titleHint?: string;
     /** Chevron after the name: the name opens the group itself. */
     titleChevron?: boolean;
+    /** The name (a DM's user's) is still loading: Skeleton's shimmer in its place and on the avatar, read as "Loading…". */
+    titleLoading?: boolean;
     statusFav?: boolean;
     /** true, or the mute duration ('8h' | '1w') for the tooltip. */
     statusMuted?: boolean | '8h' | '1w';
@@ -79,6 +82,7 @@
     openDetails,
     titleHint,
     titleChevron = false,
+    titleLoading = false,
     statusFav = false,
     statusMuted = false,
     statusEveryone = false,
@@ -181,10 +185,14 @@
 
 <div class="header" data-oc-header>
   <div class="identity" onclick={openDetails} role="button" tabindex="0" aria-label={titleHint ? t(titleHint) : undefined} title={titleHint ? t(titleHint) : undefined}>
-    <div class="avatar"><Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && user} /></div>
+    <div class="avatar"><Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && user} loading={titleLoading} /></div>
     <div class="names">
       <div class="line">
-        <span class="title">{channel ? '#' : ''}{title}</span>
+        {#if titleLoading}
+          <SkeletonText />
+        {:else}
+          <span class="title">{channel ? '#' : ''}{title}</span>
+        {/if}
         {#if verified && user}
           <span class="badge"><Badge variant="verified" /></span>
         {/if}

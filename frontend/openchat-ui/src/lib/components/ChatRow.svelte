@@ -1,7 +1,9 @@
 <!-- One chat in the chat list: avatar, title, last message (or typing dots and who's typing / live call), time, unread
      mentions (@) and unread count. A suspended user (`suspended`) has a dimmed avatar with a ban mark and a Suspended tag.
      Row menu (menuItems): right-click opens at the cursor, the kebab (hover / focus only) anchors under itself,
-     a touch long-press anchors to the row at the finger, Shift+F10 / Menu key anchors to the row. All share one ContextMenu. -->
+     a touch long-press anchors to the row at the finger, Shift+F10 / Menu key anchors to the row. All share one ContextMenu.
+     `titleLoading`: the title (a user's name) is still loading: Skeleton's shimmer in its place (SkeletonText) and on
+     the avatar (Avatar's `loading`); read as "Loading…". -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { onDestroy, type Snippet } from 'svelte';
@@ -9,6 +11,7 @@
   import Avatar from './Avatar.svelte';
   import ContextMenu from './ContextMenu.svelte';
   import Pill from './Pill.svelte';
+  import SkeletonText from './SkeletonText.svelte';
 
   type Rect = { left: number; right: number; top: number; bottom: number };
 
@@ -43,6 +46,8 @@
     online?: boolean;
     /** Users only: their account is suspended. The avatar dims with a ban mark (no online dot) and the name gets a Suspended tag. */
     suspended?: boolean;
+    /** The title (a user's name) is still loading: a shimmer bar in its place and a neutral avatar, read as "Loading…". */
+    titleLoading?: boolean;
     menuItems?: MenuItem[];
     onClick?: () => void;
   }
@@ -68,6 +73,7 @@
     verified = false,
     online = false,
     suspended = false,
+    titleLoading = false,
     menuItems = [],
     onClick,
   }: Props = $props();
@@ -199,16 +205,20 @@
       <div class="selected"></div>
     {/if}
     <div class="avatar">
-      <Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && kind === 'user'} suspended={suspended && kind === 'user'} />
+      <Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={online && kind === 'user'} suspended={suspended && kind === 'user'} loading={titleLoading} />
     </div>
     <div class="body">
       <div class="line">
         {#if locked}<span class="lock" role="img" aria-label={t('ui.chatRow.private')}></span>{/if}
-        <span class="title">{kind === 'channel' ? '#' : ''}{title}</span>
+        {#if titleLoading}
+          <SkeletonText />
+        {:else}
+          <span class="title">{kind === 'channel' ? '#' : ''}{title}</span>
+        {/if}
         {#if verified && kind === 'user'}
           <span class="verified"></span>
         {/if}
-        {#if suspended && kind === 'user'}
+        {#if suspended && kind === 'user' && !titleLoading}
           <!-- TODO(design): the Suspended tag and the avatar's mark aren't in the design export -->
           <Pill label="ui.chatRow.suspended" tone="danger" />
         {/if}

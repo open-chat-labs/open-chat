@@ -633,6 +633,30 @@ describe("where the entry is", () => {
         expect(chatEntryState(client(), group, false, suspended).recipientSuspended).toBe(false);
     });
 
+    test("a DM whose other user is still loading says so, not that it's read only", () => {
+        const none = { ...reader, permissions: { message: nothing, thread: nothing } };
+        const loading = { ...none, usersLoading: new Set(["them"]) };
+        expect(entryBlock(chatEntryState(client(), dm, false, loading))).toEqual({
+            kind: "recipient_loading",
+        });
+        expect(entryBlockBanner({ kind: "recipient_loading" })).toEqual({
+            key: "ui.common.loading",
+            tone: "info",
+        });
+        // once they've arrived, what may be sent is theirs
+        const arrived = {
+            ...reader,
+            usersLoading: new Set(["them"]),
+            recipient: { userId: "them", suspended: false },
+        };
+        expect(entryBlock(chatEntryState(client(), dm, false, arrived))).toBeUndefined();
+        // a fetch that finished without them: read only, as before; and never a group's
+        expect(entryBlock(chatEntryState(client(), dm, false, none))).toMatchObject({
+            kind: "read_only",
+        });
+        expect(chatEntryState(client(), group, false, loading).recipientLoading).toBe(false);
+    });
+
     test("a frozen chat, or a channel of a frozen community, is frozen, not read only", () => {
         const frozen = {
             isChatOrCommunityFrozen: vi.fn(() => true),

@@ -59,6 +59,7 @@ function group(
 const ctx: RowContext = {
     userName: (id) => ({ alice: "Alice", bob: "Bob" })[id] ?? id,
     userSuspended: (id) => id === "mallory",
+    userLoading: (id) => id === "lucy",
     // the preview line itself is latestMessagePreview's (app/src/logic/chats)
     preview: (chat) =>
         (chat.latestMessage?.event.content as { text: string } | undefined)?.text ?? "",
@@ -181,6 +182,15 @@ describe("a chat list row", () => {
     test("is suspended for a DM whose other user's account is suspended, not anyone else's", () => {
         expect(chatRow(dm("mallory"), ctx).suspended).toBe(true);
         expect(chatRow(dm("bob"), ctx).suspended).toBe(false);
+    });
+
+    test("is loading for a DM whose other user is still being fetched, not anyone else's", () => {
+        expect(chatRow(dm("lucy"), ctx).titleLoading).toBe(true);
+        expect(chatRow(dm("bob"), ctx).titleLoading).toBe(false);
+        // a group's id that a loading user's would be, and a message from them
+        expect(
+            chatRow(group("lucy", "Hikers", { sender: "lucy", text: "hi" }), ctx).titleLoading,
+        ).toBe(false);
     });
 
     test("is never suspended for a group or channel, whoever wrote in it", () => {
@@ -403,6 +413,20 @@ describe("a list's row context", () => {
         expect(ctx.userSuspended("bob")).toBe(false);
         expect(ctx.userSuspended("carol")).toBe(false);
         expect(chatRow(dm("mallory"), ctx).suspended).toBe(true);
+    });
+
+    test("says a user is loading while they're being fetched and not in the store yet", () => {
+        const users = new Map([["bob", { userId: "bob" } as UserSummary]]);
+        const usersLoading = new Set(["bob", "carol"]);
+        const ctx = rowContext(client, { ...inputs, users, usersLoading });
+        // carol is being fetched; bob has arrived (his id can still be in the set for a moment)
+        expect(ctx.userLoading("carol")).toBe(true);
+        expect(ctx.userLoading("bob")).toBe(false);
+        // dave isn't being fetched: once the fetch has finished without him, he's unknown, not loading
+        expect(ctx.userLoading("dave")).toBe(false);
+        expect(chatRow(dm("carol"), ctx).titleLoading).toBe(true);
+        // a list that passes no set (the old default) has no one loading
+        expect(rowContext(client, { ...inputs, users }).userLoading("carol")).toBe(false);
     });
 
     test("shows the latest message's mentions as the @names typed, once their users are known", () => {

@@ -554,6 +554,7 @@ import {
     userCreatedStore,
     walletConfigStore,
     walletTokenBySymbol,
+    usersLoadingStore,
     webhookUserIdsStore,
 } from "./state";
 import {
@@ -804,6 +805,7 @@ import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
+import { FoldUsers } from "./utils/foldUsers";
 import { routeForMovedDirectChat } from "./utils/movedDirectChatRoute";
 import {
     movePreviousWalletFunds,
@@ -1043,6 +1045,8 @@ export class OpenChat {
     readonly #miniApps: MiniAppService | undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
     #notificationSubscriptionPoller: Poller | undefined = undefined;
+    // Brings in the users each chats fold names (#10563)
+    #foldUsers: FoldUsers;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -1072,6 +1076,19 @@ export class OpenChat {
             log: (message, err) => this.#logger.error(message, err as Error),
         });
         this.#worker = new WorkerAgent(config, (head) => this.#syncPuller.onHead(head));
+        this.#foldUsers = new FoldUsers({
+            chatsBeforeUsers: config.chatsBeforeUsers ?? false,
+            missing: (userIds) =>
+                missingUserIds(userStore.allUsers, webhookUserIdsStore.value, userIds),
+            lookUpCached: async (userIds) => {
+                userStore.addMany(await this.#worker.send({ kind: "getCachedUsers", userIds }));
+            },
+            fetch: async (userIds) => {
+                await this.getMissingUsers(userIds);
+            },
+            delay: (ms) => new Promise((resolve) => window.setTimeout(resolve, ms)),
+            onLoading: (userIds) => usersLoadingStore.set(userIds),
+        });
 
         this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;
@@ -9807,6 +9824,34 @@ export class OpenChat {
         }
     }
 
+    // Puts the avatar a chats answer carries on the current user, if they're in the user store.
+    // Whether they were.
+    #applyOwnAvatar(avatarId: NonNullable<UpdatesResult["avatarId"]>): boolean {
+        const currentUser = userStore.get(currentUserIdStore.value);
+        if (currentUser === undefined) return false;
+        const blobReference =
+            avatarId === "set_to_none"
+                ? undefined
+                : {
+                      canisterId: currentUserIdStore.value,
+                      blobId: avatarId.value,
+                  };
+        const user = {
+            ...currentUser,
+            blobReference,
+            blobData: undefined,
+            // the new avatar's (rehydrated below), or none once it's removed: the old
+            // one's url stayed until a reload
+            blobUrl: buildUserAvatarUrl(
+                this.config.blobUrlPattern,
+                currentUser.userId,
+                blobReference?.blobId,
+            ),
+        };
+        userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
+        return true;
+    }
+
     async #handleChatsResponse(
         updateRegistryTask: Promise<void> | undefined,
         initialLoad: boolean,
@@ -9837,7 +9882,12 @@ export class OpenChat {
             userIds.add(currentUserIdStore.value);
         }
 
-        await this.getMissingUsers(userIds);
+        // In the new trees the first chats don't wait long on the network for their users
+        const { arrived: usersArrived } = await this.#foldUsers.load(
+            userIds,
+            initialLoad,
+            anonUserStore.value ? undefined : currentUserIdStore.value,
+        );
 
         // Held so the fold's answer can be compared with it: see `answerTouchesChat`
         const selectedBeforeFold = selectedServerChatSummaryStore.value;
@@ -9901,31 +9951,14 @@ export class OpenChat {
                 }
             }
 
-            if (chatsResponse.avatarId !== undefined) {
-                const currentUser = userStore.get(currentUserIdStore.value);
-                const blobReference =
-                    chatsResponse.avatarId === "set_to_none"
-                        ? undefined
-                        : {
-                              canisterId: currentUserIdStore.value,
-                              blobId: chatsResponse.avatarId.value,
-                          };
-                if (currentUser) {
-                    const user = {
-                        ...currentUser,
-                        blobReference,
-                        blobData: undefined,
-                        // the new avatar's (rehydrated below), or none once it's removed: the old
-                        // one's url stayed until a reload
-                        blobUrl: buildUserAvatarUrl(
-                            this.config.blobUrlPattern,
-                            currentUser.userId,
-                            blobReference?.blobId,
-                        ),
-                    };
-
-                    userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
-                }
+            const avatarId = chatsResponse.avatarId;
+            if (avatarId !== undefined && !this.#applyOwnAvatar(avatarId)) {
+                // The current user hasn't loaded yet (the first chats can show before they do):
+                // the avatar goes on them once they have
+                const userId = currentUserIdStore.value;
+                usersArrived.then(() => {
+                    if (currentUserIdStore.value === userId) this.#applyOwnAvatar(avatarId);
+                });
             }
 
             if (chatsResponse.pinNumberSettings !== undefined) {

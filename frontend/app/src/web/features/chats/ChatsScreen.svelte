@@ -36,6 +36,7 @@
         selectedChatIdStore,
         translationsStore,
         userGroupSummariesStore,
+        usersLoadingStore,
         selectedCommunitySummaryStore,
         byContext as typersByContext,
         unreadCommunityChannelCountsStore,
@@ -137,6 +138,7 @@
             selected: $selectedChatIdStore,
             community,
             withMentionsAndAvatars: true,
+            usersLoading: $usersLoadingStore,
         });
     });
 

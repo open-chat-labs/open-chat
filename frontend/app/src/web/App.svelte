@@ -40,7 +40,8 @@
 
     const logger = initialiseAppLogger();
 
-    const client: OpenChat = createOpenChatClient($_, logger);
+    // the chat list's rows follow the user store, so the first list needn't wait for every name
+    const client: OpenChat = createOpenChatClient($_, logger, true);
     setContext<OpenChat>("client", client);
 
     // the app's one call, which outlives every screen and route (web 7b)
