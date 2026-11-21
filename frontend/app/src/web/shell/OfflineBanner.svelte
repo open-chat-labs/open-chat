@@ -1,34 +1,38 @@
 <!-- Says the app is offline and that what it shows (the cache) may be out of date (#10564), while
      the client's offlineStore says so (logic/network/offlineIndicator: a blip doesn't show or hide
-     it). It only says: the app reconnects by itself, so there's no action, and no dismiss, as it
-     goes once the connection is back. -->
+     it). The library's OfflineStrip, the native shell's too, full width across the top of the
+     window above the whole app, which moves down under it: its height goes on the root as
+     --offline-strip, and Shell's frame starts below it, so it covers nothing (a header's name and
+     buttons, the rail). Dialogs and their veils may cover it. It only says: the app reconnects by
+     itself, so there's no action, and no dismiss, as it goes once the connection is back.
+     TODO(design): the web plan has no offline indicator (GAPS.md). -->
 <script lang="ts">
-    import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
+    import OfflineStrip from "@openchat/ui/src/lib/components/OfflineStrip.svelte";
     import { useOfflineIndicator } from "@src/logic/network/offlineIndicator.svelte";
+    import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
 
     const offline = useOfflineIndicator();
+    let height = $state(0);
+
+    $effect(() => {
+        document.documentElement.style.setProperty(
+            "--offline-strip",
+            `${offline.shown ? height : 0}px`,
+        );
+    });
+    onDestroy(() => document.documentElement.style.removeProperty("--offline-strip"));
 </script>
 
-<!-- the live region is always there, so a screen reader hears the banner arrive in it -->
-<div role="status">
-    {#if offline.shown}
-        <!-- TODO(design): the web plan has no offline indicator; the library's offline Banner
-             floating at the top of the window (App: .top-banners), as the layout switch's -->
-        <div class="offline">
-            <Banner tone="offline" text={$_("offlineBanner")} />
-        </div>
-    {/if}
+<div class="offline">
+    <OfflineStrip shown={offline.shown} text={$_("offlineBanner")} bind:height />
 </div>
 
 <style lang="scss">
     .offline {
-        /* the gap to the layout switch's banner under it, when that shows too */
-        margin-block-end: var(--space-8);
-        /* Banner draws the box; its tint is see-through, so this only puts the page's surface
-           under it, in its shape, and lifts it off the shell */
-        border-radius: var(--radius-md);
-        background: var(--surface-1);
-        box-shadow: var(--shadow-menu);
+        position: fixed;
+        inset: 0 0 auto;
+        /* over the shell, under the dialogs' veil */
+        z-index: calc(var(--z-backdrop) - 1);
     }
 </style>

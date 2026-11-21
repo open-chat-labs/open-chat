@@ -83,7 +83,7 @@
         type SwipeAxis,
     } from "./tabSwipe";
     import { useOfflineIndicator } from "@src/logic/network/offlineIndicator.svelte";
-    import OfflineStrip from "./OfflineStrip.svelte";
+    import OfflineStrip from "@openchat/ui/src/lib/components/OfflineStrip.svelte";
     import { ToastFloors } from "./toastFloors.svelte";
     import Toasts from "./Toasts.svelte";
 
@@ -693,11 +693,14 @@
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <OfflineStrip
-            shown={offline.shown}
-            text={$_("offlineBanner")}
-            bind:height={offlineStripHeight}
-        />
+        <!-- TODO(design): the native plan has no offline indicator (#10564; GAPS.md) -->
+        <div class="offline-strip">
+            <OfflineStrip
+                shown={offline.shown}
+                text={$_("offlineBanner")}
+                bind:height={offlineStripHeight}
+            />
+        </div>
 
         <Toasts above={toastsAbove(stacks.steps)} floor={toastFloor} queue={toasts} />
     </div>
@@ -777,12 +780,13 @@
         overflow: hidden;
     }
 
-    // Offline, the strip (OfflineStrip) takes the top of the window, under the status bar, and the
-    // screens keep clear of it as they do of the status bar: everything in the stage that minds
-    // --safe-top (the headers) moves down by the strip's height, the root's --offline-strip (0
-    // while online). The shell's own --safe-top is read into --status-bar-top first, as a property
-    // can't refer to itself. What's outside the stage and minds the top adds --offline-strip itself
-    // (the call's pill and ring, CallHost)
+    // Offline, the strip (the library's OfflineStrip) takes the top of the window, under the status
+    // bar, and the screens keep clear of it as they do of the status bar: everything in the stage
+    // that minds --safe-top (the headers) moves down by the strip's height, the root's
+    // --offline-strip (0 while online; the strip makes it a length, which moves). The shell's own
+    // --safe-top is read into --status-bar-top first, as a property can't refer to itself. What's
+    // outside the stage and minds the top adds --offline-strip itself (the call's pill and ring,
+    // CallHost)
     .shell {
         --status-bar-top: var(--safe-top);
     }
@@ -791,20 +795,11 @@
         --safe-top: calc(var(--status-bar-top) + var(--offline-strip, 0px));
     }
 
-    // a length, so it can move: the strip opens and the screens come down with it, together, and
-    // close as one (not at all with reduced motion)
-    @property --offline-strip {
-        syntax: "<length>";
-        inherits: true;
-        initial-value: 0px;
-    }
-
-    :global(html) {
-        transition: --offline-strip 0.2s var(--ease-out);
-
-        @include reduced-motion {
-            transition: none;
-        }
+    .offline-strip {
+        position: absolute;
+        inset: var(--safe-top) 0 auto;
+        // over every screen, pushed ones too
+        z-index: 3;
     }
 
     // The screen under the top one moves 28% of the way out to the start side as a screen is

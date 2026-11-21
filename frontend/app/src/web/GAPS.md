@@ -12,12 +12,18 @@ design export needs. Each entry says where it came up.
   are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
   stays until another size is picked. The store's fifth step has no size in the design.
 - **Offline** (#10564): done, TODO(design) (the web plan has no offline indicator). While the
-  client's `offlineStore` says the app is offline, the library's offline Banner (`tone="offline"`)
-  floats at the top of the window, as the layout switch's does (the two stack, `App.svelte`'s
-  `.top-banners`), saying so and that what shows may be out of date (`offlineBanner`), with no
-  action or dismiss: it goes once the connection is back (`shell/OfflineBanner`). It shows after
-  1.5s offline (at once when the app starts offline) and goes 0.5s after the connection is back
-  (`logic/network/offlineIndicator`, shared with the native strip). Confirm with design.
+  client's `offlineStore` says the app is offline, the library's `OfflineStrip` (the native
+  shell's too: the offline Banner's tone and icon) runs full width across the top of the window,
+  above the whole app, saying so and that what shows may be out of date (`offlineBanner`), its text
+  wrapping to a second line on a narrow window. The app moves down under it rather than going under
+  it: its height goes on the root as `--offline-strip` and Shell's frame starts below it, so it
+  covers nothing (decided 2026-11-21: a banner floating at the top had covered the open
+  conversation's header). It opens and closes over 0.2s with the app (none with reduced motion).
+  The layout switch's banner and a ringing call's card sit under it; dialogs and their veils may
+  cover it. No action or dismiss: it goes once the connection is back (`shell/OfflineBanner`, in
+  `AppScreen`, so the marketing pages have none). It shows after 1.5s offline (at once when the
+  app starts offline) and goes 0.5s after the connection is back (`logic/network/offlineIndicator`,
+  shared with the native strip). Confirm with design.
 - **Native platform tokens** (native N1, #10364): the library has the native layer
   (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`;
   `--safe-*`, `--scroll-end` and `--text-scale` on `:root`; `[data-always-dark]` for calls;
@@ -154,7 +160,7 @@ design export needs. Each entry says where it came up.
     client's `offlineStore` says the app is offline (the browser's offline event, or the worker
     finding the connection unusable), a slim strip across the top of the window, under the status
     bar, says so and that what shows may be out of date (`offlineBanner`): the library's offline
-    Banner's tone and icon as a strip of at least 28px (`shell/OfflineStrip`), whose text wraps to
+    Banner's tone and icon as a strip of at least 28px (the library's `OfflineStrip`, the web's too), whose text wraps to
     a second line rather than lose its end, with no action, as the app reconnects by itself. The
     shell moves its screens down under it: its height goes on the root as `--offline-strip`, which
     the stage adds to `--safe-top`, so it covers neither a header, the tab bar, a composer nor the

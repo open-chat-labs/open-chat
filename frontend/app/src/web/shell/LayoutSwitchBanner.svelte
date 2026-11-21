@@ -12,7 +12,7 @@
 
 {#if banner.message !== undefined}
     <!-- TODO(design): no design for it; the library's Banner floating at the top of the window,
-         over the app but under its dialogs (App: .top-banners, with the offline one) -->
+         over the app but under its dialogs -->
     <div class="layout-switch" role="status">
         <Banner
             text={interpolateNewUi($_, banner.message)}
@@ -24,6 +24,14 @@
 
 <style lang="scss">
     .layout-switch {
+        position: fixed;
+        /* under the offline strip, while it's open (OfflineBanner) */
+        top: calc(var(--offline-strip, 0px) + var(--space-8));
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(640px, calc(100vw - 2 * var(--space-16)));
+        /* over the shell, under the dialogs' veil */
+        z-index: calc(var(--z-backdrop) - 1);
         /* Banner draws the box; its tint is see-through, so this only puts the page's surface
            under it, in its shape, and lifts it off the shell */
         border-radius: var(--radius-md);

@@ -149,9 +149,11 @@
 </div>
 
 <style lang="scss">
+    /* below the offline strip while it's open (OfflineBanner: the root's --offline-strip, 0 while
+       online), so the app shrinks under it rather than going under it */
     .frame {
         position: fixed;
-        inset: 0;
+        inset: var(--offline-strip, 0px) 0 0;
         overflow: auto;
     }
 
