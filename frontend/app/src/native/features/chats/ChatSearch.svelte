@@ -182,7 +182,9 @@
     .search {
         position: absolute;
         inset: 0;
-        z-index: 8;
+        // over the list and its FAB (2, earlier in the screen), but under the shell's offline
+        // strip (3), which stays over every screen, the search included
+        z-index: 2;
         display: flex;
         flex-direction: column;
 
