@@ -244,6 +244,19 @@ export type RulesToAccept =
     | { chat: string; community: string | undefined }
     | { chat: undefined; community: string };
 
+/** Rules the user agreed to as they joined: the text they read, and when (ms since the epoch). */
+export type AgreedRules = { text: string; agreedAt: number };
+
+/**
+ * The rules the user agreed to as they joined a group, channel or community, which their first
+ * message there accepts: by chat (`chatIdentifierToString`) and by community id. Kept in the
+ * user's cache on the device, so a reload or a restart before that message doesn't lose them.
+ */
+export type RulesAgreedOnJoining = {
+    chats: ReadonlyMap<string, AgreedRules>;
+    communities: ReadonlyMap<string, AgreedRules>;
+};
+
 export function defaultChatRules(level: Level): VersionedRules {
     let text = "";
 

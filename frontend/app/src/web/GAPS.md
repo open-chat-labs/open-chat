@@ -397,8 +397,9 @@ design export needs. Each entry says where it came up.
     enabled) and, with any, opens the join sheet on them: the rules (Markdown, as the pre-send
     `RulesSheet`), Cancel and "Agree and join" (`agreeAndJoin`). Requirements to meet then take
     the rules' place in the same sheet; a join that doesn't go through leaves the rules up with a
-    toast. The client keeps what was agreed to, and the first message there accepts it without
-    asking (as the web's, below). TODO(design): the design has no rules step; ours, the pre-send
+    toast. The client keeps what was agreed to in the user's cache on the device, through a
+    reload or a restart, and the first message there accepts it without asking (as the web's,
+    below). TODO(design): the design has no rules step; ours, the pre-send
     sheet's look with "Rules of {name}" and "Agree and join". The sheet fits its content, so its
     height changes from the rules to the requirements. A community's preview joins the community:
     only its rules are asked for, and a channel's own are asked for before the first message in
@@ -2421,12 +2422,15 @@ design export needs. Each entry says where it came up.
     agreed to); the join gate dialog takes the rules dialog's place over its backdrop
     (`DialogStack.handOff`) when there are requirements to meet, which carry the agreement on. A
     join that doesn't go through leaves the dialog up with a toast. The backend can't take an
-    acceptance with a join, only with a message, so the client keeps the text agreed to
-    (`rulesAgreedOnJoiningStore`) and the first send there, finding those rules still to accept,
+    acceptance with a join, only with a message, so the client keeps the text agreed to, and when
+    (`rulesAgreedOnJoiningStore`, written to the user's cache on the device, the `rules_agreed`
+    store of `openchat_db_<principal>`, and loaded from it as the session starts, so a reload or a
+    restart doesn't lose it), and the first send there, finding those rules still to accept,
     sends their versions (`acceptedRules`, as the pre-send prompt's acceptance is) without asking,
-    if the text is still what was agreed to; changed rules are asked about as ever. Left:
-    - what was agreed to is kept for the session only: after a reload before the first message,
-      the pre-send prompt asks again;
+    if the text is still what was agreed to; changed rules are asked about as ever. An agreement
+    goes once a send carries it, when the user leaves the group, channel or community, and after
+    30 days unused (the pre-send prompt asks then). It's per device: another device asks before
+    the first message, as before. Left:
     - rules that couldn't be read (offline, a canister error) don't hold the join up: they're
       asked for before the first message, as before;
     - a channel of a community being previewed joins the community (the bar's "Join community"):

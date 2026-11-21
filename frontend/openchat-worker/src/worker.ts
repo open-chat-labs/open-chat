@@ -698,6 +698,8 @@ const handlers: Handlers = {
         ),
     getInviteCode: (payload, agent) => agent.getInviteCode(payload.id),
     getRulesBeforeJoining: (payload, agent) => agent.getRulesBeforeJoining(payload.id),
+    getRulesAgreedOnJoining: (_payload, agent) => agent.getRulesAgreedOnJoining(),
+    setRulesAgreedOnJoining: (payload, agent) => agent.setRulesAgreedOnJoining(payload.value),
     enableInviteCode: (payload, agent) => agent.enableInviteCode(payload.id),
     disableInviteCode: (payload, agent) => agent.disableInviteCode(payload.id),
     resetInviteCode: (payload, agent) => agent.resetInviteCode(payload.id),

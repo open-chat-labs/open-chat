@@ -170,6 +170,7 @@ import {
     type ClientJoinGroupResponse,
     type GateCheckSucceeded,
     type JoinOutcome,
+    type RulesAgreedOnJoining,
     type RulesToAccept,
     type JoinCommunity,
     type JoinGroup,
@@ -584,11 +585,7 @@ import { dailyPuzzleResultsCache } from "./stores/dailyPuzzleResults";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
-import {
-    forgetRulesAgreedOnJoining,
-    recordRulesAgreedOnJoining,
-    rulesAgreedOnJoiningStore,
-} from "./stores/rulesAgreedOnJoining";
+import { rulesAgreedOnJoiningStore } from "./stores/rulesAgreedOnJoining";
 import { groupCreation } from "./utils/groupCreation";
 import {
     initialiseMostRecentSentMessageTimes,
@@ -720,7 +717,15 @@ import {
     swapMinimumOut,
 } from "./utils/swap";
 import { joinGroupFailureMessage, postLoginJoin } from "./utils/join";
-import { rulesAgreedOnJoining, rulesToAccept } from "./utils/rulesOnJoining";
+import {
+    noRulesAgreed,
+    rulesAgreedOnJoining,
+    rulesToAccept,
+    unexpiredRulesAgreed,
+    withoutCommunityRulesAgreed,
+    withoutRulesAgreed,
+    withRulesAgreed,
+} from "./utils/rulesOnJoining";
 import { communityPreviewOriginStore, type CommunityPreviewFrom } from "./stores/previewOrigin";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
@@ -987,6 +992,9 @@ export class OpenChat {
     // forwarded before these finish waits for them (see #sendMessageCommon).
     #chatDetailsLoad: { chatId: ChatIdentifier; loaded: Promise<void> } | undefined;
     #communityDetailsLoad: { communityId: CommunityIdentifier; loaded: Promise<void> } | undefined;
+    // The load of the rules agreed to on joining from the device's cache, as the session starts,
+    // which a send needing the rules accepted waits for (see #sendMessageCommon)
+    #rulesAgreedLoad: Promise<void> = Promise.resolve();
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     #dailyResultsPending = new Map<
@@ -1747,6 +1755,7 @@ export class OpenChat {
                 .catch((err) => {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
+            this.#rulesAgreedLoad = this.#loadRulesAgreed();
             this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
                 localUpdates.initialiseFailedMessages(
                     MessageContextMap.fromMap(res).map((_, rec) => {
@@ -2452,6 +2461,7 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
     ): Promise<"success" | "failure" | "owner_cannot_leave"> {
         const undo = localUpdates.removeChat(chatId);
+        this.#forgetRulesAgreed(chatIdentifierToString(chatId), undefined);
         return this.#worker
             .send({ kind: "leaveGroup", chatId })
             .then((resp) => {
@@ -2778,11 +2788,15 @@ export class OpenChat {
                 this.#gateApprovalsUsed(this.#gateCanisterId(chat));
                 this.#miniApps?.joinedChat(chat.id);
                 if (agreedRules !== undefined) {
-                    recordRulesAgreedOnJoining(
-                        chatIdentifierToString(chat.id),
-                        agreedRules.chat,
-                        chat.id.kind === "channel" ? chat.id.communityId : undefined,
-                        agreedRules.community,
+                    this.#saveRulesAgreed(
+                        withRulesAgreed(
+                            rulesAgreedOnJoiningStore.value,
+                            { key: chatIdentifierToString(chat.id), text: agreedRules.chat },
+                            chat.id.kind === "channel"
+                                ? { id: chat.id.communityId, text: agreedRules.community }
+                                : undefined,
+                            Date.now(),
+                        ),
                     );
                 }
                 // a channel's join joins its community too
@@ -6306,6 +6320,8 @@ export class OpenChat {
 
         let acceptedRules: AcceptedRules | undefined = undefined;
         if (this.#rulesNeedAccepting(chatId)) {
+            // what was agreed to on joining comes from the device's cache as the session starts
+            await this.#rulesAgreedLoad;
             // rules the user agreed to as they joined are accepted without asking again
             acceptedRules =
                 this.#rulesAgreedOnJoining(chatId) ?? (await this.#promptForRuleAcceptance());
@@ -6496,7 +6512,7 @@ export class OpenChat {
                     this.#markCommunityRulesAcceptedLocally(true);
                 }
                 if (acceptedRules !== undefined) {
-                    forgetRulesAgreedOnJoining(
+                    this.#forgetRulesAgreed(
                         chatIdentifierToString(chat.id),
                         chat.id.kind === "channel" ? chat.id.communityId : undefined,
                     );
@@ -6760,6 +6776,48 @@ export class OpenChat {
         );
     }
 
+    // The rules agreed to on joining, from the user's cache on the device (none if it can't be
+    // read), less those too old to keep, which are dropped from the cache too
+    async #loadRulesAgreed(): Promise<void> {
+        try {
+            const cached = await this.#worker.send({ kind: "getRulesAgreedOnJoining" });
+            if (cached === undefined) {
+                rulesAgreedOnJoiningStore.set(noRulesAgreed());
+                return;
+            }
+            const kept = unexpiredRulesAgreed(cached, Date.now());
+            rulesAgreedOnJoiningStore.set(kept);
+            if (kept !== cached) this.#writeRulesAgreed(kept);
+        } catch (err) {
+            console.warn("Unable to load the rules agreed to on joining", err);
+        }
+    }
+
+    #saveRulesAgreed(agreed: RulesAgreedOnJoining): void {
+        rulesAgreedOnJoiningStore.set(agreed);
+        this.#writeRulesAgreed(agreed);
+    }
+
+    // a message accepted them, or the user left: nothing to write if there was nothing to forget
+    #forgetRulesAgreed(chatKey: string | undefined, communityId: string | undefined): void {
+        const current = rulesAgreedOnJoiningStore.value;
+        const next = withoutRulesAgreed(current, chatKey, communityId);
+        if (next !== current) this.#saveRulesAgreed(next);
+    }
+
+    // leaving a community leaves its channels too
+    #forgetCommunityRulesAgreed(community: CommunitySummary): void {
+        const current = rulesAgreedOnJoiningStore.value;
+        const next = withoutCommunityRulesAgreed(current, community.id.communityId);
+        if (next !== current) this.#saveRulesAgreed(next);
+    }
+
+    #writeRulesAgreed(agreed: RulesAgreedOnJoining): void {
+        this.#worker
+            .send({ kind: "setRulesAgreedOnJoining", value: agreed })
+            .catch((err) => console.warn("Unable to cache the rules agreed to on joining", err));
+    }
+
     // What the selected chat's send accepts because the user agreed to its rules (and its
     // community's) as they joined, if that covers every set still to be accepted
     #rulesAgreedOnJoining(chatId: ChatIdentifier): AcceptedRules | undefined {
@@ -6772,14 +6830,14 @@ export class OpenChat {
             {
                 rules: selectedChatRulesStore.value,
                 accepted: chat.membership?.rulesAccepted ?? false,
-                agreedOnJoining: agreed.chats.get(chatIdentifierToString(chatId)),
+                agreedOnJoining: agreed.chats.get(chatIdentifierToString(chatId))?.text,
             },
             {
                 rules: selectedCommunityRulesStore.value,
                 accepted: community?.membership?.rulesAccepted ?? false,
                 agreedOnJoining:
                     community !== undefined
-                        ? agreed.communities.get(community.id.communityId)
+                        ? agreed.communities.get(community.id.communityId)?.text
                         : undefined,
             },
         );
@@ -13417,11 +13475,13 @@ export class OpenChat {
             this.#gateApprovalsUsed(this.#gateCanisterId(community));
             this.#dropPreviewOrigin(community.id);
             if (agreedRules !== undefined) {
-                recordRulesAgreedOnJoining(
-                    undefined,
-                    undefined,
-                    community.id.communityId,
-                    agreedRules.community,
+                this.#saveRulesAgreed(
+                    withRulesAgreed(
+                        rulesAgreedOnJoiningStore.value,
+                        undefined,
+                        { id: community.id.communityId, text: agreedRules.community },
+                        Date.now(),
+                    ),
                 );
             }
             return resp;
@@ -13504,6 +13564,7 @@ export class OpenChat {
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
         const community = communitiesStore.value.get(id);
         if (community === undefined) return Promise.resolve(false);
+        this.#forgetCommunityRulesAgreed(community);
 
         const undo = localUpdates.removeCommunity(id);
 

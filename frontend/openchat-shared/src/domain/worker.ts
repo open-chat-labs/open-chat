@@ -4,6 +4,7 @@ import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type {
     AccessGateConfig,
     Rules,
+    RulesAgreedOnJoining,
     RulesBeforeJoiningResponse,
     UpdatedRules,
     VerifiedCredentialArgs,
@@ -370,6 +371,8 @@ export type WorkerRequest = Cloneable<
     | MessagesByMessageIndex
     | GetInviteCode
     | GetRulesBeforeJoining
+    | GetRulesAgreedOnJoining
+    | SetRulesAgreedOnJoining
     | EnableInviteCode
     | ResetInviteCode
     | DisableInviteCode
@@ -1272,6 +1275,15 @@ type ResetInviteCode = {
 type GetInviteCode = {
     id: GroupChatIdentifier | CommunityIdentifier;
     kind: "getInviteCode";
+};
+
+type GetRulesAgreedOnJoining = {
+    kind: "getRulesAgreedOnJoining";
+};
+
+type SetRulesAgreedOnJoining = {
+    kind: "setRulesAgreedOnJoining";
+    value: RulesAgreedOnJoining;
 };
 
 type GetRulesBeforeJoining = {
@@ -2767,6 +2779,8 @@ export type WorkerResults = ResultsByKind<{
     getMessagesByMessageIndex: EventsResponse<Message>;
     getInviteCode: InviteCodeResponse;
     getRulesBeforeJoining: RulesBeforeJoiningResponse;
+    getRulesAgreedOnJoining: RulesAgreedOnJoining | undefined;
+    setRulesAgreedOnJoining: void;
     enableInviteCode: EnableInviteCodeResponse;
     disableInviteCode: DisableInviteCodeResponse;
     resetInviteCode: ResetInviteCodeResponse;
