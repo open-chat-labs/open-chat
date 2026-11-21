@@ -2706,7 +2706,23 @@
                     "prize": "جوائز",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "عروض مبادلة"
-                }
+                },
+                "default": "الافتراضي",
+                "changedCount": "{count, plural, one {تغيير واحد} two {تغييران} few {# تغييرات} many {# تغييرًا} other {# تغيير}}"
+            },
+            "publicDiamond": "المجموعات العامة ميزة من Diamond.",
+            "gatesCount": "{count, plural, zero {لا شروط} one {شرط واحد} two {شرطان} few {# شروط} many {# شرطًا} other {# شرط}}",
+            "create": {
+                "membersStep": "إضافة أشخاص",
+                "detailsStep": "التفاصيل",
+                "noneInvited": "لم تتم دعوة أحد بعد",
+                "noMatches": "لا أحد يطابق",
+                "next": "التالي",
+                "create": "إنشاء مجموعة",
+                "creating": "جارٍ الإنشاء…",
+                "done": "تم",
+                "discardTitle": "تجاهل هذه المجموعة؟",
+                "discardMessage": "لن يُحفظ ما أدخلته."
             }
         }
     },

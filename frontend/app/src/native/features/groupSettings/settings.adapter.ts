@@ -598,3 +598,46 @@ export function withLossesRestored(
     }
     return next;
 }
+
+// ── Create group's Settings card ──
+
+/** Access gates' value: Off, or how many. */
+export function gatesSummary(config: AccessGateConfig, t: Translate): string {
+    const count = shownGates(config).length;
+    return count === 0 ? t("native.you.off") : t("native.groupSettings.gatesCount", { count });
+}
+
+/** Rules' value: On or Off. */
+export function rulesSummary(enabled: boolean, t: Translate): string {
+    return t(enabled ? "native.groupSettings.on" : "native.you.off");
+}
+
+/** Permissions' value: Default, or how many differ from it. */
+export function permissionsSummary(permissions: ChatPermissions, t: Translate): string {
+    const count = changedPermissions(permissions);
+    return count === 0
+        ? t("native.groupSettings.permissions.default")
+        : t("native.groupSettings.permissions.changedCount", { count });
+}
+
+/** Who may be invited to a new group: people (not bots), not the user. */
+export function invitable(user: { kind: string; userId: string }, me: string): boolean {
+    return user.kind === "user" && user.userId !== me;
+}
+
+/**
+ * Whether Create group has anything entered, to ask before it's dropped: people picked, or
+ * anything set in the draft. The client's groupChanges leaves out whether new members see the
+ * history (only Create group sets it), so that's compared here too.
+ */
+export function newGroupEntered(
+    original: CandidateGroupChat,
+    candidate: CandidateGroupChat,
+    picked: number,
+): boolean {
+    return (
+        picked > 0 ||
+        candidate.historyVisible !== original.historyVisible ||
+        Object.keys(groupChanges(original, candidate)).length > 0
+    );
+}

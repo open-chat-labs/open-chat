@@ -40,6 +40,12 @@ export type ScreenContext = {
      */
     toastFloor: (px: number | undefined) => void;
     /**
+     * Whether this screen is its tab's top one (reactive): false from the moment another is
+     * pushed over it, and from the moment it's popped, while it slides out still mounted. Its own,
+     * so a screen under the top one can leave Android's back to the one on top.
+     */
+    onTop: () => boolean;
+    /**
      * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
      * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
      */
@@ -101,7 +107,7 @@ export const screens: Screens = {
     new_chat: () => import("../chats/NewChatScreen.svelte"),
 
     // New group, from the Chats tab's menu and New chat (N7)
-    new_group: undefined,
+    new_group: () => import("../groupSettings/NewGroupScreen.svelte"),
 
     // CHIT, from the Chats tab's header and the You tab's CHIT card (N11)
     chit: undefined,
@@ -130,6 +136,9 @@ export const screens: Screens = {
     // a group's or channel's settings pages (edit, gates, rules, permissions, bots, stats), from
     // its details (N7)
     group_settings: () => import("../groupSettings/GroupSettingsScreen.svelte"),
+
+    // Create group's gates, rules and permissions, from its Settings card (N7)
+    new_group_settings: () => import("../groupSettings/NewGroupSettingsScreen.svelte"),
 
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)

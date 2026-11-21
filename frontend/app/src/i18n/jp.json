@@ -2706,7 +2706,23 @@
                     "prize": "賞品",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "交換オファー"
-                }
+                },
+                "default": "デフォルト",
+                "changedCount": "{count, plural, other {# 件変更}}"
+            },
+            "publicDiamond": "公開グループは Diamond の機能です。",
+            "gatesCount": "{count, plural, other {# 件の条件}}",
+            "create": {
+                "membersStep": "メンバーを追加",
+                "detailsStep": "詳細",
+                "noneInvited": "まだ誰も招待していません",
+                "noMatches": "一致する人がいません",
+                "next": "次へ",
+                "create": "グループを作成",
+                "creating": "作成中…",
+                "done": "完了",
+                "discardTitle": "このグループを破棄しますか？",
+                "discardMessage": "入力した内容は保存されません。"
             }
         }
     },

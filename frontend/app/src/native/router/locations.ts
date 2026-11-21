@@ -65,9 +65,12 @@ export type SettingsPage =
 
 /**
  * A group's or channel's settings page, from its details (native plan 10's Manage, the cover's Edit
- * group): N7's screens (plan 11), placeholders until then.
+ * group): N7's screens (plan 11; Bots and webhooks and Stats are placeholders).
  */
 export type GroupSettingsPage = "edit" | "gates" | "rules" | "permissions" | "bots" | "stats";
+
+/** Create group's gates, rules and permissions, pushed from its Settings card (N7). */
+export type NewGroupSettingsPage = "gates" | "rules" | "permissions";
 
 /**
  * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen
@@ -90,6 +93,8 @@ export type LocalScreen =
     | { kind: "invite_people"; chatId: MultiUserChatIdentifier }
     // a group's or channel's settings page, from its details (N7's)
     | { kind: "group_settings"; chatId: MultiUserChatIdentifier; page: GroupSettingsPage }
+    // Create group's gates, rules or permissions, from its Settings card (N7): its draft's
+    | { kind: "new_group_settings"; page: NewGroupSettingsPage }
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" }
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat
@@ -102,6 +107,7 @@ export function localKey(screen: LocalScreen): string {
     switch (screen.kind) {
         case "settings":
         case "group_settings":
+        case "new_group_settings":
             return `${screen.kind}:${screen.page}`;
         default:
             return screen.kind;

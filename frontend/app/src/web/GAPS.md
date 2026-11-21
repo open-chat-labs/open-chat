@@ -1060,7 +1060,8 @@ design export needs. Each entry says where it came up.
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
 - **Native group settings** (native N7, #10373; the native plan's 11 of 2026-11-10;
-  `src/native/features/groupSettings`). Built: a group's or channel's settings pages, pushed from
+  `src/native/features/groupSettings`). Built: Create group (below), and a group's or channel's
+  settings pages, pushed from
   its details without a URL (the local `group_settings` screen): Edit group (the cover's pencil)
   and Manage's Access gates, Rules and Permissions, each its own draft (the shared
   `UpdateGroupState`, made from the chat and its rules as the page opens) with a pinned Save (as
@@ -1140,16 +1141,48 @@ design export needs. Each entry says where it came up.
     customised per type keep their types in step with the messages' as those change, so no
     hidden thread role is saved (withMessages); rules too long say so (a new string,
     `native.groupSettings.rules.tooLong`, in every language).
+  - **Create group** (the plan's 11 "Create group"; the Chats tab's menu and New chat's New
+    group, the local `new_group` screen): two steps on one screen, Back going a step back.
+    Members: the search (name or @username, `searchUsers`), the picks as wrapping chips in place
+    of "No one invited yet", a divider, then Suggested (the people the user has DMs with) or the
+    Results as checkbox rows (details' `InviteRow`; no bots, not the user); Next is always there
+    (members are optional, as in the old pages). Details: Edit group's page with the switches
+    for Public group and Message history and the Disappearing messages TimedToggle (the plan's
+    changelog of 2026-11-10: the same 8 lengths, starting at a day, not a dropdown row), then
+    Access gates, Rules and Permissions as rows with what's set ("Off", "1 gate", "On",
+    "Default", "2 changed"), each pushing Manage's page on the same draft
+    (`new_group_settings`, held by `newGroupDraft`) with Done; Create group (the shared
+    `UpdateGroupState`'s create, the client's `createGroup` with the people picked invited)
+    opens the new group in the screen's place, saying so where the invites didn't go. A public
+    group is Diamond's to make, as on the web and the old pages (the switch says so, off).
+    Leaving with something entered asks "Discard this group?". TODO(design): the steps' header
+    ("New group" over "Add people" / "Details"), Next, Done and the discard question are ours.
+    Review (2026-11-20): Android's back on a page pushed over Create group closes that page, and
+    one pressed again as it slides off goes to Create group (its back registers only while it's
+    its tab's top screen: the shell's new `ScreenContext.onTop`, which turns as the stack does,
+    not as a screen unmounts), and is used up while the group is being created; anything set
+    (history too, which the client's `groupChanges` leaves out: `newGroupEntered`) counts as
+    entered for the discard question; the new group opens under Chats whatever the list shows
+    (it isn't a favourite); Create goes by the same checks as Save (`draftSavable`), and the
+    Rules row says why when the rules can't be saved (empty, or too long); two Create groups open
+    each keep their draft for their pages (`newGroupDraft` holds a stack).
   - **Not built**: Bots and webhooks and Stats (Manage's last two rows) are still placeholders:
     the plan has "Bots: list + Add a bot; webhooks: Add webhook. Stats: as in the prototype", and
     the web has no Stats page either (the backend keeps only all-time counters). A community's
-    settings (its details are N8a's).
+    settings: they come with its details, which push them (N8a; Create community's Settings step
+    is N8b's). The gates and rules pages take a community's draft as they are (they're on
+    `UpdateGroupOrCommunityState`); Edit community (its banner, 25-character name, no history or
+    disappearing messages) and the community's permissions (owner / admin / member, its own
+    seven) are to build.
   - **Checked** in a 412×915 touch browser on the native tree against the local replica (the
     emulator wasn't running), N6 Book Club as its owner: Edit group's description saved and shown
     in About, a permission changed (in the accent) and reset, a rules template saved and shown in
     the details' Rules, a payment and a CHIT gate added with Any one gate and saved, both taken
     off (Undo's toast) and saved, the visibility question declined, Discard changes; each put back
-    as it was. Not checked: the photo's crop and upload, iOS, the dark theme.
+    as it was. Create group: seedcommunity2 picked, "N7 Throwaway" named, disappearing on (a
+    day), a Diamond gate from its Access gates page, created and opened (TTL and gate as set);
+    its photo picked, cropped, saved and shown in the details. Not checked: iOS, the dark theme,
+    the Android emulator.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a

@@ -5,8 +5,9 @@
      starting at a day). All of it edits the draft (`editor`, the shared UpdateGroupState) until it's
      saved. Editing, who sees the history is a fact (it's set when the group is made: the client
      has no change for it), and Public and Disappearing messages are the owner's (`readOnly`, from
-     chatManageAccess), read only for the rest. `settings` adds rows to the card (Create group's
-     links to its gates, rules and permissions). -->
+     chatManageAccess), read only for the rest; making a group public is Diamond's
+     (`publicNeedsDiamond`). `settings` adds rows to the card (Create group's links to its gates,
+     rules and permissions). -->
 <script lang="ts">
     import TimedToggle from "@openchat/ui/src/lib/components/TimedToggle.svelte";
     import ListSectionLabel from "@openchat/ui/src/lib/components/ListSectionLabel.svelte";
@@ -45,6 +46,8 @@
         editor: UpdateGroupState;
         /** Creating it: who sees the history is a switch, not a fact. */
         creating: boolean;
+        /** A public group is Diamond's to make (as the web and the old pages have it). */
+        publicNeedsDiamond?: boolean;
         readOnly: ReadOnlySetting[];
         /** The swatch behind the photo while it has none. */
         color: "violet" | "blue" | "teal" | "amber" | "plum";
@@ -53,7 +56,15 @@
         settings?: Snippet;
     };
 
-    let { editor, creating, readOnly, color, context, settings }: Props = $props();
+    let {
+        editor,
+        creating,
+        publicNeedsDiamond = false,
+        readOnly,
+        color,
+        context,
+        settings,
+    }: Props = $props();
 
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
     const overlays = untrack(() => context.overlays);
@@ -193,12 +204,14 @@
             <SettingsSwitch
                 label={$_(channel ? "native.groupSettings.publicChannel" : "native.groupSettings.public")}
                 help={$_(
-                    channel
-                        ? "native.groupSettings.publicChannelHelp"
-                        : "native.groupSettings.publicHelp",
+                    publicNeedsDiamond
+                        ? "native.groupSettings.publicDiamond"
+                        : channel
+                          ? "native.groupSettings.publicChannelHelp"
+                          : "native.groupSettings.publicHelp",
                 )}
                 on={group.public}
-                disabled={editor.busy}
+                disabled={editor.busy || (publicNeedsDiamond && !group.public)}
                 onChange={(on) => (editor.candidateGroup.public = on)} />
         {/if}
         {#if creating}

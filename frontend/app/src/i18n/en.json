@@ -2615,7 +2615,23 @@
                     "prize": "Prizes",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "Swap offers"
-                }
+                },
+                "default": "Default",
+                "changedCount": "{count, plural, one {# changed} other {# changed}}"
+            },
+            "publicDiamond": "Public groups are a Diamond feature.",
+            "gatesCount": "{count, plural, one {# gate} other {# gates}}",
+            "create": {
+                "membersStep": "Add people",
+                "detailsStep": "Details",
+                "noneInvited": "No one invited yet",
+                "noMatches": "No one matches",
+                "next": "Next",
+                "create": "Create group",
+                "creating": "Creating…",
+                "done": "Done",
+                "discardTitle": "Discard this group?",
+                "discardMessage": "What you've entered won't be kept."
             }
         }
     },

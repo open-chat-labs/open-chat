@@ -2706,7 +2706,23 @@
                     "prize": "جوایز",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "پیشنهادهای مبادله"
-                }
+                },
+                "default": "پیش‌فرض",
+                "changedCount": "{count, plural, one {# تغییر} other {# تغییر}}"
+            },
+            "publicDiamond": "گروه‌های عمومی یکی از امکانات Diamond هستند.",
+            "gatesCount": "{count, plural, one {# شرط} other {# شرط}}",
+            "create": {
+                "membersStep": "افزودن افراد",
+                "detailsStep": "جزئیات",
+                "noneInvited": "هنوز کسی دعوت نشده",
+                "noMatches": "کسی پیدا نشد",
+                "next": "بعدی",
+                "create": "ساخت گروه",
+                "creating": "در حال ساخت…",
+                "done": "انجام شد",
+                "discardTitle": "این گروه کنار گذاشته شود؟",
+                "discardMessage": "آنچه وارد کرده‌اید نگه داشته نمی‌شود."
             }
         }
     },

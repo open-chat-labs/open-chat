@@ -2706,7 +2706,23 @@
                     "prize": "इनाम",
                     "memeFighter": "Meme Fighter",
                     "p2pSwap": "स्वैप ऑफ़र"
-                }
+                },
+                "default": "डिफ़ॉल्ट",
+                "changedCount": "{count, plural, one {# बदला गया} other {# बदले गए}}"
+            },
+            "publicDiamond": "सार्वजनिक ग्रुप Diamond की सुविधा हैं।",
+            "gatesCount": "{count, plural, one {# शर्त} other {# शर्तें}}",
+            "create": {
+                "membersStep": "लोग जोड़ें",
+                "detailsStep": "विवरण",
+                "noneInvited": "अभी तक किसी को आमंत्रित नहीं किया",
+                "noMatches": "कोई मेल नहीं खाता",
+                "next": "आगे",
+                "create": "ग्रुप बनाएँ",
+                "creating": "बनाया जा रहा है…",
+                "done": "हो गया",
+                "discardTitle": "यह ग्रुप छोड़ें?",
+                "discardMessage": "आपने जो दर्ज किया है वह नहीं रखा जाएगा।"
             }
         }
     },
