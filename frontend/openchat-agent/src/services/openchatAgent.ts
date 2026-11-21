@@ -153,6 +153,8 @@ import type {
     RemoveHotGroupExclusionResponse,
     RemoveMemberResponse,
     ResetInviteCodeResponse,
+    RulesAgreedOnJoining,
+    RulesBeforeJoiningResponse,
     Rules,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
@@ -3909,6 +3911,31 @@ export class OpenChatAgent extends EventTarget {
 
         const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
         return this._ledgerClient.withdraw(stamped);
+    }
+
+    // The rules the user agreed to as they joined, kept in their cache until a message accepts them
+    getRulesAgreedOnJoining(): Promise<RulesAgreedOnJoining | undefined> {
+        return this._chatsDb.getRulesAgreedOnJoining();
+    }
+
+    setRulesAgreedOnJoining(value: RulesAgreedOnJoining): Promise<void> {
+        return this._chatsDb.setRulesAgreedOnJoining(value);
+    }
+
+    // The rules of a group, channel or community the user may not be a member of yet
+    getRulesBeforeJoining(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+    ): Promise<RulesBeforeJoiningResponse> {
+        if (offline()) return Promise.resolve(CommonResponses.offline());
+
+        switch (id.kind) {
+            case "group_chat":
+                return this._groupClient.getRulesBeforeJoining(id.groupId);
+            case "channel":
+                return this._communityClient.getChannelRulesBeforeJoining(id);
+            case "community":
+                return this._communityClient.getRulesBeforeJoining(id.communityId);
+        }
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {

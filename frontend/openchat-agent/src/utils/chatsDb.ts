@@ -36,6 +36,7 @@ import type {
     P2PSwapContent,
     PublicProfile,
     ReplyContext,
+    RulesAgreedOnJoining,
     SendMessageResponse,
     SendMessageSuccess,
     Tally,
@@ -72,8 +73,9 @@ import {
     type SyncTouched,
 } from "./sync";
 
-// With no migrations registered, a bump deletes the whole cache
-const CACHE_VERSION = 160;
+// A bump deletes the whole cache unless a migration is registered for every version in between
+// (`withMigration`: from 160, the rules agreed to on joining)
+const CACHE_VERSION = 161;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -188,6 +190,12 @@ interface ChatSchema extends DBSchema {
         value: MessageActivityEvent[];
     };
 
+    // The rules the user agreed to as they joined (`RulesAgreedOnJoining`), one record: "value"
+    rules_agreed: {
+        key: string;
+        value: RulesAgreedOnJoining;
+    };
+
     // "head": the cache's one version counter; "stamps": the versions of what the head covers.
     // See utils/sync.ts and domain/sync.ts in openchat-shared.
     sync: {
@@ -274,13 +282,25 @@ export class ChatsDb {
                 { name: "externalAchievements" },
                 { name: "activityFeed" },
                 { name: "sync" },
+                { name: "rules_agreed" },
             ],
             CACHE_VERSION,
-        );
+        ).withMigration(160, async (db) => {
+            // a store added: the rest of the cache stays as it is
+            if (!db.objectStoreNames.contains("rules_agreed")) db.createObjectStore("rules_agreed");
+        });
     }
 
     getDb(): Database {
         return this.connectionManager.getDb();
+    }
+
+    async getRulesAgreedOnJoining(): Promise<RulesAgreedOnJoining | undefined> {
+        return (await this.getDb()).get("rules_agreed", "value");
+    }
+
+    async setRulesAgreedOnJoining(value: RulesAgreedOnJoining): Promise<void> {
+        await (await this.getDb()).put("rules_agreed", value, "value");
     }
 
     async getCachedBots(): Promise<BotsResponse | undefined> {

@@ -3423,10 +3423,13 @@
     "rules": {
         "accept": "Accept",
         "acceptTitle": "Chat rules",
+        "agreeAndJoin": "Agree and join",
         "channelRulesExplanation": "these will be prefixed to any community rules",
         "communityRulesExplanation": "any channel rules will be prefixed to these rules",
         "enable": "Enable rules",
         "instructions": "If enabled, new members must agree to the rules before they can send messages.",
+        "joinIntro": "Read the rules of {name}, and agree to them to join.",
+        "joinTitle": "Rules of {name}",
         "levelRules": "{level} rules",
         "placeholder": "what are the {level} rules?",
         "promptExistingUsers": "Prompt existing members",

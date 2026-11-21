@@ -3359,10 +3359,13 @@
     "rules": {
         "accept": "Accepter",
         "acceptTitle": "Règles de discussion",
+        "agreeAndJoin": "Accepter et rejoindre",
         "channelRulesExplanation": "ceux-ci seront préfixés à toutes les règles de la communauté",
         "communityRulesExplanation": "toutes les règles de chaîne seront préfixées à ces règles",
         "enable": "Activer les règles",
         "instructions": "Si cette option est activée, les nouveaux membres doivent accepter les règles avant de pouvoir envoyer des messages.",
+        "joinIntro": "Lisez les règles de {name} et acceptez-les pour rejoindre.",
+        "joinTitle": "Règles de {name}",
         "levelRules": "Règles {level}",
         "placeholder": "quelles sont les règles {level} ?",
         "promptExistingUsers": "Inviter les membres existants",

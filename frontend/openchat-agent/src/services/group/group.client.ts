@@ -34,6 +34,7 @@ import type {
     RegisterProposalVoteResponse,
     RemoveMemberResponse,
     ResetInviteCodeResponse,
+    RulesBeforeJoiningResponse,
     Rules,
     SearchGroupChatResponse,
     PendingCryptocurrencyTransfer,
@@ -86,6 +87,8 @@ import {
     GroupPinMessageArgs,
     GroupPinMessageResponse,
     GroupPublicSummaryArgs,
+    GroupRulesArgs,
+    GroupRulesResponse,
     GroupPublicSummaryResponse,
     GroupRegenerateWebhookArgs,
     GroupRegenerateWebhookResponse,
@@ -793,6 +796,19 @@ export class GroupClient
             (res) => searchGroupChatResponse(res, this.groupIdToChatId(groupId)),
             GroupSearchMessagesArgs,
             GroupSearchMessagesResponse,
+        );
+    }
+
+    // `rules`, unlike the group's other details, answers anyone who can see the group, a member or
+    // not (with the invite code for a private group): the text if the rules are enabled
+    getRulesBeforeJoining(groupId: string): Promise<RulesBeforeJoiningResponse> {
+        return this.query(
+            groupId,
+            "rules",
+            { invite_code: this.inviteCode(groupId) },
+            (resp) => mapResult(resp, (value) => ({ kind: "success" as const, text: value.rules })),
+            GroupRulesArgs,
+            GroupRulesResponse,
         );
     }
 

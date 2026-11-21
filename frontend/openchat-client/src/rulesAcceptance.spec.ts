@@ -56,6 +56,25 @@ import {
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import { rulesAgreedOnJoiningStore } from "./stores/rulesAgreedOnJoining";
+import { withRulesAgreed } from "./utils/rulesOnJoining";
+
+// What the user agreed to as they joined, as the client records it
+function recordRulesAgreedOnJoining(
+    chatKey: string,
+    chatText: string,
+    communityId: string | undefined,
+    communityText: string | undefined,
+) {
+    rulesAgreedOnJoiningStore.set(
+        withRulesAgreed(
+            rulesAgreedOnJoiningStore.value,
+            { key: chatKey, text: chatText },
+            communityId !== undefined ? { id: communityId, text: communityText } : undefined,
+            Date.now(),
+        ),
+    );
+}
 import { currentChatVisit, startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
 
@@ -255,6 +274,7 @@ describe("accepting the rules before sending a message", () => {
         vi.restoreAllMocks();
         currentUserStore.set(anonymousUser());
         captureRulesAcceptanceStore.set(undefined);
+        rulesAgreedOnJoiningStore.set({ chats: new Map(), communities: new Map() });
         currentChatVisit()?.setDetails(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
@@ -373,6 +393,65 @@ describe("accepting the rules before sending a message", () => {
         expect(sent[0]).toMatchObject({
             kind: "sendMessage",
             acceptedRules: { chat: undefined, community: 1 },
+        });
+    });
+
+    test("rules agreed to on joining are accepted by the first send without asking", async () => {
+        setup(true, false);
+        channelRules = rules("the rules of the channel joined");
+        communityRules = rules("the rules there");
+        recordRulesAgreedOnJoining(
+            "bbbbb-bb_3",
+            "the rules of the channel joined",
+            elsewhere.communityId,
+            "the rules there",
+        );
+
+        await forwardToAnotherCommunity();
+
+        expect(rulesPrompt()).toBeUndefined();
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({
+            kind: "sendMessage",
+            acceptedRules: { chat: 1, community: 1 },
+        });
+    });
+
+    test("rules changed since they were agreed to on joining are asked about", async () => {
+        setup(true);
+        channelRules = rules("the rules of the channel, changed");
+        recordRulesAgreedOnJoining(
+            "bbbbb-bb_3",
+            "the rules of the channel joined",
+            undefined,
+            undefined,
+        );
+
+        const outcome = forwardToAnotherCommunity();
+        await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+        expect(sent).toEqual([]);
+        rulesPrompt()?.resolve(false);
+
+        expect((await outcome).kind).toBe("failure");
+    });
+
+    test("leaving forgets the rules agreed to on joining, on the device too", async () => {
+        setup(true);
+        recordRulesAgreedOnJoining(
+            "left-group",
+            "the rules of the group joined",
+            undefined,
+            undefined,
+        );
+        recordRulesAgreedOnJoining("kept-group", "the rules of another", undefined, undefined);
+        const send = vi.mocked(WorkerAgent.prototype.send);
+
+        void client.leaveGroup({ kind: "group_chat", groupId: "left-group" });
+
+        expect([...rulesAgreedOnJoiningStore.value.chats.keys()]).toEqual(["kept-group"]);
+        expect(send).toHaveBeenCalledWith({
+            kind: "setRulesAgreedOnJoining",
+            value: rulesAgreedOnJoiningStore.value,
         });
     });
 

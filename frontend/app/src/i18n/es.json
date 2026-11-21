@@ -3359,10 +3359,13 @@
     "rules": {
         "accept": "Aceptar",
         "acceptTitle": "reglas de chat",
+        "agreeAndJoin": "Aceptar y unirse",
         "channelRulesExplanation": "Estos tendrán el prefijo de cualquier regla comunitaria.",
         "communityRulesExplanation": "Cualquier regla del canal tendrá como prefijo estas reglas.",
         "enable": "Habilitar reglas",
         "instructions": "Si está habilitado, los nuevos miembros deben aceptar las reglas antes de poder enviar mensajes.",
+        "joinIntro": "Lee las reglas de {name} y acéptalas para unirte.",
+        "joinTitle": "Reglas de {name}",
         "levelRules": "{level} reglas",
         "placeholder": "¿Cuáles son las reglas {level}?",
         "promptExistingUsers": "Solicitar a los miembros existentes",

@@ -3359,10 +3359,13 @@
     "rules": {
         "accept": "Annehmen",
         "acceptTitle": "Chat-Regeln",
+        "agreeAndJoin": "Zustimmen und beitreten",
         "channelRulesExplanation": "Diese werden allen Community-Regeln vorangestellt",
         "communityRulesExplanation": "Alle Kanalregeln werden diesen Regeln vorangestellt",
         "enable": "Regeln aktivieren",
         "instructions": "Wenn diese Option aktiviert ist, müssen neue Mitglieder den Regeln zustimmen, bevor sie Nachrichten senden können.",
+        "joinIntro": "Lies die Regeln von {name} und stimme ihnen zu, um beizutreten.",
+        "joinTitle": "Regeln von {name}",
         "levelRules": "Regeln der {level}",
         "placeholder": "Was sind die {level}-Regeln?",
         "promptExistingUsers": "Fordern Sie bestehende Mitglieder auf",
