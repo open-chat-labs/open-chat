@@ -2753,6 +2753,7 @@
     "noVideo": "お使いのブラウザは埋め込みビデオに対応していません",
     "nUsersJoined": "{number} 人のユーザーが {level} に参加しました",
     "offline": "オフライン",
+    "offlineBanner": "オフラインです。表示内容が最新でない可能性があります。",
     "offlineError": "申し訳ありませんが、現在オフラインのようです",
     "offlineMessage": "オフライン",
     "oneDay": "1 日",

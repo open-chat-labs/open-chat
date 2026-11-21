@@ -2753,6 +2753,7 @@
     "noVideo": "Il tuo browser non supporta il video incorporato",
     "nUsersJoined": "{number} utenti si sono uniti a {level}",
     "offline": "disconnesso",
+    "offlineBanner": "Sei offline. Ciò che vedi potrebbe non essere aggiornato.",
     "offlineError": "Siamo spiacenti, sembra che tu sia offline al momento",
     "offlineMessage": "disconnesso",
     "oneDay": "1 giorno",

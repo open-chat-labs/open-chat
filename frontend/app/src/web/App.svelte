@@ -32,6 +32,7 @@
     import { createWebCall } from "./features/call/webCall";
     import type { CallSession } from "@src/logic/video/callSession.svelte";
     import LayoutSwitchBanner from "./shell/LayoutSwitchBanner.svelte";
+    import OfflineBanner from "./shell/OfflineBanner.svelte";
     import Toasts from "./shell/Toasts.svelte";
     import Router from "./router/Router.svelte";
 
@@ -110,7 +111,11 @@
             <RouteScreen />
         </Router>
         <Toasts library={libraryToasts} />
-        <LayoutSwitchBanner />
+        <!-- the window's notices, one under another at its top -->
+        <div class="top-banners">
+            <OfflineBanner />
+            <LayoutSwitchBanner />
+        </div>
         <CallHost session={call} />
     {/if}
 
@@ -118,3 +123,26 @@
         <EmptyState preset="error" actionHandler={reset} />
     {/snippet}
 </svelte:boundary>
+
+<style lang="scss">
+    // TODO(design): no design for either; the library's Banners floating at the top of the window,
+    // over the app but under its dialogs. Only the banners take the pointer, not the space around
+    .top-banners {
+        position: fixed;
+        top: var(--space-8);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(640px, calc(100vw - 2 * var(--space-16)));
+        display: flex;
+        flex-direction: column;
+        /* no gap: the offline banner's live region is always there, empty while online, so the
+           banner keeps its own space below it (OfflineBanner) */
+        pointer-events: none;
+        /* over the shell, under the dialogs' veil */
+        z-index: calc(var(--z-backdrop) - 1);
+
+        > :global(*) {
+            pointer-events: auto;
+        }
+    }
+</style>

@@ -98,7 +98,8 @@
     // over the screens, the sheets and the minimised call; under the call screen
     .ring {
         position: fixed;
-        top: calc(var(--safe-top) + 8px);
+        // under the offline strip too, while it's open (Shell: --offline-strip)
+        top: calc(var(--safe-top) + var(--offline-strip, 0px) + 8px);
         left: 8px;
         right: 8px;
         z-index: calc(var(--z-modal) + 4);
@@ -121,7 +122,7 @@
 
     @keyframes ring-in {
         from {
-            transform: translateY(calc(-100% - var(--safe-top) - 8px));
+            transform: translateY(calc(-100% - var(--safe-top) - var(--offline-strip, 0px) - 8px));
         }
     }
 
