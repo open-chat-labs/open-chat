@@ -2900,6 +2900,19 @@ design export needs. Each entry says where it came up.
     native tab bar, N5a's decision; the old desktop nav added threads); Notifications its unread
     activity; a community pin a dot while one of its channels has unmuted unread messages or a
     mention. The old desktop nav's live call counts aren't shown (the rail has no place for them).
+  - **a name still loading** (#10563, at the user's request): the first chat list can show before
+    every user it names has loaded (`FoldUsers` in the client: the new trees only, through
+    `createOpenChatClient`'s `chatsBeforeUsers`). A DM whose other user is still being fetched
+    (`usersLoadingStore`, the client's fetches in flight; `userLoading` in `logic/chats/chatRow`)
+    shows the library's shimmer, a short bar for the name and a shimmering avatar, read as
+    "Loading…" (`SkeletonText`, `Avatar`'s `loading`, `ChatRow`'s and `ConversationHeader`'s
+    `titleLoading`, `NativePageHeader`'s; by hand, EXPORT-LOG 2026-11-21): in the web and native
+    chat lists, and in the open DM's header on both. Its composer says "Loading…" rather than
+    that the chat is read only (`entryBlock`'s `recipient_loading`), since what may be sent to
+    them isn't known yet. "Unknown User" shows only once the fetch has finished without them.
+    Left: a group's preview whose sender is still loading says "Unknown User: …" until they
+    arrive, and the search's matching by name doesn't know them yet. TODO(design): the export
+    has no loading name; the shimmer is Skeleton's.
   The community header's menu only marks all read; its other items open dialogs later phases
   build.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is

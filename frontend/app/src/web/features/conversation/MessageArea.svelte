@@ -52,6 +52,7 @@
         selectedChatBotsStore,
         selectedChatMembersStore,
         selectedChatRecipientStore,
+        usersLoadingStore,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
@@ -475,6 +476,7 @@
                 community: $selectedCommunitySummaryStore,
                 recipient: $selectedChatRecipientStore,
                 permissions,
+                usersLoading: $usersLoadingStore,
             }),
         ),
     );

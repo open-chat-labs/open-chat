@@ -554,6 +554,7 @@ import {
     userCreatedStore,
     walletConfigStore,
     walletTokenBySymbol,
+    usersLoadingStore,
     webhookUserIdsStore,
 } from "./state";
 import {
@@ -1086,6 +1087,7 @@ export class OpenChat {
                 await this.getMissingUsers(userIds);
             },
             delay: (ms) => new Promise((resolve) => window.setTimeout(resolve, ms)),
+            onLoading: (userIds) => usersLoadingStore.set(userIds),
         });
 
         this.#mobileLayout = config.mobileLayout;

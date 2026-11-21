@@ -11,6 +11,9 @@ export type FoldUsersDeps = {
     fetch: (userIds: string[]) => Promise<void>;
     // Resolves after `ms`
     delay: (ms: number) => Promise<void>;
+    // The users being fetched for the chats, whenever that changes (`usersLoadingStore`): only
+    // with `chatsBeforeUsers`, where the chats can show before them
+    onLoading: (userIds: ReadonlySet<string>) => void;
 };
 
 // How long the first chat list waits for users that weren't cached before it shows without them
@@ -31,7 +34,8 @@ export const FEW_MISSING_USERS = 5;
  *   most `FIRST_LIST_USERS_WAIT_MS`, so a hanging network can't hold it for the query timeout.
  *
  * A fetch still in flight is reused: a later fold naming the same users waits for it rather than
- * asking for them again.
+ * asking for them again. The users in flight are announced (`onLoading`) so the new trees can show
+ * them as loading rather than unknown; a user leaves the set as the fetch settles, found or not.
  */
 export class FoldUsers {
     readonly #deps: FoldUsersDeps;
@@ -93,8 +97,14 @@ export class FoldUsers {
                 for (const userId of userIds) {
                     if (this.#inFlight.get(userId) === fetched) this.#inFlight.delete(userId);
                 }
+                this.#announce();
             });
         for (const userId of userIds) this.#inFlight.set(userId, fetched);
+        this.#announce();
         return fetched;
+    }
+
+    #announce(): void {
+        this.#deps.onLoading(new Set(this.#inFlight.keys()));
     }
 }

@@ -60,7 +60,7 @@ export const general: SectionMeta[] = [
   { id: 'context-menu', title: 'Context menu', meta: 'ContextMenu.dc.html · right-click · ⋯ · long-press' },
   { id: 'chat-picker', title: 'Chat picker', meta: 'ChatPicker.dc.html' },
   { id: 'tooltip', title: 'Tooltip', meta: 'Tooltip.dc.html · tooltip.js' },
-  { id: 'skeleton', title: 'Skeleton', meta: 'Skeleton.dc.html' },
+  { id: 'skeleton', title: 'Skeleton', meta: 'Skeleton.dc.html · SkeletonText' },
   { id: 'banners', title: 'Banners', meta: 'Banner.dc.html · UndoToast.dc.html' },
   { id: 'loaders', title: 'Loaders', meta: 'Spinner.dc.html' },
   { id: 'pills', title: 'Pills', meta: 'Pill.dc.html' },

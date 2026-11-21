@@ -1,6 +1,7 @@
 <!-- Gradient avatar placeholder with an optional online dot. shape: circle | squircle (radius = a third of the size).
      url: an image (an uploaded avatar) over the gradient, which shows while it loads and if it fails to.
-     suspended: the face dimmed, with a red ban mark where the online dot sits (and no online dot). -->
+     suspended: the face dimmed, with a red ban mark where the online dot sits (and no online dot).
+     loading: whose face it is isn't known yet: Skeleton's shimmer in its place (no colour, image, dot or mark). -->
 <script lang="ts" module>
   /** The avatar swatches' gradients, for a host drawing a face the same colour elsewhere (a picker's tile). */
   export const AVATAR_GRADIENTS = {
@@ -22,9 +23,11 @@
     url?: string;
     /** A suspended account: the face dimmed and a red ban mark in the online dot's place; no online dot. */
     suspended?: boolean;
+    /** Whose face it is isn't known yet (a user still loading): Skeleton's shimmer, without colour, image, dot or mark. */
+    loading?: boolean;
   }
 
-  let { size = 42, shape = 'circle', color = 'violet', online = false, url, suspended = false }: Props = $props();
+  let { size = 42, shape = 'circle', color = 'violet', online = false, url, suspended = false, loading = false }: Props = $props();
 
   const big = $derived(size >= 60);
   // the image that failed to load: a new url is tried
@@ -35,19 +38,22 @@
 <div class="avatar" style:width="{size}px" style:height="{size}px">
   <div
     class="face"
-    class:dimmed={suspended}
+    class:dimmed={suspended && !loading}
+    class:loading
     style:border-radius={shape === 'circle' ? '999px' : `${Math.round(size * 0.33)}px`}
-    style:background={AVATAR_GRADIENTS[color] ?? AVATAR_GRADIENTS.violet}
+    style:background={loading ? undefined : (AVATAR_GRADIENTS[color] ?? AVATAR_GRADIENTS.violet)}
   >
-    {#if image}
+    {#if loading}
+      <!-- nothing on the shimmer -->
+    {:else if image}
       <img class="image" src={image} alt="" loading="lazy" draggable="false" onerror={() => (failed = image)} />
     {/if}
-    {#if online && !suspended}
+    {#if online && !suspended && !loading}
       <span class="dot" class:big></span>
     {/if}
   </div>
   <!-- outside the face, so the dimming leaves it at full strength -->
-  {#if suspended}
+  {#if suspended && !loading}
     <span class="ban" class:big aria-hidden="true"><span class="ban-icon"></span></span>
   {/if}
 </div>
@@ -76,6 +82,15 @@
     height: 100%;
     border-radius: inherit;
     object-fit: cover;
+  }
+
+  // Skeleton's shimmer (tokens --skeleton-base / --skeleton-sheen, keyframes oc-shimmer; tokens.css stops it under
+  // reduced motion)
+  .loading {
+    background: var(--skeleton-base);
+    background-image: var(--skeleton-sheen);
+    background-size: 200% 100%;
+    animation: oc-shimmer 1.4s ease-in-out infinite;
   }
 
   // TODO(design): the suspended look (the dimming, the mark) isn't in the design export

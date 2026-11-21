@@ -5,6 +5,7 @@
     import { showInRightColumn } from "../app/rightPanel";
     import {
         allUsersStore,
+        usersLoadingStore,
         anonUserStore,
         blockedUsersStore,
         chatIdentifierToString,
@@ -27,7 +28,7 @@
     import { LastOnline } from "@src/logic/conversation/lastOnline.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { now } from "@src/stores/time";
-    import { chatAvatarUrl, groupAvatarLookups } from "@src/logic/chats/chatRow";
+    import { chatAvatarUrl, groupAvatarLookups, userLoading } from "@src/logic/chats/chatRow";
     import { headerMenuItems, moderationMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
     import { getPendingToastHost } from "@openchat/ui/src/lib/toasts.svelte";
@@ -52,6 +53,11 @@
             : chat.kind === "direct_chat"
               ? client.displayName($allUsersStore.get(chat.them.userId))
               : chat.name,
+    );
+    // a DM whose other user is still being fetched: the name and picture shimmer until they arrive
+    const titleLoading = $derived(
+        chat?.kind === "direct_chat" &&
+            userLoading(chat.them.userId, $allUsersStore, $usersLoadingStore),
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
     // the chat's own picture, as its chat list row has it: its swatch without one (2026-11-10)
@@ -191,6 +197,7 @@
         {#snippet frame(list, composer)}
             <ConversationHeader
                 {title}
+                {titleLoading}
                 kind={headerKind}
                 {avatarUrl}
                 color={senderColor(

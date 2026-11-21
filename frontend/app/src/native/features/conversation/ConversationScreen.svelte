@@ -15,6 +15,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        usersLoadingStore,
         anonUserStore,
         blockedUsersStore,
         botState,
@@ -73,6 +74,7 @@
         proposalTopicsStore,
         proposalVotesStore,
     } from "@client";
+    import { userLoading } from "@src/logic/chats/chatRow";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -335,6 +337,11 @@
             : chat.kind === "direct_chat"
               ? client.displayName(them)
               : chat.name,
+    );
+    // a DM whose other user is still being fetched: the name and picture shimmer until they arrive
+    const titleLoading = $derived(
+        chat?.kind === "direct_chat" &&
+            userLoading(chat.them.userId, $allUsersStore, $usersLoadingStore),
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
@@ -1306,6 +1313,7 @@
     {:else}
         <NativePageHeader
             {title}
+            {titleLoading}
             {sub}
             onBack={context.back}
             onTitleClick={chat === undefined ? undefined : openDetails}
@@ -1320,6 +1328,7 @@
                     size={36}
                     color={avatarColor}
                     online={dmLine.online}
+                    loading={titleLoading}
                 />
             {/snippet}
         </NativePageHeader>

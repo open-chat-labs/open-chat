@@ -12,7 +12,7 @@
   import { useT } from '../../lib/i18n';
   import {
     Avatar, Badge, UserChip, MemberRow, Button, IconButton, Field, TextArea, Toggle, TimedToggle, SegmentedTabs,
-    DurationChips, Menu, ChatRow, ChatPicker, Tooltip, Skeleton, Banner, UndoToast, Spinner, Pill, ListSectionLabel,
+    DurationChips, Menu, ChatRow, ChatPicker, Tooltip, Skeleton, SkeletonText, Banner, UndoToast, Spinner, Pill, ListSectionLabel,
     CopyButton, TokenAvatar, TokenPicker, AmountCard, AvatarStack, Confetti, Countdown, DetailRow, DetailSection,
     DialogShell, PageHeader, ProgressTimeline, QuickAmountChips, RequirementChip, RoundIconButton, ShareBar, SideCard,
     SnapFloat, SortableInputList, StepIndicator, ThresholdBar, TransactionRow, Waveform,
@@ -266,6 +266,11 @@
     <Frame label="member" style="flex-direction: column; flex-wrap: nowrap" align="stretch"><Skeleton variant="member" count={3} /></Frame>
     <Frame label="token" style="flex-direction: column; flex-wrap: nowrap" align="stretch"><Skeleton variant="token" count={3} /></Frame>
     <Frame label="activity" style="flex-direction: column; flex-wrap: nowrap" align="stretch"><Skeleton variant="activity" count={3} /></Frame>
+  </div>
+  <div class="grid2">
+    <Frame label="a name still loading (SkeletonText, Avatar loading)" style="flex-direction: column; flex-wrap: nowrap" align="stretch"
+      ><ChatRow title="" preview="hello from the other side" time="14:22" titleLoading /></Frame>
+    <Frame label="SkeletonText" align="center"><SkeletonText /><SkeletonText width="80px" /></Frame>
   </div>
 </Section>
 

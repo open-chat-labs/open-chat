@@ -367,6 +367,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "A suspended account: the face dimmed and a red ban mark in the online dot's place; no online dot."
+      },
+      {
+        "name": "loading",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Whose face it is isn't known yet (a user still loading): Skeleton's shimmer, without colour, image, dot or mark."
       }
     ],
     "group": "library"
@@ -1641,6 +1652,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Users only: their account is suspended. The avatar dims with a ban mark (no online dot) and the name gets a Suspended tag."
+      },
+      {
+        "name": "titleLoading",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The title (a user's name) is still loading: a shimmer bar in its place (SkeletonText) and on the avatar (Avatar's loading), read as \"Loading…\"."
       },
       {
         "name": "menuItems",
@@ -7025,6 +7047,41 @@
     "group": "library"
   },
   {
+    "name": "SkeletonText",
+    "source": "by hand (2026-11-21), Skeleton.dc.html's shimmer",
+    "hash": "",
+    "description": "A piece of text still loading (a user's name): Skeleton's shimmer as a short bar on the text's line, in its place, so the line doesn't move as the text comes in. The bar is aria-hidden; it reads `label` (\"Loading…\") instead. ChatRow, ConversationHeader and NativePageHeader show it for a name still loading.",
+    "preview": {
+      "width": 240,
+      "height": 60
+    },
+    "props": [
+      {
+        "name": "width",
+        "type": "string",
+        "default": "132px",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'132px'",
+        "doc": "The bar's width, about the text's (a name's, by default); it shrinks with its line, down to 48px."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": "ui.common.loading",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.common.loading'",
+        "doc": "Resource key (or literal text) read in the text's place."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "AccessGates",
     "source": "lib/AccessGates.dc.html",
     "hash": "fceffeb8",
@@ -9549,6 +9606,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Chevron after the name: the name opens the group itself."
+      },
+      {
+        "name": "titleLoading",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The name (a DM's user's) is still loading: Skeleton's shimmer in its place and on the avatar, read as \"Loading…\"."
       },
       {
         "name": "statusFav",
@@ -22764,6 +22832,17 @@
         "required": true,
         "componentDefault": null,
         "doc": "Resource key (or literal text): the page title, or the name beside the avatar."
+      },
+      {
+        "name": "titleLoading",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The title (a user's name) is still loading: Skeleton's shimmer in its place, read as \"Loading…\"."
       },
       {
         "name": "sub",

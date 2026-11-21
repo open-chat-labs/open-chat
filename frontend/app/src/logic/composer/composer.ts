@@ -52,6 +52,11 @@ export type EntryState = {
     anonymous: boolean;
     /** The reader's role lets them send here. */
     canSend: boolean;
+    /**
+     * A DM whose other user is still being fetched (the chats can show before their users), so
+     * what may be sent to them isn't known yet. Only the new trees say so.
+     */
+    recipientLoading?: boolean;
     /** The entry is a thread's. */
     thread: boolean;
 };
@@ -68,6 +73,8 @@ export type EntryBlock =
     | { kind: "external" }
     // signed out: the old footers' "Please sign-in to send a message", with a Sign in action
     | { kind: "anonymous" }
+    // a DM's other user is still loading: what may be sent isn't known yet (not read only)
+    | { kind: "recipient_loading" }
     | { kind: "read_only"; key: "readOnlyThread" | "readOnlyChat" };
 
 /**
@@ -87,6 +94,7 @@ export function entryBlock(state: EntryState): EntryBlock | undefined {
     }
     if (state.externalContent) return { kind: "external" };
     if (state.anonymous) return { kind: "anonymous" };
+    if (!state.canSend && state.recipientLoading) return { kind: "recipient_loading" };
     if (!state.canSend) {
         return { kind: "read_only", key: state.thread ? "readOnlyThread" : "readOnlyChat" };
     }
@@ -134,6 +142,11 @@ export function chatEntryState(
         recipient: Pick<UserSummary, "userId" | "suspended"> | undefined;
         /** What may be sent; the thread's are picked in a thread (`entryPermitted`). */
         permissions: EntryPermissions;
+        /**
+         * The users being fetched for the chat list (usersLoadingStore), for a DM whose other user
+         * is still loading. None for the old trees.
+         */
+        usersLoading?: ReadonlySet<string>;
     },
 ): EntryState {
     return {
@@ -150,6 +163,10 @@ export function chatEntryState(
         externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
         anonymous: reader.anonymous,
         canSend: entryPermitted(reader.permissions, thread).has("text"),
+        recipientLoading:
+            chat.kind === "direct_chat" &&
+            reader.recipient === undefined &&
+            (reader.usersLoading?.has(chat.them.userId) ?? false),
         thread,
     };
 }
@@ -180,6 +197,8 @@ export function entryBlockBanner(block: EntryBlock): {
             return { key: "externalContent.disclaimer", tone: "warning" };
         case "anonymous":
             return { key: "sendMessageDisabledAnon", tone: "info", signIn: true };
+        case "recipient_loading":
+            return { key: "ui.common.loading", tone: "info" };
         case "read_only":
             return { key: block.key, tone: "info" };
     }

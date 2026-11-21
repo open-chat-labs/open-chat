@@ -1,11 +1,15 @@
 import { describe, expect, test, vi } from "vitest";
 import { FEW_MISSING_USERS, FIRST_LIST_USERS_WAIT_MS, FoldUsers } from "./foldUsers";
 
-type Deferred = { promise: Promise<void>; resolve: () => void };
+type Deferred = { promise: Promise<void>; resolve: () => void; reject: (err: Error) => void };
 function deferred(): Deferred {
     let resolve!: () => void;
-    const promise = new Promise<void>((r) => (resolve = r));
-    return { promise, resolve };
+    let reject!: (err: Error) => void;
+    const promise = new Promise<void>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
 }
 
 // A user store, a cache and a network the tests drive by hand
@@ -14,6 +18,8 @@ function setUp(chatsBeforeUsers = true, cachedIds: string[] = []) {
     const cached = new Set(cachedIds);
     const fetches: { userIds: string[]; done: Deferred }[] = [];
     const delays: { ms: number; done: Deferred }[] = [];
+    // what was last announced as loading
+    const loading = { current: new Set<string>() as ReadonlySet<string> };
     const foldUsers = new FoldUsers({
         chatsBeforeUsers,
         missing: (userIds) => [...userIds].filter((u) => !store.has(u)),
@@ -30,8 +36,9 @@ function setUp(chatsBeforeUsers = true, cachedIds: string[] = []) {
             delays.push({ ms, done });
             return done.promise;
         },
+        onLoading: (userIds) => (loading.current = userIds),
     });
-    return { foldUsers, store, fetches, delays };
+    return { foldUsers, store, fetches, delays, loading };
 }
 
 // Whether `promise` has settled once pending callbacks have run
@@ -120,10 +127,47 @@ describe("FoldUsers", () => {
             lookUpCached: () => Promise.reject(new Error("no cache")),
             fetch: () => Promise.reject(new Error("offline")),
             delay: () => new Promise(() => {}),
+            onLoading: () => {},
         });
         const { arrived } = await foldUsers.load(new Set(["me"]), true, "me");
         await expect(arrived).resolves.toBeUndefined();
         expect(warn).toHaveBeenCalledTimes(2);
         warn.mockRestore();
+    });
+
+    test("announces the users being fetched as loading until their fetch settles", async () => {
+        const { foldUsers, fetches, loading } = setUp(true, ["me"]);
+        await foldUsers.load(new Set(["me", "a", "b"]), true, "me");
+        expect([...loading.current].sort()).toEqual(["a", "b"]);
+        const later = foldUsers.load(new Set(["c"]), false, "me");
+        await settled(later);
+        expect([...loading.current].sort()).toEqual(["a", "b", "c"]);
+        fetches[0].done.resolve();
+        await settled(later);
+        expect([...loading.current]).toEqual(["c"]);
+        fetches[1].done.resolve();
+        await later;
+        expect(loading.current.size).toBe(0);
+    });
+
+    test("a user whose fetch fails is no longer loading", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const { foldUsers, fetches, loading } = setUp(true, ["me"]);
+        const { arrived } = await foldUsers.load(new Set(["me", "a"]), true, "me");
+        expect([...loading.current]).toEqual(["a"]);
+        fetches[0].done.reject(new Error("timed out"));
+        await arrived;
+        expect(loading.current.size).toBe(0);
+        warn.mockRestore();
+    });
+
+    test("the old trees announce no one as loading", async () => {
+        const { foldUsers, fetches, loading } = setUp(false, []);
+        const load = foldUsers.load(new Set(["a"]), true, "me");
+        await settled(load);
+        expect(fetches).toHaveLength(1);
+        expect(loading.current.size).toBe(0);
+        fetches[0].done.resolve();
+        await load;
     });
 });
