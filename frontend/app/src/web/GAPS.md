@@ -153,10 +153,15 @@ design export needs. Each entry says where it came up.
     client's `offlineStore` says the app is offline (the browser's offline event, or the worker
     finding the connection unusable), a slim strip across the top of the window, under the status
     bar, says so and that what shows may be out of date (`offlineBanner`): the library's offline
-    Banner's tone and icon as a 28px strip (`shell/OfflineStrip`), with no action, as the app
-    reconnects by itself. The shell moves its screens down under it (it adds the strip to
-    `--safe-top` in the stage), so it covers neither a header, the tab bar, a composer nor the
-    toasts, which is why it isn't components_mobile's `OfflineFooter` at the bottom. It shows after
+    Banner's tone and icon as a strip of at least 28px (`shell/OfflineStrip`), whose text wraps to
+    a second line rather than lose its end, with no action, as the app reconnects by itself. The
+    shell moves its screens down under it: its height goes on the root as `--offline-strip`, which
+    the stage adds to `--safe-top`, so it covers neither a header, the tab bar, a composer nor the
+    toasts, which is why it isn't components_mobile's `OfflineFooter` at the bottom. It opens and
+    closes over 0.2s with the screens coming down and back up with it (none with reduced motion);
+    a conversation keeps its newest message where it was. The call's overlays outside the shell
+    keep clear of it too (the minimised call's top, the ring card). Sheets and menus, portalled to
+    `<body>`, can still reach up over it (they're over everything while they're open). It shows after
     1.5s offline (at once when the app starts offline) and goes 0.5s after the connection is back,
     so a blip doesn't flash it (`logic/network/offlineIndicator`, shared with the web's banner).
     Only in the tabs: the signed-out start has none. Confirm with design: the strip, its words, and

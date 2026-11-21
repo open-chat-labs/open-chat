@@ -49,7 +49,16 @@
     import IncomingCall from "./IncomingCall.svelte";
     import { createNativeTreeCall } from "./treeCall";
 
-    let { overlays, barShown }: { overlays: Overlays; barShown: boolean } = $props();
+    let {
+        overlays,
+        barShown,
+        offlineStrip = 0,
+    }: {
+        overlays: Overlays;
+        barShown: boolean;
+        /** The shell's offline strip's height while it's open, in CSS pixels (Shell). */
+        offlineStrip?: number;
+    } = $props();
 
     const client = getContext<OpenChat>("client");
     const session = createNativeTreeCall(client);
@@ -163,8 +172,10 @@
         const bottom = barShown
             ? "calc(var(--tab-bar-h) + 16px)"
             : "calc(var(--safe-bottom) + 16px)";
+        // below the offline strip too, while it's open: the headers move down under it
+        const strip = offlineStrip;
         const measure = () => {
-            safeTop = px("calc(var(--safe-top) + 64px)");
+            safeTop = px("calc(var(--safe-top) + 64px)") + strip;
             safeBottom = px(bottom);
         };
         measure();
