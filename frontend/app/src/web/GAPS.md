@@ -2156,7 +2156,7 @@ design export needs. Each entry says where it came up.
 - **Clipped glyphs on one-line labels** (2026-11-21, by hand; EXPORT-LOG): text truncated with
   an ellipsis (`overflow: hidden`) and set at `line-height` 1 or 1.1 lost the bottom of its
   descenders (g, p, y) and the top of its accents: every `Button` label ("Sign out"), the nav
-  rail, page and call titles, field placeholders and more. The library's `glyph-room` mixin
+  rail, dialog, page and call titles, field placeholders and more. The library's `glyph-room` mixin
   gives each one room around its line without changing its size or position. For the design:
   its specs put single-line labels at `line-height: 1`; a tighter line than the font's own
   (about 1.3) clips once the text is cut with an ellipsis. Labels at 1.2 still lose up to a

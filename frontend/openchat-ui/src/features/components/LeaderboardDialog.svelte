@@ -116,6 +116,8 @@
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .layer {
     z-index: 73;
   }
@@ -314,7 +316,8 @@
     letter-spacing: 0.04em;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: nowrap;    // the row's line-height is 1
+    @include glyph-room;
   }
 
   .score {

@@ -835,7 +835,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    overflow: hidden;
+    /* no overflow: hidden: each line truncates itself, and clipping here would cut off their glyph room */
     opacity: 0;
     transition: opacity var(--duration-base) ease;
   }

@@ -273,6 +273,7 @@
     font: var(--weight-semibold) var(--text-md) / 1.1 var(--font-sans);
     color: var(--ink);
     @include truncate;
+    @include glyph-room;
   }
 
   .chat-kind,

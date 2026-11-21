@@ -1895,6 +1895,7 @@
     font: var(--weight-medium) 13px/1 var(--font-sans);
     color: var(--ink-3);
     @include truncate;
+    @include glyph-room;
   }
 
   .chip-edit {
