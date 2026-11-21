@@ -235,26 +235,32 @@ describe("RtcConnectionsManager", () => {
             peer.emit("disconnected", peer.id);
         }
 
-        it("backs off between attempts while online, and starts again once open", async () => {
+        it("reconnects at once while online, then backs off, and starts again once open", async () => {
             const { peer } = await setup();
             vi.useFakeTimers();
 
             disconnect(peer);
-            expect(peer.reconnects).toBe(0);
-            vi.advanceTimersByTime(1_000);
+            vi.advanceTimersByTime(0);
             expect(peer.reconnects).toBe(1);
 
             // the attempt failed
             disconnect(peer);
-            vi.advanceTimersByTime(1_999);
+            vi.advanceTimersByTime(999);
             expect(peer.reconnects).toBe(1);
             vi.advanceTimersByTime(1);
             expect(peer.reconnects).toBe(2);
 
+            // and failed again
+            disconnect(peer);
+            vi.advanceTimersByTime(1_999);
+            expect(peer.reconnects).toBe(2);
+            vi.advanceTimersByTime(1);
+            expect(peer.reconnects).toBe(3);
+
             peer.emit("open", peer.id);
             disconnect(peer);
-            vi.advanceTimersByTime(1_000);
-            expect(peer.reconnects).toBe(3);
+            vi.advanceTimersByTime(0);
+            expect(peer.reconnects).toBe(4);
         });
 
         it("waits while offline, then reconnects as soon as the app is back", async () => {
@@ -276,7 +282,7 @@ describe("RtcConnectionsManager", () => {
             vi.useFakeTimers();
 
             disconnect(peer);
-            vi.advanceTimersByTime(1_000);
+            vi.advanceTimersByTime(0);
             network.setOffline(true);
             // the attempt failed, offline
             disconnect(peer);

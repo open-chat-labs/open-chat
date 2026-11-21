@@ -156,7 +156,7 @@ export class RtcConnectionsManager {
     // A failed reconnect disconnects the peer again, and reconnecting straight away each time
     // made a loop of websocket connections to the signalling server for as long as the app was
     // offline. Offline, the reconnect waits for the app to be back and goes as soon as it is;
-    // online, it backs off.
+    // online, the first goes straight away, as before, and later ones back off.
     private scheduleReconnect(): void {
         this.cancelReconnect?.();
         let waitedForOnline = false;
