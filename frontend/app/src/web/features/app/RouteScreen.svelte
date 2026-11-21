@@ -58,7 +58,8 @@
     </div>
 {:else if gate === "loading"}
     <div class="page">
-        <Spinner />
+        <!-- a normal start is over within a second: until then only the background shows -->
+        <Spinner delay={1000} />
     </div>
 {:else if gate === "failed"}
     <!-- the identity couldn't be loaded: Retry loads the stored one again, and someone signed in

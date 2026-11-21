@@ -707,7 +707,8 @@
 {:else if location.area === "signed_out"}
     <div class="outside">
         {#if entry === "loading"}
-            <Spinner />
+            <!-- a normal start is over within a second: until then only the background shows -->
+            <Spinner delay={1000} />
         {:else if entry === "failed"}
             <!-- the session from before couldn't be loaded; still signed in, so Retry loads it again,
                  and Sign out is the way out if it never loads (#10562) -->

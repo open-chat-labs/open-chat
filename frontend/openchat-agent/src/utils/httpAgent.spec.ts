@@ -15,9 +15,11 @@ import { utf8ToBytes } from "@noble/hashes/utils";
 import { vi } from "vitest";
 import {
     abortInFlightQueries,
+    createHttpAgent,
     createQueryAwareFetch,
     QUERY_EXPIRY_SAFE_AGE_MS,
     ResyncingHttpAgent,
+    ROOT_KEY_RESPONSE_TIMEOUT_MS,
     TIME_RESYNC_MIN_INTERVAL_MS,
 } from "./httpAgent";
 import { SLOW_QUERY_MS } from "./connectionHealth";
@@ -25,6 +27,7 @@ import { SLOW_QUERY_MS } from "./connectionHealth";
 const CANISTER_ID = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
 const QUERY_URL = new URL("https://icp-api.io/api/v3/canister/rrkah-fqaaa-aaaaa-aaaaq-cai/query");
 const CALL_URL = new URL("https://icp-api.io/api/v4/canister/rrkah-fqaaa-aaaaa-aaaaq-cai/call");
+const STATUS_URL = new URL("http://localhost:8080/api/v2/status");
 
 // A fetch which never answers until its signal is aborted, like one stuck on a dead connection
 function hangingFetch() {
@@ -81,6 +84,71 @@ describe("createQueryAwareFetch", () => {
         expect(signals[0]).toBeUndefined();
         expect(abortInFlightQueries()).toBe(0);
         expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test("aborts a request for the status (the root key) that has no response within its timeout", async () => {
+        const { fn } = hangingFetch();
+        const wrapped = createQueryAwareFetch(fn, 60_000, undefined, 1000);
+        const result = wrapped(STATUS_URL);
+        const assertion = expect(result).rejects.toMatchObject({ name: "TimeoutError" });
+        await vi.advanceTimersByTimeAsync(1000);
+        await assertion;
+        // it isn't a query: resuming the app doesn't abort it
+        expect(abortInFlightQueries()).toBe(0);
+    });
+
+    test("aborts a request for the status whose body stalls after the headers arrive", async () => {
+        // Sends the headers at once, then never finishes the body until the request is aborted
+        const base = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+            const body = new ReadableStream<Uint8Array>({
+                start(stream) {
+                    stream.enqueue(new Uint8Array([1]));
+                    init?.signal?.addEventListener("abort", () =>
+                        stream.error(init.signal?.reason),
+                    );
+                },
+            });
+            return Promise.resolve(new Response(body));
+        });
+        const wrapped = createQueryAwareFetch(
+            base as unknown as typeof fetch,
+            60_000,
+            undefined,
+            1000,
+        );
+        const result = wrapped(STATUS_URL);
+        const assertion = expect(result).rejects.toMatchObject({ name: "TimeoutError" });
+        await vi.advanceTimersByTimeAsync(1000);
+        await assertion;
+    });
+
+    test("hands back the status response whole once it has arrived", async () => {
+        const base = vi.fn(() =>
+            Promise.resolve(new Response(new Uint8Array([1, 2, 3]), { status: 200 })),
+        );
+        const wrapped = createQueryAwareFetch(
+            base as unknown as typeof fetch,
+            60_000,
+            undefined,
+            1000,
+        );
+        const response = await wrapped(STATUS_URL);
+        expect(response.status).toBe(200);
+        expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test("stops following the caller's signal once the request is done", async () => {
+        const base = vi.fn(() => Promise.resolve(new Response(new Uint8Array([1]))));
+        const wrapped = createQueryAwareFetch(base as unknown as typeof fetch, 60_000);
+        for (const url of [QUERY_URL, STATUS_URL]) {
+            const caller = new AbortController();
+            const add = vi.spyOn(caller.signal, "addEventListener");
+            const remove = vi.spyOn(caller.signal, "removeEventListener");
+            await wrapped(url, { signal: caller.signal });
+            expect(add).toHaveBeenCalledTimes(1);
+            expect(remove).toHaveBeenCalledWith("abort", add.mock.calls[0][1]);
+        }
     });
 
     test("still honours a signal passed by the caller", async () => {
@@ -295,6 +363,10 @@ function fakeReplica() {
         queriesAnswered: 0,
         callsAccepted: 0,
         timeReads: 0,
+        statusReads: 0,
+        // When set, a request for the status (the root key) waits for it, or until it is aborted
+        statusHeldUntil: undefined as Promise<void> | undefined,
+        failStatus: false,
         // Makes the next query wait, before the replica looks at it, until `release` is called or
         // the query is aborted. `arrived` resolves once that query has reached the replica.
         holdNextQuery(): { arrived: Promise<void>; release: () => void } {
@@ -307,6 +379,21 @@ function fakeReplica() {
         },
         fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
             const path = new URL(input.toString()).pathname;
+            if (path.endsWith("/status")) {
+                replica.statusReads++;
+                if (replica.statusHeldUntil !== undefined) {
+                    const signal = init?.signal;
+                    const held = replica.statusHeldUntil;
+                    await new Promise<void>((resolve, reject) => {
+                        void held.then(resolve);
+                        signal?.addEventListener("abort", () => reject(signal.reason));
+                    });
+                }
+                if (replica.failStatus) {
+                    return new Response("unavailable", { status: 503 });
+                }
+                return new Response(Cbor.encode({ root_key: rootKey }) as Uint8Array<ArrayBuffer>);
+            }
             if (path.endsWith("/read_state")) {
                 replica.timeReads++;
                 if (replica.failTimeReads) {
@@ -555,5 +642,95 @@ describe("ResyncingHttpAgent", () => {
         await expect(result).resolves.toMatchObject({ status: "replied" });
         expect(replica.queriesAnswered).toBe(1);
         expect(replica.timeReads).toBe(0);
+    });
+});
+
+describe("createHttpAgent", () => {
+    const LOCAL_URL = "http://localhost:8080";
+
+    let replica: ReturnType<typeof fakeReplica>;
+    let warn: ReturnType<typeof vi.spyOn>;
+
+    function query(agent: HttpAgent) {
+        return agent.query(CANISTER_ID, { methodName: "m", arg: new Uint8Array() });
+    }
+
+    beforeEach(() => {
+        warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+        replica = fakeReplica();
+        vi.stubGlobal("fetch", replica.fetch);
+    });
+
+    afterEach(() => {
+        abortInFlightQueries();
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
+
+    test("off mainnet, returns at once and fetches the root key in the background", async () => {
+        let release!: () => void;
+        replica.statusHeldUntil = new Promise<void>((resolve) => (release = resolve));
+
+        const agent = createHttpAgent(new AnonymousIdentity(), LOCAL_URL);
+
+        expect(agent.rootKey).toBeNull();
+        await vi.waitFor(() => expect(replica.statusReads).toBe(1));
+        release();
+        await vi.waitFor(() => expect(agent.rootKey).toEqual(replica.rootKey));
+    });
+
+    test("off mainnet, a request waits for the root key before it is sent", async () => {
+        let release!: () => void;
+        replica.statusHeldUntil = new Promise<void>((resolve) => (release = resolve));
+        const agent = createHttpAgent(new AnonymousIdentity(), LOCAL_URL);
+
+        const result = query(agent);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(replica.queriesAnswered).toBe(0);
+        // it shares the fetch already under way rather than starting another
+        expect(replica.statusReads).toBe(1);
+
+        release();
+        await expect(result).resolves.toMatchObject({ status: "replied" });
+        expect(replica.queriesAnswered).toBe(1);
+        expect(agent.rootKey).toEqual(replica.rootKey);
+    });
+
+    test("off mainnet, a root key fetch that failed is tried again by the next request", async () => {
+        vi.useFakeTimers();
+        replica.failStatus = true;
+        const agent = createHttpAgent(new AnonymousIdentity(), LOCAL_URL);
+        // past the agent's retries and their backoff
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(warn).toHaveBeenCalled();
+        expect(agent.rootKey).toBeNull();
+
+        replica.failStatus = false;
+        await expect(query(agent)).resolves.toMatchObject({ status: "replied" });
+        expect(agent.rootKey).toEqual(replica.rootKey);
+    });
+
+    test("off mainnet, a replica which never answers fails the request rather than hanging", async () => {
+        vi.useFakeTimers();
+        replica.statusHeldUntil = new Promise<void>(() => undefined);
+        const agent = createHttpAgent(new AnonymousIdentity(), LOCAL_URL);
+
+        const result = query(agent);
+        const assertion = expect(result).rejects.toThrow();
+        // the agent tries the status a few times, each aborted after the timeout, with a backoff
+        await vi.advanceTimersByTimeAsync(10 * ROOT_KEY_RESPONSE_TIMEOUT_MS);
+        await assertion;
+        expect(replica.queriesAnswered).toBe(0);
+        expect(agent.rootKey).toBeNull();
+    });
+
+    test("on mainnet, uses the built-in root key without fetching it", async () => {
+        const agent = createHttpAgent(new AnonymousIdentity(), "https://icp-api.io");
+
+        expect(agent.rootKey).not.toBeNull();
+        expect(agent.rootKey).not.toEqual(replica.rootKey);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(replica.statusReads).toBe(0);
     });
 });

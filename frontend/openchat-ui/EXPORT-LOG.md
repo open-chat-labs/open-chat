@@ -1152,3 +1152,8 @@
 - All of it is Skeleton's shimmer (`--skeleton-base` / `--skeleton-sheen`, keyframes `oc-shimmer`, stopped under reduced motion by `tokens.css`).
 - Used by the app (web and native): the first chat list can now show before every user it names has loaded. A DM whose user was still on the way showed "Unknown User" with its swatch until they arrived, in the chat list and the open chat's header (the app's `GAPS.md`, "Chat list").
 - Not in the design export: the export has no loading name.
+
+## 2026-11-21 — Spinner: `delay`, by hand
+- `Spinner`: `delay` (optional, default 0, ms): it stays hidden that long, then fades in (220ms, `ease-out`), as `Skeleton`'s `delay` (CSS `animation-delay`, no timer, its space kept so nothing moves). The keyframes also take `visibility` from hidden to visible, so during the delay it is out of the accessibility tree and its `role="status"` isn't announced; after it, it is as before. Under reduced motion it just appears after the delay. `meta.json` (`delay`).
+- Used by the app (web and native) at start-up (the gate before the identity and chats are ready) and while a screen's chunk loads, with `delay={1000}`: a normal start shows only the app's background, and a spinner only if it takes longer than a second. The failed (Retry) state still shows at once.
+- Not in the design export: the export's spinner has no delay.

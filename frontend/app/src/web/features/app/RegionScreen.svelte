@@ -61,7 +61,8 @@
                         actionHandler={() => location.reload()} />
                 </div>
             {:else}
-                <div class="centred"><Spinner /></div>
+                <!-- a chunk that loads within a second (the usual case) shows no spinner -->
+                <div class="centred"><Spinner delay={1000} /></div>
             {/if}
         </div>
     {/if}

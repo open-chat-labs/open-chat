@@ -104,9 +104,11 @@ design export needs. Each entry says where it came up.
     (`configKeys.layoutOverride`), but no screen sets it yet (N12, and the web's settings). Nor does
     a resize offer a reload into the other layout.
   - **Outside the tabs**: done (N4). Signed out, every URL but a marketing page is the signed-out
-    start (no guest mode, notes §3.1), the URL kept for after sign-in; a session from before shows a
-    spinner while it loads, so Welcome doesn't flash (`startEntry`), or an error with Retry if that
-    load fails (`identityLoadFailedStore`, #10562). The marketing pages (Landing,
+    start (no guest mode, notes §3.1), the URL kept for after sign-in; a session from before shows
+    the app's background while it loads, so Welcome doesn't flash (`startEntry`), and a spinner
+    fading in only if that takes over a second (`Spinner`'s `delay`, at the user's request; the web's
+    start-up gate, `appGate`, does the same; by hand, EXPORT-LOG 2026-11-21), or an error with Retry
+    at once if that load fails (`identityLoadFailedStore`, #10562). The marketing pages (Landing,
     Learn, the terms and privacy policy) open on the website in the default browser (`openOnWeb`):
     Welcome's links do, and the app sent to one opens it there and steps back (the start or the
     chats when it was the first page), as a deep link to one already did.
