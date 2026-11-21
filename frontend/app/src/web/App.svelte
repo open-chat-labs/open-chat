@@ -135,7 +135,8 @@
         width: min(640px, calc(100vw - 2 * var(--space-16)));
         display: flex;
         flex-direction: column;
-        gap: var(--space-8);
+        /* no gap: the offline banner's live region is always there, empty while online, so the
+           banner keeps its own space below it (OfflineBanner) */
         pointer-events: none;
         /* over the shell, under the dialogs' veil */
         z-index: calc(var(--z-backdrop) - 1);
