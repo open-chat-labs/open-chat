@@ -35,6 +35,7 @@
         eventsStore,
         exchangeRatesLookupStore,
         failedMessagesStore,
+        queuedMessagesStore,
         favouritesStore,
         formatClock,
         isDiamondStore,
@@ -127,6 +128,7 @@
         isMedia,
         mediaHeld,
         messageStatus,
+        queuedMessage,
         PROPOSAL_CLOCK_MS,
         senderColor,
         untilNextDay,
@@ -1043,6 +1045,8 @@
     function status(evt: EventWrapper<Message>, args: ChatEventListArgs, failed: boolean) {
         return messageStatus({
             failed,
+            // waiting for the connection: sending, with no Retry, until it goes (#10591)
+            queued: failed && queuedMessage($queuedMessagesStore, evt.event.messageId),
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
                 chat !== undefined &&
@@ -1090,6 +1094,7 @@
             me,
             bridgedUsers: $bridgedUsersStore,
             failed,
+            queued: $queuedMessagesStore,
             confirmed,
             readonly,
             // the native tree has no guest pass yet (10a is the web's)

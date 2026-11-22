@@ -992,8 +992,9 @@ export class CommunityClient
         // The account the community pulls the message's transfer from, if it holds one
         fromAccount?: string,
     ): Promise<[SendMessageResponse, Message]> {
-        // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
-        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+        // A failed (or queued) message sent again stays on the device until it has gone
+        // (setCachedMessageFromSendResponse): removed before the send, as it was, a reload or the
+        // app closing while it was on its way lost it (#10591)
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded

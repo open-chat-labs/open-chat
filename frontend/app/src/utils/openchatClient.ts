@@ -9,17 +9,24 @@ export const websiteVersion: string = import.meta.env.OC_WEBSITE_VERSION!;
 /** The video bridge, which the native shell tells when the user declines a call from its ring. */
 export const videoBridgeUrl: string | undefined = import.meta.env.OC_VIDEO_BRIDGE_URL || undefined;
 
+/** What only the new trees (web, native) turn on (see OpenChatConfig). */
+export type NewUiBehaviour = Pick<OpenChatConfig, "chatsBeforeUsers" | "queueOfflineSends">;
+
+/** The new trees' behaviour: both on. */
+export const NEW_UI_BEHAVIOUR: NewUiBehaviour = { chatsBeforeUsers: true, queueOfflineSends: true };
+
 // The one OpenChat client config, built from the OC_* build env. Each App tree (components,
-// components_mobile, web) creates its client with this once at startup. `chatsBeforeUsers`: only
-// the new trees (web, native) pass it (see OpenChatConfig).
+// components_mobile, web) creates its client with this once at startup. `newUi`: only the new
+// trees (web, native) pass it.
 export function createOpenChatClient(
     i18nFormatter: OpenChatConfig["i18nFormatter"],
     logger: OpenChatConfig["logger"],
-    chatsBeforeUsers: boolean = false,
+    newUi: NewUiBehaviour = {},
 ): OpenChat {
     const client = new OpenChat({
         mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
-        chatsBeforeUsers,
+        chatsBeforeUsers: newUi.chatsBeforeUsers ?? false,
+        queueOfflineSends: newUi.queueOfflineSends ?? false,
         icUrl: import.meta.env.OC_IC_URL,
         webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
         iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,

@@ -1458,5 +1458,7 @@ export const identityStateStore = writable<IdentityState>(
 export const identityLoadFailedStore = writable<boolean>(false);
 
 export const failedMessagesStore = localUpdates.failedMessages;
+// The failed messages which are only waiting for the connection (`OpenChatConfig.queueOfflineSends`)
+export const queuedMessagesStore = localUpdates.queuedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;
 export const latestSuccessfulUpdatesLoop = writable(0);

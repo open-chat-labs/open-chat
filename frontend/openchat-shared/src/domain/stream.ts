@@ -43,6 +43,25 @@ export class Stream<T> {
         );
     }
 
+    /**
+     * A stream made by an async initialiser. It runs once the stream has been subscribed to (in the
+     * same task), so a result it gives before its first `await` reaches the subscriber, where the
+     * constructor's would be dropped; and an error it throws rejects the stream, where the
+     * constructor's would go unhandled and leave the subscriber waiting for ever.
+     */
+    static fromAsync<T>(
+        initialiser: (
+            resolve: (val: T, final: boolean) => void,
+            reject: (reason?: unknown) => void,
+        ) => Promise<void>,
+    ): Stream<T> {
+        return new Stream<T>((resolve, reject) => {
+            Promise.resolve()
+                .then(() => initialiser(resolve, reject))
+                .catch(reject);
+        });
+    }
+
     subscribe(subscription: Subscription<T>) {
         if (this.subscribed) {
             throw new Error("Already subscribed");

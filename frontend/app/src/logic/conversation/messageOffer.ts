@@ -12,6 +12,7 @@ import {
     type OpenChat,
 } from "@client";
 import { canShareMessage } from "@src/utils/share";
+import { queuedMessage, type QueuedMessageIds } from "./messageRow";
 import { rowMessageContext } from "./threadTimeline";
 
 // What a message in a chat's timeline or a thread's offers (`messageMenu`, as the old trees decide
@@ -36,6 +37,11 @@ export type MessageOfferState = {
     me: string;
     bridgedUsers: ReadonlyMap<string, BridgedUserSummary>;
     failed: boolean;
+    /**
+     * The messages queued for the connection (`queuedMessagesStore`): one of them, failed only for
+     * want of a connection, offers no Retry; it goes on its own once the app is back online.
+     */
+    queued: QueuedMessageIds;
     confirmed: boolean;
     /** The chat can only be read (`isChatReadOnly`). */
     readonly: boolean;
@@ -144,7 +150,18 @@ export function messageOffer(
                   startThread: client.canSendMessage(chatId, "thread"),
               },
     });
-    return peekOffer(offered, msg);
+    return withoutRetryWhenQueued(
+        peekOffer(offered, msg),
+        queuedMessage(state.queued, msg.messageId),
+    );
+}
+
+// A queued message can still be deleted, and copied, but not retried: it's sent on its own
+function withoutRetryWhenQueued(offered: MessageOffer, queued: boolean): MessageOffer {
+    if (!queued || !offered.actions.has("retry")) return offered;
+    const actions = new Set<OfferedAction>(offered.actions);
+    actions.delete("retry");
+    return { ...offered, actions };
 }
 
 /**

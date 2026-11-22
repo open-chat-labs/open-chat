@@ -24,6 +24,38 @@ design export needs. Each entry says where it came up.
   `AppScreen`, so the marketing pages have none). It shows after 1.5s offline (at once when the
   app starts offline) and goes 0.5s after the connection is back (`logic/network/offlineIndicator`,
   shared with the native strip). Confirm with design.
+- **Sending offline** (#10591, web and native): done, TODO(design). A message sent without a
+  connection waits, rather than failing: it shows as sending (the library's `sending` status,
+  with no Retry; its menu offers Delete and Copy, not Retry) and goes by itself once the app is
+  back online, each chat's (and thread's) oldest first. The client queues it (`OfflineSendQueue`,
+  `localUpdates.addQueuedMessage`; only with `queueOfflineSends`, which only the new trees'
+  `createOpenChatClient` turns on, `NEW_UI_BEHAVIOUR`: the old trees still fail it, with Retry).
+  No connectivity is the agent's `offline` answer, anything thrown while the app is offline, or a
+  request that got no response (`isTransportError`); a backend's answer, a rejection or a timeout
+  while online fails it, with Retry, as before (`sendFailureCause`). One whose sends get no
+  response three times in a row while the app says it's online shows failed, with Retry
+  (`staysQueued`); one sent again that the backend already has (the IC had taken it before the
+  connection went) counts as delivered, with no failure shown; one whose
+  chat has gone once the chats are in shows failed. A new message in a chat with queued ones
+  waits behind them, so they go in the order written. Queued messages are kept on
+  the device with the failed ones (marked `queued`, no cache version bump) and go on start-up
+  once online. Text, replies, forwards and attachments (photos, videos, files, voice: uploaded as
+  part of the send) queue; what the network builds or signs (a crypto transfer, a prize, a P2P
+  swap offer) and polls don't: offline, they aren't posted at all, the draft keeps them and the
+  composer says it couldn't send (a transfer's dialog says the device is offline, `offlineError`).
+  Left: no "waiting for connection" wording of its own (it looks like any message sending; design
+  may want a clock); a queued message can't be edited; its mentions and the rules accepted for it
+  are kept in memory only, so after a reload it goes without mentions, and one in a chat whose
+  rules need accepting shows failed, with Retry, rather than asking out of the blue; a picture in
+  one shows broken while it's sent again (the failed message's object URL is revoked, as a Retry's
+  always has been).
+  - **The chat list** (2026-11-22, web and native): a row shows the user's latest message there
+    that the backend doesn't have yet when it's newer than the chat's latest, "You: …", with the
+    sending clock (on its way, or queued) or a red failed mark (`ChatRow`'s `previewIcon`, by
+    hand, EXPORT-LOG 2026-11-22); its time and the list's order follow it
+    (`logic/chats/unsentMessages`). Not in the old trees, whose rows show the latest confirmed
+    message. TODO(design): the failed mark (no "Not delivered" words in the row), and whether a
+    thread's unsent reply should show too (it doesn't, as a row shows no thread replies).
 - **Native platform tokens** (native N1, #10364): the library has the native layer
   (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`;
   `--safe-*`, `--scroll-end` and `--text-scale` on `:root`; `[data-always-dark]` for calls;

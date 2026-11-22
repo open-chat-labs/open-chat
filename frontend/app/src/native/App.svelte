@@ -27,7 +27,7 @@
         setupNativeApp,
         startAgain,
     } from "@utils/native/nativeApp";
-    import { createOpenChatClient, videoBridgeUrl } from "@utils/openchatClient";
+    import { createOpenChatClient, NEW_UI_BEHAVIOUR, videoBridgeUrl } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import {
         botState,
@@ -55,7 +55,7 @@
     const logger = initialiseAppLogger();
 
     // the chat list's rows follow the user store, so the first list needn't wait for every name
-    const client: OpenChat = createOpenChatClient($_, logger, true);
+    const client: OpenChat = createOpenChatClient($_, logger, NEW_UI_BEHAVIOUR);
     setContext<OpenChat>("client", client);
 
     setI18n({

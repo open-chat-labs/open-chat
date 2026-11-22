@@ -1157,3 +1157,8 @@
 - `Spinner`: `delay` (optional, default 0, ms): it stays hidden that long, then fades in (220ms, `ease-out`), as `Skeleton`'s `delay` (CSS `animation-delay`, no timer, its space kept so nothing moves). The keyframes also take `visibility` from hidden to visible, so during the delay it is out of the accessibility tree and its `role="status"` isn't announced; after it, it is as before. Under reduced motion it just appears after the delay. `meta.json` (`delay`).
 - Used by the app (web and native) at start-up (the gate before the identity and chats are ready) and while a screen's chunk loads, with `delay={1000}`: a normal start shows only the app's background, and a spinner only if it takes longer than a second. The failed (Retry) state still shows at once.
 - Not in the design export: the export's spinner has no delay.
+
+## 2026-11-22 — ChatRow: an unsent latest message's status, by hand
+- `ChatRow`: `previewIcon` takes `clock` (the user's latest message, still on its way or waiting for the connection: the bubble's sending clock) and `failed` (theirs, not delivered: the `failed` icon in `--status-danger`, as ChatBubble's "Not delivered"). Both are read out (`ui.chatRow.sending`, `ui.chatRow.notDelivered`), as `forward` is. No prop change (`previewIcon` was a free icon name), so `meta.json` is as it was.
+- Used by the app (web and native): a chat list row shows the user's unsent latest message, "You: …" with its status, when it's newer than the chat's latest (#10591).
+- Not in the design export: the export has no unsent preview. TODO(design): review the failed look (a red mark before the preview, no "Not delivered" text in the row).

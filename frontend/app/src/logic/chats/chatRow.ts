@@ -20,6 +20,7 @@ import { buildDisplayName } from "@src/utils/user";
 import { latestMessagePreview, type PreviewText } from "./latestMessagePreview";
 import { typedMentions, type MentionLookups } from "../conversation/typedMentions";
 import { swatchFor, type Swatch } from "../swatch";
+import { withUnsent, type UnsentMessage } from "./unsentMessages";
 
 export { swatchFor, type Swatch };
 
@@ -36,7 +37,12 @@ export type ChatListRow = {
     title: string;
     /** The latest message, as markdown: its author's and mentions' names escaped. */
     preview: string;
-    previewIcon: "forward" | undefined;
+    /**
+     * Before the preview: `forward`, the latest message was forwarded; `clock`, it's the user's,
+     * still on its way or waiting for the connection; `failed`, it's the user's and wasn't
+     * delivered (`unsent`).
+     */
+    previewIcon: "forward" | "clock" | "failed" | undefined;
     time: string;
     kind: "user" | "group" | "channel";
     color: Swatch;
@@ -298,15 +304,33 @@ export function latestForwarded(chat: ChatSummary, now = Date.now()): boolean {
     );
 }
 
-export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): ChatListRow {
+/**
+ * A chat's row. `unsent`: the user's latest message there that the backend doesn't have yet, newer
+ * than the chat's latest (`unsentFor`): the preview and the time are that message's, with its
+ * status before it. The unread counts stay the chat's.
+ */
+export function chatRow(
+    chat: ChatSummary,
+    ctx: RowContext,
+    now = Date.now(),
+    unsent?: UnsentMessage,
+): ChatListRow {
     const id = chatIdentifierToString(chat.id);
     const pinned = ctx.pinned.has(id);
+    const shown = withUnsent(chat, unsent);
     return {
         id,
         title: chatTitle(chat, ctx),
-        preview: ctx.preview(chat),
-        previewIcon: latestForwarded(chat, now) ? "forward" : undefined,
-        time: ctx.date(getDisplayDate(chat)),
+        preview: ctx.preview(shown),
+        previewIcon:
+            unsent !== undefined
+                ? unsent.status === "failed"
+                    ? "failed"
+                    : "clock"
+                : latestForwarded(chat, now)
+                  ? "forward"
+                  : undefined,
+        time: ctx.date(getDisplayDate(shown)),
         kind:
             chat.kind === "direct_chat" ? "user" : chat.kind === "group_chat" ? "group" : "channel",
         color: swatchFor(id),

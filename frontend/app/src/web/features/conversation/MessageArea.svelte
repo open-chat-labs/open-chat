@@ -33,6 +33,7 @@
         exchangeRatesLookupStore,
         formatClock,
         failedMessagesStore,
+        queuedMessagesStore,
         runningInIframe,
         twitchPlayerParent,
         i18nKey,
@@ -231,6 +232,7 @@
         isMedia,
         mediaHeld,
         messageStatus,
+        queuedMessage,
         PROPOSAL_CLOCK_MS,
         senderColor,
         showsSenderName,
@@ -1146,6 +1148,8 @@
     function status(evt: EventWrapper<Message>, args: ChatEventListArgs, failed: boolean) {
         return messageStatus({
             failed,
+            // waiting for the connection: sending, with no Retry, until it goes (#10591)
+            queued: failed && queuedMessage($queuedMessagesStore, evt.event.messageId),
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem: messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
         });
@@ -1291,6 +1295,7 @@
             me,
             bridgedUsers: $bridgedUsersStore,
             failed,
+            queued: $queuedMessagesStore,
             confirmed,
             readonly,
             guest: $anonUserStore,

@@ -24,6 +24,7 @@ import type {
 } from "./bots";
 import type {
     AcceptedRules,
+    StoredFailedMessage,
     AcceptP2PSwapResponse,
     AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
@@ -391,6 +392,7 @@ export type WorkerRequest = Cloneable<
     | GetDeletedDirectMessage
     | LoadFailedMessages
     | DeleteFailedMessage
+    | RecordFailedMessage
     | ClaimPrize
     | PayForDiamondMembership
     | SetCommunityModerationFlags
@@ -2429,6 +2431,16 @@ type DeleteFailedMessage = {
     kind: "deleteFailedMessage";
 };
 
+// Keeps a failed message on the device. `queued`: one sent without a connection, to be sent once the
+// app is back online (see the client's `OfflineSendQueue`).
+type RecordFailedMessage = {
+    chatId: ChatIdentifier;
+    event: EventWrapper<Message>;
+    threadRootMessageIndex: number | undefined;
+    queued: boolean;
+    kind: "recordFailedMessage";
+};
+
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
@@ -2790,7 +2802,8 @@ export type WorkerResults = ResultsByKind<{
     setDiamondMembershipFees: boolean;
     stakeNeuronForSubmittingProposals: StakeNeuronForSubmittingProposalsResponse;
     topUpNeuronForSubmittingProposals: TopUpNeuronResponse;
-    loadFailedMessages: Map<string, Record<string, EventWrapper<Message>>>;
+    loadFailedMessages: Map<string, Record<string, StoredFailedMessage>>;
+    recordFailedMessage: void;
     deleteFailedMessage: void;
     claimPrize: ClaimPrizeResponse;
     payForDiamondMembership: PayForDiamondMembershipResponse;
