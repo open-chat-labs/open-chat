@@ -6,6 +6,15 @@ import type { EventWrapper, Message } from "@shared";
 // (`mergeEventsAndLocalUpdatesWithRange`), so when one of them is deleted, those after it move
 // down into its place. Otherwise deleting the first of two queued messages hid the second (#10591).
 
+/**
+ * Whether a local message at `index` is still just past the chat's confirmed events (the latest
+ * the chat's summary has, `latestConfirmed`), where the local run of messages starts. One at or
+ * below it is out of date: others have posted since it was written. Unknown, it isn't.
+ */
+export function pastConfirmed(index: number, latestConfirmed: number | undefined): boolean {
+    return latestConfirmed !== undefined && index > latestConfirmed;
+}
+
 /** Where a deleted local message was. */
 export type RemovedPlace = { index: number; messageIndex: number };
 

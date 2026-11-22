@@ -69,6 +69,22 @@ export function canQueueMessage(content: MessageContent): boolean {
     return canRetryMessage(content);
 }
 
+// How many sends of a message in a row may get no response while the app says it's online before
+// it shows as failed, with Retry. A request that never gets through while the device is online
+// (an upload a firewall or an extension blocks, say) would otherwise go again every minute for
+// ever, with no Retry. A real offline spell doesn't count: the queue waits for that as long as it
+// lasts.
+export const MAX_ONLINE_TRANSPORT_FAILURES = 3;
+
+/**
+ * Whether a message that couldn't be sent for want of a connection stays queued: always while
+ * the app is offline; while it says it's online, until its sends have got no response
+ * `MAX_ONLINE_TRANSPORT_FAILURES` times in a row (`onlineTransportFailures`, this one included).
+ */
+export function staysQueued(offline: boolean, onlineTransportFailures: number): boolean {
+    return offline || onlineTransportFailures < MAX_ONLINE_TRANSPORT_FAILURES;
+}
+
 /** A queued message: where it is, which it is, and when it was written (the order it's sent in). */
 export type QueuedSend = {
     context: MessageContext;
@@ -126,6 +142,8 @@ export type OfflineSendQueueDeps = {
 export class OfflineSendQueue {
     #deps: OfflineSendQueueDeps;
     #unsubscribe: (() => void) | undefined;
+    // stopped (logout): a flush on its way sends nothing more
+    #stopped = true;
     #isOffline = false;
     #flushing: Promise<void> | undefined;
     #again = false;
@@ -139,6 +157,7 @@ export class OfflineSendQueue {
     /** Starts watching the connection; sends what's queued if the app is online. */
     start(): void {
         if (this.#unsubscribe !== undefined) return;
+        this.#stopped = false;
         let first = true;
         this.#unsubscribe = this.#deps.offline.subscribe((offline) => {
             const cameBack = this.#isOffline && !offline;
@@ -154,6 +173,7 @@ export class OfflineSendQueue {
     }
 
     stop(): void {
+        this.#stopped = true;
         this.#unsubscribe?.();
         this.#unsubscribe = undefined;
         this.#cancelRetry();
@@ -190,6 +210,7 @@ export class OfflineSendQueue {
         await Promise.all(
             sendOrder(this.#deps.queued()).map(async (list) => {
                 for (const q of list) {
+                    if (this.#stopped) return;
                     if (this.#isOffline) {
                         heldBack = true;
                         return;
@@ -208,6 +229,7 @@ export class OfflineSendQueue {
                 }
             }),
         );
+        if (this.#stopped) return;
         if (heldBack && !this.#isOffline) {
             this.#scheduleRetry();
         } else if (!heldBack) {

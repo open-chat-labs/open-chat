@@ -32,7 +32,12 @@ design export needs. Each entry says where it came up.
   `createOpenChatClient` turns on, `NEW_UI_BEHAVIOUR`: the old trees still fail it, with Retry).
   No connectivity is the agent's `offline` answer, anything thrown while the app is offline, or a
   request that got no response (`isTransportError`); a backend's answer, a rejection or a timeout
-  while online fails it, with Retry, as before (`sendFailureCause`). Queued messages are kept on
+  while online fails it, with Retry, as before (`sendFailureCause`). One whose sends get no
+  response three times in a row while the app says it's online shows failed, with Retry
+  (`staysQueued`); one the IC had taken before the connection went isn't queued (the chat's next
+  update brings it); one sent again that the backend already has counts as delivered; one whose
+  chat has gone once the chats are in shows failed. A new message in a chat with queued ones
+  waits behind them, so they go in the order written. Queued messages are kept on
   the device with the failed ones (marked `queued`, no cache version bump) and go on start-up
   once online. Text, replies, forwards and attachments (photos, videos, files, voice: uploaded as
   part of the send) queue; what the network builds or signs (a crypto transfer, a prize, a P2P

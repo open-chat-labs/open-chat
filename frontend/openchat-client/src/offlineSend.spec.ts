@@ -24,6 +24,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     CommonResponses,
+    ErrorCode,
     ChatMap,
     ROLE_MEMBER,
     anonymousUser,
@@ -315,6 +316,113 @@ describe("a message sent without a connection", () => {
                 message: expect.objectContaining({ key: "offlineError" }),
             });
             expect(sends).toHaveLength(0);
+        });
+
+        // the chat's summary as if others had posted up to this index since
+        function othersPostedUpTo(latestEventIndex: number) {
+            const groups = new ChatMap<GroupChatSummary>();
+            groups.set(chatId, { ...group(), latestEventIndex });
+            serverGroupChatsStore.set(groups);
+        }
+
+        test("one the IC had taken before the connection went isn't queued or failed: it waits for the chat's update", async () => {
+            const id = await send();
+            lastSend().onResult("accepted", false);
+            await vi.advanceTimersByTimeAsync(0);
+            await fail({ name: "HttpError", message: "Failed to fetch HTTP request: TypeError" });
+            expect(localUpdates.isQueued(context, id)).toBe(false);
+            expect(failedMessage(id)).toBeUndefined();
+            expect(localUpdates.isUnconfirmed(context, id)).toBe(true);
+            expect(failedToasts).toBe(0);
+        });
+
+        test("sent again but already there (MessageIdAlreadyExists): delivered, not failed", async () => {
+            const id = await send();
+            await fail({ name: "HttpError", message: "Call was rejected: IC0503" });
+            failedToasts = 0;
+            void client.retrySendMessage(context, failedMessage(id)!);
+            await vi.advanceTimersByTimeAsync(0);
+            await answer([
+                { kind: "error", code: ErrorCode.MessageIdAlreadyExists, message: undefined },
+                {} as Message,
+            ]);
+            expect(failedMessage(id)).toBeUndefined();
+            expect(localUpdates.isUnconfirmed(context, id)).toBe(false);
+            expect(failedToasts).toBe(0);
+            expect(
+                requests.some((r) => r.kind === "deleteFailedMessage" && r.messageId === id),
+            ).toBe(true);
+        });
+
+        test("no response three times in a row while online: failed, with Retry", async () => {
+            const noResponse = { name: "HttpError", message: "Failed to fetch HTTP request" };
+            const id = await send();
+            await fail(noResponse);
+            expect(localUpdates.isQueued(context, id)).toBe(true);
+            for (let attempt = 2; attempt <= 3; attempt++) {
+                void client.retrySendMessage(context, failedMessage(id)!);
+                await vi.advanceTimersByTimeAsync(0);
+                await fail(noResponse);
+            }
+            expect(failedMessage(id)).toBeDefined();
+            expect(localUpdates.isQueued(context, id)).toBe(false);
+        });
+
+        test("while offline it stays queued however often it's tried", async () => {
+            online = false;
+            const id = await send();
+            for (let attempt = 1; attempt <= 5; attempt++) {
+                if (attempt > 1) {
+                    void client.retrySendMessage(context, failedMessage(id)!);
+                    await vi.advanceTimersByTimeAsync(0);
+                }
+                await answer([CommonResponses.offline(), {} as Message]);
+            }
+            expect(localUpdates.isQueued(context, id)).toBe(true);
+        });
+
+        test("sent again after others have posted, it goes at the end, not in its old place", async () => {
+            const id = await send();
+            await fail({ name: "HttpError", message: "Call was rejected: IC0503" });
+            const old = failedMessage(id)!;
+            othersPostedUpTo(10);
+            await vi.advanceTimersByTimeAsync(1_000);
+            void client.retrySendMessage(context, old);
+            await vi.advanceTimersByTimeAsync(0);
+            const resent = localUpdates.unconfirmedMessages(context)[0];
+            expect(resent.index).toBe(11);
+            expect(resent.timestamp).not.toBe(old.timestamp);
+        });
+
+        test("deleting an out-of-date failed message moves nothing onto the chat's events", async () => {
+            online = false;
+            const first = await send();
+            const second = await send();
+            for (const { handlers } of sends) {
+                handlers.onResult([CommonResponses.offline(), {} as Message], true);
+            }
+            await vi.advanceTimersByTimeAsync(0);
+            const secondIndex = failedMessage(second)!.index;
+            othersPostedUpTo(10);
+            await client.deleteFailedMessage(chatId, first);
+            expect(failedMessage(second)!.index).toBe(secondIndex);
+        });
+
+        test("a new message in a chat with queued ones waits behind them", async () => {
+            online = false;
+            const first = await send();
+            await answer([CommonResponses.offline(), {} as Message]);
+            online = true;
+            const before = sends.length;
+            void client.sendMessage(context, "after", false, undefined, []);
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.advanceTimersByTimeAsync(0);
+            // not sent past the queued one: queued behind it
+            expect(sends).toHaveLength(before);
+            const queued = localUpdates.allQueuedMessages().map((q) => q.event.event.messageId);
+            expect(queued).toHaveLength(2);
+            expect(queued).toContain(first);
+            expect(localUpdates.unconfirmedMessages(context)).toHaveLength(0);
         });
     });
 

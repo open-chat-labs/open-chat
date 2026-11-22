@@ -830,10 +830,12 @@ import {
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { Semaphore } from "./utils/semaphore";
 import { isAbortError, runWhenOnline } from "./utils/online";
+import { pastConfirmed } from "./utils/localMessageIndexes";
 import {
     canQueueMessage,
     OfflineSendQueue,
     sendFailureCause,
+    staysQueued,
     type QueuedSend,
     type ResendOutcome,
     type SendFailure,
@@ -1999,6 +2001,12 @@ export class OpenChat {
     // accepted for it. Lost on a reload, after which it's sent without mentions, and one needing
     // rules accepted shows failed (see #resendQueued).
     #queuedSendExtras = new Map<bigint, { mentioned: User[]; acceptedRules?: AcceptedRules }>();
+    // How many sends of each queued message in a row have got no response while the app said it
+    // was online (`staysQueued`)
+    #onlineTransportFailures = new Map<bigint, number>();
+    // The chats and threads (messageContextToString) with a queued message being sent again: a
+    // new message there waits behind it (#sendMessageCommon)
+    #resendsInFlight = new Map<string, number>();
 
     // Background calls waiting for the app to be online (see `runWhenOnline`). Aborted when logout
     // starts, so that a push registration parked while offline can't run after the pre-logout
@@ -2077,6 +2085,8 @@ export class OpenChat {
         this.#onlineWaits.abort();
         this.#offlineSendQueue?.stop();
         this.#queuedSendExtras.clear();
+        this.#onlineTransportFailures.clear();
+        this.#resendsInFlight.clear();
         // Run any registered pre-logout tasks (e.g. push-token cleanup) while
         // the identity is still valid. Best-effort: Promise.resolve().then wraps
         // each task so a synchronous throw becomes a rejection that allSettled
@@ -6330,8 +6340,14 @@ export class OpenChat {
             .failedMessagesForContext(context)
             .find((e) => e.event.messageId === messageId);
         localUpdates.deleteFailedMessage(context, messageId);
-        // the local messages after it move into its place, or the chat stops showing them (#10591)
-        if (deleted !== undefined) {
+        this.#onlineTransportFailures.delete(messageId);
+        // the local messages after it move into its place, or the chat stops showing them; only
+        // when it was itself just past the chat's confirmed events, or they'd move onto those
+        // (#10591)
+        if (
+            deleted !== undefined &&
+            pastConfirmed(deleted.index, this.#latestConfirmedEventIndex(context))
+        ) {
             const moved = localUpdates.closeLocalGap(context, {
                 index: deleted.index,
                 messageIndex: deleted.event.messageIndex,
@@ -6454,7 +6470,12 @@ export class OpenChat {
             : undefined;
 
         const messageEvent = createMessage(messageContext, message);
-        if (failedCopy !== undefined) {
+        // Only while the failed copy is still just past the chat's confirmed events: once others
+        // have posted after it, the message goes at the end, now, as a new one does
+        if (
+            failedCopy !== undefined &&
+            pastConfirmed(failedCopy.index, this.#latestConfirmedEventIndex(messageContext))
+        ) {
             messageEvent.index = failedCopy.index;
             messageEvent.event.messageIndex = failedCopy.event.messageIndex;
             // the time orders the local messages: one later than those queued after it came after
@@ -6501,6 +6522,16 @@ export class OpenChat {
                     ogPreviews,
                 });
             }
+        }
+
+        // A new message in a chat (or thread) with queued messages waits behind them, so that they
+        // go in the order they were written (#10591). It's queued once #postSendMessage, which
+        // shows it a moment later, has done so.
+        if (!retrying && this.#waitsBehindQueued(messageContext, message.content)) {
+            await new Promise((resolve) => window.setTimeout(resolve, 0));
+            this.#queueMessage(messageContext, messageEvent, mentioned, acceptedRules);
+            void this.#offlineSendQueue?.flush();
+            return CommonResponses.offline();
         }
 
         const canRetry = canRetryMessage(message.content);
@@ -6553,6 +6584,7 @@ export class OpenChat {
                         this.#inflightMessagePromises.delete(messageId);
                         const [resp, msg] = response;
                         if (resp.kind === "success" || resp.kind === "transfer_success") {
+                            this.#onlineTransportFailures.delete(messageId);
                             const event = mergeSendMessageResponse(msg, resp);
                             const visit = eventsVisitFor(chat.id, threadRootMessageIndex);
                             this.#addServerEventsToStores(
@@ -6580,6 +6612,14 @@ export class OpenChat {
                                 mentioned,
                                 acceptedRules,
                             );
+                        } else if (
+                            resp.kind === "error" &&
+                            retrying &&
+                            resp.code === ErrorCode.MessageIdAlreadyExists
+                        ) {
+                            // Sent again, but it had gone the first time (the reply was lost):
+                            // delivered, not failed. The chat's next update brings it.
+                            this.#onResentMessageDelivered(messageContext, messageEvent);
                         } else if (resp.kind === "error") {
                             const pinNumberFailure = pinNumberFailureFromError(resp);
                             if (pinNumberFailure !== undefined) {
@@ -7168,24 +7208,42 @@ export class OpenChat {
     ) {
         const { chatId, threadRootMessageIndex } = context;
         const messageId = event.event.messageId;
+        const isOffline = offline();
         if (
             this.#offlineSendQueue !== undefined &&
             canQueueMessage(event.event.content) &&
-            sendFailureCause(failure, offline()) === "connectivity"
+            sendFailureCause(failure, isOffline) === "connectivity"
         ) {
-            console.debug("Message queued until the app is online", messageId, failure);
-            localUpdates.addQueuedMessage(context, event);
-            messagesRead.removeUnconfirmedMessage(context, messageId);
-            this.#queuedSendExtras.set(messageId, { mentioned, acceptedRules });
-            void this.#worker.send({
-                kind: "recordFailedMessage",
-                chatId,
-                event,
-                threadRootMessageIndex,
-                queued: true,
-            });
-            this.#offlineSendQueue.queued();
-            return;
+            // The IC had taken it (`accepted`) before the connection went: it's in, or will be,
+            // and sending it again would only be refused as already there. It waits, as sending,
+            // for the chat's next update to bring it (#10591).
+            if (
+                failure.kind === "thrown" &&
+                localUpdates.isUnconfirmed(context, messageId) &&
+                !localUpdates.isPendingAcceptance(context, messageId)
+            ) {
+                console.debug("Message accepted before the connection went", messageId, failure);
+                return;
+            }
+            // a request that got no response while the app says it's online; the agent's own
+            // offline answer, or anything while offline, is an offline spell
+            const waitingForOnline = isOffline || failure.kind === "response";
+            const failures = waitingForOnline
+                ? 0
+                : (this.#onlineTransportFailures.get(messageId) ?? 0) + 1;
+            if (staysQueued(waitingForOnline, failures)) {
+                if (failures > 0) {
+                    this.#onlineTransportFailures.set(messageId, failures);
+                } else {
+                    this.#onlineTransportFailures.delete(messageId);
+                }
+                console.debug("Message queued until the app is online", messageId, failure);
+                this.#queueMessage(context, event, mentioned, acceptedRules);
+                this.#offlineSendQueue.queued();
+                return;
+            }
+            // Never getting through while online: failed, with Retry
+            this.#onlineTransportFailures.delete(messageId);
         }
         this.#onSendMessageFailure(
             chatId,
@@ -7197,6 +7255,62 @@ export class OpenChat {
         );
     }
 
+    // Queues a message the user sent: kept with the failed ones, marked queued, on the device too
+    #queueMessage(
+        context: MessageContext,
+        event: EventWrapper<Message>,
+        mentioned: User[],
+        acceptedRules: AcceptedRules | undefined,
+    ) {
+        const messageId = event.event.messageId;
+        localUpdates.addQueuedMessage(context, event);
+        messagesRead.removeUnconfirmedMessage(context, messageId);
+        this.#queuedSendExtras.set(messageId, { mentioned, acceptedRules });
+        void this.#worker.send({
+            kind: "recordFailedMessage",
+            chatId: context.chatId,
+            event,
+            threadRootMessageIndex: context.threadRootMessageIndex,
+            queued: true,
+        });
+    }
+
+    // Whether a new message must wait behind the chat's (or thread's) queued messages: one that
+    // can be queued, where some are queued or one is being sent again
+    #waitsBehindQueued(context: MessageContext, content: MessageContent): boolean {
+        if (this.#offlineSendQueue === undefined || !canQueueMessage(content)) return false;
+        return (
+            (localUpdates.queuedMessages.value.get(context)?.size ?? 0) > 0 ||
+            this.#resendsInFlight.has(messageContextToString(context))
+        );
+    }
+
+    // A message sent again that the backend already had: the failed copy goes, from the device
+    // too, with no failure shown. The chat's next update brings the message.
+    #onResentMessageDelivered(context: MessageContext, event: EventWrapper<Message>) {
+        const messageId = event.event.messageId;
+        localUpdates.deleteUnconfirmed(context, messageId);
+        localUpdates.deleteFailedMessage(context, messageId);
+        this.#onlineTransportFailures.delete(messageId);
+        void this.#worker.send({
+            kind: "deleteFailedMessage",
+            chatId: context.chatId,
+            messageId,
+            threadRootMessageIndex: context.threadRootMessageIndex,
+        });
+    }
+
+    // The index of the latest event the backend has confirmed in a chat or thread, from the
+    // chat's summary (the server's, without the messages on their way)
+    #latestConfirmedEventIndex(context: MessageContext): number | undefined {
+        const chat = allServerChatsStore.value.get(context.chatId);
+        if (chat === undefined) return undefined;
+        if (context.threadRootMessageIndex === undefined) return chat.latestEventIndex;
+        return chat.membership.latestThreads.find(
+            (t) => t.threadRootMessageIndex === context.threadRootMessageIndex,
+        )?.latestEventIndex;
+    }
+
     // Sends a queued message again (`OfflineSendQueue`), under its own id: `queued` if it's
     // still waiting for the connection
     async #resendQueued({ context, messageId }: QueuedSend): Promise<ResendOutcome> {
@@ -7206,11 +7320,17 @@ export class OpenChat {
         if (event === undefined || !localUpdates.isQueued(context, messageId)) return "sent";
         const chat = allChatsStore.value.get(context.chatId);
         const extras = this.#queuedSendExtras.get(messageId);
+        if (chat === undefined) {
+            // the chats aren't in yet (a start-up): it waits for them, tried again in a while.
+            // Once they are, a chat that isn't among them has gone (left, deleted, blocked): the
+            // message shows failed, for the user to delete, rather than waiting for ever.
+            if (!chatsInitialisedStore.value) return "queued";
+            this.#queuedMessageFailed(context, event);
+            return "sent";
+        }
         // Rules to accept, with none accepted for it (it was queued before a reload): it shows
         // failed, for the user to send it with Retry, which asks for the rules, rather than being
         // asked out of the blue when the connection is back
-        // the chats aren't in yet (a start-up): it waits for them, tried again in a while
-        if (chat === undefined) return "queued";
         if (extras?.acceptedRules === undefined && this.#rulesNeedAccepting(context.chatId)) {
             this.#queuedMessageFailed(context, event);
             return "sent";
@@ -7218,30 +7338,41 @@ export class OpenChat {
         const msg = event.event;
         const timestamp = Date.now();
         this.#queuedSendExtras.delete(messageId);
-        await this.#sendMessageCommon(
-            chat,
-            context,
-            {
-                timestamp: BigInt(timestamp),
-                expiresAt:
-                    context.threadRootMessageIndex === undefined
-                        ? this.eventExpiry(chat, timestamp)
-                        : undefined,
-                messageId,
-                sender: currentUserIdStore.value,
-                content: msg.content,
-                repliesTo: msg.repliesTo,
-                forwarded: msg.forwarded,
-                blockLevelMarkdown: msg.blockLevelMarkdown,
-                ogPreviews: [],
-            },
-            extras?.mentioned ?? [],
-            true,
-            msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
-            undefined,
-            "clear",
-            extras?.acceptedRules,
-        );
+        const key = messageContextToString(context);
+        this.#resendsInFlight.set(key, (this.#resendsInFlight.get(key) ?? 0) + 1);
+        try {
+            await this.#sendMessageCommon(
+                chat,
+                context,
+                {
+                    timestamp: BigInt(timestamp),
+                    expiresAt:
+                        context.threadRootMessageIndex === undefined
+                            ? this.eventExpiry(chat, timestamp)
+                            : undefined,
+                    messageId,
+                    sender: currentUserIdStore.value,
+                    content: msg.content,
+                    repliesTo: msg.repliesTo,
+                    forwarded: msg.forwarded,
+                    blockLevelMarkdown: msg.blockLevelMarkdown,
+                    ogPreviews: [],
+                },
+                extras?.mentioned ?? [],
+                true,
+                msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
+                undefined,
+                "clear",
+                extras?.acceptedRules,
+            );
+        } finally {
+            const left = (this.#resendsInFlight.get(key) ?? 1) - 1;
+            if (left > 0) {
+                this.#resendsInFlight.set(key, left);
+            } else {
+                this.#resendsInFlight.delete(key);
+            }
+        }
         return localUpdates.isQueued(context, messageId) ? "queued" : "sent";
     }
 
@@ -7249,6 +7380,7 @@ export class OpenChat {
     #queuedMessageFailed(context: MessageContext, event: EventWrapper<Message>) {
         localUpdates.unqueue(context, event.event.messageId);
         this.#queuedSendExtras.delete(event.event.messageId);
+        this.#onlineTransportFailures.delete(event.event.messageId);
         void this.#worker.send({
             kind: "recordFailedMessage",
             chatId: context.chatId,

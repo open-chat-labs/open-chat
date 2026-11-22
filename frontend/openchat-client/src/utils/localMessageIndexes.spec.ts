@@ -2,7 +2,7 @@ import { MessageMap, type ChatEvent, type EventWrapper, type Message } from "@sh
 import DRange from "drange";
 import { describe, expect, test } from "vitest";
 import { mergeEventsAndLocalUpdatesWithRange } from "./chat";
-import { closeGap } from "./localMessageIndexes";
+import { closeGap, pastConfirmed } from "./localMessageIndexes";
 
 function message(index: number, messageIndex: number, text: string): EventWrapper<Message> {
     return {
@@ -44,6 +44,21 @@ function shown(events: EventWrapper<ChatEvent>[], local: EventWrapper<Message>[]
             : "",
     );
 }
+
+describe("whether a local message is still just past the chat's confirmed events", () => {
+    test("it is when its index is past the latest confirmed", () => {
+        expect(pastConfirmed(11, 10)).toBe(true);
+    });
+
+    test("it isn't once others have posted up to or past it (out of date)", () => {
+        expect(pastConfirmed(10, 10)).toBe(false);
+        expect(pastConfirmed(3, 10)).toBe(false);
+    });
+
+    test("it isn't when the chat isn't known", () => {
+        expect(pastConfirmed(11, undefined)).toBe(false);
+    });
+});
 
 describe("closing the gap a deleted local message leaves", () => {
     test("one after it moves down a place, its message index too", () => {

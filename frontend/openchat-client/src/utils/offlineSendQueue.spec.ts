@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
     canQueueMessage,
     isTransportError,
+    MAX_ONLINE_TRANSPORT_FAILURES,
     OfflineSendQueue,
     QUEUE_RETRY_DELAYS_MS,
     sendFailureCause,
     sendOrder,
+    staysQueued,
     type QueuedSend,
     type ResendOutcome,
 } from "./offlineSendQueue";
@@ -69,6 +71,18 @@ describe("why a send failed", () => {
         expect(isTransportError("Failed to fetch")).toBe(false);
         expect(isTransportError(undefined)).toBe(false);
         expect(isTransportError({ message: "IC0503" })).toBe(false);
+    });
+});
+
+describe("how long a message stays queued", () => {
+    test("for as long as the app is offline", () => {
+        expect(staysQueued(true, 100)).toBe(true);
+    });
+
+    test("while online, until its sends have got no response a few times in a row", () => {
+        expect(staysQueued(false, 1)).toBe(true);
+        expect(staysQueued(false, MAX_ONLINE_TRANSPORT_FAILURES - 1)).toBe(true);
+        expect(staysQueued(false, MAX_ONLINE_TRANSPORT_FAILURES)).toBe(false);
     });
 });
 
@@ -254,6 +268,27 @@ describe("the queue", () => {
         offline.set(false);
         await vi.runAllTimersAsync();
         expect(resend).not.toHaveBeenCalled();
+    });
+
+    test("stopped (logout) while flushing, the rest of the chat's messages don't go", async () => {
+        const a1 = q(chatA, 1, 10);
+        const a2 = q(chatA, 2, 20);
+        queued = [a1, a2];
+        let release: () => void = () => {};
+        resend = vi.fn((x: QueuedSend) => {
+            queued = queued.filter((y) => y !== x);
+            return new Promise<ResendOutcome>((resolve) => {
+                release = () => resolve("sent");
+            });
+        });
+        make();
+        offline.set(false);
+        queue.start();
+        await vi.advanceTimersByTimeAsync(0);
+        queue.stop();
+        release();
+        await vi.runAllTimersAsync();
+        expect(resend.mock.calls.map(([x]) => Number(x.messageId))).toEqual([1]);
     });
 
     test("a resend that throws stays queued, not lost", async () => {
