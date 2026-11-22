@@ -12,6 +12,7 @@ import {
     TypeboxValidationError,
 } from "@shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "../error";
+import { waitForOnline } from "../../utils/waitForOnline";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -73,7 +74,19 @@ export abstract class CanisterAgent {
                     }
 
                     return new Promise((resolve, reject) => {
-                        setTimeout(() => {
+                        setTimeout(async () => {
+                            // With the browser offline a retry can only fail too, and retrying
+                            // each second sent a query over and over while the device was offline.
+                            // So the retry waits for the browser to be back, and goes then. One
+                            // still offline after `OFFLINE_RETRY_WAIT_MS` gives up: pollers stop
+                            // while offline and run again once the app is back.
+                            if (!(await waitForOnline())) {
+                                debug(
+                                    `query: still offline, exiting retry loop. retries: ${retries}. ${debugInfo}`,
+                                );
+                                reject(responseErr);
+                                return;
+                            }
                             this.executeQuery(serviceCall, mapper, args, retries + 1)
                                 .then(resolve)
                                 .catch(reject);

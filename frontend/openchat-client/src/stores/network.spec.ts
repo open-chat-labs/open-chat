@@ -37,4 +37,29 @@ describe("offline detection", () => {
         expect(offline()).toBe(false);
         expect(currentOffline()).toBe(false);
     });
+
+    // A review point on #10570: the value read at module load can be stale by the first subscriber
+    test("reads the browser's state again when the store gets its first subscriber", () => {
+        const onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+        // nothing subscribes while this changes, so no event would tell the store
+        onLine.mockReturnValue(false);
+        expect(currentOffline()).toBe(true);
+
+        onLine.mockReturnValue(true);
+        expect(currentOffline()).toBe(false);
+        onLine.mockRestore();
+    });
+
+    test("follows the online and offline events while subscribed", () => {
+        const onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+        const values: boolean[] = [];
+        const unsubscribe = offlineStore.subscribe((v) => values.push(v));
+
+        window.dispatchEvent(new Event("offline"));
+        window.dispatchEvent(new Event("online"));
+        unsubscribe();
+        onLine.mockRestore();
+
+        expect(values).toEqual([false, true, false]);
+    });
 });
