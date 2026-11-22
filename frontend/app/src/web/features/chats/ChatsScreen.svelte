@@ -23,6 +23,9 @@
         chatListSearchResults,
         chatSummariesListStore,
         currentUserIdStore,
+        failedMessagesStore,
+        queuedMessagesStore,
+        unconfirmedStore,
         favouritesStore,
         i18nKey,
         messagesRead,
@@ -51,6 +54,11 @@
         anonUserStore,
     } from "@client";
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
+    import {
+        latestUnsentByChat,
+        orderWithUnsent,
+        unsentFor,
+    } from "@src/logic/chats/unsentMessages";
     import Markdown from "@src/core/Markdown.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
     import { interpolateNewUi } from "@i18n/i18n";
@@ -89,7 +97,16 @@
     const pendingToasts = getPendingToastHost();
 
     const scope = $derived(region.scope);
-    const chats = $derived($chatSummariesListStore);
+    // the user's messages the backend doesn't have yet (sending, queued, failed): a row shows its
+    // chat's latest, and the list's order follows it (#10591)
+    const unsent = $derived(latestUnsentByChat($unconfirmedStore, $failedMessagesStore, $queuedMessagesStore));
+    const chats = $derived(
+        orderWithUnsent(
+            $chatSummariesListStore,
+            new Set(($pinnedChatsStore.get(scope.kind) ?? []).map(chatIdentifierToString)),
+            unsent,
+        ),
+    );
     const community = $derived(
         scope.kind === "community" ? $selectedCommunitySummaryStore : undefined,
     );
@@ -144,7 +161,7 @@
 
     const listedRows = $derived(
         chats.flatMap((chat) => {
-            const row = chatRow(chat, context);
+            const row = chatRow(chat, context, undefined, unsentFor(chat, unsent));
             return listed(chat, query, $allUsersStore) ? [{ chat, row }] : [];
         }),
     );

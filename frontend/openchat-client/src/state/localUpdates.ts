@@ -44,6 +44,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "@shared";
+import { closeGap, type RemovedPlace } from "../utils/localMessageIndexes";
 import { withPausedStores, writable } from "../utils/stores";
 import { revokeObjectUrls } from "../utils/url";
 import { chatDetailsLocalUpdates } from "./chat/detailsUpdates";
@@ -260,6 +261,37 @@ export class GlobalLocalState {
     failedMessagesForContext(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#failedMessages.value.get(key);
         return state ? [...state.values()] : [];
+    }
+
+    /**
+     * Moves the local messages (failed, queued and unconfirmed) after a deleted one down into its
+     * place (`closeGap`), so that they go on showing. Returns the failed ones that moved, to be
+     * kept on the device where they are now.
+     */
+    closeLocalGap(key: MessageContext, removed: RemovedPlace): EventWrapper<Message>[] {
+        const moved: EventWrapper<Message>[] = [];
+        withPausedStores(() => {
+            this.#failedMessages.update((map) => {
+                const state = map.get(key);
+                for (const [id, msg] of state ?? []) {
+                    const now = closeGap(msg, removed);
+                    if (now !== msg) {
+                        state!.set(id, now);
+                        moved.push(now);
+                    }
+                }
+                return map;
+            });
+            this.#unconfirmed.update((map) => {
+                const state = map.get(key);
+                for (const [id, msg] of state ?? []) {
+                    const now = closeGap(msg, removed);
+                    if (now !== msg) state!.set(id, now);
+                }
+                return map;
+            });
+        });
+        return moved;
     }
 
     deleteFailedMessage(key: MessageContext, messageId: bigint) {

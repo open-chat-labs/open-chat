@@ -27,7 +27,7 @@ Last updated: 2026-11-02. Nothing below has been re-exported to Svelte yet; that
 ### ChatRow
 - **Pin icon** `--ink-4` → `--accent` (**web-visible**).
 - **`locked`:** 13px lock before the title.
-- **`previewIcon`:** small icon before the preview text (native passes "forward").
+- **`previewIcon`:** small icon before the preview text (native passes "forward"; "clock" and "failed" for an unsent latest message, 2026-11-22, #10591).
 - **`fav`, `muted`:** row status icons, used by the native long-press menu.
 
 ### ClaimCalendar

@@ -18,7 +18,11 @@
   interface Props {
     title: string;
     preview: string;
-    /** An icon before the preview, e.g. `forward` when the last message was forwarded. */
+    /**
+     * An icon before the preview, e.g. `forward` when the last message was forwarded; `clock`, the user's own still on
+     * its way, and `failed`, theirs not delivered (in the danger colour, as ChatBubble's "Not delivered"). Those three
+     * are read out; any other is decoration.
+     */
     previewIcon?: string;
     /** The preview's text as the host renders it (markdown, mentions), shown in its place; plain text without it. */
     previewText?: Snippet<[string]>;
@@ -92,6 +96,14 @@
   let pressStart: { x: number; y: number } | null = null;
   let pressFired = false;
   onDestroy(() => clearTimeout(pressTimer));
+
+  // what the preview's icon says to a screen reader, for those that say something
+  const PREVIEW_ICON_LABELS: Record<string, string> = {
+    forward: 'ui.chatRow.forwarded',
+    clock: 'ui.chatRow.sending',
+    failed: 'ui.chatRow.notDelivered',
+  };
+  const previewIconLabel = $derived(previewIcon ? PREVIEW_ICON_LABELS[previewIcon] : undefined);
 
   const hasMenu = $derived(menuItems.length > 0);
   const showKebab = $derived(hasMenu && !touch && (hover || focused || !!menu));
@@ -250,10 +262,11 @@
           <span class="preview" class:unread={unreadCount > 0}
             >{#if previewIcon}<span
                 class="preview-icon"
+                class:failed={previewIcon === 'failed'}
                 style:mask="var(--icon-{previewIcon}) center/contain no-repeat"
-                role={previewIcon === 'forward' ? 'img' : undefined}
-                aria-label={previewIcon === 'forward' ? t('ui.chatRow.forwarded') : undefined}
-                aria-hidden={previewIcon === 'forward' ? undefined : 'true'}></span
+                role={previewIconLabel ? 'img' : undefined}
+                aria-label={previewIconLabel ? t(previewIconLabel) : undefined}
+                aria-hidden={previewIconLabel ? undefined : 'true'}></span
               >{/if}<span class="preview-text"
                 >{#if previewText}{@render previewText(preview)}{:else}{preview}{/if}</span
               ></span>
@@ -495,6 +508,10 @@
     width: 13px;
     height: 13px;
     background: currentColor;
+
+    &.failed {
+      background: var(--status-danger);
+    }
   }
 
   .preview-text {

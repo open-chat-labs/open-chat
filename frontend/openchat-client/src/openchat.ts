@@ -6325,7 +6325,27 @@ export class OpenChat {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<void> {
-        localUpdates.deleteFailedMessage({ chatId, threadRootMessageIndex }, messageId);
+        const context = { chatId, threadRootMessageIndex };
+        const deleted = localUpdates
+            .failedMessagesForContext(context)
+            .find((e) => e.event.messageId === messageId);
+        localUpdates.deleteFailedMessage(context, messageId);
+        // the local messages after it move into its place, or the chat stops showing them (#10591)
+        if (deleted !== undefined) {
+            const moved = localUpdates.closeLocalGap(context, {
+                index: deleted.index,
+                messageIndex: deleted.event.messageIndex,
+            });
+            for (const event of moved) {
+                void this.#worker.send({
+                    kind: "recordFailedMessage",
+                    chatId,
+                    event,
+                    threadRootMessageIndex,
+                    queued: localUpdates.isQueued(context, event.event.messageId),
+                });
+            }
+        }
         return this.#worker.send({
             kind: "deleteFailedMessage",
             chatId,
@@ -6460,6 +6480,13 @@ export class OpenChat {
             withPausedStores(() => {
                 localUpdates.deleteFailedMessage(messageContext, message.messageId);
                 localUpdates.addUnconfirmed(messageContext, messageEvent);
+                // the user's own, read, as a first send marks it (#postSendMessage): sent again
+                // after a reload, it counted as unread in the chat list while on its way
+                messagesRead.markMessageRead(
+                    messageContext,
+                    messageEvent.event.messageIndex,
+                    messageEvent.event.messageId,
+                );
             });
         }
 

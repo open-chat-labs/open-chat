@@ -262,6 +262,36 @@ describe("a message sent without a connection", () => {
             expect(requests.some((r) => r.kind === "deleteFailedMessage")).toBe(true);
         });
 
+        test("deleting the first of two queued messages keeps the second, in its place (#10591)", async () => {
+            online = false;
+            const first = await send();
+            const second = await send();
+            for (const { handlers } of sends) {
+                handlers.onResult([CommonResponses.offline(), {} as Message], true);
+            }
+            await vi.advanceTimersByTimeAsync(0);
+            const firstIndex = failedMessage(first)!.index;
+            expect(failedMessage(second)!.index).toBe(firstIndex + 1);
+
+            await client.deleteFailedMessage(chatId, first);
+
+            expect(failedMessage(first)).toBeUndefined();
+            expect(localUpdates.isQueued(context, second)).toBe(true);
+            // moved into the deleted one's place, so the chat goes on showing it
+            expect(failedMessage(second)!.index).toBe(firstIndex);
+            // and kept on the device there, still queued
+            const kept = requests.findLast(
+                (r) => r.kind === "recordFailedMessage" && r.event.event.messageId === second,
+            );
+            expect(kept?.kind === "recordFailedMessage" && kept.event.index).toBe(firstIndex);
+            expect(kept?.kind === "recordFailedMessage" && kept.queued).toBe(true);
+            // only the deleted one leaves the device
+            const removed = requests.filter((r) => r.kind === "deleteFailedMessage");
+            expect(removed.map((r) => r.kind === "deleteFailedMessage" && r.messageId)).toEqual([
+                first,
+            ]);
+        });
+
         test("a crypto transfer isn't queued, nor posted: the draft holding it stays", async () => {
             online = false;
             const outcome = client.sendMessage(context, "hello", false, transfer, []);

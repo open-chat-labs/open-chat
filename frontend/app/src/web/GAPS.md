@@ -44,6 +44,13 @@ design export needs. Each entry says where it came up.
   rules need accepting shows failed, with Retry, rather than asking out of the blue; a picture in
   one shows broken while it's sent again (the failed message's object URL is revoked, as a Retry's
   always has been).
+  - **The chat list** (2026-11-22, web and native): a row shows the user's latest message there
+    that the backend doesn't have yet when it's newer than the chat's latest, "You: …", with the
+    sending clock (on its way, or queued) or a red failed mark (`ChatRow`'s `previewIcon`, by
+    hand, EXPORT-LOG 2026-11-22); its time and the list's order follow it
+    (`logic/chats/unsentMessages`). Not in the old trees, whose rows show the latest confirmed
+    message. TODO(design): the failed mark (no "Not delivered" words in the row), and whether a
+    thread's unsent reply should show too (it doesn't, as a row shows no thread replies).
 - **Native platform tokens** (native N1, #10364): the library has the native layer
   (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`;
   `--safe-*`, `--scroll-end` and `--text-scale` on `:root`; `[data-always-dark]` for calls;

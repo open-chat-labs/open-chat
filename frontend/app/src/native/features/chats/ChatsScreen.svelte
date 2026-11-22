@@ -9,6 +9,9 @@
 <script lang="ts">
     import {
         allChatsStore,
+        failedMessagesStore,
+        queuedMessagesStore,
+        unconfirmedStore,
         allUsersStore,
         anonUserStore,
         bridgedUsersStore,
@@ -56,6 +59,11 @@
     } from "@src/logic/chats/chatListFilter";
     import { chatRow, rowContext, type ChatListRow } from "@src/logic/chats/chatRow";
     import {
+        latestUnsentByChat,
+        orderWithUnsent,
+        unsentFor,
+    } from "@src/logic/chats/unsentMessages";
+    import {
         matchingChats,
         newPeople,
         resultSection,
@@ -99,10 +107,19 @@
     // ---- the list: the scope's chats, pinned first, then the latest (chatListOrder, as
     // chatSummariesListStore has them for the route's scope)
 
+    // the user's messages the backend doesn't have yet (sending, queued, failed): a row shows its
+    // chat's latest, and the list's order follows it (#10591)
+    const unsent = $derived(
+        latestUnsentByChat($unconfirmedStore, $failedMessagesStore, $queuedMessagesStore),
+    );
     const chats = $derived(
-        chatListOrder(
-            $pinnedChatsStore.get(scope.kind) ?? [],
-            chatsInScope(scope, $allChatsStore, $favouritesStore),
+        orderWithUnsent(
+            chatListOrder(
+                $pinnedChatsStore.get(scope.kind) ?? [],
+                chatsInScope(scope, $allChatsStore, $favouritesStore),
+            ),
+            new Set(($pinnedChatsStore.get(scope.kind) ?? []).map(chatIdentifierToString)),
+            unsent,
         ),
     );
 
@@ -132,7 +149,13 @@
         kept.flatMap((chat): Listed[] => {
             // archived chats show only in a search
             if (chat.membership.archived) return [];
-            return [{ chat, row: chatRow(chat, rowCtx), key: chatIdentifierToString(chat.id) }];
+            return [
+                {
+                    chat,
+                    row: chatRow(chat, rowCtx, undefined, unsentFor(chat, unsent)),
+                    key: chatIdentifierToString(chat.id),
+                },
+            ];
         }),
     );
 
