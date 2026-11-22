@@ -7214,17 +7214,10 @@ export class OpenChat {
             canQueueMessage(event.event.content) &&
             sendFailureCause(failure, isOffline) === "connectivity"
         ) {
-            // The IC had taken it (`accepted`) before the connection went: it's in, or will be,
-            // and sending it again would only be refused as already there. It waits, as sending,
-            // for the chat's next update to bring it (#10591).
-            if (
-                failure.kind === "thrown" &&
-                localUpdates.isUnconfirmed(context, messageId) &&
-                !localUpdates.isPendingAcceptance(context, messageId)
-            ) {
-                console.debug("Message accepted before the connection went", messageId, failure);
-                return;
-            }
+            // One the IC had taken (`accepted`) before the connection went is queued too: it may
+            // still be refused, or expire, and then no update would ever bring it. Sent again
+            // under its own id, it either goes, or is refused as already there, which counts as
+            // delivered (#onResentMessageDelivered), quietly (#10591).
             // a request that got no response while the app says it's online; the agent's own
             // offline answer, or anything while offline, is an offline spell
             const waitingForOnline = isOffline || failure.kind === "response";

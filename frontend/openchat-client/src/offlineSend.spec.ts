@@ -325,14 +325,22 @@ describe("a message sent without a connection", () => {
             serverGroupChatsStore.set(groups);
         }
 
-        test("one the IC had taken before the connection went isn't queued or failed: it waits for the chat's update", async () => {
+        test("one the IC had taken before the connection went is queued, and if it had gone, sent again it counts as delivered", async () => {
             const id = await send();
             lastSend().onResult("accepted", false);
             await vi.advanceTimersByTimeAsync(0);
             await fail({ name: "HttpError", message: "Failed to fetch HTTP request: TypeError" });
-            expect(localUpdates.isQueued(context, id)).toBe(false);
+            // not left to time out as sending: the IC may yet refuse it, or let it expire
+            expect(localUpdates.isQueued(context, id)).toBe(true);
+            expect(failedToasts).toBe(0);
+            void client.retrySendMessage(context, failedMessage(id)!);
+            await vi.advanceTimersByTimeAsync(0);
+            await answer([
+                { kind: "error", code: ErrorCode.MessageIdAlreadyExists, message: undefined },
+                {} as Message,
+            ]);
             expect(failedMessage(id)).toBeUndefined();
-            expect(localUpdates.isUnconfirmed(context, id)).toBe(true);
+            expect(localUpdates.isUnconfirmed(context, id)).toBe(false);
             expect(failedToasts).toBe(0);
         });
 

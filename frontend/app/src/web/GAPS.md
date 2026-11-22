@@ -34,8 +34,8 @@ design export needs. Each entry says where it came up.
   request that got no response (`isTransportError`); a backend's answer, a rejection or a timeout
   while online fails it, with Retry, as before (`sendFailureCause`). One whose sends get no
   response three times in a row while the app says it's online shows failed, with Retry
-  (`staysQueued`); one the IC had taken before the connection went isn't queued (the chat's next
-  update brings it); one sent again that the backend already has counts as delivered; one whose
+  (`staysQueued`); one sent again that the backend already has (the IC had taken it before the
+  connection went) counts as delivered, with no failure shown; one whose
   chat has gone once the chats are in shows failed. A new message in a chat with queued ones
   waits behind them, so they go in the order written. Queued messages are kept on
   the device with the failed ones (marked `queued`, no cache version bump) and go on start-up
