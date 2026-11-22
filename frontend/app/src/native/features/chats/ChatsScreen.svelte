@@ -2,7 +2,8 @@
      kebab (New group, Mark all as read), the search field that lifts into a search, the compact
      filter, and the chats, pinned first. A row opens its conversation; a long-press opens its menu
      (Pin, Favourite, Mute, Mark as read, Archive, Leave group / Delete chat, the destructive ones
-     with Undo). The FAB opens New chat, and fades out while the list scrolls down. It lists the
+     with Undo). The search has the whole window: the tab bar slides down while it's open
+     (context.hideTabBar). The FAB opens New chat, and fades out while the list scrolls down. It lists the
      scope it's the root of (Chats, or Favourites), whatever the route's scope is while another tab
      shows. -->
 <script lang="ts">
@@ -44,6 +45,7 @@
     import LongPressMenu from "@openchat/ui/src/native/LongPressMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { longPress } from "@openchat/ui/src/native/longPress";
+    import { Presence } from "@openchat/ui/src/native/presence.svelte";
     import Markdown from "@src/core/Markdown.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { chatRowActionLabel, chatRowMenu, type ChatRowAction } from "@src/logic/chats/chatMenu";
@@ -340,8 +342,11 @@
     // ---- search: the user's chats that match, and people who aren't a chat yet
 
     let searchOpen = $state(false);
-    // the list's field stays hidden while the search's moves back down onto it
-    let fieldHidden = $state(false);
+    // the list's field stays hidden while the search's moves back down onto it: one timer, so
+    // a quick open again takes the field back and a later close starts it afresh
+    const field = new Presence(SEARCH_LEAVE_MS);
+    onDestroy(() => field.dispose());
+    const fieldHidden = $derived(field.mounted);
     let query = $state("");
     let expanded = $state<Record<string, boolean>>({});
     useOverlay(
@@ -349,6 +354,15 @@
         () => searchOpen,
         () => closeSearch(),
     );
+
+    // the search has the whole window: the tab bar goes down from the field's tap until Cancel
+    // or back (and comes back if the screen goes)
+    $effect(() => {
+        if (!searchOpen) return;
+        const hide = context.hideTabBar;
+        hide(true);
+        return () => hide(false);
+    });
 
     const people = new TermSearch((term) => client.searchUsers(term, 20));
     onDestroy(() => people.dispose());
@@ -362,13 +376,14 @@
     }
 
     function openSearch() {
-        searchOpen = fieldHidden = true;
+        searchOpen = true;
+        field.set(true);
     }
 
     function closeSearch() {
         searchOpen = false;
         onQuery("");
-        setTimeout(() => (fieldHidden = searchOpen), SEARCH_LEAVE_MS);
+        field.set(false);
     }
 
     const CHATS_SHOWN = 3;
@@ -456,7 +471,9 @@
         else if (delta < -6) fabHidden = false;
     }
 
-    const fabShown = $derived(!fabHidden && !searchOpen);
+    // and while the search is still closing, with the tab bar coming back up: the screen reaches
+    // the window's bottom until it's up, and the FAB would come in there, then jump
+    const fabShown = $derived(!fabHidden && !fieldHidden);
 </script>
 
 <!-- the latest message's markdown, on one line, as the old trees' rows render it -->
@@ -705,7 +722,10 @@
     .fab {
         position: absolute;
         inset-inline-end: var(--space-16);
-        bottom: var(--space-16);
+        // The tab bar hidden, or coming back up (the search open, and closing): the screen
+        // reaches the window's bottom (the shell's --tab-bar-room), so the FAB stays where it
+        // was as it fades, rather than dropping
+        bottom: calc(var(--space-16) + var(--tab-bar-room, 0px));
         z-index: 2;
         width: 56px;
         height: 56px;

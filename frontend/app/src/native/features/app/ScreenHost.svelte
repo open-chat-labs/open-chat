@@ -13,6 +13,7 @@
     import { _ } from "svelte-i18n";
     import type { NativeScreen, StackStep } from "../../router/locations";
     import Placeholder from "./Placeholder.svelte";
+    import type { TabBarHides } from "../../shell/tabBarHides.svelte";
     import type { ToastFloors } from "../../shell/toastFloors.svelte";
     import { screenModules, type ScreenContext } from "./screens";
 
@@ -20,21 +21,24 @@
         step: StackStep;
         /** A tab's root, with its translated title. */
         root: { title: string } | undefined;
-        /** The shell's, but for the screen's own toast floor (`floors`) and whether it's on top. */
-        context: Omit<ScreenContext, "toastFloor" | "onTop">;
+        /** The shell's, but for the screen's own toast floor (`floors`), tab bar (`hides`) and whether it's on top. */
+        context: Omit<ScreenContext, "toastFloor" | "onTop" | "hideTabBar">;
         floors: ToastFloors;
+        hides: TabBarHides;
         /** The key of the current tab's top screen. */
         topKey: () => string | undefined;
     };
 
-    let { step, root, context, floors, topKey }: Props = $props();
+    let { step, root, context, floors, hides, topKey }: Props = $props();
 
-    // the screen's own context: its toast floor is its step's, and it's on top while its step is
+    // the screen's own context: its toast floor and its hiding the tab bar are its step's, and
+    // it's on top while its step is
     const key = $derived(step.key);
     const screenContext = $derived<ScreenContext>({
         ...context,
         toastFloor: floors.for(key),
         onTop: () => topKey() === key,
+        hideTabBar: hides.for(key),
     });
 
     const built = $derived(screenModules.has(step.screen.kind));
