@@ -116,11 +116,11 @@
   --safe-bottom:env(safe-area-inset-bottom,0px); --safe-left:env(safe-area-inset-left,0px);
   --scroll-end:calc(var(--safe-bottom) + 48px);
 }
-/* Type sizes, times --text-scale: 1 (the sizes as designed) unless the native app sets it, from the interface
-   size setting and the platform's font scale (the app's textScaleOf). The app sets it on <html>, so everything
-   follows, a portal to <body> (the call screen) included. They're declared on the native root as well, so a scale
-   set on a subtree's own native root still reaches it. The native tree owns the property on <html>: it sets it only
-   while it's mounted and removes it when it unmounts, so the web tree never inherits a scale. */
+/* Type sizes, times --text-scale: 1 (the sizes as designed) unless the app sets it, from the interface size
+   setting and, in the native app, the platform's font scale (the app's textScaleOf). The app sets it on <html>, so
+   everything follows, a portal to <body> (dialogs, the call screen) included. They're declared on the native root
+   as well, so a scale set on a subtree's own native root still reaches it. The web and native trees each set the
+   property on <html> only while mounted and remove it when they unmount, so no other tree inherits a scale. */
 :root,[data-platform="native"]{
   --text-2xs:calc(9.5px * var(--text-scale)); --text-xs:calc(10px * var(--text-scale)); --text-sm:calc(11.5px * var(--text-scale));
   --text-md:calc(12.5px * var(--text-scale)); --text-base:calc(13.5px * var(--text-scale)); --text-lg:calc(15.5px * var(--text-scale));

@@ -442,7 +442,7 @@
   // who's typing, in the accent as the composer's typing strip has it
   .typing-text {
     min-width: 0;
-    font: var(--weight-medium) 12.5px/1.35 'Plus Jakarta Sans', sans-serif;
+    font: var(--weight-medium) var(--text-md) / 1.35 var(--font-sans);
     color: var(--accent-bright);
     @include truncate;
   }
@@ -466,7 +466,7 @@
   .preview {
     flex: 1;
     min-width: 0;
-    font: 400 12.5px/1.35 'Plus Jakarta Sans', sans-serif;
+    font: var(--weight-regular) var(--text-md) / 1.35 var(--font-sans);
     overflow: hidden;
     white-space: nowrap;
   }

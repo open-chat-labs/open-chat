@@ -1,6 +1,25 @@
 import { ScreenWidth } from "@shared";
 import { routeStore } from "../path/stores";
-import { dimensions, fullWidth, layout, mobileWidth, screenWidth } from "./stores";
+import {
+    dimensions,
+    fontScaleFactor,
+    fullWidth,
+    layout,
+    mobileWidth,
+    screenWidth,
+} from "./stores";
+
+describe("fontScaleFactor", () => {
+    test("font scale 2 gives a factor of exactly 1, so the default setting changes no token", () => {
+        expect(fontScaleFactor(2)).toBe(1);
+    });
+
+    test("each stored step 0 to 4 maps to the factor the old trees use", () => {
+        expect([0, 1, 2, 3, 4].map((s) => fontScaleFactor(s as 0 | 1 | 2 | 3 | 4))).toEqual([
+            0.75, 0.875, 1, 1.125, 1.25,
+        ]);
+    });
+});
 
 describe("layout stores", () => {
     beforeEach(() => {

@@ -22,7 +22,8 @@
     import { createOpenChatClient, NEW_UI_BEHAVIOUR } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import { installConsoleHooks } from "@src/logic/moderation/consoleHooks";
-    import { botState, OpenChat } from "@client";
+    import { botState, fontScaleStore, OpenChat } from "@client";
+    import { textScaleOf } from "@src/logic/profile/appearance";
     import { onMount, setContext } from "svelte";
     import { accentStore } from "@theme/accent";
     import { _, isLoading, json, locale } from "svelte-i18n";
@@ -69,6 +70,16 @@
         document.documentElement.dataset.accent = $accentStore;
     });
 
+    // The library's --text-* sizes follow --text-scale: the font size setting (Profile's), as in
+    // the native tree, with no platform font scale of its own (the browser's zoom applies on top).
+    // On <html>, so dialogs and menus follow it too; removed when the tree goes (onMount).
+    $effect(() => {
+        document.documentElement.style.setProperty(
+            "--text-scale",
+            String(textScaleOf($fontScaleStore, 1)),
+        );
+    });
+
     $effect(() => {
         botState.messageFormatter = $_;
     });
@@ -84,6 +95,7 @@
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubscribe();
             uninstallConsoleHooks();
+            document.documentElement.style.removeProperty("--text-scale");
         };
     });
 

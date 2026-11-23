@@ -757,7 +757,8 @@
 
   // ---- appearance ----
   const setAppearance = (patch: { theme?: string; accent?: string; font?: string }) => onAppearance?.(patch);
-  const sampleSize = $derived(onAppearance ? '13.5px' : `${Math.round(13.5 * (FONT_SIZES.find((f) => f.key === fontSize) ?? FONT_SIZES[1]).scale * 10) / 10}px`);
+  // With a host, the host scales the --text-* tokens by the setting (--text-scale), so the sample follows the token
+  const sampleSize = $derived(onAppearance ? 'var(--text-base)' : `${Math.round(13.5 * (FONT_SIZES.find((f) => f.key === fontSize) ?? FONT_SIZES[1]).scale * 10) / 10}px`);
 
   // ---- storage ----
   let cache = $state<'idle' | 'busy' | 'done' | 'failed'>('idle');

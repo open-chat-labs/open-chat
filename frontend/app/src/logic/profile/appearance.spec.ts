@@ -35,8 +35,8 @@ describe("the profile's font sizes", () => {
     });
 });
 
-describe("the native text scale", () => {
-    test("is the font size setting's factor at the platform's default scale", () => {
+describe("the text scale", () => {
+    test("is the font size setting's factor at the platform's default scale (the web's)", () => {
         expect([0, 1, 2, 3, 4].map((s) => textScaleOf(s as 0 | 1 | 2 | 3 | 4, 1))).toEqual([
             0.75, 0.875, 1, 1.125, 1.25,
         ]);
