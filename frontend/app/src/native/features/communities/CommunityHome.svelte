@@ -30,6 +30,7 @@
         type ChannelMatch,
         type ChatListScope,
         type ChatSummary,
+        type CommunityIdentifier,
         type CommunitySummary,
         type OpenChat,
     } from "@client";
@@ -138,9 +139,12 @@
     // ---- the channels the user isn't in, which they can read: found once per community (the old
     // lists' first page), and listed while they're still not in them
 
+    // keyed on the id's string: the summary is a new object whenever it's rebuilt (a message in
+    // one of its channels, a reorder), which isn't another community
+    const communityId = $derived(community.id.communityId);
     let found = $state<ChannelMatch[]>([]);
     $effect(() => {
-        const id = community.id;
+        const id: CommunityIdentifier = { kind: "community", communityId };
         let current = true;
         found = [];
         void (async () => {
@@ -229,10 +233,14 @@
                 });
                 break;
             case "mute_all":
-                context.toast($_("native.community.toast.mutedAll"));
-                if (!(await client.muteAllChannels(target.id, false))) {
-                    context.toast($_("native.community.toast.muteFailed"));
-                }
+                // said once it has gone through (the client shows the mute meanwhile)
+                context.toast(
+                    $_(
+                        (await client.muteAllChannels(target.id, false))
+                            ? "native.community.toast.mutedAll"
+                            : "native.community.toast.muteFailed",
+                    ),
+                );
                 break;
             case "mark_all_read": {
                 const own = chatsInScope(
