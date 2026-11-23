@@ -28,7 +28,8 @@
     });
 
     async function confirm() {
-        toastStore.showOutcome(await client.leaveOrDelete(action));
+        // the web layout is always two columns, so a deleted open group gives way to the default chat
+        toastStore.showOutcome(await client.leaveOrDelete(action, false));
     }
 </script>
 

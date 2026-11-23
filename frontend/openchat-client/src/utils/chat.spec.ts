@@ -21,6 +21,7 @@ import {
     type DirectChatIdentifier,
     type EventWrapper,
     type GroupChatIdentifier,
+    type GiphyContent,
     type GroupChatSummary,
     type Message,
     type MultiUserChatIdentifier,
@@ -44,6 +45,7 @@ import {
     isPreviewingOrLapsed,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    messageContentDimensions,
     messageReadByThem,
     navigationAfterArchivingOpenChat,
     readByThemNowConfirmed,
@@ -486,6 +488,33 @@ describe("sameUser", () => {
         // The same id on different platforms is a different author
         expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, undefined, "1"))).toBe(
             false,
+        );
+    });
+});
+
+describe("a message's media dimensions", () => {
+    const image = (width: number, height: number) => ({
+        width,
+        height,
+        url: "https://media.giphy.com/x.gif",
+        mimeType: "image/gif",
+    });
+    const gif: GiphyContent = {
+        kind: "giphy_content",
+        title: "a gif",
+        desktop: image(480, 270),
+        mobile: image(200, 113),
+    };
+
+    // L7 invariant 2
+    test("a GIF message's dimensions come from the giphy mobile rendition only when the caller says the layout is narrow", () => {
+        expect(messageContentDimensions(gif, true)).toEqual({ width: 200, height: 113 });
+        expect(messageContentDimensions(gif, false)).toEqual({ width: 480, height: 270 });
+    });
+
+    test("are none for a message with no media", () => {
+        expect(messageContentDimensions({ kind: "text_content", text: "hi" }, false)).toBe(
+            undefined,
         );
     });
 });

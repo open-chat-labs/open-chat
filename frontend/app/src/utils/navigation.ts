@@ -1,6 +1,7 @@
 import { publish, routeStore, routerReadyStore, subscribe } from "@client";
 import type { RouteParams } from "@shared";
 import page from "page";
+import { tick } from "svelte";
 import { get } from "svelte/store";
 import { getHistoryStateAction, onPopstate, syncCurrentHistoryState } from "./history";
 
@@ -473,6 +474,15 @@ export function navigate(to: string, intent: NavigationIntent = "in-app") {
 
     // This will close any open modal stack if necessary and then call flushPendingNavigation
     publish("closeModalStack", undefined);
+}
+
+/**
+ * navigate(), once Svelte has applied the changes pending now (a chat just created is in the chat
+ * list by then). `to` is read then.
+ */
+export async function navigateAfterTick(to: () => string): Promise<void> {
+    await tick();
+    navigate(to());
 }
 
 /**

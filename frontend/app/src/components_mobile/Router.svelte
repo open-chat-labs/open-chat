@@ -6,7 +6,7 @@
     import { openDeepLink } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
-    import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
+    import { type ChatIdentifier, type CommunityIdentifier, mobileWidth, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
     import page from "page";
     import { type Component, getContext, onMount, tick, untrack } from "svelte";
     import Home from "./home/HomeRoute.svelte";
@@ -287,7 +287,7 @@
                 client.setSelectedCommunity(id).then((preview) => {
                     if (preview && $selectedChatIdStore === undefined) {
                         // if we are previewing the community we need to select the first chat manually
-                        client.selectDefaultChat();
+                        client.selectDefaultChat(mobileWidth.value);
                     }
                 });
             });
@@ -344,12 +344,12 @@
             } else if (intent?.kind === "deep_link") {
                 untrack(() => {
                     // a landing page link opens outside the app, so show the default chat here
-                    if (!openDeepLink(intent.url)) client.selectDefaultChat();
+                    if (!openDeepLink(intent.url)) client.selectDefaultChat(mobileWidth.value);
                 });
             } else if (intent?.kind === "notification") {
                 untrack(() => navigate(intent.path, "notification"));
             } else {
-                client.selectDefaultChat();
+                client.selectDefaultChat(mobileWidth.value);
             }
         }
     });

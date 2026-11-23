@@ -17,8 +17,14 @@ export function loadExternalAchievements(
     if (last === undefined || now - last.at > SHARED_FOR_MS) {
         last = {
             at: now,
-            load: client.getExternalAchievements().then((value) => ({ value, at: Date.now() })),
+            load: loadedNow(client.getExternalAchievements()),
         };
     }
     return last.load;
+}
+
+// a value once it has loaded, stamped with when it did
+async function loadedNow<T>(load: Promise<T>): Promise<Loaded<T>> {
+    const value = await load;
+    return { value, at: Date.now() };
 }

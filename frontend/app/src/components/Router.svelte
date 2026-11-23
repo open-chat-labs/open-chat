@@ -2,7 +2,7 @@
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
-    import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, shareRoute, threadMessageIndexStore, threadOpenStore } from "@client";
+    import { type ChatIdentifier, type CommunityIdentifier, mobileWidth, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, shareRoute, threadMessageIndexStore, threadOpenStore } from "@client";
     import page from "page";
     import { getContext, onMount, untrack } from "svelte";
     import Home, { type HomeType } from "./home/HomeRoute.svelte";
@@ -254,7 +254,7 @@
                 client.setSelectedCommunity(id).then((preview) => {
                     if (preview && $selectedChatIdStore === undefined) {
                         // if we are previewing the community we need to select the first chat manually
-                        client.selectDefaultChat();
+                        client.selectDefaultChat(mobileWidth.value);
                     }
                 });
             });
@@ -299,7 +299,7 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            client.selectDefaultChat(mobileWidth.value);
         }
     });
 
