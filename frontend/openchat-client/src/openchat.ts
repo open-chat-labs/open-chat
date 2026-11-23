@@ -439,6 +439,7 @@ import {
 import { isCsamReport, type ReportReason } from "./utils/report";
 import {
     failedCopy,
+    keepsLaterMessagesBelow,
     resendsRefusedMessage,
     resendTakesCopy,
     type FailedCopy,
@@ -6600,8 +6601,9 @@ export class OpenChat {
             }
             // Gone to the end, now (others have posted since it was written), the failed messages
             // written after it go after it too, rather than showing above it while it's on its way
+            // (the new UIs; the old UIs' Retry leaves them as they were)
             kept =
-                failedCopy !== undefined
+                failedCopy !== undefined && keepsLaterMessagesBelow(rulesRefused)
                     ? this.#reorderAfterResent(messageContext, messageEvent, failedCopy.timestamp)
                     : [];
             // the *original* event leaves the failed store, and the *new* one is unconfirmed. The
@@ -6829,8 +6831,8 @@ export class OpenChat {
                 }
 
                 // Sent again, it took the time it went: the failed messages written after it are
-                // kept after it, rather than showing above it
-                if (failedCopy !== undefined) {
+                // kept after it, rather than showing above it (the new UIs)
+                if (failedCopy !== undefined && keepsLaterMessagesBelow(rulesRefused)) {
                     this.#keepLocalMessagesAfter(
                         messageContext,
                         failedCopy.timestamp,

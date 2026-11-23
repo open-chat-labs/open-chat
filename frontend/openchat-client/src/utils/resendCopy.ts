@@ -1,3 +1,5 @@
+import type { RulesRefusedSend } from "@shared";
+
 /**
  * Where the copy of a message being sent again is kept: shown failed (with Retry), queued for the
  * connection (the offline send queue owns it, and sends it again itself), or neither.
@@ -26,4 +28,13 @@ export function resendTakesCopy(atStart: FailedCopy, now: FailedCopy): boolean {
  */
 export function resendsRefusedMessage(copy: FailedCopy): boolean {
     return copy === "failed";
+}
+
+/**
+ * Whether a message sent again keeps the failed (and queued) messages written after it below it,
+ * re-placing and retiming them (`reorderAfterResent`, `keptAfterResent`): the new UIs' resends
+ * (`prompt`, `asked`) do. The old UIs' Retry (`fail`) leaves them as they were.
+ */
+export function keepsLaterMessagesBelow(mode: RulesRefusedSend): boolean {
+    return mode !== "fail";
 }

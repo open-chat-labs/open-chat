@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { failedCopy, resendsRefusedMessage, resendTakesCopy } from "./resendCopy";
+import {
+    failedCopy,
+    keepsLaterMessagesBelow,
+    resendsRefusedMessage,
+    resendTakesCopy,
+} from "./resendCopy";
 
 describe("failedCopy", () => {
     test("a message in the failed store is failed, or queued when marked so", () => {
@@ -38,5 +43,16 @@ describe("resendsRefusedMessage", () => {
         expect(resendsRefusedMessage("failed")).toBe(true);
         expect(resendsRefusedMessage("queued")).toBe(false);
         expect(resendsRefusedMessage("none")).toBe(false);
+    });
+});
+
+describe("keepsLaterMessagesBelow", () => {
+    test("the new UIs' resends keep the messages written after them below them", () => {
+        expect(keepsLaterMessagesBelow("prompt")).toBe(true);
+        expect(keepsLaterMessagesBelow("asked")).toBe(true);
+    });
+
+    test("the old UIs' Retry leaves them as they were", () => {
+        expect(keepsLaterMessagesBelow("fail")).toBe(false);
     });
 });

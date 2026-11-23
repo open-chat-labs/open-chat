@@ -162,6 +162,8 @@ describe("a send refused for the rules", () => {
     let answers: SendMessageResponse[];
     // the requests for the chat's details, and how they're answered
     let detailsRequests: WorkerRequest[];
+    // the failed messages written to the device
+    let recorded: WorkerRequest[];
     let latestDetails: () => Promise<GroupChatDetailsResponse>;
 
     beforeEach(() => {
@@ -172,6 +174,7 @@ describe("a send refused for the rules", () => {
         sent = [];
         answers = [];
         detailsRequests = [];
+        recorded = [];
         latestDetails = () => Promise.resolve(detailsWithRules(5n, rules(2)));
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: WorkerRequest) => {
             if (req.kind !== "sendMessage") return { subscribe: () => {} };
@@ -192,6 +195,10 @@ describe("a send refused for the rules", () => {
                 return latestDetails();
             }
             if (req.kind === "deleteFailedMessage") return Promise.resolve();
+            if (req.kind === "recordFailedMessage") {
+                recorded.push(req);
+                return Promise.resolve();
+            }
             return new Promise(() => {});
         }) as never);
         routeStore.set({
@@ -319,6 +326,47 @@ describe("a send refused for the rules", () => {
         await vi.waitFor(() => expect(sent).toHaveLength(2));
         await settle();
         expect(sent).toHaveLength(2);
+    });
+
+    test("the old UIs' Retry leaves the other failed messages as they were", async () => {
+        setup();
+        const otherError: SendMessageResponse = {
+            kind: "error",
+            code: ErrorCode.InitiatorNotAuthorized,
+            message: undefined,
+        };
+        answers.push(otherError);
+        await client.sendMessage(context, "one", false, undefined, []);
+        await vi.waitFor(() => expect(failed()).toHaveLength(1));
+        answers.push(otherError);
+        await client.sendMessage(context, "two", false, undefined, []);
+        await vi.waitFor(() => expect(failed()).toHaveLength(2));
+        // the chat has moved on past both, so the first goes at the end, now
+        const communities = new CommunityMap<CommunitySummary>();
+        const moved = community(true);
+        (moved.channels[0] as { latestEventIndex: number }).latestEventIndex = 50;
+        communities.set(here, moved);
+        serverCommunitiesStore.set(communities);
+        const text = (e: { event: { content: unknown } }) =>
+            (e.event.content as { text: string }).text;
+        const first = failed().find((e) => text(e) === "one")!;
+        const second = failed().find((e) => text(e) === "two")!;
+        const secondSentAt = localUpdates.recentlySentMessages.value.get(second.event.messageId);
+        const recordedBefore = recorded.length;
+
+        answers.push(delivered(10, BigInt(Date.now() + 60_000)));
+        const before = sent.length;
+        // as the old trees call it: no rules mode, so "fail"
+        void client.retrySendMessage(context, first);
+        await vi.waitFor(() => expect(sent.length - before).toBe(1));
+        await settle();
+        await settle();
+
+        expect(failed().find((e) => text(e) === "two")).toBe(second);
+        expect(localUpdates.recentlySentMessages.value.get(second.event.messageId)).toBe(
+            secondSentAt,
+        );
+        expect(recorded.slice(recordedBefore)).toEqual([]);
     });
 
     test("accepted on Retry, a message that failed for another reason keeps its Retry", async () => {
