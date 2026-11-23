@@ -46,7 +46,9 @@ design export needs. Each entry says where it came up.
   Left: no "waiting for connection" wording of its own (it looks like any message sending; design
   may want a clock); a queued message can't be edited; its mentions and the rules accepted for it
   are kept in memory only, so after a reload it goes without mentions, and one in a chat whose
-  rules need accepting shows failed, with Retry, rather than asking out of the blue; a picture in
+  rules need accepting shows failed, with Retry, rather than asking out of the blue (unless the user
+  agreed to those rules as they joined, "Agree and join", which is kept on the device: it goes with
+  that agreement); a picture in
   one shows broken while it's sent again (the failed message's object URL is revoked, as a Retry's
   always has been).
   - **The chat list** (2026-11-22, web and native): a row shows the user's latest message there
@@ -462,6 +464,19 @@ design export needs. Each entry says where it came up.
     (`access.paymentDistributionMessage`). Left: "Get ICP" on a payment the wallet can't cover
     (TODO(design), once the wallet is native, N10); a requirement the backend finds unmet says
     "Access gate not met", not which one.
+  - **Agree and join** (the user's decision, 2026-11-20): Join first reads the rules of what's
+    joined (logic/join's `beginJoin`, the client's `rulesToAcceptBeforeJoining`: a group's or
+    channel's own, and a channel's community's when the user hasn't accepted them, each if
+    enabled) and, with any, opens the join sheet on them: the rules (Markdown, as the pre-send
+    `RulesSheet`), Cancel and "Agree and join" (`agreeAndJoin`). Requirements to meet then take
+    the rules' place in the same sheet; a join that doesn't go through leaves the rules up with a
+    toast. The client keeps what was agreed to in the user's cache on the device, through a
+    reload or a restart, and the first message there accepts it without asking (as the web's,
+    below). TODO(design): the design has no rules step; ours, the pre-send
+    sheet's look with "Rules of {name}" and "Agree and join". The sheet fits its content, so its
+    height changes from the rules to the requirements. A community's preview joins the community:
+    only its rules are asked for, and a channel's own are asked for before the first message in
+    it, as before.
   - **A community's preview** (N8b PR 3, native/features/communities): `/community/x`, not joined
     (or lapsed), shows the design's preview at the Communities tab's root: the cover with Back and
     Share, the avatar, name, "Public · 1,284 members · English" and about, the Requirements card
@@ -2477,6 +2492,43 @@ design export needs. Each entry says where it came up.
     dialog, its row turning Met;
   - the design's preview mode around the bar (its rail entry for the previewed community, the
     reduced menus, the user's own messages hidden): not 8b's;
+  - **Agree and join** (the user's decision, 2026-11-20; every new-UI join: the bar's Join,
+    `?autojoin`, a guest's join replayed after sign-in): the rules of what's joined come before the
+    join, in the `join_rules` dialog (`JoinRulesDialogScreen`, the rules in Markdown as the
+    pre-send `RulesDialog` shows them), with Cancel and "Agree and join". logic/join's `beginJoin`
+    reads them (the client's `rulesToAcceptBeforeJoining`: a group's or channel's own, through the
+    group's `rules` query or the community's `selected_channel_initial`, which answer someone who
+    isn't a member; a channel's community's, and a community's, through its `selected_initial`,
+    when the user hasn't accepted them; each only if enabled); none for a guest, who is asked once
+    the join is replayed after sign-in, and none for a member (a join replayed after sign-in that
+    finds them one is skipped). A channel's rules and its community's are each headed with whose
+    they are. If the user goes to another page while the rules are read, nothing is joined or
+    shown (`DialogStack.closedAll`). "Agree and join" joins (`agreeAndJoin`, with the rules
+    agreed to); the join gate dialog takes the rules dialog's place over its backdrop
+    (`DialogStack.handOff`) when there are requirements to meet, which carry the agreement on. A
+    join that doesn't go through leaves the dialog up with a toast. The backend can't take an
+    acceptance with a join, only with a message, so the client keeps the text agreed to, and when,
+    in the user's cache on the device (the `rules_agreed` store of `openchat_db_<principal>`; each
+    change read and written back in one transaction by the agent, `applyRulesAgreedChange`, so
+    tabs don't write over each other's, and the client's changes made one after another; read as
+    the session starts, so a reload or a restart doesn't lose it; `rulesAgreedOnJoiningStore`
+    holds what was last read), and the first send there, finding those rules still to accept,
+    sends their versions (`acceptedRules`, as the pre-send prompt's acceptance is) without asking,
+    if the text is still what was agreed to; changed rules are asked about as ever. An agreement
+    goes once a send carries it, once the user has left the group, channel or community (a leave
+    that fails keeps it), and after 30 days unused (the pre-send prompt asks then). It's per device: another device asks before
+    the first message, as before. Left:
+    - rules that couldn't be read (offline, a canister error) don't hold the join up: they're
+      asked for before the first message, as before;
+    - a channel of a private community opened through its invite link: the channel's rules can't
+      be read before joining (`selected_channel_initial` takes no invite code, and the backend
+      checks the community is accessible without one), so only the community's are shown, and
+      the channel's are asked for before the first message, every time. Needs `invite_code` on
+      `selected_channel_initial` (a backend change);
+    - a channel of a community being previewed joins the community (the bar's "Join community"):
+      only the community's rules are asked for there, and the channel's before the first message;
+    - TODO(design): no rules dialog in the design; the pre-send dialog's look, with "Rules of
+      {name}", a line saying to agree to join, and "Agree and join".
   - the Back from a channel preview of a joined community goes to the list, not to the next chat
     (the old desktop's `selectDefaultChat`; the router picks the list's default chat).
   - two joins at once on one canister and ledger (two channels of one gated community): the

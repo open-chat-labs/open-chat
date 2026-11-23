@@ -699,6 +699,9 @@ const handlers: Handlers = {
             payload.latestKnownUpdate,
         ),
     getInviteCode: (payload, agent) => agent.getInviteCode(payload.id),
+    getRulesBeforeJoining: (payload, agent) => agent.getRulesBeforeJoining(payload.id),
+    updateRulesAgreedOnJoining: (payload, agent) =>
+        agent.updateRulesAgreedOnJoining(payload.change, payload.now),
     enableInviteCode: (payload, agent) => agent.enableInviteCode(payload.id),
     disableInviteCode: (payload, agent) => agent.disableInviteCode(payload.id),
     resetInviteCode: (payload, agent) => agent.resetInviteCode(payload.id),

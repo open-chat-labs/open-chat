@@ -182,6 +182,32 @@ describe("joining a group or community", () => {
         expect(joinRequests()).toEqual([]);
     });
 
+    // "Agree and join": a member's join is skipped, so there are no rules to agree to first
+    test("a member isn't asked to agree to the rules before a join", async () => {
+        const g = group(ROLE_MEMBER);
+        serverGroupChatsStore.set(new ChatMap<GroupChatSummary>().set(g.id, g));
+        serverCommunitiesStore.set(CommunityMap.fromList([community(ROLE_MEMBER)]));
+
+        expect(await client.rulesToAcceptBeforeJoining(g)).toBeUndefined();
+        expect(await client.rulesToAcceptBeforeJoining(community(ROLE_NONE))).toBeUndefined();
+        expect(sent.filter((r) => r.kind === "getRulesBeforeJoining")).toEqual([]);
+    });
+
+    test("a non-member is asked to agree to the rules the group has enabled", async () => {
+        const g = group(ROLE_NONE);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return req.kind === "getRulesBeforeJoining"
+                ? Promise.resolve({ kind: "success", text: "be nice" })
+                : new Promise(() => {});
+        }) as never);
+
+        expect(await client.rulesToAcceptBeforeJoining(g)).toEqual({
+            chat: { name: g.name, text: "be nice" },
+            community: undefined,
+        });
+    });
+
     // Invariant 2: a lapsed member is not a member, whichever chat list is showing
     test("a lapsed member's join is sent", async () => {
         const g = group(ROLE_MEMBER);

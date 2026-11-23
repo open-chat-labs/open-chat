@@ -24,6 +24,7 @@ export * from "./pubsub";
 export * from "./pubsub_events";
 export * from "./redact";
 export * from "./rng";
+export * from "./rulesAgreed";
 export * from "./session";
 export * from "./set";
 export * from "./standalonePages";

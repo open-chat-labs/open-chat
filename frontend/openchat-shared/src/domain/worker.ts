@@ -1,7 +1,15 @@
 import type { OCError } from "./error";
 import type { Success } from "./response";
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
-import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
+import type {
+    AccessGateConfig,
+    Rules,
+    RulesAgreedChange,
+    RulesAgreedOnJoining,
+    RulesBeforeJoiningResponse,
+    UpdatedRules,
+    VerifiedCredentialArgs,
+} from "./access";
 import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
@@ -365,6 +373,8 @@ export type WorkerRequest = Cloneable<
     | WithdrawCrypto
     | MessagesByMessageIndex
     | GetInviteCode
+    | GetRulesBeforeJoining
+    | UpdateRulesAgreedOnJoining
     | EnableInviteCode
     | ResetInviteCode
     | DisableInviteCode
@@ -1271,6 +1281,17 @@ type ResetInviteCode = {
 type GetInviteCode = {
     id: GroupChatIdentifier | CommunityIdentifier;
     kind: "getInviteCode";
+};
+
+type UpdateRulesAgreedOnJoining = {
+    kind: "updateRulesAgreedOnJoining";
+    change: RulesAgreedChange;
+    now: number;
+};
+
+type GetRulesBeforeJoining = {
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    kind: "getRulesBeforeJoining";
 };
 
 type MessagesByMessageIndex = {
@@ -2778,6 +2799,8 @@ export type WorkerResults = ResultsByKind<{
     withdrawCryptocurrency: WithdrawCryptocurrencyResponse;
     getMessagesByMessageIndex: EventsResponse<Message>;
     getInviteCode: InviteCodeResponse;
+    getRulesBeforeJoining: RulesBeforeJoiningResponse;
+    updateRulesAgreedOnJoining: RulesAgreedOnJoining;
     enableInviteCode: EnableInviteCodeResponse;
     disableInviteCode: DisableInviteCodeResponse;
     resetInviteCode: ResetInviteCodeResponse;

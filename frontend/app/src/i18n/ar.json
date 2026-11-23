@@ -3364,10 +3364,13 @@
     "rules": {
         "accept": "يقبل",
         "acceptTitle": "قواعد الدردشة",
+        "agreeAndJoin": "وافق وانضم",
         "channelRulesExplanation": "سيتم إضافة هذه القواعد إلى أي قواعد مجتمعية",
         "communityRulesExplanation": "سيتم إضافة بادئة إلى أي قواعد قناة لهذه القواعد",
         "enable": "تمكين القواعد",
         "instructions": "إذا تم تمكين ذلك، فيجب على الأعضاء الجدد الموافقة على القواعد قبل أن يتمكنوا من إرسال الرسائل.",
+        "joinIntro": "اقرأ قواعد {name} ووافق عليها للانضمام.",
+        "joinTitle": "قواعد {name}",
         "levelRules": "قواعد {level}",
         "placeholder": "ما هي قواعد {level}؟",
         "promptExistingUsers": "مطالبة الأعضاء الحاليين",

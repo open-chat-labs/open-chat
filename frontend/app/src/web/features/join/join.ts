@@ -1,8 +1,8 @@
 import { i18nKey, type OpenChat } from "@client";
 import {
+    beginJoin,
     joinFailure,
     joinTargetName,
-    startJoin,
     type JoinStep,
     type JoinTarget,
 } from "@src/logic/join/joinFlow.svelte";
@@ -16,23 +16,25 @@ import type { LocalDialog } from "../app/dialogs";
 
 /**
  * What the web tree shows for a join's next step: the requirements in the join gate dialog (in
- * place of one already open), "You joined …" (`name`: what the user joined from, the target's own
- * name unless given), or why it failed. A guest's join opens sign-in by itself (the client moves
- * the identity state to logging_in), and a dismissed PIN prompt says nothing.
+ * place of one already open, or of the rules dialog `from`, over its backdrop), "You joined …"
+ * (`name`: what the user joined from, the target's own name unless given), or why it failed. A
+ * guest's join opens sign-in by itself (the client moves the identity state to logging_in), and a
+ * dismissed PIN prompt says nothing.
  */
 export function showJoinStep(
     step: JoinStep,
     target: JoinTarget,
     dialogs: DialogStack<LocalDialog>,
     name: string = joinTargetName(target),
+    from?: LocalDialog,
 ): void {
     switch (step.kind) {
-        case "evaluate_gates":
-            dialogs.replace(
-                { kind: "join_gate", target, gates: step.gates, name },
-                (open) => open.kind === "join_gate",
-            );
+        case "evaluate_gates": {
+            const gate: LocalDialog = { kind: "join_gate", target, gates: step.gates, name };
+            if (from !== undefined) dialogs.handOff(from, gate, "scrim");
+            else dialogs.replace(gate, (open) => open.kind === "join_gate");
             break;
+        }
         case "joined":
             toastStore.showSuccessToast(i18nKey("access.joined", { name }));
             break;
@@ -50,12 +52,26 @@ export function showJoinStep(
     }
 }
 
-/** Joins a group, channel or community, and shows what comes of it (`name`: as `showJoinStep`). */
+/**
+ * Joins a group, channel or community, and shows what comes of it (`name`: as `showJoinStep`):
+ * its rules first, if it has any to agree to (the rules dialog, whose "Agree and join" carries the
+ * join on), else the join's next step. Reading the rules can take a moment: if the user has gone
+ * to another page meanwhile (the dialogs were all closed), nothing is joined or shown.
+ */
 export async function join(
-    client: Pick<OpenChat, "joinGroup" | "joinCommunity">,
+    client: Pick<OpenChat, "joinGroup" | "joinCommunity" | "rulesToAcceptBeforeJoining">,
     target: JoinTarget,
     dialogs: DialogStack<LocalDialog>,
-    name?: string,
+    name: string = joinTargetName(target),
 ): Promise<void> {
-    showJoinStep(await startJoin(client, target), target, dialogs, name);
+    const closedAll = dialogs.closedAll;
+    const start = await beginJoin(client, target, () => dialogs.closedAll === closedAll);
+    if (start.kind === "agree_to_rules") {
+        dialogs.replace(
+            { kind: "join_rules", target, rules: start.rules, name },
+            (open) => open.kind === "join_rules" || open.kind === "join_gate",
+        );
+        return;
+    }
+    showJoinStep(start, target, dialogs, name);
 }
