@@ -22,6 +22,15 @@ describe("a stream made by an async initialiser (fromAsync)", () => {
         expect((onError.mock.calls[0][0] as Error).message).toBe("Failed to fetch");
     });
 
+    test("an error it throws before its first await rejects the stream", async () => {
+        const onError = vi.fn();
+        Stream.fromAsync<string>(async () => {
+            throw new Error("no user client");
+        }).subscribe({ onResult: vi.fn(), onError });
+        await vi.waitFor(() => expect(onError).toHaveBeenCalled());
+        expect((onError.mock.calls[0][0] as Error).message).toBe("no user client");
+    });
+
     test("results after an await still arrive, in order", async () => {
         const results: string[] = [];
         Stream.fromAsync<string>(async (resolve) => {

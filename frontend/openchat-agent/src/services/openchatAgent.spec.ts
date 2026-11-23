@@ -2087,3 +2087,110 @@ describe("OpenChatAgent loading exchange rates", () => {
         expect(await agent.exchangeRates()).toBeUndefined();
     });
 });
+
+// A stream built from an async setup (`Stream.fromAsync`) rejects when the setup throws, so the
+// worker answers the request with an error instead of the caller waiting for ever (#10594)
+describe("OpenChatAgent streams whose setup fails", () => {
+    const failure = new Error("Failed to fetch");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    beforeEach(() => {
+        agent = Object.create(OpenChatAgent.prototype);
+    });
+    afterEach(() => vi.restoreAllMocks());
+
+    // The error the stream rejects with, failing if it gives a final result first
+    function errorFrom(stream: Stream<unknown>): Promise<unknown> {
+        return new Promise((resolve, reject) =>
+            stream.subscribe({
+                onResult: (value, final) => {
+                    if (final) reject(new Error(`resolved ${String(value)}`));
+                },
+                onError: resolve,
+            }),
+        );
+    }
+
+    test("loading the chats, before the user's canister is known", async () => {
+        const error = await errorFrom(agent.getUpdates(true));
+
+        expect((error as Error).message).toBe(
+            "Attempted to use the user client before it has been initialised",
+        );
+    });
+
+    test("loading another user's profile, when the cache can't be read", async () => {
+        agent._userDb = { isUserIdDeleted: () => Promise.reject(failure) };
+
+        expect(await errorFrom(agent.getPublicProfile(THEM))).toBe(failure);
+    });
+
+    test("loading the registry, when the cache can't be read", async () => {
+        agent._registryDb = { get: () => Promise.reject(failure) };
+
+        expect(await errorFrom(agent.getRegistry())).toBe(failure);
+    });
+
+    test("loading the bots, when the cache can't be read", async () => {
+        agent._chatsDb = { getCachedBots: () => Promise.reject(failure) };
+
+        expect(await errorFrom(agent.getBots(true))).toBe(failure);
+    });
+
+    test("loading the activity feed, when the user's canister can't be reached", async () => {
+        agent._chatsDb = { getActivityFeedEvents: () => Promise.resolve([]) };
+        agent._userClient = { messageActivityFeed: () => Promise.reject(failure) };
+
+        expect(await errorFrom(agent.messageActivityFeed())).toBe(failure);
+    });
+
+    // A message that can't be loaded is left out (`asyncMap` logs it), not a failure of the feed
+    test("the activity feed still ends when its messages can't be loaded", async () => {
+        const event = {
+            messageContext: { chatId: DIRECT },
+            activity: "reaction",
+            eventIndex: 4,
+            messageIndex: 3,
+            timestamp: 10n,
+        };
+        agent._chatsDb = {
+            getActivityFeedEvents: () => Promise.resolve([]),
+            setActivityFeedEvents: () => Promise.resolve(),
+        };
+        agent._userClient = {
+            messageActivityFeed: () => Promise.resolve({ total: 1, events: [event] }),
+        };
+        agent.getMessagesByMessageIndex = () =>
+            new Stream((_resolve, reject) => queueMicrotask(() => reject(failure)));
+        vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+        const final = await new Promise((resolve, reject) =>
+            agent.messageActivityFeed().subscribe({
+                onResult: (value: unknown, isFinal: boolean) => isFinal && resolve(value),
+                onError: reject,
+            }),
+        );
+
+        expect(final).toEqual({ total: 1, events: [event] });
+    });
+
+    test("swapping tokens, when the pools can't be loaded", async () => {
+        agent._registryValue = { tokenDetails: [], swapProviders: ["icpswap"] };
+        agent._dexesAgent = { get: () => ({ getSwapPools: () => Promise.reject(failure) }) };
+
+        const error = await errorFrom(
+            agent.swapTokens(
+                1n,
+                { ledger: ICP_LEDGER },
+                { ledger: LEDGER_CANISTER_CHAT },
+                100n,
+                90n,
+                "icpswap",
+                undefined,
+            ),
+        );
+
+        expect(error).toBe(failure);
+    });
+});

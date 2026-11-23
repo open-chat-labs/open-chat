@@ -2486,7 +2486,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getUpdates(initialLoad: boolean): Stream<SyncSinceResponse | undefined> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             const userId = this.userClient.userId;
 
             if (userId === ANON_USER_ID) {
@@ -2602,8 +2602,8 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    // Never throws, for the reason `getCachedChats` never does: this runs inside a `Stream`
-    // initialiser, where a rejection reaches neither onResult nor onError and the load would hang.
+    // Never throws, for the reason `getCachedChats` never does: it runs as `getUpdates` starts,
+    // where a rejection would fail the whole pass, and seeding from zero beats failing it.
     // Zero is the safe answer for a head that cannot be read. A snapshot seeded at zero leaves the
     // cursor behind everything, so the first pull carries the lot again - a duplicate, which the
     // fold absorbs, where too high a version would be a hole.
@@ -3542,7 +3542,7 @@ export class OpenChatAgent extends EventTarget {
 
     getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
         if (userId) {
-            return new Stream(async (resolve, reject) => {
+            return Stream.fromAsync(async (resolve, reject) => {
                 const deleted = await this._userDb.isUserIdDeleted(userId);
                 // The OpenChat Bot has no canister, so it has no profile to load
                 if (deleted || userId === OPENCHAT_BOT_USER_ID) {
@@ -4525,7 +4525,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getRegistry(): Stream<[RegistryValue, boolean]> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             const current = await this._registryDb.get();
             const isOffline = offline();
             if (current !== undefined) {
@@ -4779,7 +4779,7 @@ export class OpenChatAgent extends EventTarget {
         dex: DexId,
         pin: string | undefined,
     ): Stream<SwapTokensResponse | SwapTokensStep> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             try {
                 const pools = await this._dexesAgent
                     .get()
@@ -5747,7 +5747,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     messageActivityFeed(): Stream<MessageActivityFeedResponse> {
-        return new Stream(async (resolve) => {
+        return Stream.fromAsync(async (resolve) => {
             const cachedEvents = await this._chatsDb.getActivityFeedEvents();
 
             const since = cachedEvents[0]?.timestamp ?? 0n;
@@ -5775,7 +5775,7 @@ export class OpenChatAgent extends EventTarget {
 
             this._chatsDb.setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
 
-            this.hydrateActivityFeedEvents(sorted, (hydrated, final) =>
+            await this.hydrateActivityFeedEvents(sorted, (hydrated, final) =>
                 resolve({ total: server.total, events: hydrated }, final),
             );
         });
@@ -5920,7 +5920,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getBots(initialLoad: boolean): Stream<BotsResponse> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             const cachedBots = await this._chatsDb.getCachedBots();
             const isOffline = offline();
             if (cachedBots && initialLoad) {

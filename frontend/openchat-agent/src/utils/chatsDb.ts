@@ -323,10 +323,10 @@ export class ChatsDb {
         this.getDb().then((db) => db.put("bots", bots, this.principalString));
     }
 
-    // Never throws. `getUpdates` calls this from inside a `Stream` initialiser, which does not
-    // catch a rejected async initialiser: neither onResult nor onError would fire and the caller
-    // would await a load that never completes, on every launch. Returning undefined costs a full
-    // initial load; wedging the app costs everything.
+    // Never throws. `getUpdates` calls this as it starts; a rejection there would now reject its
+    // stream, and `#loadChats` would log it and end the pass with nothing loaded. Returning
+    // undefined instead costs a full initial load, which is better than a pass that fails on every
+    // launch.
     async getCachedChats(): Promise<ChatStateFull | undefined> {
         try {
             return await this.readCachedChats();

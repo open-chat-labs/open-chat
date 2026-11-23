@@ -149,7 +149,7 @@ export class CachedChatEventsReader {
         latestKnownUpdate: bigint | undefined,
         maxEvents: number,
     ): Stream<EventsResponse<ChatEvent>> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             try {
                 const [cachedEvents, missing, dirty] = await this.chatsDb.getCachedEvents(
                     eventIndexRange,
@@ -211,10 +211,16 @@ export class CachedChatEventsReader {
                                     eventIndexRange,
                                     startIndex,
                                     ascending,
-                                ).then((resp) => {
-                                    this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
-                                    resolve(resp, true);
-                                });
+                                )
+                                    .then((resp) => {
+                                        this.chatsDb.setCachedEvents(
+                                            chatId,
+                                            resp,
+                                            threadRootMessageIndex,
+                                        );
+                                        resolve(resp, true);
+                                    })
+                                    .catch(reject);
                             } else {
                                 // rethrowing inside a promise .catch produces an
                                 // unhandled rejection and a stream that never
@@ -288,7 +294,7 @@ export class CachedChatEventsReader {
         latestKnownUpdate: bigint | undefined,
         maxEvents: number,
     ): Stream<EventsResponse<ChatEvent>> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             try {
                 const [cachedEvents, missing, dirty, totalMiss] =
                     await this.chatsDb.getCachedEventsWindowByMessageIndex(
@@ -358,10 +364,16 @@ export class CachedChatEventsReader {
                                         ),
                                     eventIndexRange,
                                     messageIndex,
-                                ).then((resp) => {
-                                    this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
-                                    resolve(resp, true);
-                                });
+                                )
+                                    .then((resp) => {
+                                        this.chatsDb.setCachedEvents(
+                                            chatId,
+                                            resp,
+                                            threadRootMessageIndex,
+                                        );
+                                        resolve(resp, true);
+                                    })
+                                    .catch(reject);
                             } else {
                                 // rethrowing inside a promise .catch produces an
                                 // unhandled rejection and a stream that never
@@ -393,7 +405,7 @@ export class CachedChatEventsReader {
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Stream<EventsResponse<Message>> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             try {
                 const fromCache = await this.chatsDb.loadMessagesByMessageIndex(
                     chatId,
