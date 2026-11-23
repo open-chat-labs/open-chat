@@ -171,20 +171,6 @@ export function selectedChannelRoute(fav: boolean) {
     };
 }
 
-export function favouritesRoute(ctx: PageJS.Context): RouteParams {
-    const $qs = qs(ctx);
-    return {
-        kind: "favourites_route",
-        chatId: ctx.params["chatId"] || undefined,
-        messageIndex: ctx.params["messageIndex"] ? Number(ctx.params["messageIndex"]) : undefined,
-        threadMessageIndex: ctx.params["threadMessageIndex"]
-            ? Number(ctx.params["threadMessageIndex"])
-            : undefined,
-        open: $qs.get("open") === "true",
-        scope: { kind: "favourite" },
-    };
-}
-
 function chatSelectedRoute(
     ctx: PageJS.Context,
     chatType: "direct_chat" | "group_chat",

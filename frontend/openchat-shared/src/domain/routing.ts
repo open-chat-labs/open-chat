@@ -34,7 +34,6 @@ export type RouteParams =
     | SelectedChannelRoute
     | ShareRoute
     | NotFound
-    | HotGroupsRoute
     | AdminRoute
     | ProfileSummaryRoute
     | WelcomeRoute
@@ -141,10 +140,6 @@ export type ShareRoute = NoScope & {
     title: string;
     text: string;
     url: string;
-};
-
-export type HotGroupsRoute = Scoped & {
-    kind: "explore_groups_route";
 };
 
 export type BlogRoute = NoScope & {

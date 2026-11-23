@@ -39,7 +39,11 @@ describe("where a URL is in the native tree", () => {
         // the short and legacy paths too
         expect(stack("/user/u1")).toBe("chats: chats@/chats > conversation@/user/u1");
         expect(stack("/group/g1")).toBe("chats: chats@/chats > conversation@/group/g1");
-        expect(stack("/g1")).toBe("chats: chats@/chats > conversation@/g1");
+        expect(stack("/ryjl3-tyaaa-aaaaa-aaaba-cai")).toBe(
+            "chats: chats@/chats > conversation@/ryjl3-tyaaa-aaaaa-aaaba-cai",
+        );
+        // a short path that is no group id is not found
+        expect(stack("/g1")).toBe("not_found");
     });
 
     test("the URL itself is the top's, message index and query kept", () => {
