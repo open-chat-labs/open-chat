@@ -10,6 +10,7 @@
         allUsersStore,
         bridgedUsersStore,
         communitiesStore,
+        cryptoLookup,
         currentUserIdStore,
         messageActivitySummaryStore,
         userGroupSummariesStore,
@@ -53,6 +54,7 @@
             users: $allUsersStore,
             bridgedUsers: $bridgedUsersStore,
             userGroups: { get: (id) => $userGroupSummariesStore.get(id) },
+            tokens: $cryptoLookup,
             communityName: (id) => $communitiesStore.get(id)?.name,
             readUpTo: $messageActivitySummaryStore.readUpToTimestamp,
         });

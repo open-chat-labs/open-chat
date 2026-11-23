@@ -1384,8 +1384,8 @@ design export needs. Each entry says where it came up.
     prototype's sample has relative times ("12 min", "1 h", "1 d"). To ask.
   - **Opening a payment** opens its message, as every row does: the plan's "or payment" names no
     other place, and the wallet (N10a) isn't built. To ask once it is.
-  - **Poll votes** show under All only, as on the web (the plan's filters have no poll tab; web L3
-    is adding one there); an accepted swap is a payment.
+  - **Poll votes** show under All only, as on the web (no Polls tab anywhere: the user's decision
+    of 2026-11-24, see "Activity feed, first cut"). An accepted swap is a payment.
   - **A mark that fails** (the client undoes it) brings the dot back and says so in a toast
     (`ui.activityPanel.markFailed`); the prototype has no failure. A feed that fails to load
     shows the web's error with Retry; while it loads, the library's activity skeleton.
@@ -1393,8 +1393,8 @@ design export needs. Each entry says where it came up.
     strings, rather than the web panel's titled empty states.
   - **Read state** is the feed's one read-up-to time (see "Activity" under App), so opening a row
     marks the older ones read too, as on the web.
-  - From web L3, still to come in both trees: the person's avatar for the swatch, and a tip's
-    tips on the row.
+  - From web L3, in both trees: the person's own picture over their swatch, and a tip's tips on
+    its row (see "Activity feed, first cut").
   - **Fixed on the way, in both trees:** Mark all read said "Couldn't update that" though it had
     worked. The feed took a mark as failed when the summary's read-up-to time hadn't reached it
     afterwards, and that time stays the server's until the next sync (`messageActivitySummaryStore`
@@ -1842,14 +1842,28 @@ design export needs. Each entry says where it came up.
   (`?panel=activity`, ROUTES.md decision 7), the panel has a back button beside its title
   (`onBack`) that returns the left column to the middle's own panel. The design has none. Its
   empty All tab also gets its own words ("No activity yet") instead of the Payments tab's.
-- **Activity feed, first cut** (`features/activity`, phase 3d): items read as the old feed's,
-  with a colour swatch in place of the person's avatar and the reactions on the message but not
-  its tips. The old feed marked everything read as soon as it loaded; this one follows the
-  design: an item is read once it's opened, or with "Mark all read" (the feed's read-up-to time,
-  so opening one marks the older ones too). Poll votes show under All only (the design's tabs are
-  mentions and payments). The chat's name comes from `logic/activity/activityChatName` (moved out
-  of `ActivityScreen` by native N13, which shares it; its "Thread" is now `thread.title`), the same
-  as the old trees' `getChatName`, which they still have (web L3 switches them to it).
+- **Activity feed, first cut** (`features/activity`, phase 3d): items read as the old feed's.
+  The old feed marked everything read as soon as it loaded; this one follows the design: an item
+  is read once it's opened, or with "Mark all read" (the feed's read-up-to time, so opening one
+  marks the older ones too). The chat's name comes from `logic/activity/activityChatName` (moved
+  out of `ActivityScreen` by native N13, which shares it; its "Thread" is now `thread.title`),
+  which the old trees' rows call too since L3 (they pass their English "Thread", so they read as
+  before). L3 (#10138, by hand, EXPORT-LOG 2026-11-23), to take back to the design export:
+  - **No Polls tab** (the user's decision, 2026-11-24): #10138 asked for poll votes to get a tab
+    of their own, and L3's first version added one on the web, but the tabs stay All / Mentions /
+    Payments on the web and native alike, and a poll vote shows under All only. Why: poll votes
+    are low-signal and rare, four tabs are tight on a phone, and the web and native should have
+    the same feed. The issue's "poll votes' tab" came from its text, not a design decision.
+  - **The person's picture** over their swatch (`ActivityRow`'s `avatarUrl`): the event's user,
+    as the old rows showed; their swatch alone without one (or for an anonymous user), as
+    everywhere in the new UI.
+  - **A tip's tips** on its row, before any reactions, only on a tip's row as in the old feeds: a
+    chip per token, the conversation's (`tipChips`, web 5a: its logo, the total in its decimals,
+    who tipped as its tooltip), the first four then "+N" (mobile's cap: the row is narrow). A
+    token the registry doesn't carry has no chip. Different from the old chips, which showed the
+    number of tippers ("999+" above 999) and a tooltip with each tipper's amount and the total:
+    the new UI shows the total and who, as its messages' tips do. To ask whether the feed should
+    show the old count instead. The chip isn't a button (tipping isn't built, A3).
 - **`DialogShell` opens animated** (by hand, S2): it fades its veil in and lifts its card in
   (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
   the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none
@@ -2480,7 +2494,8 @@ design export needs. Each entry says where it came up.
     empty).
 - **Activity**:
   - read state is a single timestamp, so per-item "mark read" can only move the high-water mark;
-  - seven message-only kinds (`poll_vote` and `p2p_swap_accepted` have no design type);
+  - seven message-only kinds (`p2p_swap_accepted` has no design type, so it's a payment;
+    `poll_vote` is under All only, with no tab of its own: the user's decision, L3);
   - no paging.
 - **Chats**:
   - typing reaches peers only for the selected chat (WebRTC), so the chat list rarely shows it;

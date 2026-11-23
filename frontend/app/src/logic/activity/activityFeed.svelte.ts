@@ -1,9 +1,12 @@
-import type {
-    BridgedUserSummary,
-    CommunityIdentifier,
-    MessageFormatter,
-    OpenChat,
-    UserLookup,
+import {
+    formatTokens,
+    ownUserAvatarUrl,
+    type BridgedUserSummary,
+    type CommunityIdentifier,
+    type CryptocurrencyDetails,
+    type MessageFormatter,
+    type OpenChat,
+    type UserLookup,
 } from "@client";
 import { interpolateNewUi } from "@src/i18n/i18n";
 import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
@@ -38,6 +41,8 @@ export type ActivityContextDeps = {
     bridgedUsers: { get(key: string): BridgedUserSummary | undefined };
     /** userGroupSummariesStore: every community's groups, for a mention of one. */
     userGroups: { get(id: number): { name: string } | undefined };
+    /** cryptoLookup: the tokens, for a tip's chips. */
+    tokens: { get(ledger: string): CryptocurrencyDetails | undefined };
     /** communitiesStore, for a channel's community's name. */
     communityName: (id: CommunityIdentifier) => string | undefined;
     /** The feed's read-up-to time (messageActivitySummaryStore). */
@@ -53,6 +58,17 @@ export function activityContext(deps: ActivityContextDeps): ActivityContext {
         anon: formatter("activity.anon"),
         missing: formatter("activity.missingMessage"),
         userName: (userId) => client.displayName(users.get(userId)),
+        avatar: (userId) => ownUserAvatarUrl(users.get(userId)),
+        token: (ledger) => {
+            const token = deps.tokens.get(ledger);
+            return token === undefined
+                ? undefined
+                : {
+                      symbol: token.symbol,
+                      logo: token.logo,
+                      amount: (e8s) => formatTokens(e8s, token.decimals),
+                  };
+        },
         author: (message) =>
             messageAuthorName(message, {
                 formatter,

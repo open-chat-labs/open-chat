@@ -7,6 +7,11 @@ const ctx: ActivityContext = {
     anon: "An anonymous user",
     missing: "Message content unavailable",
     userName: (id) => ({ alice: "Alice", bob: "Bob", carol: "Carol" })[id] ?? id,
+    avatar: (id) => (id === "alice" ? "https://blobs/alice" : undefined),
+    token: (ledger) =>
+        ledger === "chat-ledger"
+            ? { symbol: "CHAT", logo: "chat.svg", amount: (e8s) => (Number(e8s) / 1e8).toString() }
+            : undefined,
     author: (message) => (message.sender === "me" ? "you" : `author of ${message.sender}`),
     chatName: () => "Group",
     contentText: (content) => (content as { text: string }).text,
@@ -102,7 +107,16 @@ describe("an activity item", () => {
         expect(type("crypto")).toBe("payment");
         expect(type("p2p_swap_accepted")).toBe("payment");
         expect(type("quote_reply")).toBe("reply");
-        expect(type("poll_vote")).toBeUndefined();
+    });
+
+    test("gives a poll vote no tab of its own, so it's under All only", () => {
+        expect(activityItem(event({ activity: "poll_vote" }), ctx).type).toBeUndefined();
+    });
+
+    test("shows the person's own picture, and none for one without or for an anonymous user", () => {
+        expect(activityItem(event(), ctx).avatarUrl).toBe("https://blobs/alice");
+        expect(activityItem(event({ userId: "bob" }), ctx).avatarUrl).toBeUndefined();
+        expect(activityItem(event({ userId: undefined }), ctx).avatarUrl).toBeUndefined();
     });
 
     test("shows a reaction's emoji, and says when the message is gone", () => {
@@ -113,6 +127,41 @@ describe("an activity item", () => {
         expect(activityItem(reacted, ctx).reactions).toEqual(["👍"]);
         const gone = { ...event(), message: undefined } as MessageActivityEvent;
         expect(activityItem(gone, ctx).preview).toBe("Message content unavailable");
+    });
+});
+
+describe("a tip's tips", () => {
+    const tipped = (activity: MessageActivityEvent["activity"]) =>
+        event(
+            { activity },
+            {
+                tips: {
+                    "chat-ledger": { alice: 50_000_000n, bob: 100_000_000n, me: 25_000_000n },
+                    "unknown-ledger": { carol: 1n },
+                },
+            },
+        );
+
+    test("a tip event's chips list exactly the ledgers the registry knows, with who tipped", () => {
+        const tips = activityItem(tipped("tip"), ctx).tips;
+        expect(tips).toHaveLength(1);
+        expect(tips?.[0]).toMatchObject({
+            symbol: "CHAT",
+            logo: 'url("chat.svg") center / cover',
+            mine: true,
+            label: "Alice, Bob, you",
+        });
+    });
+
+    test("a tip chip's total is the sum of its tippers' amounts, in that ledger's decimals", () => {
+        expect(activityItem(tipped("tip"), ctx).tips?.[0].amount).toBe("1.75");
+    });
+
+    test("only tip events carry tips: a reaction or mention on a tipped message shows none", () => {
+        expect(activityItem(tipped("reaction"), ctx).tips).toEqual([]);
+        expect(activityItem(tipped("mention"), ctx).tips).toEqual([]);
+        const gone = { ...tipped("tip"), message: undefined } as MessageActivityEvent;
+        expect(activityItem(gone, ctx).tips).toEqual([]);
     });
 });
 

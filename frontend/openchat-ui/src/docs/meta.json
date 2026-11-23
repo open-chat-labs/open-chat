@@ -82,6 +82,17 @@
         "doc": ""
       },
       {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The person's own picture, over `color` (which shows while it loads, and without one)."
+      },
+      {
         "name": "kind",
         "type": "'user' | 'group'",
         "default": "user",
@@ -105,6 +116,17 @@
         "required": false,
         "componentDefault": "[]",
         "doc": ""
+      },
+      {
+        "name": "tips",
+        "type": "ActivityTip[]",
+        "default": [],
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The tips the message got, a chip per token before the reactions: the first four, then \"+N\"."
       },
       {
         "name": "onClick",
