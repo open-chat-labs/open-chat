@@ -5,12 +5,34 @@ design export needs. Each entry says where it came up.
 
 ## Design / library
 
-- **Accent setting**: done. The accent picked on Landing's theme controls is kept in this browser
-  (`theme/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
-- **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
-  library's `--text-*` tokens yet (L4). Profile's control writes it (8c): the design's four sizes
-  are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
-  stays until another size is picked. The store's fifth step has no size in the design.
+- **Accent setting**: done. The accent picked on Landing's theme controls or in Profile (8c) is
+  kept in this browser (`theme/accent.ts`) and `App.svelte` puts it on `<html>`.
+- **Font size setting** (L4, #10139): done. The app's font size setting (`fontScaleStore`) scales
+  the library's `--text-*` tokens: `App.svelte` sets `--text-scale` on `<html>` from it
+  (`textScaleOf`, `logic/profile/appearance.ts`, the native tree's, with no platform scale on the
+  web), 0.75 to 1.25 by the old trees' factors (`fontScaleFactor`, `@client`), so the default
+  (step 2) leaves the design's sizes exactly as they are. Profile's control writes it (8c): the
+  design's four sizes are the store's steps 1 to 4, and a stored 0 shows as Small and stays until
+  another size is picked, still scaling by its own 0.75 (no one's size moves on its own). The
+  store's fifth step has no size in the design. The steps scale by the old trees' factors, not the
+  design's sample (0.92 / 1 / 1.1 / 1.2), so a setting means the same in every tree. The chat list
+  rows' preview and typing lines were moved onto `--text-md` (the same 12.5px) and Profile's sample
+  bubbles onto `--text-base`, by hand (EXPORT-LOG 2026-11-23), so the list and the sample follow it
+  too. Left: text whose size is a px value in the library (a `font-size` or the `font` shorthand)
+  rather than a `--text-*` token stays as designed, at any setting (the tokens cover most text,
+  the chat list and the messages included). In `lib/components`: `RequirementChip`,
+  `MessageActions`, `QuickAmountChips`, `SwapOffer`, `MessageGroup`, `PrizeMessage`, `EmojiPicker`,
+  `MessageComposer` (the composer's text), `ComposerBar`, `LinkPreview`, `LinkCard`, `Pill`,
+  `Tooltip`, `StepIndicator`, `ProposalMessage`, `MediaMessage`, `TransferMessage`, `FileMessage`,
+  `PollMessage`, `CallEvent`, `DetailRow`, `ChatPicker`, `CopyButton`, `ProgressTimeline`,
+  `ListSectionLabel`, `SortableInputList`, `AmountCard`, `UndoToast`; and 26 of the app components
+  in `features/components` (Profile's own labels, the wallet's, the call's, the builders' …; find
+  them with `grep -rlE "font(-size)?: ?[^;]*[0-9.]+px" openchat-ui/src/features`). Each is a
+  library change with no new design: a px size that matches a token moves onto it, and one that
+  doesn't follows the setting through the library's `text-size($px)` (`lib/styles/_mixins.scss`,
+  its px times `--text-scale`, as the native kit's `NativeMenu` and `SettingsSegmented` use it).
+  The only design question is whether a given element should scale at all (a fixed-size chip or
+  icon label, say).
 - **Offline** (#10564): done, TODO(design) (the web plan has no offline indicator). While the
   client's `offlineStore` says the app is offline, the library's `OfflineStrip` (the native
   shell's too: the offline Banner's tone and icon) runs full width across the top of the window,

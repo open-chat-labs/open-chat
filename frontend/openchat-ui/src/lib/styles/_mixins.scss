@@ -100,7 +100,7 @@
 }
 
 /// A type size with no `--text-*` token of its own (the native prototype's 15px, 14.5px …), times `--text-scale` as the
-/// tokens are, so it follows the native interface size too.
+/// tokens are, so it follows the interface size setting too (web and native).
 @function text-size($px) {
   @return calc(#{$px} * var(--text-scale));
 }

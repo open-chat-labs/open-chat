@@ -482,7 +482,7 @@ t('ui.duration.hours', { count: 12 });`;
             <div class="scale-row"><span class="name">--{t}</span><span class="val">{lengthValues[t] ?? ''}</span></div>
           {/each}
         </div>
-        <p class="note">Each <code>--text-*</code> size is its designed size times <code>--text-scale</code>, which is 1 on the web. The native app sets it on the native root: the font size setting times the platform's font scale (dynamic type, Android's font scale).</p>
+        <p class="note">Each <code>--text-*</code> size is its designed size times <code>--text-scale</code> (1 unless the app sets it). The web and native apps set it on <code>&lt;html&gt;</code> from the font size setting; the native app multiplies it by the platform's font scale (dynamic type, Android's font scale). An off-token size follows it through <code>text-size()</code> (<code>_mixins.scss</code>).</p>
       </Frame>
       <Frame label="Always dark · calls" style="flex-direction: column; flex-wrap: nowrap">
         <div class="swatches">

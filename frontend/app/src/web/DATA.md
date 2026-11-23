@@ -33,7 +33,8 @@ component's props. Missing data is listed in `GAPS.md`.
   those functions' default pictures, everywhere (GAPS.md, Swatches).
 - **Theme and settings.**
   - The root already sets `data-mode` from `currentThemeMode`.
-  - Font size: `fontScaleStore` / `fontSize`, still to be mapped onto `--text-*`.
+  - Accent: `accentStore` (`theme/accent.ts`), on `data-accent`.
+  - Font size: `fontScaleStore`, onto `--text-*` through `--text-scale` (`textScaleOf`, L4).
   - Toggles: `app/src/stores/settings.ts` (enterSend, lowBandwidth, hideTokenBalances,
     chatListFilterStore …).
   - Locale: `setLocale`.

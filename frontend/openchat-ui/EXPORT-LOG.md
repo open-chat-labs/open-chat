@@ -1162,3 +1162,11 @@
 - `ChatRow`: `previewIcon` takes `clock` (the user's latest message, still on its way or waiting for the connection: the bubble's sending clock) and `failed` (theirs, not delivered: the `failed` icon in `--status-danger`, as ChatBubble's "Not delivered"). Both are read out (`ui.chatRow.sending`, `ui.chatRow.notDelivered`), as `forward` is. No prop change (`previewIcon` was a free icon name), so `meta.json` is as it was.
 - Used by the app (web and native): a chat list row shows the user's unsent latest message, "You: …" with its status, when it's newer than the chat's latest (#10591).
 - Not in the design export: the export has no unsent preview. TODO(design): review the failed look (a red mark before the preview, no "Not delivered" text in the row).
+
+## 2026-11-23 — the web's text scale (L4, #10139), by hand
+- `tokens.css`: comment only. The `--text-*` sizes already follow `--text-scale` (2026-11-04, for the native tree); the web tree now sets it too, on `<html>` while it's mounted, from the app's font size setting (Profile's), and removes it when it unmounts. No token changed.
+- `ChatRow`: the preview and typing lines' `12.5px` and `'Plus Jakarta Sans', sans-serif` are now `var(--text-md)` (12.5px) and `var(--font-sans)`, so the chat list's previews follow the scale with the rest of the row. Same size and face at the default scale.
+- `ProfileDialog`: with a host (`onAppearance`), the Interface size sample bubbles are `var(--text-base)` (13.5px) rather than a fixed `13.5px`, so they show the size the host's scale gives. Without a host (the docs) they scale by the design's own factors, as before.
+- Left (the app's `GAPS.md`, "Font size setting"): the components whose text is a px size rather than a token don't follow the scale (28 in `lib/components`, 26 in `features/components`); each can move onto a token or `text-size($px)`.
+- Docs: the Foundations page's `--text-scale` note and `text-size()`'s comment say both trees set the scale, on `<html>`.
+- Not in the design export: the export doesn't scale text.
