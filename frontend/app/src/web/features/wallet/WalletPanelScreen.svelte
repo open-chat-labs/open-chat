@@ -20,10 +20,10 @@
     import { hideTokenBalances, walletCurrency } from "@src/stores/settings";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
-    import { SvelteSet } from "svelte/reactivity";
+    import { BalanceRefresh } from "@src/logic/wallet/balanceRefresh.svelte";
     import type { LeftRegion, ScreenProps } from "../app/screens";
-    import { panelSettings, supportedCount } from "./wallet.adapter";
-    import { walletCatalogue } from "./walletCatalogue.svelte";
+    import { panelSettings, supportedCount } from "@src/logic/wallet/walletTokens";
+    import { walletCatalogue } from "@src/logic/wallet/walletCatalogue.svelte";
     import { walletRequests } from "./walletRequests.svelte";
 
     // the region says only that it's the wallet: the selected token is the URL's
@@ -50,18 +50,10 @@
     // each token's balance, once as the list first shows it, a recent one accepted
     // (the total shows a small spinner while those first ones are coming, and until the client's
     // first try at the exchange rates it's priced with has finished, whether or not they came)
-    const refreshed = new Set<string>();
-    const loadingBalances = new SvelteSet<string>();
+    const balances = new BalanceRefresh(client);
     $effect(() => {
-        for (const token of $walletTokensSorted) {
-            if (refreshed.has(token.ledger)) continue;
-            refreshed.add(token.ledger);
-            const ledger = token.ledger;
-            untrack(() => loadingBalances.add(ledger));
-            client
-                .refreshAccountBalance(ledger, true)
-                .finally(() => loadingBalances.delete(ledger));
-        }
+        const ledgers = $walletTokensSorted.map((t) => t.ledger);
+        untrack(() => balances.refresh(ledgers));
     });
 
     // "View all" and Copy ledger ID are WalletMain's to do
@@ -102,7 +94,7 @@
     balanceHidden={$hideTokenBalances}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
     onRefresh={refresh}
-    balancesLoading={loadingBalances.size > 0}
+    balancesLoading={balances.loading}
     ratesLoading={!$exchangeRatesTriedStore}
     onRemoveToken={(ledger) => client.removeTokenFromWallet(ledger)}
     onToken={(ledger) => navigate(`/wallet/${ledger}`)}

@@ -196,8 +196,9 @@ design export needs. Each entry says where it came up.
     `pending`, so one that lands after it first looked is opened when it lands. components_mobile
     keeps its rule: it takes one when its chat list shows, untracked, so taking it never runs its
     effect again into the default chat.
-  - An app store build has no Wallet tab (`disableWalletFeature`), but a `/wallet` link still opens
-    its stack, with no tab selected.
+  - An app store build has no Wallet tab (`disableWalletFeature`), and a wallet URL (`/wallet`, a
+    token's page, a flow) opens the Chats tab, as an unknown page does (`locations.ts`' `wallet`;
+    N10a). The wallet's screens aren't in a store build's bundle (`screens.ts`).
   - **Android's system back** comes from whichever of two callbacks on the activity takes it
     (`shell/systemBack.ts`): Tauri's own (its `back-button` event), which otherwise took the
     WebView back through its history, so a screen pushed without a URL (a settings page) went back
@@ -1189,6 +1190,44 @@ design export needs. Each entry says where it came up.
     sheet, the kebab's Copy and Edit, search from both places, and the rules sheet's Cancel and
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
+- **Native wallet** (native N10a, #10377; the native plan's 13; `src/native/features/wallet`).
+  Built: the Wallet tab's root (the total, a tap cycling the display currency the web wallet keeps
+  on this device, the eye, the "today" pill, Send / Receive / Swap, the tokens largest first with
+  their price pill, amount, value and share bar, Small balances folding open, Supported tokens and
+  its sheet with search; the empty wallet with Receive leading, Send and Swap disabled saying "Add
+  funds first", the welcome card with Copy @username, the first five supported tokens and View
+  all · N) and a token's page (`/wallet/:ledger`: the price pill in the header, the kebab with its
+  flows and Copy ledger ID, the amount with the eye, the value, its share of the wallet, the
+  buttons, the filter tabs and its history by day, Load older, a failed history's Try again). The
+  figures are the web wallet's: WalletPanel's and WalletMain's logic moved to the library's
+  `lib/wallet` (the holdings, the display currency, prices, the token page's buttons and menu, the
+  activity's days and signs), the web's wallet adapter's tokens and activity to
+  `logic/wallet/walletTokens`, with `walletCatalogue`, the session's histories and the balances'
+  first refresh (`BalanceRefresh`) beside it. Left, or open:
+  - **Send, Receive and Swap** (and the kebab's) go to their flows' URLs (`/wallet/send`,
+    `?token=` from a token's page), which show N3's placeholder until N10b builds them.
+  - TODO(design): **All activity and wallet settings**, the root header's two icons (notes §3.9):
+    neither the notes nor the plan's 13 say what they open on native, and neither screen is in
+    N10a or N10b, so they're not shown yet.
+  - **"Today"** (notes §4) is taken from snapshots of the total kept on this device
+    (`logic/wallet/totalSnapshots`): one an hour at most, taken only while the Wallet tab shows with
+    its balances and prices in (nothing outside the wallet keeps the balances fresh), kept two days,
+    per user. The pill shows the change against the newest snapshot 24 to 25 hours old, so it shows
+    only for someone who had the wallet open about this time yesterday. Open question: whether a
+    snapshot should be taken in the background (it would need the balances refreshed outside the
+    wallet), and how far from 24 hours a snapshot may be.
+  - **No per-token daily change** (notes §4): none tracked.
+  - The **Send / Receive buttons are the library's `lg`** (52px, as the prototype's), not the notes'
+    56px; on a token page at zero "Receive CHAT" can truncate at 390px wide (the prototype's grid).
+  - A token's **history rows** don't open anything (the web's open the explorer).
+  - **Hidden tokens** (the web panel's Hide) aren't offered here: no row menu in the design.
+  - Checked in the browser (390×844, dark): a fresh account's empty wallet, Add funds first, the
+    Supported tokens sheet and its search, a token's page at zero (its menu: Receive and Copy
+    ledger ID), the currency tap and the eye; with balances set in the client's store (local
+    ledgers hold nothing), the funded root and a held token's page; and an app store build (no
+    tab, `/wallet` and a token's URL open Chats). Not checked: a loaded history (the local index
+    canisters failed), small balances (the local wallet's minimum is 0), "today" (needs a day),
+    iOS, the light theme.
 - **Native group settings** (native N7, #10373; the native plan's 11 of 2026-11-10;
   `src/native/features/groupSettings`). Built: Create group (below), and a group's or channel's
   settings pages, pushed from

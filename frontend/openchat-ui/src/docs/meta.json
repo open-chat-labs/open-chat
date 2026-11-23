@@ -23129,6 +23129,17 @@
         "doc": "Resource key (or literal text): the line under the name (a status, a member count)."
       },
       {
+        "name": "titleTag",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): a pill right after the title (a token page's price), as PageHeader's."
+      },
+      {
         "name": "size",
         "type": "'md' | 'lg'",
         "default": "md",

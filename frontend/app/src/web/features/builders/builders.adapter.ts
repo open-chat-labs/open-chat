@@ -31,7 +31,7 @@ import type { Prize, PrizeDraft, SwapOffer, TokenRef, Transfer } from "@openchat
 import { swatchFor } from "@src/logic/chats/chatRow";
 import type { PrizeConfig } from "@src/logic/prize/prizeForm.svelte";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
-import { displayDecimals, wholeTokens } from "../wallet/wallet.adapter";
+import { displayDecimals, wholeTokens } from "@src/logic/wallet/walletTokens";
 
 /** A library resource key (or the app's) with its values, in the app's language. */
 export type Translate = (key: string, values?: Record<string, string | number>) => string;

@@ -8,28 +8,9 @@
 <script lang="ts" module>
   import type { NetworkId } from './WalletReceive.svelte';
 
-  /** One transaction in the wallet's activity (rows are sorted by timestamp, newest first). */
-  export interface WalletActivity {
-    id: string;
-    symbol: string;
-    /** The token's id (WalletToken `id`) when tokens share a symbol; defaults to the symbol. */
-    token?: string;
-    /** `own`: between two of your own wallets, neither in nor out (listed under All only, unsigned). */
-    kind: 'send' | 'receive' | 'swap' | 'own';
-    /** "Received from Lucy Linden", "Swapped to USDT" …; without it, worded from `kind` and `party`. */
-    title?: string;
-    /** The other side ("@lucy", a saved name, an account), for the worded title. */
-    party?: string;
-    /** ms epoch */
-    timestamp: number;
-    /** Shown after the time: "direct chat", "in The Awesome Group" … */
-    context?: string;
-    /** Whole tokens, unsigned. */
-    amount: number;
-    /** USD value. */
-    fiat: number;
-    status?: 'pending' | 'sent' | 'failed';
-  }
+  // one transaction in the wallet's activity: lib/types, which the native wallet reads too
+  import type { WalletActivity as Activity } from '../../lib/types';
+  export type WalletActivity = Activity;
 
   /** A token you can receive without holding it yet. */
   export interface ReceivableToken {
@@ -66,7 +47,21 @@
   import WalletReceive, { type ReceiveNetwork, type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
-  import { flowReturn, pickedFlow, txIdOf, type WalletPlace } from '../../lib/wallet';
+  import {
+    ACTIVITY_KIND_INDEX,
+    activityAmount,
+    activityDay,
+    activityTime,
+    flowReturn,
+    formatPrice,
+    formatShare,
+    groupByDay as dayBuckets,
+    pickedFlow,
+    tokenMenuFlows,
+    tokenPageActions,
+    txIdOf,
+    type WalletPlace,
+  } from '../../lib/wallet';
   import WalletSwap from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
@@ -76,8 +71,7 @@
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
   const usd = (v: number) => `$${num(v, 2)}`;
-  const price = (v: number) =>
-    v >= 100 ? `$${num(v, 2)}` : v < 1 ? `$${num(v, 4)}` : `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+  const price = (v: number) => formatPrice(v, i18n.locale);
 
   const FILTERS = ['ui.walletMain.filterAll', 'ui.walletMain.filterSent', 'ui.walletMain.filterReceived', 'ui.walletMain.filterSwaps'];
 
@@ -98,19 +92,11 @@
     fresh?: boolean;
     status?: 'pending' | 'sent' | 'failed';
   }
-  const KIND_NUM: Record<WalletActivity['kind'], 0 | 1 | 2 | 3> = { own: 0, send: 1, receive: 2, swap: 3 };
+  const KIND_NUM = ACTIVITY_KIND_INDEX;
 
-  const DAY_MS = 86400000;
-  const startOfDay = (ms: number) => {
-    const d = new Date(ms);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime();
-  };
-  const dayOf = (ts: number) => {
-    const diff = Math.round((startOfDay(Date.now()) - startOfDay(ts)) / DAY_MS);
-    return diff <= 0 ? 'today' : diff === 1 ? 'yesterday' : new Date(ts).toLocaleDateString(i18n.locale ?? 'en', { day: 'numeric', month: 'short' });
-  };
-  const timeOf = (ts: number) => new Date(ts).toLocaleTimeString(i18n.locale ?? 'en', { hour: '2-digit', minute: '2-digit' });
+  // the day buckets, times and signs are lib/wallet's, which the native token page shows too
+  const dayOf = (ts: number) => activityDay(ts, i18n.locale);
+  const timeOf = (ts: number) => activityTime(ts, i18n.locale);
   const dayLabel = (d: string) => (d === 'today' ? t('ui.walletMain.today') : d === 'yesterday' ? t('ui.walletMain.yesterday') : d).toUpperCase();
   // between your own wallets reads with the swap arrows
   const KIND: Record<number, Kind> = { 0: 'own', 1: 'send', 2: 'receive', 3: 'swap' };
@@ -294,7 +280,7 @@
     const tk = tokens.find((t) => t.symbol === symbol);
     return tk ? idOf(tk) : symbol;
   };
-  const pct = (v: number) => (total ? `${((v / total) * 100).toFixed(1)}%` : '0%');
+  const pct = (v: number) => formatShare(v, total);
 
   function report() {
     const flow = isFlow(view);
@@ -521,7 +507,7 @@
       timestamp: a.timestamp,
       sub: [timeOf(a.timestamp), a.context].filter(Boolean).join(' · '),
       kind: KIND_NUM[a.kind],
-      amount: `${a.kind === 'receive' ? '+' : a.kind === 'own' ? '' : '\u2212'}${num(a.amount, tk.dp)} ${tk.symbol}`,
+      amount: activityAmount(a.kind, a.amount, tk.dp, tk.symbol, i18n.locale),
       fiat: usd(a.fiat),
       status: a.status,
     };
@@ -538,11 +524,7 @@
   });
 
   // day buckets in the order they first appear (entries are newest first)
-  const groupByDay = <T extends { day: string }>(list: T[]) => {
-    const days: string[] = [];
-    for (const e of list) if (!days.includes(e.day)) days.push(e.day);
-    return days.map((day) => ({ label: dayLabel(day), items: list.filter((e) => e.day === day) }));
-  };
+  const groupByDay = <T extends { day: string }>(list: T[]) => dayBuckets(list).map((g) => ({ label: dayLabel(g.day), items: g.items }));
 
   let lastCount: number | undefined;
   $effect(() => {
@@ -613,22 +595,18 @@
   const heroActions = $derived.by(() => {
     if (!raw) return [];
     // as designed whatever the host offers; one it doesn't does nothing
-    const all = [
-      { target: 'send' as const, label: 'ui.walletMain.sendSymbol', icon: 'wallet-send' },
-      { target: 'receive' as const, label: 'ui.walletMain.receiveSymbol', icon: 'receive' },
-      { target: 'swap' as const, label: 'ui.walletMain.swapSymbol', icon: 'swap' },
-    ];
-    if (raw.held > 0) return all.map((a, i) => ({ ...a, primary: i === 0, disabled: false }));
-    const receive = all.filter((a) => a.target === 'receive').map((a) => ({ ...a, primary: true, disabled: false }));
-    return [...receive, ...all.filter((a) => a.target !== 'receive').map((a) => ({ ...a, primary: false, disabled: true }))];
+    const look = {
+      send: { label: 'ui.walletMain.sendSymbol', icon: 'wallet-send' },
+      receive: { label: 'ui.walletMain.receiveSymbol', icon: 'receive' },
+      swap: { label: 'ui.walletMain.swapSymbol', icon: 'swap' },
+    };
+    return tokenPageActions(raw.held > 0).map((a) => ({ ...a, ...look[a.target] }));
   });
 
   // the token page's kebab: its flows (Receive only at zero), then Copy ledger ID when it has a ledger
   const tokMenuItems = $derived.by((): MenuItem[] => {
     if (!raw) return [];
-    const flowItems = (raw.held > 0 ? (['send', 'receive', 'swap'] as const) : (['receive'] as const))
-      .filter((f) => offers(f))
-      .map((f) => ({
+    const flowItems = tokenMenuFlows(raw.held > 0, offers).map((f) => ({
         label: t(f === 'send' ? 'ui.walletMain.sendSymbol' : f === 'receive' ? 'ui.walletMain.receiveSymbol' : 'ui.walletMain.swapSymbol', { symbol: raw.symbol }),
         mask: mask(f === 'send' ? 'wallet-send' : f),
         onSelect: () => {

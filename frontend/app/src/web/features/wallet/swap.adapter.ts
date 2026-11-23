@@ -10,7 +10,7 @@ import {
     type SwapQuote,
 } from "@client";
 import type { SwapQuote as SwapQuoteView } from "@openchat/ui/src/features/components/WalletSwap.svelte";
-import { wholeTokens } from "./wallet.adapter";
+import { wholeTokens } from "@src/logic/wallet/walletTokens";
 
 /** How many DEXes were checked for a quote: every one asked that swaps the pair at all. */
 export function dexesChecked(quotes: [DexId, DexQuote][]): number {

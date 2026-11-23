@@ -3,14 +3,9 @@
      suspended: the face dimmed, with a red ban mark where the online dot sits (and no online dot).
      loading: whose face it is isn't known yet: Skeleton's shimmer in its place (no colour, image, dot or mark). -->
 <script lang="ts" module>
+  import { AVATAR_GRADIENTS as GRADIENTS } from '../avatarGradients';
   /** The avatar swatches' gradients, for a host drawing a face the same colour elsewhere (a picker's tile). */
-  export const AVATAR_GRADIENTS = {
-    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
-    blue: 'linear-gradient(140deg,#3d7bff,#7a3dff)',
-    teal: 'linear-gradient(140deg,#2ee6a8,#1f8fbf)',
-    amber: 'linear-gradient(140deg,#ffb03d,#ff5f4d)',
-    plum: 'linear-gradient(140deg,#b04dff,#4d2dff)',
-  };
+  export const AVATAR_GRADIENTS = GRADIENTS;
 </script>
 
 <script lang="ts">

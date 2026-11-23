@@ -4,7 +4,7 @@ import { backAction } from "./back";
 import { TabStacks } from "./tabStacks.svelte";
 
 function at(url: string, signedOut = false): NativeLocation {
-    return locationFor(resolve(url), url, { signedOut, community: undefined });
+    return locationFor(resolve(url), url, { signedOut, community: undefined, wallet: true });
 }
 
 // What system back does on `url`, its stack as the URL has it, going back where the header's Back

@@ -153,6 +153,12 @@ export type LocationContext = {
      * is pushed over it. None without a community, when Explore is the tab's root.
      */
     community: CommunityIdentifier | undefined;
+    /**
+     * Whether this build has the wallet. An app store build has none (`disableWalletFeature`):
+     * no tab, and a wallet URL (/wallet, a token's page, a flow) opens the Chats tab instead, as an
+     * unknown page does (the epic's store build: no way to reach the wallet).
+     */
+    wallet: boolean;
 };
 
 /** The place of `route`, whose URL is `url` (path and query). */
@@ -207,7 +213,9 @@ export function locationFor(
                     : [exploreStep()],
             );
         case "wallet_route":
-            return tabs("wallet", url, [walletRoot(), ...walletSteps(route)]);
+            return context.wallet
+                ? tabs("wallet", url, [walletRoot(), ...walletSteps(route)])
+                : tabs("chats", url, [chatsRoot({ kind: "chats" })]);
         case "notifications_route":
             return tabs("activity", url, [
                 step("activity", { kind: "activity" }, "/notifications"),

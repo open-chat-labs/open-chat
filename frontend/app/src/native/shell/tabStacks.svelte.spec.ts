@@ -14,6 +14,7 @@ function at(url: string, communityId: string | null = "c1"): TabsLocation {
     const location = locationFor(resolve(url), url, {
         signedOut: false,
         community: communityId === null ? undefined : community(communityId),
+        wallet: true,
     });
     if (location.area !== "tabs") throw new Error(`${url} isn't in the tabs`);
     return location;
