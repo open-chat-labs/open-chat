@@ -289,6 +289,11 @@ design export needs. Each entry says where it came up.
     need that search (the web's grouped search needs it too, `ChatListPanel` pass 6).
   - **Search's People** are `searchUsers`' (bots included), less the user and anyone they already
     have a DM with. components_mobile's search also listed public groups; the design's has none.
+  - **Finding a public group** (2026-11-23, the user's decision: a design gap): native has no way to
+    find a public group the user isn't in. Search covers the user's chats, people (and messages,
+    once the backend can), and Explore lists communities only, so a group is reached only by its
+    link. TODO(design): where public groups are found (a "Public groups" section in search
+    results, as components_mobile had, or a Groups list in Explore) and what a result shows.
   - **Mute for 1 hour / 8 hours / 1 week**: the backend mutes until unmuted, so the menu has Mute /
     Unmute, as the web's row.
   - **Mark as unread**: the backend can't, so the menu offers Mark as read only when something is
@@ -472,8 +477,12 @@ design export needs. Each entry says where it came up.
     the rules' place in the same sheet; a join that doesn't go through leaves the rules up with a
     toast. The client keeps what was agreed to in the user's cache on the device, through a
     reload or a restart, and the first message there accepts it without asking (as the web's,
-    below). TODO(design): the design has no rules step; ours, the pre-send
-    sheet's look with "Rules of {name}" and "Agree and join". The sheet fits its content, so its
+    below). TODO(design) (the user, 2026-11-23: a design gap): the design has no sheet for
+    accepting a group's, community's or channel's rules, neither on joining nor before a send
+    (the pre-send `RulesSheet`); ours borrows the pre-send sheet's look, with "Rules of {name}" and
+    "Agree and join", and a channel's rules and its community's each under a heading. Wanted from
+    design: the sheet (title, the rules' layout, long rules, the buttons), the same for the web's
+    dialogs, and how the rules step and the join requirements follow each other. The sheet fits its content, so its
     height changes from the rules to the requirements. A community's preview joins the community:
     only its rules are asked for, and a channel's own are asked for before the first message in
     it, as before.
