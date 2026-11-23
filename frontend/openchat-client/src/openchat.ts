@@ -429,7 +429,13 @@ import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import { claimPrizeFailedMessage, isTrustedClick } from "./utils/prizes";
-import { promptsForRefusedRules, rulesRefusal, type RulesRefusal } from "./utils/rulesRefusal";
+import {
+    nextRulesRefusedResend,
+    promptsForRefusedRules,
+    resendsOnceRulesAccepted,
+    rulesRefusal,
+    type RulesRefusal,
+} from "./utils/rulesRefusal";
 import { isCsamReport, type ReportReason } from "./utils/report";
 import {
     failedCopy,
@@ -838,7 +844,7 @@ import {
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { Semaphore } from "./utils/semaphore";
 import { isAbortError, runWhenOnline } from "./utils/online";
-import { pastConfirmed } from "./utils/localMessageIndexes";
+import { keptAfterResent, pastConfirmed, reorderAfterResent } from "./utils/localMessageIndexes";
 import {
     canQueueMessage,
     OfflineSendQueue,
@@ -2023,6 +2029,12 @@ export class OpenChat {
     // The same chats' sends refused for the rules, each being asked for and sent again
     // (#promptForRulesAndResend), which the offline queue waits for (#rulesRefusalsSettled)
     #rulesRefusals = new Map<string, Set<Promise<void>>>();
+    // The failed messages the chat refused for the rules, in the new UIs, with where they are and
+    // whom they mentioned: sent again by themselves once the user accepts the rules on another send
+    // in the chat (#resendRulesRefused)
+    #rulesRefusedFailures = new Map<bigint, { context: MessageContext; mentioned: User[] }>();
+    // The chats (chatIdentifierToString) whose messages refused for the rules are being sent again
+    #rulesRefusedResends = new Set<string>();
 
     // Background calls waiting for the app to be online (see `runWhenOnline`). Aborted when logout
     // starts, so that a push registration parked while offline can't run after the pre-logout
@@ -2101,6 +2113,7 @@ export class OpenChat {
         this.#onlineWaits.abort();
         this.#offlineSendQueue?.stop();
         this.#queuedSendExtras.clear();
+        this.#rulesRefusedFailures.clear();
         this.#onlineTransportFailures.clear();
         this.#resendsInFlight.clear();
         // Run any registered pre-logout tasks (e.g. push-token cleanup) while
@@ -6572,6 +6585,7 @@ export class OpenChat {
                 ? this.#loadMessagePreviews(chat, messageContext, messageEvent)
                 : undefined;
 
+        let kept: EventWrapper<Message>[] = [];
         if (!retrying) {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex, draftAfterSend);
             hooks?.posted();
@@ -6584,11 +6598,18 @@ export class OpenChat {
             ) {
                 return CommonResponses.failure();
             }
+            // Gone to the end, now (others have posted since it was written), the failed messages
+            // written after it go after it too, rather than showing above it while it's on its way
+            kept =
+                failedCopy !== undefined
+                    ? this.#reorderAfterResent(messageContext, messageEvent, failedCopy.timestamp)
+                    : [];
             // the *original* event leaves the failed store, and the *new* one is unconfirmed. The
             // device keeps the failed one until the send has gone (the agent removes it then), so
             // a reload or the app closing meanwhile doesn't lose it (#10591).
             withPausedStores(() => {
                 localUpdates.deleteFailedMessage(messageContext, message.messageId);
+                localUpdates.replaceFailedMessages(messageContext, kept);
                 localUpdates.addUnconfirmed(messageContext, messageEvent);
                 // the user's own, read, as a first send marks it (#postSendMessage): sent again
                 // after a reload, it counted as unread in the chat list while on its way
@@ -6599,6 +6620,8 @@ export class OpenChat {
                 );
             });
         }
+
+        if (kept.length > 0) this.#recordFailedMessages(messageContext, kept);
 
         // Fetch og previews lazily so the message appears in the UI immediately.
         // We await here (after pushing to localUpdates) so the worker call still
@@ -6731,6 +6754,16 @@ export class OpenChat {
                             const refusal = rulesRefusal(resp);
                             if (
                                 refusal !== undefined &&
+                                canRetry &&
+                                resendsOnceRulesAccepted(rulesRefused)
+                            ) {
+                                this.#rulesRefusedFailures.set(messageId, {
+                                    context: messageContext,
+                                    mentioned,
+                                });
+                            }
+                            if (
+                                refusal !== undefined &&
                                 promptsForRefusedRules(rulesRefused, refusal, canRetry)
                             ) {
                                 // shown failed meanwhile, which it stays if the user declines
@@ -6794,9 +6827,121 @@ export class OpenChat {
                 if (acceptedRules?.community !== undefined) {
                     this.#markCommunityRulesAcceptedLocally(true);
                 }
+
+                // Sent again, it took the time it went: the failed messages written after it are
+                // kept after it, rather than showing above it
+                if (failedCopy !== undefined) {
+                    this.#keepLocalMessagesAfter(
+                        messageContext,
+                        failedCopy.timestamp,
+                        resp.timestamp,
+                    );
+                }
+                // The rules accepted with it, the chat's other messages refused for them go again
+                if (acceptedRules !== undefined && resendsOnceRulesAccepted(rulesRefused)) {
+                    void this.#resendRulesRefused(chat);
+                }
             }
             return resp;
         });
+    }
+
+    // The context's failed (and queued) messages written after a message sent again at the end, put
+    // after it (reorderAfterResent), which takes the lowest of their places: it changes in place,
+    // and they're returned, to be stored
+    #reorderAfterResent(
+        context: MessageContext,
+        resent: EventWrapper<Message>,
+        writtenAt: bigint,
+    ): EventWrapper<Message>[] {
+        const placed = reorderAfterResent(
+            resent,
+            localUpdates
+                .failedMessagesForContext(context)
+                .filter((e) => e.event.messageId !== resent.event.messageId),
+            writtenAt,
+        );
+        resent.index = placed.resent.index;
+        resent.timestamp = placed.resent.timestamp;
+        resent.event.messageIndex = placed.resent.event.messageIndex;
+        return placed.kept;
+    }
+
+    // Keeps these failed (or queued) messages on the device as they now are
+    #recordFailedMessages(context: MessageContext, events: EventWrapper<Message>[]) {
+        for (const event of events) {
+            void this.#worker.send({
+                kind: "recordFailedMessage",
+                chatId: context.chatId,
+                event,
+                threadRootMessageIndex: context.threadRootMessageIndex,
+                queued: localUpdates.isQueued(context, event.event.messageId),
+            });
+        }
+    }
+
+    // The context's failed (and queued) messages written after `writtenAt`, which a message written
+    // then and sent again was confirmed at `confirmedAt`, retimed to just after it (keptAfterResent),
+    // on the device too
+    #keepLocalMessagesAfter(context: MessageContext, writtenAt: bigint, confirmedAt: bigint) {
+        const kept = keptAfterResent(
+            localUpdates.failedMessagesForContext(context),
+            writtenAt,
+            confirmedAt,
+        );
+        if (kept.length === 0) return;
+        localUpdates.replaceFailedMessages(context, kept);
+        this.#recordFailedMessages(context, kept);
+    }
+
+    /**
+     * Sends the chat's messages refused for the rules again, now the user has accepted them on
+     * another send: the cause is gone. The oldest written first, one after another, each once,
+     * with no prompt (the rules are accepted). Those that failed for another reason keep their
+     * Retry, as do these if refused again.
+     */
+    async #resendRulesRefused(chat: ChatSummary): Promise<void> {
+        const key = chatIdentifierToString(chat.id);
+        if (this.#rulesRefusedResends.has(key)) return;
+        this.#rulesRefusedResends.add(key);
+        const sent = new Set<bigint>();
+        try {
+            for (;;) {
+                const failed = [];
+                for (const [messageId, refused] of this.#rulesRefusedFailures) {
+                    if (!chatIdentifiersEqual(refused.context.chatId, chat.id)) continue;
+                    const event = localUpdates
+                        .failedMessagesForContext(refused.context)
+                        .find((e) => e.event.messageId === messageId);
+                    if (event === undefined) {
+                        // deleted, or sent meanwhile
+                        this.#rulesRefusedFailures.delete(messageId);
+                        continue;
+                    }
+                    if (localUpdates.isQueued(refused.context, messageId)) continue;
+                    failed.push({
+                        messageId,
+                        timestamp: event.timestamp,
+                        index: event.index,
+                        event,
+                        ...refused,
+                    });
+                }
+                const next = nextRulesRefusedResend(failed, sent);
+                if (next === undefined) return;
+                sent.add(next.messageId);
+                this.#rulesRefusedFailures.delete(next.messageId);
+                await this.#resendFailed(
+                    chat,
+                    next.context,
+                    next.event.event,
+                    next.mentioned,
+                    "asked",
+                );
+            }
+        } finally {
+            this.#rulesRefusedResends.delete(key);
+        }
     }
 
     // The previews of the OpenChat messages that a message links to, which the agent otherwise fills
@@ -7121,8 +7266,8 @@ export class OpenChat {
         if (!loaded) return;
         if (!this.#rulesNeedAccepting(chatId)) return;
         if (!resendsRefusedMessage(this.#failedCopy(messageContext, failed.messageId))) return;
-        // "fail": asked once; refused again, it stays failed rather than asking again
-        await this.#resendFailed(chat, messageContext, failed, mentioned, "fail");
+        // "asked": asked once; refused again, it stays failed rather than asking again
+        await this.#resendFailed(chat, messageContext, failed, mentioned, "asked");
     }
 
     // The selected chat's (or its community's) details, rules included, brought up to date by the
@@ -7547,6 +7692,11 @@ export class OpenChat {
             if (!localUpdates.isQueued(context, messageId)) return "sent";
             if (this.#rulesNeedAccepting(context.chatId)) {
                 if (offline()) return "queued";
+                // failed for the rules: sent by itself once they're accepted
+                this.#rulesRefusedFailures.set(messageId, {
+                    context,
+                    mentioned: extras?.mentioned ?? [],
+                });
                 this.#queuedMessageFailed(context, event);
                 return "sent";
             }

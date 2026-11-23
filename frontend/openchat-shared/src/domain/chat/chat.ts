@@ -2905,9 +2905,11 @@ export type SendMessageOutcome =
  * since it last synced). `fail`: the message shows as failed, with Retry, as the old UIs have it.
  * `prompt`: the latest rules are loaded and the user is asked to accept them, as before any send
  * that needs them; accepted, the message is sent again with the acceptance; declined, it stays
- * failed.
+ * failed. `asked`: the new UIs' send that has just asked (or needs no asking): refused, it stays
+ * failed without asking again. With `prompt` and `asked` a message refused for the rules is sent
+ * again by itself once the user accepts them on another send in the chat; with `fail` it isn't.
  */
-export type RulesRefusedSend = "fail" | "prompt";
+export type RulesRefusedSend = "fail" | "prompt" | "asked";
 
 /**
  * How forwarding a message to several chats at once went. `forwarded`: every chat has it (and the

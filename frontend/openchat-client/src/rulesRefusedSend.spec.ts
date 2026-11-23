@@ -138,9 +138,10 @@ function detailsWithRules(timestamp: bigint, chatRules: VersionedRules): GroupCh
     };
 }
 
-const delivered = (eventIndex: number): SendMessageResponse => ({
+// confirmed at `timestamp`, the backend's time
+const delivered = (eventIndex: number, timestamp = BigInt(Date.now())): SendMessageResponse => ({
     kind: "success",
-    timestamp: BigInt(Date.now()),
+    timestamp,
     messageIndex: eventIndex,
     eventIndex,
 });
@@ -320,6 +321,34 @@ describe("a send refused for the rules", () => {
         expect(sent).toHaveLength(2);
     });
 
+    test("accepted on Retry, a message that failed for another reason keeps its Retry", async () => {
+        setup();
+        answers.push({ kind: "error", code: ErrorCode.InitiatorNotAuthorized, message: undefined });
+        await client.sendMessage(context, "other", false, undefined, [], "prompt");
+        await vi.waitFor(() => expect(failed()).toHaveLength(1));
+        // refused for the rules, whose latest can't be loaded: failed, nothing asked
+        latestDetails = () => Promise.resolve({ kind: "failure" });
+        answers.push(refused);
+        await client.sendMessage(context, "rules", false, undefined, [], "prompt");
+        await vi.waitFor(() => expect(failed()).toHaveLength(2));
+        await vi.waitFor(() => expect(detailsRequests).toHaveLength(1));
+        await settle();
+
+        answers.push(delivered(10));
+        const before = sent.length;
+        const rules = failed().find(
+            (e) => e.event.content.kind === "text_content" && e.event.content.text === "rules",
+        )!;
+        void client.retrySendMessage(context, rules, "prompt");
+        await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+        rulesPrompt()?.resolve(true);
+        await vi.waitFor(() => expect(sent.length - before).toBe(1));
+        await settle();
+        await settle();
+        expect(sent.length - before).toBe(1);
+        expect(failed().map((e) => (e.event.content as { text: string }).text)).toEqual(["other"]);
+    });
+
     // The new UIs queue a message sent without a connection, and send it again once back online
     describe("with the offline send queue", () => {
         let online: boolean;
@@ -413,6 +442,77 @@ describe("a send refused for the rules", () => {
             expect(rulesPrompt()).toBeUndefined();
             expect(sent.length - before).toBe(1);
             expect(failed()).toHaveLength(2);
+        });
+
+        test("declined, then accepted on Retry of the first: the second goes by itself, after it", async () => {
+            setup();
+            await sendOffline("one", "two");
+            const [one, two] = queuedIds();
+            setOnline(true);
+            answers.push(refused);
+            queue()?.start();
+            await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+            rulesPrompt()?.resolve(false);
+            await vi.waitFor(() => expect(failed()).toHaveLength(2));
+            await settle();
+
+            // Retry on the first asks, and the user accepts: it goes, confirmed at a time after
+            // both were written
+            const confirmedAt = BigInt(Date.now() + 60_000);
+            answers.push(delivered(10, confirmedAt), delivered(11));
+            const before = sent.length;
+            const first = failed().find((e) => e.event.messageId === one)!;
+            void client.retrySendMessage(context, first, "prompt");
+            await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+            rulesPrompt()?.resolve(true);
+
+            // the second, refused for the same rules, goes by itself, once, with no prompt, kept
+            // after the first rather than above it
+            await vi.waitFor(() => expect(sent.length - before).toBe(2));
+            await settle();
+            const [resentOne, resentTwo] = sent.slice(before);
+            expect(resentOne.event.event.messageId).toBe(one);
+            expect(resentTwo.event.event.messageId).toBe(two);
+            expect(resentTwo.event.timestamp).toBe(confirmedAt + 1n);
+            expect(rulesPrompt()).toBeUndefined();
+            expect(sent.length - before).toBe(2);
+        });
+
+        test("sent again at the end, others having posted, the second stays below it while it goes", async () => {
+            setup();
+            await sendOffline("one", "two");
+            const [one, two] = queuedIds();
+            setOnline(true);
+            answers.push(refused);
+            queue()?.start();
+            await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+            rulesPrompt()?.resolve(false);
+            await vi.waitFor(() => expect(failed()).toHaveLength(2));
+            await settle();
+
+            // the chat has moved on past both (the rules changing was logged, say)
+            const communities = new CommunityMap<CommunitySummary>();
+            const moved = community(false);
+            (moved.channels[0] as { latestEventIndex: number }).latestEventIndex = 50;
+            communities.set(here, moved);
+            serverCommunitiesStore.set(communities);
+
+            const before = sent.length;
+            void client.retrySendMessage(
+                context,
+                failed().find((e) => e.event.messageId === one)!,
+                "prompt",
+            );
+            await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+            rulesPrompt()?.resolve(true);
+            await vi.waitFor(() => expect(sent.length - before).toBe(1));
+
+            // on its way, at the end, now; the second, written after it, after it
+            const goingAt = sent[before].event.timestamp;
+            const second = failed().find((e) => e.event.messageId === two)!;
+            expect(second.timestamp).toBe(goingAt + 1n);
+            // and the local time it's ordered by against one on its way
+            expect(localUpdates.recentlySentMessages.value.get(two)).toBe(goingAt + 1n);
         });
 
         test("a refused message queued since (Retry offline) is left to the queue", async () => {
