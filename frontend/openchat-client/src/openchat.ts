@@ -207,7 +207,6 @@ import {
     type DiamondMembershipFees,
     type DiamondMembershipStatus,
     type DiamondRoute,
-    type Dimensions,
     type DirectChatIdentifier,
     type DirectChatSummary,
     type EnhancedAccessGate,
@@ -502,7 +501,6 @@ import {
     localUpdates,
     messageActivitySummaryStore,
     messageFiltersStore,
-    mobileWidth,
     moderationFlagsEnabledStore,
     namedAccountsStore,
     navOpen,
@@ -2396,7 +2394,11 @@ export class OpenChat {
             });
     }
 
-    archiveChat(chatId: ChatIdentifier): Promise<boolean> {
+    /**
+     * Archives a chat. If it's the open chat, goes off it first: on a wide layout to the scope's
+     * next chat, on a narrow one (`narrow`: the view shows one column, as a phone's) to the list.
+     */
+    archiveChat(chatId: ChatIdentifier, narrow: boolean): Promise<boolean> {
         // Read first: archiving a chat with unread messages un-archives it again
         const chat = chatSummariesStore.value.get(chatId);
         if (chat !== undefined) {
@@ -2417,7 +2419,7 @@ export class OpenChat {
                     chatId,
                     scope,
                     chatSummariesListStore.value,
-                    get(mobileWidth),
+                    narrow,
                 ),
             );
         }
@@ -2599,7 +2601,11 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
+    /**
+     * Deletes a group or channel. If it was the open chat, opens the scope's default chat, unless
+     * the layout is `narrow` (one column, as a phone's), where the list stays showing.
+     */
+    deleteGroup(chatId: MultiUserChatIdentifier, narrow: boolean): Promise<boolean> {
         // TODO we don't use the local updates mechanism here at the moment for some reason. Probably should.
         return this.#worker
             .send({ kind: "deleteGroup", chatId })
@@ -2607,7 +2613,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
                     if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-                        this.selectDefaultChat();
+                        this.selectDefaultChat(narrow);
                     }
                     return true;
                 } else {
@@ -2636,9 +2642,10 @@ export class OpenChat {
     /**
      * Leaves or deletes a group, channel, DM or community the user has confirmed. When it's the one
      * being viewed, goes off it first and back if the call fails, and once it's gone clears its
-     * details from the right panel; otherwise the route and the panel stay.
+     * details from the right panel; otherwise the route and the panel stay. `narrow`: the view
+     * shows one column (as a phone's), where deleting the open group never opens another chat.
      */
-    async leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteOutcome> {
+    async leaveOrDelete(action: LeaveOrDelete, narrow: boolean): Promise<LeaveOrDeleteOutcome> {
         const navigation = leaveOrDeleteNavigation(
             action,
             selectedChatIdStore.value,
@@ -2648,7 +2655,7 @@ export class OpenChat {
         if (navigation !== undefined) {
             publish("navigateTo", { url: navigation.away });
         }
-        const result = await this.#leaveOrDelete(action);
+        const result = await this.#leaveOrDelete(action, narrow);
         if (navigation !== undefined) {
             if (result === "success") {
                 rightPanelHistory.set([]);
@@ -2659,13 +2666,13 @@ export class OpenChat {
         return leaveOrDeleteOutcome(action, result);
     }
 
-    async #leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteResult> {
+    async #leaveOrDelete(action: LeaveOrDelete, narrow: boolean): Promise<LeaveOrDeleteResult> {
         const ok = (success: boolean) => (success ? "success" : "failure");
         switch (action.kind) {
             case "leave":
                 return this.leaveGroup(action.chatId);
             case "delete":
-                return ok(await this.deleteGroup(action.chatId));
+                return ok(await this.deleteGroup(action.chatId, narrow));
             case "delete_direct_chat":
                 return ok(await this.deleteDirectChat(action.chatId, action.blockUser));
             case "leave_community":
@@ -14305,8 +14312,12 @@ export class OpenChat {
         return false;
     }
 
-    selectDefaultChat(desktopOnly: boolean = true): boolean {
-        if (!desktopOnly || !get(mobileWidth)) {
+    /**
+     * Opens the scope's default chat (the last opened, else the first), unless the layout is
+     * `narrow` (one column, as a phone's), where the list stays showing. Whether it opened one.
+     */
+    selectDefaultChat(narrow: boolean): boolean {
+        if (!narrow) {
             const scope = chatListScopeStore.value;
             const chat = defaultChat(
                 chatSummariesListStore.value,
@@ -16592,31 +16603,6 @@ export class OpenChat {
             externalUrl: embeddedContent ? "" : undefined,
             verified: false,
         };
-    }
-
-    extractDimensionsFromMessageContent(content: MessageContent): Dimensions | undefined {
-        if (content.kind === "image_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "video_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "meme_fighter_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "giphy_content") {
-            return mobileWidth.value
-                ? { width: content.mobile.width, height: content.mobile.height }
-                : { width: content.desktop.width, height: content.desktop.height };
-        }
-
-        return undefined;
     }
 
     updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {

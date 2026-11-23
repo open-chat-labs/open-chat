@@ -33,8 +33,8 @@
     } from "@src/logic/groupOrCommunity/group.svelte";
     import { toastStore } from "@src/stores/toast";
     import { AVATAR_SIZE, BANNER_SIZE, cropCentred, type CroppedImage } from "@src/utils/imageCrop";
-    import { navigate } from "@src/utils/navigation";
-    import { getContext, tick } from "svelte";
+    import { navigateAfterTick } from "@src/utils/navigation";
+    import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
     import { supportedLanguages } from "@i18n/i18n";
     import { gateAssets } from "../access/gates.adapter";
@@ -111,10 +111,10 @@
             switch (outcome.kind) {
                 case "created_without_invites":
                     toastStore.showFailureToast(outcome.message);
-                    void tick().then(() => navigate(`/community/${outcome.id.communityId}`));
+                    void navigateAfterTick(() => `/community/${outcome.id.communityId}`);
                     return;
                 case "created":
-                    void tick().then(() => navigate(`/community/${outcome.id.communityId}`));
+                    void navigateAfterTick(() => `/community/${outcome.id.communityId}`);
                     return;
                 case "failed":
                     toastStore.showFailureToast(outcome.message);
@@ -139,8 +139,8 @@
                 }
                 const chatId = outcome.chatId;
                 // the new group is in the chat list by the next tick
-                void tick().then(() =>
-                    navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId)),
+                void navigateAfterTick(() =>
+                    routeForChatIdentifier($chatListScopeStore.kind, chatId),
                 );
                 return;
             }

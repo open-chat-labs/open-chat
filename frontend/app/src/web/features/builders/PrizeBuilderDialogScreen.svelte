@@ -53,10 +53,8 @@
         ...(untrack(() => dialog.editing)?.excludedUsers ?? []),
     ]);
     const exclusions = {
-        search: (query: string) =>
-            client
-                .searchUsers(query, 20)
-                .then((users) => users.map((u) => ({ id: u.userId, name: u.username }))),
+        search: async (query: string) =>
+            (await client.searchUsers(query, 20)).map((u) => ({ id: u.userId, name: u.username })),
         nameOf: (id: string) => $allUsersStore.get(id)?.username ?? id,
         max: MAX_PRIZE_EXCLUDED_USERS,
     };

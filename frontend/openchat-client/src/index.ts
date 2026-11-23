@@ -36,6 +36,7 @@ export {
     getTypingString,
     isPreviewing,
     isPreviewingOrLapsed,
+    messageContentDimensions,
     messageReadByThem,
     ownGroupAvatarUrl,
     ownUserAvatarUrl,

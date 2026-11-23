@@ -3,6 +3,7 @@
     import { Body, Button, ColourVars, Container, H2, Input } from "component-lib";
     import {
         chatListScopeStore,
+        mobileWidth,
         OpenChat,
         publish,
         routeForChatIdentifier,
@@ -37,7 +38,7 @@
             navigate(routeForScope($chatListScopeStore));
         }
         client
-            .deleteGroup(chat.id)
+            .deleteGroup(chat.id, mobileWidth.value)
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(

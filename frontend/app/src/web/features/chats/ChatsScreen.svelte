@@ -326,7 +326,8 @@
     }
 
     async function archive(chat: ChatSummary) {
-        if (!(await client.archiveChat(chat.id))) {
+        // the web layout is always two columns: archiving the open chat opens the next one
+        if (!(await client.archiveChat(chat.id, false))) {
             toastStore.showFailureToast(i18nKey("archiveChatFailed"));
         }
     }

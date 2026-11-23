@@ -321,7 +321,8 @@
                 client.markAllRead(chat);
                 break;
             case "archive":
-                if (await client.archiveChat(chat.id)) {
+                // one column: archiving the open chat goes to the list, never another chat
+                if (await client.archiveChat(chat.id, true)) {
                     context.toast($_("native.chats.toast.archived"), () => void unarchive(chat));
                 } else {
                     toastStore.showFailureToast(i18nKey("archiveChatFailed"));

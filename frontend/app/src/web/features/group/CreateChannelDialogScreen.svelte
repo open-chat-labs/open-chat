@@ -31,8 +31,8 @@
     import { searchToInvite } from "@src/logic/members/memberManagement.svelte";
     import { toastStore } from "@src/stores/toast";
     import { AVATAR_SIZE, cropCentred } from "@src/utils/imageCrop";
-    import { navigate } from "@src/utils/navigation";
-    import { getContext, tick } from "svelte";
+    import { navigateAfterTick } from "@src/utils/navigation";
+    import { getContext } from "svelte";
     import { gateAssets } from "../access/gates.adapter";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { invitePerson } from "./group.adapter";
@@ -120,7 +120,7 @@
 
     function openChannel(chatId: Parameters<typeof routeForChatIdentifier>[1]) {
         // the new channel is in the chat list by the next tick
-        void tick().then(() => navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId)));
+        void navigateAfterTick(() => routeForChatIdentifier($chatListScopeStore.kind, chatId));
     }
 </script>
 

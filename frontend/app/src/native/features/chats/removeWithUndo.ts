@@ -16,7 +16,8 @@ export function removeWithUndo(
     message: string,
 ): void {
     sendAfterUndo(context, key, message, async () =>
-        toastStore.showOutcome(await client.leaveOrDelete(action)),
+        // the native tree shows one column: deleting the open group leaves the list showing
+        toastStore.showOutcome(await client.leaveOrDelete(action, true)),
     );
 }
 

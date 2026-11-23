@@ -23,6 +23,7 @@
         getTypingString,
         latestMessageExpired,
         messagesRead,
+        mobileWidth,
         notificationsSupported,
         OpenChat,
         pinChatFailureMessage,
@@ -245,7 +246,7 @@
     }
 
     function archiveChat() {
-        client.archiveChat(chatSummary.id).then((success) => {
+        client.archiveChat(chatSummary.id, mobileWidth.value).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }

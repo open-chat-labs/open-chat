@@ -132,7 +132,7 @@ describe("leaving, deleting and archiving", () => {
     test("leaving a chat that isn't open leaves the route alone", async () => {
         response = { kind: "error", code: 0 };
 
-        await client.leaveOrDelete({ kind: "leave", chatId: other });
+        await client.leaveOrDelete({ kind: "leave", chatId: other }, false);
 
         expect(urls).toEqual([]);
     });
@@ -141,7 +141,7 @@ describe("leaving, deleting and archiving", () => {
     test("leaving the open chat goes to its list first and back when it fails", async () => {
         response = { kind: "error", code: 0 };
 
-        await client.leaveOrDelete({ kind: "leave", chatId: viewed });
+        await client.leaveOrDelete({ kind: "leave", chatId: viewed }, false);
 
         expect(urls).toEqual(["/chats", `/chats/group/${viewed.groupId}`]);
     });
@@ -150,7 +150,7 @@ describe("leaving, deleting and archiving", () => {
     test("leaving the open chat stays on the list and clears its details when it succeeds", async () => {
         rightPanelHistory.set([{ kind: "group_details" }]);
 
-        await client.leaveOrDelete({ kind: "leave", chatId: viewed });
+        await client.leaveOrDelete({ kind: "leave", chatId: viewed }, false);
 
         expect(urls).toEqual(["/chats"]);
         expect(rightPanelHistory.value).toEqual([]);
@@ -159,7 +159,7 @@ describe("leaving, deleting and archiving", () => {
     test("leaving a chat that isn't open keeps the open chat's details", async () => {
         rightPanelHistory.set([{ kind: "group_details" }]);
 
-        await client.leaveOrDelete({ kind: "leave", chatId: other });
+        await client.leaveOrDelete({ kind: "leave", chatId: other }, false);
 
         expect(rightPanelHistory.value).toEqual([{ kind: "group_details" }]);
     });
@@ -169,7 +169,7 @@ describe("leaving, deleting and archiving", () => {
         withCommunity();
         response = { kind: "error", code: 0 };
 
-        await client.leaveOrDelete({ kind: "leave_community", id: community });
+        await client.leaveOrDelete({ kind: "leave_community", id: community }, false);
 
         expect(urls).toEqual([]);
     });
@@ -183,7 +183,7 @@ describe("leaving, deleting and archiving", () => {
         });
         response = { kind: "error", code: 0 };
 
-        await client.leaveOrDelete({ kind: "leave_community", id: community });
+        await client.leaveOrDelete({ kind: "leave_community", id: community }, false);
 
         expect(urls.length).toBe(2);
         expect(urls[0]).not.toBe(`/community/${community.communityId}`);
@@ -194,7 +194,7 @@ describe("leaving, deleting and archiving", () => {
     test("the last owner's failed leave says they can't leave", async () => {
         response = { kind: "error", code: ErrorCode.LastOwnerCannotLeave };
 
-        expect(await client.leaveOrDelete({ kind: "leave", chatId: other })).toEqual({
+        expect(await client.leaveOrDelete({ kind: "leave", chatId: other }, false)).toEqual({
             kind: "failed",
             message: expect.objectContaining({ key: "ownerCantLeave" }),
         });
@@ -212,9 +212,68 @@ describe("leaving, deleting and archiving", () => {
             return Promise.resolve({ kind: "success" });
         }) as never);
 
-        await client.archiveChat(toArchive);
+        await client.archiveChat(toArchive, false);
 
         expect(order.indexOf("read")).toBeGreaterThanOrEqual(0);
         expect(order.indexOf("read")).toBeLessThan(order.indexOf("archiveChat"));
+    });
+
+    // L7 invariant 1: the caller says whether the layout is narrow; the client doesn't read the
+    // screen width. Each test opens chats of its own, as the tests above leave theirs gone.
+    function openChat(open: string, next: string) {
+        const chats = new ChatMap<GroupChatSummary>();
+        for (const groupId of [open, next]) {
+            const id = { kind: "group_chat" as const, groupId };
+            chats.set(id, {
+                kind: "group_chat",
+                id,
+                membership: { archived: false },
+            } as unknown as GroupChatSummary);
+        }
+        serverGroupChatsStore.set(chats);
+        routeStore.set({
+            kind: "global_chat_selected_route",
+            scope: { kind: "chats" },
+            chatId: { kind: "group_chat", groupId: open },
+            chatType: "group_chat",
+            open: false,
+        });
+        return { kind: "group_chat" as const, groupId: open };
+    }
+
+    // deleting succeeds; archiving fails, so no chat stays archived
+    function deletesSucceed() {
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "deleteGroup"
+                ? Promise.resolve({ kind: "success" })
+                : req.kind === "archiveChat"
+                  ? Promise.resolve({ kind: "error", code: 0 })
+                  : new Promise(() => {})) as never);
+    }
+
+    test("archiving or deleting the selected chat below 768px doesn't auto-select another chat", async () => {
+        deletesSucceed();
+        const next = "rkp4c-7iaaa-aaaaa-aaaca-cai";
+
+        await client.archiveChat(openChat("renrk-eyaaa-aaaaa-aaada-cai", next), true);
+        expect(urls).toEqual(["/chats"]);
+
+        urls = [];
+        const deleted = openChat("rno2w-sqaaa-aaaaa-aaacq-cai", next);
+        expect(await client.deleteGroup(deleted, true)).toBe(true);
+        expect(urls).toEqual([]);
+    });
+
+    test("archiving or deleting the selected chat at 768px and up selects the scope's default", async () => {
+        deletesSucceed();
+        const next = "rdmx6-jaaaa-aaaaa-aaadq-cai";
+
+        await client.archiveChat(openChat("qoctq-giaaa-aaaaa-aaaea-cai", next), false);
+        expect(urls).toEqual([`/chats/group/${next}`]);
+
+        urls = [];
+        const deleted = openChat("qjdve-lqaaa-aaaaa-aaaeq-cai", next);
+        expect(await client.deleteGroup(deleted, false)).toBe(true);
+        expect(urls).toEqual([`/chats/group/${next}`]);
     });
 });

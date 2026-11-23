@@ -101,6 +101,9 @@ export function runChatMenuItem(
         const failed = await muteChat(client, chat.id, mute, atEveryone, formatter);
         if (failed !== undefined) toastStore.showFailureToast(failed);
     };
+    const block = async (userId: string, blocked: boolean) => {
+        toastStore.showOutcome(await client.setBlockedInDirectChat(userId, blocked));
+    };
     // a guest can look at the details and copy the link; the rest asks them to sign in
     if (!GUEST_ITEMS.has(id) && signInFirst(client)) return;
     switch (id) {
@@ -141,9 +144,7 @@ export function runChatMenuItem(
         case "block":
         case "unblock":
             if (chat.kind === "direct_chat") {
-                void client
-                    .setBlockedInDirectChat(chat.them.userId, id === "block")
-                    .then((outcome) => toastStore.showOutcome(outcome));
+                void block(chat.them.userId, id === "block");
             }
             break;
         case "favourite":

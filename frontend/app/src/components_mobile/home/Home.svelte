@@ -38,6 +38,7 @@
         publish,
         querystringStore,
         routeForChatIdentifier,
+        mobileWidth,
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
@@ -312,7 +313,7 @@
     }
 
     async function leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteOutcome> {
-        const outcome = await client.leaveOrDelete(action);
+        const outcome = await client.leaveOrDelete(action, mobileWidth.value);
         toastStore.showOutcome(outcome);
         return outcome;
     }

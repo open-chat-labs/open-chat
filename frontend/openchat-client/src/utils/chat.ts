@@ -18,6 +18,7 @@ import type {
     CommunityMap,
     CommunitySummary,
     CreateGroupSuccess,
+    Dimensions,
     CreatedUser,
     CryptocurrencyContent,
     CryptocurrencyDetails,
@@ -2727,6 +2728,29 @@ export function defaultChat(
             ? undefined
             : chats.find((c) => chatIdentifiersEqual(c.id, lastSelected));
     return last ?? chats.find((c) => !c.membership.archived);
+}
+
+/**
+ * The size an image, video, meme or GIF message shows at, or undefined for other content. A GIF
+ * uses the giphy rendition for the layout: its mobile one when `narrow` (one column, as a
+ * phone's), else its desktop one.
+ */
+export function messageContentDimensions(
+    content: MessageContent,
+    narrow: boolean,
+): Dimensions | undefined {
+    switch (content.kind) {
+        case "image_content":
+        case "video_content":
+        case "meme_fighter_content":
+            return { width: content.width, height: content.height };
+        case "giphy_content": {
+            const rendition = narrow ? content.mobile : content.desktop;
+            return { width: rendition.width, height: rendition.height };
+        }
+        default:
+            return undefined;
+    }
 }
 
 /**

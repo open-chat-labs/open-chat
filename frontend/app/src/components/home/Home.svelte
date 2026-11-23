@@ -48,6 +48,7 @@
         pinNumberResolverStore,
         querystringStore,
         routeForChatIdentifier,
+        mobileWidth,
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
@@ -466,7 +467,7 @@
     }
 
     async function leaveOrDelete(action: LeaveOrDelete): Promise<void> {
-        toastStore.showOutcome(await client.leaveOrDelete(action));
+        toastStore.showOutcome(await client.leaveOrDelete(action, mobileWidth.value));
     }
 
     function showInviteGroupUsers(show: boolean) {
