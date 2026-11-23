@@ -3364,10 +3364,13 @@
     "rules": {
         "accept": "تایید کنید",
         "acceptTitle": "قوانین چت",
+        "agreeAndJoin": "موافقت و پیوستن",
         "channelRulesExplanation": "اینها پیشوند هر قواعد انجمن خواهند بود",
         "communityRulesExplanation": "هر گونه قوانین کانال پیشوند این قوانین خواهد بود",
         "enable": "قوانین را فعال کنید",
         "instructions": "در صورت فعال بودن، اعضای جدید قبل از ارسال پیام باید با قوانین موافقت کنند.",
+        "joinIntro": "قوانین {name} را بخوانید و برای پیوستن با آن‌ها موافقت کنید.",
+        "joinTitle": "قوانین {name}",
         "levelRules": "قوانین {level}",
         "placeholder": "قوانین {level} چیست؟",
         "promptExistingUsers": "درخواست اعضای موجود",

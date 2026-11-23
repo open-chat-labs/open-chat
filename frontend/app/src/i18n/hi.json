@@ -3364,10 +3364,13 @@
     "rules": {
         "accept": "स्वीकार करना",
         "acceptTitle": "चैट नियम",
+        "agreeAndJoin": "सहमत हों और जुड़ें",
         "channelRulesExplanation": "इन्हें किसी भी सामुदायिक नियम से पहले जोड़ा जाएगा",
         "communityRulesExplanation": "किसी भी चैनल नियम को इन नियमों से पहले जोड़ा जाएगा",
         "enable": "नियम सक्षम करें",
         "instructions": "यदि सक्षम किया गया है, तो नए सदस्यों को संदेश भेजने से पहले नियमों से सहमत होना होगा।",
+        "joinIntro": "{name} के नियम पढ़ें, और जुड़ने के लिए उनसे सहमत हों।",
+        "joinTitle": "{name} के नियम",
         "levelRules": "{level} नियम",
         "placeholder": "{level} नियम क्या हैं?",
         "promptExistingUsers": "मौजूदा सदस्यों को संकेत दें",

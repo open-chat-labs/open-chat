@@ -17,6 +17,8 @@ export class DialogStack<D> {
     #handedOffTo: D | undefined;
     // the backdrop the dialog handed off from showed, which the one handed off to keeps
     #handOffBackdrop: HandOffBackdrop = "veil";
+    // not state: nothing shows it
+    #closedAll = 0;
 
     get items(): readonly D[] {
         return this.#items;
@@ -63,7 +65,17 @@ export class DialogStack<D> {
     }
 
     closeAll(): void {
+        this.#closedAll += 1;
         if (this.#items.length > 0) this.#items = [];
+    }
+
+    /**
+     * How many times everything was closed (each navigation, Back or Forward): a dialog to open
+     * once something slow has answered isn't opened if this changed meanwhile, as the page it was
+     * for has gone (`join`'s rules).
+     */
+    get closedAll(): number {
+        return this.#closedAll;
     }
 }
 

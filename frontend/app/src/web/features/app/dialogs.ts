@@ -13,6 +13,7 @@ import type {
     P2PSwapContentInitial,
     PriceSubject,
     PrizeContentInitial,
+    RulesToAccept,
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { FreezeTarget } from "@src/logic/moderation/freeze";
@@ -120,6 +121,9 @@ export type LocalDialog =
     // the requirements joining a group, channel or community has (`gates`, a level at a time),
     // paid for and met before the join is carried on (8b); `name` is what "You joined …" names
     | { kind: "join_gate"; target: JoinTarget; gates: EnhancedAccessGate[]; name: string }
+    // the rules of what's being joined, agreed to before the join (and its gates, which take
+    // this dialog's place); `name` as the join gate's
+    | { kind: "join_rules"; target: JoinTarget; rules: RulesToAccept; name: string }
     // picking a chat to forward a message to (5b)
     | { kind: "forward"; message: Message }
     // reporting a message to the platform's moderators, and deleting it too where the reader can
@@ -263,6 +267,9 @@ export const dialogs: Dialogs = {
 
     // the requirements to join a group, channel or community, paid for and met (8b)
     join_gate: () => import("../join/JoinGateDialogScreen.svelte"),
+
+    // the rules to agree to before joining (8b)
+    join_rules: () => import("../join/JoinRulesDialogScreen.svelte"),
 
     // picking a chat to forward a message to (5b)
     forward: () => import("../conversation/ForwardDialogScreen.svelte"),

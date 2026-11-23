@@ -3364,10 +3364,13 @@
     "rules": {
         "accept": "承認",
         "acceptTitle": "チャットのルール",
+        "agreeAndJoin": "同意して参加",
         "channelRulesExplanation": "これらはコミュニティ ルールの先頭に付けられます",
         "communityRulesExplanation": "チャネル ルールはこれらのルールの前に付けられます。",
         "enable": "ルールを有効にする",
         "instructions": "有効にすると、新しいメンバーはメッセージを送信する前にルールに同意する必要があります。",
+        "joinIntro": "{name} のルールを読み、同意すると参加できます。",
+        "joinTitle": "{name} のルール",
         "levelRules": "{level} ルール",
         "placeholder": "{level} ルールとは何ですか?",
         "promptExistingUsers": "既存のメンバーにルールを表示する",

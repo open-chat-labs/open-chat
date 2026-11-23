@@ -5,11 +5,15 @@ import {
     type JoinOutcome,
     type MultiUserChat,
     type OpenChat,
+    type RulesToAccept,
 } from "@client";
 import { describe, expect, test, vi } from "vitest";
-import { JoinFlow, joinStep } from "./joinFlow.svelte";
+import { JoinFlow, joinStep, rulesToAcceptSections } from "./joinFlow.svelte";
 
 type JoinClient = Pick<OpenChat, "joinGroup" | "joinCommunity">;
+
+// what the flows here read as the rules: none, unless a test says
+const noRules = async () => undefined;
 
 const gate: EnhancedAccessGate = {
     kind: "diamond_gate",
@@ -32,7 +36,10 @@ function flow(...outcomes: (JoinOutcome | Error)[]) {
         return next;
     });
     const client: JoinClient = { joinGroup: request, joinCommunity: request };
-    const join = new JoinFlow<MultiUserChat>((c, target, check) => c.joinGroup(target, check));
+    const join = new JoinFlow<MultiUserChat>(
+        (c, target, check) => c.joinGroup(target, check),
+        noRules,
+    );
     return { join, client, request };
 }
 
@@ -90,7 +97,10 @@ describe("the join flow", () => {
         let answer: (outcome: JoinOutcome) => void = () => {};
         const request = vi.fn(() => new Promise<JoinOutcome>((resolve) => (answer = resolve)));
         const client: JoinClient = { joinGroup: request, joinCommunity: request };
-        const join = new JoinFlow<MultiUserChat>((c, target, check) => c.joinGroup(target, check));
+        const join = new JoinFlow<MultiUserChat>(
+            (c, target, check) => c.joinGroup(target, check),
+            noRules,
+        );
 
         const joined = join.join(client, chat);
         expect(join.joining).toBe(chat);
@@ -104,7 +114,10 @@ describe("the join flow", () => {
         const answers: ((outcome: JoinOutcome) => void)[] = [];
         const request = vi.fn(() => new Promise<JoinOutcome>((resolve) => answers.push(resolve)));
         const client: JoinClient = { joinGroup: request, joinCommunity: request };
-        const join = new JoinFlow<MultiUserChat>((c, target, check) => c.joinGroup(target, check));
+        const join = new JoinFlow<MultiUserChat>(
+            (c, target, check) => c.joinGroup(target, check),
+            noRules,
+        );
         const other = { ...chat, name: "other" };
 
         const first = join.join(client, chat);
@@ -153,5 +166,153 @@ describe("the join flow", () => {
         expect(join.gateCheckFailed).toEqual([gate]);
         join.reset();
         expect(join.gateCheckFailed).toEqual([]);
+    });
+});
+
+describe("the rules to agree to, as shown", () => {
+    const channel = { name: "#general", text: "channel" };
+    const community = { name: "Book Club", text: "community" };
+
+    test("one set: named in the title, with no heading", () => {
+        expect(rulesToAcceptSections({ chat: channel, community: undefined })).toEqual({
+            title: "#general",
+            sections: [{ heading: undefined, text: "channel" }],
+        });
+        expect(rulesToAcceptSections({ chat: undefined, community })).toEqual({
+            title: "Book Club",
+            sections: [{ heading: undefined, text: "community" }],
+        });
+    });
+
+    test("a channel's own, then its community's, each headed with whose they are", () => {
+        expect(rulesToAcceptSections({ chat: channel, community })).toEqual({
+            title: "#general",
+            sections: [
+                { heading: "#general", text: "channel" },
+                { heading: "Book Club", text: "community" },
+            ],
+        });
+    });
+});
+
+describe("agreeing to the rules before joining", () => {
+    const agreed: RulesToAccept = {
+        chat: { name: "g", text: "be nice" },
+        community: undefined,
+    };
+    const wanted = () => true;
+
+    function rulesFlow(rules: RulesToAccept | undefined | Error, ...outcomes: JoinOutcome[]) {
+        const request = vi.fn(async () => outcomes.shift() ?? { kind: "success" as const });
+        const readRules = vi.fn(async () => {
+            if (rules instanceof Error) throw rules;
+            return rules;
+        });
+        const client = {
+            joinGroup: request,
+            joinCommunity: request,
+            rulesToAcceptBeforeJoining: readRules,
+        };
+        const join = new JoinFlow<MultiUserChat>(
+            (c, target, check, agreedRules) => c.joinGroup(target, check, agreedRules),
+            (c, target) => c.rulesToAcceptBeforeJoining(target),
+        );
+        return { join, client, request, readRules };
+    }
+
+    test("rules to agree to come first, and nothing is joined yet", async () => {
+        const { join, client, request } = rulesFlow(agreed);
+
+        expect(await join.begin(client, chat, wanted)).toEqual({
+            kind: "agree_to_rules",
+            rules: agreed,
+        });
+        expect(request).not.toHaveBeenCalled();
+        expect(join.joining).toBeUndefined();
+    });
+
+    test("with no rules to agree to, it joins straight away", async () => {
+        const { join, client, request } = rulesFlow(undefined);
+
+        expect(await join.begin(client, chat, wanted)).toEqual({ kind: "joined" });
+        expect(request).toHaveBeenCalledWith(chat, undefined, undefined);
+    });
+
+    test("rules that couldn't be read don't stop the join", async () => {
+        const { join, client, request } = rulesFlow(new Error("offline"));
+
+        expect(await join.begin(client, chat, wanted)).toEqual({ kind: "joined" });
+        expect(request).toHaveBeenCalledOnce();
+    });
+
+    test("nothing is joined or shown if the join isn't wanted once the rules are read", async () => {
+        const withRules = rulesFlow(agreed);
+        expect(await withRules.join.begin(withRules.client, chat, () => false)).toEqual({
+            kind: "not_sent",
+        });
+        const noRules = rulesFlow(undefined);
+        expect(await noRules.join.begin(noRules.client, chat, () => false)).toEqual({
+            kind: "not_sent",
+        });
+        expect(noRules.request).not.toHaveBeenCalled();
+        expect(noRules.join.joining).toBeUndefined();
+    });
+
+    test("is joining while the rules are read", async () => {
+        const { join, client, readRules } = rulesFlow(undefined);
+        let answer: (rules: RulesToAccept | undefined) => void = () => {};
+        readRules.mockImplementation(() => new Promise((resolve) => (answer = resolve)));
+
+        const begun = join.begin(client, chat, wanted);
+        expect(join.joining).toBe(chat);
+        answer(agreed);
+        await begun;
+        expect(join.joining).toBeUndefined();
+    });
+
+    test("the rules agreed to go with the join", async () => {
+        const { join, client, request } = rulesFlow(agreed);
+
+        expect(await join.join(client, chat, agreed)).toEqual({ kind: "joined" });
+        expect(request).toHaveBeenCalledWith(chat, undefined, agreed);
+    });
+
+    test("the rules agreed to go with the join through its gates", async () => {
+        const { join, client, request } = rulesFlow(
+            agreed,
+            { kind: "needs_gate_evaluation", gates: [gate] },
+            { kind: "failed", message: i18nKey("joinGroupFailed") },
+            { kind: "success" },
+        );
+
+        expect(await join.join(client, chat, agreed)).toMatchObject({ kind: "evaluate_gates" });
+        expect(await join.submitGates(client, gateCheck)).toMatchObject({ kind: "failed" });
+        expect(request).toHaveBeenLastCalledWith(chat, gateCheck, agreed);
+        expect(await join.submitGates(client, gateCheck)).toEqual({ kind: "joined" });
+        expect(request).toHaveBeenLastCalledWith(chat, gateCheck, agreed);
+    });
+
+    test("continuing after the gates keeps the rules agreed to", async () => {
+        const { join, client, request } = rulesFlow(agreed, {
+            kind: "needs_gate_evaluation",
+            gates: [gate],
+        });
+
+        await join.join(client, chat, agreed);
+        expect(await join.continueJoin(client, gateCheck)).toEqual({ kind: "joined" });
+        expect(request).toHaveBeenLastCalledWith(chat, gateCheck, agreed);
+    });
+
+    test("a closed evaluation drops the rules agreed to with the join", async () => {
+        const { join, client, request } = rulesFlow(
+            agreed,
+            { kind: "needs_gate_evaluation", gates: [gate] },
+            { kind: "success" },
+        );
+
+        await join.join(client, chat, agreed);
+        join.reset();
+        await join.join(client, chat);
+        expect(request).toHaveBeenLastCalledWith(chat, undefined, undefined);
     });
 });

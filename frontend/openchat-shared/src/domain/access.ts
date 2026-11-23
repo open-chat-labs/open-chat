@@ -1,5 +1,6 @@
 import type { ResourceKey } from "../utils/i18n";
-import type { Success } from "./response";
+import type { OCError } from "./error";
+import type { Offline, Success } from "./response";
 import type { Level } from "./structure";
 
 export type EnhancedAccessGate = {
@@ -224,6 +225,56 @@ export type Rules = {
 export type UpdatedRules = Rules & {
     newVersion: boolean;
 };
+
+/**
+ * A group's, channel's or community's rules as someone who isn't a member yet reads them: their
+ * text if they're enabled. A group's come without their version, so it's the text that's kept.
+ */
+export type RulesBeforeJoiningResponse =
+    | { kind: "success"; text: string | undefined }
+    | OCError
+    | Offline;
+
+/** One set of rules to agree to before joining: whose they are (the name), and their text. */
+export type RulesToAcceptSet = { name: string; text: string };
+
+/**
+ * The rules joining a group, channel or community asks the user to agree to first: each set
+ * that's enabled and that the user hasn't accepted yet (a channel's own, and its community's when
+ * the user isn't a member of that yet). At least one is there.
+ */
+export type RulesToAccept =
+    | { chat: RulesToAcceptSet; community: RulesToAcceptSet | undefined }
+    | { chat: undefined; community: RulesToAcceptSet };
+
+/** Rules the user agreed to as they joined: the text they read, and when (ms since the epoch). */
+export type AgreedRules = { text: string; agreedAt: number };
+
+/**
+ * The rules the user agreed to as they joined a group, channel or community, which their first
+ * message there accepts: by chat (`chatIdentifierToString`) and by community id. Kept in the
+ * user's cache on the device, so a reload or a restart before that message doesn't lose them.
+ */
+export type RulesAgreedOnJoining = {
+    chats: ReadonlyMap<string, AgreedRules>;
+    communities: ReadonlyMap<string, AgreedRules>;
+};
+
+/**
+ * A change to the rules agreed to on joining, which the agent makes to what's cached in one
+ * transaction (`applyRulesAgreedChange`): none (just read them), rules agreed to as a chat (`key`,
+ * `chatIdentifierToString`) and its community were joined, and forgetting them once a message
+ * accepted them or the user left the chat or the community (and its channels).
+ */
+export type RulesAgreedChange =
+    | { kind: "read" }
+    | {
+          kind: "agreed";
+          chat: { key: string; text: string } | undefined;
+          community: { id: string; text: string } | undefined;
+      }
+    | { kind: "forget"; chatKey: string; communityId: string | undefined }
+    | { kind: "forget_community"; communityId: string };
 
 export function defaultChatRules(level: Level): VersionedRules {
     let text = "";

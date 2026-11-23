@@ -3364,10 +3364,13 @@
     "rules": {
         "accept": "接受",
         "acceptTitle": "聊天规则",
+        "agreeAndJoin": "同意并加入",
         "channelRulesExplanation": "这些将作为任何社区规则的前缀",
         "communityRulesExplanation": "任何频道规则都将作为这些规则的前缀",
         "enable": "启用群规",
         "instructions": "如果启用，新成员必须同意规则才能发送消息。",
+        "joinIntro": "请阅读 {name} 的规则，同意后即可加入。",
+        "joinTitle": "{name} 的规则",
         "levelRules": "{level} 规则",
         "placeholder": "{level}规则是什么？",
         "promptExistingUsers": "提示现有会员",

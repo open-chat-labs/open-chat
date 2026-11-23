@@ -6,11 +6,17 @@ import {
     type EnhancedTokenDetails,
     type ReadonlyMap,
     type ResourceKey,
+    type RulesToAccept,
 } from "@client";
 import type { EvaluatedLeafGate } from "@src/logic/access/gateEvaluation.svelte";
 import { otherRequirement, type GateChoice } from "@src/logic/join/joinGate";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** What the join sheet opens on: the rules to agree to first, or the requirements to meet. */
+export type JoinSheetStart =
+    | { kind: "rules"; rules: RulesToAccept }
+    | { kind: "gates"; gates: EnhancedAccessGate[] };
 
 // The requirements sheet (N8b PR 2, native plan 12 "Join sheet"): a gate's requirements as a
 // checklist, one level at a time (GateEvaluation's), and what Join pays. What the user chose is

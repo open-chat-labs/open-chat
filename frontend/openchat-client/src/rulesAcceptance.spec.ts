@@ -23,6 +23,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 }));
 
 import {
+    applyRulesAgreedChange,
     CommunityMap,
     ROLE_MEMBER,
     Stream,
@@ -41,6 +42,7 @@ import {
     type SendMessageResponse,
     type VersionedRules,
     type WorkerRequest,
+    withRulesAgreed,
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
@@ -56,8 +58,28 @@ import {
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import { rulesAgreedOnJoiningStore } from "./stores/rulesAgreedOnJoining";
 import { currentChatVisit, startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
+
+// What the user agreed to as they joined, as the client holds it once read from the cache
+function recordRulesAgreedOnJoining(
+    chatKey: string,
+    chatText: string,
+    communityId: string | undefined,
+    communityText: string | undefined,
+) {
+    rulesAgreedOnJoiningStore.set(
+        withRulesAgreed(
+            rulesAgreedOnJoiningStore.value,
+            { key: chatKey, text: chatText },
+            communityId !== undefined && communityText !== undefined
+                ? { id: communityId, text: communityText }
+                : undefined,
+            Date.now(),
+        ),
+    );
+}
 
 // Sending a message to a chat or community whose rules the user hasn't accepted first asks them
 // to accept those rules. Forwarding a message sends it as soon as the chat it's forwarded to
@@ -255,6 +277,7 @@ describe("accepting the rules before sending a message", () => {
         vi.restoreAllMocks();
         currentUserStore.set(anonymousUser());
         captureRulesAcceptanceStore.set(undefined);
+        rulesAgreedOnJoiningStore.set({ chats: new Map(), communities: new Map() });
         currentChatVisit()?.setDetails(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
@@ -374,6 +397,117 @@ describe("accepting the rules before sending a message", () => {
             kind: "sendMessage",
             acceptedRules: { chat: undefined, community: 1 },
         });
+    });
+
+    test("rules agreed to on joining are accepted by the first send without asking", async () => {
+        setup(true, false);
+        channelRules = rules("the rules of the channel joined");
+        communityRules = rules("the rules there");
+        recordRulesAgreedOnJoining(
+            "bbbbb-bb_3",
+            "the rules of the channel joined",
+            elsewhere.communityId,
+            "the rules there",
+        );
+
+        await forwardToAnotherCommunity();
+
+        expect(rulesPrompt()).toBeUndefined();
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({
+            kind: "sendMessage",
+            acceptedRules: { chat: 1, community: 1 },
+        });
+    });
+
+    test("rules changed since they were agreed to on joining are asked about", async () => {
+        setup(true);
+        channelRules = rules("the rules of the channel, changed");
+        recordRulesAgreedOnJoining(
+            "bbbbb-bb_3",
+            "the rules of the channel joined",
+            undefined,
+            undefined,
+        );
+
+        const outcome = forwardToAnotherCommunity();
+        await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+        expect(sent).toEqual([]);
+        rulesPrompt()?.resolve(false);
+
+        expect((await outcome).kind).toBe("failure");
+    });
+
+    // The worker answers a leave when the test says, and changes the cached agreements as the
+    // agent does
+    function answerLeaves() {
+        const send = vi.mocked(WorkerAgent.prototype.send);
+        const inner = send.getMockImplementation();
+        let answer: (resp: { kind: "success" | "failure" }) => void = () => {};
+        send.mockImplementation(((req: WorkerRequest) => {
+            switch (req.kind) {
+                case "leaveGroup":
+                    return new Promise((resolve) => (answer = resolve));
+                case "updateRulesAgreedOnJoining":
+                    return Promise.resolve(
+                        applyRulesAgreedChange(
+                            rulesAgreedOnJoiningStore.value,
+                            req.change,
+                            req.now,
+                        ),
+                    );
+                default:
+                    return inner?.(req);
+            }
+        }) as never);
+        return { send, answer: (kind: "success" | "failure") => answer({ kind }) };
+    }
+
+    test("leaving forgets the rules agreed to on joining, once the leave goes through", async () => {
+        setup(true);
+        recordRulesAgreedOnJoining(
+            "left-group",
+            "the rules of the group joined",
+            undefined,
+            undefined,
+        );
+        recordRulesAgreedOnJoining("kept-group", "the rules of another", undefined, undefined);
+        const { send, answer } = answerLeaves();
+
+        const left = client.leaveGroup({ kind: "group_chat", groupId: "left-group" });
+        expect(rulesAgreedOnJoiningStore.value.chats.has("left-group")).toBe(true);
+        answer("success");
+        await left;
+
+        await vi.waitFor(() =>
+            expect([...rulesAgreedOnJoiningStore.value.chats.keys()]).toEqual(["kept-group"]),
+        );
+        expect(send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                kind: "updateRulesAgreedOnJoining",
+                change: { kind: "forget", chatKey: "left-group", communityId: undefined },
+            }),
+        );
+    });
+
+    test("a leave that fails keeps the rules agreed to on joining", async () => {
+        setup(true);
+        recordRulesAgreedOnJoining(
+            "stay-group",
+            "the rules of the group joined",
+            undefined,
+            undefined,
+        );
+        const { send, answer } = answerLeaves();
+
+        const left = client.leaveGroup({ kind: "group_chat", groupId: "stay-group" });
+        answer("failure");
+        expect(await left).toBe("failure");
+
+        expect(rulesAgreedOnJoiningStore.value.chats.has("stay-group")).toBe(true);
+        expect(send).not.toHaveBeenCalledWith(
+            expect.objectContaining({ kind: "updateRulesAgreedOnJoining" }),
+        );
     });
 
     test("forwarding to a channel with no rules sends it without asking", async () => {

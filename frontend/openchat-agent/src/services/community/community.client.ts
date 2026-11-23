@@ -50,6 +50,7 @@ import type {
     RegisterProposalVoteResponse,
     RemoveMemberResponse,
     ResetInviteCodeResponse,
+    RulesBeforeJoiningResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
     SetMemberDisplayNameResponse,
@@ -822,6 +823,31 @@ export class CommunityClient
                     CommunitySelectedUpdatesResponse,
                 ),
             fromCanister,
+        );
+    }
+
+    // The community's rules for someone who may not be a member yet: `selected_initial` answers
+    // anyone who can see the community. Not cached, and without its members
+    getRulesBeforeJoining(communityId: string): Promise<RulesBeforeJoiningResponse> {
+        return this.query(
+            communityId,
+            "selected_initial",
+            { invite_code: this.inviteCode(communityId), max_members: 0 },
+            (resp) => mapResult(resp, (value) => rulesBeforeJoining(value.chat_rules)),
+            CommunitySelectedInitialArgs,
+            CommunitySelectedInitialResponse,
+        );
+    }
+
+    // As for the community's: `selected_channel_initial` answers anyone who can see the channel
+    getChannelRulesBeforeJoining(chatId: ChannelIdentifier): Promise<RulesBeforeJoiningResponse> {
+        return this.query(
+            chatId.communityId,
+            "selected_channel_initial",
+            { channel_id: toBigInt32(chatId.channelId), max_members: 0 },
+            (resp) => mapResult(resp, (value) => rulesBeforeJoining(value.chat_rules)),
+            CommunitySelectedChannelInitialArgs,
+            CommunitySelectedChannelInitialResponse,
         );
     }
 
@@ -1797,6 +1823,13 @@ export class CommunityClient
 }
 
 // The key under which the details of a channel are cached
+function rulesBeforeJoining(rules: { text: string; enabled: boolean } | undefined): {
+    kind: "success";
+    text: string | undefined;
+} {
+    return { kind: "success", text: rules?.enabled ? rules.text : undefined };
+}
+
 function channelDetailsCacheKey(chatId: ChannelIdentifier): string {
     return `${chatId.communityId}_${chatId.channelId}`;
 }

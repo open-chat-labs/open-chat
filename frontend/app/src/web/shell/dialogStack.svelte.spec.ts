@@ -112,6 +112,16 @@ describe("the app's own dialogs", () => {
         stack.closeAll();
         expect(stack.items).toEqual([]);
     });
+
+    // a dialog to open once something slow has answered checks that no navigation came between
+    test("counts each time all close, with or without a dialog open", () => {
+        const stack = new DialogStack<{ name: string }>();
+        const before = stack.closedAll;
+        stack.closeAll();
+        stack.open({ name: "first" });
+        stack.closeAll();
+        expect(stack.closedAll).toBe(before + 2);
+    });
 });
 
 describe("the dialogs and a navigation", () => {
