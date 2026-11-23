@@ -21,7 +21,8 @@ export type SendFailureCause = "connectivity" | "backend";
 /** How a send ended without succeeding: what came back, or what was thrown. */
 export type SendFailure =
     | { kind: "response"; response: SendMessageResponse }
-    | { kind: "thrown"; error: unknown };
+    // `accepted`: the IC had taken the request in (its 202) before this was thrown
+    | { kind: "thrown"; error: unknown; accepted?: boolean };
 
 // What a request which never got a response looks like once it has crossed the worker: the
 // agent's `HttpFetchErrorCode` ("Failed to fetch HTTP request: …", wrapped in an `HttpError`), or
@@ -57,7 +58,33 @@ export function sendFailureCause(failure: SendFailure, offline: boolean): SendFa
     if (failure.kind === "response") {
         return failure.response.kind === "offline" ? "connectivity" : "backend";
     }
-    return offline || isTransportError(failure.error) ? "connectivity" : "backend";
+    if (offline || isTransportError(failure.error)) return "connectivity";
+    // Taken in by the IC, then the answer was lost (the poll for it timed out, say, as the
+    // connection came back): it may well have gone. Sent again under its own id, it either goes or
+    // is refused as already there, which counts as delivered. Only the IC's own refusal of it is
+    // the backend's answer.
+    return failure.accepted === true && !isRejection(failure.error) ? "connectivity" : "backend";
+}
+
+/**
+ * Whether a send's ending is moot: the chat's update brought the message while the send was on
+ * its way (`settledAlready`: it resolved the send then), so it's delivered, and a failure that
+ * comes after (a lost answer, a timeout, the duplicate refused) is no failure. A success still
+ * counts: it carries what the chat shows of the message.
+ */
+export function deliveredBeforeAnswer(
+    settledAlready: boolean,
+    answer: SendMessageResponse | "thrown",
+): boolean {
+    if (!settledAlready) return false;
+    return answer === "thrown" || (answer.kind !== "success" && answer.kind !== "transfer_success");
+}
+
+/** Whether a thrown error is the IC's refusal of the call (a reject, with its code). */
+export function isRejection(error: unknown): boolean {
+    if (error === null || typeof error !== "object") return false;
+    const message = (error as { message?: unknown }).message;
+    return typeof message === "string" && /reject/i.test(message);
 }
 
 /**
@@ -83,6 +110,21 @@ export const MAX_ONLINE_TRANSPORT_FAILURES = 3;
  */
 export function staysQueued(offline: boolean, onlineTransportFailures: number): boolean {
     return offline || onlineTransportFailures < MAX_ONLINE_TRANSPORT_FAILURES;
+}
+
+// How long after the app comes back online a send that gets no response doesn't count towards
+// `MAX_ONLINE_TRANSPORT_FAILURES`: the browser says online before the connection is really
+// usable (DNS, a captive network, a phone leaving airplane mode), and the first sends then often
+// get nothing. They stay queued and go on the queue's waits.
+export const RECONNECT_GRACE_MS = 30_000;
+
+/**
+ * Whether a send that got no response counts towards showing it failed: not while the app is
+ * offline (`waitingForOnline`), and not in the first `RECONNECT_GRACE_MS` after it came back
+ * online (`msSinceOnline`). The count itself starts again at each reconnect.
+ */
+export function countsAsOnlineFailure(waitingForOnline: boolean, msSinceOnline: number): boolean {
+    return !waitingForOnline && msSinceOnline >= RECONNECT_GRACE_MS;
 }
 
 /** A queued message: where it is, which it is, and when it was written (the order it's sent in). */
@@ -132,6 +174,8 @@ export type OfflineSendQueueDeps = {
     resend(queued: QueuedSend): Promise<ResendOutcome>;
     /** How long until the send throttle allows the next send, in ms: 0 if it does now. */
     msUntilSendAllowed(): number;
+    /** The app has come back online (after being offline), before what's queued is sent. */
+    cameOnline?(): void;
     offline: Readable<boolean>;
     setTimeout(fn: () => void, ms: number): unknown;
     clearTimeout(handle: unknown): void;
@@ -174,6 +218,7 @@ export class OfflineSendQueue {
             if (offline) {
                 this.#cancelRetry();
             } else if (first || cameBack) {
+                if (cameBack) this.#deps.cameOnline?.();
                 this.#retries = 0;
                 void this.flush();
             }

@@ -3,10 +3,14 @@ import { writable } from "./stores";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
     canQueueMessage,
+    countsAsOnlineFailure,
+    deliveredBeforeAnswer,
+    isRejection,
     isTransportError,
     MAX_ONLINE_TRANSPORT_FAILURES,
     OfflineSendQueue,
     QUEUE_RETRY_DELAYS_MS,
+    RECONNECT_GRACE_MS,
     sendFailureCause,
     sendOrder,
     staysQueued,
@@ -71,6 +75,59 @@ describe("why a send failed", () => {
         expect(isTransportError("Failed to fetch")).toBe(false);
         expect(isTransportError(undefined)).toBe(false);
         expect(isTransportError({ message: "IC0503" })).toBe(false);
+    });
+});
+
+describe("a send the IC had taken in before it failed", () => {
+    test("its answer lost (a timeout waiting for it): no connectivity, it may well have gone", () => {
+        const error = { name: "HttpError", message: "Request timed out after 300000 msec" };
+        expect(sendFailureCause({ kind: "thrown", error, accepted: true }, false)).toBe(
+            "connectivity",
+        );
+        expect(sendFailureCause({ kind: "thrown", error }, false)).toBe("backend");
+    });
+
+    test("refused by the IC (a reject): the backend's answer", () => {
+        const error = { name: "HttpError", message: "Call was rejected: Reject code: 5" };
+        expect(isRejection(error)).toBe(true);
+        expect(sendFailureCause({ kind: "thrown", error, accepted: true }, false)).toBe("backend");
+    });
+});
+
+describe("a send's ending once the chat already has the message", () => {
+    test("a failure then is no failure: it's delivered", () => {
+        expect(deliveredBeforeAnswer(true, "thrown")).toBe(true);
+        expect(deliveredBeforeAnswer(true, { kind: "error", code: 287, message: undefined })).toBe(
+            true,
+        );
+    });
+
+    test("a success still counts, and anything counts while it's still on its way", () => {
+        expect(
+            deliveredBeforeAnswer(true, {
+                kind: "success",
+                timestamp: 1n,
+                messageIndex: 1,
+                eventIndex: 1,
+            }),
+        ).toBe(false);
+        expect(deliveredBeforeAnswer(false, "thrown")).toBe(false);
+    });
+});
+
+describe("a send that got no response, counted towards showing it failed", () => {
+    test("not while offline", () => {
+        expect(countsAsOnlineFailure(true, Infinity)).toBe(false);
+    });
+
+    test("not just after the app came back online, while the connection settles", () => {
+        expect(countsAsOnlineFailure(false, 0)).toBe(false);
+        expect(countsAsOnlineFailure(false, RECONNECT_GRACE_MS - 1)).toBe(false);
+    });
+
+    test("once online for a while", () => {
+        expect(countsAsOnlineFailure(false, RECONNECT_GRACE_MS)).toBe(true);
+        expect(countsAsOnlineFailure(false, Infinity)).toBe(true);
     });
 });
 
@@ -182,6 +239,28 @@ describe("the queue", () => {
         queue.start();
         await vi.runAllTimersAsync();
         expect(resend).not.toHaveBeenCalled();
+    });
+
+    test("it says when the app came back online, before sending, and not when it starts online", async () => {
+        const cameOnline = vi.fn(() => expect(resend).not.toHaveBeenCalled());
+        queue = new OfflineSendQueue({
+            queued: () => queued,
+            resend,
+            offline,
+            cameOnline,
+            msUntilSendAllowed: () => 0,
+            setTimeout: (fn, ms) => setTimeout(fn, ms),
+            clearTimeout: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
+        });
+        offline.set(false);
+        queue.start();
+        expect(cameOnline).not.toHaveBeenCalled();
+        offline.set(true);
+        queued = [q(chatA, 1, 10)];
+        offline.set(false);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(cameOnline).toHaveBeenCalledTimes(1);
+        expect(resend).toHaveBeenCalledTimes(1);
     });
 
     test("started online, it sends what's queued (a reload while queued)", async () => {

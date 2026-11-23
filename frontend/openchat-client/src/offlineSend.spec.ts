@@ -377,6 +377,52 @@ describe("a message sent without a connection", () => {
             expect(localUpdates.isQueued(context, id)).toBe(false);
         });
 
+        // Back from airplane mode, the first sends get nothing while the connection
+        // settles; the third used to show the message failed, with Retry, for a moment
+        test("just back online, sends that get no response keep it queued, however many", async () => {
+            const queuedCalls = vi.spyOn(OfflineSendQueue.prototype, "queued");
+            const setOnline = (value: boolean) => {
+                online = value;
+                window.dispatchEvent(new Event(value ? "online" : "offline"));
+            };
+            const noResponse = { name: "HttpError", message: "Failed to fetch HTTP request" };
+            setOnline(false);
+            const id = await send();
+            await answer([CommonResponses.offline(), {} as Message]);
+            const queue = queuedCalls.mock.contexts[0] as OfflineSendQueue;
+            queue.start();
+            setOnline(true);
+            await vi.advanceTimersByTimeAsync(0);
+            // the queue's own resend, and two more, each getting nothing
+            await fail(noResponse);
+            for (let attempt = 2; attempt <= 4; attempt++) {
+                void client.retrySendMessage(context, failedMessage(id)!);
+                await vi.advanceTimersByTimeAsync(0);
+                await fail(noResponse);
+            }
+            expect(localUpdates.isQueued(context, id)).toBe(true);
+            expect(failedToasts).toBe(0);
+            queue.stop();
+        });
+
+        test("taken in by the IC, then its answer lost (a timeout), it stays queued, not failed", async () => {
+            const id = await send();
+            lastSend().onResult("accepted", false);
+            await vi.advanceTimersByTimeAsync(0);
+            await fail({ name: "HttpError", message: "Request timed out after 300000 msec" });
+            expect(localUpdates.isQueued(context, id)).toBe(true);
+            expect(failedToasts).toBe(0);
+        });
+
+        test("refused by the IC once taken in (a reject): failed, with Retry", async () => {
+            const id = await send();
+            lastSend().onResult("accepted", false);
+            await vi.advanceTimersByTimeAsync(0);
+            await fail({ name: "HttpError", message: "Call was rejected: Reject code: 5" });
+            expect(localUpdates.isQueued(context, id)).toBe(false);
+            expect(failedMessage(id)).toBeDefined();
+        });
+
         test("while offline it stays queued however often it's tried", async () => {
             online = false;
             const id = await send();

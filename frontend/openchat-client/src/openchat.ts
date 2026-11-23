@@ -855,6 +855,8 @@ import { keptAfterResent, pastConfirmed, reorderAfterResent } from "./utils/loca
 import {
     canQueueMessage,
     OfflineSendQueue,
+    countsAsOnlineFailure,
+    deliveredBeforeAnswer,
     sendFailureCause,
     staysQueued,
     type QueuedSend,
@@ -1144,6 +1146,11 @@ export class OpenChat {
                     })),
                 resend: (queued) => this.#resendQueued(queued),
                 msUntilSendAllowed: () => msUntilNextSendAllowed(isDiamondStore.value),
+                // each reconnect starts the count of sends that got nothing again
+                cameOnline: () => {
+                    this.#cameOnlineAt = Date.now();
+                    this.#onlineTransportFailures.clear();
+                },
                 offline: offlineStore,
                 setTimeout: (fn, ms) => window.setTimeout(fn, ms),
                 clearTimeout: (handle) => window.clearTimeout(handle as number),
@@ -2037,6 +2044,8 @@ export class OpenChat {
     // How many sends of each queued message in a row have got no response while the app said it
     // was online (`staysQueued`)
     #onlineTransportFailures = new Map<bigint, number>();
+    // When the app last came back online (`countsAsOnlineFailure`)
+    #cameOnlineAt: number | undefined;
     // The chats and threads (messageContextToString) with a queued message being sent again: a
     // new message there waits behind it (#sendMessageCommon)
     #resendsInFlight = new Map<string, number>();
@@ -6806,6 +6815,18 @@ export class OpenChat {
                 })
                 .subscribe({
                     onResult: (response) => {
+                        // the chat's update brought it while this was on its way (it resolved
+                        // this send already, #addServerEventsToStores): it's delivered, whatever
+                        // comes back now. A late failure showed a delivered message failed.
+                        if (
+                            response !== "accepted" &&
+                            deliveredBeforeAnswer(
+                                !this.#inflightMessagePromises.has(messageId),
+                                response[0],
+                            )
+                        ) {
+                            return;
+                        }
                         if (response === "accepted") {
                             localUpdates.markUnconfirmedAccepted(messageContext, messageId);
 
@@ -6907,9 +6928,17 @@ export class OpenChat {
                         resolve(resp);
                     },
                     onError: (error) => {
-                        this.#inflightMessagePromises.delete(messageId);
+                        // delivered already (see onResult): not failed, however it ended
+                        const settledAlready = !this.#inflightMessagePromises.delete(messageId);
+                        if (deliveredBeforeAnswer(settledAlready, "thrown")) return;
                         this.#onSendMessageUnsent(
-                            { kind: "thrown", error },
+                            {
+                                kind: "thrown",
+                                error,
+                                accepted:
+                                    localUpdates.isUnconfirmed(messageContext, messageId) &&
+                                    !localUpdates.isPendingAcceptance(messageContext, messageId),
+                            },
                             messageContext,
                             messageEvent,
                             canRetry,
@@ -7765,9 +7794,13 @@ export class OpenChat {
             // a request that got no response while the app says it's online; the agent's own
             // offline answer, or anything while offline, is an offline spell
             const waitingForOnline = isOffline || failure.kind === "response";
+            const counts = countsAsOnlineFailure(
+                waitingForOnline,
+                this.#cameOnlineAt === undefined ? Infinity : Date.now() - this.#cameOnlineAt,
+            );
             const failures = waitingForOnline
                 ? 0
-                : (this.#onlineTransportFailures.get(messageId) ?? 0) + 1;
+                : (this.#onlineTransportFailures.get(messageId) ?? 0) + (counts ? 1 : 0);
             if (staysQueued(waitingForOnline, failures)) {
                 if (failures > 0) {
                     this.#onlineTransportFailures.set(messageId, failures);
