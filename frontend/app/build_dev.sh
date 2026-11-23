@@ -49,4 +49,11 @@ export OC_KLIPY_APIKEY="$OC_APP_KLIPY_APIKEY"
 # Daily's call machine, served from our own origin, pinned (#10124)
 node "$SCRIPT_DIR/fetch-daily-call-machine.mjs" || exit 1
 
+# The e2e suite's full runs (frontend/e2e) serve a build of the app instead. A page then makes about
+# 125 requests rather than 780, so many browsers at once leave the replica more of the CPU
+if [ "$OC_E2E_BUNDLE" = "true" ]; then
+    NODE_ENV=production npx vite build || exit 1
+    exec npx vite preview --strictPort --port $OC_DEV_PORT
+fi
+
 npx vite --strictPort --port $OC_DEV_PORT

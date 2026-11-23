@@ -5,7 +5,7 @@ import fs from "fs";
 import { execFileSync } from "node:child_process";
 import path from "path";
 import execute from "rollup-plugin-shell";
-import { build, defineConfig, type Plugin, type PluginOption } from "vite";
+import { build, defineConfig, type Connect, type Plugin, type PluginOption } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
 import dfxJson from "../../dfx.json";
 import {
@@ -133,26 +133,35 @@ function ocWorkerPlugin(): Plugin {
         }
     }
 
+    // Serve the built workers (and their sourcemaps) regardless of the
+    // ?v= cache-busting query string the client appends.
+    function serveWorkers(middlewares: Connect.Server) {
+        middlewares.use((req, res, next) => {
+            const fileName = path.basename((req.url ?? "").split("?")[0]);
+            const filePath = path.join(workerBuildDir, fileName);
+            if (fileName.replace(/\.map$/, "") in workerEntries && fs.existsSync(filePath)) {
+                res.setHeader(
+                    "Content-Type",
+                    fileName.endsWith(".map") ? "application/json" : "text/javascript",
+                );
+                fs.createReadStream(filePath).pipe(res);
+                return;
+            }
+            next();
+        });
+    }
+
     return {
         name: "oc-worker",
+        // `vite preview` serves a `vite build` of the app, which the e2e suite runs against
+        // (build_dev.sh, OC_E2E_BUNDLE); the workers aren't part of that build.
+        async configurePreviewServer(server) {
+            await buildWorker();
+            serveWorkers(server.middlewares);
+        },
         async configureServer(server) {
             await buildWorker();
-
-            // Serve the built workers (and their sourcemaps) regardless of the
-            // ?v= cache-busting query string the client appends.
-            server.middlewares.use((req, res, next) => {
-                const fileName = path.basename((req.url ?? "").split("?")[0]);
-                const filePath = path.join(workerBuildDir, fileName);
-                if (fileName.replace(/\.map$/, "") in workerEntries && fs.existsSync(filePath)) {
-                    res.setHeader(
-                        "Content-Type",
-                        fileName.endsWith(".map") ? "application/json" : "text/javascript",
-                    );
-                    fs.createReadStream(filePath).pipe(res);
-                    return;
-                }
-                next();
-            });
+            serveWorkers(server.middlewares);
 
             // Rebuild the worker when its source (or the agent/shared code it
             // bundles) changes, then full-reload the page.
@@ -245,7 +254,12 @@ export default defineConfig({
               // produce sourcemaps for debug builds
               sourcemap: !!process.env.TAURI_ENV_DEBUG,
           }
-        : undefined,
+        : process.env.OC_E2E === "true"
+          ? // The e2e suite's build (build_dev.sh, OC_E2E_BUNDLE). Minified, the ternary of imports
+            // that picks a UI tree in main.ts becomes one import with the last tree's preload list,
+            // and the other trees load without their CSS.
+            { minify: false }
+          : undefined,
     plugins: [
         svelte() as PluginOption,
         replace({
