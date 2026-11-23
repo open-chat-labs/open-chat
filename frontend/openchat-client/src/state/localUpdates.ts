@@ -268,6 +268,30 @@ export class GlobalLocalState {
      * place (`closeGap`), so that they go on showing. Returns the failed ones that moved, to be
      * kept on the device where they are now.
      */
+    /**
+     * Puts these failed (or queued) messages in place of the copies held, where they're held. A
+     * recently sent one's local time, which orders it against messages still on their way, moves
+     * with it.
+     */
+    replaceFailedMessages(key: MessageContext, messages: EventWrapper<Message>[]) {
+        if (messages.length === 0) return;
+        withPausedStores(() => {
+            this.#failedMessages.update((map) => {
+                const state = map.get(key);
+                for (const m of messages) {
+                    if (state?.has(m.event.messageId)) state.set(m.event.messageId, m);
+                }
+                return map;
+            });
+            this.#recentlySentMessages.update((map) => {
+                for (const m of messages) {
+                    if (map.has(m.event.messageId)) map.set(m.event.messageId, m.timestamp);
+                }
+                return map;
+            });
+        });
+    }
+
     closeLocalGap(key: MessageContext, removed: RemovedPlace): EventWrapper<Message>[] {
         const moved: EventWrapper<Message>[] = [];
         withPausedStores(() => {

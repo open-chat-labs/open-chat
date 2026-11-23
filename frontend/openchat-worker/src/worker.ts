@@ -456,6 +456,7 @@ const handlers: Handlers = {
             payload.chatId,
             payload.detailsLastUpdated,
             payload.detailsSyncedUpTo,
+            payload.fromCanister,
         ),
     lookupMembers: (payload, agent) =>
         agent.lookupMembers(payload.id, payload.userIds, payload.latestKnownUpdate),
@@ -853,6 +854,7 @@ const handlers: Handlers = {
             payload.id.communityId,
             payload.detailsLastUpdated,
             payload.detailsSyncedUpTo,
+            payload.fromCanister,
         ),
     addToFavourites: (payload, agent) =>
         agent.userClient.manageFavouriteChats([payload.chatId], []),

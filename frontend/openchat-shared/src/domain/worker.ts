@@ -1223,6 +1223,9 @@ type GetCommunityDetails = {
     // they haven't. If they still haven't, the response only says so, rather than carrying every
     // member across again.
     detailsSyncedUpTo?: bigint;
+    // Asks the canister whatever `detailsLastUpdated` says, failing if it can't be asked, rather
+    // than returning the details held or cached: for when the summary is out of date too
+    fromCanister?: boolean;
 };
 
 type ExploreChannels = {
@@ -1763,9 +1766,10 @@ type MarkMessagesRead = {
 
 type GetGroupDetails = {
     chatId: MultiUserChatIdentifier;
-    // Both as for `GetCommunityDetails`
+    // All as for `GetCommunityDetails`
     detailsLastUpdated: bigint;
     detailsSyncedUpTo?: bigint;
+    fromCanister?: boolean;
     kind: "getGroupDetails";
 };
 

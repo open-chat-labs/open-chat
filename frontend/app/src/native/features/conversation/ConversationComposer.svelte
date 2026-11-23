@@ -448,10 +448,21 @@
         inserted = { key: (inserted?.key ?? 0) + 1, text };
     }
 
-    // a GIF is sent as it's tapped, as a reply to the draft's reply, and the panel goes (07)
+    // a GIF is sent as it's tapped, as a reply to the draft's reply, and the panel goes (07);
+    // refused for rules changed since the last sync, the client asks for them and sends again
     function sendGif(content: GiphyContent) {
         slot.close();
-        void client.sendMessageWithContent(context, content, false);
+        void client.sendMessageWithContent(
+            context,
+            content,
+            false,
+            [],
+            false,
+            undefined,
+            undefined,
+            undefined,
+            "prompt",
+        );
     }
 
     // the attach panel's pickers: photos and videos (several), the camera, any file; the system's

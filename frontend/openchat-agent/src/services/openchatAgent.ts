@@ -3435,6 +3435,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
+        fromCanister = false,
     ): Promise<GroupChatDetailsResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -3442,12 +3443,14 @@ export class OpenChatAgent extends EventTarget {
                     chatId.groupId,
                     detailsLastUpdated,
                     detailsSyncedUpTo,
+                    fromCanister,
                 );
             case "channel":
                 return this._communityClient.getChannelDetails(
                     chatId,
                     detailsLastUpdated,
                     detailsSyncedUpTo,
+                    fromCanister,
                 );
         }
     }

@@ -2,7 +2,12 @@ import { MessageMap, type ChatEvent, type EventWrapper, type Message } from "@sh
 import DRange from "drange";
 import { describe, expect, test } from "vitest";
 import { mergeEventsAndLocalUpdatesWithRange } from "./chat";
-import { closeGap, pastConfirmed } from "./localMessageIndexes";
+import {
+    closeGap,
+    keptAfterResent,
+    pastConfirmed,
+    reorderAfterResent,
+} from "./localMessageIndexes";
 
 function message(index: number, messageIndex: number, text: string): EventWrapper<Message> {
     return {
@@ -84,5 +89,92 @@ describe("closing the gap a deleted local message leaves", () => {
             "hello",
             "two",
         ]);
+    });
+});
+
+describe("the failed messages written after one sent again and confirmed", () => {
+    const at = (m: EventWrapper<Message>, timestamp: number): EventWrapper<Message> => ({
+        ...m,
+        timestamp: BigInt(timestamp),
+    });
+    // the chat up to 5; two messages written offline, both failed (M1 at 6, M2 at 7); meanwhile
+    // the chat logged an event at 6 (the rules changing), so M1, sent again, is confirmed at 7
+    const confirmed = [1, 2, 3, 4, 5].map((i) => message(i, i, `c${i}`));
+    const m1 = at(message(6, 6, "M1"), 100);
+    const m2 = at(message(7, 7, "M2"), 101);
+    const rulesChanged = { ...message(6, 6, "rules"), timestamp: 90n };
+    const m1Confirmed = at(message(7, 6, "M1"), 500);
+    m1Confirmed.event.messageId = m1.event.messageId;
+
+    test("left as they were, one shows above the one sent again, which took the time it went", () => {
+        expect(shown([...confirmed, rulesChanged, m1Confirmed], [m2])).toEqual([
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5",
+            "rules",
+            "M2",
+            "M1",
+        ]);
+    });
+
+    test("retimed to just after it, they stay below it, in the order they were written", () => {
+        const m3 = at(message(8, 8, "M3"), 102);
+        const kept = keptAfterResent([m3, m2], m1.timestamp, m1Confirmed.timestamp);
+        expect(kept.map((m) => m.timestamp)).toEqual([501n, 502n]);
+        expect(shown([...confirmed, rulesChanged, m1Confirmed], kept)).toEqual([
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5",
+            "rules",
+            "M1",
+            "M2",
+            "M3",
+        ]);
+    });
+
+    test("those written before it, or already after it, are left as they are", () => {
+        const before = at(message(5, 5, "before"), 50);
+        const later = at(message(9, 9, "later"), 600);
+        expect(keptAfterResent([before, later], 100n, 500n)).toEqual([]);
+    });
+});
+
+describe("a failed message sent again at the end, others having posted since", () => {
+    const at = (m: EventWrapper<Message>, timestamp: number): EventWrapper<Message> => ({
+        ...m,
+        timestamp: BigInt(timestamp),
+    });
+    // the chat up to 5, then the rules changing at 6; M1 and M2 failed at 6 and 7 (out of date),
+    // and M1 sent again now, given the next index after M2's
+    const confirmed = [1, 2, 3, 4, 5].map((i) => message(i, i, `c${i}`));
+    const rulesChanged = { ...message(6, 6, "rules"), timestamp: 90n };
+    const m2 = at(message(7, 7, "M2"), 101);
+    const m1Going = at(message(8, 8, "M1"), 500);
+
+    test("left as they were, the later written shows above it", () => {
+        expect(shown([...confirmed, rulesChanged], [m1Going, m2]).slice(-2)).toEqual(["M2", "M1"]);
+    });
+
+    test("put back in order, it takes the lower place and they follow, all showing", () => {
+        const { resent, kept } = reorderAfterResent(m1Going, [m2], 100n);
+        expect(resent.index).toBe(7);
+        expect(resent.timestamp).toBe(500n);
+        expect(kept.map((m) => [m.index, m.timestamp])).toEqual([[8, 501n]]);
+        expect(shown([...confirmed, rulesChanged], [resent, ...kept]).slice(-3)).toEqual([
+            "rules",
+            "M1",
+            "M2",
+        ]);
+    });
+
+    test("sent again in its place (nothing written after it is earlier), nothing changes", () => {
+        const inPlace = at(message(6, 6, "M1"), 100);
+        const { resent, kept } = reorderAfterResent(inPlace, [m2], 100n);
+        expect(resent).toBe(inPlace);
+        expect(kept).toEqual([]);
     });
 });
