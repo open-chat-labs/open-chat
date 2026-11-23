@@ -33,6 +33,7 @@ export function initialiseMostRecentSentMessageTimes(diamond: boolean) {
     const now = Date.now();
     const withinLastMinute = timesInWindow(now, times);
     const nextAllowedAt = nextSendAllowedAt(now, diamond, withinLastMinute);
+    // as it always has (`checkTimes` did this before #10599): a reload while throttled still is
     throttleDeadline.set(nextAllowedAt > now ? nextAllowedAt : 0);
     mostRecentStore.set(withinLastMinute);
 }

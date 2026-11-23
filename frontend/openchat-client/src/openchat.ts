@@ -7912,6 +7912,8 @@ export class OpenChat {
         }
         const msg = event.event;
         const timestamp = Date.now();
+        // the rules accepted before, unless they've been asked for again since
+        const sentWithRules = waitedForRules ? undefined : acceptedRules;
         this.#queuedSendExtras.delete(messageId);
         const key = messageContextToString(context);
         this.#resendsInFlight.set(key, (this.#resendsInFlight.get(key) ?? 0) + 1);
@@ -7938,14 +7940,20 @@ export class OpenChat {
                 msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
                 undefined,
                 "clear",
-                // the rules accepted before, unless they've been asked for again since
-                waitedForRules ? undefined : acceptedRules,
+                sentWithRules,
                 // only the new UIs queue: refused for rules changed since, it asks for them
                 "prompt",
             );
             if (resp.kind === "message_throttled") {
-                // nothing was sent, nor changed: it stays queued as it was, with what it's sent with
-                if (extras !== undefined) this.#queuedSendExtras.set(messageId, extras);
+                // nothing was sent, nor changed: it stays queued, to go with what it was sent with
+                // this time. Not the rules accepted before if they've been asked for again since:
+                // the next try would go with those, out of date, and be refused (#10599)
+                if (extras !== undefined) {
+                    this.#queuedSendExtras.set(messageId, {
+                        mentioned: extras.mentioned,
+                        acceptedRules: sentWithRules,
+                    });
+                }
                 return "throttled";
             }
         } finally {

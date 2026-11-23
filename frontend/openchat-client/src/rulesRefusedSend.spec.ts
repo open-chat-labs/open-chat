@@ -563,6 +563,62 @@ describe("a send refused for the rules", () => {
             expect(localUpdates.recentlySentMessages.value.get(two)).toBe(goingAt + 1n);
         });
 
+        test("held back by the throttle after the rules were asked for again, it doesn't go with those accepted before", async () => {
+            setup();
+            // the rules (version 1) to accept: both sends, offline, take the one answer
+            const communities = new CommunityMap<CommunitySummary>();
+            communities.set(here, community(false));
+            serverCommunitiesStore.set(communities);
+            setOnline(false);
+            answers.push(CommonResponses.offline(), CommonResponses.offline());
+            void client.sendMessage(context, "one", false, undefined, [], "prompt");
+            await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+            // (not `sendMessage`, which would be busy with the first)
+            void client.sendMessageWithContent(
+                context,
+                { kind: "text_content", text: "two" },
+                false,
+                [],
+                false,
+            );
+            await settle();
+            rulesPrompt()?.resolve(true);
+            await vi.waitFor(() => expect(queuedIds()).toHaveLength(2));
+            // both queued with the rules accepted then
+            expect(sent.map((s) => s.acceptedRules?.chat)).toEqual([1, 1]);
+
+            // back online, the chat refuses the first the queue sends for its rules, changed since
+            setOnline(true);
+            answers.push(refused);
+            let before = sent.length;
+            queue()?.start();
+            await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+            const first = sent[before].event.event.messageId;
+            const two = queuedIds().find((id) => id !== first)!;
+            // room for just one more send this minute: the first, once they're accepted
+            mostRecentStore.set(Array.from({ length: 9 }, () => Date.now()));
+            answers.push(delivered(10));
+            before = sent.length;
+            rulesPrompt()?.resolve(true);
+            await vi.waitFor(() => expect(sent.length - before).toBe(1));
+            await settle();
+            await settle();
+            // the second, throttled, waits
+            expect(sent.length - before).toBe(1);
+            expect(queuedIds()).toEqual([two]);
+
+            // the throttle allows it: it goes without the rules accepted before (version 1),
+            // which the chat would refuse, asking again
+            mostRecentStore.set([]);
+            answers.push(delivered(11));
+            void queue()?.flush();
+            await vi.waitFor(() => expect(sent.length - before).toBe(2));
+            expect(sent[before + 1].event.event.messageId).toBe(two);
+            expect(sent[before + 1].acceptedRules?.chat).not.toBe(1);
+            await settle();
+            expect(rulesPrompt()).toBeUndefined();
+        });
+
         test("a refused message queued since (Retry offline) is left to the queue", async () => {
             setup();
             let loaded = (_: GroupChatDetailsResponse) => {};
