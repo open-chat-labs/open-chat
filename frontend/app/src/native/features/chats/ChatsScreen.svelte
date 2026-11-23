@@ -741,6 +741,9 @@
         min-width: 0;
         font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
         @include truncate;
+        // a line-height of 1 clips the descenders (p, g) at the box's bottom: room for them,
+        // given back as margin so the field and the text stay where they are
+        @include glyph-room;
     }
 
     .filters {

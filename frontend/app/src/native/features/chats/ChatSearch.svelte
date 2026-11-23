@@ -273,6 +273,9 @@
         color: var(--ink);
         font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
         appearance: none;
+        // a placeholder or text too long for the field ends in an ellipsis while the field
+        // isn't focused, as the list's field does (Chrome shows none on a focused field)
+        text-overflow: ellipsis;
 
         &::placeholder {
             color: var(--ink-4);

@@ -1780,7 +1780,7 @@
             "markRead": "Marquer comme lu",
             "rowOptions": "Options de {name}",
             "search": {
-                "placeholder": "Rechercher des discussions, des personnes et des groupes",
+                "placeholder": "Discussions, personnes, groupes",
                 "clear": "Effacer",
                 "searchFor": "Rechercher",
                 "chats": "Discussions",

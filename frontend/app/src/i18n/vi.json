@@ -1780,7 +1780,7 @@
             "markRead": "Đánh dấu đã đọc",
             "rowOptions": "Tùy chọn của {name}",
             "search": {
-                "placeholder": "Tìm cuộc trò chuyện, mọi người và nhóm",
+                "placeholder": "Tìm trò chuyện, người và nhóm",
                 "clear": "Xóa",
                 "searchFor": "Tìm",
                 "chats": "Cuộc trò chuyện",

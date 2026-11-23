@@ -1780,7 +1780,7 @@
             "markRead": "既読にする",
             "rowOptions": "{name} のオプション",
             "search": {
-                "placeholder": "チャット、ユーザー、グループを検索",
+                "placeholder": "チャット、ユーザー、グループ",
                 "clear": "クリア",
                 "searchFor": "検索対象",
                 "chats": "チャット",

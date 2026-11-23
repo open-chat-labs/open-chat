@@ -1780,7 +1780,7 @@
             "markRead": "Als gelesen markieren",
             "rowOptions": "Optionen für {name}",
             "search": {
-                "placeholder": "Chats, Personen und Gruppen suchen",
+                "placeholder": "Chats, Personen, Gruppen",
                 "clear": "Löschen",
                 "searchFor": "Suchen nach",
                 "chats": "Chats",
