@@ -1,6 +1,7 @@
 import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
 import {
+    afterChatRemoved,
     showsTabBar,
     toastsAbove,
     localKey,
@@ -331,6 +332,21 @@ describe("the chat a stack has open", () => {
     test("is none on a list", () => {
         expect(opened("/chats")).toBeUndefined();
         expect(opened("/wallet")).toBeUndefined();
+    });
+});
+
+describe("where a chat that's left or deleted goes", () => {
+    test("its list, on its list's tab", () => {
+        expect(afterChatRemoved({ kind: "chats" }, new URLSearchParams())).toBe("/chats");
+        expect(
+            afterChatRemoved({ kind: "community", id: community("c2") }, new URLSearchParams()),
+        ).toBe("/community/c2");
+    });
+
+    test("opened from the activity feed, the feed: its tab's root, not another tab's list", () => {
+        const url = afterChatRemoved({ kind: "chats" }, new URLSearchParams("panel=activity"));
+        expect(url).toBe("/notifications");
+        expect(stack(url)).toBe("activity: activity@/notifications");
     });
 });
 

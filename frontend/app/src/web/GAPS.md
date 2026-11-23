@@ -1399,7 +1399,10 @@ design export needs. Each entry says where it came up.
     afterwards, and that time stays the server's until the next sync (`messageActivitySummaryStore`
     only zeroes the unread count for a local mark). The client's `markActivityFeedRead` now
     resolves to whether it stuck, and `markActivityRead` goes by that; the old trees ignore its
-    result, as before.
+    result, and a failure is as silent for them as before (nothing logged).
+  - **Leaving or deleting a chat opened from the feed** (its details' Leave and Delete) goes back
+    to the feed, the Activity tab's root (`afterChatRemoved` in `router/locations`), rather than
+    to the chat list's tab, which had left the Activity tab's stack on the chat that had gone.
   - Checked in a browser (390×844, two fresh accounts, one inviting the other to a group): two
     reactions, a mention and a quote reply in the feed, the badges (All 3, Mentions 1, none on
     Payments), the tabs, opening a row (its message pushed over the tab, the older row read, the

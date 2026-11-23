@@ -2775,9 +2775,9 @@ export class OpenChat {
                 readUpTo,
             });
             return true;
-        } catch (err) {
+        } catch {
+            // silent, as it always was for the old UIs; the new ones say so from the result
             undo();
-            console.warn("Unable to mark the activity feed read", err);
             return false;
         }
     }

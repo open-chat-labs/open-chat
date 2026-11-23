@@ -19,7 +19,7 @@
         groupDescription,
         knownMembers,
         ROLE_NONE,
-        routeForScope,
+        querystringStore,
         selectedChatMembersStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
@@ -48,6 +48,7 @@
     import { navigate } from "@src/utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
+    import { afterChatRemoved } from "../../router/locations";
     import type { ScreenContext } from "../app/screens";
     import { favouriteWithToast, muteWithToast } from "../chats/chatToasts";
     import { removeWithUndo } from "../chats/removeWithUndo";
@@ -149,9 +150,10 @@
         }).includes("leave"),
     );
 
-    // back to the list, where the chat has gone, with Undo
+    // back to the list, where the chat has gone (or the activity feed it was opened from:
+    // afterChatRemoved), with Undo
     function leave() {
-        navigate(routeForScope($chatListScopeStore), "dismiss");
+        navigate(afterChatRemoved($chatListScopeStore, $querystringStore), "dismiss");
         removeWithUndo(
             client,
             context,
@@ -161,10 +163,11 @@
         );
     }
 
-    // back to the list, where the chat has gone, with Undo: the delete is sent once the toast has
+    // back to the list, where the chat has gone (or the activity feed: afterChatRemoved), with
+    // Undo: the delete is sent once the toast has
     // gone (the shell's PendingRemovals), and Undo sends nothing
     function deleteChat() {
-        navigate(routeForScope($chatListScopeStore), "dismiss");
+        navigate(afterChatRemoved($chatListScopeStore, $querystringStore), "dismiss");
         removeWithUndo(
             client,
             context,
