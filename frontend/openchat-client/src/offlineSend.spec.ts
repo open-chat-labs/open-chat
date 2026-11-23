@@ -40,6 +40,7 @@ import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { currentUserStore, localUpdates, serverGroupChatsStore } from "./state";
 import { mostRecentStore } from "./stores/throttling";
+import { OfflineSendQueue } from "./utils/offlineSendQueue";
 import { WorkerAgent } from "./workerAgent";
 
 // A message sent without a connection: with `queueOfflineSends` (the new UIs) it waits, queued,
@@ -431,6 +432,75 @@ describe("a message sent without a connection", () => {
             expect(queued).toHaveLength(2);
             expect(queued).toContain(first);
             expect(localUpdates.unconfirmedMessages(context)).toHaveLength(0);
+        });
+
+        // #10595: the queue used to try a throttled message again on its retry delays, and each
+        // try counted towards the throttle, so the window never cleared
+        test("held back by the send throttle, queued messages go as soon as it allows, in order, once each", async () => {
+            const queuedCalls = vi.spyOn(OfflineSendQueue.prototype, "queued");
+            const setOnline = (value: boolean) => {
+                online = value;
+                window.dispatchEvent(new Event(value ? "online" : "offline"));
+            };
+            const sentIds = () =>
+                sends.map(({ req }) =>
+                    req.kind === "sendMessage" ? req.event.event.messageId : 0n,
+                );
+
+            // 8 sent a second apart, then 2 offline, queued: the minute's 10
+            const start = Date.now();
+            for (let i = 0; i < 8; i++) {
+                await send();
+                await vi.advanceTimersByTimeAsync(1_000);
+            }
+            setOnline(false);
+            const first = await send();
+            await answer([CommonResponses.offline(), {} as Message]);
+            await vi.advanceTimersByTimeAsync(1_000);
+            void client.sendMessage(context, "second", false, undefined, []);
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.advanceTimersByTimeAsync(0);
+            const second = localUpdates
+                .allQueuedMessages()
+                .map((q) => q.event.event.messageId)
+                .find((id) => id !== first)!;
+            expect(localUpdates.allQueuedMessages()).toHaveLength(2);
+            expect(sends).toHaveLength(9);
+
+            // back online, the throttle holds them back: still queued, not failed
+            const queue = queuedCalls.mock.contexts[0] as OfflineSendQueue;
+            queue.start();
+            setOnline(true);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(sends).toHaveLength(9);
+            expect(localUpdates.isQueued(context, first)).toBe(true);
+            expect(localUpdates.isQueued(context, second)).toBe(true);
+            expect(failedToasts).toBe(0);
+
+            // the first goes once the first of the 10 leaves the window, however often the queue
+            // was held back meanwhile
+            await vi.advanceTimersByTimeAsync(start + 60_001 - Date.now() - 1);
+            expect(sends).toHaveLength(9);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(sentIds().slice(9)).toEqual([first]);
+            expect(localUpdates.isQueued(context, second)).toBe(true);
+            const resent = sends[9].req;
+            await answer([
+                { kind: "success", timestamp: BigInt(Date.now()), messageIndex: 1, eventIndex: 1 },
+                resent.kind === "sendMessage" ? resent.event.event : ({} as Message),
+            ]);
+            expect(localUpdates.isQueued(context, second)).toBe(true);
+
+            // the second once the next leaves it, a second later
+            await vi.advanceTimersByTimeAsync(1_000 - 1);
+            expect(sends).toHaveLength(10);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(sentIds().slice(9)).toEqual([first, second]);
+
+            // and neither again
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(sentIds().slice(9)).toEqual([first, second]);
+            queue.stop();
         });
     });
 

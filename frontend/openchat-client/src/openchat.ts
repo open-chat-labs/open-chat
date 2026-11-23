@@ -608,6 +608,7 @@ import { rulesAgreedOnJoiningStore } from "./stores/rulesAgreedOnJoining";
 import { groupCreation } from "./utils/groupCreation";
 import {
     initialiseMostRecentSentMessageTimes,
+    msUntilNextSendAllowed,
     sendsLeftNow,
     shouldThrottle,
 } from "./stores/throttling";
@@ -1142,6 +1143,7 @@ export class OpenChat {
                         timestamp: event.timestamp,
                     })),
                 resend: (queued) => this.#resendQueued(queued),
+                msUntilSendAllowed: () => msUntilNextSendAllowed(isDiamondStore.value),
                 offline: offlineStore,
                 setTimeout: (fn, ms) => window.setTimeout(fn, ms),
                 clearTimeout: (handle) => window.clearTimeout(handle as number),
@@ -7847,7 +7849,8 @@ export class OpenChat {
     }
 
     // Sends a queued message again (`OfflineSendQueue`), under its own id: `queued` if it's
-    // still waiting for the connection
+    // still waiting for the connection, `throttled` if the send throttle held it back (still
+    // queued, untouched)
     async #resendQueued({ context, messageId }: QueuedSend): Promise<ResendOutcome> {
         const event = localUpdates
             .failedMessagesForContext(context)
@@ -7909,11 +7912,13 @@ export class OpenChat {
         }
         const msg = event.event;
         const timestamp = Date.now();
+        // the rules accepted before, unless they've been asked for again since
+        const sentWithRules = waitedForRules ? undefined : acceptedRules;
         this.#queuedSendExtras.delete(messageId);
         const key = messageContextToString(context);
         this.#resendsInFlight.set(key, (this.#resendsInFlight.get(key) ?? 0) + 1);
         try {
-            await this.#sendMessageCommon(
+            const resp = await this.#sendMessageCommon(
                 chat,
                 context,
                 {
@@ -7935,11 +7940,22 @@ export class OpenChat {
                 msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
                 undefined,
                 "clear",
-                // the rules accepted before, unless they've been asked for again since
-                waitedForRules ? undefined : acceptedRules,
+                sentWithRules,
                 // only the new UIs queue: refused for rules changed since, it asks for them
                 "prompt",
             );
+            if (resp.kind === "message_throttled") {
+                // nothing was sent, nor changed: it stays queued, to go with what it was sent with
+                // this time. Not the rules accepted before if they've been asked for again since:
+                // the next try would go with those, out of date, and be refused (#10599)
+                if (extras !== undefined) {
+                    this.#queuedSendExtras.set(messageId, {
+                        mentioned: extras.mentioned,
+                        acceptedRules: sentWithRules,
+                    });
+                }
+                return "throttled";
+            }
         } finally {
             const left = (this.#resendsInFlight.get(key) ?? 1) - 1;
             if (left > 0) {

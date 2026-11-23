@@ -92,8 +92,11 @@ export type QueuedSend = {
     timestamp: bigint;
 };
 
-/** `sent`: it went (or failed for a backend reason, now shown failed). `queued`: no connection yet. */
-export type ResendOutcome = "sent" | "queued";
+/**
+ * `sent`: it went (or failed for a backend reason, now shown failed). `queued`: no connection yet.
+ * `throttled`: the send throttle held it back; it stays queued until the throttle allows a send.
+ */
+export type ResendOutcome = "sent" | "queued" | "throttled";
 
 /**
  * The queued messages of each chat (or thread) in the order they were written, the chats in the
@@ -127,6 +130,8 @@ export type OfflineSendQueueDeps = {
     queued(): QueuedSend[];
     /** Sends a queued message again. */
     resend(queued: QueuedSend): Promise<ResendOutcome>;
+    /** How long until the send throttle allows the next send, in ms: 0 if it does now. */
+    msUntilSendAllowed(): number;
     offline: Readable<boolean>;
     setTimeout(fn: () => void, ms: number): unknown;
     clearTimeout(handle: unknown): void;
@@ -137,7 +142,9 @@ export type OfflineSendQueueDeps = {
  * whenever it comes back online, and, for a message queued while it said it was online, again
  * after a while (`QUEUE_RETRY_DELAYS_MS`). Each chat's messages go one at a time, oldest first;
  * one that's queued again (still no connection) holds back those after it, so they keep their
- * order. Chats go side by side.
+ * order. Chats go side by side. One the send throttle holds back holds back its chat too, and is
+ * sent once the throttle allows the next send, not on the retry delays, which would only try it
+ * while it's still throttled (#10595).
  */
 export class OfflineSendQueue {
     #deps: OfflineSendQueueDeps;
@@ -149,6 +156,8 @@ export class OfflineSendQueue {
     #again = false;
     #retryTimer: unknown;
     #retries = 0;
+    // waiting for the send throttle to allow the next send
+    #throttleTimer: unknown;
 
     constructor(deps: OfflineSendQueueDeps) {
         this.#deps = deps;
@@ -207,6 +216,7 @@ export class OfflineSendQueue {
     async #flushOnce(): Promise<void> {
         this.#cancelRetry();
         let heldBack = false;
+        let throttled = false;
         await Promise.all(
             sendOrder(this.#deps.queued()).map(async (list) => {
                 for (const q of list) {
@@ -226,10 +236,15 @@ export class OfflineSendQueue {
                         heldBack = true;
                         return;
                     }
+                    if (outcome === "throttled") {
+                        throttled = true;
+                        return;
+                    }
                 }
             }),
         );
         if (this.#stopped) return;
+        if (throttled && !this.#isOffline) this.#waitForThrottle();
         if (heldBack && !this.#isOffline) {
             this.#scheduleRetry();
         } else if (!heldBack) {
@@ -248,10 +263,23 @@ export class OfflineSendQueue {
         }, delay);
     }
 
+    // Sends again once the throttle allows the next send
+    #waitForThrottle(): void {
+        if (this.#throttleTimer !== undefined) return;
+        this.#throttleTimer = this.#deps.setTimeout(() => {
+            this.#throttleTimer = undefined;
+            if (this.#unsubscribe !== undefined && !this.#isOffline) void this.flush();
+        }, this.#deps.msUntilSendAllowed());
+    }
+
     #cancelRetry(): void {
         if (this.#retryTimer !== undefined) {
             this.#deps.clearTimeout(this.#retryTimer);
             this.#retryTimer = undefined;
+        }
+        if (this.#throttleTimer !== undefined) {
+            this.#deps.clearTimeout(this.#throttleTimer);
+            this.#throttleTimer = undefined;
         }
     }
 }
