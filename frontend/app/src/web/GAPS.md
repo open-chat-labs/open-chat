@@ -28,8 +28,11 @@ design export needs. Each entry says where it came up.
   `ListSectionLabel`, `SortableInputList`, `AmountCard`, `UndoToast`; and 26 of the app components
   in `features/components` (Profile's own labels, the wallet's, the call's, the builders' …; find
   them with `grep -rlE "font(-size)?: ?[^;]*[0-9.]+px" openchat-ui/src/features`). Each is a
-  library change: a px size that matches a token can move onto it; one that doesn't needs a
-  design decision (TODO(design)).
+  library change with no new design: a px size that matches a token moves onto it, and one that
+  doesn't follows the setting through the library's `text-size($px)` (`lib/styles/_mixins.scss`,
+  its px times `--text-scale`, as the native kit's `NativeMenu` and `SettingsSegmented` use it).
+  The only design question is whether a given element should scale at all (a fixed-size chip or
+  icon label, say).
 - **Offline** (#10564): done, TODO(design) (the web plan has no offline indicator). While the
   client's `offlineStore` says the app is offline, the library's `OfflineStrip` (the native
   shell's too: the offline Banner's tone and icon) runs full width across the top of the window,

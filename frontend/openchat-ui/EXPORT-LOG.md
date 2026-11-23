@@ -1167,5 +1167,6 @@
 - `tokens.css`: comment only. The `--text-*` sizes already follow `--text-scale` (2026-11-04, for the native tree); the web tree now sets it too, on `<html>` while it's mounted, from the app's font size setting (Profile's), and removes it when it unmounts. No token changed.
 - `ChatRow`: the preview and typing lines' `12.5px` and `'Plus Jakarta Sans', sans-serif` are now `var(--text-md)` (12.5px) and `var(--font-sans)`, so the chat list's previews follow the scale with the rest of the row. Same size and face at the default scale.
 - `ProfileDialog`: with a host (`onAppearance`), the Interface size sample bubbles are `var(--text-base)` (13.5px) rather than a fixed `13.5px`, so they show the size the host's scale gives. Without a host (the docs) they scale by the design's own factors, as before.
-- Left (the app's `GAPS.md`, "Font size setting"): the components whose text is a px size rather than a token don't follow the scale (28 in `lib/components`, 26 in `features/components`).
+- Left (the app's `GAPS.md`, "Font size setting"): the components whose text is a px size rather than a token don't follow the scale (28 in `lib/components`, 26 in `features/components`); each can move onto a token or `text-size($px)`.
+- Docs: the Foundations page's `--text-scale` note and `text-size()`'s comment say both trees set the scale, on `<html>`.
 - Not in the design export: the export doesn't scale text.
