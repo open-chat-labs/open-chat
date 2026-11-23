@@ -227,7 +227,8 @@
                 "gif": "Questa GIF prenderà il suo posto e ciò che hai impostato andrà perso.",
                 "prize": "Un nuovo premio prenderà il suo posto una volta impostato e ciò che hai impostato per questo andrà perso.",
                 "transfer": "Un trasferimento prenderà il suo posto una volta impostato e ciò che hai impostato per questo andrà perso.",
-                "swap": "Una nuova offerta di scambio prenderà il suo posto una volta impostata e ciò che hai impostato per questa andrà perso."
+                "swap": "Una nuova offerta di scambio prenderà il suo posto una volta impostata e ciò che hai impostato per questa andrà perso.",
+                "result": "Questo risultato del puzzle del giorno prenderà il suo posto e ciò che hai impostato andrà perso."
             }
         }
     },

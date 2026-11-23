@@ -13,13 +13,14 @@ import type { ComposerBuilder } from "./composer";
 // duration), too costly to lose to a stray click, so anything replacing one asks (the user's
 // decision, 2026-11-19). A photo, video, file or GIF is replaced without asking, as before.
 // Every way something is attached in the web composer goes through `replaceNeedsConfirm`: the "+"
-// menu's photo / video and file, a file dropped or pasted, a GIF picked, and another builder.
+// menu's photo / video and file, a file dropped or pasted, a GIF picked, another builder, and a
+// daily puzzle result shared into the chat (#10236, the user's decision of 2026-11-23).
 
 /** A builder's content staged as the draft's attachment, which is asked about before it goes. */
 export type StagedBuilder = "prize" | "transfer" | "swap";
 
-/** What's about to take the staged attachment's place. */
-export type IncomingAttachment = "photo" | "video" | "file" | "gif" | StagedBuilder;
+/** What's about to take the staged attachment's place (`result`: a daily puzzle result shared here). */
+export type IncomingAttachment = "photo" | "video" | "file" | "gif" | "result" | StagedBuilder;
 
 /** The builder whose content the draft's attachment is, if it's one. */
 export function stagedBuilder(attachment: { kind: string } | undefined): StagedBuilder | undefined {

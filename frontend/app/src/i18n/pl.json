@@ -227,7 +227,8 @@
                 "gif": "Ten GIF zajmie jej miejsce, a to, co ustawiono, zostanie utracone.",
                 "prize": "Nowa nagroda zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone.",
                 "transfer": "Przelew zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone.",
-                "swap": "Nowa oferta wymiany zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone."
+                "swap": "Nowa oferta wymiany zajmie jej miejsce po ustawieniu, a to, co ustawiono dla obecnej, zostanie utracone.",
+                "result": "Ten wynik codziennej łamigłówki zajmie jej miejsce, a to, co ustawiono, zostanie utracone."
             }
         }
     },

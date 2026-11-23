@@ -106,7 +106,9 @@
         proposalTopicsStore,
         proposalVotesStore,
         dailyPuzzleStore,
+        sharedToChatStore,
     } from "@client";
+    import { applyShared, sharedHere, shareStep } from "@src/logic/dailyPuzzle/shareResult";
     import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
     import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
     import { cardOffersPlayWith } from "@src/logic/dailyPuzzle/dailyResultCard";
@@ -1468,6 +1470,29 @@
         });
     });
 
+    // the composer starts again from the draft's text when something outside it writes the text
+    // (a share taken in below): it reads the draft's text only as it mounts
+    let composerGeneration = $state(0);
+
+    // a daily puzzle result shared here (sharedToChatStore, from the puzzle's chat picker), taken
+    // into the draft as this chat opens, or at once in the chat open already: asking first in
+    // place of a staged transfer, prize or swap offer (shareStep; Cancel keeps it, and the result
+    // isn't attached), and its text, if any, the draft's (the composer starts again from it)
+    $effect(() => {
+        const shared = $sharedToChatStore;
+        if (!sharedHere(shared, chat.id, thread !== undefined)) return;
+        untrack(() => {
+            sharedToChatStore.set(undefined);
+            const where = context;
+            const take = () => {
+                if (applyShared(localUpdates.draftMessages, where, shared)) composerGeneration++;
+            };
+            const step = shareStep(draftAttachment(draft), shared);
+            if (step.kind === "attach") take();
+            else askToReplace(step.question, { kind: "attach", attach: take });
+        });
+    });
+
     function confirmDelete() {
         const confirmed = deleting;
         deleting = undefined;
@@ -1961,8 +1986,9 @@
         <!-- the chat's own composer is what the toasts and the achievement toast play above
              (bottomAnchors); a thread's isn't -->
         <div class="composer" {@attach thread === undefined && bottomAnchorFor("composer")}>
-            <!-- one composer per chat or thread: it starts from that one's draft -->
-            {#key contextKey}
+            <!-- one composer per chat or thread: it starts from that one's draft (again once
+                 a share writes its text: composerGeneration) -->
+            {#key `${contextKey}#${composerGeneration}`}
                 <Composer
                     {block}
                     onSignIn={() => askToSignIn(client)}

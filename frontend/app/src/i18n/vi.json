@@ -227,7 +227,8 @@
                 "gif": "GIF này sẽ thế chỗ, và những gì bạn đã thiết lập sẽ bị mất.",
                 "prize": "Một giải thưởng mới sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất.",
                 "transfer": "Một giao dịch chuyển sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất.",
-                "swap": "Một đề nghị hoán đổi mới sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất."
+                "swap": "Một đề nghị hoán đổi mới sẽ thế chỗ khi bạn thiết lập xong, và những gì bạn đã thiết lập cho cái này sẽ bị mất.",
+                "result": "Kết quả câu đố hằng ngày này sẽ thế chỗ, và những gì bạn đã thiết lập sẽ bị mất."
             }
         }
     },

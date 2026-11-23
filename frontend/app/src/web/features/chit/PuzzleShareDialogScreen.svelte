@@ -1,21 +1,21 @@
 <!-- Sharing today's daily puzzle result into a chat (?chit=share:<gameId>, #10236): ChatPicker in the
      puzzle dialog's place over the same backdrop, its back arrow returning to the puzzle, listing
-     the chats the user can send text in (SharePicker), the open one left out, as the new UI's
-     other pickers (?share, forward) leave it: its composer is already mounted, and reads a
-     draft's text only as it mounts, so the message written here would be lost (the old desktop's
-     picker offered it, with no message to write; GAPS.md). Picking one opens it with the result card as its draft's attachment, and the
-     message written here as its text (shareResultToDraft): nothing is sent until the user sends it,
-     as the old trees' share (SlidingModals.shareDailyResultToChat). The card is made from what the
-     store holds for the game (shareableResultCard): a link to it with no result to share (not
-     solved, solved too quickly to share, another day's) opens the puzzle in its place. -->
+     the chats the user can send text in (SharePicker), the open one included (the user's decision
+     of 2026-11-23, as the old desktop picker offered it). Picking one opens it, and its
+     conversation takes the result card into its draft with the message written here as its text
+     (sharedToChatStore, MessageArea): asking first in place of a staged transfer, prize or swap
+     offer, and starting its composer again from the text, so it lands the same in the chat open
+     already. Nothing is sent until the user sends it, as the old trees' share
+     (SlidingModals.shareDailyResultToChat). The card is made from what the store holds for the
+     game (shareableResultCard): a link to it with no result to share (not solved, solved too
+     quickly to share, another day's) opens the puzzle in its place. -->
 <script lang="ts">
     import {
         chatListScopeStore,
         currentUserIdStore,
         dailyPuzzleStore,
-        localUpdates,
         routeForChatIdentifier,
-        selectedChatIdStore,
+        sharedToChatStore,
         type OpenChat,
         type ResourceKey,
     } from "@client";
@@ -24,7 +24,6 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { interpolateNewUi } from "@src/i18n/i18n";
     import { shareableResultCard } from "@src/logic/dailyPuzzle/dailyResultCard";
-    import { shareResultToDraft } from "@src/logic/dailyPuzzle/shareResult";
     import { navigate, replaceQuery } from "@src/utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -37,9 +36,9 @@
         $props();
 
     const client = getContext<OpenChat>("client");
-    // the open chat left out (above)
+    // every chat the user can send in, the open one too
     // svelte-ignore state_referenced_locally
-    const picker = new SharePicker(client, $_, () => selectedChatIdStore.value);
+    const picker = new SharePicker(client, $_, () => undefined);
 
     // today's puzzles are known once a fetch has come back (a reload or a link lands before the
     // poll's first), as the puzzle dialog waits for them
@@ -77,7 +76,7 @@
     function pick({ chatId, message }: { chatId: string; message: string }) {
         const id = picker.chatId(chatId);
         if (id === undefined || card === undefined) return;
-        shareResultToDraft(localUpdates.draftMessages, id, card, message);
+        sharedToChatStore.set({ chatId: id, attachment: card, text: message });
         navigate(routeForChatIdentifier($chatListScopeStore.kind, id));
     }
 </script>

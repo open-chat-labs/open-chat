@@ -227,7 +227,8 @@
                 "gif": "Dieses GIF tritt an seine Stelle, und was du dafür eingerichtet hast, geht verloren.",
                 "prize": "Ein neuer Preis tritt an seine Stelle, sobald du ihn eingerichtet hast, und was du für diesen eingerichtet hast, geht verloren.",
                 "transfer": "Eine Überweisung tritt an seine Stelle, sobald du sie eingerichtet hast, und was du hierfür eingerichtet hast, geht verloren.",
-                "swap": "Ein neues Tauschangebot tritt an seine Stelle, sobald du es eingerichtet hast, und was du für dieses eingerichtet hast, geht verloren."
+                "swap": "Ein neues Tauschangebot tritt an seine Stelle, sobald du es eingerichtet hast, und was du für dieses eingerichtet hast, geht verloren.",
+                "result": "Dieses Ergebnis des Tagesrätsels tritt an seine Stelle, und was du dafür eingerichtet hast, geht verloren."
             }
         }
     },
