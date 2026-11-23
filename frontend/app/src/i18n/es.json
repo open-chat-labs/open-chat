@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "Toca tantas veces como quieras para dejar una propina.",
         "failure": "Lo sentimos, no pudimos agregar tu consejo.",
+        "insufficient": "No tienes suficiente {token} para esta propina y su comisión",
         "menu": "Consejo",
         "noExchangeRate": "No tenemos ningún tipo de cambio configurado para {token}",
         "plusFee": "+ tarifa {fee} {token}",

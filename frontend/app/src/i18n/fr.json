@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire",
         "failure": "Désolé, nous n'avons pas pu ajouter votre conseil",
+        "insufficient": "Pas assez de {token} pour ce pourboire et ses frais",
         "menu": "Conseil",
         "noExchangeRate": "Nous n'avons pas de taux de change configuré pour {token}",
         "plusFee": "+ frais de {fee} {token}",

@@ -119,6 +119,13 @@ describe("a message's actions", () => {
         });
     });
 
+    test("tipping asks how much first", async () => {
+        expect(await messageAction("tip", target(fakeClient()))).toEqual({
+            kind: "ask",
+            dialog: { kind: "tip", evt },
+        });
+    });
+
     test("forwarding asks where to first", async () => {
         expect(await messageAction("forward", target(fakeClient()))).toEqual({
             kind: "ask",

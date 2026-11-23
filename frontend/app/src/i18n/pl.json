@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "Stuknij tyle razy, ile chcesz, aby zostawić napiwek",
         "failure": "Przepraszamy, nie mogliśmy dodać Twojej wskazówki",
+        "insufficient": "Za mało {token} na ten napiwek i jego opłatę",
         "menu": "Wskazówka",
         "noExchangeRate": "Nie mamy skonfigurowanego kursu wymiany dla {token}",
         "plusFee": "+ opłata {fee} {token}",

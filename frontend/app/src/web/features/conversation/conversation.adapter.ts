@@ -179,6 +179,8 @@ const MESSAGE_MENU: MessageMenuEntry[] = [
     { action: "undelete", label: "undeleteMessage", icon: "rotate-back" },
     // a revealed deleted message back behind its placeholder (`hideRevealedMessage`)
     { action: "hide", label: "hideRevealedMessage", icon: "eye-off" },
+    // last before the danger items, as in the old desktop menu
+    { action: "tip", label: "tip.menu", icon: "coin" },
 ];
 
 const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
@@ -190,7 +192,7 @@ const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
 
 /**
  * A message's menu (MessageActions' items) for what it offers (`messageMenu`). Only the actions
- * this screen carries out are listed (a proposal's, tipping and the rest wait for theirs).
+ * this screen carries out are listed (a proposal's and the rest wait for theirs).
  */
 export function messageMenuItems(actions: ReadonlySet<OfferedAction>): MessageMenuItem[] {
     const item =

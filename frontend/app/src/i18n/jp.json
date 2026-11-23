@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "好きなだけタップしてチップを残しましょう",
         "failure": "申し訳ありませんが、チップを追加できませんでした",
+        "insufficient": "このチップと手数料に必要な {token} が足りません",
         "menu": "チップ",
         "noExchangeRate": "{token} には為替レートが設定されていません",
         "plusFee": "+ {fee} {token} 手数料",

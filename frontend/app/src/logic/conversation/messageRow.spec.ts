@@ -930,10 +930,16 @@ describe("tips", () => {
                 amount: "1.5",
                 symbol: "ICP",
                 logo: 'url("icp.svg") center / cover',
+                id: "icp",
                 mine: true,
                 label: "Alice, You",
             },
         ]);
+    });
+
+    test("carry their token's ledger, which a chip hands back to tip again in it", () => {
+        const tipped = message({ tips: { icp: { alice: 1n } } });
+        expect(messageRow(tipped, "sent", ctx).message.tips?.map((t) => t.id)).toEqual(["icp"]);
     });
 
     test("show on every kind", () => {

@@ -57,6 +57,7 @@ function state(guest: boolean): MessageOfferState {
         undeleting: new Set<bigint>(),
         blocked: new Set<string>(),
         tipsEnabled: true,
+        tipRecipient: "them",
     };
 }
 
@@ -82,6 +83,71 @@ describe("a message in a preview", () => {
         expect(offer.menu).toBe(false);
         expect(offer.react).toBe(false);
         expect(offer.actions.size).toBe(0);
+    });
+});
+
+describe("tipping a message", () => {
+    // a member who may do everything, tipping included
+    const member = {
+        canSendMessage: () => true,
+        canReactToMessages: () => true,
+        canPinMessages: () => true,
+        canTipMessages: () => true,
+        canDeleteOtherUsersMessages: () => true,
+        canBlockUsers: () => true,
+    };
+    const writable = (patch: Partial<MessageOfferState> = {}): MessageOfferState => ({
+        ...state(false),
+        readonly: false,
+        ...patch,
+    });
+
+    test("is offered on someone else's message, to whoever it pays", () => {
+        const offer = messageOffer(member, group, theirs, writable());
+        expect(offer.canTip).toBe(true);
+        expect(offer.actions).toContain("tip");
+    });
+
+    test("is offered in a thread too, by the tip permission", () => {
+        const root = { messageId: 99n, messageIndex: 1 };
+        const offer = messageOffer(
+            member,
+            group,
+            theirs,
+            writable({ thread: { root, following: true } }),
+        );
+        expect(offer.actions).toContain("tip");
+        const noTip = messageOffer(
+            { ...member, canTipMessages: () => false },
+            group,
+            theirs,
+            writable({ thread: { root, following: true } }),
+        );
+        expect(noTip.actions).not.toContain("tip");
+    });
+
+    test("is never offered in an app store build", () => {
+        const offer = messageOffer(member, group, theirs, writable({ tipsEnabled: false }));
+        expect(offer.canTip).toBe(false);
+        expect(offer.actions).not.toContain("tip");
+    });
+
+    test("is never offered with no one to pay (a bot's, or a relayed message no one linked)", () => {
+        const offer = messageOffer(member, group, theirs, writable({ tipRecipient: undefined }));
+        expect(offer.canTip).toBe(false);
+        expect(offer.actions).not.toContain("tip");
+    });
+
+    test("is never offered where it would pay the reader (their own relayed message)", () => {
+        const offer = messageOffer(member, group, theirs, writable({ tipRecipient: "me" }));
+        expect(offer.actions).not.toContain("tip");
+    });
+
+    test("is never offered on a failed or unconfirmed message", () => {
+        expect(messageOffer(member, group, theirs, writable({ failed: true })).canTip).toBe(false);
+        expect(messageOffer(member, group, theirs, writable({ confirmed: false })).canTip).toBe(
+            false,
+        );
     });
 });
 

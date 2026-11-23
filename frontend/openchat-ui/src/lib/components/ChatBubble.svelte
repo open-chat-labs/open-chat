@@ -75,6 +75,8 @@
     onShowAllReactions?: () => void;
     /** The tips the message got, a chip per token before its reactions (by hand, web 5a). */
     tips?: Tip[];
+    /** A tip chip pressed (by its `id`): the viewer tips again in its token (by hand, web 5b). */
+    onTip?: (id: string) => void;
     /** Replies in the message's thread: the thread link under the reactions. */
     threadCount?: number;
     threadLastAt?: string;
@@ -119,6 +121,7 @@
     onToggleReaction,
     onShowAllReactions,
     tips = [],
+    onTip,
     threadCount = 0,
     threadLastAt = '',
     threadFaces = [],
@@ -193,7 +196,7 @@
           <span class="retry" onclick={retryAction} role="button" tabindex="0">{t('ui.common.retry')}</span>
         </div>
       {/if}
-      <ReactionChips {reactions} {tips} maxRows={maxReactionRows} {mirror} onToggle={onToggleReaction} onShowAll={onShowAllReactions} />
+      <ReactionChips {reactions} {tips} maxRows={maxReactionRows} {mirror} onToggle={onToggleReaction} onShowAll={onShowAllReactions} {onTip} />
       <!-- the thread under the reactions, which overlap the bubble's edge (pass 8) -->
       {#if threadCount > 0}
         <ThreadLink

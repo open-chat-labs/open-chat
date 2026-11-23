@@ -51,7 +51,13 @@ describe("a message's menu", () => {
     });
 
     test("leaves out what this screen doesn't carry out", () => {
-        expect(messageMenuItems(offers("tip", "collapse_proposal"))).toEqual([]);
+        expect(messageMenuItems(offers("collapse_proposal"))).toEqual([]);
+    });
+
+    test("offers Tip last before the danger items, as the old desktop menu did", () => {
+        expect(
+            messageMenuItems(offers("delete", "tip", "copy", "reply")).map((i) => i.action),
+        ).toEqual(["reply", "copy", "tip", "separator", "delete"]);
     });
 
     test("offers a thread's items after Reply: start one, or follow or unfollow it", () => {

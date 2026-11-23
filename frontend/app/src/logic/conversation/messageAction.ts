@@ -73,13 +73,14 @@ export type MessageActionTarget = {
 
 /**
  * A dialog an action needs before it's done: confirming a delete, picking where to forward to,
- * why it's reported or when to be reminded.
+ * why it's reported, when to be reminded or how much to tip.
  */
 export type MessageMenuDialog =
     | { kind: "delete"; evt: EventWrapper<Message> }
     | { kind: "forward"; evt: EventWrapper<Message> }
     | { kind: "report"; evt: EventWrapper<Message> }
-    | { kind: "remind"; evt: EventWrapper<Message> };
+    | { kind: "remind"; evt: EventWrapper<Message> }
+    | { kind: "tip"; evt: EventWrapper<Message> };
 
 /** What came of a message's action, for the view to show. */
 export type MessageActionOutcome =
@@ -133,6 +134,8 @@ export async function messageAction(
             return { kind: "ask", dialog: { kind: "report", evt } };
         case "remind":
             return { kind: "ask", dialog: { kind: "remind", evt } };
+        case "tip":
+            return { kind: "ask", dialog: { kind: "tip", evt } };
         case "reply_privately": {
             // the sender's DM, made if there's none, with the reply set (an edit there ending)
             const replyingTo = messageReplyContext(evt, target.users.get(msg.sender), context);
@@ -235,7 +238,7 @@ export async function messageAction(
             if (target.confirmDelete) return { kind: "ask", dialog: { kind: "delete", evt } };
             return { kind: "deleted", ok: await deleteMessage(client, context, evt) };
         default:
-            // not carried out here yet (tipping, a proposal's)
+            // not carried out here yet (a proposal's)
             return DONE;
     }
 }

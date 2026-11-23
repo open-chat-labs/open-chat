@@ -5,6 +5,7 @@ import {
     exchangeRatesLookupStore,
     formatTokens,
     lastCryptoSent,
+    validateTokenInput,
     type Message,
     type MessageContext,
     type TipOutcome,
@@ -49,6 +50,27 @@ export class TipForm extends TransferForm {
             (this.payFromWallet || this.tokenState.remainingBalance >= 0n) &&
             !this.tokenChanging
         );
+    }
+
+    // More than the OpenChat account holds, the fees included (an external wallet's balance is its
+    // own business)
+    get insufficient(): boolean {
+        return (
+            !this.payFromWallet &&
+            this.tokenState.draftAmount > 0n &&
+            this.tokenState.remainingBalance < 0n
+        );
+    }
+
+    /**
+     * A custom amount, as typed in the token's units (the old trees' `TokenInput`): the tip becomes
+     * exactly that, or nothing for what isn't an amount. Returns the text to show in its place when
+     * it has more decimals than the token has, else undefined.
+     */
+    typeAmount(text: string): string | undefined {
+        const { replacementText, amount } = validateTokenInput(text, this.tokenState.decimals);
+        this.tokenState.draftAmount = amount;
+        return replacementText;
     }
 
     // Whether adding `increment` cents would go over what the user can spend

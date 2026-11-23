@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa",
         "failure": "Rất tiếc, chúng tôi không thể thêm mẹo của bạn",
+        "insufficient": "Không đủ {token} cho khoản tiền tip này và phí của nó",
         "menu": "Mẹo",
         "noExchangeRate": "Chúng tôi không có tỷ giá hối đoái nào được định cấu hình cho {token}",
         "plusFee": "+ phí {fee} {token}",

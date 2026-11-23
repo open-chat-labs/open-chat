@@ -72,6 +72,8 @@
     /** Own text messages only. */
     onEdit?: (index: number, el?: HTMLElement) => void;
     onSwipeLeft?: (index: number) => void;
+    /** A message's tip chip pressed (by the tip's `id`): the viewer tips again in its token (by hand, web 5b). */
+    onTip?: (index: number, id: string) => void;
     /** The sender's avatar or name was clicked (or pressed with Enter / Space); gets the element clicked. Plain text without it. */
     onSenderClick?: (el: HTMLElement) => void;
     /** Right-aligned sent messages (native): a sent run sits at the inline end, its bubbles' corners mirrored. */
@@ -114,6 +116,7 @@
     onReply,
     onEdit,
     onSwipeLeft,
+    onTip,
     mirror = false,
     compactGifs = false,
     avatarSize = 34,
@@ -541,11 +544,11 @@
         {:else if m.kind === 'daily_result'}
           <DailyResultMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if !m.kind || m.kind === 'text'}
-          <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={onReact ? (c) => onReact(i, c) : undefined} />
+          <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={onReact ? (c) => onReact(i, c) : undefined} onTip={onTip ? (id) => onTip(i, id) : undefined} />
         {/if}
         <!-- every other kind's reactions and thread, under it as under a text bubble (ChatBubble draws its own) -->
         {#if m.kind && m.kind !== 'text' && (m.reactions?.length || m.tips?.length)}
-          <ReactionChips reactions={m.reactions ?? []} tips={m.tips} mirror={mirrored} onToggle={onReact ? (c) => onReact(i, c) : undefined} />
+          <ReactionChips reactions={m.reactions ?? []} tips={m.tips} mirror={mirrored} onToggle={onReact ? (c) => onReact(i, c) : undefined} onTip={onTip ? (id) => onTip(i, id) : undefined} />
         {/if}
         {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
           <ThreadLink

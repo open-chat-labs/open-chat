@@ -59,6 +59,14 @@ export class TransferForm {
         this.#chooseToken(token);
     }
 
+    /**
+     * Checks the chosen token's balance again (a Refresh button), as choosing it does; a failure is
+     * reported to `onRefreshFailed`.
+     */
+    refreshBalance(): Promise<void> {
+        return this.#refreshChosenBalance();
+    }
+
     // The balance of the chosen token has been checked
     balanceChecked() {
         this.#tokenChanging = false;

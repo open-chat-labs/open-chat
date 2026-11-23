@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "Tocca quante volte vuoi per lasciare una mancia",
         "failure": "Siamo spiacenti, non siamo riusciti ad aggiungere il tuo suggerimento",
+        "insufficient": "{token} insufficienti per questa mancia e la sua commissione",
         "menu": "Lascia una mancia",
         "noExchangeRate": "Non abbiamo configurato alcun tasso di cambio per {token}",
         "plusFee": "+ commissione {fee} {token}",

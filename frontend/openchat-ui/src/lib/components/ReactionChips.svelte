@@ -2,7 +2,8 @@
      into a "+N" chip that expands them, and a close chip folds them again. Click a chip → onToggle(emoji).
      By hand: ChatBubble's chips as their own component, so every kind of message shows its reactions (MessageGroup puts
      them under the kinds that don't draw their own). Also by hand (web 5a, TODO(design)): the tips a message got, a chip
-     per token (its logo and the total) before the reactions, the viewer's own tipped ones marked as their reactions are. -->
+     per token (its logo and the total) before the reactions, the viewer's own tipped ones marked as their reactions are.
+     A tip with an `id` is a button with onTip (by hand, web 5b, 2026-11-23): onTip(id) tips again in that token. -->
 <script lang="ts" module>
   export interface Reaction {
     emoji: string;
@@ -21,6 +22,8 @@
     mine?: boolean;
     /** Who tipped, for the chip's tooltip. */
     label?: string;
+    /** The host's id for the token, handed back to onTip (by hand, web 5b). */
+    id?: string;
   }
 </script>
 
@@ -38,9 +41,19 @@
     mirror?: boolean;
     onToggle?: (emoji: string) => void;
     onShowAll?: () => void;
+    /** A tip chip pressed (one with an `id`): the viewer tips again in its token. Tips are only shown without it. */
+    onTip?: (id: string) => void;
   }
 
-  let { reactions, tips = [], maxRows = 1, mirror = false, onToggle, onShowAll }: Props = $props();
+  let { reactions, tips = [], maxRows = 1, mirror = false, onToggle, onShowAll, onTip }: Props = $props();
+
+  // Enter and Space press a tip chip, as they would a button
+  function tipKey(e: KeyboardEvent, id: string) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onTip?.(id);
+    }
+  }
   const t = useT();
 
   // fit === null renders every chip so their rows can be measured
@@ -85,9 +98,24 @@
 {#if reactions.length > 0 || tips.length > 0}
   <div class="reactions" class:mirror bind:this={chips}>
     {#each tips as tip}
-      <span class="chip tip" class:mine={tip.mine} data-oc-tip title={tip.label}
-        ><span class="coin" style:background={tip.logo} aria-hidden="true"></span>{tip.amount} {tip.symbol}</span
-      >
+      {#if onTip && tip.id !== undefined}
+        {@const id = tip.id}
+        <span
+          class="chip tip tippable"
+          class:mine={tip.mine}
+          data-oc-tip
+          title={tip.label}
+          onclick={() => onTip(id)}
+          onkeydown={(e) => tipKey(e, id)}
+          role="button"
+          tabindex="0"
+          ><span class="coin" style:background={tip.logo} aria-hidden="true"></span>{tip.amount} {tip.symbol}</span
+        >
+      {:else}
+        <span class="chip tip" class:mine={tip.mine} data-oc-tip title={tip.label}
+          ><span class="coin" style:background={tip.logo} aria-hidden="true"></span>{tip.amount} {tip.symbol}</span
+        >
+      {/if}
     {/each}
     {#each shown as r}
       {#if onToggle}
@@ -188,8 +216,8 @@
     }
   }
 
-  /* a tip isn't a toggle: no pointer, no hover */
-  .chip.tip {
+  /* a tip isn't a toggle: no pointer, no hover, unless it tips again (onTip) */
+  .chip.tip:not(.tippable) {
     cursor: default;
 
     &:hover {

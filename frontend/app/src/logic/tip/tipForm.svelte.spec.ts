@@ -173,4 +173,56 @@ describe("choosing a tip", () => {
         await vi.waitFor(() => expect(refreshed.tokenChanging).toBe(false));
         expect(onRefreshFailed).not.toHaveBeenCalled();
     });
+
+    test("a custom amount is exactly what was typed, in the token's units", () => {
+        cryptoBalanceStore.setBalance(icp.ledger, 100_000_000n);
+        const form = new TipForm(client, icp.ledger);
+
+        expect(form.typeAmount("0.05")).toBeUndefined();
+        expect(form.tokenState.draftAmount).toBe(5_000_000n);
+
+        form.typeAmount("not a number");
+        expect(form.tokenState.draftAmount).toBe(0n);
+    });
+
+    test("a custom amount with more decimals than the token has is cut to them", () => {
+        const form = new TipForm(client, ckusdc.ledger);
+
+        expect(form.typeAmount("0.1234567")).toBe("0.123456");
+        expect(form.tokenState.draftAmount).toBe(123_456n);
+    });
+
+    // Invariant: a tip the OpenChat account can't cover, fees included, is said so and can't be sent
+    test("an amount over the balance, fees included, is insufficient and not valid", async () => {
+        cryptoBalanceStore.setBalance(icp.ledger, 1_000_000n);
+        const form = new TipForm(client, icp.ledger);
+        await vi.waitFor(() => expect(form.tokenChanging).toBe(false));
+
+        form.typeAmount("0.0098");
+        expect(form.insufficient).toBe(false);
+        expect(form.valid).toBe(true);
+
+        // 0.0099 + 0.0001 fee + 0.0001 approval fee > 0.01
+        form.typeAmount("0.0099");
+        expect(form.insufficient).toBe(true);
+        expect(form.valid).toBe(false);
+    });
+
+    test("no amount yet is neither insufficient nor valid", async () => {
+        const form = new TipForm(client, icp.ledger);
+        await vi.waitFor(() => expect(form.tokenChanging).toBe(false));
+
+        expect(form.insufficient).toBe(false);
+        expect(form.valid).toBe(false);
+    });
+
+    test("refreshing checks the chosen token's balance again", async () => {
+        const form = new TipForm(client, icp.ledger);
+        await vi.waitFor(() => expect(form.tokenChanging).toBe(false));
+        vi.mocked(client.refreshAccountBalance).mockClear();
+
+        await form.refreshBalance();
+
+        expect(client.refreshAccountBalance).toHaveBeenCalledWith(icp.ledger, false);
+    });
 });
