@@ -947,7 +947,7 @@ export class UserClient
     }
 
     getPublicProfile(): Stream<PublicProfile> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             try {
                 const cachedProfile = await this.chatsDb.getCachedPublicProfile(this.userId);
 

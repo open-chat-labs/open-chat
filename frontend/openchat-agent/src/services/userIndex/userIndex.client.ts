@@ -189,7 +189,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
-        return new Stream(async (resolve, reject) => {
+        return Stream.fromAsync(async (resolve, reject) => {
             try {
                 const cachedUser = await this.chatsDb.getCachedCurrentUser();
 
