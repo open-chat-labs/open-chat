@@ -30,6 +30,7 @@ import {
     type ChatSummary,
     type CryptocurrencyContent,
     type CryptocurrencyDetails,
+    type DailyResultContent,
     type DeletedContent,
     type EventWrapper,
     type GiphyContent,
@@ -70,6 +71,8 @@ import { threadUnreadCount } from "@src/logic/threads/threadRead";
 import { typedMentions, type MentionLookups } from "./typedMentions";
 import { linkPreviews } from "./linkPreview";
 import { isRevealedDeleted } from "./messageOffer";
+import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+import { cardNumbers, type CardVerification } from "@src/logic/dailyPuzzle/dailyResultCard";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -154,6 +157,19 @@ export type ConversationContext = {
     proposalTopics: ReadonlyMap<number, string>;
     /** The reader's vote on a proposal this session (`proposalVotesStore`), on its way or counted. */
     proposalVote: (messageId: bigint) => ProposalVoteStatus | undefined;
+    /** What a daily puzzle's result card shows that isn't in the message (`DailyResultView`). */
+    dailyResult: (content: DailyResultContent) => DailyResultView;
+};
+
+/**
+ * A daily puzzle result card's state beyond the message: its numbers as the results index has
+ * them (`DailyResultVerifier`; the message's own are a claim, never shown), whether this build
+ * draws its game, and whether it offers today's puzzle to play (`cardOffersPlay`).
+ */
+export type DailyResultView = {
+    verification: CardVerification;
+    drawable: boolean;
+    offersPlay: boolean;
 };
 
 export type TransferToken = {
@@ -756,6 +772,8 @@ function kindMessage(
             return status === "failed"
                 ? undefined
                 : swapMessage(msg.sender, sendingSwap(content, ctx.now), ctx, base, true);
+        case "daily_result":
+            return dailyResultMessage(content, ctx, base);
         case "file_content":
             return {
                 ...base,
@@ -767,6 +785,51 @@ function kindMessage(
             };
     }
     return undefined;
+}
+
+/**
+ * A daily puzzle's result card (the old trees' DailyResultContent): the puzzle's number, its game
+ * and tier, and the time, hints and streak the results index holds for it ("–" until it's
+ * answered, and for a result it doesn't hold: #9332 invariant 44); Play while it's today's
+ * puzzle and the reader hasn't solved it, or a note in its place for a game this build can't draw.
+ */
+export function dailyResultMessage(
+    content: DailyResultContent,
+    ctx: Pick<ConversationContext, "dailyResult" | "text">,
+    base: KindBase,
+): GroupMessage {
+    const view = ctx.dailyResult(content);
+    const numbers = cardNumbers(view.verification);
+    const label = (key: string) => ctx.text(i18nKey(key));
+    const unknown = "–";
+    const game = label(gameNameKey(content.gameId));
+    return {
+        ...base,
+        kind: "daily_result",
+        title: ctx.text(i18nKey("dailyPuzzle.number", { number: content.number })),
+        subtitle: content.tier === undefined ? game : `${game} · ${label(tierKey(content.tier))}`,
+        stats: [
+            {
+                value: numbers === undefined ? unknown : formatSolveTime(numbers.solveTimeMs),
+                label: label("dailyPuzzle.card.time"),
+                mono: true,
+            },
+            {
+                value: numbers === undefined ? unknown : String(numbers.hintsUsed),
+                label: label("dailyPuzzle.card.hints"),
+            },
+            {
+                value: numbers === undefined ? unknown : String(numbers.streak),
+                label: label("dailyPuzzle.card.dayStreak"),
+            },
+        ],
+        verification: view.verification.kind,
+        verifiedLabel: label("dailyPuzzle.verified"),
+        unverifiedLabel: label("dailyPuzzle.unverified"),
+        note: view.drawable ? "" : label("dailyPuzzle.needsNewerApp"),
+        playLabel: view.drawable && view.offersPlay ? label("dailyPuzzle.play") : "",
+        caption: content.caption ?? "",
+    };
 }
 
 /**
@@ -1157,6 +1220,8 @@ export type ConversationContextInput = {
     proposalTopics: ReadonlyMap<number, string>;
     /** This session's votes on proposals (`proposalVotesStore`). */
     proposalVotes: ReadonlyMap<bigint, ProposalVoteStatus>;
+    /** A daily puzzle result card's state beyond the message (`DailyResultView`). */
+    dailyResult: ConversationContext["dailyResult"];
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -1214,6 +1279,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         twitchParent: input.twitchParent,
         proposalTopics: input.proposalTopics,
         proposalVote: (messageId) => input.proposalVotes.get(messageId),
+        dailyResult: input.dailyResult,
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
                 chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),

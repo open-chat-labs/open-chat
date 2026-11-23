@@ -41,6 +41,8 @@
         proposalTopicsStore,
         proposalVotesStore,
     } from "@client";
+    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
@@ -85,6 +87,7 @@
         $props();
 
     const client = getContext<OpenChat>("client");
+    const resultVerifier = new DailyResultVerifier(client);
     // the shell's, the same for the screen's life
     const overlays = untrack(() => context.overlays);
     const chatId = untrack(() => screen.chatId);
@@ -185,6 +188,12 @@
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,
+            // a daily puzzle result's card, its numbers checked as the conversation's are; no Play
+            dailyResult: (content) => ({
+                verification: resultVerifier.verification(content),
+                drawable: dailyPuzzleGame(content.gameId) !== undefined,
+                offersPlay: false,
+            }),
         }),
     );
 

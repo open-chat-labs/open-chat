@@ -5,6 +5,7 @@ import {
     proposalVoting,
     quoteText,
     type ConversationContext,
+    type DailyResultView,
     type MessageRow,
     type MessageStatus,
 } from "./messageRow";
@@ -26,6 +27,7 @@ export class RowCache {
             thread: string;
             undeleting: boolean;
             proposal: string;
+            result: string;
             row: MessageRow;
         }
     >();
@@ -57,6 +59,10 @@ export class RowCache {
             content.kind === "proposal_content"
                 ? `${ctx.proposalVote(msg.messageId) ?? ""}|${proposalTopicLabel(content, ctx.proposalTopics)}|${proposalVoting(content.proposal.deadline, ctx.now).left}`
                 : "";
+        // a daily puzzle result's check against the results index landing, and whether it still
+        // offers today's puzzle
+        const result =
+            content.kind === "daily_result" ? dailyResultKey(ctx.dailyResult(content)) : "";
         const kept = this.#rows.get(key);
         if (
             kept?.evt === evt &&
@@ -64,18 +70,23 @@ export class RowCache {
             kept.names === names &&
             kept.thread === thread &&
             kept.undeleting === undeleting &&
-            kept.proposal === proposal
+            kept.proposal === proposal &&
+            kept.result === result
         ) {
             return kept.row;
         }
         const row = messageRow(evt, status, ctx);
-        this.#rows.set(key, { evt, status, names, thread, undeleting, proposal, row });
+        this.#rows.set(key, { evt, status, names, thread, undeleting, proposal, result, row });
         return row;
     }
 
     clear(): void {
         this.#rows.clear();
     }
+}
+
+function dailyResultKey(view: DailyResultView): string {
+    return `${view.verification.kind}|${view.drawable}|${view.offersPlay}`;
 }
 
 /**

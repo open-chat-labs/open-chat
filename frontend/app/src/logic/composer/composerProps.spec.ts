@@ -51,6 +51,7 @@ const ctx: ConversationContext = {
     twitchParent: "oc.app",
     proposalTopics: new Map(),
     proposalVote: () => undefined,
+    dailyResult: () => ({ verification: { kind: "pending" }, drawable: true, offersPlay: false }),
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -341,23 +342,31 @@ describe("the composer's staged attachment", () => {
         ).toMatchObject({ type: "file", summary: "2.0 KB" });
     });
 
-    test("is none without one, or for what the composer doesn't stage yet", () => {
+    test("is none without one", () => {
         expect(composerAttachment(undefined, ctx)).toBeNull();
-        expect(
-            composerAttachment(
-                {
-                    kind: "daily_result",
-                    gameId: "g",
-                    number: 1,
-                    userId: "me",
-                    solveTimeMs: 1,
-                    hintsUsed: 0,
-                    streak: 1,
-                    layout: "",
-                },
-                ctx,
-            ),
-        ).toBeNull();
+    });
+
+    test("is a chip naming a puzzle result shared into the chat, and its game and tier (#10236)", () => {
+        const result = {
+            kind: "daily_result" as const,
+            gameId: "bridges",
+            number: 12,
+            userId: "me",
+            solveTimeMs: 61_000,
+            hintsUsed: 0,
+            streak: 1,
+            layout: "",
+        };
+        expect(composerAttachment(result, ctx)).toEqual({
+            type: "file",
+            title: "dailyPuzzle.number",
+            summary: "dailyPuzzle.games.bridges.name",
+        });
+        expect(composerAttachment({ ...result, tier: 1 }, ctx)).toEqual({
+            type: "file",
+            title: "dailyPuzzle.number",
+            summary: "dailyPuzzle.games.bridges.name · dailyPuzzle.tier.1",
+        });
     });
 });
 

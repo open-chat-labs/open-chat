@@ -31,7 +31,7 @@ import type { Component } from "svelte";
 // - linked: a query param over whatever page is open, which people link to and Back closes
 //   (ROUTES.md, decision 6): ?profile, ?chit, ?hof, ?diamond. The CHIT dialog's own views, the
 //   ways to earn (?chit=earn), buying streak insurance (?chit=insurance), today's puzzle
-//   (?chit=puzzle) and the claim calendar (?chit=calendar), are linked dialogs too, so one takes the CHIT dialog's place over the same
+//   (?chit=puzzle), sharing its result (?chit=share:<gameId>) and the claim calendar (?chit=calendar), are linked dialogs too, so one takes the CHIT dialog's place over the same
 //   backdrop. A dialog opened from another (linkedDialogs.svelte.ts) has a back arrow to it, the
 //   only way back; ×, the backdrop and Back close them all;
 // - local: opened by the app itself (a name clicked in a message …), kept in a DialogStack, and
@@ -52,6 +52,9 @@ export type LinkedDialog =
     // today's puzzle (with no `gameId`, the first on the rota: ?chit=puzzle), or that game's
     // (?chit=puzzle:<gameId>); `how`: opened on how to play (?chit=howto, ?chit=howto:<gameId>)
     | { kind: "puzzle"; gameId?: string; how?: boolean }
+    // sharing today's result of a game into a chat (?chit=share:<gameId>, #10236), from the
+    // puzzle's Share: the chat picker, its back arrow to the puzzle
+    | { kind: "puzzle_share"; gameId: string }
     // the claim calendar (?chit=calendar), from the CHIT dialog or the profile's CHIT section
     | { kind: "claim_history" }
     // picking a chat to share into what another app shared (/share?title&text&url, which redirects
@@ -256,6 +259,9 @@ export const dialogs: Dialogs = {
     // today's daily puzzle (8d)
     puzzle: () => import("../chit/PuzzleDialogScreen.svelte"),
 
+    // sharing a daily puzzle result into a chat (#10236)
+    puzzle_share: () => import("../chit/PuzzleShareDialogScreen.svelte"),
+
     // the CHIT claim calendar (8e)
     claim_history: () => import("../chit/ClaimHistoryDialogScreen.svelte"),
 
@@ -297,6 +303,7 @@ const PARAMS: Record<LinkedDialog["kind"], string> = {
     achievements: "chit",
     streak_insurance: "chit",
     puzzle: "chit",
+    puzzle_share: "chit",
     claim_history: "chit",
     leaderboard: "hof",
     share: "share",
@@ -311,6 +318,7 @@ const INSURANCE = "insurance";
 const PUZZLE = "puzzle";
 const HOW_TO = "howto";
 const CALENDAR = "calendar";
+const SHARE = "share";
 
 /** The linked dialog the URL's query opens, if any: one at a time. */
 export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
@@ -335,6 +343,9 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
             if (value === PUZZLE) return { kind: "puzzle" };
             if (value.startsWith(`${PUZZLE}:`)) {
                 return { kind: "puzzle", gameId: value.slice(PUZZLE.length + 1) };
+            }
+            if (value.startsWith(`${SHARE}:`) && value.length > SHARE.length + 1) {
+                return { kind: "puzzle_share", gameId: value.slice(SHARE.length + 1) };
             }
             if (value === HOW_TO) return { kind: "puzzle", how: true };
             if (value.startsWith(`${HOW_TO}:`)) {
@@ -392,6 +403,8 @@ function valueOf(dialog: LinkedDialog): string | undefined {
             const view = dialog.how ? HOW_TO : PUZZLE;
             return dialog.gameId === undefined ? view : `${view}:${dialog.gameId}`;
         }
+        case "puzzle_share":
+            return `${SHARE}:${dialog.gameId}`;
         default:
             return undefined;
     }
@@ -410,6 +423,7 @@ export function shownLinkedDialog(
         dialog?.kind === "achievements" ||
         dialog?.kind === "streak_insurance" ||
         dialog?.kind === "puzzle" ||
+        dialog?.kind === "puzzle_share" ||
         dialog?.kind === "claim_history";
     return chit && chitOff ? undefined : dialog;
 }

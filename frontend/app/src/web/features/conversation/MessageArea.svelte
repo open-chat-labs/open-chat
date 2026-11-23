@@ -105,7 +105,13 @@
         type ProposalContent,
         proposalTopicsStore,
         proposalVotesStore,
+        dailyPuzzleStore,
     } from "@client";
+    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
+    import { cardOffersPlay } from "@src/logic/dailyPuzzle/dailyResultCard";
+    import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
+    import { openLinked } from "../app/linkedDialogs.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
@@ -248,6 +254,7 @@
         quoteTarget,
         retryFor,
         withHandlers,
+        withResultPreview,
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
@@ -417,8 +424,18 @@
             }),
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,
+            dailyResult: (content) => ({
+                verification: resultVerifier.verification(content),
+                drawable: dailyPuzzleGame(content.gameId) !== undefined,
+                offersPlay: cardOffersPlay($dailyPuzzleStore, content),
+            }),
         });
     });
+
+    // a daily puzzle result card's numbers, checked against the results index once it shows
+    // (read as rows are made: RowCache keys on what came back)
+    // svelte-ignore state_referenced_locally
+    const resultVerifier = new DailyResultVerifier(client);
 
     // ── media ──
 
@@ -587,8 +604,8 @@
         return { text: interpolateNewUi($_, words.key), tone: words.tone };
     });
 
-    // the draft's photo, video or file, or a builder's payment (5d), staged above the text (only
-    // what the composer shows is sent with it: a puzzle result isn't yet)
+    // the draft's photo, video or file, a puzzle result shared here (#10236), or a builder's
+    // payment (5d), staged above the text (only what the composer shows is sent with it)
     // (none during an edit, when the draft holds the edited message's own content)
     const staged = $derived(
         composerAttachment(draftAttachment(draft), ctx) ?? stagedPayment(draftAttachment(draft)),
@@ -1217,14 +1234,17 @@
         withBody: boolean,
         evt: EventWrapper<Message>,
         offers: RowOffers,
+        preview: Snippet,
     ): GroupMessage[] {
         const key = `${offers.menu}|${offers.retry !== undefined}`;
         const kept = groupMessages.get(row);
         if (kept?.offers === key) return kept.messages;
         const where = rowContext(evt);
-        const message = withBody
+        const acting = withBody
             ? ({ ...row.message, body } as GroupMessage)
             : withActions(where, row, evt.event);
+        // a daily puzzle result's grid, where this build draws its game (core/dailyPuzzle)
+        const message = withResultPreview(acting, preview);
         // kept between renders, so composed without reading a voice message's live fields
         // (withFields): a spread would freeze its playback
         const quoted = quoteTarget(evt.event, chat.id, $chatListScopeStore.kind, rootIndex);
@@ -1538,6 +1558,8 @@
             vote: (m, content, next) => vote(where, m, content, next),
             voteOnProposal: (m, content, adopt) => voteProposal(m, content, adopt),
             openProposal: (content) => window.open(proposalPage(client, content), "_blank", "noopener"),
+            // a result card's Play: today's puzzle of its game (?chit=puzzle:<gameId>)
+            playPuzzle: (gameId) => openLinked({ kind: "puzzle", gameId }),
             download,
             get voice() {
                 return voice;
@@ -1822,6 +1844,11 @@
                         inline={content.kind === "text_content" ? !msg.blockLevelMarkdown : false} />
                 {/if}
             {/snippet}
+            {#snippet preview()}
+                {#if content.kind === "daily_result"}
+                    <DailyResultBoard {content} />
+                {/if}
+            {/snippet}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="row"
@@ -1870,7 +1897,7 @@
                     onSwipeLeft={swipeLeft === undefined
                         ? undefined
                         : () => run(where, swipeLeft, evt, failed)}
-                    messages={messagesFor(row, body, markdown !== undefined, evt, offers)}
+                    messages={messagesFor(row, body, markdown !== undefined, evt, offers, preview)}
                 />
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}

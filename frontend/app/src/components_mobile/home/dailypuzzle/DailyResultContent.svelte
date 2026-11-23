@@ -1,20 +1,18 @@
 <script lang="ts">
     import {
         dailyPuzzleStore,
-        descriptionFromHex,
         publish,
-        stateFor,
-        todaysPuzzle,
         type DailyResultContent,
         type OpenChat,
     } from "@client";
     import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
-    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import { dailyPuzzleGame, resultCardBoard } from "@src/core/dailyPuzzle/registry";
     import {
         cardNumbers,
+        cardOffersPlay,
         verificationFrom,
         type CardVerification,
-    } from "@src/utils/dailyResultCard";
+    } from "@src/logic/dailyPuzzle/dailyResultCard";
     import {
         Caption,
         ColourVars,
@@ -50,14 +48,7 @@
 
     // undefined = a game this build does not know how to render
     let def = $derived(dailyPuzzleGame(content.gameId));
-    let board = $derived.by(() => {
-        if (def === undefined) return undefined;
-        try {
-            return def.newBoard(descriptionFromHex(content.layout));
-        } catch {
-            return undefined;
-        }
-    });
+    let board = $derived(resultCardBoard(content));
 
     // Checked against the daily canister's results index the first time the card scrolls into
     // view. The numbers shown are the row's; the payload's are a claim and are never shown.
@@ -75,11 +66,7 @@
         }
     });
 
-    let isCurrent = $derived.by(() => {
-        const puzzle = todaysPuzzle($dailyPuzzleStore, content.gameId);
-        return puzzle?.enabled === true && puzzle.number === content.number;
-    });
-    let viewerSolved = $derived(stateFor($dailyPuzzleStore, content.gameId)?.solved !== undefined);
+    let offersPlay = $derived(cardOffersPlay($dailyPuzzleStore, content));
 
     let textColour: ColourVarKeys = $derived(me ? "chatTextSent" : "textPrimary");
     let mutedColour: ColourVarKeys = $derived(me ? "chatMetadataSent" : "textSecondary");
@@ -141,7 +128,7 @@
         <Caption colour={mutedColour}>
             <Translatable resourceKey={i18nKey("dailyPuzzle.needsNewerApp")} />
         </Caption>
-    {:else if isCurrent && !viewerSolved}
+    {:else if offersPlay}
         <CommonButton2
             variant={"primary"}
             mode={"small"}

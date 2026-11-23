@@ -27,6 +27,7 @@ export { default as Confetti } from './components/Confetti.svelte';
 export { default as ContextMenu } from './components/ContextMenu.svelte';
 export { default as CopyButton } from './components/CopyButton.svelte';
 export { default as Countdown } from './components/Countdown.svelte';
+export { default as DailyResultMessage } from './components/DailyResultMessage.svelte';
 export { default as DetailRow } from './components/DetailRow.svelte';
 export { default as DetailSection } from './components/DetailSection.svelte';
 export { default as DialogShell } from './components/DialogShell.svelte';

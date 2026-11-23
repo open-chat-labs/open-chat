@@ -2,6 +2,7 @@ import {
     bridges,
     chatRooms,
     dailyPuzzleStore,
+    descriptionFromHex,
     lightUp,
     loopy,
     slant,
@@ -10,6 +11,7 @@ import {
     unruly,
     type DailyGame,
     type DailyPuzzleState,
+    type DailyResultContent,
     type OpenChat,
     type PublicDailyPuzzle,
 } from "@client";
@@ -44,7 +46,7 @@ import {
     type PuzzleGameDef,
     type PuzzleHost,
 } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
-import { bindBoard } from "@src/logic/dailyPuzzle/puzzleBoard.svelte";
+import { bindBoard, type PuzzleBoard } from "@src/logic/dailyPuzzle/puzzleBoard.svelte";
 
 // Everything the app needs to render one kind of daily puzzle. The weekday rota can name any
 // game the backend generates; a game_id missing from this registry is one this build predates.
@@ -123,6 +125,22 @@ export const dailyPuzzleGames: Record<string, DailyPuzzleGameDef> = {
 
 export function dailyPuzzleGame(gameId: string): DailyPuzzleGameDef | undefined {
     return dailyPuzzleGames[gameId];
+}
+
+/**
+ * A result card's board, drawn from the layout it carries (its `Pictogram`): none for a game this
+ * build doesn't know, or a layout it can't read.
+ */
+export function resultCardBoard(
+    content: Pick<DailyResultContent, "gameId" | "layout">,
+): PuzzleBoard | undefined {
+    const def = dailyPuzzleGame(content.gameId);
+    if (def === undefined) return undefined;
+    try {
+        return def.newBoard(descriptionFromHex(content.layout));
+    } catch {
+        return undefined;
+    }
 }
 
 /**

@@ -35,8 +35,9 @@ every workstream.
   - Explore (8a): what's left of it is in GAPS.md ("Explore");
   - the join gate (8b): what's left of it is in GAPS.md ("Join gate");
   - Profile (8c): GAPS.md ("`ProfileDialog` against the app");
-  - CHIT (8d): the daily result message and sharing a result are a follow-up,
-    [#10236](https://github.com/open-chat-labs/open-chat/issues/10236); GAPS.md ("CHIT dialog");
+  - CHIT (8d), with its follow-up the daily result message and sharing a result
+    ([#10236](https://github.com/open-chat-labs/open-chat/issues/10236)): GAPS.md ("CHIT dialog",
+    "Sharing a puzzle result", "The result card in a chat");
   - Diamond (8e): GAPS.md ("Diamond");
   - message actions (5b) but tipping: what's left is in GAPS.md ("Message actions");
   - the message kinds (5a): every kind in its bubble or in the old trees' words, deleted messages,

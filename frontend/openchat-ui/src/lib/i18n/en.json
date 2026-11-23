@@ -1018,6 +1018,10 @@
       "unavailable": "No puzzle today. Check back tomorrow.",
       "view": "View"
     },
+    "dailyResultMessage": {
+      "verified": "Verified",
+      "unverified": "Unverified"
+    },
     "deleteGroupDialog": {
       "deleting": "Deleting…",
       "failed": "{noun, select, channel {Couldn't delete the channel.} community {Couldn't delete the community.} chat {Couldn't delete the chat.} other {Couldn't delete the group.}} Nothing was removed — try again.",

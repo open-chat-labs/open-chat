@@ -13,8 +13,10 @@ import {
     quoteTarget,
     retryFor,
     withHandlers,
+    withResultPreview,
     type MessageHandlers,
 } from "./messageHandlers";
+import { createRawSnippet } from "svelte";
 import type { MessageRow } from "./messageRow";
 import type { VoicePlayer } from "./voicePlayer.svelte";
 
@@ -162,6 +164,36 @@ describe("a message's controls", () => {
             new Map(),
         );
         expect(shown).toBe(message);
+    });
+});
+
+describe("a daily puzzle result's card (#10236)", () => {
+    const content = { kind: "daily_result", gameId: "bridges" } as MessageContent;
+    const card = (fields: object = {}) =>
+        ({
+            kind: "daily_result",
+            time: "",
+            title: "",
+            stats: [],
+            note: "",
+            ...fields,
+        }) as GroupMessage;
+
+    test("its Play opens today's puzzle of its game; without the handler, no Play", () => {
+        const playPuzzle = vi.fn();
+        const shown = withHandlers(row(card()), msg(content), handlers({ playPuzzle }), new Map());
+        (shown as { onPlay: () => void }).onPlay();
+        expect(playPuzzle).toHaveBeenCalledWith("bridges");
+        const without = withHandlers(row(card()), msg(content), handlers(), new Map());
+        expect("onPlay" in without).toBe(false);
+    });
+
+    test("shows its grid where the game is drawn, and none in place of the newer app note", () => {
+        const preview = createRawSnippet(() => ({ render: () => "<span></span>" }));
+        expect(withResultPreview(card(), preview)).toMatchObject({ preview });
+        expect("preview" in withResultPreview(card({ note: "newer" }), preview)).toBe(false);
+        const text = { time: "", text: "hi" } as GroupMessage;
+        expect(withResultPreview(text, preview)).toBe(text);
     });
 });
 

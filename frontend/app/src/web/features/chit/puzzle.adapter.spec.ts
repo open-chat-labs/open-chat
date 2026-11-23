@@ -1,5 +1,5 @@
 import type { DailyPuzzleRow, DailyPuzzleStatus, PublicDailyPuzzle, ResourceKey } from "@client";
-import { puzzleCardProps, puzzleTitle } from "./puzzle.adapter";
+import { puzzleCardProps, puzzleTitle, shareItem } from "./puzzle.adapter";
 
 const NOW = 1_000_000_000;
 
@@ -103,5 +103,26 @@ describe("the puzzle dialog's title", () => {
             'dailyPuzzle.number{"number":7} · dailyPuzzle.games.tents.name · dailyPuzzle.tier.0',
         );
         expect(puzzleTitle(undefined, translate)).toBe("dailyPuzzle.title");
+    });
+});
+
+describe("what the chat picker says it's sharing (#10236)", () => {
+    test("is the result's puzzle, then its game, tier and time", () => {
+        const card = {
+            kind: "daily_result" as const,
+            gameId: "tents",
+            number: 7,
+            userId: "me",
+            solveTimeMs: 83_000,
+            hintsUsed: 0,
+            streak: 1,
+            layout: "",
+        };
+        expect(shareItem({ ...card, tier: 1 }, translate)).toEqual({
+            title: 'dailyPuzzle.number{"number":7}',
+            sub: "dailyPuzzle.games.tents.name · dailyPuzzle.tier.1 · 1:23",
+            icon: "trophy",
+        });
+        expect(shareItem(card, translate).sub).toBe("dailyPuzzle.games.tents.name · 1:23");
     });
 });

@@ -17,7 +17,8 @@ import {
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { isSingleEmoji } from "@src/utils/emojis";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
-import { isMedia, isWordedKind, type MessageRow } from "./messageRow";
+import type { Snippet } from "svelte";
+import { isMedia, isWordedKind, withFields, type MessageRow } from "./messageRow";
 import type { VoicePlayer, VoiceSpeed } from "./voicePlayer.svelte";
 
 // A message row's controls (MessageGroup's cards and players) wired to what the conversation does
@@ -43,6 +44,8 @@ export type MessageHandlers = {
     voteOnProposal?: (msg: Message, content: ProposalContent, adopt: boolean) => void;
     /** A proposal's details: its page on the IC dashboard. */
     openProposal?: (content: ProposalContent) => void;
+    /** A daily puzzle result card's Play: today's puzzle of its game. None leaves the card without it. */
+    playPuzzle?: (gameId: string) => void;
 };
 
 /**
@@ -98,6 +101,12 @@ export function withHandlers(
             } as GroupMessage;
         case "file_content":
             return { ...row.message, onDownload: () => handlers.download(content) } as GroupMessage;
+        case "daily_result": {
+            const play = handlers.playPuzzle;
+            return play === undefined
+                ? row.message
+                : ({ ...row.message, onPlay: () => play(content.gameId) } as GroupMessage);
+        }
         case "proposal_content": {
             const vote = handlers.voteOnProposal;
             const open = handlers.openProposal;
@@ -140,6 +149,16 @@ export function withHandlers(
         default:
             return row.message;
     }
+}
+
+/**
+ * A daily puzzle result card with its grid (`preview`, the screen's: drawn by the game's own
+ * pictogram, core/dailyPuzzle), where this build draws its game: none with the "needs a newer app"
+ * note in its place. Any other message as it is.
+ */
+export function withResultPreview(message: GroupMessage, preview: Snippet): GroupMessage {
+    if (message.kind !== "daily_result" || message.note) return message;
+    return withFields(message, { preview });
 }
 
 /**

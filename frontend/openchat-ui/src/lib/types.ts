@@ -2,6 +2,7 @@
 // each shape mirrors what the matching .logic.js file produces or reads.
 import type { Component } from 'svelte';
 import type ChatBubble from './components/ChatBubble.svelte';
+import type DailyResultMessage from './components/DailyResultMessage.svelte';
 import type FileMessage from './components/FileMessage.svelte';
 import type LinkPreview from './components/LinkPreview.svelte';
 import type { Tip } from './components/ReactionChips.svelte';
@@ -79,6 +80,7 @@ export type GroupMessage = GroupMessageBase &
     | ({ kind: 'poll' } & KindProps<typeof PollMessage>)
     | ({ kind: 'prize' } & KindProps<typeof PrizeMessage>)
     | ({ kind: 'proposal' } & KindProps<typeof ProposalMessage>)
+    | ({ kind: 'daily_result' } & KindProps<typeof DailyResultMessage>)
   );
 
 /** One sender's run of messages, as rendered by MessageGroup (ThreadPanel `replies`). */

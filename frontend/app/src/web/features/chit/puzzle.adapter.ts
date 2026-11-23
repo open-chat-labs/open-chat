@@ -1,6 +1,7 @@
 import {
     formatTimeRemaining,
     type DailyPuzzleRow,
+    type DailyResultContent,
     type PublicDailyPuzzle,
     type ResourceKey,
 } from "@client";
@@ -88,4 +89,23 @@ export function puzzleTitle(
         translate(i18nKey(gameNameKey(puzzle.gameId))),
         translate(i18nKey(tierKey(puzzle.tier))),
     ].join(" · ");
+}
+
+/**
+ * What the chat picker shows it's sharing for a result card (#10236): the puzzle's number, then
+ * its game, its tier and the solve's time. Given translated (`translate`).
+ */
+export function shareItem(
+    card: DailyResultContent,
+    translate: (key: ResourceKey) => string,
+): { title: string; sub: string; icon: string } {
+    return {
+        title: translate(i18nKey("dailyPuzzle.number", { number: card.number })),
+        sub: [
+            translate(i18nKey(gameNameKey(card.gameId))),
+            ...(card.tier === undefined ? [] : [translate(i18nKey(tierKey(card.tier)))]),
+            formatSolveTime(card.solveTimeMs),
+        ].join(" · "),
+        icon: "trophy",
+    };
 }
