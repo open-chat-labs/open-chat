@@ -2784,7 +2784,7 @@ export type WorkerResults = ResultsByKind<{
     dismissRecommendation: void;
     searchGroupChat: SearchGroupChatResponse;
     searchDirectChat: SearchDirectChatResponse;
-    refreshAccountBalance: bigint;
+    refreshAccountBalance: bigint | undefined;
     fundsInPreviousWallets: FundsInPreviousWallet[];
     moveFundsFromPreviousWallets: MoveFundsOutcome[];
     getAccountTransactions: AccountTransactionResult;

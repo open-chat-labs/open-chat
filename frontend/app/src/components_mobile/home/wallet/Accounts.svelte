@@ -1,17 +1,22 @@
 <script lang="ts">
-    import { BodySmall, Container, Sheet } from "component-lib";
+    import { BodySmall, ColourVars, Container, Sheet } from "component-lib";
     import {
         walletTokensSorted as accountsSorted,
         i18nKey,
         publish,
+        walletTokensUnavailable,
         type OpenChat,
     } from "@client";
+    import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
     import WalletToken from "./WalletToken.svelte";
-    import type { ConversionToken } from "@src/logic/wallet/walletState.svelte";
+    import {
+        unavailableTokensLabel,
+        type ConversionToken,
+    } from "@src/logic/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -21,11 +26,14 @@
 
     let { selectedConversion = $bindable("usd") }: Props = $props();
 
-    const balanceError: string | undefined = $state();
     let actionMode: "none" | "swap" | "restricted" = $state("none");
     const selectedLedger: string | undefined = $state(undefined);
 
-    onMount(() => client.refreshSwappableTokens());
+    onMount(() => {
+        client.refreshSwappableTokens();
+        // a ledger which didn't answer earlier may now, and only the listed tokens ask again
+        void client.refreshUnavailableBalances();
+    });
 
     function hideManageModal() {
         actionMode = "none";
@@ -81,12 +89,30 @@
             {token}
             onRemoveFromWallet={removeFromWallet} />
     {/each}
-    {#if balanceError !== undefined}
-        <ErrorMessage>{balanceError}</ErrorMessage>
+    <!-- the balances the wallet asked for and couldn't get (a ledger out of cycles answers
+         nothing): the listed ones are marked in their rows, and an automatic wallet can't tell
+         whether to list the others, so they are named here -->
+    {#if $walletTokensUnavailable.length > 0}
+        <Container gap={"md"} padding={["lg", "lg"]} crossAxisAlignment={"start"}>
+            <span class="alert">
+                <AlertOutline size="1.25rem" color={ColourVars.validationWarning} />
+            </span>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey("cryptoAccount.balancesUnavailable", {
+                        tokens: unavailableTokensLabel($walletTokensUnavailable),
+                    })} />
+            </BodySmall>
+        </Container>
     {/if}
 </Container>
 
 <style lang="scss">
+    .alert {
+        display: flex;
+        flex: none;
+    }
+
     :global(.manage .link-button) {
         padding: 0 0 0 $sp3;
         &:first-child {
