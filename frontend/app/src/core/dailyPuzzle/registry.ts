@@ -12,6 +12,7 @@ import {
     type DailyGame,
     type DailyPuzzleState,
     type DailyResultContent,
+    type MessageContent,
     type OpenChat,
     type PublicDailyPuzzle,
 } from "@client";
@@ -141,6 +142,14 @@ export function resultCardBoard(
     } catch {
         return undefined;
     }
+}
+
+/**
+ * Whether a message is a result card whose board can be drawn (`resultCardBoard`), so its grid is
+ * shown: not for a game this build doesn't know, or a layout it can't read.
+ */
+export function drawsResultGrid(content: MessageContent): boolean {
+    return content.kind === "daily_result" && resultCardBoard(content) !== undefined;
 }
 
 /**

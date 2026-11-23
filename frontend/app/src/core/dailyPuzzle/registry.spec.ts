@@ -8,7 +8,7 @@ import tentsHints from "../../../../openchat-shared/src/utils/dailyGames/tentsHi
 import unrulyHints from "../../../../openchat-shared/src/utils/dailyGames/unrulyHints.json";
 import en from "../../i18n/en.json";
 import { DRAWN_GAMES, playableDailyPuzzleRows } from "./playable";
-import { dailyPuzzleGames, openablePuzzle } from "./registry";
+import { dailyPuzzleGames, drawsResultGrid, openablePuzzle } from "./registry";
 
 function flatten(obj: unknown, prefix = ""): Record<string, string> {
     const out: Record<string, string> = {};
@@ -39,6 +39,33 @@ describe("daily puzzle game strings", () => {
             expect(stringsOf(def.i18nPrefix).rules).toBeTruthy();
         });
     }
+});
+
+describe("a result card's grid (#10236)", () => {
+    const card = (gameId: string, layout: string) => ({
+        kind: "daily_result" as const,
+        gameId,
+        number: 1,
+        userId: "u",
+        solveTimeMs: 1,
+        hintsUsed: 0,
+        streak: 1,
+        layout,
+    });
+    // a 5x5 Light Up: black corners, a 4 in the middle (its demo's)
+    const lightUp =
+        "010505" + "1000000000" + "0000000000" + "0000150000" + "0000000000" + "0000000010";
+
+    test("is drawn from a layout the game reads", () => {
+        expect(drawsResultGrid(card("light_up", lightUp))).toBe(true);
+    });
+
+    test("isn't for a layout it can't read, a game this build doesn't know, or another kind", () => {
+        expect(drawsResultGrid(card("light_up", "zz"))).toBe(false);
+        expect(drawsResultGrid(card("light_up", ""))).toBe(false);
+        expect(drawsResultGrid(card("no_such_game", lightUp))).toBe(false);
+        expect(drawsResultGrid({ kind: "text_content", text: "hi" })).toBe(false);
+    });
 });
 
 // The demos are the only teaching the pre-start screen does, and they are hand-built from raw

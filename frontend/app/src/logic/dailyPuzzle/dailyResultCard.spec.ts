@@ -10,6 +10,7 @@ import {
     canShareResult,
     cardNumbers,
     cardOffersPlay,
+    cardOffersPlayWith,
     resultCard,
     shareableResultCard,
     verificationFrom,
@@ -142,6 +143,12 @@ describe("a result card's Play", () => {
 
     test("isn't once the reader has solved it", () => {
         expect(cardOffersPlay(state({}, solved(61_000n)), card())).toBe(false);
+    });
+
+    test("isn't offered in the new UIs while CHIT is turned off (#10605 review)", () => {
+        expect(cardOffersPlayWith(state({}), card(), false)).toBe(true);
+        expect(cardOffersPlayWith(state({}), card(), true)).toBe(false);
+        expect(cardOffersPlayWith(state({}, solved(61_000n)), card(), false)).toBe(false);
     });
 
     test("isn't for another day's puzzle, or one that's off", () => {

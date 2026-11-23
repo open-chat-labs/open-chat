@@ -153,11 +153,16 @@ export function withHandlers(
 
 /**
  * A daily puzzle result card with its grid (`preview`, the screen's: drawn by the game's own
- * pictogram, core/dailyPuzzle), where this build draws its game: none with the "needs a newer app"
- * note in its place. Any other message as it is.
+ * pictogram, core/dailyPuzzle), where its board can be drawn (`drawn`: the game is one this build
+ * knows and its layout reads, `resultCardBoard`): none otherwise, so the card never holds an empty
+ * square, as the old cards left the pictogram out. Any other message as it is.
  */
-export function withResultPreview(message: GroupMessage, preview: Snippet): GroupMessage {
-    if (message.kind !== "daily_result" || message.note) return message;
+export function withResultPreview(
+    message: GroupMessage,
+    preview: Snippet,
+    drawn: boolean,
+): GroupMessage {
+    if (message.kind !== "daily_result" || message.note || !drawn) return message;
     return withFields(message, { preview });
 }
 

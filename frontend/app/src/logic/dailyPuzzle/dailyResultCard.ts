@@ -51,6 +51,19 @@ export function cardOffersPlay(state: DailyPuzzleState, content: DailyResultCont
     return isCurrent && stateFor(state, content.gameId)?.solved === undefined;
 }
 
+/**
+ * Whether a card offers Play in the new UIs: as `cardOffersPlay`, and only while CHIT is on
+ * (`chitOff`: the user's setting hides the CHIT dialogs, the puzzle's among them, so Play would
+ * open nothing, as the rail's puzzle link doesn't).
+ */
+export function cardOffersPlayWith(
+    state: DailyPuzzleState,
+    content: DailyResultContent,
+    chitOff: boolean,
+): boolean {
+    return !chitOff && cardOffersPlay(state, content);
+}
+
 /** The card for a solve of `puzzle` by `userId`; none until it's solved. */
 export function resultCard(
     puzzle: PublicDailyPuzzle,

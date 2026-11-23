@@ -107,9 +107,9 @@
         proposalVotesStore,
         dailyPuzzleStore,
     } from "@client";
-    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
     import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
-    import { cardOffersPlay } from "@src/logic/dailyPuzzle/dailyResultCard";
+    import { cardOffersPlayWith } from "@src/logic/dailyPuzzle/dailyResultCard";
     import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
     import { openLinked } from "../app/linkedDialogs.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
@@ -199,6 +199,7 @@
     import {
         confirmMessageDeletion,
         dclickReply,
+        disableChit,
         enterSend,
         lowBandwidth,
     } from "@src/stores/settings";
@@ -427,7 +428,8 @@
             dailyResult: (content) => ({
                 verification: resultVerifier.verification(content),
                 drawable: dailyPuzzleGame(content.gameId) !== undefined,
-                offersPlay: cardOffersPlay($dailyPuzzleStore, content),
+                // no Play while CHIT is turned off: its puzzle dialog wouldn't show (DialogHost)
+                offersPlay: cardOffersPlayWith($dailyPuzzleStore, content, $disableChit),
             }),
         });
     });
@@ -1243,8 +1245,8 @@
         const acting = withBody
             ? ({ ...row.message, body } as GroupMessage)
             : withActions(where, row, evt.event);
-        // a daily puzzle result's grid, where this build draws its game (core/dailyPuzzle)
-        const message = withResultPreview(acting, preview);
+        // a daily puzzle result's grid, where its board can be drawn (core/dailyPuzzle)
+        const message = withResultPreview(acting, preview, drawsResultGrid(evt.event.content));
         // kept between renders, so composed without reading a voice message's live fields
         // (withFields): a spread would freeze its playback
         const quoted = quoteTarget(evt.event, chat.id, $chatListScopeStore.kind, rootIndex);

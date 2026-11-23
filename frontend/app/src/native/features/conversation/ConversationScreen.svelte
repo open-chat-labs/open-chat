@@ -76,7 +76,7 @@
         proposalVotesStore,
     } from "@client";
     import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
-    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
     import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
     import { userLoading } from "@src/logic/chats/chatRow";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
@@ -1155,6 +1155,7 @@
                 ? ({ ...row.message, body } as GroupMessage)
                 : withHandlers(row, evt.event, handlers, $cryptoLookup),
             preview,
+            drawsResultGrid(evt.event.content),
         );
         // kept between renders, so composed without reading a voice message's live fields
         const quoted =

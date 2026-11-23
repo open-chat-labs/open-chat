@@ -2810,8 +2810,10 @@ design export needs. Each entry says where it came up.
   (`DailyResultBoard`, the game's own pictogram), and the time, hints and streak from the daily
   canister's results index (`DailyResultVerifier`, once per card as it shows; "–" until it
   answers and for a result it doesn't hold, #9332 invariant 44), "Verified" or "Unverified" (the
-  stats faded); Play while it's today's puzzle and the reader hasn't solved it (`cardOffersPlay`),
-  opening `?chit=puzzle:<gameId>`; "needs a newer app" for a game this build can't draw. The
+  stats faded); Play while it's today's puzzle and the reader hasn't solved it, and CHIT isn't
+  turned off (`cardOffersPlayWith`: the setting hides the puzzle dialog, so Play would open
+  nothing), opening `?chit=puzzle:<gameId>`; "needs a newer app" for a game this build can't
+  draw, and no grid (`drawsResultGrid`) for a layout it can't read, as the old cards. The
   caption is plain text, where the old trees rendered it as markdown (as the other cards' captions
   in the new UI). The old desktop hid the verified line on a narrow window; it always shows. The
   native conversation shows the card too (the library's `MessageGroup`, `messageRow`), with its

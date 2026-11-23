@@ -188,12 +188,17 @@ describe("a daily puzzle result's card (#10236)", () => {
         expect("onPlay" in without).toBe(false);
     });
 
-    test("shows its grid where the game is drawn, and none in place of the newer app note", () => {
+    test("shows its grid where the board is drawn, and none in place of the newer app note", () => {
         const preview = createRawSnippet(() => ({ render: () => "<span></span>" }));
-        expect(withResultPreview(card(), preview)).toMatchObject({ preview });
-        expect("preview" in withResultPreview(card({ note: "newer" }), preview)).toBe(false);
+        expect(withResultPreview(card(), preview, true)).toMatchObject({ preview });
+        expect("preview" in withResultPreview(card({ note: "newer" }), preview, false)).toBe(false);
         const text = { time: "", text: "hi" } as GroupMessage;
-        expect(withResultPreview(text, preview)).toBe(text);
+        expect(withResultPreview(text, preview, false)).toBe(text);
+    });
+
+    test("leaves out the grid's square where the layout can't be read (#10605 review)", () => {
+        const preview = createRawSnippet(() => ({ render: () => "<span></span>" }));
+        expect("preview" in withResultPreview(card(), preview, false)).toBe(false);
     });
 });
 
