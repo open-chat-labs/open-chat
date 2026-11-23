@@ -58,7 +58,6 @@ import {
     type StorageStatus,
     type StreakInsurance,
     type ThreadIdentifier,
-    type ThreadSyncDetails,
     type TokenExchangeRates,
     type CashtagCoin,
     type MiniAppLiveCard,
@@ -77,7 +76,7 @@ import {
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../../utils/chat";
-import { chatListOrder, chatsInScope } from "../../utils/chatList";
+import { chatListOrder, chatsInScope, followedThreadsByChat } from "../../utils/chatList";
 import { enumFromStringValue } from "../../utils/enums";
 import { setsAreEqual } from "../../utils/set";
 import { derived, writable, type Subscriber } from "../../utils/stores";
@@ -1168,18 +1167,7 @@ export const isProposalGroupStore = derived(selectedChatSummaryStore, (selectedC
     );
 });
 
-export const threadsByChatStore = derived(chatSummariesStore, (chatSummaries) => {
-    return [...chatSummaries.entries()].reduce((result, [_, chat]) => {
-        if (
-            (chat.kind === "group_chat" || chat.kind === "channel") &&
-            chat.membership &&
-            chat.membership.latestThreads.length > 0
-        ) {
-            result.set(chat.id, chat.membership.latestThreads);
-        }
-        return result;
-    }, new ChatMap<ThreadSyncDetails[]>());
-});
+export const threadsByChatStore = derived(chatSummariesStore, followedThreadsByChat);
 
 export const numberOfThreadsStore = derived(threadsByChatStore, (threadsByChat) =>
     threadsByChat.map((_, ts) => ts.length).reduce((total, [_, n]) => total + n, 0),

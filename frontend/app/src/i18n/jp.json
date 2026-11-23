@@ -2594,6 +2594,12 @@
                 "yours": "あなたのコミュニティ",
                 "reorder": "あなたのコミュニティ（ドラッグで並べ替え）",
                 "moveUp": "{name} を上へ移動"
+            },
+            "language": "言語",
+            "manage": {
+                "channels": "チャンネル",
+                "userGroups": "ユーザーグループ",
+                "invite": "招待と共有"
             }
         },
         "explore": {

@@ -222,7 +222,11 @@
                 break;
             }
             case "invite":
-                context.push({ kind: "community_invite", communityId: target.id });
+                context.push({
+                    kind: "community_settings",
+                    communityId: target.id,
+                    page: "invite",
+                });
                 break;
             case "mute_all":
                 context.toast($_("native.community.toast.mutedAll"));

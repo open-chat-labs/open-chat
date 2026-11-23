@@ -20,6 +20,7 @@
         type ThreadPreview,
     } from "@client";
     import ThreadList from "@openchat/ui/src/features/components/ThreadList.svelte";
+    import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { ThreadPreviews } from "@src/logic/threads/threadPreviews.svelte";
     import { threadUnreadCount } from "@src/logic/threads/threadRead";
@@ -33,7 +34,7 @@
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
-    import { threadListGroups } from "./thread.adapter";
+    import { threadListGroups } from "@src/logic/threads/threadRows";
 
     let { region, context }: ScreenProps<Extract<LeftRegion, { kind: "threads" }>> = $props();
 
@@ -92,6 +93,7 @@
         const users = $allUsersStore;
         const chats = $chatSummariesStore;
         return threadListGroups(previews.previews.threads, {
+            gradient: (swatch) => AVATAR_GRADIENTS[swatch],
             userName: (userId) => client.displayName(findUser(userId, users)),
             contentText: (content) => client.getContentAsText($_, content),
             // the threads can be any community's channels': every community's groups, looked

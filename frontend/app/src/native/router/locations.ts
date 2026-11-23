@@ -69,6 +69,20 @@ export type SettingsPage =
  */
 export type GroupSettingsPage = "edit" | "gates" | "rules" | "permissions" | "bots" | "stats";
 
+/**
+ * A community's settings page, from its details' Manage (native plan 12 "Community details": N7's
+ * screens, placeholders until then); Invite people too, from its page's menu.
+ */
+export type CommunitySettingsPage =
+    | "channels"
+    | "user_groups"
+    | "invite"
+    | "gates"
+    | "rules"
+    | "permissions"
+    | "bots"
+    | "stats";
+
 /** Create group's gates, rules and permissions, pushed from its Settings card (N7). */
 export type NewGroupSettingsPage = "gates" | "rules" | "permissions";
 
@@ -103,8 +117,8 @@ export type LocalScreen =
     | { kind: "explore_list"; shelf: ExploreShelfKey }
     // a community's details, from its page's header and Manage (N8a)
     | { kind: "community_details"; communityId: CommunityIdentifier }
-    // Invite people to a community, from its page's menu (plan 10: the group's screen, to come)
-    | { kind: "community_invite"; communityId: CommunityIdentifier }
+    // a community's settings page, from its details' Manage and its page's menu (N7's, to come)
+    | { kind: "community_settings"; communityId: CommunityIdentifier; page: CommunitySettingsPage }
     // Create community, from the Communities switcher's sheet (N8b)
     | { kind: "new_community" };
 
@@ -114,6 +128,7 @@ export function localKey(screen: LocalScreen): string {
         case "settings":
         case "group_settings":
         case "new_group_settings":
+        case "community_settings":
             return `${screen.kind}:${screen.page}`;
         default:
             return screen.kind;
@@ -256,15 +271,16 @@ export function showsTabBar(steps: readonly StackStep[], hiddenByTop = false): b
 
 /**
  * What a toast sits above on this stack (native design notes §1: toasts sit above the tab bar):
- * the tab bar on a tab's root, the composer on a conversation (its footer), and the safe area on
- * any other pushed screen, or a root that has hidden the tab bar (`hiddenByTop`).
+ * the tab bar on a tab's root, the composer on a conversation or a thread (its footer), and the
+ * safe area on any other pushed screen, or a root that has hidden the tab bar (`hiddenByTop`).
  */
 export function toastsAbove(
     steps: readonly StackStep[],
     hiddenByTop = false,
 ): "tabBar" | "footer" | "none" {
     if (showsTabBar(steps, hiddenByTop)) return "tabBar";
-    return steps[steps.length - 1]?.screen.kind === "conversation" ? "footer" : "none";
+    const top = steps[steps.length - 1]?.screen.kind;
+    return top === "conversation" || top === "thread" ? "footer" : "none";
 }
 
 /** The chat a stack has open (its conversation, or a thread in it), if any. */
@@ -404,19 +420,23 @@ function threadsStep(scope: ChatListScope, query: URLSearchParams): StackStep[] 
 // thread open in it (`/:rootIndex?open=true`, or `/:rootIndex/:threadIndex`)
 function chatSteps(route: ChatRoute, query: URLSearchParams): StackStep[] {
     const chat = chatKey(route.chatId);
+    // opened from the list of threads: the screens over it keep it (`?threads`), so Back from a
+    // thread goes to its conversation with the list still under it
+    const listed = query.has("threads");
+    const base = routeForChatIdentifier(route.scope.kind, route.chatId);
     const steps = [
         ...threadsStep(route.scope, query),
         step(
             `conversation:${chat}`,
             { kind: "conversation", route },
-            routeForChatIdentifier(route.scope.kind, route.chatId),
+            listed ? `${base}?threads` : base,
         ),
     ];
     if (
         route.messageIndex !== undefined &&
         (route.open || route.threadMessageIndex !== undefined)
     ) {
-        const url = `${routeForChatIdentifier(route.scope.kind, route.chatId)}/${route.messageIndex}?open=true`;
+        const url = `${base}/${route.messageIndex}?open=true${listed ? "&threads" : ""}`;
         steps.push(step(`thread:${chat}:${route.messageIndex}`, { kind: "thread", route }, url));
     }
     return steps;

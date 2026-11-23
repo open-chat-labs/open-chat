@@ -27,10 +27,12 @@
     groups: { name: string; grad: string; radius: string; threads: Thread[] }[];
     /** Match the chat list header: 54px plain, 62px with the community avatar. */
     headerHeight?: string;
+    /** The list's own header (back, title, scope); false where the host has its own (the native page header). */
+    header?: boolean;
     onBack?: () => void;
   }
 
-  let { scopeLabel = 'ui.threadList.scopeChats', groups, headerHeight = '54px', onBack }: Props = $props();
+  let { scopeLabel = 'ui.threadList.scopeChats', groups, headerHeight = '54px', header = true, onBack }: Props = $props();
   const t = useT();
 
   let filter = $state(0);
@@ -40,10 +42,12 @@
 </script>
 
 <div class="threads">
-  <div class="header" style:height={headerHeight}>
-    <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
-    <span class="heading"><span class="title">{t('ui.threadList.title')}</span><span class="scope">{t(scopeLabel)}</span></span>
-  </div>
+  {#if header}
+    <div class="header" style:height={headerHeight}>
+      <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
+      <span class="heading"><span class="title">{t('ui.threadList.title')}</span><span class="scope">{t(scopeLabel)}</span></span>
+    </div>
+  {/if}
   <div class="filter">
     <SegmentedTabs labels={[t('ui.threadList.all'), t('ui.threadList.unread')]} counts={[null, unreadCount || null]} dotOnLast={false} selectedIndex={filter} onSelect={(i) => (filter = i)} />
   </div>

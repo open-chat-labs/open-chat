@@ -530,8 +530,10 @@ design export needs. Each entry says where it came up.
     statuses (Met, On join, Not met, To do) and a note (all or any, and how often members are
     re-checked). Join is the join bar's (`JoinButton`): it joins the community alone. Ours: the top
     is the details screens' (`DetailsHead`: 88px avatar, 132px cover), not the design's 80px and
-    170px; Back at the tab's root cancels the preview (`cancelPreview`). Left: a member's page is a
-    placeholder until N8a; a community the client can't find shows a spinner.
+    170px; Back at the tab's root cancels the preview (`cancelPreview`). A member's page is N8a's
+    ("Native Communities tab"). Left: a community the client can't find shows a spinner. The
+    Requirements and Channels cards are shared with the community's details
+    (`RequirementsCard`, `ChannelsCard`).
   - **Explore** (N8b PR 4, native/features/explore): the search, the language button (with a count
     once any are picked) and the picked languages as pills (Clear with more than one); browsing,
     Featured and the shelves, a shelf hidden under 3 communities, View all pushing its whole list;
@@ -553,8 +555,8 @@ design export needs. Each entry says where it came up.
     - **Its items**: the design's Reply, Forward, Copy, Info, Edit, Delete, Report, and between
       them the rest of what `messageMenu` offers that the native tree carries out: Reply
       privately, Translate / Untranslate, Pin / Unpin, Copy link, Share, Cancel reminder, Retry,
-      Reveal, Undelete, and Block (a group's) after the divider. Not offered yet: starting or
-      following a thread (N8a), a reminder (no native sheet for its time yet: the web has
+      Reveal, Undelete, and Block (a group's) after the divider; Reply in thread after Reply, and
+      Follow / Unfollow thread after Edit (N8a). Not offered yet: a reminder (no native sheet for its time yet: the web has
       `ReminderDialogScreen`; when it comes, its toast says when with View to the OpenChat Bot's
       DM, as the web's does: `reminderSetText`, decided 2026-11-19. A message's pending-reminder
       marker and a list of pending reminders wait for the user's design round, as on the web:
@@ -717,10 +719,8 @@ design export needs. Each entry says where it came up.
       panel does). Only the strip's list button opens them.
     - **The live call's strip** (to go with N14, plan 04) still shows, under the pinned strip.
     - Checked in a desktop browser at a phone's size against the local replica; not on a device.
-  - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
-    screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
-    gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
-    than a link that opens nothing.
+  - **A message's thread** (N8a): the replies link under messages pushes the thread screen (its
+    replies, composer and Follow); see "Native Communities tab" below.
   - **The details** (the header's title, the menu's details item): done (N6), the local
     `chat_details` screen ("Native details", below).
   - **Calls (N14, PRs 1 to 3):** the header's video and voice buttons start a call (one button
@@ -1169,8 +1169,8 @@ design export needs. Each entry says where it came up.
     (the shell's PendingRemovals, as a removal), the link dimmed and Copy and Share off meanwhile;
     then a spinner in the card until the new link and QR are in (the plan has the new link at
     once, with Undo). Switching the link is shown at once and goes back with a toast if refused.
-    Not built: a community's Invite people (the screen takes a group or channel; communities are
-    N8a's, and `inviteAccess` takes any).
+    Not built: a community's Invite people (the screen takes a group or channel; the community's
+    menu and Manage push a placeholder, `community_settings`, and `inviteAccess` takes any).
   - **Profile sheet** (tapping a member, the plan's "profile sheet", not drawn): a bottom sheet with
     their avatar, name and @username, About (bio, member since, CHIT earned) as their profile
     loads, and the web's user card's actions (the user's answer, 2026-11-10): Message (not on your
@@ -1181,9 +1181,9 @@ design export needs. Each entry says where it came up.
   - **Not built**: a link to the members (`?everyone`, the @everyone mention's; `?usergroup=`)
     still opens the conversation only; the native router could push the Members screen for it.
     Pinned messages (the web's panel lists them) aren't in the plan: a design brief will follow as
-    its own PR (the user, 2026-11-10). A community's details are
-    N8a's / N7's; a channel's details are the group's, with its community's banner and rules. The
-    plan's thread list and thread screen (10 "Threads") are N8a's.
+    its own PR (the user, 2026-11-10). A community's details are N8a's (its settings pages
+    N7's); a channel's details are the group's, with its community's banner and rules. The plan's
+    thread list and thread screen (10 "Threads") are N8a's ("Native Communities tab").
   - **Checked** on the Android emulator (2026-11-10, dark): a bot's DM, Book Club as an admin,
     Readers Circle as a member, Owner Test as the owner (disappearing on, a day, off; Delete and
     Undo), the Members screen's labels, a block from the ⋯ and from the sheet with Undo, the
@@ -1408,6 +1408,62 @@ design export needs. Each entry says where it came up.
     Payments), the tabs, opening a row (its message pushed over the tab, the older row read, the
     newer two still unread) and Back to the feed, Mark all read (faded out, the tabs unmoved, the
     tab bar's dot gone, no error), the empty feed, light and dark. Not checked: iOS, Android.
+- **Native Communities tab** (native N8a, #10374; the native plan's 12 of 2026-11-08 and 10
+  "Threads"; `src/native/features/communities`, `features/threads`). Built: a member's page at
+  the tab's root (CommunityHome: the header with its 42px avatar, name and "Public · N members",
+  which push the details, and the kebab: Invite people, Mute all channels, Mark all as read,
+  Manage, Leave with Undo), the Threads row, the channels as ChatRows (the Chats tab's long-press
+  menu, now shared: `chats/rowActions`) and those the user isn't in ("Not joined · tap to read",
+  opened to read with the join bar); the switcher, strip ↔ sheet on one factor (`switcher.ts`:
+  the fades, fill, corners, shadow and dim; a flick, a quick drag or where it's let go), the
+  sheet's search, rows dragged by the grip to a new order (the client's `updateCommunityIndexes`)
+  and Explore / Create; a community's long-press menu in the strip and the sheet; the community's
+  details for members (About, Channels, Rules and Access gates, read only) and Manage's rows for
+  owners and admins; a message's thread (the replies link under messages, Reply in thread and
+  Follow / Unfollow in the long-press menu, the thread screen: the library's ThreadPanel full
+  screen around the conversation's own list and composer, as the web's thread panel); the
+  followed threads of a community (`?threads`: the library's ThreadList under the native page
+  header, `header={false}`, EXPORT-LOG 2026-11-23). Left, or decided where the plan is silent:
+  - **Placeholders**: Manage's eight pages, and the kebab's Invite people, push
+    `community_settings` (N7's community pages: Edit community, its permissions, Bots and
+    webhooks, Stats; and plan 10's Invite people for a community); the sheet's Create pushes
+    `new_community` (N8b PR 5).
+  - **The channels not joined** are those `exploreChannels` finds (its first page of 100, as the
+    old mobile list's "Other channels") that the user can read: public ones, or private ones
+    they're invited to (`logic/communities/otherChannels`). A private channel they aren't invited
+    to isn't listed (it couldn't be opened). They follow the user's own channels, in the order
+    found; the plan doesn't say where they go. They have no long-press menu.
+  - **Mute all channels** mutes (the client's `muteAllChannels`); there's no "Unmute all" (the
+    backend's community mute only mutes), so the item goes once every channel is muted. The
+    prototype's mute-length submenu isn't built: a community's mute has no length.
+  - **A community's long-press menu** is the prototype's (Move to top, Mute all channels, Mark
+    all as read, Manage, Leave): the plan names the row menu (01) but not its items. TODO(design).
+  - **Leave** goes at once with Undo, as a group's; the tab moves to the next community (Explore
+    with none left). Delete community isn't offered: the plan's menu has Leave only, and the last
+    owner's leave fails with the old words.
+  - **The Threads row** always shows (the prototype's), with its badge the community's unread
+    threads (not muted); with none, the list shows ThreadList's empty words, where the web's
+    list goes back.
+  - **The thread screen** is the conversation's screen for the thread (one file, as the web's
+    MessageArea serves both): its list (ChatEventList with the root), the composer sending to
+    the thread (`thread` prop), the long-press menu in the thread's context (the root's actions
+    in the chat's). ThreadPanel's own header shows (the prototype's), with the library's back
+    arrow, not the platform's chevron on iOS (TODO(design): the panel has no native back), and
+    its back label says "Back to details". Jump to message goes back to the conversation and
+    marks the root. Info isn't offered on a thread's replies (MessageInfoScreen reads the chat's
+    messages). The rules sheet shows on the top screen only (a thread's send asks there).
+  - **The threads list** keeps the library's All / Unread at its own size (the plan's compact
+    40px tabs are 99's library follow-up) and its group marks; the prototype's list is drawn
+    inline with uppercase channel names and no marks. A thread opened from it keeps the list
+    under the conversation (`?threads`).
+  - **The details** have no tiles, Members, mute toggle or Leave (the prototype has them; the
+    plan's members' details are Channels, Rules and Access gates). Access gates show the
+    preview's card without the statuses.
+  - **Checked** in a 390×844 touch browser on the native tree against the local replica, as a
+    fresh user in Sci-Fi Book Club and Meme Factory: the page, the strip, the sheet by its handle
+    and by a drag, the kebab, a channel's thread from its link and from the menu's Reply in
+    thread, a reply sent there, the Threads row and list, a thread from the list, the details.
+    Not checked: the reorder drag on a device, iOS, the Android emulator, the dark theme.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a

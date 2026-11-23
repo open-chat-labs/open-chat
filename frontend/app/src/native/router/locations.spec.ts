@@ -89,7 +89,7 @@ describe("where a URL is in the native tree", () => {
         );
         // a thread opened from the list keeps it under the conversation
         expect(stack("/community/c2/channel/9/12?open=true&threads")).toBe(
-            "communities: communities@/community/c2 > threads@/community/c2?threads > conversation@/community/c2/channel/9 > thread@/community/c2/channel/9/12?open=true&threads",
+            "communities: communities@/community/c2 > threads@/community/c2?threads > conversation@/community/c2/channel/9?threads > thread@/community/c2/channel/9/12?open=true&threads",
         );
     });
 
@@ -376,6 +376,11 @@ describe("a toast", () => {
     test("sits above the composer in a conversation, a DM's or a channel's", () => {
         expect(above("/chats/user/u1")).toBe("footer");
         expect(above("/community/c2/channel/9")).toBe("footer");
+    });
+
+    // a thread's composer is its footer too (N8a)
+    test("sits above the composer in a thread", () => {
+        expect(above("/community/c2/channel/9/5?open=true")).toBe("footer");
     });
 
     test("sits above the safe area on any other pushed screen, a chat's details too", () => {

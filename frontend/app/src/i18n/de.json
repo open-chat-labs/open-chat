@@ -2594,6 +2594,12 @@
                 "yours": "Deine Communities",
                 "reorder": "Deine Communities, zum Umsortieren ziehen",
                 "moveUp": "{name} nach oben verschieben"
+            },
+            "language": "Sprache",
+            "manage": {
+                "channels": "Kanäle",
+                "userGroups": "Benutzergruppen",
+                "invite": "Einladen und teilen"
             }
         },
         "explore": {

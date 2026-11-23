@@ -8,8 +8,8 @@
      notice over it (the throttle, a video being prepared); where the reader can't send, the old
      footer's reason instead. Its operations are the shared ones the web's composer uses
      (logic/composer, logic/conversation/draftActions, the client's sends). A part of the
-     conversation screen, as the web's MessageArea is, so a thread's screen (N8a) can take it too:
-     `context` is where it sends. Keyed by chat by its host, so it starts from that chat's draft. -->
+     conversation screen, as the web's MessageArea is; a thread's screen takes it too (`thread`:
+     it sends there). Keyed by chat by its host, so it starts from that chat's draft. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -23,6 +23,7 @@
         messageContextsEqual,
         messagePermissionsForSelectedChatStore,
         selectedChatDraftMessageStore,
+        selectedThreadDraftMessageStore,
         selectedChatMembersStore,
         selectedChatRecipientStore,
         usersLoadingStore,
@@ -136,6 +137,11 @@
          * window's bottom; undefined, above the composer.
          */
         onToastFloor: (px: number | undefined) => void;
+        /**
+         * A thread's composer (N8a): it sends to the thread whose root is this, and what it may
+         * send and why it can't are the thread's. Its placeholder says whom it replies to.
+         */
+        thread?: { rootIndex: number; rootAuthor: string };
     };
 
     let {
@@ -150,15 +156,19 @@
         onBuild,
         onJump,
         onToastFloor,
+        thread,
     }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
     const me = $derived($currentUserIdStore);
-    // where it sends: the chat (a thread's composer, N8a, sends to the thread, and sets this, so
-    // what it may send and why it can't are the thread's)
-    const inThread = false;
-    const context = $derived<MessageContext>({ chatId: chat.id });
+    // where it sends: the chat, or the thread in it
+    const inThread = $derived(thread !== undefined);
+    const context = $derived<MessageContext>(
+        thread === undefined
+            ? { chatId: chat.id }
+            : { chatId: chat.id, threadRootMessageIndex: thread.rootIndex },
+    );
     // What may be sent and why not come from the selected chat's stores, which Back empties at once
     // (no permissions: "This chat is read-only") while the screen is still sliding out: what the
     // composer showed is held until it's gone (HeldWhileLeaving), as the screen holds its chat
@@ -216,7 +226,9 @@
 
     // the chat's draft: its text, the reply or edit (an edit starts from the message's text with its
     // mentions as typed), and what's attached (a photo, video or file; a builder's payment is N9's)
-    const draft = $derived($selectedChatDraftMessageStore);
+    const draft = $derived(
+        thread === undefined ? $selectedChatDraftMessageStore : $selectedThreadDraftMessageStore,
+    );
     const composing = $derived(
         composerContext(
             draft,
@@ -263,8 +275,14 @@
         if (!canPlus && slot.panel === "attach") untrack(() => slot.close());
     });
 
+    // a thread's says whom it replies to, as the design's thread panel does (the web's too)
     const placeholder = $derived(
-        interpolateNewUi($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
+        thread !== undefined
+            ? $_("ui.threadPanel.replyTo", { values: { name: thread.rootAuthor } })
+            : interpolateNewUi(
+                  $_,
+                  entryPlaceholder({ canEnterText: true, attached: false, directBot }),
+              ),
     );
 
     // a voice message, recorded in a format every device plays, where the reader may send one
@@ -310,8 +328,8 @@
     });
     // the others hear while the reader types; leaving, their "typing" runs out by itself
     const typing = new TypingNotifier(
-        () => client.startTyping(chat.id, me, undefined),
-        () => client.stopTyping(chat.id, me, undefined),
+        () => client.startTyping(chat.id, me, thread?.rootIndex),
+        () => client.stopTyping(chat.id, me, thread?.rootIndex),
     );
     $effect(() => () => typing.cancel());
 

@@ -19207,6 +19207,17 @@
         "doc": "Match the chat list header: 54px plain, 62px with the community avatar."
       },
       {
+        "name": "header",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "The list's own header (back, title, scope); false where the host has its own (the native page header)."
+      },
+      {
         "name": "onBack",
         "type": "() => void",
         "default": null,

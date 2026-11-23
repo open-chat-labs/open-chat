@@ -95,6 +95,14 @@ native/
                      new_group: Members, then Details), whose gates, rules and permissions are
                      the same pages on its draft (NewGroupSettingsScreen, new_group_settings,
                      newGroupDraft)
+    communities/     the Communities tab's root (N8a, N8b): a community's preview or, for a member,
+                     its page (CommunityHome: the header and its menu, the Threads row, the
+                     channels and those not joined) with the switcher, strip ↔ sheet
+                     (CommunitySwitcher on switcher.ts' one factor); the community's details
+                     (CommunityDetailsScreen, community_details, pushed locally)
+    threads/         the followed threads of a scope (`?threads`, ThreadsScreen); a thread itself
+                     is the conversation's screen for it (`thread`: ThreadPanel around its list
+                     and composer)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -144,7 +152,10 @@ too), the wallet (the library's `lib/wallet`: the holdings, the display currency
 page's buttons and the activity's days, which WalletPanel and WalletMain use too; the tokens and
 their activity in `logic/wallet/walletTokens`, the catalogue, the session's histories and the
 balances' first refresh beside it, all the web wallet's; the total's "today" in
-`logic/wallet/totalSnapshots`), and the theme the web and Welcome's menu keep
+`logic/wallet/totalSnapshots`), threads (the thread panel's card and the threads list's rows in
+`logic/threads/threadRows`, moved from the web's thread adapter; the previews' loading in `logic/threads/threadPreviews`;
+a scope's followed threads in the client's `followedThreadsByChat`), a community's channels not
+joined (`logic/communities/otherChannels`), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link

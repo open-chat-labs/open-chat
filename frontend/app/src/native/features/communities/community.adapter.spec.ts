@@ -10,6 +10,7 @@ import {
     channelsNotJoined,
     communityAction,
     communityKey,
+    communityManageRows,
     headerMenuItems,
     matchingCommunities,
     nextCommunity,
@@ -49,6 +50,19 @@ describe("the community's menus", () => {
         expect(rowMenuItems(all, false, label)[0].id).toBe("move_to_top");
         expect(rowMenuItems(all, true, label).map((i) => i.id)).not.toContain("move_to_top");
         expect(rowMenuItems(all, true, label).map((i) => i.id)).not.toContain("invite");
+    });
+
+    test("the details' Manage: every settings page, in the plan's order", () => {
+        expect(communityManageRows(label).map((r) => r.page)).toEqual([
+            "channels",
+            "user_groups",
+            "invite",
+            "gates",
+            "rules",
+            "permissions",
+            "bots",
+            "stats",
+        ]);
     });
 
     test("a picked row's action", () => {

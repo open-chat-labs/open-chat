@@ -11,7 +11,12 @@
      (MessageActions: reactions, Reply, Forward, Copy, Info …); and the composer with the keyboard and
      its panels under it (ConversationComposer, KeyboardSlot), and the rules sheet when sending
      needs the chat's rules accepted (RulesSheet). The details (features/details) are pushed over
-     it. -->
+     it. A message's thread link (its "N replies") and Reply in thread push its thread (N8a, native
+     plan 10 "Threads"): the same screen for the thread (`/:rootIndex?open=true`), the library's
+     ThreadPanel full screen (its root's card, Follow, Jump to message) around the thread's replies,
+     listed, acted on and written here as the chat's messages are, as the web's MessageArea does
+     for its thread panel. -->
+
 <script lang="ts">
     import {
         allUsersStore,
@@ -62,6 +67,13 @@
         serverEventsStore,
         undeletingMessagesStore,
         webhookUserIdsStore,
+        i18nKey,
+        selectedThreadDraftMessageStore,
+        serverThreadEventsStore,
+        threadEventsStore,
+        threadOpenStore,
+        threadsFollowedByMeStore,
+        type MessageContext,
         type ChatEvent,
         type ChatSummary,
         type EventWrapper,
@@ -89,6 +101,16 @@
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
+    import ThreadPanel from "@openchat/ui/src/features/components/ThreadPanel.svelte";
+    import {
+        followsThread,
+        rowMessageContext,
+        threadEventReadByMe,
+        threadReplyEvents,
+    } from "@src/logic/conversation/threadTimeline";
+    import { threadOpenPath } from "@src/logic/threads/threadUrl";
+    import { typedMentions } from "@src/logic/conversation/typedMentions";
+    import { threadSummaryProps } from "@src/logic/threads/threadRows";
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
@@ -192,7 +214,7 @@
     import RulesSheet from "./RulesSheet.svelte";
     import SearchBar from "./SearchBar.svelte";
     import { onSearchRequest } from "./searchRequests";
-    import { onJumpRequest } from "./jumpRequests";
+    import { onJumpRequest, requestJump } from "./jumpRequests";
     import {
         nextPin,
         stripBar,
@@ -214,8 +236,10 @@
     } from "../call/call.adapter";
     import type { ComposerBuilder } from "@src/logic/composer/composer";
 
-    let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "conversation" }>> =
-        $props();
+    let {
+        screen,
+        context,
+    }: ScreenProps<Extract<NativeScreen, { kind: "conversation" | "thread" }>> = $props();
 
     const client = getContext<OpenChat>("client");
     // the shell's, the same for the screen's life
@@ -234,6 +258,47 @@
     const me = $derived($currentUserIdStore);
     const direct = $derived(chat?.kind === "direct_chat");
     const chatKey = $derived(chat && chatIdentifierToString(chat.id));
+
+    // ---- a thread (N8a): this screen for the thread whose root is the route's message
+    // (`/:rootIndex?open=true`), which the client opens as the route does (RouteEffects). Its root
+    // is the chat's message, found in the chat's events (as the web's right column finds it),
+    // held while the screen slides away as the chat is
+
+    const rootIndex: number | undefined = untrack(() =>
+        screen.kind === "thread" ? screen.route.messageIndex : undefined,
+    );
+    const inThread = rootIndex !== undefined;
+    // the route still has this thread open: from Back, it hasn't (its replies are let go)
+    const onScreen = $derived(
+        selected && (!inThread || ($threadOpenStore && $messageIndexStore === rootIndex)),
+    );
+    const heldRoot = new HeldWhileLeaving<EventWrapper<Message> | undefined>(undefined);
+    const root = $derived.by(() => {
+        if (rootIndex === undefined) return undefined;
+        const live = $eventsStore.find(
+            (evt): evt is EventWrapper<Message> =>
+                evt.event.kind === "message" && evt.event.messageIndex === rootIndex,
+        );
+        return heldRoot.of(onScreen && live !== undefined, live);
+    });
+    // where the messages are: the chat itself, or the thread in it
+    const where = $derived<MessageContext>(
+        chat === undefined
+            ? { chatId: screen.route.chatId }
+            : rootIndex === undefined
+              ? { chatId: chat.id }
+              : { chatId: chat.id, threadRootMessageIndex: rootIndex },
+    );
+    // where a row's message is, which its actions go to: in a thread, the root is the chat's
+    function rowWhere(evt: EventWrapper<Message>): MessageContext {
+        return rowMessageContext(chat?.id ?? screen.route.chatId, root?.event, evt.event);
+    }
+    // a thread's replies don't show as unread unless the reader follows it
+    const following = $derived(
+        root !== undefined &&
+            chat !== undefined &&
+            followsThread(root.event, $threadsFollowedByMeStore.get(chat.id)),
+    );
 
     // the day, which changes at midnight, so "Today" and "Yesterday" are worked out again then
     let day = $state(new Date().toDateString());
@@ -282,6 +347,8 @@
         void clock;
         void rowsVersion;
         void ratesLoaded;
+        // a thread's unread replies ("· N new" on its link) follow what's read, as the web's
+        void $messagesRead;
         const live = conversationContext({
             client,
             chat,
@@ -298,15 +365,16 @@
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
-            // no thread screen yet (PLAN, N8a): no replies link under a message until then
-            threads: false,
+            // the replies link under a message, which pushes its thread (none inside the thread:
+            // threadLink)
+            threads: true,
             locale: $locale ?? "en",
             undeleting: (messageId) => $undeletingMessagesStore.has(messageId),
             // a revealed deleted message's deletion, as the server has it
             deletion: (messageId) =>
                 revealedDeletion(
                     revealedDeletionsStore.get(messageId),
-                    serverEventsStore.value,
+                    inThread ? serverThreadEventsStore.value : serverEventsStore.value,
                     messageId,
                 ),
             // Twitch doesn't play in the native apps: its links open Twitch
@@ -693,12 +761,15 @@
 
     // the details' Search tile goes back to here and opens it (N6). The route's chat is the
     // screen's for its life: another chat is another screen
-    onDestroy(
-        onSearchRequest(
-            untrack(() => chatIdentifierToString(screen.route.chatId)),
-            openSearch,
-        ),
-    );
+    // (the conversation's; a thread's screen over it has no search)
+    if (!inThread) {
+        onDestroy(
+            onSearchRequest(
+                untrack(() => chatIdentifierToString(screen.route.chatId)),
+                openSearch,
+            ),
+        );
+    }
 
     function closeSearch() {
         searchOpen = false;
@@ -739,7 +810,7 @@
     );
     // loaded again as the pins change, once the chat's details are in and as the chat changes (an
     // edit to a pin), not on every update to its details (sync follows only those)
-    const pinsLoad = $derived(multiUserId !== undefined && selected);
+    const pinsLoad = $derived(multiUserId !== undefined && selected && !inThread);
     $effect(() => {
         if (pinsLoad) void pinnedLoader.sync();
     });
@@ -813,12 +884,15 @@
 
     // a pin tapped on the Pinned messages screen comes back here, to its message; and the screen
     // shows the pinned messages loaded here, not fetching (and marking read) them again
-    onDestroy(
-        onJumpRequest(untrack(() => chatIdentifierToString(screen.route.chatId)), {
-            jump: (index) => void goToMarked(index, PIN_MARK_MS),
-            pinned: pinnedLoader,
-        }),
-    );
+    // (the conversation's: a thread's Jump to message comes here too)
+    if (!inThread) {
+        onDestroy(
+            onJumpRequest(untrack(() => chatIdentifierToString(screen.route.chatId)), {
+                jump: (index) => void goToMarked(index, PIN_MARK_MS),
+                pinned: pinnedLoader,
+            }),
+        );
+    }
 
     // ---- the live call: its item in the timeline (no strip under the header: the header's button
     // of its kind is green and joins it, native plan 09, 2026-11-10)
@@ -837,12 +911,12 @@
     // ---- who is typing: a received-style bubble at the end of a DM, a strip resting on the
     // composer in a group or channel (kept while it fades out; typingPlacement)
 
-    const typingAt = $derived(chat === undefined ? "strip" : typingPlacement(chat.kind, undefined));
+    const typingAt = $derived(chat === undefined ? "strip" : typingPlacement(chat.kind, rootIndex));
 
     const typingNames = $derived(
         chat === undefined
             ? []
-            : othersTyping($typersByContext.get({ chatId: chat.id }), me, (userId) =>
+            : othersTyping($typersByContext.get(where), me, (userId) =>
                   client.displayName($allUsersStore.get(userId)),
               ),
     );
@@ -922,7 +996,7 @@
     $effect(() => () => context.toastFloor(undefined));
 
     function jumpTo(index: number) {
-        if (chat !== undefined) void list?.scrollToMessageIndex({ chatId: chat.id }, index, false);
+        if (chat !== undefined) void list?.scrollToMessageIndex(where, index, false);
     }
 
     // a builder (N9's screens) is pushed over the chat
@@ -935,7 +1009,7 @@
     // a group or channel whose own settings hide its messages from non-members shows none until
     // joined, its gates or its community's aside (logic/join); the join bar shows either way
     const hiddenNotice = $derived(
-        chat === undefined || chat.kind === "direct_chat"
+        chat === undefined || chat.kind === "direct_chat" || inThread
             ? undefined
             : hiddenMessagesNotice(client, chat),
     );
@@ -945,9 +1019,10 @@
     const flattener = new TimelineFlattener();
     const heldItems = new HeldWhileLeaving<FlatChatItem[]>([]);
     const items = $derived.by((): FlatChatItem[] => {
-        if (!selected || chat === undefined) return heldItems.of(false, []);
+        if (!onScreen || chat === undefined) return heldItems.of(false, []);
         const timeline = grouper.group(
-            $eventsStore,
+            // a thread's: its replies alone, under the panel's card of its root
+            inThread ? threadReplyEvents(root, $threadEventsStore) : $eventsStore,
             me,
             chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
@@ -970,7 +1045,8 @@
     const firstUnread = $derived.by(() => {
         void dividerSeen;
         const current = chat;
-        if (current === undefined) return undefined;
+        // a thread has none, as in the old trees and the web
+        if (current === undefined || inThread) return undefined;
         return firstUnreadMarker.of(current.id, () =>
             untrack(() =>
                 firstUnreadOnOpen(current, (chatId, latest) =>
@@ -1011,7 +1087,7 @@
     $effect(() => {
         const current = list;
         const here = chat;
-        if (current == null || here === undefined || !selected) return;
+        if (current == null || here === undefined || !selected || inThread) return;
         const shown = items;
         const to = openAtUnread.next(here.id, firstUnread, $messageIndexStore, (index) =>
             shown.some(
@@ -1036,12 +1112,16 @@
         const key = chatKey;
         if (key === initialisedFor) return;
         initialisedFor = key;
-        initialised = untrack(() => chat !== undefined && chat.latestEventIndex <= 0);
+        initialised = untrack(
+            () => !inThread && chat !== undefined && chat.latestEventIndex <= 0,
+        );
     });
 
-    // the route's message (a deep link): gone to when it changes, and when the chat does
+    // the route's message (a deep link): gone to when it changes, and when the chat does. A
+    // thread's own (`/:rootIndex/:threadIndex`) is loaded by the client as it opens the thread
     const messageLink = new MessageLink();
     $effect(() => {
+        if (inThread) return;
         const idx = $messageIndexStore;
         const chatId = $selectedChatIdStore;
         const current = list;
@@ -1067,6 +1147,13 @@
     // rows kept per event (RowCache), and their messages with them, so user and other chat
     // updates don't redo every bubble; started again for a new chat, wording or day
     const rows = new RowCache();
+    // a thread's list shows a spinner until its replies start to come in, as the old one did
+    const threadLoading = $derived(
+        inThread &&
+            !initialised &&
+            $threadEventsStore.length === 0 &&
+            root?.event.thread !== undefined,
+    );
     const groupMessages = new WeakMap<MessageRow, { offers: string; messages: GroupMessage[] }>();
     $effect.pre(() => {
         void chatKey;
@@ -1117,6 +1204,8 @@
             tipsEnabled: !disableTipsFeature,
             // the native tree doesn't tip yet (its menu leaves Tip out)
             tipRecipient: undefined,
+            // in a thread, its root can't be edited or replied to there, and nothing is pinned
+            thread: root === undefined ? undefined : { root: root.event, following },
         });
         return nativeMessageOffer(offered, evt.event.content);
     }
@@ -1163,11 +1252,12 @@
         const quoted =
             chat === undefined
                 ? undefined
-                : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
+                : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind, rootIndex);
         const messages = [
             withFields(message, {
                 ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
+                ...threadLink(evt),
                 ...quoteFor(quoted, goToQuote),
                 menu: offers.menu,
                 swipeLeft: offers.swipes.left,
@@ -1175,6 +1265,21 @@
         ];
         groupMessages.set(row, { offers: key, messages });
         return messages;
+    }
+
+    // a message's "N replies" pushes its thread; inside the thread its root shows none (the old
+    // trees' `canReplyInThread`)
+    function threadLink(evt: EventWrapper<Message>): Partial<GroupMessage> {
+        if (inThread) return { threadCount: 0 };
+        const index = evt.event.messageIndex;
+        return { onOpenThread: () => openThread(index) };
+    }
+
+    // a thread is pushed over the conversation at its root's own URL (`?open=true`), keeping the
+    // list of threads it was opened from (`?threads`); Reply in thread starts one this way too
+    function openThread(index: number) {
+        if (chat === undefined) return;
+        navigate(threadOpenPath(screen.route.scope.kind, chat.id, index, location.search));
     }
 
     // ---- what's done with a message
@@ -1194,7 +1299,7 @@
         offered: MessageOffer,
         failed: boolean,
     ) {
-        if (messageActions?.open(evt, el, offered, failed) === true) {
+        if (messageActions?.open(evt, el, offered, failed, rowWhere(evt)) === true) {
             slot.holdForMenu(!searchOpen);
         }
     }
@@ -1206,7 +1311,7 @@
         return {
             onRemovePreview: (index: number) => {
                 const url = previewLink(msg, index);
-                if (url !== undefined) messageActions?.removePreview(evt, url);
+                if (url !== undefined) messageActions?.removePreview(evt, url, rowWhere(evt));
             },
         };
     }
@@ -1223,7 +1328,7 @@
 
     async function goToMarked(messageIndex: number, markMs: number) {
         if (chat === undefined || list == null) return;
-        await list.scrollToMessageIndex({ chatId: chat.id }, messageIndex, false);
+        await list.scrollToMessageIndex(where, messageIndex, false);
         clearTimeout(quotedTimer);
         quotedIndex = messageIndex;
         quotedTimer = setTimeout(() => (quotedIndex = undefined), markMs);
@@ -1238,25 +1343,28 @@
         await goToMarked(target.messageIndex, QUOTED_MARK_MS);
     }
 
+    // each where the message is (rowWhere): a thread's replies in the thread
     function reply(evt: EventWrapper<Message>) {
-        // no threads on native yet (N8a): its messages are the chat's
-        if (chat !== undefined) replyToMessage({ chatId: chat.id }, evt, $allUsersStore);
+        if (chat !== undefined) replyToMessage(rowWhere(evt), evt, $allUsersStore);
     }
 
     function edit(evt: EventWrapper<Message>) {
-        if (chat !== undefined) editMessage({ chatId: chat.id }, evt, $allUsersStore);
+        if (chat !== undefined) editMessage(rowWhere(evt), evt, $allUsersStore);
     }
 
     function retry(evt: EventWrapper<Message>) {
-        if (chat !== undefined) void client.retrySendMessage({ chatId: chat.id }, evt, "prompt");
+        if (chat !== undefined) void client.retrySendMessage(rowWhere(evt), evt, "prompt");
     }
 
     function react(evt: EventWrapper<Message>, emoji: string) {
-        if (chat !== undefined) void toggleReaction(client, { chatId: chat.id }, evt.event, emoji);
+        if (chat !== undefined) void toggleReaction(client, rowWhere(evt), evt.event, emoji);
     }
 
-    // the message replied to or edited (the chat's draft, which the composer shows), marked
-    const draft = $derived($selectedChatDraftMessageStore);
+    // the message replied to or edited (the chat's or thread's draft, which the composer shows),
+    // marked
+    const draft = $derived(
+        inThread ? $selectedThreadDraftMessageStore : $selectedChatDraftMessageStore,
+    );
     const composingId = $derived(
         draft?.editingEvent?.event.messageId ?? draft?.replyingTo?.messageId,
     );
@@ -1280,7 +1388,7 @@
 
     async function vote(msg: Message, content: PollContent, next: number[]) {
         if (chat === undefined) return;
-        if ((await votePoll(client, chat, me, msg, content, next)) === "failed") {
+        if ((await votePoll(client, chat, me, msg, content, next, rootIndex)) === "failed") {
             context.toast($_("poll.voteFailed"));
         }
     }
@@ -1307,6 +1415,48 @@
         voice,
     };
 
+    // ---- the thread's panel (ThreadPanel): its root's card, who's in it, Follow and Jump to
+    // message, as the web's thread panel has them (logic/threads/threadRows)
+
+    const summary = $derived(
+        root === undefined
+            ? undefined
+            : threadSummaryProps(root, {
+                  userName: ctx.userName,
+                  contentText: (content) => client.getContentAsText($_, content),
+                  mentionsAsTyped: typedMentions({
+                      users: $allUsersStore,
+                      userGroups: $userGroupSummariesStore,
+                  }),
+                  date: (timestamp) =>
+                      client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
+              }),
+    );
+
+    // Follow shows a spinner until this settles, and stays as it was when it rejects
+    async function follow(on: boolean) {
+        if (chat === undefined || root === undefined) return;
+        if (!(await client.followThread(chat.id, root.event, on))) {
+            toastStore.showFailureToast(i18nKey(on ? "followThreadFailed" : "unfollowThreadFailed"));
+            throw new Error("not followed");
+        }
+    }
+
+    // back to the conversation, which goes to the root and marks it (jumpRequests)
+    function jumpToRoot() {
+        if (chat === undefined || rootIndex === undefined) return;
+        const key = chatIdentifierToString(chat.id);
+        context.back?.();
+        requestJump(key, rootIndex);
+    }
+
+    // whether the reader has read an event: in a thread, its root and the replies of a thread
+    // they don't follow always count as read
+    function readByMe(evt: EventWrapper<ChatEvent>, args: ChatEventListArgs): boolean {
+        const read = args.isReadByMe($messagesRead, evt);
+        return inThread ? threadEventReadByMe(evt, root?.event.messageId, following, read) : read;
+    }
+
     function isMessage(evt: EventWrapper<ChatEvent>): evt is EventWrapper<Message> {
         return evt.event.kind === "message";
     }
@@ -1318,7 +1468,9 @@
 
 <!-- data-chat-surface: in native light, the off-white chat with white bubbles (tokens.css) -->
 <div class="conversation" data-chat-surface {@attach followCovered}>
-    {#if searchOpen}
+    {#if inThread}
+        <!-- the thread's header is its panel's -->
+    {:else if searchOpen}
         <SearchBar
             {query}
             count={searchCount}
@@ -1365,7 +1517,7 @@
     {#snippet pinLine()}
         <Markdown oneLine suppressLinks text={pinStrip?.line ?? ""} />
     {/snippet}
-    {#if !searchOpen && !privatePreview && pinStrip !== undefined}
+    {#if !inThread && !searchOpen && !privatePreview && pinStrip !== undefined}
         <PinnedStrip
             bar={pinStrip.bar}
             title={pinStrip.title}
@@ -1410,10 +1562,313 @@
                             onBuild={build}
                             onJump={jumpTo}
                             onToastFloor={(px) => (toastFloor = px)}
+                            thread={rootIndex === undefined || root === undefined
+                                ? undefined
+                                : {
+                                      rootIndex,
+                                      rootAuthor: ctx.userName(root.event.sender).split(" ")[0],
+                                  }}
                         />
                     {/key}
                 </footer>
             {/if}
+        {/if}
+    {/snippet}
+
+    <!-- a thread where the chat is read only has no composer, as in the old trees: the safe area -->
+    {#snippet threadEnd()}
+        <div class="search-end"></div>
+    {/snippet}
+
+    {#snippet messageList()}
+        {#if chat !== undefined}
+            <!-- a tap on the messages leaves the keyboard or a panel as it is -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                class="messages"
+                class:typing={typingAt === "strip" && typingNames.length > 0}
+                style:--group-gap="8px"
+                onmousedown={keepFocus}
+            >
+                <div
+                    class="sticky-date"
+                    class:shown={stickyDate !== undefined}
+                    use:stickyDateTop={(top) => (stickyTop = top)}
+                >
+                    {#if stickyDate !== undefined}
+                        <span class="pill">{dateLabel(stickyDate)}</span>
+                    {/if}
+                </div>
+                {#if waiting || threadLoading}
+                    <div class="waiting"><Spinner size={20} /></div>
+                {/if}
+                <ChatEventList
+                    bind:this={list}
+                    rootSelector={inThread ? "native-thread" : "native-conversation"}
+                    {chat}
+                    threadRootEvent={root}
+                    {items}
+                    {readonly}
+                    loadedRange={loaded}
+                    maintainScroll={!inThread}
+                    visible
+                    bind:initialised
+                    stickyDateElTop={stickyTop}
+                    bind:stickyDateTimestamp={stickyDate}
+                    viewportClass="native-conversation-list"
+                >
+                    {#snippet row(item, args)}
+                        {#if item.kind === "timeline_date"}
+                            <div class="date">
+                                <span class="pill">{dateLabel(item.timestamp)}</span>
+                            </div>
+                        {:else if item.kind === "event"}
+                            {@const evt = item.event}
+                            {#if isMessage(evt)}
+                                {@const msg = evt.event}
+                                {@const failed = args.isFailed($failedMessagesStore, evt)}
+                                {#if isCall(msg)}
+                                    {@const call = callState(msg.content, me)}
+                                    {@const media = callMedia(msg.content)}
+                                    <div
+                                        class="call"
+                                        data-index={failed ? "" : msg.messageIndex}
+                                        data-id={failed ? "" : msg.messageId}
+                                        use:observeRead={{
+                                            observer: args.messageObserver,
+                                            read: readByMe(evt, args),
+                                        }}
+                                    >
+                                        {#if call === "live" && isLiveCall(liveCall, msg.messageIndex)}
+                                            <div class="live-pill">
+                                                <span
+                                                    class="live-icon"
+                                                    style:mask="var(--icon-{media === 'voice'
+                                                        ? 'phone'
+                                                        : 'video'}) center/contain no-repeat"
+                                                ></span>
+                                                <span class="live-text">
+                                                    <span class="live-title">
+                                                        {$_(
+                                                            media === "voice"
+                                                                ? "native.conversation.live.voice"
+                                                                : "native.conversation.live.video",
+                                                        )}
+                                                    </span>
+                                                    <span class="live-sub mono">
+                                                        {liveSub(msg.content, evt.timestamp)}
+                                                    </span>
+                                                </span>
+                                                {#if ownCall !== undefined && ownCall.messageId === msg.messageId}
+                                                    <button
+                                                        type="button"
+                                                        class="join leave"
+                                                        onclick={() => publish("hangup")}
+                                                    >
+                                                        {$_("ui.callEvent.leave")}
+                                                    </button>
+                                                {:else}
+                                                    <button
+                                                        type="button"
+                                                        class="join"
+                                                        onclick={() => pressCall("join", msg.content)}
+                                                    >
+                                                        {$_("ui.callEvent.join")}
+                                                    </button>
+                                                {/if}
+                                            </div>
+                                        {:else if call !== "live"}
+                                            <CallEvent
+                                                {...callEventProps(
+                                                    call,
+                                                    media,
+                                                    msg.sender === me
+                                                        ? { mine: true }
+                                                        : {
+                                                              mine: false,
+                                                              name: ctx.userName(msg.sender),
+                                                          },
+                                                    formatClock(
+                                                        (callLength(msg.content, evt.timestamp, 0) ??
+                                                            0) / 1000,
+                                                    ),
+                                                    ctx.time(evt.timestamp),
+                                                )}
+                                                onCallBack={() => pressCall("call_back", msg.content)}
+                                            />
+                                        {/if}
+                                    </div>
+                                {:else}
+                                    {@const row = rows.row(
+                                        item.key,
+                                        evt,
+                                        status(evt, args, failed),
+                                        ctx,
+                                    )}
+                                    {@const content = msg.content}
+                                    {@const confirmed = args.isConfirmed($unconfirmedStore, evt)}
+                                    {@const offered = offeredFor(chat, evt, failed, confirmed)}
+                                    {@const offers = rowOffers(evt, offered)}
+                                    {@const received = row.side === "received"}
+                                    {@const searchMatch =
+                                        searchOpen && args.focusIndex === msg.messageIndex && !failed}
+                                    {@const quoted = quotedIndex === msg.messageIndex && !failed}
+                                    {@const markdown = bodyMarkdown(content, row.message)}
+                                    <!-- a text message's text as the old UI renders it: markdown, mentions,
+                                         links, custom emoji (a lone emoji is the bubble's own, large); a
+                                         kind without a bubble of its own, its words (a reminder's notes,
+                                         the referral card's link), as the web's -->
+                                    {#snippet body()}
+                                        {#if markdown !== undefined}
+                                            <Markdown
+                                                text={markdown}
+                                                inline={content.kind === "text_content"
+                                                    ? !msg.blockLevelMarkdown
+                                                    : false}
+                                            />
+                                        {/if}
+                                    {/snippet}
+                                    {#snippet preview()}
+                                        {#if content.kind === "daily_result"}
+                                            <DailyResultBoard {content} />
+                                        {/if}
+                                    {/snippet}
+                                    <div
+                                        class="row"
+                                        class:starts={item.first}
+                                        class:received
+                                        class:avatars={!direct}
+                                        class:search-match={searchMatch || quoted}
+                                        data-index={failed ? "" : msg.messageIndex}
+                                        data-id={failed ? "" : msg.messageId}
+                                        use:observeRead={{
+                                            observer: args.messageObserver,
+                                            read: readByMe(evt, args),
+                                        }}
+                                    >
+                                        {#if firstUnread === msg.messageIndex && msg.sender !== me}
+                                            <div class="unread" class:fading={dividerFading}>
+                                                <div class="unread-inner">
+                                                    <div class="unread-pad"><UnreadDivider /></div>
+                                                </div>
+                                            </div>
+                                        {/if}
+                                        <MessageGroup
+                                            compactGifs
+                                            side={row.side}
+                                            senderName={row.senderName}
+                                            color={row.color}
+                                            showAvatar={!direct && received && item.first}
+                                            showName={!direct && received && item.first}
+                                            avatarSpace={!direct && received}
+                                            avatarSize={28}
+                                            endsRun={item.last}
+                                            mirror
+                                            swipeStyle="inset"
+                                            hoverBar={false}
+                                            pressVibration={false}
+                                            marked={searchMatch ||
+                                            quoted ||
+                                            (args.focusIndex === msg.messageIndex && !failed) ||
+                                            composingId === msg.messageId
+                                                ? 0
+                                                : -1}
+                                            onMessageMenu={offered.menu
+                                                ? (_, pos) =>
+                                                      openMessageMenu(evt, pos.el, offered, failed)
+                                                : undefined}
+                                            onReact={offered.react
+                                                ? (_, emoji) => react(evt, emoji)
+                                                : undefined}
+                                            onReply={offers.swipes.right === undefined
+                                                ? undefined
+                                                : () => reply(evt)}
+                                            onSwipeLeft={offers.swipes.left === undefined
+                                                ? undefined
+                                                : () => edit(evt)}
+                                            messages={messagesFor(
+                                                row,
+                                                markdown !== undefined,
+                                                body,
+                                                evt,
+                                                offers,
+                                                preview,
+                                            )}
+                                        />
+                                    </div>
+                                {/if}
+                            {:else if evt.event.kind === "aggregate_common_events"}
+                                {@const text = aggregateEventTextNewUi(evt.event, eventCtx)}
+                                {@const deleted = evt.event.messagesDeleted}
+                                {#if text.joined !== undefined || text.deleted !== undefined || text.rolesChanged.length > 0}
+                                    <div
+                                        class="event"
+                                        data-index={deleted.length > 0 ? deleted.join(" ") : undefined}
+                                        use:observeRead={{
+                                            observer: args.messageObserver,
+                                            read:
+                                                deleted.length === 0 ||
+                                                readByMe(evt, args),
+                                        }}
+                                    >
+                                        {#if text.joined !== undefined}
+                                            <p class="event-line">
+                                                <Markdown oneLine suppressLinks text={text.joined} />
+                                            </p>
+                                        {/if}
+                                        {#if text.deleted !== undefined}
+                                            <p class="event-line">
+                                                <button
+                                                    type="button"
+                                                    class="expand"
+                                                    onclick={() =>
+                                                        client.expandDeletedMessages(new Set(deleted))}
+                                                >
+                                                    {text.deleted}
+                                                </button>
+                                            </p>
+                                        {/if}
+                                        {#each text.rolesChanged as line}
+                                            <p class="event-line">
+                                                <Markdown suppressLinks text={line} />
+                                            </p>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            {:else if isTextEvent(evt.event)}
+                                {@const text = timelineEventTextNewUi(evt.event, eventCtx)}
+                                {#if text !== undefined}
+                                    <div class="event">
+                                        <p class="event-line">
+                                            <Markdown suppressLinks {text} />
+                                        </p>
+                                    </div>
+                                {/if}
+                            {/if}
+                        {/if}
+                    {/snippet}
+                    {#snippet fabs({ showGoToBottom, scrollToLast })}
+                        <button
+                            type="button"
+                            class="to-latest"
+                            class:shown={showGoToBottom}
+                            class:call={latestCall}
+                            aria-label={$_(
+                                latestCall ? "native.conversation.latestCall" : "goToLatestMessage",
+                            )}
+                            aria-hidden={!showGoToBottom}
+                            tabindex={showGoToBottom ? 0 : -1}
+                            onclick={scrollToLast}
+                        >
+                            <span class="pulse"></span>
+                            <span class="arrow"></span>
+                            {#if latestCall}
+                                <span class="phone"></span>
+                            {/if}
+                        </button>
+                    {/snippet}
+                </ChatEventList>
+            </div>
         {/if}
     {/snippet}
 
@@ -1429,294 +1884,30 @@
         {@render composerArea()}
     {:else if chat === undefined}
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
-    {:else}
-        <!-- a tap on the messages leaves the keyboard or a panel as it is -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-            class="messages"
-            class:typing={typingAt === "strip" && typingNames.length > 0}
-            style:--group-gap="8px"
-            onmousedown={keepFocus}
-        >
-            <div
-                class="sticky-date"
-                class:shown={stickyDate !== undefined}
-                use:stickyDateTop={(top) => (stickyTop = top)}
-            >
-                {#if stickyDate !== undefined}
-                    <span class="pill">{dateLabel(stickyDate)}</span>
-                {/if}
+    {:else if inThread}
+        <!-- the thread's panel full screen (native plan 10 "Threads"): the replies and the composer
+             are this screen's, in the thread -->
+        {#if root !== undefined && summary !== undefined}
+            <div class="thread">
+                <ThreadPanel
+                    chatName={title}
+                    threadKey={`${rootIndex}`}
+                    root={summary.root}
+                    faces={summary.faces}
+                    replyCount={summary.replyCount}
+                    {following}
+                    onFollowChange={follow}
+                    onJump={jumpToRoot}
+                    onClose={() => context.back?.()}
+                    list={messageList}
+                    composer={readonly ? threadEnd : composerArea}
+                />
             </div>
-            {#if waiting}
-                <div class="waiting"><Spinner size={20} /></div>
-            {/if}
-            <ChatEventList
-                bind:this={list}
-                rootSelector="native-conversation"
-                {chat}
-                threadRootEvent={undefined}
-                {items}
-                {readonly}
-                loadedRange={loaded}
-                maintainScroll
-                visible
-                bind:initialised
-                stickyDateElTop={stickyTop}
-                bind:stickyDateTimestamp={stickyDate}
-                viewportClass="native-conversation-list"
-            >
-                {#snippet row(item, args)}
-                    {#if item.kind === "timeline_date"}
-                        <div class="date">
-                            <span class="pill">{dateLabel(item.timestamp)}</span>
-                        </div>
-                    {:else if item.kind === "event"}
-                        {@const evt = item.event}
-                        {#if isMessage(evt)}
-                            {@const msg = evt.event}
-                            {@const failed = args.isFailed($failedMessagesStore, evt)}
-                            {#if isCall(msg)}
-                                {@const call = callState(msg.content, me)}
-                                {@const media = callMedia(msg.content)}
-                                <div
-                                    class="call"
-                                    data-index={failed ? "" : msg.messageIndex}
-                                    data-id={failed ? "" : msg.messageId}
-                                    use:observeRead={{
-                                        observer: args.messageObserver,
-                                        read: args.isReadByMe($messagesRead, evt),
-                                    }}
-                                >
-                                    {#if call === "live" && isLiveCall(liveCall, msg.messageIndex)}
-                                        <div class="live-pill">
-                                            <span
-                                                class="live-icon"
-                                                style:mask="var(--icon-{media === 'voice'
-                                                    ? 'phone'
-                                                    : 'video'}) center/contain no-repeat"
-                                            ></span>
-                                            <span class="live-text">
-                                                <span class="live-title">
-                                                    {$_(
-                                                        media === "voice"
-                                                            ? "native.conversation.live.voice"
-                                                            : "native.conversation.live.video",
-                                                    )}
-                                                </span>
-                                                <span class="live-sub mono">
-                                                    {liveSub(msg.content, evt.timestamp)}
-                                                </span>
-                                            </span>
-                                            {#if ownCall !== undefined && ownCall.messageId === msg.messageId}
-                                                <button
-                                                    type="button"
-                                                    class="join leave"
-                                                    onclick={() => publish("hangup")}
-                                                >
-                                                    {$_("ui.callEvent.leave")}
-                                                </button>
-                                            {:else}
-                                                <button
-                                                    type="button"
-                                                    class="join"
-                                                    onclick={() => pressCall("join", msg.content)}
-                                                >
-                                                    {$_("ui.callEvent.join")}
-                                                </button>
-                                            {/if}
-                                        </div>
-                                    {:else if call !== "live"}
-                                        <CallEvent
-                                            {...callEventProps(
-                                                call,
-                                                media,
-                                                msg.sender === me
-                                                    ? { mine: true }
-                                                    : {
-                                                          mine: false,
-                                                          name: ctx.userName(msg.sender),
-                                                      },
-                                                formatClock(
-                                                    (callLength(msg.content, evt.timestamp, 0) ??
-                                                        0) / 1000,
-                                                ),
-                                                ctx.time(evt.timestamp),
-                                            )}
-                                            onCallBack={() => pressCall("call_back", msg.content)}
-                                        />
-                                    {/if}
-                                </div>
-                            {:else}
-                                {@const row = rows.row(
-                                    item.key,
-                                    evt,
-                                    status(evt, args, failed),
-                                    ctx,
-                                )}
-                                {@const content = msg.content}
-                                {@const confirmed = args.isConfirmed($unconfirmedStore, evt)}
-                                {@const offered = offeredFor(chat, evt, failed, confirmed)}
-                                {@const offers = rowOffers(evt, offered)}
-                                {@const received = row.side === "received"}
-                                {@const searchMatch =
-                                    searchOpen && args.focusIndex === msg.messageIndex && !failed}
-                                {@const quoted = quotedIndex === msg.messageIndex && !failed}
-                                {@const markdown = bodyMarkdown(content, row.message)}
-                                <!-- a text message's text as the old UI renders it: markdown, mentions,
-                                     links, custom emoji (a lone emoji is the bubble's own, large); a
-                                     kind without a bubble of its own, its words (a reminder's notes,
-                                     the referral card's link), as the web's -->
-                                {#snippet body()}
-                                    {#if markdown !== undefined}
-                                        <Markdown
-                                            text={markdown}
-                                            inline={content.kind === "text_content"
-                                                ? !msg.blockLevelMarkdown
-                                                : false}
-                                        />
-                                    {/if}
-                                {/snippet}
-                                {#snippet preview()}
-                                    {#if content.kind === "daily_result"}
-                                        <DailyResultBoard {content} />
-                                    {/if}
-                                {/snippet}
-                                <div
-                                    class="row"
-                                    class:starts={item.first}
-                                    class:received
-                                    class:avatars={!direct}
-                                    class:search-match={searchMatch || quoted}
-                                    data-index={failed ? "" : msg.messageIndex}
-                                    data-id={failed ? "" : msg.messageId}
-                                    use:observeRead={{
-                                        observer: args.messageObserver,
-                                        read: args.isReadByMe($messagesRead, evt),
-                                    }}
-                                >
-                                    {#if firstUnread === msg.messageIndex && msg.sender !== me}
-                                        <div class="unread" class:fading={dividerFading}>
-                                            <div class="unread-inner">
-                                                <div class="unread-pad"><UnreadDivider /></div>
-                                            </div>
-                                        </div>
-                                    {/if}
-                                    <MessageGroup
-                                        compactGifs
-                                        side={row.side}
-                                        senderName={row.senderName}
-                                        color={row.color}
-                                        showAvatar={!direct && received && item.first}
-                                        showName={!direct && received && item.first}
-                                        avatarSpace={!direct && received}
-                                        avatarSize={28}
-                                        endsRun={item.last}
-                                        mirror
-                                        swipeStyle="inset"
-                                        hoverBar={false}
-                                        pressVibration={false}
-                                        marked={searchMatch ||
-                                        quoted ||
-                                        (args.focusIndex === msg.messageIndex && !failed) ||
-                                        composingId === msg.messageId
-                                            ? 0
-                                            : -1}
-                                        onMessageMenu={offered.menu
-                                            ? (_, pos) =>
-                                                  openMessageMenu(evt, pos.el, offered, failed)
-                                            : undefined}
-                                        onReact={offered.react
-                                            ? (_, emoji) => react(evt, emoji)
-                                            : undefined}
-                                        onReply={offers.swipes.right === undefined
-                                            ? undefined
-                                            : () => reply(evt)}
-                                        onSwipeLeft={offers.swipes.left === undefined
-                                            ? undefined
-                                            : () => edit(evt)}
-                                        messages={messagesFor(
-                                            row,
-                                            markdown !== undefined,
-                                            body,
-                                            evt,
-                                            offers,
-                                            preview,
-                                        )}
-                                    />
-                                </div>
-                            {/if}
-                        {:else if evt.event.kind === "aggregate_common_events"}
-                            {@const text = aggregateEventTextNewUi(evt.event, eventCtx)}
-                            {@const deleted = evt.event.messagesDeleted}
-                            {#if text.joined !== undefined || text.deleted !== undefined || text.rolesChanged.length > 0}
-                                <div
-                                    class="event"
-                                    data-index={deleted.length > 0 ? deleted.join(" ") : undefined}
-                                    use:observeRead={{
-                                        observer: args.messageObserver,
-                                        read:
-                                            deleted.length === 0 ||
-                                            args.isReadByMe($messagesRead, evt),
-                                    }}
-                                >
-                                    {#if text.joined !== undefined}
-                                        <p class="event-line">
-                                            <Markdown oneLine suppressLinks text={text.joined} />
-                                        </p>
-                                    {/if}
-                                    {#if text.deleted !== undefined}
-                                        <p class="event-line">
-                                            <button
-                                                type="button"
-                                                class="expand"
-                                                onclick={() =>
-                                                    client.expandDeletedMessages(new Set(deleted))}
-                                            >
-                                                {text.deleted}
-                                            </button>
-                                        </p>
-                                    {/if}
-                                    {#each text.rolesChanged as line}
-                                        <p class="event-line">
-                                            <Markdown suppressLinks text={line} />
-                                        </p>
-                                    {/each}
-                                </div>
-                            {/if}
-                        {:else if isTextEvent(evt.event)}
-                            {@const text = timelineEventTextNewUi(evt.event, eventCtx)}
-                            {#if text !== undefined}
-                                <div class="event">
-                                    <p class="event-line">
-                                        <Markdown suppressLinks {text} />
-                                    </p>
-                                </div>
-                            {/if}
-                        {/if}
-                    {/if}
-                {/snippet}
-                {#snippet fabs({ showGoToBottom, scrollToLast })}
-                    <button
-                        type="button"
-                        class="to-latest"
-                        class:shown={showGoToBottom}
-                        class:call={latestCall}
-                        aria-label={$_(
-                            latestCall ? "native.conversation.latestCall" : "goToLatestMessage",
-                        )}
-                        aria-hidden={!showGoToBottom}
-                        tabindex={showGoToBottom ? 0 : -1}
-                        onclick={scrollToLast}
-                    >
-                        <span class="pulse"></span>
-                        <span class="arrow"></span>
-                        {#if latestCall}
-                            <span class="phone"></span>
-                        {/if}
-                    </button>
-                {/snippet}
-            </ChatEventList>
-        </div>
+        {:else}
+            <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
+        {/if}
+    {:else}
+        {@render messageList()}
 
         {#if typingAt === "bubble" && typingNames.length > 0}
             <div class="typing-bubble">
@@ -1740,11 +1931,14 @@
     bind:this={messageActions}
     {chat}
     {context}
+    threadRoot={root?.event}
+    onOpenThread={openThread}
     onSettled={(exit) => slot.menuClosed(exit)}
 />
 
-<!-- sending here needs the chat's rules accepted first: the client waits for the answer -->
-<RulesSheet shown={selected} {overlays} />
+<!-- sending here needs the chat's rules accepted first: the client waits for the answer. The top
+     screen's: a thread's, over the conversation of the same chat, asks for a send in the thread -->
+<RulesSheet shown={selected && context.onTop()} {overlays} />
 
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
@@ -1760,6 +1954,21 @@
         height: 100%;
         min-height: 0;
         background: var(--surface-0);
+    }
+
+    // a thread: its panel full screen under the status bar, on the page colour (the prototype's)
+    .thread {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: max(0px, calc(var(--safe-top) - 10px));
+        --surface-1: var(--surface-0);
+
+        :global(.replies.hosted) {
+            display: flex;
+            flex-direction: column;
+        }
     }
 
     .state {

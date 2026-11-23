@@ -2503,6 +2503,12 @@
                 "yours": "Your communities",
                 "reorder": "Your communities, drag to reorder",
                 "moveUp": "Move {name} up"
+            },
+            "language": "Language",
+            "manage": {
+                "channels": "Channels",
+                "userGroups": "User groups",
+                "invite": "Invite and share"
             }
         },
         "explore": {

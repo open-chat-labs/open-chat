@@ -27,7 +27,7 @@
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import MessageArea from "../conversation/MessageArea.svelte";
-    import { threadSummaryProps } from "./thread.adapter";
+    import { threadSummaryProps } from "@src/logic/threads/threadRows";
 
     let { region, context: screen }: ScreenProps<Extract<RightRegion, { kind: "thread" }>> =
         $props();

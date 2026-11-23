@@ -6,6 +6,7 @@ import {
     type ReadonlyMap,
 } from "@client";
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
+import type { CommunitySettingsPage } from "../../router/locations";
 import { canReadChannel, otherChannels } from "@src/logic/communities/otherChannels";
 import { swatchFor, type Swatch } from "@src/logic/swatch";
 
@@ -84,6 +85,28 @@ function commonItems(
 /** What a picked menu row (by its id) does. */
 export function communityAction(id: string): CommunityAction | undefined {
     return (Object.keys(ICONS) as CommunityAction[]).find((a) => a === id);
+}
+
+// ---- the community's details
+
+/** A row of the details' Manage card: the settings page it pushes. */
+export type CommunityManageRow = { page: CommunitySettingsPage; icon: string; label: string };
+
+/**
+ * Manage's rows, in the plan's order (12 "Community details"): Channels, User groups, Invite and
+ * share, Access gates, Rules, Permissions, Bots and webhooks, Stats.
+ */
+export function communityManageRows(label: (key: string) => string): CommunityManageRow[] {
+    return [
+        { page: "channels", icon: "hash", label: label("native.community.manage.channels") },
+        { page: "user_groups", icon: "users", label: label("native.community.manage.userGroups") },
+        { page: "invite", icon: "invite", label: label("native.community.manage.invite") },
+        { page: "gates", icon: "lock", label: label("native.details.manage.gates") },
+        { page: "rules", icon: "rules", label: label("native.details.manage.rules") },
+        { page: "permissions", icon: "shield", label: label("native.details.manage.permissions") },
+        { page: "bots", icon: "bot", label: label("native.details.manage.bots") },
+        { page: "stats", icon: "chart", label: label("native.details.manage.stats") },
+    ];
 }
 
 // ---- the channels

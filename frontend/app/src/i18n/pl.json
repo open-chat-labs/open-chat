@@ -2594,6 +2594,12 @@
                 "yours": "Twoje społeczności",
                 "reorder": "Twoje społeczności, przeciągnij, aby zmienić kolejność",
                 "moveUp": "Przenieś {name} wyżej"
+            },
+            "language": "Język",
+            "manage": {
+                "channels": "Kanały",
+                "userGroups": "Grupy użytkowników",
+                "invite": "Zaproś i udostępnij"
             }
         },
         "explore": {

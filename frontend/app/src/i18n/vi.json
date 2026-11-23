@@ -2594,6 +2594,12 @@
                 "yours": "Cộng đồng của bạn",
                 "reorder": "Cộng đồng của bạn, kéo để sắp xếp lại",
                 "moveUp": "Chuyển {name} lên"
+            },
+            "language": "Ngôn ngữ",
+            "manage": {
+                "channels": "Kênh",
+                "userGroups": "Nhóm người dùng",
+                "invite": "Mời và chia sẻ"
             }
         },
         "explore": {

@@ -2594,6 +2594,12 @@
                 "yours": "Le tue community",
                 "reorder": "Le tue community, trascina per riordinare",
                 "moveUp": "Sposta {name} in su"
+            },
+            "language": "Lingua",
+            "manage": {
+                "channels": "Canali",
+                "userGroups": "Gruppi di utenti",
+                "invite": "Invita e condividi"
             }
         },
         "explore": {

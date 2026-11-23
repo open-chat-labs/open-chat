@@ -6,21 +6,21 @@ import {
     type Message,
     type ThreadPreview,
 } from "@client";
-import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
-import type ThreadList from "@openchat/ui/src/features/components/ThreadList.svelte";
-import type ThreadPanel from "@openchat/ui/src/features/components/ThreadPanel.svelte";
 import { swatchFor } from "@src/logic/chats/chatRow";
-import type { ComponentProps } from "svelte";
 import { senderColor, type ConversationContext } from "@src/logic/conversation/messageRow";
+import type { Swatch } from "@src/logic/swatch";
 
 // The thread panel's summary of the open thread, and the list of threads, as the library's
-// ThreadPanel and ThreadList take them.
+// ThreadPanel and ThreadList take them (their `root`, `faces` and `replyCount`, and their
+// `groups`): the web's right column and the native thread screen and list (N8a) alike.
 
 /** What the thread panel says about the thread above its replies. */
-export type ThreadSummaryProps = Pick<
-    ComponentProps<typeof ThreadPanel>,
-    "root" | "faces" | "replyCount"
->;
+export type ThreadSummaryProps = {
+    root: { author: string; color: string; text: string; time: string };
+    /** Those in the thread, as their swatches. */
+    faces: string[];
+    replyCount: number;
+};
 
 /**
  * The thread's root as the panel's card shows it (who wrote it, its text with its mentions as the
@@ -43,13 +43,33 @@ export function threadSummaryProps(
     };
 }
 
-type ThreadListGroup = ComponentProps<typeof ThreadList>["groups"][number];
+/** A thread in the list (ThreadList's). */
+export type ThreadListRow = {
+    author: string;
+    grad: string;
+    time: string;
+    text: string;
+    count: string;
+    unread?: number;
+    selected?: boolean;
+    onOpen?: () => void;
+};
+
+/** A chat's threads in the list (ThreadList's `groups`). */
+export type ThreadListGroup = {
+    name: string;
+    grad: string;
+    radius: string;
+    threads: ThreadListRow[];
+};
 
 /** What the list of threads needs to know about each thread, and the chats they're in. */
 export type ThreadListContext = Pick<
     ConversationContext,
     "userName" | "contentText" | "mentionsAsTyped" | "date"
 > & {
+    /** A swatch's gradient (the library Avatar's `AVATAR_GRADIENTS`). */
+    gradient: (swatch: Swatch) => string;
     chat: (chatId: ChatIdentifier) => ChatSummary | undefined;
     /** "N replies", in the app's language. */
     replies: (count: number) => string;
@@ -82,7 +102,7 @@ export function threadListGroups(
         if (group === undefined) {
             group = {
                 name: chat.name,
-                grad: AVATAR_GRADIENTS[swatchFor(key)],
+                grad: ctx.gradient(swatchFor(key)),
                 radius: CHAT_RADIUS,
                 threads: [],
             };
@@ -92,7 +112,7 @@ export function threadListGroups(
         const unread = ctx.unread(thread);
         group.threads.push({
             author: ctx.userName(root.event.sender),
-            grad: AVATAR_GRADIENTS[swatchFor(root.event.sender)],
+            grad: ctx.gradient(swatchFor(root.event.sender)),
             time: ctx.date(root.timestamp),
             text: ctx.mentionsAsTyped(ctx.contentText(root.event.content)),
             count: ctx.replies(thread.totalReplies),

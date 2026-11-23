@@ -1197,3 +1197,8 @@
 - `ActivityPanel`: uses it; its look and behaviour are as they were. No props changed, so `meta.json` is as it was.
 - Used by the app: the web feed (through `ActivityPanel`) and the native Activity tab, which lays the same rules out in the native design (plan 16: Mark all read fades rather than going, the compact tabs, the mono caps day headings) with `ActivityRow`, `SegmentedTabs` and `NativePageHeader`.
 - Not in the design export: the export builds the feed inline in `ActivityPanel` and in `NativeApp.svelte`.
+
+## 2026-11-23 — ThreadList: `header`, by hand
+- `ThreadList`: `header` (optional, default true): the list's own header (back, title, scope). False leaves it out, for a host with a header of its own. `meta.json` (`header`).
+- Used by the native app (N8a): the threads list is a pushed screen under the native page header (its back is the platform's, the title "Threads" over the community's name), with the list's filter and groups as they are.
+- Not in the design export: the prototype's native threads list is drawn inline, not with ThreadList.

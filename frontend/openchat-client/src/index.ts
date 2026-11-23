@@ -140,7 +140,7 @@ export {
 } from "./utils/chit";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginCreateCommunity, postLoginJoin, postLoginPath } from "./utils/join";
-export { chatListOrder, chatsInScope } from "./utils/chatList";
+export { chatListOrder, chatsInScope, followedThreadsByChat } from "./utils/chatList";
 export {
     chatListSearchMatches,
     chatListSearchResults,
