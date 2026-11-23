@@ -157,6 +157,15 @@ export const screens: Screens = {
 
     // a group's or channel's pinned messages, from the conversation's pinned strip (plan 04)
     pinned_messages: () => import("../conversation/PinnedMessagesScreen.svelte"),
+
+    // a community's details, from its page's header and Manage (N8a)
+    community_details: undefined,
+
+    // Invite people to a community, from its page's menu (plan 10's screen, for a community)
+    community_invite: undefined,
+
+    // Create community, from the Communities switcher's sheet (N8b)
+    new_community: undefined,
 };
 
 /**

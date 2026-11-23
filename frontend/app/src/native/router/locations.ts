@@ -100,7 +100,13 @@ export type LocalScreen =
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat
     | { kind: "builder"; builder: ComposerBuilder; chatId: ChatIdentifier }
     // an Explore shelf's View all (N8b)
-    | { kind: "explore_list"; shelf: ExploreShelfKey };
+    | { kind: "explore_list"; shelf: ExploreShelfKey }
+    // a community's details, from its page's header and Manage (N8a)
+    | { kind: "community_details"; communityId: CommunityIdentifier }
+    // Invite people to a community, from its page's menu (plan 10: the group's screen, to come)
+    | { kind: "community_invite"; communityId: CommunityIdentifier }
+    // Create community, from the Communities switcher's sheet (N8b)
+    | { kind: "new_community" };
 
 /** A local screen's identity in its stack (StackStep.key, after "local:"). */
 export function localKey(screen: LocalScreen): string {

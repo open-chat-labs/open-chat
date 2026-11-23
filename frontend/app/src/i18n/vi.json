@@ -2563,11 +2563,37 @@
                 "any": "Chỉ cần đáp ứng một trong số này.",
                 "channelMembers": "{count} thành viên",
                 "recheck": {
-                "minute": "{count, plural, other {Thành viên được kiểm tra lại mỗi # phút.}}",
-                "hour": "{count, plural, other {Thành viên được kiểm tra lại mỗi # giờ.}}",
-                "day": "{count, plural, other {Thành viên được kiểm tra lại mỗi # ngày.}}",
-                "week": "{count, plural, other {Thành viên được kiểm tra lại mỗi # tuần.}}"
-            }
+                    "minute": "{count, plural, other {Thành viên được kiểm tra lại mỗi # phút.}}",
+                    "hour": "{count, plural, other {Thành viên được kiểm tra lại mỗi # giờ.}}",
+                    "day": "{count, plural, other {Thành viên được kiểm tra lại mỗi # ngày.}}",
+                    "week": "{count, plural, other {Thành viên được kiểm tra lại mỗi # tuần.}}"
+                }
+            },
+            "details": "Chi tiết cộng đồng",
+            "options": "Tùy chọn cộng đồng",
+            "threads": "Chủ đề",
+            "notJoined": "Chưa tham gia · nhấn để đọc",
+            "menu": {
+                "moveToTop": "Chuyển lên đầu",
+                "invite": "Mời mọi người",
+                "manage": "Quản lý"
+            },
+            "toast": {
+                "mutedAll": "Đã tắt tiếng tất cả kênh",
+                "muteFailed": "Không thể tắt tiếng các kênh",
+                "left": "Bạn đã rời {name}"
+            },
+            "switcher": {
+                "label": "Cộng đồng",
+                "expand": "Mở rộng cộng đồng",
+                "collapse": "Thu gọn cộng đồng",
+                "explore": "Khám phá cộng đồng",
+                "exploreButton": "Khám phá",
+                "create": "Tạo",
+                "search": "Tìm trong cộng đồng của bạn",
+                "yours": "Cộng đồng của bạn",
+                "reorder": "Cộng đồng của bạn, kéo để sắp xếp lại",
+                "moveUp": "Chuyển {name} lên"
             }
         },
         "explore": {

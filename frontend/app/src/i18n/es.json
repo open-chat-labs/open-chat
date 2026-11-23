@@ -2563,11 +2563,37 @@
                 "any": "Basta con cumplir uno.",
                 "channelMembers": "{count, plural, one {# miembro} other {# miembros}}",
                 "recheck": {
-                "minute": "{count, plural, one {Los miembros se vuelven a comprobar cada minuto.} other {Los miembros se vuelven a comprobar cada # minutos.}}",
-                "hour": "{count, plural, one {Los miembros se vuelven a comprobar cada hora.} other {Los miembros se vuelven a comprobar cada # horas.}}",
-                "day": "{count, plural, one {Los miembros se vuelven a comprobar cada día.} other {Los miembros se vuelven a comprobar cada # días.}}",
-                "week": "{count, plural, one {Los miembros se vuelven a comprobar cada semana.} other {Los miembros se vuelven a comprobar cada # semanas.}}"
-            }
+                    "minute": "{count, plural, one {Los miembros se vuelven a comprobar cada minuto.} other {Los miembros se vuelven a comprobar cada # minutos.}}",
+                    "hour": "{count, plural, one {Los miembros se vuelven a comprobar cada hora.} other {Los miembros se vuelven a comprobar cada # horas.}}",
+                    "day": "{count, plural, one {Los miembros se vuelven a comprobar cada día.} other {Los miembros se vuelven a comprobar cada # días.}}",
+                    "week": "{count, plural, one {Los miembros se vuelven a comprobar cada semana.} other {Los miembros se vuelven a comprobar cada # semanas.}}"
+                }
+            },
+            "details": "Detalles de la comunidad",
+            "options": "Opciones de la comunidad",
+            "threads": "Hilos",
+            "notJoined": "No te has unido · toca para leer",
+            "menu": {
+                "moveToTop": "Mover arriba del todo",
+                "invite": "Invitar a personas",
+                "manage": "Gestionar"
+            },
+            "toast": {
+                "mutedAll": "Todos los canales silenciados",
+                "muteFailed": "No se pudieron silenciar los canales",
+                "left": "Has salido de {name}"
+            },
+            "switcher": {
+                "label": "Comunidades",
+                "expand": "Expandir comunidades",
+                "collapse": "Contraer comunidades",
+                "explore": "Explorar comunidades",
+                "exploreButton": "Explorar",
+                "create": "Crear",
+                "search": "Busca en tus comunidades",
+                "yours": "Tus comunidades",
+                "reorder": "Tus comunidades, arrastra para reordenar",
+                "moveUp": "Subir {name}"
             }
         },
         "explore": {
