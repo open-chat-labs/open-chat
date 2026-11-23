@@ -644,7 +644,7 @@
 
     let searchOpen = $state(false);
     let query = $state("");
-    let list: ChatEventList | undefined = $state();
+    let list: ChatEventList | null | undefined = $state();
 
     const search = new ChatSearch({
         search: async (term, mentions) => {
@@ -891,7 +891,7 @@
 
     // a toast sits above the composer however tall it is (a reply, a panel, the keyboard), or,
     // while a panel shows its own footer at the bottom (Recents' "Attach N"), above that
-    let footer = $state<HTMLElement>();
+    let footer = $state<HTMLElement | null>();
     let footerHeight = $state<number>();
     let toastFloor = $state<number>();
     $effect(() => {
@@ -1001,7 +1001,7 @@
     $effect(() => {
         const current = list;
         const here = chat;
-        if (current === undefined || here === undefined || !selected) return;
+        if (current == null || here === undefined || !selected) return;
         const shown = items;
         const to = openAtUnread.next(here.id, firstUnread, $messageIndexStore, (index) =>
             shown.some(
@@ -1035,7 +1035,7 @@
         const idx = $messageIndexStore;
         const chatId = $selectedChatIdStore;
         const current = list;
-        if (current === undefined || !chatIdentifiersEqual(chatId, screen.route.chatId)) return;
+        if (current == null || !chatIdentifiersEqual(chatId, screen.route.chatId)) return;
         const to = messageLink.next(chatId, idx, $chatsInitialisedStore);
         if (chatId !== undefined && to !== undefined) {
             untrack(() => current.scrollToMessageIndex({ chatId }, to, false));
@@ -1157,7 +1157,7 @@
     // ---- what's done with a message
 
     // its long-press menu (MessageActions), and what that opens
-    let messageActions: MessageActions | undefined = $state();
+    let messageActions: MessageActions | null | undefined = $state();
 
     // the keyboard goes down as the menu opens (Android's long-press takes the focus off the text
     // box, and the menu takes it): with the composer's keyboard up, its space is kept
@@ -1199,7 +1199,7 @@
     onDestroy(() => clearTimeout(quotedTimer));
 
     async function goToMarked(messageIndex: number, markMs: number) {
-        if (chat === undefined || list === undefined) return;
+        if (chat === undefined || list == null) return;
         await list.scrollToMessageIndex({ chatId: chat.id }, messageIndex, false);
         clearTimeout(quotedTimer);
         quotedIndex = messageIndex;
