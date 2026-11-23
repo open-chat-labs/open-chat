@@ -141,6 +141,19 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/admin")).toBe("you: you@/profile_summary > admin@/admin");
     });
 
+    test("a message opened from the activity feed is pushed over the Activity tab", () => {
+        expect(stack("/chats/group/g1/3?panel=activity")).toBe(
+            "activity: activity@/notifications > conversation@/chats/group/g1/3?panel=activity",
+        );
+        expect(stack("/community/c2/channel/9/4?panel=activity")).toBe(
+            "activity: activity@/notifications > conversation@/community/c2/channel/9/4?panel=activity",
+        );
+        // the same message without it is in its own tab
+        expect(stack("/chats/group/g1/3")).toBe(
+            "chats: chats@/chats > conversation@/chats/group/g1/3",
+        );
+    });
+
     test("the web's Diamond dialog and CHIT's settings are pushed over the You tab", () => {
         expect(stack("/profile_summary?diamond")).toBe(
             "you: you@/profile_summary > diamond@/profile_summary?diamond",

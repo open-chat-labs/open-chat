@@ -79,7 +79,7 @@ export const screens: Screens = {
     wallet: disableWalletFeature ? undefined : () => import("../wallet/WalletScreen.svelte"),
 
     // the Activity tab (N13)
-    activity: undefined,
+    activity: () => import("../activity/ActivityScreen.svelte"),
 
     // the You tab (N12)
     you: () => import("../you/YouScreen.svelte"),

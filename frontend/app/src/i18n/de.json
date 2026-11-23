@@ -2781,6 +2781,13 @@
                 "discardTitle": "Diese Gruppe verwerfen?",
                 "discardMessage": "Deine Eingaben gehen verloren."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Hier ist noch nichts.",
+                "mentions": "Noch keine Erwähnungen. Wenn dich jemand @erwähnt, erscheint es hier.",
+                "payments": "Noch keine Zahlungen."
+            }
         }
     },
     "new": "Neu",

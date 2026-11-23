@@ -187,6 +187,11 @@ export function locationFor(
     if (query.has("diamond")) {
         return tabs("you", url, [youRoot(), step("diamond", { kind: "diamond" }, DIAMOND_URL)]);
     }
+    // a message opened from the activity feed (the web's ?panel=activity, its feed kept beside
+    // the message): pushed over the Activity tab, so Back returns to the feed (native plan 16)
+    if (query.get("panel") === "activity" && isChatRoute(route)) {
+        return tabs("activity", url, [activityRoot(), ...chatSteps(route, query)]);
+    }
     switch (route.kind) {
         case "global_chat_selected_route":
             return tabs("chats", url, [chatsRoot(route.scope), ...chatSteps(route, query)]);
@@ -343,6 +348,14 @@ function exploreStep(): StackStep {
 
 function walletRoot(): StackStep {
     return step("wallet", { kind: "wallet" }, "/wallet");
+}
+
+function activityRoot(): StackStep {
+    return step("activity", { kind: "activity" }, "/notifications");
+}
+
+function isChatRoute(route: RouteParams): route is ChatRoute {
+    return route.kind === "global_chat_selected_route" || route.kind === "selected_channel_route";
 }
 
 function youRoot(): StackStep {

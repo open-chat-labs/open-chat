@@ -123,7 +123,14 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   the library's `lib/wallet` and `logic/wallet/walletTokens`). An app store build has no wallet:
   no tab, and its URLs open Chats. Send, Receive and Swap go to their flows' URLs, N10b's. What it
   left is in GAPS.md ("Native wallet").
-- **Next:** the screens. N11 and N13 need only N3; N10b needs N10a; N8a (communities) can start now that
+- **Built:** N13 the Activity tab
+  ([#10381](https://github.com/open-chat-labs/open-chat/issues/10381)), to the plan's 16: the title
+  with Mark all read (fading, never moving the layout), All / Mentions / Payments with badges only
+  for unread, the day-grouped rows with the dot, and a row's message pushed over the tab
+  (`?panel=activity`). On the web feed's logic, moved to `logic/activity` (the items, the chat's
+  name, the context, the loading, marking read) and the library's `lib/activityFeed` (the tabs,
+  badges, days and marks that roll back). What it left is in GAPS.md ("Native Activity").
+- **Next:** the screens. N11 needs only N3; N10b needs N10a; N8a (communities) can start now that
   N6 is in; N9 (the builders) needs N10b too.
 
 ## Workstreams

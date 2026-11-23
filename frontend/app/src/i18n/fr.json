@@ -2781,6 +2781,13 @@
                 "discardTitle": "Abandonner ce groupe ?",
                 "discardMessage": "Ce que tu as saisi ne sera pas conservé."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Rien ici pour l’instant.",
+                "mentions": "Aucune mention pour l’instant. Quand quelqu’un vous @mentionne, cela apparaît ici.",
+                "payments": "Aucun paiement pour l’instant."
+            }
         }
     },
     "new": "Nouveau",
