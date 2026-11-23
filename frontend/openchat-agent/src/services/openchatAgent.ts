@@ -2602,8 +2602,8 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    // Never throws, for the reason `getCachedChats` never does: this runs inside a `Stream`
-    // initialiser, where a rejection reaches neither onResult nor onError and the load would hang.
+    // Never throws, for the reason `getCachedChats` never does: it runs as `getUpdates` starts,
+    // where a rejection would fail the whole pass, and seeding from zero beats failing it.
     // Zero is the safe answer for a head that cannot be read. A snapshot seeded at zero leaves the
     // cursor behind everything, so the first pull carries the lot again - a duplicate, which the
     // fold absorbs, where too high a version would be a hole.
