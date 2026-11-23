@@ -15,8 +15,12 @@ declare global {
                     candidate: Record<string, unknown>,
                     invitees: string[],
                 ): Promise<{ kind: string; chatId?: GroupId }>;
+                setSelectedChat(chatId: GroupId, ...rest: unknown[]): Promise<void>;
+                isPreviewing(chatId: GroupId): boolean;
             };
         };
+        /** The app's last call to `setSelectedChat`, where a spec records it */
+        __ocSelecting?: Promise<void>;
     }
 }
 
