@@ -172,6 +172,15 @@ describe("a token's page", () => {
         expect(page?.menu).toEqual(["send", "receive"]);
     });
 
+    test("its share is of everything owned, as the web's: in a manual wallet too, listed or not", () => {
+        const tokens = [tok("ICP", 2, 5), tok("CHAT", 200, 0.2)];
+        const manual = figures(tokens, { settings: { autoConfig: false, tokens: ["icp-ledger"] } });
+        expect(tokenPage(manual, "chat-ledger")?.share).toEqual({ label: "80.0%", percent: 80 });
+        expect(tokenPage(manual, "icp-ledger")?.share).toEqual({ label: "20.0%", percent: 20 });
+        const nothingListed = figures(tokens, { settings: { autoConfig: false, tokens: [] } });
+        expect(tokenPage(nothingListed, "chat-ledger")?.share?.label).toBe("80.0%");
+    });
+
     test("no page for a token the catalogue doesn't have", () => {
         expect(tokenPage(figures([]), "nope")).toBeUndefined();
     });

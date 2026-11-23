@@ -259,7 +259,9 @@ export function tokenPage(f: WalletFigures, id: string): TokenPage | undefined {
     const t = f.tokens.find((x) => walletTokenId(x) === id);
     if (t === undefined) return undefined;
     const rates = currencyRates(f.tokens, f.rates);
-    const h = walletHoldings(f.tokens, f.settings);
+    // its share of everything owned, as the web's token page (WalletMain) divides it: a manual
+    // wallet's total counts only its list, and a held token off the list still has a page here
+    const owned = walletHoldings(f.tokens, f.settings).owned.reduce((n, x) => n + x.value, 0);
     const value = t.price * t.held;
     const held = t.held > 0;
     const offers = (flow: TokenFlow) => !t.actions || t.actions.includes(flow);
@@ -279,8 +281,8 @@ export function tokenPage(f: WalletFigures, id: string): TokenPage | undefined {
         value: money(f, rates, value),
         share: held
             ? {
-                  label: f.veiled ? VEILED : formatShare(value, h.total),
-                  percent: shareOf(value, h.total),
+                  label: f.veiled ? VEILED : formatShare(value, owned),
+                  percent: shareOf(value, owned),
               }
             : undefined,
         held,
