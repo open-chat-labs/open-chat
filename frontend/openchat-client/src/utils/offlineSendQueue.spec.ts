@@ -141,11 +141,14 @@ describe("the queue", () => {
     let queued: QueuedSend[];
     let resend: ReturnType<typeof vi.fn<(q: QueuedSend) => Promise<ResendOutcome>>>;
     let queue: OfflineSendQueue;
+    // when the send throttle allows the next send (fake timers' time)
+    let sendAllowedAt: number;
 
     function make() {
         queue = new OfflineSendQueue({
             queued: () => queued,
             resend,
+            msUntilSendAllowed: () => Math.max(0, sendAllowedAt - Date.now()),
             offline,
             setTimeout: (fn, ms) => setTimeout(fn, ms),
             clearTimeout: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
@@ -165,6 +168,7 @@ describe("the queue", () => {
         offline = writable(true);
         queued = [];
         resend = sends();
+        sendAllowedAt = 0;
         make();
     });
 
@@ -289,6 +293,73 @@ describe("the queue", () => {
         release();
         await vi.runAllTimersAsync();
         expect(resend.mock.calls.map(([x]) => Number(x.messageId))).toEqual([1]);
+    });
+
+    // a resend the send throttle refuses until `sendAllowedAt`, as the client's does
+    function throttledSends(): ReturnType<typeof vi.fn<(q: QueuedSend) => Promise<ResendOutcome>>> {
+        return vi.fn(async (x: QueuedSend) => {
+            if (Date.now() < sendAllowedAt) return "throttled" as ResendOutcome;
+            queued = queued.filter((y) => y !== x);
+            return "sent" as ResendOutcome;
+        });
+    }
+
+    test("one the throttle holds back waits until it allows a send, not the retry delays (#10595)", async () => {
+        const a1 = q(chatA, 1, 10);
+        const a2 = q(chatA, 2, 20);
+        queued = [a2, a1];
+        sendAllowedAt = Date.now() + 42_000;
+        resend = throttledSends();
+        make();
+        offline.set(false);
+        queue.start();
+        await vi.advanceTimersByTimeAsync(0);
+        // tried once, held back, and its chat with it
+        expect(resend.mock.calls.map(([x]) => Number(x.messageId))).toEqual([1]);
+        // not tried again on the retry delays while still throttled
+        await vi.advanceTimersByTimeAsync(42_000 - 1);
+        expect(resend).toHaveBeenCalledTimes(1);
+        expect(queued).toHaveLength(2);
+        // then both go, in order, once each
+        await vi.advanceTimersByTimeAsync(1);
+        expect(resend.mock.calls.map(([x]) => Number(x.messageId))).toEqual([1, 1, 2]);
+        expect(queued).toEqual([]);
+        await vi.runAllTimersAsync();
+        expect(resend).toHaveBeenCalledTimes(3);
+    });
+
+    test("the throttle holds back every chat, and each goes on in order once it allows", async () => {
+        const a1 = q(chatA, 1, 10);
+        const b1 = q(chatB, 2, 15);
+        const a2 = q(chatA, 3, 20);
+        queued = [a1, b1, a2];
+        sendAllowedAt = Date.now() + 10_000;
+        resend = throttledSends();
+        make();
+        offline.set(false);
+        queue.start();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(resend.mock.calls.map(([x]) => Number(x.messageId))).toEqual([1, 2]);
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(resend.mock.calls.slice(2).map(([x]) => Number(x.messageId))).toEqual([1, 2, 3]);
+        expect(queued).toEqual([]);
+    });
+
+    test("going offline while waiting for the throttle cancels the wait", async () => {
+        queued = [q(chatA, 1, 10)];
+        sendAllowedAt = Date.now() + 10_000;
+        resend = throttledSends();
+        make();
+        offline.set(false);
+        queue.start();
+        await vi.advanceTimersByTimeAsync(0);
+        offline.set(true);
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(resend).toHaveBeenCalledTimes(1);
+        offline.set(false);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(resend).toHaveBeenCalledTimes(2);
+        expect(queued).toEqual([]);
     });
 
     test("a resend that throws stays queued, not lost", async () => {

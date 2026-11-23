@@ -608,6 +608,7 @@ import { rulesAgreedOnJoiningStore } from "./stores/rulesAgreedOnJoining";
 import { groupCreation } from "./utils/groupCreation";
 import {
     initialiseMostRecentSentMessageTimes,
+    msUntilNextSendAllowed,
     sendsLeftNow,
     shouldThrottle,
 } from "./stores/throttling";
@@ -1142,6 +1143,7 @@ export class OpenChat {
                         timestamp: event.timestamp,
                     })),
                 resend: (queued) => this.#resendQueued(queued),
+                msUntilSendAllowed: () => msUntilNextSendAllowed(isDiamondStore.value),
                 offline: offlineStore,
                 setTimeout: (fn, ms) => window.setTimeout(fn, ms),
                 clearTimeout: (handle) => window.clearTimeout(handle as number),
@@ -7847,7 +7849,8 @@ export class OpenChat {
     }
 
     // Sends a queued message again (`OfflineSendQueue`), under its own id: `queued` if it's
-    // still waiting for the connection
+    // still waiting for the connection, `throttled` if the send throttle held it back (still
+    // queued, untouched)
     async #resendQueued({ context, messageId }: QueuedSend): Promise<ResendOutcome> {
         const event = localUpdates
             .failedMessagesForContext(context)
@@ -7913,7 +7916,7 @@ export class OpenChat {
         const key = messageContextToString(context);
         this.#resendsInFlight.set(key, (this.#resendsInFlight.get(key) ?? 0) + 1);
         try {
-            await this.#sendMessageCommon(
+            const resp = await this.#sendMessageCommon(
                 chat,
                 context,
                 {
@@ -7940,6 +7943,11 @@ export class OpenChat {
                 // only the new UIs queue: refused for rules changed since, it asks for them
                 "prompt",
             );
+            if (resp.kind === "message_throttled") {
+                // nothing was sent, nor changed: it stays queued as it was, with what it's sent with
+                if (extras !== undefined) this.#queuedSendExtras.set(messageId, extras);
+                return "throttled";
+            }
         } finally {
             const left = (this.#resendsInFlight.get(key) ?? 1) - 1;
             if (left > 0) {
