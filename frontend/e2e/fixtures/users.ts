@@ -60,6 +60,7 @@ export async function newUser(
 ): Promise<User> {
     const context = await browser.newContext(options);
     const page = await context.newPage();
+    countViteReloads(page);
     // the passkey lives on this session: read it (passkeyOf) before the page closes
     const cdp = await context.newCDPSession(page);
     await cdp.send("WebAuthn.enable");
@@ -74,6 +75,21 @@ export async function newUser(
         },
     });
     return { label, tree, context, page, cdp, authenticatorId };
+}
+
+// Vite reloads every open page when it bundles a dependency it found late, or when the worker or
+// the source it's serving changes. A reload in the middle of a test shows up as a bug in the app
+// (one in the middle of sign-up signs the user out, #10580), so the test that saw one fails saying so.
+let viteReloads = 0;
+
+function countViteReloads(page: Page): void {
+    page.on("websocket", (ws) =>
+        ws.on("framereceived", ({ payload }) => {
+            if (typeof payload === "string" && payload.includes('"type":"full-reload"')) {
+                viteReloads++;
+            }
+        }),
+    );
 }
 
 /** A username no earlier run has taken: 5–20 letters, digits and underscores. */
@@ -156,7 +172,21 @@ export async function userIdOf(user: User): Promise<string | undefined> {
 }
 
 /** The suite's `test`: `users.add(label)` makes each person a test needs, closed after it. */
-export const test = base.extend<{ users: Users }>({
+export const test = base.extend<{ users: Users; noViteReload: void }>({
+    noViteReload: [
+        // Playwright reads a fixture's dependencies from this pattern, and this one has none
+        // eslint-disable-next-line no-empty-pattern
+        async ({}, use) => {
+            const before = viteReloads;
+            await use();
+            expect(
+                viteReloads - before,
+                "the dev server reloaded the page during this test: a dependency it hadn't bundled " +
+                    "(optimizeDeps in app/vite.config.ts), or source edited while the suite ran",
+            ).toBe(0);
+        },
+        { auto: true },
+    ],
     users: async ({ browser }, use, testInfo) => {
         const made: User[] = [];
         const tree = treeOf(testInfo);

@@ -188,6 +188,15 @@ function ocWorkerPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
     cacheDir,
+    // index.html has no module script (createHtmlPlugin injects main.ts), so Vite's start-up scan
+    // finds no dependencies and bundles each one when a page first imports it, reloading every open
+    // page as it does. The e2e suite's pages are mid-test then, and a reload in the middle of
+    // sign-up logs the user out (#10580), so its server scans from main.ts and bundles them all first.
+    // The scan skips Svelte libraries; svelte-qrcode-image is one that has to be bundled anyway.
+    optimizeDeps:
+        process.env.OC_E2E === "true"
+            ? { entries: ["src/main.ts"], include: ["svelte-qrcode-image"] }
+            : undefined,
     envPrefix: "OC_",
     define: {
         "import.meta.env.OC_AIRDROP_BOT_CANISTER": JSON.stringify(

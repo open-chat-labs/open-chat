@@ -1,4 +1,4 @@
-<script module>
+<script module lang="ts">
     export type Tab = {
         title: ResourceKey;
         snippet: Snippet;
