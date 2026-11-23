@@ -1,8 +1,20 @@
-import { chatIdentifierToString, type ChatSummary, type UserSummary } from "@client";
+import {
+    chatIdentifierToString,
+    type BotMatch,
+    type ChatListSearchResults,
+    type ChatSummary,
+    type GroupMatch,
+    type UserSummary,
+} from "@client";
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
 import type { ChatRowAction } from "@src/logic/chats/chatMenu";
 import { swatchFor, type ChatListRow, type Swatch } from "@src/logic/chats/chatRow";
-import { splitAtMatch } from "@src/logic/chats/chatSearch";
+import {
+    outsideList,
+    resultSection,
+    splitAtMatch,
+    type ResultSection,
+} from "@src/logic/chats/chatSearch";
 
 // The Chats tab's data as the native kit and the library take it (native design notes §3.2). The
 // words come in from the screen (`label`), translated, as the kit shows its rows' labels as they are.
@@ -126,4 +138,88 @@ export function personResult(user: UserSummary, name: string, term: string): Res
         kind: "user",
         color: swatchFor(chatIdentifierToString({ kind: "direct_chat", userId: user.userId })),
     };
+}
+
+/** A bot that takes direct chats, found by the search: its name over its description. */
+export function botResult(bot: BotMatch, term: string): ResultRow {
+    return {
+        id: bot.id,
+        title: splitAtMatch(bot.name, term),
+        sub: bot.definition.description,
+        subMarkdown: false,
+        kind: "user",
+        // its DM's swatch, as a person's
+        color: swatchFor(chatIdentifierToString({ kind: "direct_chat", userId: bot.id })),
+    };
+}
+
+/** A public group found (one the user isn't in): its name over its member count (`members`). */
+export function groupResult(group: GroupMatch, members: string, term: string): ResultRow {
+    return {
+        id: group.chatId.groupId,
+        title: splitAtMatch(group.name, term),
+        sub: members,
+        subMarkdown: false,
+        kind: "group",
+        color: swatchFor(chatIdentifierToString(group.chatId)),
+    };
+}
+
+export type FoundResultsInput = {
+    /** What the search on OpenChat found (the client's searchChatList, with public groups). */
+    found: ChatListSearchResults;
+    /**
+     * The user's chats to leave out: the list's, with every chat they have or are previewing in
+     * any scope (allServerChatsStore), less those waiting to be left or deleted.
+     */
+    chats: readonly ChatSummary[];
+    me: string;
+    term: string;
+    /** A user's name as the app shows it. */
+    userName: (user: UserSummary) => string;
+    /** A group's member count, in the app's words. */
+    members: (count: number) => string;
+};
+
+export type FoundResults = { people: ResultRow[]; groups: ResultRow[] };
+
+/**
+ * The search's People and Public groups: what was found that isn't a chat already (`outsideList`,
+ * as the web's chat list search). People are the people found, then the bots that take direct
+ * chats (as the web's and the old mobile search's); Public groups the groups the user isn't in or
+ * previewing (those are under Chats).
+ */
+export function foundResults(input: FoundResultsInput): FoundResults {
+    const { term } = input;
+    const outside = outsideList(input.found, input.chats, input.me);
+    return {
+        people: [
+            ...outside.users.map((user) => personResult(user, input.userName(user), term)),
+            ...outside.bots.map((bot) => botResult(bot, term)),
+        ],
+        groups: outside.groups.map((group) =>
+            groupResult(group, input.members(group.memberCount), term),
+        ),
+    };
+}
+
+/** The search's sections, in their order. */
+export const SEARCH_SECTIONS = ["chats", "people", "groups"] as const;
+export type SearchSectionId = (typeof SEARCH_SECTIONS)[number];
+
+/** How many of a section's rows show until Show all. */
+export const SEARCH_SECTION_CAP = 3;
+
+/**
+ * The search's sections with something in them, in order (Chats, People, Public groups), each its
+ * first few (`SEARCH_SECTION_CAP`) until it's expanded (Show all).
+ */
+export function searchSections(
+    rows: Record<SearchSectionId, readonly ResultRow[]>,
+    expanded: Partial<Record<string, boolean>>,
+): { id: SearchSectionId; section: ResultSection<ResultRow> }[] {
+    return SEARCH_SECTIONS.map((id) => ({
+        id,
+        section: resultSection(rows[id], SEARCH_SECTION_CAP, expanded[id] ?? false),
+    })).filter(({ section }) => section.total > 0);
 }

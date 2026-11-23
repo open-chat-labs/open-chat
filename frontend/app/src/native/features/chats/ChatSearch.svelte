@@ -2,7 +2,8 @@
      row, Cancel slides in beside it as the field narrows from the list's full width to make room
      (its width animates, user's request 2026-11-20) and the results fade in; Cancel reverses it.
      It has the whole window, the tab bar out of the way (ChatsScreen). Empty, it says what
-     it searches; then the results in sections (Chats, People), each its first few with Show all. A
+     it searches; then the results in sections (Chats, People, Public groups), each its first few
+     with Show all. A
      layer over the Chats root, which swipes between tabs leave alone. Reduced motion: no slide or
      fade. -->
 <script lang="ts" module>
@@ -34,7 +35,7 @@
         open: boolean;
         query: string;
         sections: SearchSection[];
-        /** An answer is on its way (people). */
+        /** An answer is on its way (people, public groups). */
         searching: boolean;
         /** The app's words, translated. */
         text: {
