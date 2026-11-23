@@ -28,9 +28,11 @@ npx playwright test dm --project v3-mobile # one spec, one tree
 npm run report                            # the last run's report, with traces of failures
 ```
 
-`npm test` starts its own dev server (`npm run dev:native` with `OC_E2E=true`) on port 5011. It uses its own Vite cache, so a dev server you already have running on 5001 is left alone. A server already running on 5011 is reused. To point the suite at another server, set `OC_E2E_URL`. That server must have been started with `OC_E2E=true`, and it must be on this machine: the suite refuses any other host (`config/local.mjs`).
+`npm test` builds the app (`npm run dev:native` with `OC_E2E=true` and `OC_E2E_BUNDLE=true`, which runs `vite build`, then `vite preview`) and serves it on port 5011. The build takes about a minute. It keeps its own Vite cache, so a dev server you already have running on 5001 is left alone. A server already running on 5011 is reused, so stop it after changing app code or the run tests the old build. To point the suite at another server, set `OC_E2E_URL`. That server must have been started with `OC_E2E=true`, and it must be on this machine: the suite refuses any other host (`config/local.mjs`).
 
-The first load of a fresh server takes 10–20s while Vite builds. A sign-up takes about 10s, because it creates a user canister.
+While writing a spec, `OC_E2E_DEV=true npm test` serves the app from the Vite dev server instead, which picks up your edits without a rebuild. It costs more CPU per page: about 780 requests against about 125 from the build.
+
+The suite runs 3 workers. A sign-up takes about 10s, because it creates a user canister, and other requests to the local replica slow down while it does. With more workers on a busy machine, requests stall for long enough to fail a sign-up. `OC_E2E_WORKERS` sets the number.
 
 ## Writing a spec
 
