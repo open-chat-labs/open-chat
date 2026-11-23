@@ -284,16 +284,29 @@ design export needs. Each entry says where it came up.
   web's chat list's do (see the web's "Chat list").
   Left, or decided against the prototype:
   - **Message search**: the backend has no search across chats, and a chat's own search
-    (`searchChat`) returns message indexes without their text, so the search has Chats and People
-    only ("Search chats and people"). Messages, and a result opening the chat in search mode on it,
-    need that search (the web's grouped search needs it too, `ChatListPanel` pass 6).
-  - **Search's People** are `searchUsers`' (bots included), less the user and anyone they already
-    have a DM with. components_mobile's search also listed public groups; the design's has none.
-  - **Finding a public group** (2026-11-23, the user's decision: a design gap): native has no way to
-    find a public group the user isn't in. Search covers the user's chats, people (and messages,
-    once the backend can), and Explore lists communities only, so a group is reached only by its
-    link. TODO(design): where public groups are found (a "Public groups" section in search
-    results, as components_mobile had, or a Groups list in Explore) and what a result shows.
+    (`searchChat`) returns message indexes without their text, so the search has Chats, People and
+    Public groups ("Search chats, people and groups"). Messages, and a result opening the chat in
+    search mode on it, need that search (the web's grouped search needs it too, `ChatListPanel`
+    pass 6).
+  - **Search's People and Public groups** come from the client's `searchChatList(term, { groups:
+    true })`, as the web's chat list search (`chatListSearchResults` into `TermSearch`, each kind
+    showing as it arrives), less what's a chat already (`outsideList`, over the list's chats and
+    `allServerChatsStore`, less those waiting to be left or deleted; `foundResults` in
+    `chats.adapter`). People are the people found (the user and anyone they have a DM with left
+    out), then the bots that take direct chats, a bot's line its description: up to 10 of each
+    (`CHAT_LIST_SEARCH_MAX`, as the web's and the old mobile search's), so Show all reaches at
+    most 10 people. Until 2026-11-23 they were `searchUsers`' alone, up to 20. components_mobile's search also listed public groups and the
+    design's has none; **native lists them too, the user's decision of 2026-11-23**: a third
+    section, Public groups, after Chats and People (first 3, Show all, as the others), each row
+    the group's swatch (the search's rows show no pictures), its name and its member count
+    (`native.explore.members`). A group the user is in or previewing is under Chats instead.
+    Tapping one opens its page (`/chats/group/:id`, the same as `/group/:id`), its preview with
+    Join. Store builds: `searchGroups` asks the group index for no Adult or Offensive groups
+    (`appStoreBuild`), as on the web and the old mobile search.
+  - **Finding a public group** (2026-11-23, the user's decision): the search's Public groups
+    section above finds them. TODO(design): how that section should look (the design's search has
+    none; it's built from the other sections' rows), and whether Explore, which lists communities
+    only, should list groups too.
   - **Mute for 1 hour / 8 hours / 1 week**: the backend mutes until unmuted, so the menu has Mute /
     Unmute, as the web's row.
   - **Mark as unread**: the backend can't, so the menu offers Mark as read only when something is
@@ -2937,7 +2950,9 @@ design export needs. Each entry says where it came up.
     (the old desktop's `BrowseChannels`, mobile's `OtherChannels`: browsing channels needs a
     design of its own), and message search (none across chats, see Chats below).
   - the native Chats tab's rows have the avatar and mentions in `chatRow` but don't show them
-    (`nativeChatRow` leaves them out); its search is its own (People, `searchUsers`).
+    (`nativeChatRow` leaves them out); its search is its own, on the same `searchChatList(term, { groups: true })` and
+    `outsideList` (People and Public groups, see the native Chats tab's "Search's People and
+    Public groups").
   - **the search's tabs** (built 2026-11-11 from web/04, the chat list's plan,
     `web/04-chat-list.md` in the design plan, "Search"; by hand in `ChatListPanel`, see "The chat
     list's search tabs" under Design / library; the user's decision, replacing the fold-away of

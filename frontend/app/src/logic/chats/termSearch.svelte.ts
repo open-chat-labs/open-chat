@@ -1,5 +1,5 @@
-// Looking something up on OpenChat as the user types (the native Chats search's People and New chat
-// look people up, the web chat list people, bots and groups): once the text has stopped changing
+// Looking something up on OpenChat as the user types (native New chat looks people up, the web chat
+// list and the native Chats search people, bots and groups): once the text has stopped changing
 // for a moment, only the latest search's answer is kept, and an emptied text drops it.
 
 export const TERM_SEARCH_DEBOUNCE_MS = 300;

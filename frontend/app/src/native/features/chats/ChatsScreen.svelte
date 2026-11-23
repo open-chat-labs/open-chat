@@ -9,6 +9,8 @@
 <script lang="ts">
     import {
         allChatsStore,
+        allServerChatsStore,
+        chatListSearchResults,
         failedMessagesStore,
         queuedMessagesStore,
         unconfirmedStore,
@@ -33,8 +35,10 @@
         translationsStore,
         userGroupSummariesStore,
         usersLoadingStore,
+        type ChatListSearchResults,
         type ChatSummary,
         type DirectChatIdentifier,
+        type GroupChatIdentifier,
         type LeaveOrDelete,
         type OpenChat,
     } from "@client";
@@ -63,12 +67,7 @@
         orderWithUnsent,
         unsentFor,
     } from "@src/logic/chats/unsentMessages";
-    import {
-        matchingChats,
-        newPeople,
-        resultSection,
-        searchTerm,
-    } from "@src/logic/chats/chatSearch";
+    import { matchingChats, searchTerm } from "@src/logic/chats/chatSearch";
     import { TermSearch } from "@src/logic/chats/termSearch.svelte";
     import { chitButton } from "@src/logic/chit/chitButton";
     import { chatListFilterStore, disableChit, hideChitIcon } from "@src/stores/settings";
@@ -85,11 +84,14 @@
     import { removeWithUndo as removeChatWithUndo } from "./removeWithUndo";
     import {
         chatResult,
+        foundResults,
         HEADER_MENU_ACTIONS,
         headerMenuItems,
         nativeChatRow,
-        personResult,
         rowMenuItems,
+        searchSections,
+        type FoundResults,
+        type SearchSectionId,
     } from "./chats.adapter";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "chats" }>> = $props();
@@ -362,7 +364,8 @@
         }
     }
 
-    // ---- search: the user's chats that match, and people who aren't a chat yet
+    // ---- search: the user's chats that match, and the people and public groups found on
+    // OpenChat that aren't a chat yet
 
     let searchOpen = $state(false);
     // the list's field stays hidden while the search's moves back down onto it: one timer, so
@@ -387,15 +390,20 @@
         return () => hide(false);
     });
 
-    const people = new TermSearch((term) => client.searchUsers(term, 20));
-    onDestroy(() => people.dispose());
+    // people, bots that take direct chats and public groups on OpenChat (the client's
+    // searchChatList, as the web's chat list search; the groups at the user's request of
+    // 2026-11-23): each kind shows as it arrives, the people not waiting for the group index
+    const found = new TermSearch<ChatListSearchResults>((term, soFar) =>
+        chatListSearchResults(client.searchChatList(term, { groups: true }), soFar),
+    );
+    onDestroy(() => found.dispose());
 
     const term = $derived(searchTerm(query));
 
     function onQuery(next: string) {
         query = next;
         expanded = {};
-        people.set(searchTerm(next));
+        found.set(searchTerm(next));
     }
 
     function openSearch() {
@@ -409,46 +417,57 @@
         field.set(false);
     }
 
-    const CHATS_SHOWN = 3;
-    const PEOPLE_SHOWN = 3;
-
     const chatResults = $derived(searchOpen ? matchingChats(kept, term, $allUsersStore) : []);
-    const peopleFound = $derived.by(() => {
-        const results = people.results;
-        return results.kind === "found" && results.term === term
-            ? newPeople(results.found, kept, $currentUserIdStore)
-            : [];
+    const foundRows = $derived.by((): FoundResults => {
+        const results = found.results;
+        // what has arrived: all of it, or the kinds in so far while the rest is on its way
+        const arrived =
+            results.kind === "found"
+                ? results.found
+                : results.kind === "searching"
+                  ? results.soFar
+                  : undefined;
+        if (results.kind === "idle" || results.term !== term || arrived === undefined) {
+            return { people: [], groups: [] };
+        }
+        return foundResults({
+            found: arrived,
+            // the user's DMs, groups and group previews in every scope, less those waiting to be
+            // left or deleted (opening one takes that back)
+            chats: [
+                ...kept,
+                ...[...$allServerChatsStore.values()].filter(
+                    (chat) => !removals.has(chatIdentifierToString(chat.id)),
+                ),
+            ],
+            me: $currentUserIdStore,
+            term,
+            userName: (user) => client.displayName(user),
+            members: (count) => $_("native.explore.members", { values: { count } }),
+        });
     });
+
+    const SECTION_LABELS: Record<SearchSectionId, string> = {
+        chats: "native.chats.search.chatsCount",
+        people: "native.chats.search.peopleCount",
+        groups: "native.chats.search.publicGroupsCount",
+    };
 
     const sections = $derived.by((): SearchSection[] => {
         const username = (userId: string) => $allUsersStore.get(userId)?.username;
         const chatRows = chatResults.map((chat) =>
             chatResult(chat, chatRow(chat, rowCtx), term, username),
         );
-        const personRows = peopleFound.map((user) =>
-            personResult(user, client.displayName(user), term),
-        );
-        const all = [
-            {
-                id: "chats",
-                key: "native.chats.search.chatsCount",
-                section: resultSection(chatRows, CHATS_SHOWN, expanded.chats ?? false),
-            },
-            {
-                id: "people",
-                key: "native.chats.search.peopleCount",
-                section: resultSection(personRows, PEOPLE_SHOWN, expanded.people ?? false),
-            },
-        ];
-        return all
-            .filter(({ section }) => section.total > 0)
-            .map(({ id, key, section }) => ({
-                id,
-                label: $_(key, { values: { count: section.total } }),
-                rows: section.rows,
-                more: section.more,
-                expanded: expanded[id] ?? false,
-            }));
+        return searchSections(
+            { chats: chatRows, people: foundRows.people, groups: foundRows.groups },
+            expanded,
+        ).map(({ id, section }) => ({
+            id,
+            label: $_(SECTION_LABELS[id], { values: { count: section.total } }),
+            rows: section.rows,
+            more: section.more,
+            expanded: expanded[id] ?? false,
+        }));
     });
 
     const searchText = $derived({
@@ -459,6 +478,7 @@
         kinds: [
             { label: $_("native.chats.search.chats"), icon: "chat" },
             { label: $_("native.chats.search.people"), icon: "user" },
+            { label: $_("publicGroups"), icon: "users" },
         ],
         showAll: $_("native.chats.search.showAll"),
         showLess: $_("native.chats.search.showLess"),
@@ -472,8 +492,15 @@
             if (chat === undefined) return;
             closeSearch();
             open(chat);
+        } else if (sectionId === "groups") {
+            // a public group the user isn't in: its page, which previews it with Join, as a link
+            // to it does (not a favourite, so the Chats route whatever the scope)
+            const chatId: GroupChatIdentifier = { kind: "group_chat", groupId: rowId };
+            closeSearch();
+            navigate(routeForChatIdentifier("chats", chatId));
         } else {
-            // someone whose DM is waiting to be deleted: opening it takes the delete back (Shell)
+            // a person or bot; someone whose DM is waiting to be deleted: opening it takes the
+            // delete back (Shell)
             const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: rowId };
             closeSearch();
             navigate(chatWithRoute(chatId, chats, scope));
@@ -593,7 +620,7 @@
         open={searchOpen}
         {query}
         {sections}
-        searching={people.results.kind === "searching"}
+        searching={found.results.kind === "searching"}
         text={searchText}
         {onQuery}
         onCancel={closeSearch}
@@ -714,6 +741,9 @@
         min-width: 0;
         font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
         @include truncate;
+        // a line-height of 1 clips the descenders (p, g) at the box's bottom: room for them,
+        // given back as margin so the field and the text stay where they are
+        @include glyph-room;
     }
 
     .filters {

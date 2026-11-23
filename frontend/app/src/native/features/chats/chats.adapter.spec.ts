@@ -1,7 +1,16 @@
-import type { ChatSummary, UserSummary } from "@client";
+import type { BotMatch, ChatSummary, GroupMatch, UserSummary } from "@client";
 import type { ChatListRow } from "@src/logic/chats/chatRow";
 import { describe, expect, test } from "vitest";
-import { chatResult, nativeChatRow, personResult, rowMenuItems } from "./chats.adapter";
+import {
+    chatResult,
+    foundResults,
+    groupResult,
+    nativeChatRow,
+    personResult,
+    rowMenuItems,
+    searchSections,
+    type ResultRow,
+} from "./chats.adapter";
 
 const row: ChatListRow = {
     id: "g1",
@@ -101,5 +110,95 @@ describe("search results", () => {
             subMarkdown: false,
             kind: "user",
         });
+    });
+
+    test("a public group is its name, matched, over its member count", () => {
+        const group = {
+            chatId: { kind: "group_chat", groupId: "g9" },
+            name: "N6 Book Club",
+            memberCount: 12,
+        } as GroupMatch;
+        expect(groupResult(group, "12 members", "book")).toMatchObject({
+            id: "g9",
+            title: { before: "N6 ", match: "Book", after: " Club" },
+            sub: "12 members",
+            subMarkdown: false,
+            kind: "group",
+        });
+    });
+});
+
+describe("what the search found on OpenChat", () => {
+    const user = (userId: string, username: string) => ({ userId, username }) as UserSummary;
+    const bot = (id: string, name: string) =>
+        ({ id, name, definition: { description: `${name} helps` } }) as BotMatch;
+    const group = (groupId: string, name: string, memberCount: number) =>
+        ({ chatId: { kind: "group_chat", groupId }, name, memberCount }) as GroupMatch;
+    const dm = (userId: string) =>
+        ({
+            kind: "direct_chat",
+            id: { kind: "direct_chat", userId },
+            them: { userId },
+        }) as ChatSummary;
+    const joined = (groupId: string) =>
+        ({ kind: "group_chat", id: { kind: "group_chat", groupId } }) as ChatSummary;
+
+    const results = (chats: ChatSummary[]) =>
+        foundResults({
+            found: {
+                users: [user("me", "me"), user("u1", "lucy"), user("u2", "matt")],
+                bots: [bot("b1", "Quizzer")],
+                groups: [group("g1", "N6 Book Club", 3), group("g2", "N6 Runners", 1)],
+            },
+            chats,
+            me: "me",
+            term: "n6",
+            userName: (u) => u.username,
+            members: (count) => `${count} members`,
+        });
+
+    test("people are the people found, then the bots; groups the public groups", () => {
+        const { people, groups } = results([]);
+        expect(people.map((r) => r.id)).toEqual(["u1", "u2", "b1"]);
+        expect(people[2]).toMatchObject({ sub: "Quizzer helps", kind: "user" });
+        expect(groups.map((r) => r.id)).toEqual(["g1", "g2"]);
+        expect(groups[0]).toMatchObject({ sub: "3 members", kind: "group" });
+    });
+
+    test("leave out the user, anyone already a DM, and the groups the user is in", () => {
+        const { people, groups } = results([dm("u2"), joined("g1")]);
+        expect(people.map((r) => r.id)).toEqual(["u1", "b1"]);
+        expect(groups.map((r) => r.id)).toEqual(["g2"]);
+    });
+});
+
+describe("the search's sections", () => {
+    const rows = (prefix: string, n: number): ResultRow[] =>
+        Array.from({ length: n }, (_, i) => ({
+            id: `${prefix}${i}`,
+            title: { before: `${prefix}${i}`, match: "", after: "" },
+            sub: "",
+            subMarkdown: false,
+            kind: "user",
+            color: "teal",
+        }));
+
+    test("are Chats, People and Public groups in that order, the empty ones left out", () => {
+        const sections = searchSections(
+            { chats: rows("c", 1), people: [], groups: rows("g", 2) },
+            {},
+        );
+        expect(sections.map((s) => s.id)).toEqual(["chats", "groups"]);
+    });
+
+    test("show their first 3 until expanded, with Show all", () => {
+        const [groups] = searchSections({ chats: [], people: [], groups: rows("g", 5) }, {});
+        expect(groups?.section).toMatchObject({ total: 5, more: true });
+        expect(groups?.section.rows.map((r) => r.id)).toEqual(["g0", "g1", "g2"]);
+        const [all] = searchSections(
+            { chats: [], people: [], groups: rows("g", 5) },
+            { groups: true },
+        );
+        expect(all?.section.rows).toHaveLength(5);
     });
 });

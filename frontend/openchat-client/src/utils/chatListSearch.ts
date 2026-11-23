@@ -2,7 +2,8 @@ import type { BotMatch, GroupMatch, UserSummary } from "@shared";
 
 // The chat list's search on OpenChat, for what isn't in the list: people, bots that take direct
 // chats and, when asked for, public groups (the old mobile search's, and the new web UI's at the
-// user's request of 2026-11-12: web plan 04 has none). Every tree's chat list search runs it (the
+// user's request of 2026-11-12: web plan 04 has none; the native Chats search's since 2026-11-23).
+// Every tree's chat list search runs it (the
 // client's searchChatList).
 
 /** How many of each the search asks for. */
