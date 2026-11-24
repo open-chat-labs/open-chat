@@ -66,6 +66,7 @@
         throttleCountdown,
         TypingNotifier,
         type ComposerBuilder,
+        type EntryBlock,
         type EntryPermissions,
     } from "@src/logic/composer/composer";
     import {
@@ -102,6 +103,7 @@
     import JoinBar from "../join/JoinBar.svelte";
     import AttachPanel, { type RecentItem } from "./AttachPanel.svelte";
     import EmojiPanel from "./EmojiPanel.svelte";
+    import { HeldWhileLeaving } from "./heldWhileLeaving";
     import KeyboardPanel from "./KeyboardPanel.svelte";
     import { KeyboardPanelState } from "./panelState.svelte";
     import { composerPlacement, type Panel } from "./keyboardSlot";
@@ -110,6 +112,11 @@
     type Props = {
         /** The chat (the selected one). */
         chat: ChatSummary;
+        /**
+         * Whether the chat is still the selected one: false from when Back changes the URL, while
+         * the screen slides out, when the composer holds what it showed.
+         */
+        selected: boolean;
         /** The rows' context, for the reply or edit strip's names and text. */
         ctx: ConversationContext;
         slot: KeyboardSlot;
@@ -131,8 +138,19 @@
         onToastFloor: (px: number | undefined) => void;
     };
 
-    let { chat, ctx, slot, os, gallery, toast, overlays, onBuild, onJump, onToastFloor }: Props =
-        $props();
+    let {
+        chat,
+        selected,
+        ctx,
+        slot,
+        os,
+        gallery,
+        toast,
+        overlays,
+        onBuild,
+        onJump,
+        onToastFloor,
+    }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -141,24 +159,33 @@
     // what it may send and why it can't are the thread's)
     const inThread = false;
     const context = $derived<MessageContext>({ chatId: chat.id });
-    const permissions = $derived<EntryPermissions>({
+    // What may be sent and why not come from the selected chat's stores, which Back empties at once
+    // (no permissions: "This chat is read-only") while the screen is still sliding out: what the
+    // composer showed is held until it's gone (HeldWhileLeaving), as the screen holds its chat
+    const heldPermissions = new HeldWhileLeaving<EntryPermissions | undefined>(undefined);
+    const livePermissions = $derived<EntryPermissions>({
         message: $messagePermissionsForSelectedChatStore,
         thread: $threadPermissionsForSelectedChatStore,
     });
+    const permissions = $derived(heldPermissions.of(selected, livePermissions) ?? livePermissions);
     const permitted = $derived(entryPermitted(permissions, inThread));
 
     // why the reader can't send here, in the old footer's words
+    const heldBlock = new HeldWhileLeaving<EntryBlock | undefined>(undefined);
     const block = $derived(
-        entryBlock(
-            chatEntryState(client, chat, inThread, {
-                suspended: $suspendedUserStore,
-                anonymous: $anonUserStore,
-                blockedUsers: $blockedUsersStore,
-                community: $selectedCommunitySummaryStore,
-                recipient: $selectedChatRecipientStore,
-                permissions,
-                usersLoading: $usersLoadingStore,
-            }),
+        heldBlock.of(
+            selected,
+            entryBlock(
+                chatEntryState(client, chat, inThread, {
+                    suspended: $suspendedUserStore,
+                    anonymous: $anonUserStore,
+                    blockedUsers: $blockedUsersStore,
+                    community: $selectedCommunitySummaryStore,
+                    recipient: $selectedChatRecipientStore,
+                    permissions,
+                    usersLoading: $usersLoadingStore,
+                }),
+            ),
         ),
     );
     const blocked = $derived(block === undefined ? undefined : entryBlockBanner(block));
