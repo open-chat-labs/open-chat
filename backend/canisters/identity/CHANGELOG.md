@@ -10,13 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Keep a session signed in by linking with a code working for 30 days, not 5 minutes ([#10616](https://github.com/open-chat-labs/open-chat/pull/10616))
 
-### Fixed
-
-- Ignore temp keys once they expire, not up to a day later when they're removed ([#10616](https://github.com/open-chat-labs/open-chat/pull/10616))
-
 ### Removed
 
 - Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+
+### Fixed
+
+- Ignore temp keys once they expire, not up to a day later when they're removed ([#10616](https://github.com/open-chat-labs/open-chat/pull/10616))
 
 ## [[2.0.2162](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2162-identity)] - 2026-10-20
 
