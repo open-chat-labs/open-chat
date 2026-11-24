@@ -1071,6 +1071,12 @@ const handlers: Handlers = {
             }) ?? Promise.resolve(undefined)
         );
     },
+    // Rejects rather than guess when there is no sign-in to check, so the caller does nothing
+    authPrincipalLinked: async (_payload) => {
+        if (identityAgent === undefined) throw new Error("IdentityAgent not initialized");
+        const res = await identityAgent.checkAuthPrincipal();
+        return res.kind === "success";
+    },
     lookupWebAuthnPubKey: (payload, _agent, config) =>
         IdentityAgent.create(
             new AnonymousIdentity(),

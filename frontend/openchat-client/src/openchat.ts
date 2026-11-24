@@ -907,6 +907,10 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const DAILY_PUZZLE_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const DAILY_PUZZLE_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
+// How often a session checks that the sign-in method it used is still linked to the account. The
+// first check runs straight away, as a phone app may never stay in the foreground this long. Not
+// while the app is in the background: the check runs on coming back if it's due by then.
+const AUTH_PRINCIPAL_LINK_CHECK_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
@@ -1073,6 +1077,7 @@ export class OpenChat {
     #dailyPuzzleRolloverTimer: number | undefined = undefined;
     #dailyPuzzleVisibilityListener: (() => void) | undefined = undefined;
     #registryPoller: Poller | undefined = undefined;
+    #authPrincipalLinkPoller: Poller | undefined = undefined;
     #onlinePoller: Poller | undefined = undefined;
     #btcBalancePoller: Poller | undefined = undefined;
     #btcAddressUnsub: Unsubscriber | undefined = undefined;
@@ -1394,6 +1399,7 @@ export class OpenChat {
         this.#stopWatchingForResume?.();
         this.#stopWatchingForResume = undefined;
         this.#dailyPuzzlePoller?.stop();
+        this.#authPrincipalLinkPoller?.stop();
         if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
         this.#resetChatsSession(true);
@@ -1438,6 +1444,7 @@ export class OpenChat {
 
             this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
             this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
+            this.#startAuthPrincipalLinkPoller(authPrincipal);
 
             createdUser = await this.getCurrentUser()
                 .then((user) => {
@@ -2007,6 +2014,37 @@ export class OpenChat {
                 true,
             );
         }
+    }
+
+    // Unlinking a sign-in method from another device leaves this session's OpenChat delegation
+    // valid until it expires, so the session checks now and then that its own sign-in method is
+    // still linked, and signs out once it isn't (deleting the account unlinks them all too)
+    #startAuthPrincipalLinkPoller(authPrincipal: string) {
+        this.#authPrincipalLinkPoller?.stop();
+        this.#authPrincipalLinkPoller = new Poller(
+            () => this.#signOutIfAuthPrincipalUnlinked(authPrincipal),
+            AUTH_PRINCIPAL_LINK_CHECK_INTERVAL,
+            undefined,
+            true,
+        );
+    }
+
+    async #signOutIfAuthPrincipalUnlinked(authPrincipal: string): Promise<void> {
+        let linked: boolean;
+        try {
+            linked = await this.#worker.send({ kind: "authPrincipalLinked" });
+        } catch (err) {
+            // Only an answer from the identity canister signs the user out, never a failed call
+            console.warn(
+                "Unable to check whether this session's sign-in method is still linked",
+                err,
+            );
+            return;
+        }
+        // The session may have changed while the check was in flight
+        if (linked || this.#authPrincipal !== authPrincipal) return;
+        console.debug("This session's sign-in method has been unlinked, signing out");
+        await this.logout();
     }
 
     #startRegistryPoller() {

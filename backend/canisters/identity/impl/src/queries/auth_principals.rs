@@ -10,7 +10,7 @@ fn auth_principals(_args: Args) -> Response {
 fn auth_principals_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if let Some(user_principal) = state.data.user_principals.get_caller_user_principal(caller) {
+    if let Some(user_principal) = state.data.user_principals.get_caller_user_principal(caller, state.env.now()) {
         Success(
             user_principal
                 .auth_principals

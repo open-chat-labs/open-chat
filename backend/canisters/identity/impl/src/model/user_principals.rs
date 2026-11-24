@@ -110,8 +110,8 @@ impl UserPrincipals {
         );
     }
 
-    pub fn get_caller_user_principal(&self, caller: Principal) -> Option<UserPrincipal> {
-        let principal = self.unwrap_temp_key_or(caller);
+    pub fn get_caller_user_principal(&self, caller: Principal, now: TimestampMillis) -> Option<UserPrincipal> {
+        let principal = self.unwrap_temp_key_or(caller, now);
         if let Some(index) = self.user_principal_lookup.get(&principal) {
             self.user_principal_by_index(*index)
         } else {
@@ -249,10 +249,13 @@ impl UserPrincipals {
             .is_some_and(|p| p.user_id.is_some())
     }
 
-    // Returns the underlying auth principal if the caller is using a temp key, else returns the
-    // calling principal
-    pub fn unwrap_temp_key_or(&self, caller: Principal) -> Principal {
-        self.temp_keys.get(&caller).map_or(caller, |k| k.auth_principal)
+    // Returns the underlying auth principal if the caller is using a temp key which hasn't expired
+    // (expired ones are only removed once a day), else returns the calling principal
+    pub fn unwrap_temp_key_or(&self, caller: Principal, now: TimestampMillis) -> Principal {
+        self.temp_keys
+            .get(&caller)
+            .filter(|k| k.expires > now)
+            .map_or(caller, |k| k.auth_principal)
     }
 
     pub fn user_principals_count(&self) -> u32 {
@@ -404,6 +407,16 @@ mod tests {
 
     fn principal(byte: u8) -> Principal {
         Principal::from_slice(&[byte; 10])
+    }
+
+    #[test]
+    fn expired_temp_keys_are_ignored_before_they_are_removed() {
+        let mut user_principals = UserPrincipals::default();
+        let (temp_key, auth_principal) = (principal(1), principal(2));
+        user_principals.add_temp_key(temp_key, auth_principal, 100, 200);
+
+        assert_eq!(user_principals.unwrap_temp_key_or(temp_key, 199), auth_principal);
+        assert_eq!(user_principals.unwrap_temp_key_or(temp_key, 200), temp_key);
     }
 
     #[test]
