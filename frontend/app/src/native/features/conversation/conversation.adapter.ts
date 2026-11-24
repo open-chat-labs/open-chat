@@ -145,3 +145,17 @@ export function disappearingPick(
 export function listWaiting(list: { initialised: boolean; items: number }): boolean {
     return !list.initialised && list.items === 0;
 }
+
+/**
+ * Whether a thread's list shows its small spinner: its replies are on their way, none being in
+ * yet. A thread that doesn't exist yet (Reply in thread on a message without one) has nothing to
+ * load, so it shows its root and the composer at once (N8a, from testing).
+ */
+export function threadWaiting(thread: {
+    initialised: boolean;
+    replies: number;
+    /** The root has a thread (its summary): there are replies to load. */
+    exists: boolean;
+}): boolean {
+    return thread.exists && !thread.initialised && thread.replies === 0;
+}

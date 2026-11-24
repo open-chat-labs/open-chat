@@ -205,6 +205,7 @@
         headerMenuItems,
         isDisappearingItem,
         listWaiting,
+        threadWaiting,
         type HeaderMenuAction,
     } from "./conversation.adapter";
     import { durationLabel } from "../details/details.adapter";
@@ -1150,9 +1151,11 @@
     // a thread's list shows a spinner until its replies start to come in, as the old one did
     const threadLoading = $derived(
         inThread &&
-            !initialised &&
-            $threadEventsStore.length === 0 &&
-            root?.event.thread !== undefined,
+            threadWaiting({
+                initialised,
+                replies: $threadEventsStore.length,
+                exists: root?.event.thread !== undefined,
+            }),
     );
     const groupMessages = new WeakMap<MessageRow, { offers: string; messages: GroupMessage[] }>();
     $effect.pre(() => {
@@ -1599,7 +1602,9 @@
                         <span class="pill">{dateLabel(stickyDate)}</span>
                     {/if}
                 </div>
-                {#if waiting || threadLoading}
+                <!-- a thread waits only for replies it has: a new one (Reply in thread) has none
+                     to load, and shows its root and the composer at once -->
+                {#if inThread ? threadLoading : waiting}
                     <div class="waiting"><Spinner size={20} /></div>
                 {/if}
                 <ChatEventList

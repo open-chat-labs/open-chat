@@ -29,8 +29,6 @@ export type CommunityMenuState = {
     /** Owners and admins: Manage. */
     canManage: boolean;
     canLeave: boolean;
-    /** Every channel is muted already: no Mute all channels. */
-    allMuted: boolean;
 };
 
 const ICONS: Record<CommunityAction, string> = {
@@ -75,7 +73,9 @@ function commonItems(
     label: (action: CommunityAction) => string,
 ): NativeMenuItem[] {
     return [
-        ...(!state.allMuted ? [item("mute_all", label)] : []),
+        // every member's, whether or not its channels are muted already (the user's decision,
+        // 2026-11-24: joined channels can start muted, and it hid the item)
+        item("mute_all", label),
         item("mark_all_read", label),
         ...(state.canManage ? [item("manage", label)] : []),
         ...(state.canLeave ? [{ ...item("leave", label), danger: true, separator: true }] : []),

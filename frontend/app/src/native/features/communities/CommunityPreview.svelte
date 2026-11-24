@@ -73,7 +73,8 @@
     // the channels someone not in the community can read
     const channels = $derived(community.channels.filter((c) => c.public));
 
-    // a pushed preview goes back; the tab's root cancels the preview, back where it was opened from
+    // pushed over Explore (N8a: locations), it goes back there; at the tab's root (a cold link,
+    // before the community is known) it cancels the preview, back where it was opened from
     function back() {
         if (context.back !== undefined) context.back();
         else navigate(client.cancelPreview(community.id));

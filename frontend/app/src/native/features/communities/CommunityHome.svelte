@@ -17,6 +17,7 @@
         currentUserIdStore,
         favouritesStore,
         failedMessagesStore,
+        followedThreadsByChat,
         messagesRead,
         pinnedChatsStore,
         queuedMessagesStore,
@@ -163,8 +164,12 @@
         if (channel !== undefined) navigate(routeForChatIdentifier("community", channel.id));
     }
 
-    // ---- the Threads row: its badge, the community's unread threads
+    // ---- the Threads row, while the user follows a thread in one of its channels (the user's
+    // decision, 2026-11-24: none, no row), with its badge, the community's unread threads
 
+    const followsThreads = $derived(
+        followedThreadsByChat(chatsInScope(scope, $allChatsStore, $favouritesStore)).size > 0,
+    );
     const threadsUnread = $derived(
         $unreadCommunityChannelCountsStore.get(community.id)?.threads.unmuted ?? 0,
     );
@@ -177,13 +182,10 @@
 
     function menuState(c: CommunitySummary) {
         const permissions = communityMenuPermissions(client, c);
-        const own = chatsInScope({ kind: "community", id: c.id }, $allChatsStore, $favouritesStore);
         return {
             canInvite: permissions.canInvite,
             canManage: permissions.canEdit,
             canLeave: permissions.canLeave,
-            allMuted:
-                own.size > 0 && [...own.values()].every((chat) => chat.membership.notificationsMuted),
         };
     }
 
@@ -263,13 +265,15 @@
 
     // Leaving with Undo (notes §1): it goes from the switcher at once, the tab moving on to the next
     // community if it's the one showing, and the leave is sent once the toast has gone (the shell's
-    // PendingRemovals); Undo sends nothing and puts it back
+    // PendingRemovals); Undo sends nothing, puts it back and, if it was showing, shows it again
     function leave(target: CommunitySummary) {
         const key = communityKey(target.id);
-        if (target.id.communityId === community.id.communityId) {
+        const showing = target.id.communityId === community.id.communityId;
+        if (showing) {
             const next = nextCommunity(switcher, target.id);
             navigate(next === undefined ? "/communities" : `/community/${next.communityId}`);
         }
+        const url = `/community/${target.id.communityId}`;
         sendAfterUndo(
             context,
             key,
@@ -278,6 +282,7 @@
                 toastStore.showOutcome(
                     await client.leaveOrDelete({ kind: "leave_community", id: target.id }, true),
                 ),
+            showing ? () => navigate(url) : undefined,
         );
     }
 
@@ -451,14 +456,16 @@
         </button>
     </header>
 
-    <button type="button" class="threads" onclick={openThreads}>
-        <span class="threads-mark"><span class="threads-icon"></span></span>
-        <span class="threads-label">{$_("native.community.threads")}</span>
-        <span class="chevron"></span>
-        {#if threadsUnread > 0}
-            <span class="badge">{threadsUnread}</span>
-        {/if}
-    </button>
+    {#if followsThreads}
+        <button type="button" class="threads" onclick={openThreads}>
+            <span class="threads-mark"><span class="threads-icon"></span></span>
+            <span class="threads-label">{$_("native.community.threads")}</span>
+            <span class="chevron"></span>
+            {#if threadsUnread > 0}
+                <span class="badge">{threadsUnread}</span>
+            {/if}
+        </button>
+    {/if}
 
     <div class="list">
         {#each listed as item (item.key)}
@@ -508,13 +515,30 @@
     label={pressedLabel}
     onSelect={onPressMenu}
     onClose={() => (pressOpen = false)}
->
-    {#snippet row()}
-        {#if pressed?.kind === "channel"}
-            <ChatRow {...rowProps(pressed.listed)} {previewText} />
-        {/if}
-    {/snippet}
-</LongPressMenu>
+    row={pressedCopy}
+/>
+
+<!-- what lifts over the blur, as the Chats tab's rows: the pressed channel's row, or the pressed
+     community as its sheet row has it (its avatar, name and "Public · N members"), over its strip
+     avatar (as a card) or its row -->
+{#snippet pressedCopy()}
+    {#if pressed?.kind === "channel"}
+        <ChatRow {...rowProps(pressed.listed)} {previewText} />
+    {:else if pressed?.kind === "community"}
+        <div class="community-copy">
+            <Avatar
+                size={42}
+                shape="squircle"
+                color={pressed.community.color}
+                url={pressed.community.avatarUrl}
+            />
+            <span class="texts">
+                <span class="name">{pressed.community.name}</span>
+                <span class="sub">{pressed.community.sub}</span>
+            </span>
+        </div>
+    {/if}
+{/snippet}
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
@@ -525,6 +549,22 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
+    }
+
+    // a community lifted by its long-press: its sheet row's look
+    .community-copy {
+        display: flex;
+        align-items: center;
+        gap: var(--space-12);
+        min-height: 58px;
+        padding: var(--space-8);
+        box-sizing: border-box;
+        color: var(--ink);
+
+        .name {
+            font: var(--weight-bold) text-size(15px) / 1.2 var(--font-sans);
+            @include truncate;
+        }
     }
 
     // the avatar 18px from the edge, as the channels' (notes §3.8)

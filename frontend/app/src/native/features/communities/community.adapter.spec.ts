@@ -24,7 +24,6 @@ const all: CommunityMenuState = {
     canInvite: true,
     canManage: true,
     canLeave: true,
-    allMuted: false,
 };
 const label = (a: string) => a;
 
@@ -41,9 +40,14 @@ describe("the community's menus", () => {
         expect(leave).toMatchObject({ danger: true, separator: true });
     });
 
-    test("a member who can't invite or manage, with every channel muted", () => {
-        const member = { ...all, canInvite: false, canManage: false, allMuted: true };
-        expect(headerMenuItems(member, label).map((i) => i.id)).toEqual(["mark_all_read", "leave"]);
+    // a plain member: Invite only where the community's permissions let members invite
+    test("a member who can't invite or manage: Mute all channels, Mark all as read, Leave", () => {
+        const member = { ...all, canInvite: false, canManage: false };
+        expect(headerMenuItems(member, label).map((i) => i.id)).toEqual([
+            "mute_all",
+            "mark_all_read",
+            "leave",
+        ]);
     });
 
     test("a community's long-press: Move to top but for the first", () => {

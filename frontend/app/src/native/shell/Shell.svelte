@@ -14,6 +14,7 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
     import { Presence } from "@openchat/ui/src/native/presence.svelte";
+    import { previewingCommunity } from "@src/logic/join/previewBar";
     import { disableWalletFeature } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
     import {
@@ -108,14 +109,23 @@
     let offlineStripHeight = $state(0);
 
     // The Communities tab's community when a URL doesn't name one (Explore): the one the tab shows,
-    // else the default (the last selected, else the first)
+    // else the default (the last selected, else the first), never one only being previewed
     const defaultCommunityId = $derived(
         defaultCommunity(
             $lastSelectedCommunityIdStore,
-            (id) => $communitiesStore.get(id),
-            $sortedCommunitiesStore,
+            (id) => {
+                const community = $communitiesStore.get(id);
+                return community !== undefined && !previewingCommunity(community)
+                    ? community
+                    : undefined;
+            },
+            $sortedCommunitiesStore.filter((c) => !previewingCommunity(c)),
         )?.id,
     );
+    // a community being previewed is pushed over Explore (locations: communitySteps)
+    function previewing(id: CommunityIdentifier): boolean {
+        return previewingCommunity($communitiesStore.get(id));
+    }
 
     function communityShown(): CommunityIdentifier | undefined {
         const root = stacks.root("communities")?.screen;
@@ -148,6 +158,7 @@
             signedOut: entry !== "app",
             // what the tab shows is the stacks' own state, not something to recompute on
             community: untrack(communityShown) ?? defaultCommunityId,
+            previewing,
             // an app store build has no wallet to go to
             wallet: !disableWalletFeature,
         }),

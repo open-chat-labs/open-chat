@@ -124,7 +124,7 @@
             <!-- TODO(design): ThreadList has no loading state (as on the web) -->
             <div class="state"><Spinner /></div>
         {:else}
-            <ThreadList {groups} header={false} />
+            <ThreadList {groups} header={false} channelHeads={scope.kind === "community"} />
         {/if}
     </div>
 </div>

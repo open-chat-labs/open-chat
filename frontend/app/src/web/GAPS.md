@@ -530,8 +530,9 @@ design export needs. Each entry says where it came up.
     statuses (Met, On join, Not met, To do) and a note (all or any, and how often members are
     re-checked). Join is the join bar's (`JoinButton`): it joins the community alone. Ours: the top
     is the details screens' (`DetailsHead`: 88px avatar, 132px cover), not the design's 80px and
-    170px; Back at the tab's root cancels the preview (`cancelPreview`). A member's page is N8a's
-    ("Native Communities tab"). Left: a community the client can't find shows a spinner. The
+    170px. A preview is pushed over Explore (N8a), and Back goes there; at the tab's root (a link
+    opened cold, a moment before the community is known) Back cancels it (`cancelPreview`). A
+    member's page is N8a's ("Native Communities tab"). Left: a community the client can't find shows a spinner. The
     Requirements and Channels cards are shared with the community's details
     (`RequirementsCard`, `ChannelsCard`).
   - **Explore** (N8b PR 4, native/features/explore): the search, the language button (with a count
@@ -1432,18 +1433,24 @@ design export needs. Each entry says where it came up.
     old mobile list's "Other channels") that the user can read: public ones, or private ones
     they're invited to (`logic/communities/otherChannels`). A private channel they aren't invited
     to isn't listed (it couldn't be opened). They follow the user's own channels, in the order
-    found; the plan doesn't say where they go. They have no long-press menu.
+    found (both the user's decision, 2026-11-24). They have no long-press menu.
   - **Mute all channels** mutes (the client's `muteAllChannels`); there's no "Unmute all" (the
-    backend's community mute only mutes), so the item goes once every channel is muted. The
-    prototype's mute-length submenu isn't built: a community's mute has no length.
+    backend's community mute only mutes; the user's decision, 2026-11-24: fine). Every member is
+    offered it, whether or not the channels are muted already (the user's decision, 2026-11-24:
+    it was hidden once all were, and joined channels can start muted, so a plain member saw only
+    Mark all as read and Leave). Invite people shows where the community's permissions let the
+    member invite (`canInviteUsers`, admins by default). The prototype's mute-length submenu isn't
+    built: a community's mute has no length.
   - **A community's long-press menu** is the prototype's (Move to top, Mute all channels, Mark
-    all as read, Manage, Leave): the plan names the row menu (01) but not its items. TODO(design).
+    all as read, Manage, Leave), in the strip and the sheet alike (the user's decision,
+    2026-11-24). As the Chats tab's rows, the pressed avatar or row lifts over the blur.
   - **Leave** goes at once with Undo, as a group's; the tab moves to the next community (Explore
-    with none left). Delete community isn't offered: the plan's menu has Leave only, and the last
+    with none left), and Undo brings it back and shows its page again. The Undo toast covers the
+    switcher's strip while it shows (the user's decision, 2026-11-24: fine, it can be closed). Delete community isn't offered: the plan's menu has Leave only, and the last
     owner's leave fails with the old words.
-  - **The Threads row** always shows (the prototype's), with its badge the community's unread
-    threads (not muted); with none, the list shows ThreadList's empty words, where the web's
-    list goes back.
+  - **The Threads row** shows only while the user follows a thread in one of the community's
+    channels (the user's decision, 2026-11-24, against the prototype, which always shows it),
+    with its badge the community's unread threads (not muted).
   - **The thread screen** is the conversation's screen for the thread (one file, as the web's
     MessageArea serves both): its list (ChatEventList with the root), the composer sending to
     the thread (`thread` prop), the long-press menu in the thread's context (the root's actions
@@ -1453,9 +1460,13 @@ design export needs. Each entry says where it came up.
     marks the root. Info isn't offered on a thread's replies (MessageInfoScreen reads the chat's
     messages). The rules sheet shows on the top screen only (a thread's send asks there).
   - **The threads list** keeps the library's All / Unread at its own size (the plan's compact
-    40px tabs are 99's library follow-up) and its group marks; the prototype's list is drawn
-    inline with uppercase channel names and no marks. A thread opened from it keeps the list
+    40px tabs are 99's library follow-up); a community's groups are headed "#channel", with no
+    mark or count (ThreadList's `channelHeads`, the user's decision, 2026-11-24). A new thread
+    (Reply in thread) shows its root and composer at once, with no spinner. A thread opened from it keeps the list
     under the conversation (`?threads`).
+  - **A community's preview** opened from Explore is pushed over it (and a channel read there
+    over the preview), so Back goes back through them to Explore and the community the tab was
+    on; it was the tab's root, so Back from it went to the Chats tab (from testing, 2026-11-24).
   - **The details** have no tiles, Members, mute toggle or Leave (the prototype has them; the
     plan's members' details are Channels, Rules and Access gates). Access gates show the
     preview's card without the statuses.

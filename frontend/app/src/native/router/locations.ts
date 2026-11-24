@@ -175,6 +175,11 @@ export type LocationContext = {
      */
     community: CommunityIdentifier | undefined;
     /**
+     * Whether a community is only being previewed (not joined, or lapsed): its page is pushed over
+     * Explore rather than being the tab's root. None: every community is the user's.
+     */
+    previewing?: (id: CommunityIdentifier) => boolean;
+    /**
      * Whether this build has the wallet. An app store build has none (`disableWalletFeature`):
      * no tab, and a wallet URL (/wallet, a token's page, a flow) opens the Chats tab instead, as an
      * unknown page does (the epic's store build: no way to reach the wallet).
@@ -217,27 +222,22 @@ export function locationFor(
         case "global_chat_selected_route":
             return tabs("chats", url, [chatsRoot(route.scope), ...chatSteps(route, query)]);
         case "selected_channel_route":
-            // a favourite channel is in Chats (Favourites), any other in its community
+            // a favourite channel is in Chats (Favourites), any other in its community: a
+            // previewed one's over its preview, pushed over Explore
             return route.scope.kind === "favourite"
                 ? tabs("chats", url, [chatsRoot(route.scope), ...chatSteps(route, query)])
                 : tabs("communities", url, [
-                      communitiesRoot(route.communityId),
+                      ...communitySteps(route.communityId, context),
                       ...chatSteps(route, query),
                   ]);
         case "selected_community_route":
             return tabs("communities", url, [
-                communitiesRoot(route.communityId),
+                ...communitySteps(route.communityId, context),
                 ...threadsStep({ kind: "community", id: route.communityId }, query),
             ]);
         case "communities_route":
         case "welcome_route":
-            return tabs(
-                "communities",
-                url,
-                context.community !== undefined
-                    ? [communitiesRoot(context.community), exploreStep()]
-                    : [exploreStep()],
-            );
+            return tabs("communities", url, exploreSteps(context));
         case "wallet_route":
             return context.wallet
                 ? tabs("wallet", url, [walletRoot(), ...walletSteps(route)])
@@ -366,6 +366,32 @@ function communityUrl(communityId: CommunityIdentifier): string {
 
 function exploreStep(): StackStep {
     return step("explore", { kind: "explore" }, "/communities");
+}
+
+// The tab's member community, if it has one (not one only being previewed)
+function memberCommunity(context: LocationContext): CommunityIdentifier | undefined {
+    const shown = context.community;
+    return shown === undefined || context.previewing?.(shown) ? undefined : shown;
+}
+
+// Explore, over the community the tab shows (none: Explore is the root)
+function exploreSteps(context: LocationContext): StackStep[] {
+    const member = memberCommunity(context);
+    return member !== undefined ? [communitiesRoot(member), exploreStep()] : [exploreStep()];
+}
+
+// A community's page: the tab's root for one the user's in; one being previewed is pushed over
+// Explore, where it's found (Back goes there, never to another tab)
+function communitySteps(id: CommunityIdentifier, context: LocationContext): StackStep[] {
+    if (!context.previewing?.(id)) return [communitiesRoot(id)];
+    return [
+        ...exploreSteps(context),
+        step(
+            `preview:${id.communityId}`,
+            { kind: "communities", communityId: id },
+            communityUrl(id),
+        ),
+    ];
 }
 
 function walletRoot(): StackStep {

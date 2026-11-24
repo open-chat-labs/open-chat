@@ -1202,3 +1202,4 @@
 - `ThreadList`: `header` (optional, default true): the list's own header (back, title, scope). False leaves it out, for a host with a header of its own. `meta.json` (`header`).
 - Used by the native app (N8a): the threads list is a pushed screen under the native page header (its back is the platform's, the title "Threads" over the community's name), with the list's filter and groups as they are.
 - Not in the design export: the prototype's native threads list is drawn inline, not with ThreadList.
+- 2026-11-24, from testing on Android: `channelHeads` (optional, default false): the groups are a community's channels, each headed "#name" as channel names are written elsewhere (not upper-cased), without the group's mark or its count of threads. The native list of a community's threads sets it; the web's list doesn't (its groups keep their marks). `meta.json` (`channelHeads`).

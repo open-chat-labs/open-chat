@@ -19218,6 +19218,17 @@
         "doc": "The list's own header (back, title, scope); false where the host has its own (the native page header)."
       },
       {
+        "name": "channelHeads",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The groups are a community's channels: each headed \"#name\", without the mark or the count (the native list)."
+      },
+      {
         "name": "onBack",
         "type": "() => void",
         "default": null,
