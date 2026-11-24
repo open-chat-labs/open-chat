@@ -869,7 +869,8 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const DAILY_PUZZLE_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const DAILY_PUZZLE_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
-// How often a session checks that the sign-in method it used is still linked to the account. Not
+// How often a session checks that the sign-in method it used is still linked to the account. The
+// first check runs straight away, as a phone app may never stay in the foreground this long. Not
 // while the app is in the background: the check runs on coming back if it's due by then.
 const AUTH_PRINCIPAL_LINK_CHECK_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
@@ -1870,6 +1871,8 @@ export class OpenChat {
         this.#authPrincipalLinkPoller = new Poller(
             () => this.#signOutIfAuthPrincipalUnlinked(authPrincipal),
             AUTH_PRINCIPAL_LINK_CHECK_INTERVAL,
+            undefined,
+            true,
         );
     }
 

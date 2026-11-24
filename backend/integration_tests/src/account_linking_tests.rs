@@ -119,7 +119,7 @@ fn test_account_linking_create_link_code() {
     //
     // ---- The session signed in this way keeps calling as the temp key ----
     //
-    // Past the old 5 minute expiry, and after the job removing expired temp keys has run
+    // Well past the old 5 minute expiry
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     for _ in 0..3 {
         env.tick();

@@ -84,7 +84,7 @@ impl RuntimeState {
 
     pub fn caller_auth_principal(&self) -> Principal {
         let caller = self.env.caller();
-        self.data.user_principals.unwrap_temp_key_or(caller)
+        self.data.user_principals.unwrap_temp_key_or(caller, self.env.now())
     }
 
     pub fn verify_new_identity(&self, args: VerifyNewIdentityArgs) -> Result<VerifyNewIdentitySuccess, VerifyNewIdentityError> {
