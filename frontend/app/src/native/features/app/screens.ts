@@ -3,7 +3,7 @@ import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
 import type { Overlays } from "../../shell/overlays.svelte";
-import { disableWalletFeature } from "@src/utils/features";
+import { disableStreakInsuranceFeature, disableWalletFeature } from "@src/utils/features";
 import { ScreenModules } from "./screenModules";
 
 // Which screen shows for each kind of native screen (router/locations.ts), a tab's root or one
@@ -118,7 +118,18 @@ export const screens: Screens = {
     new_group: () => import("../groupSettings/NewGroupScreen.svelte"),
 
     // CHIT, from the Chats tab's header and the You tab's CHIT card (N11)
-    chit: undefined,
+    chit: () => import("../chit/ChitScreen.svelte"),
+
+    // Streak insurance, from CHIT's hero (N11); none in an app store build (paid in CHAT)
+    streak_insurance: disableStreakInsuranceFeature
+        ? undefined
+        : () => import("../chit/StreakInsuranceScreen.svelte"),
+
+    // the achievements, from CHIT's View all (N11)
+    achievements: () => import("../chit/AchievementsScreen.svelte"),
+
+    // today's daily puzzle, from CHIT's puzzle row and a result card's Play (N11)
+    daily_puzzle: () => import("../chit/PuzzleScreen.svelte"),
 
     // Diamond, from the You tab (N12; buying it waits for N10b's PIN sheet)
     diamond: () => import("../you/DiamondScreen.svelte"),

@@ -1269,3 +1269,9 @@
 - `meta.json` entries and `index.ts` exports for all seven.
 - Used by the app: the operator console (`/admin/:section`), laid out from the Claude Design canvas "Admin Console" (2026-11-26).
 - Not in the design export (the canvas is the app's, not the export's): to take back to it.
+
+## 2026-11-24 — AchievementsDialog: its groups exported, for native CHIT (N11 #10379), by hand
+- `AchievementsDialog`: the groups' metadata (key, label, icon, colour), which the dialog kept inline, moved to its module script as `ACHIEVEMENT_GROUPS` and exported, so the native Achievements screen lists the achievements under the same groups in the same order. The dialog reads it as before: its look and behaviour are as they were. No props changed, so `meta.json` is as it was.
+- Used by the app: the native Achievements screen (CHIT's View all). `ClaimCalendar`, `AchievementToast` (`speed` 1.25, `outroSpeed` 1.8, the "Challenge solved" kicker) and `Confetti` (`within`) are used as they are.
+- Not ported: `PuzzleDialog`'s `layout="screen"` (`topInset`, `backIcon`, `backFlip`). The dialog plays Bridges only, so the app's puzzle (every game) is drawn by the app on both trees (the app's `GAPS.md`, "Native CHIT").
+- Not in the design export: the export keeps the groups inside the dialog.

@@ -15,8 +15,8 @@
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
-    import { achievementItems } from "./chit.adapter";
-    import { loadExternalAchievements, type Loaded } from "./externalAchievements";
+    import { achievementItems } from "@src/logic/chit/achievements";
+    import { loadExternalAchievements, type Loaded } from "@src/logic/chit/externalAchievements";
 
     let { dialog, onClose }: DialogProps<Extract<LinkedDialog, { kind: "achievements" }>> =
         $props();

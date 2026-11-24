@@ -88,6 +88,9 @@
         type VideoCallContent,
         proposalTopicsStore,
         proposalVotesStore,
+        dailyPuzzleStore,
+        localUpdates,
+        sharedToChatStore,
     } from "@client";
     import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
     import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
@@ -186,7 +189,9 @@
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
     import { claimsStore } from "@src/stores/claims";
-    import { lowBandwidth } from "@src/stores/settings";
+    import { disableChit, lowBandwidth } from "@src/stores/settings";
+    import { cardOffersPlayWith } from "@src/logic/dailyPuzzle/dailyResultCard";
+    import { applyShared, sharedHere } from "@src/logic/dailyPuzzle/shareResult";
     import { now, now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { disableTipsFeature } from "@src/utils/features";
@@ -384,11 +389,12 @@
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,
-            // a daily puzzle result's card; no Play: the native tree has no daily puzzle yet
+            // a daily puzzle result's card, with Play for today's puzzle of its game while the
+            // reader hasn't solved it and CHIT is on (N11, as the web's)
             dailyResult: (content) => ({
                 verification: resultVerifier.verification(content),
                 drawable: dailyPuzzleGame(content.gameId) !== undefined,
-                offersPlay: false,
+                offersPlay: cardOffersPlayWith($dailyPuzzleStore, content, $disableChit),
             }),
         });
         // the chat's webhooks and details go with the selection
@@ -1418,7 +1424,24 @@
         vote,
         download,
         voice,
+        // a result card's Play: today's puzzle of its game, pushed over the conversation (N11)
+        playPuzzle: (gameId) => context.push({ kind: "daily_puzzle", gameId }),
     };
+
+    // a daily puzzle result shared here from the puzzle's Share to chat (sharedToChatStore, N11),
+    // taken into the draft as this chat opens, or at once in the chat open already, and its text,
+    // if any, the draft's: the composer starts again from it (as the web's MessageArea)
+    let composerGeneration = $state(0);
+    $effect(() => {
+        const shared = $sharedToChatStore;
+        if (chat === undefined || !sharedHere(shared, chat.id, inThread)) return;
+        const here = where;
+        untrack(() => {
+            sharedToChatStore.set(undefined);
+            applyShared(localUpdates.draftMessages, here, shared);
+            composerGeneration++;
+        });
+    });
 
     // ---- the thread's panel (ThreadPanel): its root's card, who's in it, Follow and Jump to
     // message, as the web's thread panel has them (logic/threads/threadRows)
@@ -1591,8 +1614,9 @@
                             <span class="typing-text">{typingText}</span>
                         </div>
                     {/if}
-                    <!-- one per chat: it starts from that chat's draft -->
-                    {#key chatKey}
+                    <!-- one per chat: it starts from that chat's draft, and again once a share
+                         has written the draft -->
+                    {#key `${chatKey}|${composerGeneration}`}
                         <ConversationComposer
                             {chat}
                             {selected}

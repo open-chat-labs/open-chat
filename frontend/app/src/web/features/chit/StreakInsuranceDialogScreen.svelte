@@ -23,7 +23,7 @@
         streakInsuranceBalance,
         streakInsuranceDialogPrices,
         streakInsurancePurchase,
-    } from "./chit.adapter";
+    } from "@src/logic/chit/streakInsurance";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "streak_insurance" }>> = $props();
 

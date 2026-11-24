@@ -50,7 +50,8 @@ type Client = Pick<OpenChat, "chitHistory" | "claimDailyChit">;
  */
 export class ClaimHistory {
     days = $state<ClaimDay[]>([]);
-    #events: ChitEvent[] = [];
+    /** Every CHIT event loaded, oldest first (the calendar's days are worked out from them). */
+    events = $state.raw<ChitEvent[]>([]);
     #run = 0;
 
     constructor(
@@ -61,10 +62,10 @@ export class ClaimHistory {
     async load(): Promise<void> {
         const run = ++this.#run;
         try {
-            const events = await this.client.chitHistory(reloadFrom(this.#events, this.joined));
+            const events = await this.client.chitHistory(reloadFrom(this.events, this.joined));
             if (run !== this.#run) return;
-            this.#events = mergeChitEvents(this.#events, events);
-            this.days = claimDays(this.#events);
+            this.events = mergeChitEvents(this.events, events);
+            this.days = claimDays(this.events);
         } catch (err) {
             console.warn("Unable to load the CHIT claim history", err);
         }
@@ -73,11 +74,13 @@ export class ClaimHistory {
     /**
      * Claims today's CHIT, as the CHIT dialog does: a claim made shows on today at once, and the
      * history reloads whatever the answer (a day claimed already, elsewhere or before the client
-     * knew, is on it). Rejects when the claim fails, for the dialog to say so.
+     * knew, is on it). Rejects when the claim fails, for the dialog to say so. Whether a claim was
+     * made (false: today's was claimed already), for a celebration only a claim made gets.
      */
-    async claim(now: number = Date.now()): Promise<void> {
+    async claim(now: number = Date.now()): Promise<boolean> {
         const resp = await this.client.claimDailyChit();
         if (resp.kind === "success") this.days = withTodaysClaim(this.days, resp, now);
         void this.load();
+        return resp.kind === "success";
     }
 }

@@ -17,6 +17,18 @@
     /** Resource key (or literal text); defaults to ui.achievementsDialog.achievements.<id>. */
     label?: string;
   }
+
+  /** The dialog's groups, in order: each one's label (a resource key), icon and colour. Group metadata stays here; the
+   *  achievements themselves (ids, rewards, done) come from the host. Exported for native's Achievements screen. */
+  export const ACHIEVEMENT_GROUPS: readonly { key: string; label: string; icon: string; ink: string }[] = [
+    { key: 'messaging', label: 'ui.achievementsDialog.groups.messaging', icon: 'chat', ink: 'var(--status-chit)' },
+    { key: 'profile', label: 'ui.achievementsDialog.groups.profile', icon: 'user', ink: 'var(--accent)' },
+    { key: 'wallet', label: 'ui.achievementsDialog.groups.wallet', icon: 'wallet', ink: 'var(--status-verified)' },
+    { key: 'community', label: 'ui.achievementsDialog.groups.community', icon: 'users', ink: 'var(--status-online)' },
+    { key: 'streaks', label: 'ui.achievementsDialog.groups.streaks', icon: 'flame', ink: 'var(--status-chit)' },
+    { key: 'referrals', label: 'ui.achievementsDialog.groups.referrals', icon: 'users', ink: 'var(--ink-3)' },
+    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4)' },
+  ];
 </script>
 
 <script lang="ts">
@@ -27,16 +39,8 @@
 
   type Band = AchievementBand;
 
-  // group metadata stays here; the achievements themselves (ids, rewards, done) come from the host
-  const GROUPS: { key: string; label: string; icon: string; ink: string }[] = [
-    { key: 'messaging', label: 'ui.achievementsDialog.groups.messaging', icon: 'chat', ink: 'var(--status-chit)' },
-    { key: 'profile', label: 'ui.achievementsDialog.groups.profile', icon: 'user', ink: 'var(--accent)' },
-    { key: 'wallet', label: 'ui.achievementsDialog.groups.wallet', icon: 'wallet', ink: 'var(--status-verified)' },
-    { key: 'community', label: 'ui.achievementsDialog.groups.community', icon: 'users', ink: 'var(--status-online)' },
-    { key: 'streaks', label: 'ui.achievementsDialog.groups.streaks', icon: 'flame', ink: 'var(--status-chit)' },
-    { key: 'referrals', label: 'ui.achievementsDialog.groups.referrals', icon: 'users', ink: 'var(--ink-3)' },
-    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4)' },
-  ];
+  // group metadata: ACHIEVEMENT_GROUPS (the module's, shared with native's Achievements screen)
+  const GROUPS = ACHIEVEMENT_GROUPS;
 
   const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
   const achievement = (id: string) => 'ui.achievementsDialog.achievements.' + id;

@@ -101,6 +101,13 @@ export type LocalScreen =
     | { kind: "new_chat" }
     | { kind: "new_group" }
     | { kind: "chit" }
+    // CHIT's Streak insurance, from its hero (N11); never in an app store build
+    | { kind: "streak_insurance" }
+    // the achievements (ways to earn CHIT), from CHIT's View all (N11)
+    | { kind: "achievements" }
+    // today's daily puzzle, a game's or the first on today's rota, from CHIT's puzzle row and a
+    // result card's Play (N11)
+    | { kind: "daily_puzzle"; gameId?: string }
     | { kind: "edit_profile" }
     | { kind: "settings"; page: SettingsPage }
     | { kind: "chat_details"; chatId: ChatIdentifier }
@@ -466,8 +473,7 @@ function chatSteps(route: ChatRoute, query: URLSearchParams): StackStep[] {
     const chat = chatKey(route.chatId);
     const base = routeForChatIdentifier(route.scope.kind, route.chatId);
     const thread =
-        route.messageIndex !== undefined &&
-        (route.open || route.threadMessageIndex !== undefined)
+        route.messageIndex !== undefined && (route.open || route.threadMessageIndex !== undefined)
             ? step(
                   `thread:${chat}:${route.messageIndex}`,
                   { kind: "thread", route },

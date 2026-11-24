@@ -1,5 +1,5 @@
 import type { DailyPuzzleRow, DailyPuzzleStatus, PublicDailyPuzzle, ResourceKey } from "@client";
-import { puzzleCardProps, puzzleTitle, shareItem } from "./puzzle.adapter";
+import { puzzleCardProps, puzzleTitle, shareItem } from "./puzzleCard";
 
 const NOW = 1_000_000_000;
 

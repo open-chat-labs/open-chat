@@ -39,7 +39,7 @@
     import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import ReplaceStagedDialogScreen from "../conversation/ReplaceStagedDialogScreen.svelte";
     import { SharePicker } from "../share/sharePicker.svelte";
-    import { shareItem } from "./puzzle.adapter";
+    import { shareItem } from "@src/logic/dailyPuzzle/puzzleCard";
 
     let {
         dialog,

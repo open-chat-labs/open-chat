@@ -61,6 +61,11 @@ native/
                      the library's rules (lib/activityFeed); a row's message is pushed over the tab
                      (?panel=activity, router/locations)
     chats/           the Chats tab: the list, its search, New chat
+    chit/            CHIT (N11), pushed from the Chats header and the You tab's card (ChitScreen: the
+                     hero, the milestones, the latest achievements, the claim calendar), Streak
+                     insurance (none in an app store build), the Achievements screen, and the daily
+                     puzzle (PuzzleScreen around PuzzlePlay; Share to chat's sheet), pushed from
+                     CHIT and a result card's Play
     conversation/    a conversation (N5b): the header and its menu, search in the chat, the
                      messages on core/ChatEventList, the swipes, typing, call items; its composer
                      (N5c: ConversationComposer) and the slot under it that the keyboard and the
@@ -136,7 +141,10 @@ accent (`theme/accent.ts`), the native apps' setup (`utils/native/nativeApp.ts`,
 its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs), the
 profile and its settings (`logic/profile`: the form, the username check, appearance, notifications,
 community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared with the web's
-profile and CHIT dialog), a conversation's messages (`logic/conversation`: the rows, what a message
+profile and CHIT dialog; CHIT's screens on `logic/chit` (the claim calendar's history, the
+achievements, streak insurance, the hero's milestones and strip) and the daily puzzle on
+`logic/dailyPuzzle` and `core/dailyPuzzle` (the card, the game, the reveal of a solve, sharing a
+result), the web's CHIT dialogs' too), a conversation's messages (`logic/conversation`: the rows, what a message
 offers and what each of its actions does (`messageAction`, which the web's menu runs too), its
 controls, removing a link's preview, the unread divider and the route's message, search in a chat,
 call items;

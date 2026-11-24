@@ -148,7 +148,15 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   list and composer) and the followed threads list. Manage's pages and a community's Invite
   people are N7's, pushed as placeholders (`community_settings`); Create community is N8b's
   (`new_community`). What it left is in GAPS.md ("Native Communities tab").
-- **Next:** the screens. N11 needs only N3; N10b needs N10a; N9 (the builders) needs N10b
+- **Built:** N11 CHIT, the daily puzzle, streak insurance and claim history
+  ([#10379](https://github.com/open-chat-labs/open-chat/issues/10379)), to the plan's 14: the CHIT
+  screen (the hero with the streak ring, the 7-day strip and Claim, the milestones, the latest
+  achievements, the claim calendar), Streak insurance (none in an app store build), the
+  Achievements screen, the daily puzzle as its own screen (the "Challenge solved" banner, then the
+  solved view, Share to chat), and Play on a result card. On the web's CHIT logic, moved to
+  `logic/chit` and `logic/dailyPuzzle`. What it left (no Undo, PuzzleDialog's screen layout not
+  ported, buying with a PIN …) is in GAPS.md ("Native CHIT").
+- **Next:** the screens. N10b needs N10a; N9 (the builders) needs N10b
   too; N8b's Create community and N7's community pages can start now that N8a is in.
 
 ## Workstreams

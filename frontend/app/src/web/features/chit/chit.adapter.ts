@@ -1,7 +1,3 @@
-import type {
-    Achievement as AchievementItem,
-    AchievementBand,
-} from "@openchat/ui/src/features/components/AchievementsDialog.svelte";
 import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
 import type LeaderboardDialog from "@openchat/ui/src/features/components/LeaderboardDialog.svelte";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
@@ -9,15 +5,8 @@ import { chitButton, type ChitButtonInputs } from "@src/logic/chit/chitButton";
 import { dailyClaim } from "@src/logic/chit/dailyClaim";
 import type { ComponentProps } from "svelte";
 import {
-    CHAT_E8S,
-    STREAK_INSURANCE_MAX_DAYS,
-    streakInsuranceDayPrice,
-    streakInsurancePrice,
-    walletApprovalFee,
     CHIT_STREAK_MILESTONES,
     streakRingProgress,
-    type Achievement,
-    type AchievementEntry,
     type ChitLeaderboardResponse,
     type ChitUserBalance,
     type StreakInsurance,
@@ -89,100 +78,6 @@ export function chitRailProps(inputs: ChitInputs, hideOnceClaimed: boolean): Chi
     };
 }
 
-// AchievementsDialog's groups, for each achievement; the partners' (external) ones are "partners"
-type AchievementGroup = "messaging" | "profile" | "wallet" | "community" | "streaks" | "referrals";
-const GROUPS: Record<Achievement, AchievementGroup> = {
-    sent_text: "messaging",
-    reacted_to_message: "messaging",
-    sent_direct_message: "messaging",
-    received_direct_message: "messaging",
-    edited_message: "messaging",
-    deleted_message: "messaging",
-    forwarded_message: "messaging",
-    tipped_message: "messaging",
-    sent_image: "messaging",
-    sent_file: "messaging",
-    sent_poll: "messaging",
-    sent_video: "messaging",
-    sent_audio: "messaging",
-    sent_giphy: "messaging",
-    sent_meme: "messaging",
-    quote_replied: "messaging",
-    replied_in_thread: "messaging",
-    received_reaction: "messaging",
-    had_message_tipped: "messaging",
-    voted_on_poll: "messaging",
-    sent_reminder: "messaging",
-    followed_thread: "messaging",
-    set_bio: "profile",
-    set_avatar: "profile",
-    set_display_name: "profile",
-    set_community_display_name: "profile",
-    changed_theme: "profile",
-    set_pin: "profile",
-    upgraded_to_diamond: "profile",
-    upgrade_to_gold_diamond: "profile",
-    proved_unique_personhood: "profile",
-    sent_crypto: "wallet",
-    received_crypto: "wallet",
-    swapped_from_wallet: "wallet",
-    sent_swap_offer: "wallet",
-    accepted_swap_offer: "wallet",
-    sent_prize: "wallet",
-    deposited_btc: "wallet",
-    joined_group: "community",
-    joined_community: "community",
-    started_call: "community",
-    joined_call: "community",
-    favourited_chat: "community",
-    pinned_chat: "community",
-    streak_3: "streaks",
-    streak_7: "streaks",
-    streak_14: "streaks",
-    streak_30: "streaks",
-    streak_100: "streaks",
-    streak_365: "streaks",
-    referred_1st_user: "referrals",
-    referred_3rd_user: "referrals",
-    referred_10th_user: "referrals",
-    referred_20th_user: "referrals",
-    referred_50th_user: "referrals",
-};
-
-// what the dialog's "next up" picks from: a quick win, a middling task or a big one, by reward
-function bandOf(reward: number): AchievementBand {
-    return reward <= 1000 ? "quick" : reward <= 3000 ? "mid" : "big";
-}
-
-/** An achievement's id in the dialog (and to pick it out): its own, or an external one's name. */
-export function achievementItemId(entry: AchievementEntry): string {
-    return entry.kind === "internal" ? entry.id : entry.achievement.name;
-}
-
-/**
- * AchievementsDialog's achievements, from the list to show (achievementList), each named by
- * `name` (the old UI's text for it, translated: the dialog takes text, not the app's keys).
- */
-export function achievementItems(
-    entries: AchievementEntry[],
-    name: (achievement: Achievement) => string,
-): AchievementItem[] {
-    return entries.map((entry) => ({
-        id: achievementItemId(entry),
-        group: entry.kind === "internal" ? GROUPS[entry.id] : "partners",
-        reward: entry.reward,
-        done: entry.done,
-        band: bandOf(entry.reward),
-        // the old UI's name for it, or the partner's
-        label: entry.kind === "internal" ? name(entry.id) : entry.achievement.name,
-    }));
-}
-
-/** ChitDialog's "Ways to earn" count. */
-export function achievementsCount(entries: AchievementEntry[]): { total: number; left: number } {
-    return { total: entries.length, left: entries.filter((e) => !e.done).length };
-}
-
 type Boards = ComponentProps<typeof LeaderboardDialog>["boards"];
 
 // the most each board shows, as the old hall of fame did
@@ -224,49 +119,4 @@ export function leaderboardBoards(
         lastMonth: board(month(1), result?.lastMonth),
         allTime: board(allTime, result?.allTime),
     };
-}
-
-// CHAT e8s as CHAT
-function chat(e8s: bigint): number {
-    return Number(e8s) / Number(CHAT_E8S);
-}
-
-/**
- * StreakInsuranceDialog's `prices`: what each position of the user's cover costs, in CHAT. The
- * dialog prices a position by the cover held (bought less missed days used), the backend by the
- * days bought, so the positions are offset by the days used, and there are fewer of them as the
- * days bought can't pass 30: what the dialog shows is what's charged.
- */
-export function streakInsuranceDialogPrices({ daysMissed }: StreakInsurance): number[] {
-    return Array.from(
-        { length: Math.max(STREAK_INSURANCE_MAX_DAYS - daysMissed, 0) },
-        (_, position) => chat(streakInsuranceDayPrice(daysMissed + position)),
-    );
-}
-
-/**
- * The CHAT the dialog can spend, in CHAT: the balance less the fee for the approval the user makes
- * before the price is taken (the price itself is burned, with no fee), so a day it offers can be
- * paid. None for a balance not loaded, or while CHAT's fee isn't known (without it, nothing is
- * known to be left for the approval).
- */
-export function streakInsuranceBalance(
-    balanceE8s: bigint,
-    transferFee: bigint | undefined,
-): number {
-    if (transferFee === undefined) return 0;
-    const spendable = balanceE8s - walletApprovalFee(transferFee);
-    return spendable > 0n ? chat(spendable) : 0;
-}
-
-/**
- * What buying `requested` more days sends: the days, capped so cover bought never passes 30, and
- * their price worked out from the cover bought (streakInsuranceStore), never the dialog's figure.
- */
-export function streakInsurancePurchase(
-    { daysInsured }: StreakInsurance,
-    requested: number,
-): { days: number; price: bigint } {
-    const days = Math.max(Math.min(requested, STREAK_INSURANCE_MAX_DAYS - daysInsured), 0);
-    return { days, price: streakInsurancePrice(daysInsured, days) };
 }

@@ -5,24 +5,27 @@ import {
     type PublicDailyPuzzle,
     type ResourceKey,
 } from "@client";
-import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
 import { i18nKey } from "@src/i18n/i18n";
-import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
-import type { ComponentProps } from "svelte";
-import type { LinkedDialog } from "../app/dialogs";
+import { formatSolveTime, gameNameKey, tierKey } from "./dailyPuzzle.svelte";
 
-// The daily puzzle's props for ChitDialog's card, from today's rota (playableDailyPuzzleRows), and
-// the puzzle dialog's title.
+// Today's puzzle as the web's CHIT dialog's card (ChitDialog) and the native CHIT screen's puzzle
+// row show it, from today's rota (playableDailyPuzzleRows); the puzzle's title; and what the chat
+// picker says it's sharing. Moved from the web's puzzle adapter for the native tree (N11).
 
-export type PuzzleCardProps = Pick<
-    ComponentProps<typeof ChitDialog>,
-    "puzzleState" | "puzzleSub" | "puzzleTitle" | "puzzleCountdown"
-> & {
+/** What the puzzle card opens: a puzzle (the web's ?chit=puzzle), or the leaderboard (?hof). */
+export type PuzzleCardOpens = { kind: "puzzle"; gameId: string } | { kind: "leaderboard" };
+
+/** The card's props, as ChitDialog takes them (its puzzle card's). */
+export type PuzzleCardProps = {
+    puzzleState: "new" | "progress" | "solved" | "unavailable" | "off";
+    puzzleSub?: string;
+    puzzleTitle?: string;
+    puzzleCountdown?: string;
     // the game its "How to play" opens, if any
     gameId?: string;
     // what pressing the card opens: the puzzle, or once all are solved the leaderboard; nothing
     // without a puzzle today
-    opens?: LinkedDialog;
+    opens?: PuzzleCardOpens;
 };
 
 /**
