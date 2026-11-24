@@ -2,12 +2,16 @@ use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, client};
+use constants::DAY_IN_MS;
+use identity_canister::check_auth_principal_v2::Response as CheckAuthPrincipalResponse;
 use identity_canister::create_account_linking_code::Response as CreateAccountLinkingCodeResponse;
 use identity_canister::finalise_account_linking_with_code::Response as FinaliseAccountLinkingWithCodeResponse;
 use identity_canister::verify_account_linking_code::Response as VerifyAccountLinkingCodeResponse;
 use rand::random;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::{random_internet_identity_principal, random_principal};
+use types::Empty;
 
 #[test]
 fn test_account_linking_create_link_code() {
@@ -111,4 +115,24 @@ fn test_account_linking_create_link_code() {
     assert_eq!(auth_principals_response.len(), 2);
     assert!(auth_principals_response.first().unwrap().is_ii_principal);
     assert!(!auth_principals_response.last().unwrap().is_ii_principal);
+
+    //
+    // ---- The session signed in this way keeps calling as the temp key ----
+    //
+    // Past the old 5 minute expiry, and after the job removing expired temp keys has run
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    for _ in 0..3 {
+        env.tick();
+    }
+
+    let check_response = client::identity::check_auth_principal_v2(env, temp_key_principal, canister_ids.identity, &Empty {});
+    assert!(matches!(check_response, CheckAuthPrincipalResponse::Success(_)));
+
+    //
+    // ---- Once the new identity is unlinked, the temp key session is no longer found ----
+    //
+    client::identity::happy_path::remove_identity_link(env, user_auth.auth_principal(), canister_ids.identity, new_principal);
+
+    let check_response = client::identity::check_auth_principal_v2(env, temp_key_principal, canister_ids.identity, &Empty {});
+    assert!(matches!(check_response, CheckAuthPrincipalResponse::NotFound));
 }

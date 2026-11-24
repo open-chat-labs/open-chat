@@ -501,6 +501,7 @@ export type WorkerRequest = Cloneable<
     | GetCksolMinterDepositInfo
     | GetCksolMinterWithdrawalInfo
     | CurrentUserWebAuthnKey
+    | AuthPrincipalLinked
     | LookupWebAuthnPubKey
     | SetCachedWebAuthnKey
     | GenerateMagicLink
@@ -2072,6 +2073,11 @@ type CurrentUserWebAuthnKey = {
     kind: "currentUserWebAuthnKey";
 };
 
+// Whether the principal this session signed in with is still linked to an OpenChat account
+type AuthPrincipalLinked = {
+    kind: "authPrincipalLinked";
+};
+
 type LookupWebAuthnPubKey = {
     credentialId: Uint8Array;
     kind: "lookupWebAuthnPubKey";
@@ -2881,6 +2887,7 @@ export type WorkerResults = ResultsByKind<{
     cksolMinterDepositInfo: CksolMinterDepositInfo;
     cksolMinterWithdrawalInfo: CksolMinterWithdrawalInfo;
     currentUserWebAuthnKey: WebAuthnKeyFull | undefined;
+    authPrincipalLinked: boolean;
     lookupWebAuthnPubKey: Uint8Array | undefined;
     setCachedWebAuthnKey: void;
     generateMagicLink: GenerateMagicLinkResponse;
