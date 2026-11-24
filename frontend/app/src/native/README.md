@@ -53,6 +53,9 @@ native/
     tabSwipe.ts      the swipe between tabs, and a tab switch's two-screen slide
     Toasts.svelte    the app's toast as the kit's
     toastFloors.svelte.ts  where toasts sit over a footer that grows: the top screen's say
+    PinSheet.svelte  the client's PIN prompt (pinNumberResolverStore) as a sheet over any screen,
+                     on the kit's PinPad; its chip ("Send 25 ICP to Julian") is what the screen
+                     starting the transfer says (pinAction.svelte.ts)
   features/      one folder per screen/feature, as in src/web:
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/screenModules.ts   the screens' chunks, loaded once and kept, preloaded while idle
@@ -109,8 +112,11 @@ native/
                      someone's signed out
     wallet/          the Wallet tab (N10a): its root (WalletScreen: the total and its "today",
                      the tokens, Small balances, the Supported tokens sheet) and a token's page
-                     (TokenScreen, /wallet/:ledger); none in an app store build (screens.ts,
-                     locations.ts' `wallet`)
+                     (TokenScreen, /wallet/:ledger); Send, Receive and Swap (N10b:
+                     WalletFlowScreen at /wallet/send|receive|swap, ?token= from a token's page:
+                     SendFlow, ReceiveFlow, SwapFlow, the token sheet (SupportedTokensSheet with a
+                     flow's tokens), the recipient sheet, their rules in flows.adapter); none in an
+                     app store build (screens.ts, locations.ts' `wallet`)
     you/             the You tab (N12): its root, Edit profile, Diamond, and the settings pages
                      (SettingsScreen and settings/: Appearance, Notifications, Chats, Communities,
                      Storage, Bots, Account, CHIT's) and Delete account's steps, pushed locally
@@ -152,7 +158,10 @@ too), the wallet (the library's `lib/wallet`: the holdings, the display currency
 page's buttons and the activity's days, which WalletPanel and WalletMain use too; the tokens and
 their activity in `logic/wallet/walletTokens`, the catalogue, the session's histories and the
 balances' first refresh beside it, all the web wallet's; the total's "today" in
-`logic/wallet/totalSnapshots`), threads (the thread panel's card and the threads list's rows in
+`logic/wallet/totalSnapshots`; Send, Receive and Swap on the web wallet's: `logic/wallet/walletFlows`
+(Receive's networks, Send's people and saved addresses), `walletSendFlow` (a send end to end and
+the addresses it takes), `btcWithdrawalFees`, `swapQuote` and `SwapForm`, `ReceiveAccount`; the PIN
+prompt's answer in `logic/composer/sendPrompts`' PinAnswer, the web's), threads (the thread panel's card and the threads list's rows in
 `logic/threads/threadRows`, moved from the web's thread adapter; the previews' loading in `logic/threads/threadPreviews`;
 a scope's followed threads in the client's `followedThreadsByChat`), a community's channels not
 joined (`logic/communities/otherChannels`), and the theme the web and Welcome's menu keep

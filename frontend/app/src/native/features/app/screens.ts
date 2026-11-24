@@ -102,8 +102,10 @@ export const screens: Screens = {
     // a token's page (N10a); none in an app store build, as the root
     token: disableWalletFeature ? undefined : () => import("../wallet/TokenScreen.svelte"),
 
-    // Send, Receive and Swap (N10b)
-    wallet_flow: undefined,
+    // Send, Receive and Swap (N10b); none in an app store build, as the wallet's root
+    wallet_flow: disableWalletFeature
+        ? undefined
+        : () => import("../wallet/WalletFlowScreen.svelte"),
 
     // the saved recipients (N10b)
     recipients: undefined,

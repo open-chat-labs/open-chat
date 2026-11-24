@@ -6,7 +6,7 @@ import {
     searchContacts,
     sendContacts,
     walletRecipients,
-} from "./wallet.adapter";
+} from "./walletFlows";
 
 describe("Receive's networks", () => {
     const words = (key: string, values: Record<string, string>) =>

@@ -307,6 +307,12 @@ describe("the Supported tokens sheet", () => {
         expect(sheet.yours).toEqual([]);
         expect(sheet.others.map((t) => t.symbol)).toEqual(["CHAT"]);
     });
+
+    test("a flow's sheet lists only the tokens it can take", () => {
+        const sheet = supportedSheet(figures(tokens), "", (id) => id !== "chat-ledger");
+        expect(sheet.yours.map((t) => t.symbol)).toEqual(["ICP"]);
+        expect(sheet.others.map((t) => t.symbol)).toEqual(["BTC"]);
+    });
 });
 
 describe("where the buttons go", () => {

@@ -123,6 +123,18 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   the library's `lib/wallet` and `logic/wallet/walletTokens`). An app store build has no wallet:
   no tab, and its URLs open Chats. Send, Receive and Swap go to their flows' URLs, N10b's. What it
   left is in GAPS.md ("Native wallet").
+- **Built:** N10b the wallet's flows and the PIN sheet
+  ([#10378](https://github.com/open-chat-labs/open-chat/issues/10378)), to the plan's 13: Receive
+  (the token, the QR card with the address's middle dimmed and the network chip, the warning, the
+  @username card, Copy / Share), Send (the token, the recipient sheet with saved addresses and the
+  people already DM'd, the amount and quick picks, a message to a person, the fee and total, the
+  PIN, the receipt with View in chat and Done) and Swap (You pay / You get, slippage, the best
+  quote of every exchange, named, the PIN, Deposit → Swap → Withdraw); from the wallet each asks
+  for its token first, from a token's page it's filled, and Done lands on the token's page. The
+  PIN sheet is the shell's, answering the client's prompt for any transfer (the kit's PinPad, the
+  chip from `shell/pinAction`). On the web wallet's logic, moved to `logic/wallet` (`walletFlows`,
+  `swapQuote`, `walletSendFlow`, `btcWithdrawalFees`). None in an app store build. What it left is
+  in GAPS.md ("Native wallet", "Native PIN sheet").
 - **Built:** N13 the Activity tab
   ([#10381](https://github.com/open-chat-labs/open-chat/issues/10381)), to the plan's 16: the title
   with Mark all read (fading, never moving the layout), All / Mentions / Payments with badges only

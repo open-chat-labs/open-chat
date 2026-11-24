@@ -5,6 +5,7 @@ import type {
     MessageContent,
     MessageFormatter,
     ReadonlyMap,
+    ResourceKey,
 } from "@client";
 import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "@client";
 import { isTauriApp } from "@shared";
@@ -154,31 +155,55 @@ export async function shareMessageOrFail(
  * apps, whose WebViews have none (the Tauri plugin's `share`), and by copying it otherwise, or where
  * the app's shell is older than the plugin's share sheet.
  */
-export async function shareLink(url: string): Promise<void> {
+export function shareLink(url: string): Promise<void> {
+    return shareOrCopy({ url, files: [] }, url, {
+        failed: i18nKey("failedToShareLink"),
+        copied: i18nKey("linkCopiedToClipboard"),
+        notCopied: i18nKey("failedToCopyUrlToClipboard"),
+    });
+}
+
+/**
+ * Shares some text (a wallet address) as `shareLink` shares a link: the Web Share API, the apps'
+ * share sheet, else copied.
+ */
+export function shareText(text: string): Promise<void> {
+    return shareOrCopy({ text, files: [] }, text, {
+        failed: i18nKey("failedToShare"),
+        copied: i18nKey("copiedToClipboard"),
+        notCopied: i18nKey("failedToCopyToClipboard", { account: text }),
+    });
+}
+
+async function shareOrCopy(
+    data: ShareData,
+    value: string,
+    words: { failed: ResourceKey; copied: ResourceKey; notCopied: ResourceKey },
+): Promise<void> {
     if (canShare()) {
         try {
-            await navigator.share({ url, files: [] });
+            await navigator.share(data);
         } catch (e) {
             if (!(e instanceof DOMException && e.name === "AbortError")) {
-                console.log(`Failed to share link ${url}: ${e}`);
-                toastStore.showFailureToast(i18nKey("failedToShareLink"));
+                console.log(`Failed to share ${value}: ${e}`);
+                toastStore.showFailureToast(words.failed);
             }
         }
         return;
     }
     if (isTauriApp()) {
         try {
-            await shareSheet(url);
+            await shareSheet(value);
             return;
         } catch (e) {
-            console.warn("The share sheet didn't open, so the link is copied instead", e);
+            console.warn("The share sheet didn't open, so it's copied instead", e);
         }
     }
     try {
-        await navigator.clipboard.writeText(url);
-        toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
+        await navigator.clipboard.writeText(value);
+        toastStore.showSuccessToast(words.copied);
     } catch {
-        toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard"));
+        toastStore.showFailureToast(words.notCopied);
     }
 }
 

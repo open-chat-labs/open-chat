@@ -1,7 +1,10 @@
 <!-- The Supported tokens sheet (native plan's 13 Root, Empty wallet; the prototype's token sheet with
      its "browse" target): a search, the tokens held ("Your tokens", amount and value), then the rest
      of the catalogue ("All tokens", their price). A token picked opens its page. One fixed height, as
-     a sheet whose content changes (notes §1 Sheets). -->
+     a sheet whose content changes (notes §1 Sheets). A flow's token sheet is the same sheet (the
+     prototype's token sheet with its "send", "receive", "swapFrom" and "swapTo" targets): its own
+     title, only the tokens the flow takes, the one chosen marked, and the search where the
+     prototype has it. -->
 <script lang="ts">
     import Field from "@openchat/ui/src/lib/components/Field.svelte";
     import ListSectionLabel from "@openchat/ui/src/lib/components/ListSectionLabel.svelte";
@@ -17,12 +20,29 @@
         onClose: () => void;
         /** A token picked, by its id. */
         onPick: (id: string) => void;
+        /** The sheet's title (translated): Supported tokens without it. */
+        title?: string;
+        /** Whether it has the search. */
+        searchable?: boolean;
+        /** Only these tokens (by id), for a flow. */
+        offered?: (id: string) => boolean;
+        /** The token chosen now (by id), marked. */
+        selected?: string;
     };
 
-    let { open, figures, onClose, onPick }: Props = $props();
+    let {
+        open,
+        figures,
+        onClose,
+        onPick,
+        title,
+        searchable = true,
+        offered,
+        selected,
+    }: Props = $props();
 
     let query = $state("");
-    const sheet = $derived(supportedSheet(figures, query));
+    const sheet = $derived(supportedSheet(figures, query, offered));
 
     // the search starts empty the next time
     $effect(() => {
@@ -32,7 +52,12 @@
 
 {#snippet rows(list: SheetRow[])}
     {#each list as t (t.id)}
-        <button type="button" class="row" onclick={() => onPick(t.id)}>
+        <button
+            type="button"
+            class="row"
+            class:selected={t.id === selected}
+            aria-current={t.id === selected || undefined}
+            onclick={() => onPick(t.id)}>
             <TokenAvatar size={40} symbol={t.symbol} mark={t.mark} gradient={t.grad} logo={t.logo} />
             <span class="names">
                 <span class="symbol">{t.symbol}</span>
@@ -46,23 +71,33 @@
     {/each}
 {/snippet}
 
-<BottomSheet {open} {onClose} title={$_("native.wallet.supportedTokens")} height="82%" keyboard={softKeyboard.covering}>
-    {#snippet header()}
-        <div class="search">
-            <Field
-                placeholder={$_("native.wallet.searchTokens")}
-                value={query}
-                onInput={(e) => (query = e.currentTarget.value)}
-                onClear={() => (query = "")}
-                showShortcut={false} />
-        </div>
-    {/snippet}
+{#snippet search()}
+    <div class="search">
+        <Field
+            placeholder={$_("native.wallet.searchTokens")}
+            value={query}
+            onInput={(e) => (query = e.currentTarget.value)}
+            onClear={() => (query = "")}
+            showShortcut={false} />
+    </div>
+{/snippet}
+
+<BottomSheet
+    {open}
+    {onClose}
+    title={title ?? $_("native.wallet.supportedTokens")}
+    height={searchable ? "82%" : undefined}
+    keyboard={softKeyboard.covering}
+    header={searchable ? search : undefined}>
     <div class="list">
-        {#if sheet.yours.length > 0}
+        {#if !searchable}
+            <!-- a flow's own tokens only (Send's, Swap's to pay with): no sections, as the prototype's -->
+            {@render rows([...sheet.yours, ...sheet.others])}
+        {:else if sheet.yours.length > 0}
             <div class="label first"><ListSectionLabel label={$_("native.wallet.yourTokens")} /></div>
             {@render rows(sheet.yours)}
         {/if}
-        {#if sheet.others.length > 0}
+        {#if searchable && sheet.others.length > 0}
             <div class="label" class:first={sheet.yours.length === 0}>
                 <ListSectionLabel label={$_("native.wallet.allTokens")} />
             </div>
@@ -116,7 +151,8 @@
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
 
-        &:active {
+        &:active,
+        &.selected {
             background: var(--overlay-1);
         }
 

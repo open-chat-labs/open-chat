@@ -384,16 +384,20 @@ export type SheetRow = Pick<TokenRow, "id" | "symbol" | "name" | "mark" | "grad"
 
 /**
  * The Supported tokens sheet: the tokens held ("Your tokens"), then the rest of the catalogue ("All
- * tokens"), those whose symbol or name has the search in it.
+ * tokens"), those whose symbol or name has the search in it. A flow's token sheet lists only the
+ * tokens it can take (`offered`, by id: Send's held ones, Swap's payable ones or its targets).
  */
 export function supportedSheet(
     f: WalletFigures,
     query: string,
+    offered?: (id: string) => boolean,
 ): { yours: SheetRow[]; others: SheetRow[] } {
     const rates = currencyRates(f.tokens, f.rates);
     const needle = query.trim().toLowerCase();
     const shown = f.tokens.filter(
-        (t) => needle === "" || `${t.symbol} ${t.name}`.toLowerCase().includes(needle),
+        (t) =>
+            (offered === undefined || offered(walletTokenId(t))) &&
+            (needle === "" || `${t.symbol} ${t.name}`.toLowerCase().includes(needle)),
     );
     const row = (t: WalletToken, held: boolean): SheetRow => ({
         id: walletTokenId(t),

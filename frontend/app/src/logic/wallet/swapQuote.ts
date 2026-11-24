@@ -1,5 +1,6 @@
-// The client's swaps in WalletSwap's shapes: the best quote and how many DEXes it was the best of,
-// the steps and how a swap went.
+// The client's swaps as both wallets show them (the web's WalletSwap takes these shapes, and the
+// native Swap): the best quote and how many DEXes it was the best of, the steps and how a swap went.
+// Moved here from the web's swap adapter (native N10b).
 import {
     dexName,
     type DexId,
@@ -9,8 +10,19 @@ import {
     type SwapOutcome,
     type SwapQuote,
 } from "@client";
-import type { SwapQuote as SwapQuoteView } from "@openchat/ui/src/features/components/WalletSwap.svelte";
-import { wholeTokens } from "@src/logic/wallet/walletTokens";
+import { wholeTokens } from "./walletTokens";
+
+/** The best quote, as Swap shows it. */
+export type SwapQuoteView = {
+    /** The DEX with the best rate, by name. */
+    dex: string;
+    /** What the swap pays out at the quoted rate, in whole tokens. */
+    out: number;
+    /** How many DEXes were checked. */
+    checked: number;
+    /** Something to confirm before swapping, in the app's words. */
+    warning: string | undefined;
+};
 
 /** How many DEXes were checked for a quote: every one asked that swaps the pair at all. */
 export function dexesChecked(quotes: [DexId, DexQuote][]): number {

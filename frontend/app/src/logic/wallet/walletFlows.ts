@@ -1,13 +1,46 @@
-// The web wallet's Receive, Send and recipients in the library's shapes. The tokens and a token's
-// history as activity rows, which the native wallet lists too, are logic/wallet/walletTokens'.
+// Receive, Send and the saved recipients as both wallets show them: the web's (WalletReceive,
+// WalletSend, WalletRecipients take these shapes) and the native flows (src/native/features/wallet).
+// Moved here from the web's wallet adapter (native N10b). The tokens and a token's history as
+// activity rows are walletTokens'.
 import type { NamedAccount, UserSummary } from "@client";
-import type { ReceiveNetwork } from "@openchat/ui/src/features/components/WalletReceive.svelte";
-import type { SendContact } from "@openchat/ui/src/features/components/WalletSend.svelte";
-import type { DepositNote } from "@src/logic/wallet/receiveAccount.svelte";
-import type { Recipient } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
-import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/avatarGradients";
-import { swatchFor } from "@src/logic/swatch";
+import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
+import { swatchFor } from "../swatch";
+import type { DepositNote } from "./receiveAccount.svelte";
+
+/** A network a token is received on, with the user's address there once it's known. */
+export type ReceiveNetwork = {
+    id: string;
+    /** The network's name. */
+    label: string;
+    /** The token that arrives on it, when the network names it (BTC or ckBTC). */
+    token?: string;
+    /** The address; without it, it's still being fetched (or `failed`). */
+    address?: string;
+    failed?: boolean;
+    /** What depositing on it costs or needs, in the app's words. */
+    note?: string;
+};
+
+/** A person Send can pay: a user already DM'd. */
+export type SendContact = {
+    userId: string;
+    name: string;
+    handle: string;
+    /** Avatar background. */
+    grad?: string;
+};
+
+/** A saved address, keyed by its account. */
+export type Recipient = {
+    id: string;
+    name: string;
+    address: string;
+    /** The network's name, as the address reads. */
+    networkName?: string;
+    /** The token Send opens on for it (its ledger). */
+    sendToken?: string;
+};
 
 // a network's name as Receive shows it
 const NETWORK_NAMES: Record<string, string> = {
