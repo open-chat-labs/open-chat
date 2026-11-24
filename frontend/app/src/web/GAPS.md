@@ -2176,8 +2176,9 @@ design export needs. Each entry says where it came up.
     and `group` (the sections); `InviteDialog` takes `filterChats`, and its `onShareToChat` may
     resolve `false`; `Avatar` exports `AVATAR_GRADIENTS` for the picker's faces.
   - forwarding a message uses it too (5b, `ForwardDialogScreen`), one chat at a time;
-  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), a daily puzzle
-    result (#10236). The picker has no recent chats order (the design's "Recent chats"): sections
+  - sharing a daily puzzle result uses it too (#10236, `PuzzleShareDialogScreen`, "Sharing a
+    puzzle result"), with `onBack` (by hand) for its back arrow to the puzzle;
+  - not yet: Receive's "Share to chat" (6b, with `SharePicker`). The picker has no recent chats order (the design's "Recent chats"): sections
     are sorted by name, as the old pickers did.
 
 - **User groups** (4b part 3b): `UserGroupDialog` creates, edits and deletes a community's user
@@ -2781,10 +2782,48 @@ design export needs. Each entry says where it came up.
   old modal showed no row (and none while they're still loading). A game this build can't draw
   is left out, and a link to a game that's off today opens no puzzle. The rail's puzzle dot shows
   while one is still to play. Not yet:
-  - sharing a result (the old "Share" button) and the result card in a chat
-    (`DailyResultContent`), which wait on the message kinds (#10236);
   - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
     has neither.
+- **Sharing a puzzle result** (#10236; `?chit=share:<gameId>`, `PuzzleShareDialogScreen`): a
+  solve slow enough to be carded (`canShareResult`, the old screens' `canShare`) offers Share in
+  the puzzle dialog, which opens `ChatPicker` in its place over the same backdrop, its back arrow
+  (`ChatPicker`'s `onBack`, by hand) returning to the puzzle; ×, the backdrop and Back close both.
+  The picker offers every chat the user can send text in, the open one too (the user's decision
+  of 2026-11-23, as the old desktop picker did). The chosen chat opens, and its conversation
+  takes the share (`sharedToChatStore`, `logic/dailyPuzzle/shareResult`): the result card as its
+  draft's attachment and the message written in the picker as its text, the composer started
+  again from the text (`composerGeneration`: it reads a draft's text only as it mounts), so the
+  open chat ends up as any other. In place of a transfer, prize or swap offer staged in the chosen
+  chat's draft, the picker asks first (`shareStep`), with the composer's replace confirm
+  (`ReplaceStagedDialogScreen`, "This daily puzzle result will take its place") in the picker's
+  place over the same backdrop. Replace shares; Cancel, × and the backdrop keep the payment and
+  attach nothing; either way the chosen chat opens (the user's decision of 2026-11-23; the old
+  trees replaced it without asking). Opened from the puzzle, the confirm keeps the veil the picker
+  wore. A picker opened straight from a link (`?chit=share:<gameId>`, not handed off to) shows its
+  own backdrop, which the confirm fades in again in its place. Nothing is sent
+  until the user sends it, as the old trees' share. The card is made from the store's solve
+  (`shareableResultCard`), so a link to it with nothing to share opens the puzzle instead. Where
+  it differs from the old trees:
+  - the picker lists the chats the user can send text in (`SharePicker`); a chat that allows text
+    but not the result's permission (`memeFighter`, as `contentTypeToPermission` maps it)
+    refuses at send, as the old pickers did;
+  - staged in the composer as a file chip, "The Daily #12" over its game and tier
+    (`composerAttachment`; `TODO(design)`: the design has no chip for a result, the old trees
+    showed the whole card there). Its remove button says "Remove file".
+- **The result card in a chat** (#10236, `DailyResultMessage`, by hand, `TODO(design)`: no design;
+  built on `TransferMessage`'s card): the puzzle's number, game and tier, its grid
+  (`DailyResultBoard`, the game's own pictogram), and the time, hints and streak from the daily
+  canister's results index (`DailyResultVerifier`, once per card as it shows; "–" until it
+  answers and for a result it doesn't hold, #9332 invariant 44), "Verified" or "Unverified" (the
+  stats faded); Play while it's today's puzzle and the reader hasn't solved it, and CHIT isn't
+  turned off (`cardOffersPlayWith`: the setting hides the puzzle dialog, so Play would open
+  nothing), opening `?chit=puzzle:<gameId>`; "needs a newer app" for a game this build can't
+  draw, and no grid (`drawsResultGrid`) for a layout it can't read, as the old cards. The
+  caption is plain text, where the old trees rendered it as markdown (as the other cards' captions
+  in the new UI). The old desktop hid the verified line on a narrow window; it always shows. The
+  native conversation shows the card too (the library's `MessageGroup`, `messageRow`), with its
+  grid and no Play (the native tree has no daily puzzle yet); its pinned messages and message info
+  show it without the grid.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, with its Invaders game behind the joystick (8f: the old game, now
   `core/invaders`, for both trees), where the device can play it (a keyboard, or iOS, which steers
@@ -3225,7 +3264,7 @@ design export needs. Each entry says where it came up.
   - still as a text bubble with its content's own English text (`contentText`, the chat list's
     preview text): a bot still working ("Bot working ...", the old trees' typing dots), an
     encrypted message, a price chart and a MiniApp's card (their designs are asked for: "Designs
-    needed"), the daily puzzle's result (#10236), a reported message's and a moderation report's
+    needed"), a reported message's and a moderation report's
     cards (the platform moderators' review cards, left from L6: "Platform operators and
     moderators"), and calls and proposals until theirs are built;
   - deleted (the design of 2026-11-19, not yet in the plan files): the placeholder

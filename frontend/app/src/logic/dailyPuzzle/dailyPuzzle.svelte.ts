@@ -3,7 +3,6 @@ import {
     ErrorCode,
     chitStateStore,
     dailyPuzzleStore,
-    descriptionToHex,
     puzzleFingerprint,
     puzzleReplaced,
     stateFor,
@@ -20,6 +19,7 @@ import {
     type Violation,
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
+import { canShareResult, resultCard } from "./dailyResultCard";
 import type { PuzzleBoard } from "./puzzleBoard.svelte";
 
 /** A game as the puzzle flow needs it: its strings, and boards on a puzzle's description. */
@@ -733,23 +733,10 @@ export class DailyPuzzleGame {
     }
 
     resultCard(): DailyResultContent | undefined {
-        const solved = this.solved;
-        if (solved === undefined) return undefined;
-        return {
-            kind: "daily_result",
-            gameId: this.puzzle.gameId,
-            number: this.puzzle.number,
-            userId: this.userId,
-            solveTimeMs: Number(solved.solveTimeMs),
-            hintsUsed: solved.hintsUsed,
-            streak: solved.streak,
-            layout: descriptionToHex(this.puzzle.description),
-            tier: this.puzzle.tier,
-        };
+        return resultCard(this.puzzle, this.userState, this.userId);
     }
 
     get canShare(): boolean {
-        const solved = this.solved;
-        return solved !== undefined && solved.solveTimeMs >= this.puzzle.minCardedSolveMs;
+        return canShareResult(this.puzzle, this.solved);
     }
 }

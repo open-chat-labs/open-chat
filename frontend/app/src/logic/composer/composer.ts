@@ -450,8 +450,7 @@ export function draftAttachment<A>(
 
 /**
  * What a send takes from the draft's attachment (`draftAttachment`), given whether the composer
- * shows it: an attachment shown goes with the text; one it doesn't show isn't sent (a puzzle
- * result, not yet), except a payment (a transfer, a prize, a swap offer), which can go unshown
+ * shows it: an attachment shown goes with the text; one it doesn't show isn't sent, except a payment (a transfer, a prize, a swap offer), which can go unshown
  * when its token has left the registry: the send is refused rather than the text going without
  * it, and the draft that holds it with it.
  */

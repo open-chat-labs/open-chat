@@ -187,7 +187,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's default chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
-| `?chit` **(new)** | `ChitDialog`; `?chit=earn` (`AchievementsDialog`, `?chit=earn:<id>` with that achievement picked out) `?chit=insurance` (`StreakInsuranceDialog`) and `?chit=puzzle` (today's puzzle, `?chit=puzzle:<gameId>` for that game's, `?chit=howto[:<gameId>]` opened on how to play) and `?chit=calendar` (`ClaimHistoryDialog`, also from the profile's CHIT section) in its place, over the same backdrop, with a back arrow to it (×, the backdrop and Back close both) |
+| `?chit` **(new)** | `ChitDialog`; `?chit=earn` (`AchievementsDialog`, `?chit=earn:<id>` with that achievement picked out) `?chit=insurance` (`StreakInsuranceDialog`) and `?chit=puzzle` (today's puzzle, `?chit=puzzle:<gameId>` for that game's, `?chit=howto[:<gameId>]` opened on how to play; its Share, `?chit=share:<gameId>`, the chat picker for today's result of that game, in the puzzle's place with a back arrow to it, #10236) and `?chit=calendar` (`ClaimHistoryDialog`, also from the profile's CHIT section) in its place, over the same backdrop, with a back arrow to it (×, the backdrop and Back close both) |
 | `?profile=chit` **(new)** | `ProfileDialog` on its CHIT section (the CHIT dialog's settings) |
 | `?hof` | `LeaderboardDialog` |
 | `?faq=<topic>` | navigates to `/faq?q=<topic>` |

@@ -26,6 +26,7 @@ const everyIncoming: IncomingAttachment[] = [
     "video",
     "file",
     "gif",
+    "result",
     "prize",
     "transfer",
     "swap",

@@ -524,7 +524,8 @@
                 "gif": "This GIF will take its place, and what you set up for it will be lost.",
                 "prize": "A new prize will take its place once you've set it up, and what you set up for this one will be lost.",
                 "transfer": "A transfer will take its place once you've set it up, and what you set up for this one will be lost.",
-                "swap": "A new swap offer will take its place once you've set it up, and what you set up for this one will be lost."
+                "swap": "A new swap offer will take its place once you've set it up, and what you set up for this one will be lost.",
+                "result": "This daily puzzle result will take its place, and what you set up for it will be lost."
             }
         }
     },

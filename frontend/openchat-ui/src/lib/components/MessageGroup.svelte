@@ -18,6 +18,7 @@
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
+  import DailyResultMessage from './DailyResultMessage.svelte';
   import { barBeside, barPlacement, overBubble, type BarPlacement } from '../hoverBar';
   import ReactionChips from './ReactionChips.svelte';
   import FileMessage from './FileMessage.svelte';
@@ -537,6 +538,8 @@
           <PrizeMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'proposal'}
           <ProposalMessage {...m} lastInGroup={last} />
+        {:else if m.kind === 'daily_result'}
+          <DailyResultMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={onReact ? (c) => onReact(i, c) : undefined} />
         {/if}

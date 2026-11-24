@@ -4,7 +4,8 @@
      the dialog is open, so its backdrop never plays in again: it waits for today's puzzles to load
      (a reload or a link lands before the first fetch) and only its body changes: "no puzzle"
      until the store holds one (a later poll may bring it), then a session, a new one for another
-     game or view. The title is the session's puzzle's. -->
+     game or view. The title is the session's puzzle's. Share (a solve) opens the chat picker in its
+     place (PuzzleShareDialogScreen, ?chit=share:<gameId>), its back arrow returning here. -->
 <script lang="ts">
     import {
         dailyPuzzleStore,
@@ -19,7 +20,7 @@
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
-    import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
+    import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
     import { puzzleTitle } from "./puzzle.adapter";
     import PuzzleSession from "./PuzzleSession.svelte";
 
@@ -74,6 +75,7 @@
                 gameId={dialog.gameId}
                 {how}
                 onPuzzle={(puzzle) => (reported = { key: sessionKey, puzzle })}
+                onShare={(gameId) => openFromDialog({ kind: "puzzle_share", gameId })}
                 {onClose} />
         {/key}
     {:else if ready}

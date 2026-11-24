@@ -28,6 +28,7 @@ import {
     untilNextDay,
     withFields,
     type ConversationContext,
+    type DailyResultView,
     type PlayerProps,
 } from "./messageRow";
 
@@ -62,6 +63,7 @@ const ctx: ConversationContext = {
     threads: true,
     proposalTopics: new Map(),
     proposalVote: () => undefined,
+    dailyResult: () => ({ verification: { kind: "pending" }, drawable: true, offersPlay: false }),
     undeleting: () => false,
     referralLink: "https://oc.app/?ref=me",
     twitchParent: "oc.app",
@@ -1105,6 +1107,83 @@ describe("a proposals chat", () => {
     });
 });
 
+describe("daily puzzle results (#10236)", () => {
+    const result = {
+        kind: "daily_result" as const,
+        gameId: "bridges",
+        number: 12,
+        userId: "alice",
+        // a claim, never shown (#9332 invariant 44)
+        solveTimeMs: 1,
+        hintsUsed: 9,
+        streak: 99,
+        layout: "",
+        tier: 1,
+    };
+    const indexed = {
+        gameId: "bridges",
+        number: 12,
+        userId: "alice",
+        solveTimeMs: 83_000n,
+        hintsUsed: 2,
+        streak: 7,
+        solvedAt: 1n,
+    };
+    const card = (view: Partial<DailyResultView>, content: object = result) =>
+        messageRow(message({ content: content as Message["content"] }), "sent", {
+            ...ctx,
+            dailyResult: () => ({
+                verification: { kind: "pending" },
+                drawable: true,
+                offersPlay: false,
+                ...view,
+            }),
+        }).message;
+
+    test("is its own card: the puzzle, its game and tier, and the index's numbers", () => {
+        expect(card({ verification: { kind: "verified", row: indexed } })).toMatchObject({
+            kind: "daily_result",
+            title: "dailyPuzzle.number",
+            subtitle: "dailyPuzzle.games.bridges.name · dailyPuzzle.tier.1",
+            stats: [
+                { value: "1:23", label: "dailyPuzzle.card.time", mono: true },
+                { value: "2", label: "dailyPuzzle.card.hints" },
+                { value: "7", label: "dailyPuzzle.card.dayStreak" },
+            ],
+            verification: "verified",
+            note: "",
+            playLabel: "",
+        });
+    });
+
+    test("shows none of the message's own numbers while it's checked, or once the index has none", () => {
+        for (const kind of ["pending", "unverified"] as const) {
+            const shown = card({ verification: { kind } });
+            expect(shown).toMatchObject({ verification: kind });
+            expect("stats" in shown && shown.stats.map((s) => s.value)).toEqual(["–", "–", "–"]);
+        }
+    });
+
+    test("offers Play on today's puzzle the reader hasn't solved", () => {
+        expect(card({ offersPlay: true })).toMatchObject({ playLabel: "dailyPuzzle.play" });
+    });
+
+    test("says a game this build can't draw needs a newer app, with no Play", () => {
+        expect(card({ drawable: false, offersPlay: true })).toMatchObject({
+            note: "dailyPuzzle.needsNewerApp",
+            playLabel: "",
+        });
+    });
+
+    test("names the game alone without a tier, and carries its caption", () => {
+        const { tier: _, ...untiered } = result;
+        expect(card({}, { ...untiered, caption: "beat that" })).toMatchObject({
+            subtitle: "dailyPuzzle.games.bridges.name",
+            caption: "beat that",
+        });
+    });
+});
+
 describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
@@ -1234,6 +1313,11 @@ describe("a conversation's context", () => {
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
+            dailyResult: () => ({
+                verification: { kind: "pending" },
+                drawable: true,
+                offersPlay: false,
+            }),
         });
         expect(ctx.unreadInThread(4)).toBe(2);
         expect(asked).toEqual([[4, 6]]);
@@ -1280,6 +1364,11 @@ describe("a conversation's context", () => {
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
+            dailyResult: () => ({
+                verification: { kind: "pending" },
+                drawable: true,
+                offersPlay: false,
+            }),
         });
         expect(ctx.mentionsAsTyped("hi @UserId(a1), @UserGroup(7) and @UserId(zz)")).toBe(
             "hi @alice, @mods and @UserId(zz)",
@@ -1338,6 +1427,11 @@ describe("a conversation's context", () => {
             twitchParent: undefined,
             proposalTopics: new Map(),
             proposalVotes: new Map(),
+            dailyResult: () => ({
+                verification: { kind: "pending" },
+                drawable: true,
+                offersPlay: false,
+            }),
         });
         expect(ctx.avatar("alice")).toBe("https://blobs/alice");
         expect(ctx.avatar("bob")).toBeUndefined();

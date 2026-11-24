@@ -227,7 +227,8 @@
                 "gif": "Este GIF ocupará su lugar y se perderá lo que configuraste.",
                 "prize": "Un nuevo premio ocupará su lugar cuando lo configures, y se perderá lo que configuraste para este.",
                 "transfer": "Una transferencia ocupará su lugar cuando la configures, y se perderá lo que configuraste para esto.",
-                "swap": "Una nueva oferta de intercambio ocupará su lugar cuando la configures, y se perderá lo que configuraste para esta."
+                "swap": "Una nueva oferta de intercambio ocupará su lugar cuando la configures, y se perderá lo que configuraste para esta.",
+                "result": "Este resultado del puzzle diario ocupará su lugar y se perderá lo que configuraste."
             }
         }
     },

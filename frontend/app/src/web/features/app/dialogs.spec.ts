@@ -11,7 +11,15 @@ import {
 
 describe("the linked dialogs a guest is asked to sign in for", () => {
     test("are all but the leaderboard, which anyone can read", () => {
-        for (const query of ["profile", "profile=chit", "diamond", "chit", "chit=earn", "chit=puzzle", "share={}"]) {
+        for (const query of [
+            "profile",
+            "profile=chit",
+            "diamond",
+            "chit",
+            "chit=earn",
+            "chit=puzzle",
+            "share={}",
+        ]) {
             const dialog = linkedDialog(new URLSearchParams(query));
             expect(dialog && linkedDialogNeedsAccount(dialog)).toBe(true);
         }
@@ -61,6 +69,12 @@ describe("the dialog a URL's query opens", () => {
         expect(linkedDialog(new URLSearchParams("chit=calendar"))).toEqual({
             kind: "claim_history",
         });
+        expect(linkedDialog(new URLSearchParams("chit=share%3Abridges"))).toEqual({
+            kind: "puzzle_share",
+            gameId: "bridges",
+        });
+        // sharing names the game whose result it shares
+        expect(linkedDialog(new URLSearchParams("chit=share%3A"))).toEqual({ kind: "chit" });
         expect(linkedDialog(new URLSearchParams("chit=nope"))).toEqual({ kind: "chit" });
     });
 
@@ -86,6 +100,7 @@ describe("the linked dialog shown", () => {
         expect(shownLinkedDialog({ kind: "achievements" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "streak_insurance" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "puzzle" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "puzzle_share", gameId: "tents" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "claim_history" }, true)).toBeUndefined();
         expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
@@ -155,6 +170,14 @@ describe("opening a linked dialog", () => {
                 how: true,
             }),
         ).toBe("?chit=howto%3Atents");
+        // sharing a result takes the puzzle's place
+        expect(
+            openLinkedDialog(new URLSearchParams("chit=puzzle%3Atents"), {
+                kind: "puzzle_share",
+                gameId: "tents",
+            }),
+        ).toBe("?chit=share%3Atents");
+        expect(linkedDialogParam({ kind: "puzzle_share", gameId: "tents" })).toBe("chit");
         // the same param, so closing any of them drops it
         expect(linkedDialogParam({ kind: "streak_insurance" })).toBe("chit");
     });

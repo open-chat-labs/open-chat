@@ -1,10 +1,7 @@
 <script lang="ts">
     import {
         dailyPuzzleStore,
-        descriptionFromHex,
         publish,
-        stateFor,
-        todaysPuzzle,
         mobileWidth,
         type DailyResultContent,
         type OpenChat,
@@ -14,12 +11,13 @@
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
-    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import { dailyPuzzleGame, resultCardBoard } from "@src/core/dailyPuzzle/registry";
     import {
         cardNumbers,
+        cardOffersPlay,
         verificationFrom,
         type CardVerification,
-    } from "../../../utils/dailyResultCard";
+    } from "@src/logic/dailyPuzzle/dailyResultCard";
     import Button from "../../Button.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import ContentCaption from "../ContentCaption.svelte";
@@ -37,14 +35,7 @@
 
     // undefined = a game this build does not know how to render
     let def = $derived(dailyPuzzleGame(content.gameId));
-    let board = $derived.by(() => {
-        if (def === undefined) return undefined;
-        try {
-            return def.newBoard(descriptionFromHex(content.layout));
-        } catch {
-            return undefined;
-        }
-    });
+    let board = $derived(resultCardBoard(content));
 
     // Checked against the daily canister's results index the first time the card scrolls into
     // view. The numbers shown are the row's; the payload's are a claim and are never shown.
@@ -62,11 +53,7 @@
         }
     });
 
-    let isCurrent = $derived.by(() => {
-        const puzzle = todaysPuzzle($dailyPuzzleStore, content.gameId);
-        return puzzle?.enabled === true && puzzle.number === content.number;
-    });
-    let viewerSolved = $derived(stateFor($dailyPuzzleStore, content.gameId)?.solved !== undefined);
+    let offersPlay = $derived(cardOffersPlay($dailyPuzzleStore, content));
 </script>
 
 <div class="card">
@@ -129,7 +116,7 @@
         <div class="note">
             <Translatable resourceKey={i18nKey("dailyPuzzle.needsNewerApp")} />
         </div>
-    {:else if isCurrent && !viewerSolved}
+    {:else if offersPlay}
         <div class="play">
             <Button fill small onClick={() => publish("dailyPuzzle", { gameId: content.gameId })}>
                 <Translatable resourceKey={i18nKey("dailyPuzzle.play")} />

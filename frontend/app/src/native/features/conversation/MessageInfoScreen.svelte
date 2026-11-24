@@ -40,6 +40,8 @@
         proposalTopicsStore,
         proposalVotesStore,
     } from "@client";
+    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
+    import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
@@ -67,6 +69,7 @@
         $props();
 
     const client = getContext<OpenChat>("client");
+    const resultVerifier = new DailyResultVerifier(client);
     const me = $derived($currentUserIdStore);
 
     // the conversation under it keeps its chat selected; once that goes (Back from the
@@ -140,6 +143,12 @@
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,
+            // a daily puzzle result's card, its numbers checked as the conversation's are; no Play
+            dailyResult: (content) => ({
+                verification: resultVerifier.verification(content),
+                drawable: dailyPuzzleGame(content.gameId) !== undefined,
+                offersPlay: false,
+            }),
         }),
     );
 

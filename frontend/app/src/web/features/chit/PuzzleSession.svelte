@@ -3,8 +3,8 @@
      old puzzle screens (DailyPuzzleGame, logic/dailyPuzzle): the board or its demo, the time, hints
      and streak, the rules or the hint's sentence, and Start / Reset / Hint. Opened on how to play
      (`how`), the tutorial shows once the game is under way (the demo stands in for the board
-     before it starts, and a solved puzzle shows its result, never the tutorial). Sharing a result
-     waits on the chat picker (4d). -->
+     before it starts, and a solved puzzle shows its result, never the tutorial). A solve slow
+     enough to be carded (`canShare`, as the old screens' Share) offers Share (`onShare`). -->
 <script lang="ts">
     import {
         currentUserIdStore,
@@ -30,10 +30,12 @@
         how: boolean;
         // told the puzzle it plays, for the frame's title
         onPuzzle: (puzzle: PublicDailyPuzzle | undefined) => void;
+        // shares the result of the game played into a chat (#10236)
+        onShare: (gameId: string) => void;
         onClose: () => void;
     };
 
-    let { gameId, how, onPuzzle, onClose }: Props = $props();
+    let { gameId, how, onPuzzle, onShare, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const tr = (key: ResourceKey) => interpolateNewUi($_, key);
@@ -126,6 +128,12 @@
         {#if game !== undefined && !game.tutorialOpen}
             {#if game.busy}<Spinner />{/if}
             {#if game.solved !== undefined}
+                {#if game.canShare}
+                    <Button
+                        label={$_("dailyPuzzle.share")}
+                        icon="share"
+                        onClick={() => game && onShare(game.puzzle.gameId)} />
+                {/if}
                 <Button label={$_("close")} variant="secondary" onClick={onClose} />
             {:else if !game.started}
                 <Button

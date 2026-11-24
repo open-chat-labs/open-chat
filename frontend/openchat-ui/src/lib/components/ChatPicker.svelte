@@ -46,6 +46,8 @@
     chats: Chat[];
     onSend?: (v: { chatId: string; chat: string; message: string }) => void;
     onClose?: () => void;
+    /** A back arrow in the header (DialogShell's), to the dialog this one took the place of (by hand, 2026-11-23). */
+    onBack?: () => void;
     z?: number;
     /** The host's search: the chats to list for a query (a name, a username, a community …); the picker otherwise
      *  matches `chats` by name and kind. */
@@ -62,6 +64,7 @@
     chats,
     onSend,
     onClose,
+    onBack,
     z = 90,
     filter,
     emptyLabel = 'ui.chatPicker.noChats',
@@ -100,7 +103,7 @@
   </span>
 {/snippet}
 
-<DialogShell {title} width={460} height="min(600px,100%)" flush={true} {z} {onClose}>
+<DialogShell {title} width={460} height="min(600px,100%)" flush={true} {z} {onBack} {onClose}>
   <div class="picker">
     {#if !to}
       <div class="top">

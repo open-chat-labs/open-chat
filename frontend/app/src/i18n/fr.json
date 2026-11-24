@@ -227,7 +227,8 @@
                 "gif": "Ce GIF prendra sa place, et ce que vous avez configuré sera perdu.",
                 "prize": "Un nouveau prix prendra sa place une fois configuré, et ce que vous avez configuré pour celui-ci sera perdu.",
                 "transfer": "Un transfert prendra sa place une fois configuré, et ce que vous avez configuré pour celui-ci sera perdu.",
-                "swap": "Une nouvelle offre d'échange prendra sa place une fois configurée, et ce que vous avez configuré pour celle-ci sera perdu."
+                "swap": "Une nouvelle offre d'échange prendra sa place une fois configurée, et ce que vous avez configuré pour celle-ci sera perdu.",
+                "result": "Ce résultat du puzzle du jour prendra sa place, et ce que vous avez configuré sera perdu."
             }
         }
     },

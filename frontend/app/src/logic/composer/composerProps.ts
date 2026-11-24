@@ -1,5 +1,6 @@
 import {
     formatFileSize,
+    i18nKey,
     mentionCandidateKey,
     mentionName,
     type AttachmentContent,
@@ -19,6 +20,7 @@ import type {
 } from "@openchat/ui/src/lib/types";
 import { cssUrl } from "@openchat/ui/src/lib/cssUrl";
 import type { GifFeed } from "@src/logic/composer/gifFeed.svelte";
+import { gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
 import {
     isMedia,
     mediaHeld,
@@ -113,12 +115,14 @@ export function replyThumb(
 
 /**
  * The draft's attachment as the composer stages it: a photo, video or GIF in its media tray, a
- * file or audio clip as a chip. None for what the composer doesn't show yet (5d's prize, transfer
- * and swap offer, a puzzle result), which isn't sent with the text either.
+ * file or audio clip as a chip, a daily puzzle result shared into the chat as a chip naming the
+ * puzzle and its game (TODO(design): the design has no chip for one; the old trees showed the
+ * card). None for what the composer doesn't show yet (5d's prize, transfer and swap offer, which
+ * the screen stages itself), which isn't sent with the text either.
  */
 export function composerAttachment(
     content: AttachmentContent | undefined,
-    ctx: Pick<ConversationContext, "contentText">,
+    ctx: Pick<ConversationContext, "contentText" | "text">,
 ): ComposerAttachment | null {
     switch (content?.kind) {
         case "image_content":
@@ -140,6 +144,17 @@ export function composerAttachment(
                 title: ctx.contentText(content),
                 summary: formatFileSize(content.blobData?.byteLength ?? 0),
             };
+        case "daily_result": {
+            const game = ctx.text(i18nKey(gameNameKey(content.gameId)));
+            return {
+                type: "file",
+                title: ctx.text(i18nKey("dailyPuzzle.number", { number: content.number })),
+                summary:
+                    content.tier === undefined
+                        ? game
+                        : `${game} · ${ctx.text(i18nKey(tierKey(content.tier)))}`,
+            };
+        }
         // TODO(phase 5, 5d): the "+" builders' contents
         default:
             return null;

@@ -7,6 +7,7 @@ export * from "./profiling";
 export * from "./proposalVotes";
 export * from "./revealedDeletions";
 export * from "./rules";
+export * from "./sharedToChat";
 export * from "./throttling";
 export * from "./typing";
 export * from "./unconfirmed";

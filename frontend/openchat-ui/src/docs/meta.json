@@ -6900,6 +6900,17 @@
         "doc": ""
       },
       {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A back arrow in the header (DialogShell's), to the dialog this one took the place of (by hand, 2026-11-23)."
+      },
+      {
         "name": "z",
         "type": "number",
         "default": 90,
@@ -19748,6 +19759,224 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "DailyResultMessage",
+    "source": "by hand (2026-11-23), TransferMessage's card",
+    "hash": "",
+    "description": "A daily puzzle's result shared into a chat: its title and game over the puzzle's grid (the host's `preview`), its time, hints and day streak beside it, and whether they were checked (`verification`: nothing while pending, \"Verified\", or \"Unverified\" with the stats faded). `note` in place of Play where the host can't draw the game; `playLabel` with `onPlay` offers today's puzzle. Optional caption under the card.",
+    "preview": {
+      "width": 360,
+      "height": 300
+    },
+    "props": [
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": "received",
+        "editor": "enum",
+        "options": [
+          "received",
+          "sent"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'received'",
+        "doc": ""
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": "The Daily #12",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): \"The Daily #12\"."
+      },
+      {
+        "name": "subtitle",
+        "type": "string",
+        "default": "Bridges · Tricky",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the game, and its tier."
+      },
+      {
+        "name": "preview",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The puzzle's grid, drawn by the host in a square beside the stats."
+      },
+      {
+        "name": "stats",
+        "type": "{ value: string; label: string; mono?: boolean }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Each stat's value (\"–\" while it isn't known) and label (resource key or literal text); `mono` for tabular figures."
+      },
+      {
+        "name": "verification",
+        "type": "'pending' | 'verified' | 'unverified'",
+        "default": "verified",
+        "editor": "enum",
+        "options": [
+          "pending",
+          "verified",
+          "unverified"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'pending'",
+        "doc": "Whether the stats were checked: nothing shown while pending."
+      },
+      {
+        "name": "verifiedLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.dailyResultMessage.verified'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "unverifiedLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.dailyResultMessage.unverified'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text) under the card in place of Play."
+      },
+      {
+        "name": "playLabel",
+        "type": "string",
+        "default": "Play",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): Play, shown with onPlay."
+      },
+      {
+        "name": "onPlay",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "caption",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "time",
+        "type": "string",
+        "default": "14:32",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "lastInGroup",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`."
+      },
+      {
+        "name": "quoteName",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Reply quote (ReplyQuote): who wrote the quoted message."
+      },
+      {
+        "name": "quoteText",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message."
       }
     ],
     "group": "library"

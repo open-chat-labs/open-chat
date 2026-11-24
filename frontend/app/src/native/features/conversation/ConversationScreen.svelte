@@ -75,6 +75,9 @@
         proposalTopicsStore,
         proposalVotesStore,
     } from "@client";
+    import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
+    import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
+    import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
     import { userLoading } from "@src/logic/chats/chatRow";
     import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
@@ -115,6 +118,7 @@
         quoteTarget,
         retryFor,
         withHandlers,
+        withResultPreview,
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
@@ -309,6 +313,12 @@
             twitchParent: undefined,
             proposalTopics: $proposalTopicsStore,
             proposalVotes: $proposalVotesStore,
+            // a daily puzzle result's card; no Play: the native tree has no daily puzzle yet
+            dailyResult: (content) => ({
+                verification: resultVerifier.verification(content),
+                drawable: dailyPuzzleGame(content.gameId) !== undefined,
+                offersPlay: false,
+            }),
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;
@@ -1123,19 +1133,30 @@
         };
     }
 
+    // a daily puzzle result card's numbers, checked against the results index once it shows, as
+    // the web's
+    // svelte-ignore state_referenced_locally
+    const resultVerifier = new DailyResultVerifier(client);
+
     function messagesFor(
         row: MessageRow,
         withBody: boolean,
         body: import("svelte").Snippet,
         evt: EventWrapper<Message>,
         offers: RowOffers,
+        preview: import("svelte").Snippet,
     ): GroupMessage[] {
         const key = `${offers.menu}|${offers.swipes.left}|${offers.retry !== undefined}`;
         const kept = groupMessages.get(row);
         if (kept?.offers === key) return kept.messages;
-        const message = withBody
-            ? ({ ...row.message, body } as GroupMessage)
-            : withHandlers(row, evt.event, handlers, $cryptoLookup);
+        // a daily puzzle result with its grid, as the web's
+        const message = withResultPreview(
+            withBody
+                ? ({ ...row.message, body } as GroupMessage)
+                : withHandlers(row, evt.event, handlers, $cryptoLookup),
+            preview,
+            drawsResultGrid(evt.event.content),
+        );
         // kept between renders, so composed without reading a voice message's live fields
         const quoted =
             chat === undefined
@@ -1552,6 +1573,11 @@
                                         />
                                     {/if}
                                 {/snippet}
+                                {#snippet preview()}
+                                    {#if content.kind === "daily_result"}
+                                        <DailyResultBoard {content} />
+                                    {/if}
+                                {/snippet}
                                 <div
                                     class="row"
                                     class:starts={item.first}
@@ -1611,6 +1637,7 @@
                                             body,
                                             evt,
                                             offers,
+                                            preview,
                                         )}
                                     />
                                 </div>

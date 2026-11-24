@@ -36,6 +36,7 @@ const ctx: ConversationContext = {
     twitchParent: "oc.app",
     proposalTopics: new Map(),
     proposalVote: () => undefined,
+    dailyResult: () => ({ verification: { kind: "pending" }, drawable: true, offersPlay: false }),
     token: () => undefined,
 };
 
@@ -236,6 +237,34 @@ describe("the rows kept per event", () => {
         expect(rows.row("k", evt, "sent", ctx)).toBe(first);
         const voting = { ...ctx, proposalVote: () => "adopting" as const };
         expect(rows.row("k", evt, "sent", voting)).not.toBe(first);
+    });
+
+    test("are made again as a daily puzzle result's check lands, and as its Play comes or goes", () => {
+        const rows = new RowCache();
+        const evt = message();
+        evt.event.content = {
+            kind: "daily_result",
+            gameId: "bridges",
+            number: 12,
+            userId: "alice",
+            solveTimeMs: 1,
+            hintsUsed: 0,
+            streak: 1,
+            layout: "",
+        };
+        const view = (verified: boolean, offersPlay: boolean): ConversationContext => ({
+            ...ctx,
+            dailyResult: () => ({
+                verification: verified ? { kind: "unverified" } : { kind: "pending" },
+                drawable: true,
+                offersPlay,
+            }),
+        });
+        const first = rows.row("k", evt, "sent", view(false, false));
+        expect(rows.row("k", evt, "sent", view(false, false))).toBe(first);
+        const checked = rows.row("k", evt, "sent", view(true, false));
+        expect(checked).not.toBe(first);
+        expect(rows.row("k", evt, "sent", view(true, true))).not.toBe(checked);
     });
 
     test("are made again as a proposal's time left changes and as its voting ends", () => {
