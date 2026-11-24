@@ -739,9 +739,6 @@
         color: var(--ink-4);
     }
 
-    // Supported tokens: no divider above it (the user's call, testing on Android, against the
-    // prototype's line), the space the divider took kept so it doesn't crowd the row above
-    .supported {
-        margin-top: var(--space-12);
-    }
+    // Supported tokens: no divider above it and no extra gap (the user's calls, testing on
+    // Android, against the prototype's line): it follows the last token as one more row
 </style>
