@@ -4,9 +4,10 @@
      what it is in dollars and the fee, the balance checked (TipForm, shared with both old dialogs).
      Sent with the PIN where the user has one: the client asks for it (the S3 PIN prompt, a small
      confirm over this dialog); given up, the tip stays here to send. The dialog closes once the tip
-     has gone; a failure is toasted and the dialog stays. An empty account shows where to deposit
-     and a Refresh in Send's place, as the old desktop dialog did. The token list replaces the form in place, with a
-     back arrow. Pays from the OpenChat wallet only (GAPS, "Message actions": no external wallet).
+     has gone; a failure is toasted and the dialog stays. An empty account shows its address on the
+     IC (ckBTC, ckSOL, a oneSec token's ICP network: no minter, no network fee, nothing to fetch),
+     named, and a Refresh in Send's place, as the old desktop dialog did (which also offered the
+     other networks). The token list replaces the form in place, with a back arrow. Pays from the OpenChat wallet only (GAPS, "Message actions": no external wallet).
      Never in an app store build (`disableTipsFeature`), where the menu and the chips don't offer it.
      TODO(design): the design has no tip dialog; DialogShell with the library's amount card. -->
 <script lang="ts">
@@ -25,6 +26,7 @@
     import TokenPicker from "@openchat/ui/src/lib/components/TokenPicker.svelte";
     import { TIP_INCREMENTS, TipForm, type TipIncrement } from "@src/logic/tip/tipForm.svelte";
     import { ReceiveAccount } from "@src/logic/wallet/receiveAccount.svelte";
+    import { icNetwork } from "@src/logic/wallet/receiveAddress";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { toastStore } from "@src/stores/toast";
     import { disableTipsFeature } from "@src/utils/features";
@@ -56,6 +58,22 @@
             principal: () => client.OcIdentityPrincipal,
         }),
     );
+
+    // the token's own account on the IC, never a native BTC / SOL or EVM address, whose network
+    // and fees this dialog doesn't show (TokenPicker's own networks are the wallet's Receive)
+    function depositOnIc() {
+        receive.selectedNetwork = icNetwork(receive.networks);
+    }
+    depositOnIc();
+
+    // what arrives at the address: ckBTC / ckSOL by their names, else the token
+    const depositToken = $derived.by(() => {
+        const network = receive.selectedNetwork;
+        return (
+            (network === undefined ? undefined : receive.arrivingToken(network)) ??
+            tokenState.symbol
+        );
+    });
 
     // an app store build never tips (nothing offers it there)
     onMount(() => {
@@ -113,10 +131,14 @@
         if (replacement !== undefined) e.currentTarget.value = replacement;
     }
 
-    // another token starts the amount again (TransferForm), and checks its balance
+    // another token starts the amount again (TransferForm), and checks its balance; the one already
+    // chosen keeps the amount, and so its text
     function pick(ledger: string) {
-        form.ledger = ledger;
-        amountText = "";
+        if (ledger !== form.ledger) {
+            form.ledger = ledger;
+            amountText = "";
+            depositOnIc();
+        }
         picking = false;
     }
 
@@ -186,11 +208,20 @@
                         text={$_("tokenTransfer.zeroBalance", {
                             values: { token: tokenState.symbol },
                         })} />
+                    <p class="advice">
+                        {$_("tokenTransfer.yourAccount", { values: { token: depositToken } })}
+                    </p>
                     {#if receive.address !== undefined}
                         <div class="address">
                             <span class="account">{receive.address}</span>
                             <CopyButton value={receive.address} variant="soft" />
                         </div>
+                    {:else}
+                        <p class="advice" class:failed={receive.failed}>
+                            {receive.failed
+                                ? $_("cryptoAccount.failedToGenerateAddress")
+                                : $_("generating")}
+                        </p>
                     {/if}
                     <p class="advice">{$_("tokenTransfer.makeDeposit")}</p>
                 {:else if form.exchangeRate > 0}
@@ -272,6 +303,10 @@
         margin: 0;
         font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
         color: var(--ink-3);
+
+        &.failed {
+            color: var(--status-danger);
+        }
     }
 
     .actions {

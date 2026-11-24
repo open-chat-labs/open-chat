@@ -3619,8 +3619,8 @@ design export needs. Each entry says where it came up.
     the balance can't cover it), or an amount typed in the token (`TipForm.typeAmount`), what it
     is in dollars and the fee, "not enough" where the balance doesn't cover it with its fees
     (`TipForm.insufficient`, new string `tip.insufficient`), and an empty account's deposit
-    address with Refresh (the old desktop's). Sent with the PIN where the user has one (the
-    client's prompt, a small confirm over the dialog). Offered as `messageMenu` decides
+    address on the IC with Refresh (the old desktop's). Sent with the PIN where the user has one
+    (the client's prompt, a small confirm over the dialog). Offered as `messageMenu` decides
     (`tipRecipient` now passed, `messageOffer`): never on the reader's own, an unconfirmed, failed,
     inert or revealed message, nor one with no one to pay (a bot's, a relayed message no one in
     the chat linked), nor without the "tip messages" permission (in a thread too), nor in an app
@@ -3637,8 +3637,11 @@ design export needs. Each entry says where it came up.
       client's `markTip`);
     - the old dialogs' flying 🤑 on each step, and "Custom tip amount" behind a link (the amount
       is always typeable here), aren't carried over;
-    - an empty account shows the deposit address for the token's first network (`ReceiveAccount`),
-      with no network picker (the old `AccountInfo` had one, and a QR code);
+    - an empty account shows only its address on the IC (`ReceiveAccount` on `icNetwork`: ckBTC
+      for BTC, ckSOL for SOL, ICP for a oneSec token; no minter, no network fee, nothing to
+      fetch), named ("Your ckBTC address"). The old `AccountInfo` had a network picker (native
+      BTC and SOL, a oneSec token's EVM chains, with their deposit fees) and a QR code; those stay
+      in the wallet's Receive;
   - a proposal's collapse waits for the proposals filters (proposals show: 5a, "Proposals in the
     conversation"; the thread's items, reply in thread and follow / unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;
