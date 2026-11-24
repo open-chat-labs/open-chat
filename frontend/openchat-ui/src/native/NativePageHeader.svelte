@@ -17,6 +17,8 @@
     titleLoading?: boolean;
     /** Resource key (or literal text): the line under the name (a status, a member count). */
     sub?: string;
+    /** Resource key (or literal text): a pill right after the title (a token page's price), as PageHeader's. */
+    titleTag?: string;
     /** md: a pushed page's 17px title. lg: a tab root's 21px title, without back. */
     size?: 'md' | 'lg';
     /** The avatar before the name (the conversation's header): an Avatar or TokenAvatar, about 36px. */
@@ -41,7 +43,7 @@
   }
 
   let {
-    title, titleLoading = false, sub = '', size = 'md', avatar, onBack, backLabel = 'ui.common.back', onTitleClick, titleLabel = '', actions = [],
+    title, titleLoading = false, sub = '', titleTag, size = 'md', avatar, onBack, backLabel = 'ui.common.back', onTitleClick, titleLabel = '', actions = [],
     onMore, moreLabel = 'ui.common.moreOptions', divider = false, children,
   }: Props = $props();
   const t = useT();
@@ -52,7 +54,9 @@
 {#snippet heading()}
   {#if avatar}{@render avatar()}{/if}
   <span class="text">
-    {#if titleLoading}<SkeletonText />{:else}<span class="title">{t(title)}</span>{/if}
+    {#if titleLoading}<SkeletonText />{:else if titleTag}<span class="title-line"
+        ><span class="title">{t(title)}</span><span class="tag">{t(titleTag)}</span></span
+      >{:else}<span class="title">{t(title)}</span>{/if}
     {#if sub}<span class="sub">{t(sub)}</span>{/if}
   </span>
 {/snippet}
@@ -184,6 +188,12 @@
     &:is(button) {
       cursor: pointer;
     }
+
+    // a tab root's title row is a touch target tall with or without buttons beside it (the
+    // prototype's rows all carry its icons' 44/48px), so every root's title sits at the same height
+    .lg & {
+      min-height: var(--touch-target);
+    }
   }
 
   .text {
@@ -206,6 +216,26 @@
     .person & {
       font: var(--weight-bold) var(--text-lg) / 1.2 var(--font-sans);
     }
+  }
+
+  // the title with its pill (a token's price), the pill never shrinking
+  .title-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .tag {
+    flex: none;
+    height: 22px;
+    padding: 0 var(--space-8);
+    border-radius: var(--radius-pill);
+    display: inline-flex;
+    align-items: center;
+    background: var(--overlay-2);
+    font: var(--weight-medium) text-size(12px) / 1 var(--font-mono);
+    color: var(--ink-3);
   }
 
   .sub {

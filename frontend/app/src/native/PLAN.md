@@ -115,7 +115,15 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   pushed from (N8a; Create community's Settings step is N8b's): the gates and rules pages work on
   a community's draft as they are (`UpdateGroupOrCommunityState`); Edit community and the
   community's permissions are to build. What it left is in GAPS.md ("Native group settings").
-- **Next:** the screens. N10a, N11 and N13 need only N3; N8a (communities) can start now that
+- **Built:** N10a the Wallet tab's root and a token's page
+  ([#10377](https://github.com/open-chat-labs/open-chat/issues/10377)), to the plan's 13: the
+  total with the display currency and the eye, the "today" pill from snapshots kept on the device,
+  the tokens, Small balances, Supported tokens and its sheet, the empty wallet, and a token's page
+  with its kebab, share of the wallet and history by day; on the web wallet's figures (moved to
+  the library's `lib/wallet` and `logic/wallet/walletTokens`). An app store build has no wallet:
+  no tab, and its URLs open Chats. Send, Receive and Swap go to their flows' URLs, N10b's. What it
+  left is in GAPS.md ("Native wallet").
+- **Next:** the screens. N11 and N13 need only N3; N10b needs N10a; N8a (communities) can start now that
   N6 is in; N9 (the builders) needs N10b too.
 
 ## Workstreams

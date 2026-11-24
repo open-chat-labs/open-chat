@@ -71,7 +71,7 @@
         tokenActions,
         tokenActionsContext,
     } from "@src/logic/wallet/tokenActions";
-    import { walletHistories } from "./walletHistories";
+    import { walletHistories } from "@src/logic/wallet/walletSessionHistories";
     import { hideTokenBalances } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
@@ -81,16 +81,18 @@
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
         addressNetworkName,
-        parseActivityId,
         receiveNetworks,
         searchContacts,
         sendContacts,
-        tokenActivity,
-        wholeTokens,
         walletRecipients,
-        walletToken,
     } from "./wallet.adapter";
-    import { walletCatalogue } from "./walletCatalogue.svelte";
+    import {
+        historyActivity,
+        parseActivityId,
+        wholeTokens,
+        walletToken,
+    } from "@src/logic/wallet/walletTokens";
+    import { walletCatalogue } from "@src/logic/wallet/walletCatalogue.svelte";
     import {
         SwapFailed,
         type SwapQuote as SwapQuoteView,
@@ -201,23 +203,14 @@
 
     // every history loaded so far as activity rows: the token page lists its own, All activity all
     const activity = $derived(
-        histories.all.flatMap(([historyLedger, history]) => {
-            const t = $cryptoLookup.get(historyLedger);
-            if (t === undefined || history.state.kind !== "loaded") return [];
-            return tokenActivity(
-                history.state.history.transactions,
-                t,
-                $exchangeRatesLookupStore.get(t.ledger)?.toUSD,
-                {
-                    me: {
-                        userId: $currentUserStore.userId,
-                        cryptoAccount: $currentUserStore.cryptoAccount,
-                    },
-                    users: $allUsersStore,
-                    saved: $namedAccountsStore,
-                    unknown: $_("unknownUser"),
-                },
-            );
+        historyActivity(histories.all, $cryptoLookup, $exchangeRatesLookupStore, {
+            me: {
+                userId: $currentUserStore.userId,
+                cryptoAccount: $currentUserStore.cryptoAccount,
+            },
+            users: $allUsersStore,
+            saved: $namedAccountsStore,
+            unknown: $_("unknownUser"),
         }),
     );
     // All activity waits while a held token's first page is still coming (or not yet asked for)

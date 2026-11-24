@@ -25,7 +25,7 @@
     import type { PinOperation } from "@src/stores/pinNumber";
     import { getContext, onDestroy, onMount } from "svelte";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
-    import { walletCatalogue } from "./walletCatalogue.svelte";
+    import { walletCatalogue } from "@src/logic/wallet/walletCatalogue.svelte";
 
     let { onClose }: DialogProps<Extract<LocalDialog, { kind: "wallet_settings" }>> = $props();
 

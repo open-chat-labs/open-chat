@@ -18,7 +18,7 @@ const community = (communityId: string): CommunityIdentifier => ({
     communityId,
 });
 
-const signedIn: LocationContext = { signedOut: false, community: community("c1") };
+const signedIn: LocationContext = { signedOut: false, community: community("c1"), wallet: true };
 
 // Where a URL is, resolved by the route table as the router does
 function at(url: string, context: LocationContext = signedIn): NativeLocation {
@@ -99,7 +99,7 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/communities?q=dao")).toBe(
             "communities: communities@/community/c1 > explore@/communities?q=dao",
         );
-        expect(stack("/welcome", { signedOut: false, community: undefined })).toBe(
+        expect(stack("/welcome", { signedOut: false, community: undefined, wallet: true })).toBe(
             "communities: explore@/welcome",
         );
     });
@@ -119,6 +119,18 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/wallet/swap?token=ledger1")).toBe(
             "wallet: wallet@/wallet > token@/wallet/ledger1 > wallet_flow@/wallet/swap?token=ledger1",
         );
+    });
+
+    test("an app store build has no wallet: its URLs open the Chats tab, as an unknown page does", () => {
+        const store: LocationContext = { ...signedIn, wallet: false };
+        for (const url of [
+            "/wallet",
+            "/wallet/ledger1",
+            "/wallet/send?token=ledger1",
+            "/wallet/recipients",
+        ]) {
+            expect(stack(url, store)).toBe(`chats: chats@${url}`);
+        }
     });
 
     test("activity is the Activity tab, the profile the You tab", () => {
@@ -165,7 +177,7 @@ describe("where a URL is in the native tree", () => {
     });
 
     test("the marketing pages are outside the tabs, signed in or out", () => {
-        const signedOut = { signedOut: true, community: undefined };
+        const signedOut = { signedOut: true, community: undefined, wallet: true };
         expect(stack("/home")).toBe("marketing");
         expect(stack("/blog/some-post")).toBe("marketing");
         expect(stack("/home", signedOut)).toBe("marketing");
@@ -173,7 +185,7 @@ describe("where a URL is in the native tree", () => {
     });
 
     test("signed out, anything else is the signed-out start: no guest mode", () => {
-        const signedOut = { signedOut: true, community: undefined };
+        const signedOut = { signedOut: true, community: undefined, wallet: true };
         expect(stack("/", signedOut)).toBe("signed_out");
         expect(stack("/chats", signedOut)).toBe("signed_out");
         expect(stack("/group/g1", signedOut)).toBe("signed_out");
@@ -202,9 +214,9 @@ describe("where a URL is in the native tree", () => {
         };
         expect(root("/community/c2")).not.toEqual(root("/community/c3"));
         expect(root("/community/c2/channel/9")).toEqual(root("/community/c2"));
-        expect(root("/communities", { signedOut: false, community: undefined })).not.toEqual(
-            root("/community/c2"),
-        );
+        expect(
+            root("/communities", { signedOut: false, community: undefined, wallet: true }),
+        ).not.toEqual(root("/community/c2"));
         expect(root("/favourite")).not.toEqual(root("/chats"));
         expect(root("/chats/group/g1")).toEqual(root("/chats"));
     });
@@ -279,7 +291,7 @@ describe("a tab's root before it's opened", () => {
         ["with a community", community("c1")],
         ["without one", undefined],
     ])("is the root the tab opens on (%s)", (_, inCommunity) => {
-        const context: LocationContext = { signedOut: false, community: inCommunity };
+        const context: LocationContext = { signedOut: false, community: inCommunity, wallet: true };
         for (const tab of NATIVE_TABS) {
             const location = at(tabRootUrl(tab, inCommunity), context);
             if (location.area !== "tabs") throw new Error(`${tab}'s root isn't in the tabs`);

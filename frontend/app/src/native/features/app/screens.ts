@@ -3,6 +3,7 @@ import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
 import type { Overlays } from "../../shell/overlays.svelte";
+import { disableWalletFeature } from "@src/utils/features";
 import { ScreenModules } from "./screenModules";
 
 // Which screen shows for each kind of native screen (router/locations.ts), a tab's root or one
@@ -73,8 +74,9 @@ export const screens: Screens = {
     // the Communities tab: a community's preview (N8b), the switcher and its channels (N8a)
     communities: () => import("../communities/CommunityScreen.svelte"),
 
-    // the Wallet tab's root (N10a)
-    wallet: undefined,
+    // the Wallet tab's root (N10a); none in an app store build, which never routes there
+    // (locations.ts), so its chunk isn't built into one
+    wallet: disableWalletFeature ? undefined : () => import("../wallet/WalletScreen.svelte"),
 
     // the Activity tab (N13)
     activity: undefined,
@@ -97,8 +99,8 @@ export const screens: Screens = {
     // an Explore shelf's View all (N8b)
     explore_list: () => import("../explore/ExploreListScreen.svelte"),
 
-    // a token's page (N10a)
-    token: undefined,
+    // a token's page (N10a); none in an app store build, as the root
+    token: disableWalletFeature ? undefined : () => import("../wallet/TokenScreen.svelte"),
 
     // Send, Receive and Swap (N10b)
     wallet_flow: undefined,

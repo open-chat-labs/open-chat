@@ -148,6 +148,8 @@
             signedOut: entry !== "app",
             // what the tab shows is the stacks' own state, not something to recompute on
             community: untrack(communityShown) ?? defaultCommunityId,
+            // an app store build has no wallet to go to
+            wallet: !disableWalletFeature,
         }),
     );
 

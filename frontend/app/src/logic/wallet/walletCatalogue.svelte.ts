@@ -5,9 +5,9 @@ import {
     walletConfigStore,
 } from "@client";
 import type { WalletToken } from "@openchat/ui/src/lib/types";
-import { tokenActionsContext } from "@src/logic/wallet/tokenActions";
+import { tokenActionsContext } from "./tokenActions";
 import { createSubscriber } from "svelte/reactivity";
-import { walletTokens } from "./wallet.adapter";
+import { walletTokens } from "./walletTokens";
 
 /**
  * The wallet's catalogue as both wallet screens list it (walletTokens over cryptoTokensSorted),

@@ -6,16 +6,9 @@
      Menus: right-click opens at the cursor, the kebab anchors under itself, a touch long-press anchors to the row.
      Veil, hidden tokens and settings can be owned by the host (the props) or kept locally (no handler passed). -->
 <script lang="ts" module>
-  /** The parts of the wallet settings this panel reads. */
-  export interface WalletPanelSettings {
-    currency?: string;
-    /** false = only `tokens` are listed; otherwise holdings worth at least `minBalance` USD, the rest folded into
-     *  "small balances" (the minimum never hides a supported token). */
-    autoConfig?: boolean;
-    minBalance?: string;
-    /** The manual list: token ids (`id`, else the symbol). */
-    tokens?: string[];
-  }
+  // the parts of the wallet settings this panel reads: lib/types, which the native wallet reads too
+  import type { WalletPanelSettings as Settings } from '../../lib/types';
+  export type WalletPanelSettings = Settings;
 </script>
 
 <script lang="ts">
@@ -30,25 +23,25 @@
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import { getToastHost } from '../../lib/toasts.svelte';
   import { getI18n, useT } from '../../lib/i18n';
-  import { parseAmount } from '../../lib/amount';
+  import {
+    currencyRates,
+    displayCurrencies,
+    formatHolding,
+    formatMoney,
+    formatPrice,
+    formatSmallHolding,
+    VEILED,
+    walletHoldings,
+  } from '../../lib/wallet';
   const i18n = getI18n(); // number formatting follows the host locale
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const OTHER = 'transparent';
   const UNDO_MS = 6000;
-  const DOTS = '••••';
-  // display currencies; BTC / ETH / ICP are offered when the host's tokens price them (USD per unit)
-  const CURRENCIES = ['USD', 'BTC', 'ETH', 'ICP'];
-  const PREFIX: Record<string, string> = { USD: '$', BTC: '₿', ETH: 'Ξ', ICP: '' };
+  const DOTS = VEILED;
 
-  const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
-  // under a dollar keeps four places; single and double digits keep up to four,
-  // trimmed — so ICP reads $5.481 rather than $5.48
-  const price = (v: number) => {
-    if (v >= 100) return `$${num(v, 2)}`;
-    if (v < 1) return `$${num(v, 4)}`;
-    return `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
-  };
+  // the figures are lib/wallet's, which the native wallet shows too
+  const price = (v: number) => formatPrice(v, i18n.locale);
 
   type Rect = { left: number; right: number; top: number; bottom: number };
 
@@ -175,15 +168,8 @@
   );
 
   // USD per unit of each display currency, from the tokens' own prices
-  const rates = $derived.by(() => {
-    const out: Record<string, number> = { USD: 1 };
-    for (const c of CURRENCIES.slice(1)) {
-      const p = hostRates ? hostRates[c] : tokens.find((tk) => tk.symbol === c)?.price;
-      if (p && p > 0) out[c] = p;
-    }
-    return out;
-  });
-  const currencies = $derived(CURRENCIES.filter((c) => rates[c]));
+  const rates = $derived(currencyRates(tokens, hostRates));
+  const currencies = $derived(displayCurrencies(rates));
 
   async function refresh(id?: string) {
     if (!onRefresh || spinning) return;
@@ -197,34 +183,17 @@
     }
   }
 
-  function money(v: number) {
-    const rate = rates[currency];
-    // a currency the tokens can't price falls back to USD
-    if (!rate) return `$${num(v, 2)}`;
-    const c = v / rate;
-    if (currency === 'USD') return `$${num(c, 2)}`;
-    return PREFIX[currency] + num(c, c < 1 ? 4 : 2) + (currency === 'ICP' ? ' ICP' : '');
-  }
+  // a currency the tokens can't price falls back to USD
+  const money = (v: number) => formatMoney(v, currency, rates, i18n.locale);
 
-  // wallet settings decide which tokens exist here at all: either a minimum
-  // dollar value (automatic) or an explicit list (manual)
-  const floor = $derived(manual ? 0 : parseAmount(settings.minBalance || ''));
-  // the tokens you own, not hidden from the list
-  const owned = $derived(
-    tokens
-      .filter((t) => t.held > 0)
-      .filter((t) => !hidden.includes(idOf(t)))
-      .map((t) => ({ ...t, value: t.price * t.held })),
-  );
-  const held = $derived.by(() => {
-    const allow = manual && settings.tokens ? settings.tokens : null;
-    return owned.filter((t) => (allow ? allow.includes(idOf(t)) : t.value >= floor));
-  });
-  // owned, but under the minimum value: folded into one row instead of disappearing
-  const small = $derived(manual ? [] : owned.filter((t) => t.value < floor));
-  const smallTotal = $derived(small.reduce((sum, t) => sum + t.value, 0));
-  // what's listed counts towards the total, small balances included
-  const total = $derived([...held, ...small].reduce((sum, t) => sum + t.value, 0));
+  // wallet settings decide which tokens exist here at all: either a minimum dollar value (automatic) or an explicit
+  // list (manual); what's under the minimum is folded into small balances, and the total counts both (lib/wallet)
+  const holdings = $derived(walletHoldings(tokens, settings, hidden));
+  const floor = $derived(holdings.floor);
+  const held = $derived(holdings.held);
+  const small = $derived(holdings.small);
+  const smallTotal = $derived(holdings.smallTotal);
+  const total = $derived(holdings.total);
   // nothing owned yet: the supported tokens lead, Receive is the primary action
   // not while the balances are still loading: an empty wallet's layout would flash before them
   const empty = $derived(!loading && !balancesLoading && tokens.every((t) => !(t.held > 0)));
@@ -499,7 +468,7 @@
           <div class="token-body">
             <div class="token-line"><span class="symbol">{tk.symbol}</span><span class="value">{veiled ? DOTS : money(tk.value)}</span></div>
             <div class="token-line"
-              ><span class="price">{price(tk.price)}</span><span class="holdings">{veiled ? DOTS : num(tk.held, tk.held < 1 ? 4 : tk.held % 1 === 0 ? 0 : 2)}</span></div
+              ><span class="price">{price(tk.price)}</span><span class="holdings">{veiled ? DOTS : formatHolding(tk.held, i18n.locale)}</span></div
             >
             <ShareBar {share} {veiled} gradient={tk.grad} />
           </div>
@@ -549,7 +518,7 @@
               <div class="small-row" onclick={() => onToken?.(idOf(tk))} role="button" tabindex="0">
                 <TokenAvatar size={24} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} logo={tk.logo} />
                 <span class="small-symbol">{tk.symbol}</span>
-                <span class="small-holdings">{veiled ? DOTS : num(tk.held, tk.held < 1 ? 4 : 2)}</span>
+                <span class="small-holdings">{veiled ? DOTS : formatSmallHolding(tk.held, i18n.locale)}</span>
                 <span class="small-value">{veiled ? DOTS : money(tk.value)}</span>
               </div>
             {/each}

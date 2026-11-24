@@ -354,6 +354,40 @@ export interface ComposerContext {
   text?: string;
 }
 
+/** The parts of the wallet settings WalletPanel (and the native wallet, `walletHoldings`) reads. */
+export interface WalletPanelSettings {
+  currency?: string;
+  /** false = only `tokens` are listed; otherwise holdings worth at least `minBalance` USD, the rest folded into
+   *  "small balances" (the minimum never hides a supported token). */
+  autoConfig?: boolean;
+  minBalance?: string;
+  /** The manual list: token ids (`id`, else the symbol). */
+  tokens?: string[];
+}
+
+/** One transaction in the wallet's activity (rows are sorted by timestamp, newest first). */
+export interface WalletActivity {
+  id: string;
+  symbol: string;
+  /** The token's id (WalletToken `id`) when tokens share a symbol; defaults to the symbol. */
+  token?: string;
+  /** `own`: between two of your own wallets, neither in nor out (listed under All only, unsigned). */
+  kind: 'send' | 'receive' | 'swap' | 'own';
+  /** "Received from Lucy Linden", "Swapped to USDT" …; without it, worded from `kind` and `party`. */
+  title?: string;
+  /** The other side ("@lucy", a saved name, an account), for the worded title. */
+  party?: string;
+  /** ms epoch */
+  timestamp: number;
+  /** Shown after the time: "direct chat", "in The Awesome Group" … */
+  context?: string;
+  /** Whole tokens, unsigned. */
+  amount: number;
+  /** USD value. */
+  fiat: number;
+  status?: 'pending' | 'sent' | 'failed';
+}
+
 /** Something a wallet token's menu or page offers. */
 export type WalletTokenAction = 'send' | 'receive' | 'swap' | 'refresh' | 'hide';
 

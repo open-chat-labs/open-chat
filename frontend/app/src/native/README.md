@@ -96,6 +96,10 @@ native/
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
                      someone's signed out
+    wallet/          the Wallet tab (N10a): its root (WalletScreen: the total and its "today",
+                     the tokens, Small balances, the Supported tokens sheet) and a token's page
+                     (TokenScreen, /wallet/:ledger); none in an app store build (screens.ts,
+                     locations.ts' `wallet`)
     you/             the You tab (N12): its root, Edit profile, Diamond, and the settings pages
                      (SettingsScreen and settings/: Appearance, Notifications, Chats, Communities,
                      Storage, Bots, Account, CHIT's) and Delete account's steps, pushed locally
@@ -133,7 +137,11 @@ setting the details' switch and the conversation menu's submenu both read and sa
 `disappearingLengthsStore`), a group's settings (`logic/groupOrCommunity`'s
 UpdateGroupState, the old pages' and the web's draft, with `chatManageAccess` for what the
 viewer's role can change; the gates' values in `logic/access/gateValues`, the web's AccessGates'
-too), and the theme the web and Welcome's menu keep
+too), the wallet (the library's `lib/wallet`: the holdings, the display currency, the token
+page's buttons and the activity's days, which WalletPanel and WalletMain use too; the tokens and
+their activity in `logic/wallet/walletTokens`, the catalogue, the session's histories and the
+balances' first refresh beside it, all the web wallet's; the total's "today" in
+`logic/wallet/totalSnapshots`), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link

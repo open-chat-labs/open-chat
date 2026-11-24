@@ -1,5 +1,5 @@
 import { currentUserIdStore, type OpenChat } from "@client";
-import { WalletHistories } from "@src/logic/wallet/walletHistories.svelte";
+import { WalletHistories } from "./walletHistories.svelte";
 
 let session: { userId: string; histories: WalletHistories } | undefined;
 
