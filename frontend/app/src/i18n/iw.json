@@ -590,7 +590,6 @@
     },
     "chatUnfrozenBy": "הצ'אט בוטל על ידי {unfrozenBy}",
     "chatWith": "צ'אט עם {username}",
-    "checkBackLater": "בבקשה נסה שוב מאוחר יותר.",
     "chitBalance": "איזון CHIT",
     "chitReferralRewardReason": {
         "diamond": "משתמש שהפנית שדרג ל-Diamond",
@@ -1401,7 +1400,6 @@
     "historyVisible": "היסטוריית צ'אט גלויה",
     "home": "בית",
     "homepage": "דף הבית",
-    "hotGroups": "קבוצות לוהטות",
     "hours": "שעה (ות",
     "human": {
         "already": "מזל טוב! כבר אימתת שאתה אדם אמיתי וייחודי!",
@@ -2747,7 +2745,6 @@
     "noChannelSelected": "לא נבחר ערוץ כרגע",
     "noChatsAvailable": "אין צ'אטים זמינים!",
     "noChatSelected": "לא נבחר צ'אט כרגע",
-    "noGroupsFound": "לא נמצאו קבוצות 😭",
     "noMatchingTokens": "אין אסימונים תואמים",
     "noThanks": "לא תודה",
     "notificationsDisabled": "התראות מושבתות",
@@ -3391,7 +3388,6 @@
     "selectAChannel": "בחר ערוץ מהרשימה או חפש ערוצים נוספים בקהילה זו.",
     "selectAChat": "חפש חבר, צור קבוצה חדשה או בחר צ'אט.",
     "selectAFavourite": "אתה יכול להוסיף צ'אטים ישירים, צ'אטים קבוצתיים או ערוצים קהילתיים למועדפים שלך ותראה אותם כאן.",
-    "selectAGroup": "בחר קבוצה לתצוגה מקדימה או להצטרף אליה.",
     "selectAGroupChat": "בחר קבוצה מהרשימה או חפש קבוצה גלובלית להצטרף אליה.",
     "selectAUser": "בחר משתמש מהרשימה או חפש משתמש לצ'אט איתו.",
     "selectCommunityTheme": "בחר נושא קהילה",

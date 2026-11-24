@@ -590,7 +590,6 @@
     },
     "chatUnfrozenBy": "Czat odblokowany przez {unfrozenBy}",
     "chatWith": "Porozmawiaj z {username}",
-    "checkBackLater": "Spróbuj ponownie później. ",
     "chitBalance": "Saldo CHIT",
     "chitReferralRewardReason": {
         "diamond": "Polecony przez Ciebie użytkownik uzyskał status Diamond",
@@ -1401,7 +1400,6 @@
     "historyVisible": "widoczna historia czatów",
     "home": "dom",
     "homepage": "Strona główna",
-    "hotGroups": "Gorące grupy",
     "hours": "godziny",
     "human": {
         "already": "Gratulacje! Już zweryfikowałeś, że jesteś prawdziwą, wyjątkową osobą!",
@@ -2747,7 +2745,6 @@
     "noChannelSelected": "Aktualnie nie wybrano żadnego kanału",
     "noChatsAvailable": "Brak dostępnych czatów!",
     "noChatSelected": "Obecnie nie wybrano żadnego czatu",
-    "noGroupsFound": "Nie znaleziono żadnych grup 😭",
     "noMatchingTokens": "Brak pasujących tokenów",
     "noThanks": "Nie, dziękuję",
     "notificationsDisabled": "Powiadomienia wyłączone",
@@ -3391,7 +3388,6 @@
     "selectAChannel": "Wybierz kanał z listy lub wyszukaj więcej kanałów w tej społeczności.",
     "selectAChat": "Wyszukaj znajomego, utwórz nową grupę lub wybierz czat.",
     "selectAFavourite": "Możesz dodać czaty bezpośrednie, czaty grupowe lub kanały społecznościowe do swoich ulubionych, a zobaczysz je tutaj.",
-    "selectAGroup": "Wybierz grupę, której podgląd chcesz wyświetlić lub do której chcesz dołączyć.",
     "selectAGroupChat": "Wybierz grupę z listy lub wyszukaj grupę globalną, do której chcesz dołączyć.",
     "selectAUser": "Wybierz użytkownika z listy lub wyszukaj użytkownika, z którym chcesz porozmawiać.",
     "selectCommunityTheme": "Wybierz motyw społeczności",
