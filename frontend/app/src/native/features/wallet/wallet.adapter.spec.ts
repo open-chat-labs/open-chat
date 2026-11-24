@@ -181,6 +181,20 @@ describe("a token's page", () => {
         expect(tokenPage(nothingListed, "chat-ledger")?.share?.label).toBe("80.0%");
     });
 
+    test("the menu offers exactly the flows whose buttons are enabled, held or not, swappable or not", () => {
+        const cases: WalletToken[] = [
+            tok("ICP", 10, 5),
+            tok("ICP", 10, 5, { actions: ["send", "receive", "refresh"] }),
+            tok("ICP", 0, 5),
+            tok("ICP", 0, 5, { actions: ["send", "receive", "refresh"] }),
+        ];
+        for (const t of cases) {
+            const page = tokenPage(figures([t]), "icp-ledger");
+            const enabled = page?.actions.filter((a) => !a.disabled).map((a) => a.flow);
+            expect([...(page?.menu ?? [])].sort()).toEqual([...(enabled ?? [])].sort());
+        }
+    });
+
     test("no page for a token the catalogue doesn't have", () => {
         expect(tokenPage(figures([]), "nope")).toBeUndefined();
     });

@@ -740,9 +740,12 @@
         color: var(--ink-4);
     }
 
+    // the one divider above Supported tokens, under the tokens or Small balances (notes §3.9): the
+    // prototype's --line-1 was too faint to see on a phone, beside the share bars' tracks
     .divider {
+        flex: none;
         height: 1px;
-        margin: 2px var(--space-4);
-        background: var(--line-1);
+        margin: var(--space-6) var(--space-4);
+        background: var(--line-2);
     }
 </style>

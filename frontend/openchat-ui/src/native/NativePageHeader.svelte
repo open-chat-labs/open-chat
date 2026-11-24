@@ -188,6 +188,12 @@
     &:is(button) {
       cursor: pointer;
     }
+
+    // a tab root's title row is a touch target tall with or without buttons beside it (the
+    // prototype's rows all carry its icons' 44/48px), so every root's title sits at the same height
+    .lg & {
+      min-height: var(--touch-target);
+    }
   }
 
   .text {

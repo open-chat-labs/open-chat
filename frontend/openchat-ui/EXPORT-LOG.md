@@ -1189,4 +1189,5 @@
 - `lib/types`: `WalletPanelSettings` (was `WalletPanel`'s) and `WalletActivity` (was `WalletMain`'s) moved here; both components still export them under the same names.
 - `lib/avatarGradients` (new): `AVATAR_GRADIENTS` moved out of `Avatar`'s module script, so a plain module can read it (the app's shared wallet logic colours a token by its ledger's swatch); `Avatar` still exports it.
 - `NativePageHeader`: `titleTag` (optional), a pill right after the title (a token page's price), as `PageHeader`'s, in the native header's sizes (22px, mono 12px, `--overlay-2`, `--ink-3`). Without it, the title is as before. `meta.json` (`titleTag`).
+- `NativePageHeader` (2026-11-24, from testing on Android): `size="lg"`'s title row is at least a touch target tall (`--touch-target`, 44/48px), with or without buttons beside it, as every row in the prototype carries its icons. A tab root without header buttons (the Wallet tab) had a 24px row, its title 12px higher than Chats' and crowding what's under it; now every root's title sits at the same height. Roots with buttons are unchanged. No props changed.
 - Not in the design export (the app's `GAPS.md`, "Native wallet").
