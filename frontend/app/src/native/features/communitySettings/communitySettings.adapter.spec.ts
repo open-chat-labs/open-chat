@@ -18,6 +18,8 @@ import {
     communityRoleOf,
     communityRoleOptions,
     communitySettingsReady,
+    userGroupPeople,
+    userGroupRows,
 } from "./communitySettings.adapter";
 
 const t = (key: string, values?: Record<string, string | number>) =>
@@ -120,5 +122,42 @@ describe("a community's permissions", () => {
             changeRoles: ROLE_ADMIN,
         };
         expect(changedCommunityPermissions(permissions)).toBe(2);
+    });
+});
+
+describe("user groups", () => {
+    test("the page's rows: as they're mentioned, with their size, by name", () => {
+        const rows = userGroupRows(
+            [
+                { id: 2, name: "mods", members: new Set(["a", "b"]) },
+                { id: 1, name: "devs", members: new Set(["a"]) },
+            ],
+            t,
+        );
+        expect(rows).toEqual([
+            {
+                id: 1,
+                mention: "@devs",
+                members: 'native.communitySettings.userGroups.members {"count":1}',
+            },
+            {
+                id: 2,
+                mention: "@mods",
+                members: 'native.communitySettings.userGroups.members {"count":2}',
+            },
+        ]);
+    });
+
+    test("the people offered: the members matching, by name", () => {
+        const members = [
+            { userId: "b", username: "zed", displayName: "Bea" },
+            { userId: "a", username: "amy" },
+            { userId: "c", username: "cat" },
+        ];
+        expect(userGroupPeople(members, () => true).map((m) => m.userId)).toEqual(["a", "b", "c"]);
+        expect(userGroupPeople(members, (m) => m.username !== "cat").map((m) => m.userId)).toEqual([
+            "a",
+            "b",
+        ]);
     });
 });

@@ -99,7 +99,8 @@ export type GateEntriesStep = "list" | "pick" | "value";
  */
 export type LocalScreen =
     | { kind: "new_chat" }
-    | { kind: "new_group" }
+    // Create group, or with `channel`, a new channel in that community (N7, its Channels page)
+    | { kind: "new_group"; channel?: CommunityIdentifier }
     | { kind: "chit" }
     | { kind: "edit_profile" }
     | { kind: "settings"; page: SettingsPage }
@@ -133,6 +134,8 @@ export type LocalScreen =
     | { kind: "community_search"; communityId: CommunityIdentifier }
     // a community's settings page, from its details' Manage and Edit, and its page's menu (N7)
     | { kind: "community_settings"; communityId: CommunityIdentifier; page: CommunitySettingsPage }
+    // a community's user group, made or changed, from its User groups page (N7); a new one has no id
+    | { kind: "user_group"; communityId: CommunityIdentifier; userGroupId: number | undefined }
     // Create community, from the Communities switcher's sheet (N8b)
     | { kind: "new_community" };
 
@@ -146,6 +149,8 @@ export function localKey(screen: LocalScreen): string {
             return `${screen.kind}:${screen.page}`;
         case "gate_entries":
             return `${screen.kind}:${screen.gate}:${screen.step}`;
+        case "user_group":
+            return `user_group:${screen.userGroupId ?? "new"}`;
         default:
             return screen.kind;
     }

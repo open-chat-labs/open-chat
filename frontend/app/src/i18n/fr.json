@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "Créer des chaînes privées",
                     "manageUserGroups": "Gérer les groupes d'utilisateurs"
                 }
+            },
+            "channels": {
+                "yours": "Vos chaînes",
+                "note": "Touchez une chaîne pour la modifier."
+            },
+            "userGroups": {
+                "intro": "Mentionnez tout un groupe de membres d'un coup avec son @nom.",
+                "none": "Pas encore de groupe d'utilisateurs.",
+                "new": "Nouveau groupe d'utilisateurs",
+                "edit": "Modifier le groupe d'utilisateurs",
+                "members": "{count, plural, one {# membre} other {# membres}}",
+                "namePlaceholder": "nom",
+                "nameHint": "Les membres mentionnent le groupe par son nom.",
+                "mention": "Mentionné comme {mention}",
+                "nameTaken": "Un autre groupe d'utilisateurs porte ce nom.",
+                "noMembers": "Personne pour l'instant",
+                "search": "Rechercher parmi les membres de la communauté",
+                "create": "Créer le groupe d'utilisateurs",
+                "delete": "Supprimer le groupe d'utilisateurs",
+                "deleteTitle": "Supprimer ce groupe d'utilisateurs ?",
+                "deleteMessage": "{name} disparaîtra et ne pourra plus être mentionné.",
+                "deleted": "{name} supprimé",
+                "confirmDelete": "Supprimer",
+                "people": "Membres de la communauté"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "Création…",
                 "done": "Terminé",
                 "discardTitle": "Abandonner ce groupe ?",
-                "discardMessage": "Ce que tu as saisi ne sera pas conservé."
+                "discardMessage": "Ce que tu as saisi ne sera pas conservé.",
+                "createChannel": "Créer la chaîne",
+                "discardChannelTitle": "Abandonner cette chaîne ?"
             }
         },
         "activity": {

@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "Private Kanäle erstellen",
                     "manageUserGroups": "Benutzergruppen verwalten"
                 }
+            },
+            "channels": {
+                "yours": "Deine Kanäle",
+                "note": "Tippe auf einen Kanal, um ihn zu bearbeiten."
+            },
+            "userGroups": {
+                "intro": "Erwähne eine ganze Gruppe von Mitgliedern auf einmal mit ihrem @Namen.",
+                "none": "Noch keine Benutzergruppen.",
+                "new": "Neue Benutzergruppe",
+                "edit": "Benutzergruppe bearbeiten",
+                "members": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
+                "namePlaceholder": "Name",
+                "nameHint": "Mitglieder erwähnen die Gruppe mit ihrem Namen.",
+                "mention": "Erwähnt als {mention}",
+                "nameTaken": "Eine andere Benutzergruppe hat diesen Namen.",
+                "noMembers": "Noch niemand darin",
+                "search": "Mitglieder der Community suchen",
+                "create": "Benutzergruppe erstellen",
+                "delete": "Benutzergruppe löschen",
+                "deleteTitle": "Diese Benutzergruppe löschen?",
+                "deleteMessage": "{name} wird gelöscht und kann nicht mehr erwähnt werden.",
+                "deleted": "{name} gelöscht",
+                "confirmDelete": "Löschen",
+                "people": "Community-Mitglieder"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "Wird erstellt…",
                 "done": "Fertig",
                 "discardTitle": "Diese Gruppe verwerfen?",
-                "discardMessage": "Deine Eingaben gehen verloren."
+                "discardMessage": "Deine Eingaben gehen verloren.",
+                "createChannel": "Kanal erstellen",
+                "discardChannelTitle": "Diesen Kanal verwerfen?"
             }
         },
         "activity": {

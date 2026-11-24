@@ -2564,6 +2564,30 @@
                     "createPrivateChannel": "Create private channels",
                     "manageUserGroups": "Manage user groups"
                 }
+            },
+            "channels": {
+                "yours": "Your channels",
+                "note": "Tap a channel to edit it."
+            },
+            "userGroups": {
+                "intro": "Mention a whole group of members at once by its @name.",
+                "none": "No user groups yet.",
+                "new": "New user group",
+                "edit": "Edit user group",
+                "members": "{count, plural, one {# member} other {# members}}",
+                "namePlaceholder": "name",
+                "nameHint": "Members mention the group by its name.",
+                "mention": "Mentioned as {mention}",
+                "nameTaken": "Another user group has this name.",
+                "noMembers": "No one in it yet",
+                "search": "Search the community's members",
+                "create": "Create user group",
+                "delete": "Delete user group",
+                "deleteTitle": "Delete this user group?",
+                "deleteMessage": "{name} goes, and can't be mentioned any more.",
+                "deleted": "Deleted {name}",
+                "confirmDelete": "Delete",
+                "people": "Community members"
             }
         },
         "explore": {
@@ -2808,7 +2832,9 @@
                 "creating": "Creating…",
                 "done": "Done",
                 "discardTitle": "Discard this group?",
-                "discardMessage": "What you've entered won't be kept."
+                "discardMessage": "What you've entered won't be kept.",
+                "createChannel": "Create channel",
+                "discardChannelTitle": "Discard this channel?"
             }
         },
         "activity": {

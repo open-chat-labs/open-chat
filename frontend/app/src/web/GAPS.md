@@ -1553,7 +1553,8 @@ design export needs. Each entry says where it came up.
   "Community details" → Manage, on 11's pages; `src/native/features/communitySettings`). Built,
   pushed without a URL (the local `community_settings` screen) from the details' Manage rows, the
   details' cover's Edit (owners and admins) and the page's kebab (Invite people): Edit community,
-  Invite and share, Access gates, Rules and Permissions, each its own draft on the shared
+  Channels, User groups, Invite and share, Access gates, Rules and Permissions; the last four and
+  Edit community each its own draft on the shared
   `UpdateCommunityState` (made from the community and its rules as the page opens; Rules waits for
   them) in the group pages' frame (`SettingsEditorFrame`: Save, "Discard changes?", the save's
   questions), saved through the client's `updateCommunity`, back to the details with "Changes
@@ -1596,14 +1597,41 @@ design export needs. Each entry says where it came up.
     or thread permissions. No note under the Members card (the design has none; 2026-11-25).
   - **Not built yet** (placeholders): Channels and User groups (a second PR of this issue), Bots
     and webhooks and Stats (under-specified: "Native group settings").
+    `stores/community`), and Reset to defaults. A community has no message or thread permissions.
+  - **Channels** (second PR): the user's channels in the community (its `channels`, as the
+    details' card lists them), each opening its Edit channel (the group settings page, which now
+    finds a channel that isn't selected among the user's chats, `allChatsStore`; its other pages
+    still need it selected, for its rules), and New channel for someone who may make one
+    (`communityMenuPermissions`' canCreateChannel): Create group's screen for a channel
+    (`new_group` with `channel`), its Details step alone (name, photo, description, Public
+    channel, Message history, Disappearing messages, and the gates, rules and permissions pages),
+    created in the community and opened. People are added afterwards from its Invite people (the
+    plan's Channels page has "add" and no more; the web's dialog picks members as it creates).
+    **Not built: the reorder by the drag grip** the plan has: a community's channels have no order
+    the backend keeps (the web and the old UIs have none either). Open question for the user.
+    Channels the user isn't in aren't listed (the community page lists those it can read).
+  - **User groups** (second PR): the community's groups as they're mentioned ("@moderators") with
+    their size, by name, each opening its page (the local `user_group` screen), and New user
+    group, for someone who may manage them (`canManageUserGroups`). A group's page: its name
+    (the old editors' rules, now `logic/communities/userGroups`: 3 to 25 characters, spaces
+    become underscores, not another group's name; the old trees keep their own copies, unchanged),
+    the people in it as chips, a search of the community's members (one holding only some finds
+    the rest, `findMembers`, as the old editors did) as checkbox rows, a pinned Save (the client's
+    `saveUserGroup`) and, for one that's there, Delete, asked first in a small alert over the page
+    (`deleteUserGroup`). Leaving with changes asks "Discard changes?". Someone who may not manage
+    them sees a group read only. TODO(design): the plan has no layout for the page.
+  - **Not built yet** (placeholders): Bots and webhooks and Stats (under-specified: "Native group
+    settings").
   - **Checked** in a 390×844 touch browser on the native tree against the local replica, as
     seedcommunity1 in Seed Private Lab (its owner): the description saved and shown in About, then
     put back; the language sheet; a permission saved (Invite people → Everyone) and reset; the
     "Keep it civil" rules saved and shown in the details, then off with the seed's default text
     put back; a Diamond gate saved and shown, then taken off; the invite link switched on (QR,
     Copy, Share, Reset) and off; Invite people from the kebab; a channel's Edit (the shared frame)
-    with Discard changes. Not checked: iOS, the dark theme, the Android emulator, the banner and
-    photo upload.
+    with Discard changes. Second PR: the Channels page, a channel's Edit from it (not selected),
+    New channel ("n7 temp", private) created and opened, then deleted from its details; a user
+    group ("n7 testers", the owner in it) created, shown as @n7_testers, opened and deleted.
+    Not checked: iOS, the dark theme, the Android emulator, the banner and photo upload.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a

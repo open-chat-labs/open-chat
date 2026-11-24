@@ -110,8 +110,10 @@ native/
                      Permissions (CommunityPermissionsPage), each on its own draft
                      (CommunitySettingsEditor: the shared UpdateCommunityState, in
                      groupSettings' SettingsEditorFrame); Invite and share is details'
-                     InvitePeople for the community; Channels, User groups, Bots and webhooks
-                     and Stats are still placeholders
+                     InvitePeople for the community; Channels (ChannelsPage: Edit channel is
+                     group_settings, New channel is new_group with `channel`) and User groups
+                     (UserGroupsPage, and a group's UserGroupScreen, user_group); Bots and
+                     webhooks and Stats are still placeholders
     threads/         the followed threads of a scope (`?threads`, ThreadsScreen); a thread itself
                      is the conversation's screen for it (`thread`: ThreadPanel around its list
                      and composer)

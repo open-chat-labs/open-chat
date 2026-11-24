@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "Tạo kênh riêng tư",
                     "manageUserGroups": "Quản lý nhóm người dùng"
                 }
+            },
+            "channels": {
+                "yours": "Kênh của bạn",
+                "note": "Chạm vào một kênh để chỉnh sửa."
+            },
+            "userGroups": {
+                "intro": "Nhắc đến cả một nhóm thành viên cùng lúc bằng @tên của nhóm.",
+                "none": "Chưa có nhóm người dùng nào.",
+                "new": "Nhóm người dùng mới",
+                "edit": "Chỉnh sửa nhóm người dùng",
+                "members": "{count, plural, other {# thành viên}}",
+                "namePlaceholder": "tên",
+                "nameHint": "Thành viên nhắc đến nhóm bằng tên của nhóm.",
+                "mention": "Được nhắc đến là {mention}",
+                "nameTaken": "Đã có nhóm người dùng khác dùng tên này.",
+                "noMembers": "Chưa có ai",
+                "search": "Tìm thành viên trong cộng đồng",
+                "create": "Tạo nhóm người dùng",
+                "delete": "Xóa nhóm người dùng",
+                "deleteTitle": "Xóa nhóm người dùng này?",
+                "deleteMessage": "{name} sẽ bị xóa và không thể được nhắc đến nữa.",
+                "deleted": "Đã xóa {name}",
+                "confirmDelete": "Xóa",
+                "people": "Thành viên cộng đồng"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "Đang tạo…",
                 "done": "Xong",
                 "discardTitle": "Bỏ nhóm này?",
-                "discardMessage": "Những gì bạn đã nhập sẽ không được giữ."
+                "discardMessage": "Những gì bạn đã nhập sẽ không được giữ.",
+                "createChannel": "Tạo kênh",
+                "discardChannelTitle": "Bỏ kênh này?"
             }
         },
         "activity": {

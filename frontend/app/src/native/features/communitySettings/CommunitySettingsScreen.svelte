@@ -1,11 +1,11 @@
 <!-- A community's settings page (native plan 12 "Community details" → Manage, on plan 11's pages),
      pushed without a URL from its details (Manage's rows, the cover's Edit) and its page's menu
-     (Invite people): Edit community, Invite and share (Invite people for the community), Access
-     gates, Rules and Permissions (CommunitySettingsEditor, mounted once the community is in, and
-     for Rules its rules). Channels, User groups, Bots and webhooks and Stats are still placeholders
-     (GAPS.md, "Native community settings"). The community is the user's (communitiesStore) and the
-     selected one, whose rules and members the pages read; its rules are held while the screen
-     slides out once it isn't selected. -->
+     (Invite people): Edit community, Channels (ChannelsPage), User groups (UserGroupsPage), Invite
+     and share (Invite people for the community), Access gates, Rules and Permissions
+     (CommunitySettingsEditor, mounted once the community is in, and for Rules its rules). Bots and
+     webhooks and Stats are still placeholders (GAPS.md, "Native community settings"). The
+     community is the user's (communitiesStore) and the selected one, whose rules, members and user
+     groups the pages read; its rules are held while the screen slides out once it isn't selected. -->
 <script lang="ts">
     import {
         anonUserStore,
@@ -24,8 +24,10 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
     import InvitePeople from "../details/InvitePeople.svelte";
+    import ChannelsPage from "./ChannelsPage.svelte";
     import CommunityInfoPage from "./CommunityInfoPage.svelte";
     import CommunitySettingsEditor from "./CommunitySettingsEditor.svelte";
+    import UserGroupsPage from "./UserGroupsPage.svelte";
     import { communityPageTitle, communitySettingsReady } from "./communitySettings.adapter";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "community_settings" }>> =
@@ -55,7 +57,7 @@
 <div class="community-settings">
     {#if readOnly && community !== undefined && (screen.page === "channels" || screen.page === "rules" || screen.page === "gates")}
         <CommunityInfoPage {community} {rules} page={screen.page} {context} />
-    {:else if screen.page === "channels" || screen.page === "user_groups" || screen.page === "bots" || screen.page === "stats"}
+    {:else if screen.page === "bots" || screen.page === "stats"}
         <!-- not built yet (GAPS.md, "Native community settings") -->
         <Placeholder
             title={communityPageTitle(screen.page, t)}
@@ -65,6 +67,14 @@
             links={[]} />
     {:else if screen.page === "invite"}
         <InvitePeople target={community} {context} />
+    {:else if screen.page === "channels" || screen.page === "user_groups"}
+        {#if community === undefined}
+            <NativePageHeader title="" onBack={context.back} />
+        {:else if screen.page === "channels"}
+            <ChannelsPage {community} {context} />
+        {:else}
+            <UserGroupsPage {community} {context} />
+        {/if}
     {:else if ready && community !== undefined}
         <CommunitySettingsEditor {community} {rules} page={screen.page} {context} />
     {:else}

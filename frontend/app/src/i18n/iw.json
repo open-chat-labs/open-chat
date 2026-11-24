@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "יצירת ערוצים פרטיים",
                     "manageUserGroups": "ניהול קבוצות משתמשים"
                 }
+            },
+            "channels": {
+                "yours": "הערוצים שלך",
+                "note": "הקש על ערוץ כדי לערוך אותו."
+            },
+            "userGroups": {
+                "intro": "אזכור קבוצה שלמה של חברים בבת אחת לפי ה‑@שם שלה.",
+                "none": "אין עדיין קבוצות משתמשים.",
+                "new": "קבוצת משתמשים חדשה",
+                "edit": "עריכת קבוצת משתמשים",
+                "members": "{count, plural, one {חבר אחד} other {# חברים}}",
+                "namePlaceholder": "שם",
+                "nameHint": "החברים מזכירים את הקבוצה לפי שמה.",
+                "mention": "מוזכרת כ‑{mention}",
+                "nameTaken": "לקבוצת משתמשים אחרת יש את השם הזה.",
+                "noMembers": "אין בה עדיין אף אחד",
+                "search": "חיפוש בחברי הקהילה",
+                "create": "יצירת קבוצת משתמשים",
+                "delete": "מחיקת קבוצת המשתמשים",
+                "deleteTitle": "למחוק את קבוצת המשתמשים הזו?",
+                "deleteMessage": "{name} תימחק ולא ניתן יהיה להזכיר אותה עוד.",
+                "deleted": "{name} נמחקה",
+                "confirmDelete": "מחיקה",
+                "people": "חברי הקהילה"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "יוצר…",
                 "done": "סיום",
                 "discardTitle": "לבטל את הקבוצה הזו?",
-                "discardMessage": "מה שהזנת לא יישמר."
+                "discardMessage": "מה שהזנת לא יישמר.",
+                "createChannel": "יצירת ערוץ",
+                "discardChannelTitle": "לבטל את הערוץ הזה?"
             }
         },
         "activity": {

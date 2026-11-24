@@ -175,6 +175,9 @@ export const screens: Screens = {
     // bots, stats), from its details' Manage and Edit, and its page's menu (N7)
     community_settings: () => import("../communitySettings/CommunitySettingsScreen.svelte"),
 
+    // a community's user group, made or changed, from its User groups page (N7)
+    user_group: () => import("../communitySettings/UserGroupScreen.svelte"),
+
     // Create community, from the Communities switcher's sheet (N8b)
     new_community: undefined,
 };

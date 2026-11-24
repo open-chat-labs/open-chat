@@ -9,10 +9,15 @@
      (`new_group_settings`, newGroupDraft). The draft is the shared UpdateGroupState on the
      client's blank group, created through it as the old pages and the web's dialog create one,
      with the people picked invited; then the new group opens in this screen's place. Leaving
-     with something entered asks first (TODO(design): the plan doesn't say). -->
+     with something entered asks first (TODO(design): the plan doesn't say).
+     With `channel` (a community's Channels page's New channel, N7), a new channel in that
+     community: the Details step alone (the plan's Channels page has "add" and no more; people are
+     added afterwards, from its Invite people), the client's blank channel, created and opened in
+     the community. -->
 <script lang="ts">
     import {
         allUsersStore,
+        communitiesStore,
         currentUserIdStore,
         directChatUsers,
         isDiamondStore,
@@ -34,7 +39,7 @@
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { UpdateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onDestroy, tick, untrack } from "svelte";
+    import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { aboveKeyboard } from "../../aboveKeyboard.svelte";
     import type { NativeScreen, NewGroupSettingsPage } from "../../router/locations";
@@ -44,7 +49,7 @@
     import { chipName } from "../details/invite.adapter";
     import InviteRow from "../details/InviteRow.svelte";
     import GeneralPage from "./GeneralPage.svelte";
-    import { holdNewGroup } from "./newGroupDraft";
+    import { holdNewGroup, newChannelCandidate } from "./newGroupDraft";
     import {
         draftSavable,
         newGroupEntered,
@@ -56,18 +61,33 @@
         rulesSummary,
     } from "./settings.adapter";
 
-    let { context }: ScreenProps<Extract<NativeScreen, { kind: "new_group" }>> = $props();
+    let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "new_group" }>> =
+        $props();
 
     const client = getContext<OpenChat>("client");
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
     const overlays = untrack(() => context.overlays);
 
-    // the draft: the client's blank group, held for the pages pushed over this screen
+    // a new channel, in this community (the one showing, the client's blank channel's)
+    const channelOf = untrack(() => screen.channel);
+    const channel = channelOf !== undefined;
+    const community = $derived(
+        channelOf === undefined ? undefined : $communitiesStore.get(channelOf),
+    );
+
+    // the draft: the client's blank group or channel, held for the pages pushed over this screen
     const editor = new UpdateGroupState();
-    editor.initialise(client.createCandidateGroup("group", false));
+    const blank = channel
+        ? newChannelCandidate(client.createCandidateGroup("channel", false), channelOf)
+        : client.createCandidateGroup("group", false);
+    // a channel's needs its community showing (it always is, from its Channels page)
+    editor.initialise(blank ?? client.createCandidateGroup("group", false));
+    onMount(() => {
+        if (blank === undefined) context.back?.();
+    });
     onDestroy(holdNewGroup(editor));
 
-    let step = $state<"members" | "details">("members");
+    let step = $state<"members" | "details">(channel ? "details" : "members");
 
     // ---- Members
 
@@ -142,9 +162,10 @@
                 }
                 // the new group is in the chat list by the next tick; it opens in this screen's
                 // place (the URL is still the list's), under Chats whatever the list shows: a
-                // new group isn't a favourite (nor in a community)
+                // new group isn't a favourite (nor in a community). A new channel opens in its
+                // community.
                 await tick();
-                navigate(routeForChatIdentifier("chats", outcome.chatId));
+                navigate(routeForChatIdentifier(channel ? "community" : "chats", outcome.chatId));
                 return;
             case "failed":
                 context.toast(interpolateNewUi($_, outcome.message));
@@ -179,7 +200,7 @@
 
     function back() {
         if (editor.busy) return;
-        if (step === "details") step = "members";
+        if (step === "details" && !channel) step = "members";
         else if (entered) discarding = true;
         else context.back?.();
     }
@@ -187,12 +208,14 @@
 
 <div class="new-group">
     <NativePageHeader
-        title={$_("newGroup")}
-        sub={$_(
-            step === "members"
-                ? "native.groupSettings.create.membersStep"
-                : "native.groupSettings.create.detailsStep",
-        )}
+        title={$_(channel ? "communities.createChannel" : "newGroup")}
+        sub={channel
+            ? (community?.name ?? "")
+            : $_(
+                  step === "members"
+                      ? "native.groupSettings.create.membersStep"
+                      : "native.groupSettings.create.detailsStep",
+              )}
         onBack={back} />
 
     {#if step === "members"}
@@ -250,7 +273,7 @@
             <GeneralPage
                 {editor}
                 creating
-                publicNeedsDiamond={!$isDiamondStore}
+                publicNeedsDiamond={!channel && !$isDiamondStore}
                 readOnly={[]}
                 color="violet"
                 {context}>
@@ -282,7 +305,9 @@
                 label={$_(
                     editor.busy
                         ? "native.groupSettings.create.creating"
-                        : "native.groupSettings.create.create",
+                        : channel
+                          ? "native.groupSettings.create.createChannel"
+                          : "native.groupSettings.create.create",
                 )}
                 size="lg"
                 fullWidth
@@ -294,7 +319,11 @@
 
 <NativeAlert
     open={discarding}
-    title={$_("native.groupSettings.create.discardTitle")}
+    title={$_(
+        channel
+            ? "native.groupSettings.create.discardChannelTitle"
+            : "native.groupSettings.create.discardTitle",
+    )}
     message={$_("native.groupSettings.create.discardMessage")}
     confirmLabel={$_("native.groupSettings.discard")}
     cancelLabel={$_("native.groupSettings.keepEditing")}

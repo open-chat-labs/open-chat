@@ -121,8 +121,11 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   name, description, language, Public) and Manage's Invite and share (Invite people for the
   community), Access gates, Rules and Permissions (the community's seven), each a draft on the
   shared `UpdateCommunityState` saved through the client's `updateCommunity`, in the group
-  pages' frame. Left: Channels and User groups (next), Bots and webhooks and Stats (a group's
-  too). What it left is in GAPS.md ("Native community settings").
+  pages' frame. Then Channels (the user's channels, each to its Edit channel, and New channel:
+  Create group's Details for a channel) and User groups (the list, a group's page with its name
+  and members picked from the community, Delete). Left: the channels' reorder (no order the
+  backend keeps), Bots and webhooks and Stats (a group's too). What it left is in GAPS.md
+  ("Native community settings").
 - **Built:** N10a the Wallet tab's root and a token's page
   ([#10377](https://github.com/open-chat-labs/open-chat/issues/10377)), to the plan's 13: the
   total with the display currency and the eye, the "today" pill from snapshots kept on the device,
