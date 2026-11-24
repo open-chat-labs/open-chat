@@ -92,6 +92,7 @@
     import OfflineStrip from "@openchat/ui/src/lib/components/OfflineStrip.svelte";
     import { ToastFloors } from "./toastFloors.svelte";
     import Toasts from "./Toasts.svelte";
+    import PinSheet from "./PinSheet.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -754,6 +755,9 @@
         </div>
 
         <Toasts above={toastsAbove(stacks.steps, barHidden)} floor={toastFloor} queue={toasts} />
+
+        <!-- the client's PIN prompt, over whatever asked for it (N10b) -->
+        <PinSheet {overlays} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">

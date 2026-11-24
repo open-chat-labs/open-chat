@@ -1,7 +1,7 @@
 import { i18nKey, type SwapQuote } from "@client";
-import { amountUnits } from "@src/logic/wallet/walletSend";
+import { amountUnits } from "./walletSend";
 import { describe, expect, test } from "vitest";
-import { dexesChecked, swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
+import { dexesChecked, swapAnswer, swapQuoteView, swapStepIndex } from "./swapQuote";
 
 const quote: SwapQuote = {
     ledgerIn: "icp",
@@ -49,7 +49,7 @@ describe("a swap's quote as Swap shows it", () => {
                 words,
             ).checked,
         ).toBe(2);
-        expect(swapQuoteView(quote, [], 8, words).expiresAt).toBeUndefined();
+        expect("expiresAt" in swapQuoteView(quote, [], 8, words)).toBe(false);
         expect(swapQuoteView({ ...quote, valueWarning: "dropped" }, [], 8, words).warning).toBe(
             "tokenSwap.warningValueDropped",
         );

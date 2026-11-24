@@ -209,6 +209,9 @@ describe("where a URL is in the native tree", () => {
             "/wallet",
             "/wallet/ledger1",
             "/wallet/send?token=ledger1",
+            "/wallet/send",
+            "/wallet/receive?token=ledger1",
+            "/wallet/swap",
             "/wallet/recipients",
         ]) {
             expect(stack(url, store)).toBe(`chats: chats@${url}`);

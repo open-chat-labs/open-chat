@@ -52,17 +52,9 @@
         RECIPIENT_NAME_MAX,
     } from "@src/logic/wallet/addressBook";
     import { recipientToSave } from "@src/utils/savedRecipient";
-    import { sendInDirectChat } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
-    import {
-        acceptsAddress,
-        ownAccounts,
-        sendAnswer,
-        sendCost,
-        sendNetworks,
-        sendPlan,
-        type BtcWithdrawal,
-    } from "@src/logic/wallet/walletSend";
-    import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
+    import { sendCost } from "@src/logic/wallet/walletSend";
+    import { sendFromWallet, walletAddressCheck } from "@src/logic/wallet/walletSendFlow";
+    import { BtcWithdrawalFees } from "@src/logic/wallet/btcWithdrawalFees.svelte";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { sharedLinkText } from "../share/share.adapter";
     import { SharePicker } from "../share/sharePicker.svelte";
@@ -85,7 +77,7 @@
         searchContacts,
         sendContacts,
         walletRecipients,
-    } from "./wallet.adapter";
+    } from "@src/logic/wallet/walletFlows";
     import {
         historyActivity,
         parseActivityId,
@@ -101,7 +93,7 @@
     import { canPayWith, SwapForm } from "@src/logic/wallet/swapForm.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import { amountUnits } from "@src/logic/wallet/walletSend";
-    import { swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
+    import { swapAnswer, swapQuoteView, swapStepIndex } from "@src/logic/wallet/swapQuote";
     import QrScanDialog from "./QrScanDialog.svelte";
     import SavedAddressPicker from "./SavedAddressPicker.svelte";
     import { walletRequests } from "./walletRequests.svelte";
@@ -352,28 +344,18 @@
     // a Bitcoin send's minter fee and minimum, asked each time Send opens while BTC is held (Send
     // may pick BTC itself when opened without a token), and again 10 s after a failure; only the
     // latest answer counts (#9638), and none from an earlier opening
-    let btcWithdrawal = $state<BtcWithdrawal>();
-    let btcRetry: ReturnType<typeof setTimeout> | undefined;
-    const btcInfo = new CkbtcWithdrawalInfoRequests(
-        (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
-        (info) => (btcWithdrawal = { fee: info.feeEstimate, minimum: info.minWithdrawalAmount }),
-        500,
-        () => {
-            if (sendingBtc) btcRetry = setTimeout(() => btcInfo.now(0n), 10_000);
-        },
+    const btcFeesInfo = new BtcWithdrawalFees((amount) =>
+        client.getCkbtcMinterWithdrawalInfo(amount),
     );
+    const btcWithdrawal = $derived(btcFeesInfo.current);
     const btcToken = $derived(
         [...$enhancedCryptoLookup.values()].find((t) => t.symbol === BTC_SYMBOL),
     );
     const sendingBtc = $derived(sending && btcToken !== undefined && btcToken.balance > 0n);
     $effect(() => {
         if (!sendingBtc) return;
-        untrack(() => btcInfo.now(0n));
-        return () => {
-            clearTimeout(btcRetry);
-            btcInfo.cancel();
-            btcWithdrawal = undefined;
-        };
+        untrack(() => btcFeesInfo.start());
+        return () => btcFeesInfo.stop();
     });
     // a Bitcoin address costs the approval and the minter's fee on top. The design's other route,
     // ckBTC to that address, can't reach it (the ledger only sends to IC accounts), so Send only
@@ -385,31 +367,20 @@
         };
     });
 
-    // the user's own wallet for a token, in each form, worked out once per token and user
-    const ownWallets = $derived.by(() => {
-        const owner = {
-            cryptoAccount: $currentUserStore.cryptoAccount,
-            userId: $currentUserIdStore,
-            principal: () => client.OcIdentityPrincipal,
-        };
-        const bySymbol = new Map<string, string[]>();
-        return (symbol: string): string[] => {
-            let own = bySymbol.get(symbol);
-            if (own === undefined) {
-                own = ownAccounts(symbol, owner);
-                bySymbol.set(symbol, own);
-            }
-            return own;
-        };
-    });
-
-    // never the user's own wallet, nor an account of a MultiUser user id, and only on a network
-    // the send can reach
+    // never the user's own wallet (worked out once per token and user), nor an account of a
+    // MultiUser user id, and only on a network the send can reach
+    const addressCheck = $derived(
+        walletAddressCheck(
+            {
+                cryptoAccount: $currentUserStore.cryptoAccount,
+                userId: $currentUserIdStore,
+                principal: () => client.OcIdentityPrincipal,
+            },
+            (a) => client.isAccountOfMultiUserCanisterUserId(a),
+        ),
+    );
     function checkAddress(address: string, symbol: string): boolean {
-        return acceptsAddress(address, sendNetworks(symbol), {
-            ownAccounts: ownWallets(symbol),
-            isUserIdAccount: (a) => client.isAccountOfMultiUserCanisterUserId(a),
-        });
+        return addressCheck(address, symbol);
     }
 
     // One send per confirm (WalletSend can't confirm again while this runs): to a person a
@@ -419,37 +390,30 @@
     async function send(x: WalletSendRequest): Promise<boolean> {
         const token = enhancedCryptoLookup.value.get(x.token);
         if (token === undefined) throw new Error(`no token ${x.token} to send`);
-        const plan = sendPlan(
+        const answer = await sendFromWallet(
+            client,
+            token,
+            token.balance,
             {
                 amountText: x.amountText,
                 max: x.max,
                 userId: x.person ? x.userId : undefined,
                 to: x.to,
                 network: x.network,
+                memo: x.memo,
             },
-            token,
-            token.balance,
             token.symbol === BTC_SYMBOL ? btcWithdrawal : undefined,
         );
-        if (plan === undefined) throw new Error("nothing to send");
-        if (plan.kind === "too_small") {
-            const amount = formatTokens(plan.minimum, token.decimals);
-            toastStore.showFailureToast(i18nKey("minimumAmount", { amount, symbol: token.symbol }));
-            throw new Error("under the minimum");
-        }
-        const outcome =
-            plan.kind === "transfer"
-                ? await sendInDirectChat(client, token, plan.userId, plan.amount, x.memo ?? "")
-                : await client.withdraw({
-                      ledger: token.ledger,
-                      symbol: token.symbol,
-                      route: plan.route,
-                      to: plan.to,
-                      amount: plan.amount,
-                      fee: plan.fee,
-                  });
-        const answer = sendAnswer(outcome);
         switch (answer.kind) {
+            case "nothing":
+                throw new Error("nothing to send");
+            case "too_small": {
+                const amount = formatTokens(answer.minimum, token.decimals);
+                toastStore.showFailureToast(
+                    i18nKey("minimumAmount", { amount, symbol: token.symbol }),
+                );
+                throw new Error("under the minimum");
+            }
             case "sent":
                 return true;
             case "not_sent":

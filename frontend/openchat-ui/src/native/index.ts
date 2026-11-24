@@ -24,6 +24,7 @@ export { default as SettingsSwatches } from './SettingsSwatches.svelte';
 export { default as SettingsMeter } from './SettingsMeter.svelte';
 export { default as SettingsAction } from './SettingsAction.svelte';
 export { default as CodeTiles } from './CodeTiles.svelte';
+export { default as PinPad } from './PinPad.svelte';
 export { default as Toasts } from './Toasts.svelte';
 export { haptic, setHaptics } from './haptics';
 export type { HapticStyle, Haptics } from './haptics';
@@ -35,6 +36,8 @@ export { anchoredPlacement, liftPlacement, menuHeight, messageMenuPlacement } fr
 export type { AnchoredPlacement, LiftPlacement, MessageMenuOrder, MessageMenuPlacement, Rect } from './menuPlacement';
 export { codeTiles, normaliseCode } from './codeTiles';
 export type { CodeTile } from './codeTiles';
+export { PIN_KEYS, pinDots, pinKeyOf, pinPress } from './pinPad';
+export type { PinKey } from './pinPad';
 export { TOAST_MS, ToastQueue, UNDO_TOAST_MS } from './toastQueue.svelte';
 export type { NativeToast } from './toastQueue.svelte';
 export type { NativeHeaderAction, NativeMenuItem, NativeTab } from './types';

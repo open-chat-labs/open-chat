@@ -1205,8 +1205,49 @@ design export needs. Each entry says where it came up.
   activity's days and signs), the web's wallet adapter's tokens and activity to
   `logic/wallet/walletTokens`, with `walletCatalogue`, the session's histories and the balances'
   first refresh (`BalanceRefresh`) beside it. Left, or open:
-  - **Send, Receive and Swap** (and the kebab's) go to their flows' URLs (`/wallet/send`,
-    `?token=` from a token's page), which show N3's placeholder until N10b builds them.
+  - **Send, Receive and Swap** (N10b, #10378; `WalletFlowScreen`) at their flows' URLs
+    (`/wallet/send`, `?token=` from a token's page; from the wallet the token sheet opens by
+    itself). The logic is the web wallet's, moved to `logic/wallet` (`walletFlows`, `swapQuote`,
+    `walletSendFlow`, `btcWithdrawalFees`; the web's screen uses them too). Left, or open:
+    - **Recipients** (`/wallet/recipients`, the address book): neither the notes nor the plan's 13
+      have the screen, so the URL still shows N3's placeholder (TODO(design)). Send's recipient
+      sheet offers the saved addresses the token can reach.
+    - **Scan QR** on Send: not in the native design (the web's Send has it): an address is typed
+      or pasted.
+    - **The message** shows only for a person (it's their DM's caption); the prototype shows it
+      for an address too, where nothing would keep it (as on the web).
+    - **Receive's network chip** opens the networks in an anchored menu where a token has several
+      (BTC / ckBTC, SOL / ckSOL, oneSec's chains): the prototype's chip isn't a control (its
+      tokens have one network each). Network names are the app's, without times. Not checked in
+      the browser: the local replica has ICP and CHAT only.
+    - **Share** on Receive shares the address as text (the system share sheet, else copied); the
+      prototype's "the QR and address" would need the QR as a file. No "Save QR to Photos".
+    - **The receipt** has no Transaction row: the client doesn't return the transaction's id.
+    - **Swap**: no fee or price impact rows and no countdown or Refresh quote (the client's quotes
+      have neither; the minimum output protects a stale quote), as on the web. A quote's value
+      warning is confirmed with a checkbox above the button (TODO(design): the 6c invariant needs
+      it; the design has no place). "You can leave this screen. We'll notify you" isn't said:
+      nothing notifies. Three fees or less is too little to swap (the web Swap's rule). The local
+      replica has no exchanges, so no quote was seen: checked are the form, the token sheets
+      (empty: "No tokens match") and the button's states (specced).
+    - **A wrong PIN on a withdrawal** fails like any other in the client (`withdrawResult`), so
+      the native Send says the PIN's error when the client has just recorded a PIN failure; the
+      web's Send says "Failed to send" there (open: map it in the client, which the old trees'
+      withdraw form shares).
+    - Checked in the browser (390×844, dark): Receive from the wallet (the sheet) and from a URL
+      (ICP), Copy address; a real Send of 0.5 ICP from a funded account to a fresh one's address,
+      and from the fresh one with a PIN (the PIN sheet, its chip, a wrong PIN's toast), the
+      receipt and Done landing on the token's page; Swap without exchanges; an app store build (no
+      tab; the flows' URLs open Chats). Not checked: a send to a person (View in chat), BTC's
+      route, iOS, the light theme.
+- **Native PIN sheet** (N10b; `shell/PinSheet`): the client's PIN prompt for any transfer, as the
+  plan's 13 has it ("Enter your PIN", the chip, the dots, the keypad: the kit's PinPad). Left:
+  - TODO(design): **"I've forgotten my PIN"**: the design has no way out of the sheet but closing
+    it (the web's prompt signs in again, S3).
+  - The **chip** says what a transfer confirms only where its screen says it (`pinAction`: the
+    wallet's Send and Swap); a PIN asked for elsewhere (a tip, a builder, N9) shows the sheet
+    without one until those screens say.
+  - Setting or changing the PIN: no native screen yet (wallet settings aren't in N10a/N10b).
   - **Swap** is offered (a token page's button and its kebab) only for a token a supported exchange
     lists (`tokenActions`, every tree's rule: `swappableTokensStore`, the DEXes' pools). Locally
     no exchange answers, so no token has Swap: its button is disabled and the kebab leaves it out

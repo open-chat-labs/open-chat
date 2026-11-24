@@ -22682,6 +22682,96 @@
     "group": "native"
   },
   {
+    "name": "PinPad",
+    "source": "native/NativeApp.svelte (the PIN sheet), by hand (N10b, 2026-11-24)",
+    "hash": "",
+    "description": "The PIN sheet's pad: a row of dots filled in the accent as digits go in, over a 3 × 4 keypad (1–9, then 0 with delete). The keyboard's digits and Backspace work too. The digits are the host's.",
+    "preview": {
+      "width": 370,
+      "height": 340
+    },
+    "props": [
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The digits so far."
+      },
+      {
+        "name": "length",
+        "type": "number",
+        "default": 6,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "6",
+        "doc": "How many digits."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.native.pinPad.label'",
+        "doc": "Resource key (or literal text): the dots' accessible name."
+      },
+      {
+        "name": "deleteLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.native.pinPad.delete'",
+        "doc": "Resource key (or literal text): the delete key's accessible name."
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Keys ignored (the PIN is on its way)."
+      },
+      {
+        "name": "onInput",
+        "type": "(value: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The digits after a key."
+      },
+      {
+        "name": "onComplete",
+        "type": "(value: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The last digit is in."
+      }
+    ],
+    "group": "native"
+  },
+  {
     "name": "LongPressMenu",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",

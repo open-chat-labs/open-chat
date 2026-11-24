@@ -2238,6 +2238,10 @@
       },
       "codeTiles": {
         "label": "Code"
+      },
+      "pinPad": {
+        "label": "PIN",
+        "delete": "Delete"
       }
     },
     "navRail": {

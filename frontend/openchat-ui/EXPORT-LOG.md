@@ -1203,3 +1203,8 @@
 - Used by the native app (N8a): the threads list is a pushed screen under the native page header (its back is the platform's, the title "Threads" over the community's name), with the list's filter and groups as they are.
 - Not in the design export: the prototype's native threads list is drawn inline, not with ThreadList.
 - 2026-11-24, from testing on Android: `channelHeads` (optional, default false): the groups are a community's channels, each headed "#name" as channel names are written elsewhere (not upper-cased), without the group's mark or its count of threads. The native list of a community's threads sets it; the web's list doesn't (its groups keep their marks). `meta.json` (`channelHeads`).
+
+## 2026-11-24 — the native kit's PinPad, for the native PIN sheet (native N10b #10378), by hand
+- `native/PinPad.svelte` (new) and `native/pinPad.ts` (new, specced): the PIN sheet's dots and keypad (native design notes §3.9 PIN sheet; the prototype's PIN sheet): six dots filled in the accent as digits go in, over a 3 × 4 keypad (1–9, then 0 with delete beside it); the keyboard's digits and Backspace work too. The digits are the host's (`value`, `onInput`, `onComplete`); `label`, `deleteLabel` (new keys `ui.native.pinPad.label` / `.delete`) and `disabled`. Exported from `native/index.ts`; `meta.json` (`PinPad`).
+- Used by the app: the native shell's PIN sheet, which answers the client's PIN prompt for every transfer (the wallet's Send and Swap now, the builders later).
+- Not in the design export: the prototype draws the PIN sheet inline in `NativeApp.svelte`. Its delete key uses the `back` icon, as the prototype's does.
