@@ -1210,9 +1210,9 @@ design export needs. Each entry says where it came up.
     lists (`tokenActions`, every tree's rule: `swappableTokensStore`, the DEXes' pools). Locally
     no exchange answers, so no token has Swap: its button is disabled and the kebab leaves it out
     (the kebab lists exactly the flows whose buttons are enabled; specced).
-  - **The divider above Supported tokens** is `--line-2`, with 6px either side, where the
-    prototype's is `--line-1` at 2px: that was too faint to see on an Android phone beside the
-    share bars (found testing, 2026-11-24).
+  - **No divider above Supported tokens** (the user's decision, 2026-11-24, against the notes'
+    "one divider between them" and the prototype's line), under the tokens or under Small
+    balances; the row keeps 12px more space above it in the line's place.
   - TODO(design): **All activity and wallet settings**, the root header's two icons (notes §3.9):
     neither the notes nor the plan's 13 say what they open on native, and neither screen is in
     N10a or N10b, so they're not shown yet.

@@ -315,8 +315,7 @@
                         </div>
                     {/if}
                 {/if}
-                <div class="divider"></div>
-                <button type="button" class="row fold" onclick={() => (browsing = true)}>
+                <button type="button" class="row fold supported" onclick={() => (browsing = true)}>
                     <span class="badge"><span class="badge-icon search"></span></span>
                     <span class="names">
                         <span class="symbol">{$_("native.wallet.supportedTokens")}</span>
@@ -740,12 +739,9 @@
         color: var(--ink-4);
     }
 
-    // the one divider above Supported tokens, under the tokens or Small balances (notes §3.9): the
-    // prototype's --line-1 was too faint to see on a phone, beside the share bars' tracks
-    .divider {
-        flex: none;
-        height: 1px;
-        margin: var(--space-6) var(--space-4);
-        background: var(--line-2);
+    // Supported tokens: no divider above it (the user's call, testing on Android, against the
+    // prototype's line), the space the divider took kept so it doesn't crowd the row above
+    .supported {
+        margin-top: var(--space-12);
     }
 </style>
