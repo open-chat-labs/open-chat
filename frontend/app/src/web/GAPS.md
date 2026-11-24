@@ -2793,10 +2793,14 @@ design export needs. Each entry says where it came up.
   takes the share (`sharedToChatStore`, `logic/dailyPuzzle/shareResult`): the result card as its
   draft's attachment and the message written in the picker as its text, the composer started
   again from the text (`composerGeneration`: it reads a draft's text only as it mounts), so the
-  open chat ends up as any other. In place of a staged transfer, prize or swap offer it asks first
-  (`shareStep`, the composer's replace confirm, "This daily puzzle result will take its place"):
-  Cancel keeps the payment and attaches nothing, the user in that chat; Replace attaches the card
-  (the user's decision of 2026-11-23; the old trees replaced it without asking). Nothing is sent
+  open chat ends up as any other. In place of a transfer, prize or swap offer staged in the chosen
+  chat's draft, the picker asks first (`shareStep`), with the composer's replace confirm
+  (`ReplaceStagedDialogScreen`, "This daily puzzle result will take its place") in the picker's
+  place over the same backdrop. Replace shares; Cancel, × and the backdrop keep the payment and
+  attach nothing; either way the chosen chat opens (the user's decision of 2026-11-23; the old
+  trees replaced it without asking). Opened from the puzzle, the confirm keeps the veil the picker
+  wore. A picker opened straight from a link (`?chit=share:<gameId>`, not handed off to) shows its
+  own backdrop, which the confirm fades in again in its place. Nothing is sent
   until the user sends it, as the old trees' share. The card is made from the store's solve
   (`shareableResultCard`), so a link to it with nothing to share opens the puzzle instead. Where
   it differs from the old trees:

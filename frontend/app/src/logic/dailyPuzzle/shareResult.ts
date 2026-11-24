@@ -13,8 +13,10 @@ import {
 } from "@src/logic/composer/replaceStaged";
 
 // Something shared into a chat from outside its conversation (`sharedToChatStore`: a daily
-// puzzle result from the puzzle's chat picker), taken into that chat's draft by its conversation:
-// asking first in place of a staged payment, as anything attached in the composer does.
+// puzzle result from the puzzle's chat picker), taken into that chat's draft by its conversation.
+// The picker asks first in place of a staged payment (`shareStep`), as anything attached in the
+// composer does, in its own place over the same backdrop, so the conversation takes only a share
+// already agreed to.
 
 /** The drafts a share goes into (`localUpdates.draftMessages`). */
 export type SharedDrafts = {

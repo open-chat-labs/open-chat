@@ -108,7 +108,7 @@
         dailyPuzzleStore,
         sharedToChatStore,
     } from "@client";
-    import { applyShared, sharedHere, shareStep } from "@src/logic/dailyPuzzle/shareResult";
+    import { applyShared, sharedHere } from "@src/logic/dailyPuzzle/shareResult";
     import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
     import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
     import { cardOffersPlayWith } from "@src/logic/dailyPuzzle/dailyResultCard";
@@ -1474,22 +1474,16 @@
     // (a share taken in below): it reads the draft's text only as it mounts
     let composerGeneration = $state(0);
 
-    // a daily puzzle result shared here (sharedToChatStore, from the puzzle's chat picker), taken
-    // into the draft as this chat opens, or at once in the chat open already: asking first in
-    // place of a staged transfer, prize or swap offer (shareStep; Cancel keeps it, and the result
-    // isn't attached), and its text, if any, the draft's (the composer starts again from it)
+    // a daily puzzle result shared here (sharedToChatStore, from the puzzle's chat picker, which
+    // has already asked in place of a staged transfer, prize or swap offer), taken into the draft
+    // as this chat opens, or at once in the chat open already, and its text, if any, the draft's
+    // (the composer starts again from it)
     $effect(() => {
         const shared = $sharedToChatStore;
         if (!sharedHere(shared, chat.id, thread !== undefined)) return;
         untrack(() => {
             sharedToChatStore.set(undefined);
-            const where = context;
-            const take = () => {
-                if (applyShared(localUpdates.draftMessages, where, shared)) composerGeneration++;
-            };
-            const step = shareStep(draftAttachment(draft), shared);
-            if (step.kind === "attach") take();
-            else askToReplace(step.question, { kind: "attach", attach: take });
+            if (applyShared(localUpdates.draftMessages, context, shared)) composerGeneration++;
         });
     });
 
