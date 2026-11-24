@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Keep a session signed in by linking with a code working for 30 days, not 5 minutes
+- Keep a session signed in by linking with a code working for 30 days, not 5 minutes ([#10616](https://github.com/open-chat-labs/open-chat/pull/10616))
 
 ### Removed
 
