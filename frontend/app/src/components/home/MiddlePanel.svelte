@@ -25,7 +25,6 @@
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import NoChatSelected from "./NoChatSelected.svelte";
-    import RecommendedGroups from "./RecommendedGroups.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -109,9 +108,7 @@
     class:visible={$showMiddle}
     class:offset={$showNav && !$showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if $routeStore.kind === "explore_groups_route"}
-        <RecommendedGroups {joining} />
-    {:else if $routeStore.kind === "communities_route"}
+    {#if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
     {:else if $routeStore.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}

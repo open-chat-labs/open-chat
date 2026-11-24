@@ -170,7 +170,7 @@ describe("app state", () => {
         test("chat list scope is set", () => {
             expect(chatListScopeStore.value).toMatchObject({ kind: "community", id: communityId });
             setRouteParams(mockContext, {
-                kind: "explore_groups_route",
+                kind: "chat_list_route",
                 scope: { kind: "chats" },
             });
             expect(get(chatListScopeStore)).toMatchObject({ kind: "chats" });

@@ -39,8 +39,9 @@ Agreed on 2026-10-16; the tables below follow them.
    - **Route kinds:** mobile's `wallet_route` (gaining `{ view, ledger? }`),
      `notifications_route` and `profile_summary_route`.
    - **Registration order:** these paths have to be registered ahead of the legacy
-     `/:chatId/...` route, which otherwise takes any 1–3 segment path as a group id. On the
-     desktop router today, `/wallet` opens the "group not found" modal.
+     `/:chatId/...` route, which takes any 1–3 segment path whose first segment is a principal as
+     a group id (any other is not found). On the old desktop router, which takes any short path
+     as a group id, `/wallet` opens the "group not found" modal.
    - **Only in the new UI.** The old desktop router doesn't get these paths. A v3 build serves the
      old mobile UI below 768px until N15, and the native tree (which routes them) after it. Where
      the old UI below 768px is the old desktop tree (`OC_MOBILE_LAYOUT=v1`), a new-UI link such as
@@ -126,7 +127,7 @@ sideways instead, and below 768px it's offered a reload into the phone layout.
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats`, once the chats are in. A new account goes on once its own chats are in (`currentUserChatsLoadedStore`: they load afresh after the sign-up, without the loader, the anonymous session's standing in meanwhile), and lands on the OpenChat Bot's DM; the default chat (decision 7) waits for them too |
 | `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one (`NoChatScreen`, the old desktop's words: `noChatSelectedText`), blank while the list is empty (`middleWithoutChatText`) | – | list | yes |
 | `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" tab (`dmTabs`) below 1476px; thread → `ThreadPanel`. The OpenChat Bot's DM has none, and no panel toggle or pinned-messages button (`chatHasRightColumn`, TODO(design)) | conversation | sign in, then the DM |
-| `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
+| `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` (`:id` a principal, else not found) | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
 | `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then the page |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
 | `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the channel last opened there, else its first (decision 7) | `GroupPanel` (community) on demand | list | preview |
@@ -308,9 +309,10 @@ Still to come:
 - **Share**: `/share` goes to the default scope with `?share={"title","text","url"}`, which opens
   `ChatPicker` (4d). Picking a chat opens it with the shared text in its draft.
 
-## Known router issues (not fixed here)
+## Known router issues (old trees only)
 
-- The legacy `/:chatId` route catches unregistered 1–3 segment paths and treats them as a group id
-  (`/hotgroups`, `/welcome` on desktop, `/faq` on mobile).
-- `explore_groups_route` is a route kind no path produces. `favourites_route` is used (`navigation.ts`
-  and the mobile router label `/favourite` with it); only its parser, `favouritesRoute`, is unused.
+- The old desktop and mobile routers (`components/Router.svelte`, `components_mobile/Router.svelte`)
+  still take any unregistered 1–3 segment path as a group id (`/hotgroups`, `/welcome` on desktop,
+  `/faq` on mobile). Left as it is (decision 1). The
+  new trees' table (`utils/routeTable.ts`, `legacyGroupRoute`) takes only a principal there, so a
+  real old group link still opens its group and anything else is not found (L5).

@@ -591,7 +591,6 @@
     },
     "chatUnfrozenBy": "{unfrozenBy} 解冻聊天",
     "chatWith": "与{username}聊天",
-    "checkBackLater": "请稍后再试",
     "chitBalance": "CHIT 余额",
     "chitReferralRewardReason": {
         "diamond": "您推荐的用户已升级至钻石级",
@@ -1402,7 +1401,6 @@
     "historyVisible": "可见的聊天记录",
     "home": "主页",
     "homepage": "首页",
-    "hotGroups": "热门群聊",
     "hours": "小时",
     "human": {
         "already": "恭喜！您已验证您是一个真实而独特的人！",
@@ -2748,7 +2746,6 @@
     "noChannelSelected": "当前未选择频道",
     "noChatsAvailable": "没有可用的聊天！",
     "noChatSelected": "没有聊天被选中",
-    "noGroupsFound": "没有找到群组😭",
     "noMatchingTokens": "没有匹配的令牌",
     "noThanks": "不用了",
     "notificationsDisabled": "推送通知已关闭",
@@ -3392,7 +3389,6 @@
     "selectAChannel": "从列表中选择一个频道或搜索该社区中的更多频道。",
     "selectAChat": "搜索好友，创建群聊或选择一个聊天",
     "selectAFavourite": "您可以将直接聊天、群聊或社区频道添加到您的收藏夹中，您将在此处看到它们。",
-    "selectAGroup": "选择群聊",
     "selectAGroupChat": "从列表中选择一个组或搜索要加入的全局组。",
     "selectAUser": "从列表中选择用户或搜索要与之聊天的用户。",
     "selectCommunityTheme": "选择社区主题",

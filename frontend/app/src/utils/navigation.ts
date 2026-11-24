@@ -182,7 +182,6 @@ export function parentRoute(from: RouteParams): string | null {
         case "share_route":
         case "welcome_route":
         case "favourites_route":
-        case "explore_groups_route":
             return "/chats";
         case "chat_list_route":
         case "not_found_route":

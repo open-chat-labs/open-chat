@@ -105,12 +105,35 @@ describe("the web UI's route table", () => {
         ]);
     });
 
-    test("still takes an unknown short path as a legacy group link", () => {
-        expect(resolve("/abc/3")).toMatchObject({
+    // invariant 1 of #10140
+    test("a legacy group link with a valid group id still opens that group", () => {
+        const groupId = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+        expect(resolve(`/${groupId}`)).toMatchObject({
             kind: "global_chat_selected_route",
-            chatId: { kind: "group_chat", groupId: "abc" },
+            chatId: { kind: "group_chat", groupId },
+            messageIndex: undefined,
+            scope: { kind: "chats" },
+        });
+        expect(resolve(`/${groupId}/3`)).toMatchObject({
+            kind: "global_chat_selected_route",
+            chatId: { kind: "group_chat", groupId },
             messageIndex: 3,
         });
+        expect(resolve(`/${groupId}/3/7?open=true`)).toMatchObject({
+            kind: "global_chat_selected_route",
+            chatId: { kind: "group_chat", groupId },
+            messageIndex: 3,
+            threadMessageIndex: 7,
+            open: true,
+        });
+    });
+
+    // invariant 2 of #10140. /hotgroups was the old routers' explore_groups_route, a kind no path
+    // produced and that's gone now
+    test("an unregistered short path whose first segment isn't a canister id is not found", () => {
+        expect(
+            ["/foo", "/abc123", "/abc/3", "/hotgroups", "/faq/1/2", "/ryjl3-tyaaa"].map(kind),
+        ).toEqual(Array(6).fill("not_found_route"));
     });
 
     test("ends with not found for anything else", () => {

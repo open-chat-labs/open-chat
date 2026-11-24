@@ -591,7 +591,6 @@
     },
     "chatUnfrozenBy": "Chat von {unfrozenBy} freigegeben",
     "chatWith": "Chatten Sie mit {username}",
-    "checkBackLater": "Bitte versuchen Sie es später erneut.",
     "chitBalance": "CHIT-Guthaben",
     "chitReferralRewardReason": {
         "diamond": "Ein von Ihnen geworbener Benutzer hat ein Upgrade auf Diamond erhalten",
@@ -1402,7 +1401,6 @@
     "historyVisible": "Sichtbarer Chatverlauf",
     "home": "Start",
     "homepage": "Startseite",
-    "hotGroups": "Heiße Gruppen",
     "hours": "Std",
     "human": {
         "already": "Herzlichen Glückwunsch! Sie haben bereits bestätigt, dass Sie eine echte, einzigartige Person sind!",
@@ -2748,7 +2746,6 @@
     "noChannelSelected": "Derzeit ist kein Kanal ausgewählt",
     "noChatsAvailable": "Keine Chats verfügbar!",
     "noChatSelected": "Derzeit kein Chat ausgewählt",
-    "noGroupsFound": "Keine Gruppen gefunden 😭",
     "noMatchingTokens": "Keine passenden Token",
     "noThanks": "Nein Danke",
     "notificationsDisabled": "Benachrichtigungen deaktiviert",
@@ -3392,7 +3389,6 @@
     "selectAChannel": "Wählen Sie einen Kanal aus der Liste aus oder suchen Sie nach weiteren Kanälen in dieser Community.",
     "selectAChat": "Suchen Sie nach einem Freund, erstellen Sie eine neue Gruppe oder wählen Sie einen Chat aus.",
     "selectAFavourite": "Sie können Direktchats, Gruppenchats oder Community-Kanäle zu Ihren Favoriten hinzufügen und sehen diese hier.",
-    "selectAGroup": "Wählen Sie eine Gruppe für die Vorschau aus oder treten Sie ihr bei.",
     "selectAGroupChat": "Wähle eine Gruppe aus der Liste oder suche nach einer globalen Gruppe, um beizutreten.",
     "selectAUser": "Wählen Sie einen Benutzer aus der Liste aus oder suchen Sie nach einem Benutzer, mit dem Sie chatten möchten.",
     "selectCommunityTheme": "Wählen Sie ein Community-Design aus",

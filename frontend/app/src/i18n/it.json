@@ -591,7 +591,6 @@
     },
     "chatUnfrozenBy": "Chat sbloccata da {unfrozenBy}",
     "chatWith": "Chatta con {username}",
-    "checkBackLater": "Per favore riprova più tardi.",
     "chitBalance": "Equilibrio CHIT",
     "chitReferralRewardReason": {
         "diamond": "Un utente da te segnalato è passato a Diamond",
@@ -1402,7 +1401,6 @@
     "historyVisible": "cronologia chat visibile",
     "home": "Home",
     "homepage": "Pagina iniziale",
-    "hotGroups": "Gruppi caldi",
     "hours": "Ore",
     "human": {
         "already": "Congratulazioni! Hai già verificato che sei una persona reale, unica!",
@@ -2748,7 +2746,6 @@
     "noChannelSelected": "Nessun canale attualmente selezionato",
     "noChatsAvailable": "Nessuna chat disponibile!",
     "noChatSelected": "Nessuna chat attualmente selezionata",
-    "noGroupsFound": "Nessun gruppo trovato 😭",
     "noMatchingTokens": "Nessun token corrispondente",
     "noThanks": "No grazie",
     "notificationsDisabled": "Notifiche disabilitate",
@@ -3392,7 +3389,6 @@
     "selectAChannel": "Seleziona un canale dall'elenco o cerca altri canali in questa community.",
     "selectAChat": "Cerca un amico, crea un nuovo gruppo o seleziona una chat.",
     "selectAFavourite": "Puoi aggiungere chat dirette, chat di gruppo o canali della community ai tuoi preferiti e li vedrai qui.",
-    "selectAGroup": "Seleziona un gruppo da visualizzare in anteprima o unirti.",
     "selectAGroupChat": "Seleziona un gruppo dall'elenco o cerca un gruppo globale a cui unirti.",
     "selectAUser": "Seleziona un utente dall'elenco o cerca un utente con cui chattare.",
     "selectCommunityTheme": "Seleziona un tema della community",

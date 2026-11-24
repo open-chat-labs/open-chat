@@ -5,6 +5,7 @@ import {
     communitesRoute,
     globalDirectChatSelectedRoute,
     globalGroupChatSelectedRoute,
+    isPrincipalValid,
     notificationsRoute,
     profileSummaryRoute,
     selectedChannelRoute,
@@ -31,6 +32,17 @@ export const redirectTable: { path: string; to: (params: Record<string, string>)
     },
 ];
 
+// The legacy links to a group, oc.app/<groupId>/<messageIndex>/<threadIndex>. Every group id is a
+// principal, so a first segment that isn't one (/faq on mobile, /hotgroups, a typo) is no group
+// link: it gets the not found page instead of a "group not found" for a made-up id.
+export function legacyGroupRoute(ctx: PageJS.Context): RouteParams {
+    const chatId = ctx.params["chatId"];
+    if (chatId === undefined || !isPrincipalValid(chatId)) {
+        return { kind: "not_found_route", scope: { kind: "none" } };
+    }
+    return globalGroupChatSelectedRoute({ kind: "chats" })(ctx);
+}
+
 const page = (kind: Extract<RouteParams, { scope: { kind: "none" } }>["kind"]) => () =>
     ({ kind, scope: { kind: "none" } }) as RouteParams;
 
@@ -39,7 +51,8 @@ const page = (kind: Extract<RouteParams, { scope: { kind: "none" } }>["kind"]) =
 // place in either tree. src/web/ROUTES.md says what each one renders on the web, and
 // src/native/router/locations.ts which tab and stack it is on native. It's the existing desktop
 // router's table (every current path stays) plus the paths the new UI adds, which have to come
-// before the legacy /:chatId/... route, as that takes any one to three segment path as a group id.
+// before the legacy /:chatId/... route, as that takes any one to three segment path whose first
+// segment is a principal as a group id.
 export const routeTable: RouteEntry[] = [
     // marketing pages, outside the shell
     { path: "/home", parse: page("home_landing_route") },
@@ -104,10 +117,7 @@ export const routeTable: RouteEntry[] = [
     { path: "/admin", parse: adminRoute },
     { path: "/", parse: () => ({ kind: "home_route", scope: { kind: "none" } }) },
 
-    // legacy links to a group
-    {
-        path: "/:chatId/:messageIndex?/:threadMessageIndex?",
-        parse: globalGroupChatSelectedRoute({ kind: "chats" }),
-    },
+    // legacy links to a group: a principal at the root, or not found
+    { path: "/:chatId/:messageIndex?/:threadMessageIndex?", parse: legacyGroupRoute },
     { path: "*", parse: page("not_found_route") },
 ];
