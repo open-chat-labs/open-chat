@@ -145,6 +145,15 @@ export type LocalDialog =
           eventIndex: number;
           threadRootMessageIndex?: number;
       }
+    // tipping a message (5b), in the chat or thread it's in (`context`): `recipient` is who's paid
+    // (`tipRecipient`), `ledger` the token it starts on (the one last sent, or a tip chip's)
+    | {
+          kind: "tip_message";
+          context: MessageContext;
+          message: Message;
+          recipient: string;
+          ledger: string;
+      }
     // the composer's "+" builders (5d), each for the chat or thread (4c) its composer is in
     // (`context`): a poll, published from the dialog
     | { kind: "poll_builder"; context: MessageContext }
@@ -283,6 +292,9 @@ export const dialogs: Dialogs = {
     // reporting a message, and setting a reminder about one (5b)
     report_message: () => import("../conversation/ReportMessageDialogScreen.svelte"),
     remind_message: () => import("../conversation/ReminderDialogScreen.svelte"),
+
+    // tipping a message, from its menu or a tip chip (5b)
+    tip_message: () => import("../conversation/TipDialogScreen.svelte"),
 
     // the composer's "+" builders (5d)
     poll_builder: () => import("../builders/PollBuilderDialogScreen.svelte"),

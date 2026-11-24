@@ -972,6 +972,17 @@
         "type": "Tip[]"
       },
       {
+        "name": "onTip",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A tip chip pressed (by its `id`): the viewer tips again in its token."
+      },
+      {
         "name": "threadCount",
         "type": "number",
         "default": 0,
@@ -1115,6 +1126,17 @@
         "doc": "The tips the message got, a chip per token (its logo and total) before the reactions, never folded into \"+N\".",
         "name": "tips",
         "type": "Tip[]"
+      },
+      {
+        "name": "onTip",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A tip chip pressed (one with an `id`): the viewer tips again in its token. Tips are only shown without it."
       },
       {
         "name": "maxRows",
@@ -4376,6 +4398,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onTip",
+        "type": "(index: number, id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A message's tip chip pressed (by the tip's `id`): the viewer tips again in its token."
       },
       {
         "name": "mirror",

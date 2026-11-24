@@ -40,6 +40,8 @@
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
+        lastCryptoSent,
+        LEDGER_CANISTER_ICP,
         localUpdates,
         messageContextsEqual,
         messageReadByThem,
@@ -80,6 +82,7 @@
         threadsFollowedByMeStore,
         throttleDeadline,
         TimelineGrouper,
+        tipRecipient,
         toLongDatetimeString,
         translationsStore,
         unconfirmedReadByThem,
@@ -1328,8 +1331,30 @@
             undeleting: $undeletingMessagesStore,
             blocked: $selectedChatBlockedUsersStore,
             tipsEnabled: !disableTipsFeature,
+            tipRecipient: tipTo(evt.event),
             thread: thread === undefined ? undefined : { root: thread.event, following },
         });
+    }
+
+    // who a tip on the message goes to (as the old messages decide it): its sender, unless a bot,
+    // or for a relayed message whoever linked its account, if they're a member. Only the members
+    // held count: in a chat too big for them all, the linked user can't be tipped until found
+    function tipTo(msg: Message): string | undefined {
+        return tipRecipient(
+            msg,
+            $allUsersStore.get(msg.sender),
+            $bridgedUsersStore,
+            (userId) => $selectedChatMembersStore.has(userId),
+        );
+    }
+
+    // the tip dialog for the message, starting on `ledger` (the one last sent, from the menu; a
+    // tip chip's own, to tip again in it). Only where its menu offers Tip
+    function openTip(context: MessageContext, evt: EventWrapper<Message>, ledger: string) {
+        if ($anonUserStore) return;
+        const recipient = tipTo(evt.event);
+        if (recipient === undefined) return;
+        screen.dialogs.open({ kind: "tip_message", context, message: evt.event, recipient, ledger });
     }
 
     function rowOffers(
@@ -1445,6 +1470,9 @@
                 threadRootMessageIndex,
                 canDelete: client.canDeleteOtherUsersMessages(chatId),
             });
+        }
+        if (dialog?.kind === "tip") {
+            openTip(context, dialog.evt, lastCryptoSent.value ?? LEDGER_CANISTER_ICP);
         }
         if (dialog?.kind === "remind") {
             screen.dialogs.open({
@@ -1918,6 +1946,9 @@
                     onSwipeLeft={swipeLeft === undefined
                         ? undefined
                         : () => run(where, swipeLeft, evt, failed)}
+                    onTip={actions.has("tip")
+                        ? (_, ledger) => openTip(where, evt, ledger)
+                        : undefined}
                     messages={messagesFor(row, body, markdown !== undefined, evt, offers, preview)}
                 />
             </div>

@@ -1115,6 +1115,8 @@
             undeleting: $undeletingMessagesStore,
             blocked: $selectedChatBlockedUsersStore,
             tipsEnabled: !disableTipsFeature,
+            // the native tree doesn't tip yet (its menu leaves Tip out)
+            tipRecipient: undefined,
         });
         return nativeMessageOffer(offered, evt.event.content);
     }

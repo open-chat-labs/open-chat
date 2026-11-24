@@ -57,8 +57,13 @@ export type MessageOfferState = {
     undeleting: { has(messageId: bigint): boolean };
     /** Who is blocked from the chat. */
     blocked: { has(userId: string): boolean };
-    /** Tipping is on in this build. */
+    /** Tipping is on in this build (off in an app store build: `disableTipsFeature`). */
     tipsEnabled: boolean;
+    /**
+     * Who a tip on the message goes to (`tipRecipient`: its sender, or whoever linked the account
+     * a relayed message came from), or undefined: no one can be paid, or this tree doesn't tip.
+     */
+    tipRecipient: string | undefined;
     /**
      * In a thread's list: its root, which can't be edited or replied to there, and whether the
      * reader follows the thread. None in the chat's own timeline.
@@ -135,8 +140,8 @@ export function messageOffer(
         supportsEdit: !isRoot,
         supportsReply: !isRoot,
         shareable: canShareMessage(msg.content),
-        // TODO(phase 5, 5b): tipping (in a thread too, by the "tip messages" permission)
-        tipRecipient: undefined,
+        // in a thread too, by the "tip messages" permission
+        tipRecipient: state.tipRecipient,
         tipsEnabled: state.tipsEnabled,
         permissions: state.guest
             ? GUEST_PERMISSIONS

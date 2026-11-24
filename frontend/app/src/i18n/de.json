@@ -3508,6 +3508,7 @@
     "tip": {
         "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen",
         "failure": "Leider konnten wir Ihren Tipp nicht hinzufügen",
+        "insufficient": "Nicht genug {token} für dieses Trinkgeld und die Gebühr",
         "menu": "Tipp",
         "noExchangeRate": "Wir haben keinen Wechselkurs für {token} konfiguriert",
         "plusFee": "+ {fee} {token} Gebühr",

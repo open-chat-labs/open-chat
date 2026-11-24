@@ -1177,3 +1177,9 @@
 - `ChatPicker`: `onBack` (optional), passed to `DialogShell`: a back arrow in the header to the dialog it took the place of (the app's puzzle dialog, sharing its result). Without it, as before. `meta.json` (`onBack`).
 - Used by the app: web's conversation (with Play) and native's (no Play; its pinned messages and message info without the grid), and web's share from the puzzle dialog.
 - Not in the design export: the design has no result card (the old trees' `DailyResultContent`). TODO(design): ask for one (the app's `GAPS.md`, "The result card in a chat").
+
+## 2026-11-23 — tipping again from a tip chip (web 5b, #10117), by hand
+- `ReactionChips`: a `Tip` takes an `id` (the host's id for its token), and `onTip(id)`: with both, the tip chip is a button (Enter and Space press it; a pointer and a hover, as the reaction chips have) that tips again in that token. Without either it's shown only, as before.
+- `ChatBubble`: `onTip`, passed to its chips. `MessageGroup`: `onTip(index, id)`, for the bubbles and for the chips under the kinds that don't draw their own. `meta.json` (`ReactionChips.onTip`, `ChatBubble.onTip`, `MessageGroup.onTip`).
+- Used by the app: the reader tips again in a chip's token, as the old trees' tip thumbnails did, wherever the message offers Tip (never on their own message, nor in an app store build).
+- Not in the design export: the export has no tips (2026-11-16). TODO(design): the tip chip, and the app's tip dialog (on `DialogShell`).

@@ -527,6 +527,8 @@ export function tipChips(
             amount: token.amount(total),
             symbol: token.symbol,
             logo: `url("${token.logo}") center / cover`,
+            // the chip tips again in its token (onTip hands it back)
+            id: ledger,
             mine: tippers.includes(ctx.me),
             label: tippers
                 .map((userId) => (userId === ctx.me ? ctx.you : ctx.userName(userId)))

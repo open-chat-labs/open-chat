@@ -557,7 +557,7 @@ design export needs. Each entry says where it came up.
       `ReminderDialogScreen`; when it comes, its toast says when with View to the OpenChat Bot's
       DM, as the web's does: `reminderSetText`, decided 2026-11-19. A message's pending-reminder
       marker and a list of pending reminders wait for the user's design round, as on the web:
-      "Message actions" under App), tipping (the web hasn't it either). Info isn't offered on what
+      "Message actions" under App), tipping (the web's is `TipDialogScreen`, 5b; native passes no `tipRecipient` to `messageOffer` until it has a sheet for it, and never tips in a store build). Info isn't offered on what
       can't be acted on (deleted, blocked). The card is 240px with 48px rows, measured as it lays
       out. Past the notes' four placements round the message (ours): the whole card at the
       screen's bottom, over the message, the reactions above it (or at the screen's top); it
@@ -1392,7 +1392,9 @@ design export needs. Each entry says where it came up.
 - **Tips** (by hand, 5a, EXPORT-LOG 2026-11-16), to take back to the design export: `ReactionChips`
   (so `ChatBubble` and `MessageGroup`, and `GroupMessage`) takes `tips`, a chip per token before
   the reactions: the token's logo and the total, the viewer's own marked as their reactions are,
-  who tipped as its tooltip. Not a button. The design has no tips.
+  who tipped as its tooltip. The design has no tips. A tip with an `id` is a button with `onTip`
+  (`MessageGroup`'s `onTip(index, id)`, by hand, 5b, EXPORT-LOG 2026-11-23): the reader tips again
+  in that token.
 
 - **A deleted message's popover** (by hand, EXPORT-LOG 2026-11-19), from a Claude Design spec
   not yet in the export or the plan files: `ChatBubble` (so `GroupMessage`) takes `deletedBy` and
@@ -3312,7 +3314,8 @@ design export needs. Each entry says where it came up.
   - tips: a chip per token before its reactions, the token's logo and the total (`tipChips`), the
     reader's own marked as their reactions are, who tipped in its tooltip; `ReactionChips` takes
     `tips` by hand (EXPORT-LOG 2026-11-16; the design has none: `TODO(design)`). A token the
-    registry doesn't carry has no chip. Clicking one does nothing (tipping is 5b's, not built);
+    registry doesn't carry has no chip. Where the message offers Tip, a chip opens the tip dialog on
+    its token, to tip again (5b, "Message actions"), as the old trees' did; elsewhere it's shown only;
   - reactions: chips under every kind (5b, "Message actions");
   - a reply's quote: at the top of every kind (see Media messages).
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
@@ -3608,12 +3611,37 @@ design export needs. Each entry says where it came up.
   - **no list of pending reminders** (waiting for the user's design round, 2026-11-19): somewhere
     to see, and cancel, every reminder still to go off, in the profile or the OpenChat Bot DM's
     header. It needs the same collection from the bot's DM as the marker above;
-  - tip (`TODO(phase 5, 5b)`): the old trees' `TipBuilder` (a token, $0.01 / $0.10 / $1 steps
-    or a custom amount, the fee, paying from an external wallet with its approval, the PIN; not in
-    the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
-    no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
-    out). The tips a message got show as chips (5a, "Message kinds"), which do nothing when
-    clicked, where the old trees' tipped again;
+  - tip (built, 2026-11-23): Tip in the menu (last before the danger items, as the old desktop
+    menu) and a tip chip under the message (to tip again in its token) open `TipDialogScreen`, the
+    old trees' `TipBuilder` on `TipForm` (`logic/tip`): the token (the one last sent from the menu,
+    the chip's own from a chip; any enabled token from `TokenPicker`, in the form's place with a
+    back arrow), $0.01 / $0.10 / $1 steps where the token has an exchange rate (each disabled where
+    the balance can't cover it), or an amount typed in the token (`TipForm.typeAmount`), what it
+    is in dollars and the fee, "not enough" where the balance doesn't cover it with its fees
+    (`TipForm.insufficient`, new string `tip.insufficient`), and an empty account's deposit
+    address on the IC with Refresh (the old desktop's). Sent with the PIN where the user has one
+    (the client's prompt, a small confirm over the dialog). Offered as `messageMenu` decides
+    (`tipRecipient` now passed, `messageOffer`): never on the reader's own, an unconfirmed, failed,
+    inert or revealed message, nor one with no one to pay (a bot's, a relayed message no one in
+    the chat linked), nor without the "tip messages" permission (in a thread too), nor in an app
+    store build (`disableTipsFeature`; tips received still show). Not yet, or not the same:
+    - TODO(design): the design has no tip dialog (`DialogShell` with the library's `AmountCard`,
+      `TokenPicker`, `Banner`) and no tip chip (EXPORT-LOG 2026-11-16, 2026-11-23);
+    - paying from an external wallet (the old `SourceWalletSelector`, the approval and its fee):
+      not offered, as the "+" builders' isn't ("Composer"); the OpenChat wallet only. `TipForm`
+      keeps it (`sourceWallet`, `tip`'s `fromAccount`) for when it has a design;
+    - the old dialogs closed on Send and toasted a failure; this one stays open until the tip has
+      gone (Send busy), so a PIN prompt given up leaves the tip to send, and a failure (toasted, a
+      wrong PIN with the PIN's own message) leaves it to try again, as the web's other paying
+      dialogs (Diamond, streak insurance) do. The chip shows the tip at once either way (the
+      client's `markTip`);
+    - the old dialogs' flying 🤑 on each step, and "Custom tip amount" behind a link (the amount
+      is always typeable here), aren't carried over;
+    - an empty account shows only its address on the IC (`ReceiveAccount` on `icNetwork`: ckBTC
+      for BTC, ckSOL for SOL, ICP for a oneSec token; no minter, no network fee, nothing to
+      fetch), named ("Your ckBTC address"). The old `AccountInfo` had a network picker (native
+      BTC and SOL, a oneSec token's EVM chains, with their deposit fees) and a QR code; those stay
+      in the wallet's Receive;
   - a proposal's collapse waits for the proposals filters (proposals show: 5a, "Proposals in the
     conversation"; the thread's items, reply in thread and follow / unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;
@@ -3837,8 +3865,8 @@ design export needs. Each entry says where it came up.
     old header had it.
   - **Mobile's "peek"**: the old mobile list opened a thread without changing the route; here it's
     always the root's own URL with `?threads` kept (ROUTES.md, decision 2), as the old desktop.
-  - **Tipping in a thread** waits for the tip dialog (5b), and will go by the "tip messages"
-    permission as the conversation's does. Calls: closing a thread doesn't tell the call it's
+  - **Tipping in a thread** goes by the "tip messages" permission, as the conversation's does
+    (5b, "Message actions"). Calls: closing a thread doesn't tell the call it's
     closed yet (`TODO(phase 7)`, the old panel's `activeVideoCall.threadOpen(false)`).
   - **Unfollowing the last followed thread** with the list open goes back to the chat list (no
     threads left), as the old desktop list does.
