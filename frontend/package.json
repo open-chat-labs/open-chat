@@ -73,7 +73,7 @@
         "drange": "^2.0.1",
         "emoji-picker-element": "1.22.6",
         "highlight.js": "^11.11.1",
-        "i18next": "^23.11.4",
+        "i18next": "^26.3.4",
         "idb": "^7.1.1",
         "identicon.js": "^2.3.3",
         "intl-messageformat": "9.13.0",
