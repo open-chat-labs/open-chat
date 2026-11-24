@@ -1,6 +1,7 @@
 import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
 import {
+    afterChatRemoved,
     showsTabBar,
     toastsAbove,
     localKey,
@@ -139,6 +140,19 @@ describe("where a URL is in the native tree", () => {
         // the web's profile dialog, over whatever page
         expect(stack("/chats/user/u1?profile")).toBe("you: you@/chats/user/u1?profile");
         expect(stack("/admin")).toBe("you: you@/profile_summary > admin@/admin");
+    });
+
+    test("a message opened from the activity feed is pushed over the Activity tab", () => {
+        expect(stack("/chats/group/g1/3?panel=activity")).toBe(
+            "activity: activity@/notifications > conversation@/chats/group/g1/3?panel=activity",
+        );
+        expect(stack("/community/c2/channel/9/4?panel=activity")).toBe(
+            "activity: activity@/notifications > conversation@/community/c2/channel/9/4?panel=activity",
+        );
+        // the same message without it is in its own tab
+        expect(stack("/chats/group/g1/3")).toBe(
+            "chats: chats@/chats > conversation@/chats/group/g1/3",
+        );
     });
 
     test("the web's Diamond dialog and CHIT's settings are pushed over the You tab", () => {
@@ -318,6 +332,21 @@ describe("the chat a stack has open", () => {
     test("is none on a list", () => {
         expect(opened("/chats")).toBeUndefined();
         expect(opened("/wallet")).toBeUndefined();
+    });
+});
+
+describe("where a chat that's left or deleted goes", () => {
+    test("its list, on its list's tab", () => {
+        expect(afterChatRemoved({ kind: "chats" }, new URLSearchParams())).toBe("/chats");
+        expect(
+            afterChatRemoved({ kind: "community", id: community("c2") }, new URLSearchParams()),
+        ).toBe("/community/c2");
+    });
+
+    test("opened from the activity feed, the feed: its tab's root, not another tab's list", () => {
+        const url = afterChatRemoved({ kind: "chats" }, new URLSearchParams("panel=activity"));
+        expect(url).toBe("/notifications");
+        expect(stack(url)).toBe("activity: activity@/notifications");
     });
 });
 

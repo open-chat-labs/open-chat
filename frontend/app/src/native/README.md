@@ -57,6 +57,9 @@ native/
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/screenModules.ts   the screens' chunks, loaded once and kept, preloaded while idle
     app/ScreenHost.svelte  shows it, or a placeholder until it's built
+    activity/        the Activity tab (N13): the feed, on the web feed's logic (logic/activity) and
+                     the library's rules (lib/activityFeed); a row's message is pushed over the tab
+                     (?panel=activity, router/locations)
     chats/           the Chats tab: the list, its search, New chat
     conversation/    a conversation (N5b): the header and its menu, search in the chat, the
                      messages on core/ChatEventList, the swipes, typing, call items; its composer

@@ -2781,6 +2781,13 @@
                 "discardTitle": "Bỏ nhóm này?",
                 "discardMessage": "Những gì bạn đã nhập sẽ không được giữ."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Chưa có gì ở đây.",
+                "mentions": "Chưa có lượt nhắc nào. Khi ai đó @nhắc đến bạn, nó sẽ hiện ở đây.",
+                "payments": "Chưa có khoản thanh toán nào."
+            }
         }
     },
     "new": "Mới",

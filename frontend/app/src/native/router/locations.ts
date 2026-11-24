@@ -187,6 +187,11 @@ export function locationFor(
     if (query.has("diamond")) {
         return tabs("you", url, [youRoot(), step("diamond", { kind: "diamond" }, DIAMOND_URL)]);
     }
+    // a message opened from the activity feed (the web's ?panel=activity, its feed kept beside
+    // the message): pushed over the Activity tab, so Back returns to the feed (native plan 16)
+    if (fromActivity(query) && isChatRoute(route)) {
+        return tabs("activity", url, [activityRoot(), ...chatSteps(route, query)]);
+    }
     switch (route.kind) {
         case "global_chat_selected_route":
             return tabs("chats", url, [chatsRoot(route.scope), ...chatSteps(route, query)]);
@@ -343,6 +348,28 @@ function exploreStep(): StackStep {
 
 function walletRoot(): StackStep {
     return step("wallet", { kind: "wallet" }, "/wallet");
+}
+
+function activityRoot(): StackStep {
+    return step("activity", { kind: "activity" }, "/notifications");
+}
+
+function isChatRoute(route: RouteParams): route is ChatRoute {
+    return route.kind === "global_chat_selected_route" || route.kind === "selected_channel_route";
+}
+
+// a chat opened from the activity feed, which is pushed over the Activity tab
+function fromActivity(query: URLSearchParams): boolean {
+    return query.get("panel") === "activity";
+}
+
+/**
+ * Where the chat showing (or its details) goes once it's left or deleted: back to the root of the
+ * tab it's on. That's its chat list (`scope`), or the activity feed for a chat opened from there,
+ * whose stack would otherwise keep the chat while the list's tab took over.
+ */
+export function afterChatRemoved(scope: ChatListScope, query: URLSearchParams): string {
+    return fromActivity(query) ? activityRoot().url : routeForScope(scope);
 }
 
 function youRoot(): StackStep {

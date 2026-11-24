@@ -2781,6 +2781,13 @@
                 "discardTitle": "¿Descartar este grupo?",
                 "discardMessage": "Lo que has introducido no se guardará."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Aún no hay nada aquí.",
+                "mentions": "Aún no hay menciones. Cuando alguien te @mencione, aparecerá aquí.",
+                "payments": "Aún no hay pagos."
+            }
         }
     },
     "new": "nuevo",

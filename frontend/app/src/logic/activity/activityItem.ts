@@ -9,13 +9,14 @@ import {
     type MessageContext,
     type ResourceKey,
 } from "@client";
-import type { ActivityItem } from "@openchat/ui/src/features/components/ActivityPanel.svelte";
+import type { ActivityItem } from "@openchat/ui/src/lib/activityFeed.svelte";
 import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
 import { swatchFor } from "@src/logic/swatch";
 
-// The activity feed's events to ActivityPanel's items (DATA.md, ActivityPanel), in the old feed's
-// words (ActivityEvent.svelte). The client's lookups and wording come in through ActivityContext,
-// so this stays pure.
+// The activity feed's events to ActivityPanel's items (web DATA.md, ActivityPanel), in the old
+// feed's words (ActivityEvent.svelte): the web's feed and the native Activity tab both show these.
+// The client's lookups and wording come in through ActivityContext (`activityContext` builds it
+// from the stores), so this stays pure.
 
 export type ActivityContext = {
     /** The signed-in user's id. */
@@ -96,8 +97,10 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
 }
 
 /**
- * Where opening an event goes: its message, with the feed still open beside it, unless the screen
- * is narrow, where only one column shows and the message is what was asked for.
+ * Where opening an event goes: its message, with the feed still open beside it (`?panel=activity`),
+ * unless the screen is narrow, where only one column shows and the message is what was asked for.
+ * The native tree reads the same URL as the message pushed over its Activity tab, so Back returns
+ * to the feed.
  */
 export function activityLink(event: MessageActivityEvent, keepFeed = true): string {
     const route = routeForMessage(

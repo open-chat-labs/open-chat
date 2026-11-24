@@ -1,5 +1,5 @@
 import type { Message, MessageActivityEvent } from "@client";
-import { activityItem, activityLink, readUpTo, type ActivityContext } from "./activity.adapter";
+import { activityItem, activityLink, readUpTo, type ActivityContext } from "./activityItem";
 
 const ctx: ActivityContext = {
     me: "me",

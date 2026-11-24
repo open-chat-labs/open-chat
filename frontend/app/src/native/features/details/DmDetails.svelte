@@ -17,7 +17,7 @@
         chatListScopeStore,
         favouritesStore,
         publish,
-        routeForScope,
+        querystringStore,
         toMonthYearString,
         userBadges,
         type DirectChatSummary,
@@ -37,6 +37,7 @@
     import { blobUrlPattern } from "@src/utils/openchatClient";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
+    import { afterChatRemoved } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
     import { blockWithToast, favouriteWithToast, muteWithToast } from "../chats/chatToasts";
@@ -118,9 +119,10 @@
         () => (menuAnchor = null),
     );
 
-    // back to the list, where the chat has gone, with Undo (as the conversation's menu does)
+    // back to the list, where the chat has gone (or the activity feed it was opened from:
+    // afterChatRemoved), with Undo (as the conversation's menu does)
     function deleteChat() {
-        navigate(routeForScope($chatListScopeStore), "dismiss");
+        navigate(afterChatRemoved($chatListScopeStore, $querystringStore), "dismiss");
         removeWithUndo(
             client,
             context,

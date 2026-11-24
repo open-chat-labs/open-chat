@@ -1360,6 +1360,54 @@ design export needs. Each entry says where it came up.
     day), a Diamond gate from its Access gates page, created and opened (TTL and gate as set);
     its photo picked, cropped, saved and shown in the details. Not checked: iOS, the dark theme,
     the Android emulator.
+- **Native Activity** (native N13, #10381; the native plan's 16 of 2026-11-08;
+  `src/native/features/activity`). Built: the title with Mark all read (always in the row, faded
+  out and inert while nothing is unread, so nothing moves), All / Mentions / Payments (the
+  compact `SegmentedTabs`) with a badge only where something is unread, the rows grouped by day
+  (the prototype's mono caps headings) with the accent dot and no tint, and tapping a row marks it
+  read and opens its message pushed over the Activity tab, Back returning to the feed. The URL is
+  the web's (`?panel=activity` on the message's: the web keeps the feed beside it), which the
+  native router reads as the Activity tab's stack. The tab bar's dot was already the shell's
+  (unread in the activity summary). On the web feed's logic, moved rather than copied:
+  `logic/activity/activityItem` (was `web/features/activity/activity.adapter`),
+  `activityChatName` (was `ActivityScreen.chatName`, a copy of the old trees' `getChatName`; the
+  old trees' rows still have theirs, web L3's to switch), and `activityFeed.svelte` (the items'
+  context, the loading with Retry, marking read); and the library's `lib/activityFeed` (the item,
+  the tabs, badges, days, and marks that roll back, which `ActivityPanel` now uses too). A store
+  build has nothing to hide here: the feed only shows what happened (tips and crypto received,
+  swaps accepted), as the epic keeps. Left, or decided where the plan is silent:
+  - **Where it happened** is the old feeds' name (the person for a DM, "Community > channel",
+    "> Thread"), where the prototype's sample says "Private chat" for a DM and "Community /
+    #channel". To ask.
+  - **The time** is the message's clock time under its day heading, as the web feed's, where the
+    prototype's sample has relative times ("12 min", "1 h", "1 d"). To ask.
+  - **Opening a payment** opens its message, as every row does: the plan's "or payment" names no
+    other place, and the wallet (N10a) isn't built. To ask once it is.
+  - **Poll votes** show under All only, as on the web (the plan's filters have no poll tab; web L3
+    is adding one there); an accepted swap is a payment.
+  - **A mark that fails** (the client undoes it) brings the dot back and says so in a toast
+    (`ui.activityPanel.markFailed`); the prototype has no failure. A feed that fails to load
+    shows the web's error with Retry; while it loads, the library's activity skeleton.
+  - **The empty tabs** say the prototype's lines ("Nothing here yet." …), new `native.activity`
+    strings, rather than the web panel's titled empty states.
+  - **Read state** is the feed's one read-up-to time (see "Activity" under App), so opening a row
+    marks the older ones read too, as on the web.
+  - From web L3, still to come in both trees: the person's avatar for the swatch, and a tip's
+    tips on the row.
+  - **Fixed on the way, in both trees:** Mark all read said "Couldn't update that" though it had
+    worked. The feed took a mark as failed when the summary's read-up-to time hadn't reached it
+    afterwards, and that time stays the server's until the next sync (`messageActivitySummaryStore`
+    only zeroes the unread count for a local mark). The client's `markActivityFeedRead` now
+    resolves to whether it stuck, and `markActivityRead` goes by that; the old trees ignore its
+    result, and a failure is as silent for them as before (nothing logged).
+  - **Leaving or deleting a chat opened from the feed** (its details' Leave and Delete) goes back
+    to the feed, the Activity tab's root (`afterChatRemoved` in `router/locations`), rather than
+    to the chat list's tab, which had left the Activity tab's stack on the chat that had gone.
+  - Checked in a browser (390×844, two fresh accounts, one inviting the other to a group): two
+    reactions, a mention and a quote reply in the feed, the badges (All 3, Mentions 1, none on
+    Payments), the tabs, opening a row (its message pushed over the tab, the older row read, the
+    newer two still unread) and Back to the feed, Mark all read (faded out, the tabs unmoved, the
+    tab bar's dot gone, no error), the empty feed, light and dark. Not checked: iOS, Android.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a
@@ -1730,8 +1778,9 @@ design export needs. Each entry says where it came up.
   its tips. The old feed marked everything read as soon as it loaded; this one follows the
   design: an item is read once it's opened, or with "Mark all read" (the feed's read-up-to time,
   so opening one marks the older ones too). Poll votes show under All only (the design's tabs are
-  mentions and payments). The chat's name comes from `ActivityScreen.chatName`, a copy of the old
-  `getChatName` still to extract.
+  mentions and payments). The chat's name comes from `logic/activity/activityChatName` (moved out
+  of `ActivityScreen` by native N13, which shares it; its "Thread" is now `thread.title`), the same
+  as the old trees' `getChatName`, which they still have (web L3 switches them to it).
 - **`DialogShell` opens animated** (by hand, S2): it fades its veil in and lifts its card in
   (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
   the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none

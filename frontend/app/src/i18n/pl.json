@@ -2781,6 +2781,13 @@
                 "discardTitle": "Odrzucić tę grupę?",
                 "discardMessage": "To, co wpisano, nie zostanie zachowane."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Na razie nic tu nie ma.",
+                "mentions": "Brak wzmianek. Gdy ktoś Cię @wspomni, pojawi się to tutaj.",
+                "payments": "Brak płatności."
+            }
         }
     },
     "new": "nowy",

@@ -3,24 +3,8 @@
      onMarkRead; "Mark all read" calls onMarkAllRead. Read state comes from `unread` on each item; local marks are optimistic
      and roll back with an error if the host rejects. Items are identified by `id`, never by title. -->
 <script lang="ts" module>
-  export interface ActivityItem {
-    id: string;
-    /** Day heading the item sits under; consecutive items share it. */
-    day: string;
-    title: string;
-    context: string;
-    preview?: string;
-    time: string;
-    unread?: boolean;
-    color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
-    kind?: 'user' | 'group';
-    reactions?: string[];
-    type?: 'reaction' | 'mention' | 'reply' | 'payment';
-    /** Chat to open. */
-    chatId: string;
-    /** Message to land on. */
-    messageId?: string;
-  }
+  // the item and the feed's rules are activityFeed's, shared with the native Activity tab
+  export type { ActivityItem } from '../../lib/activityFeed.svelte';
 </script>
 
 <script lang="ts">
@@ -30,10 +14,11 @@
   import IconButton from '../../lib/components/IconButton.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
+  import { ACTIVITY_TAB_LABELS, ActivityReadMarks, activityTabCounts, activityTabItems, startsDay, type ActivityItem as Item } from '../../lib/activityFeed.svelte';
 
   interface Props {
-    items: ActivityItem[];
-    onOpen?: (item: ActivityItem) => void;
+    items: Item[];
+    onOpen?: (item: Item) => void;
     /** Mark these items read (opening one marks it). Rolls back if it rejects. */
     onMarkRead?: (ids: string[]) => Promise<unknown> | void;
     /** "Mark all read"; hidden without it (or onMarkRead). Rolls back if it rejects. */
@@ -53,40 +38,22 @@
     { title: 'ui.activityPanel.noMentions', body: 'ui.activityPanel.noMentionsBody' },
     { title: 'ui.activityPanel.noPayments', body: 'ui.activityPanel.noPaymentsBody' },
   ];
-  // ids marked read here, until the host's items catch up
-  let read = $state<string[]>([]);
-  let failed = $state(false);
+  // ids marked read here, until the host's items catch up (activityFeed, shared with the native tab)
+  const marks = new ActivityReadMarks();
 
-  const isUnread = (it: ActivityItem) => !!it.unread && !read.includes(it.id);
-  const shown = $derived(items.filter((it) => tab === 0 || (tab === 1 && it.type === 'mention') || (tab === 2 && it.type === 'payment')));
+  const isUnread = (it: Item) => marks.isUnread(it);
+  const shown = $derived(activityTabItems(items, tab));
   // each tab's new (unread) activity; none, no badge
-  const counts = $derived(
-    [items, items.filter((i) => i.type === 'mention'), items.filter((i) => i.type === 'payment')].map((tabItems) => tabItems.filter(isUnread).length || null),
-  );
+  const counts = $derived(activityTabCounts(items, isUnread));
   const hasUnread = $derived(items.some(isUnread));
 
-  async function markRead(ids: string[], call: () => Promise<unknown> | void) {
-    const fresh = ids.filter((id) => !read.includes(id));
-    if (!fresh.length) return;
-    failed = false;
-    read = [...read, ...fresh];
-    try {
-      await call();
-    } catch {
-      read = read.filter((id) => !fresh.includes(id));
-      failed = true;
-    }
-  }
-
-  function open(it: ActivityItem) {
-    if (isUnread(it) && onMarkRead) markRead([it.id], () => onMarkRead([it.id]));
+  function open(it: Item) {
+    void marks.open(it, onMarkRead);
     onOpen?.(it);
   }
 
   function markAll() {
-    const ids = items.filter(isUnread).map((i) => i.id);
-    if (onMarkAllRead) markRead(ids, onMarkAllRead);
-    else if (onMarkRead) markRead(ids, () => onMarkRead(ids));
+    void marks.markAll(items, onMarkAllRead, onMarkRead);
   }
 </script>
 
@@ -101,8 +68,8 @@
         <span class="mark-all" onclick={markAll} role="button" tabindex="0">{t('ui.activityPanel.markAllRead')}</span>
       {/if}
     </div>
-    {#if failed}<span class="failed" role="alert">{t('ui.activityPanel.markFailed')}</span>{/if}
-    <div class="tabs"><SegmentedTabs labels={[t('ui.activityPanel.tabAll'), t('ui.activityPanel.tabMentions'), t('ui.activityPanel.tabPayments')]} {counts} selectedIndex={tab} dotOnLast={false} onSelect={(i) => (tab = i)} /></div>
+    {#if marks.failed}<span class="failed" role="alert">{t('ui.activityPanel.markFailed')}</span>{/if}
+    <div class="tabs"><SegmentedTabs labels={ACTIVITY_TAB_LABELS.map((key) => t(key))} {counts} selectedIndex={tab} dotOnLast={false} onSelect={(i) => (tab = i)} /></div>
   </div>
 
   <div class="feed">
@@ -110,7 +77,7 @@
       <Skeleton variant="activity" count={7} />
     {:else}
       {#each shown as it, i (it.id)}
-        {#if i === 0 || shown[i - 1].day !== it.day}
+        {#if startsDay(shown, i)}
           <span class="day" class:first={i === 0}>{it.day}</span>
         {/if}
         <div class="row">

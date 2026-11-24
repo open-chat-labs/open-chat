@@ -2781,6 +2781,13 @@
                 "discardTitle": "放弃这个群组？",
                 "discardMessage": "你输入的内容不会保留。"
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "这里还没有内容。",
+                "mentions": "还没有提及。有人 @提及你时，会显示在这里。",
+                "payments": "还没有付款。"
+            }
         }
     },
     "new": "新的",

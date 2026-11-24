@@ -2690,6 +2690,13 @@
                 "discardTitle": "Discard this group?",
                 "discardMessage": "What you've entered won't be kept."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Nothing here yet.",
+                "mentions": "No mentions yet. When someone @mentions you, it shows up here.",
+                "payments": "No payments yet."
+            }
         }
     },
     "new": "new",

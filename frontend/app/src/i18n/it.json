@@ -2781,6 +2781,13 @@
                 "discardTitle": "Annullare questo gruppo?",
                 "discardMessage": "Quello che hai inserito non verrà conservato."
             }
+        },
+        "activity": {
+            "empty": {
+                "all": "Ancora niente qui.",
+                "mentions": "Ancora nessuna menzione. Quando qualcuno ti @menziona, apparirà qui.",
+                "payments": "Ancora nessun pagamento."
+            }
         }
     },
     "new": "nuovo",

@@ -2761,14 +2761,25 @@ export class OpenChat {
         return results[0];
     }
 
-    markActivityFeedRead(readUpTo: bigint) {
+    /**
+     * Marks the activity feed read up to `readUpTo`, at once (local update), and undoes that if it
+     * fails. Resolves to whether it stuck. The summary store can't say: it only takes the local mark
+     * into account once it reaches the feed's latest activity (unreadCount), and its
+     * readUpToTimestamp stays the server's until the next sync.
+     */
+    async markActivityFeedRead(readUpTo: bigint): Promise<boolean> {
         const undo = localUpdates.setMessageActivityFeedReadUpTo(readUpTo);
-        return this.#worker
-            .send({
+        try {
+            await this.#worker.send({
                 kind: "markActivityFeedRead",
                 readUpTo,
-            })
-            .catch(undo);
+            });
+            return true;
+        } catch {
+            // silent, as it always was for the old UIs; the new ones say so from the result
+            undo();
+            return false;
+        }
     }
 
     subscribeToMessageActivityFeed(
