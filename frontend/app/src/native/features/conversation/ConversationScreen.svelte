@@ -1400,6 +1400,7 @@
                     {#key chatKey}
                         <ConversationComposer
                             {chat}
+                            {selected}
                             {ctx}
                             {slot}
                             {os}
