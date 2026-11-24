@@ -71,9 +71,10 @@ export type GroupSettingsPage = "edit" | "gates" | "rules" | "permissions" | "bo
 
 /**
  * A community's settings page, from its details' Manage (native plan 12 "Community details": N7's
- * screens, placeholders until then); Invite people too, from its page's menu.
+ * screens) and its cover's Edit; Invite people too, from its page's menu.
  */
 export type CommunitySettingsPage =
+    | "edit"
     | "channels"
     | "user_groups"
     | "invite"
@@ -117,7 +118,7 @@ export type LocalScreen =
     | { kind: "explore_list"; shelf: ExploreShelfKey }
     // a community's details, from its page's header and Manage (N8a)
     | { kind: "community_details"; communityId: CommunityIdentifier }
-    // a community's settings page, from its details' Manage and its page's menu (N7's, to come)
+    // a community's settings page, from its details' Manage and Edit, and its page's menu (N7)
     | { kind: "community_settings"; communityId: CommunityIdentifier; page: CommunitySettingsPage }
     // Create community, from the Communities switcher's sheet (N8b)
     | { kind: "new_community" };

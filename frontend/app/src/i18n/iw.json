@@ -2602,6 +2602,27 @@
                 "invite": "הזמנה ושיתוף"
             }
         },
+        "communitySettings": {
+            "edit": "עריכת הקהילה",
+            "photo": "תמונת הקהילה",
+            "banner": "באנר",
+            "changeBanner": "החלפת באנר",
+            "namePlaceholder": "שם הקהילה",
+            "public": "קהילה ציבורית",
+            "publicHelp": "כל אחד יכול למצוא קהילה ציבורית ולהצטרף אליה. קהילה פרטית מיועדת למוזמנים.",
+            "permissions": {
+                "channels": "ערוצים וקבוצות משתמשים",
+                "perm": {
+                    "changeRoles": "שינוי תפקידי חברים",
+                    "updateDetails": "עריכת פרטי הקהילה",
+                    "inviteUsers": "הזמנת אנשים",
+                    "removeMembers": "הסרה או חסימה של חברים",
+                    "createPublicChannel": "יצירת ערוצים ציבוריים",
+                    "createPrivateChannel": "יצירת ערוצים פרטיים",
+                    "manageUserGroups": "ניהול קבוצות משתמשים"
+                }
+            }
+        },
         "explore": {
             "title": "גילוי",
             "search": "חיפוש קהילות",

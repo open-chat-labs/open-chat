@@ -2602,6 +2602,27 @@
                 "invite": "Zaproś i udostępnij"
             }
         },
+        "communitySettings": {
+            "edit": "Edytuj społeczność",
+            "photo": "Zdjęcie społeczności",
+            "banner": "Baner",
+            "changeBanner": "Zmień baner",
+            "namePlaceholder": "Nazwa społeczności",
+            "public": "Społeczność publiczna",
+            "publicHelp": "Każdy może znaleźć publiczną społeczność i do niej dołączyć. Prywatna jest dla zaproszonych osób.",
+            "permissions": {
+                "channels": "Kanały i grupy użytkowników",
+                "perm": {
+                    "changeRoles": "Zmiana ról członków",
+                    "updateDetails": "Edycja informacji o społeczności",
+                    "inviteUsers": "Zapraszanie osób",
+                    "removeMembers": "Usuwanie lub blokowanie członków",
+                    "createPublicChannel": "Tworzenie kanałów publicznych",
+                    "createPrivateChannel": "Tworzenie kanałów prywatnych",
+                    "manageUserGroups": "Zarządzanie grupami użytkowników"
+                }
+            }
+        },
         "explore": {
             "title": "Odkrywaj",
             "search": "Szukaj społeczności",

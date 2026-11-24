@@ -4667,15 +4667,21 @@ export class OpenChat {
     // the selected channel and its community, where it holds only some of its members, so that the
     // members held say which of them are members. Then those who are members already aren't offered
     // to invite (a group's or channel's members held being only its first page), and those who are
-    // members of the community, but not the channel, are offered to add to the channel.
-    async lookupDirectChatUsersAmongMembers(): Promise<void> {
+    // members of the community, but not the channel, are offered to add to the channel. With
+    // `community`, among the selected community's members instead (inviting to the community).
+    async lookupDirectChatUsersAmongMembers(community: boolean = false): Promise<void> {
+        const userIds = [...serverDirectChatsStore.value.values()]
+            .map((c) => c.them.userId)
+            .filter((u) => userStore.get(u)?.kind !== "bot");
+        if (community) {
+            const communityId = selectedCommunityIdStore.value;
+            if (communityId !== undefined) await this.#membersAmong(communityId, userIds);
+            return;
+        }
         const chatId = selectedChatIdStore.value;
         if (chatId === undefined || chatId.kind === "direct_chat") {
             return;
         }
-        const userIds = [...serverDirectChatsStore.value.values()]
-            .map((c) => c.them.userId)
-            .filter((u) => userStore.get(u)?.kind !== "bot");
         if (chatId.kind === "group_chat") {
             await this.#membersAmong(chatId, userIds);
             return;

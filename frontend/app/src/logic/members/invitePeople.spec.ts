@@ -6,11 +6,14 @@ import {
     ROLE_MODERATOR,
     ROLE_NONE,
     ROLE_OWNER,
+    type CommunitySummary,
     type DirectChatSummary,
+    type OpenChat,
     type UserSummary,
 } from "@client";
 import { describe, expect, test } from "vitest";
 import {
+    communityInviteAccess,
     inviteAccess,
     invitePeopleLists,
     inviteRole,
@@ -230,5 +233,53 @@ describe("invitePeopleLists", () => {
             { userId: "i", way: "invited" },
             { userId: "m", way: "member" },
         ]);
+    });
+});
+
+describe("communityInviteAccess", () => {
+    const community = (role: CommunitySummary["membership"]["role"], isPublic: boolean) =>
+        ({
+            kind: "community",
+            id: { kind: "community", communityId: "c" },
+            public: isPublic,
+            membership: { role },
+        }) as CommunitySummary;
+    const client = (canInvite: boolean, frozen = false) =>
+        ({
+            isCommunityFrozen: () => frozen,
+            canEditCommunity: () => false,
+            canDeleteCommunity: () => false,
+            canInviteUsers: () => canInvite,
+            canManageUserGroups: () => false,
+            canManageBots: () => false,
+        }) as never as OpenChat;
+
+    test("someone who may invite gets both tabs, and manages a private community's link", () => {
+        expect(communityInviteAccess(client(true), community(ROLE_ADMIN, false), false)).toEqual({
+            kind: "allowed",
+            tabs: ["people", "link"],
+            invite: true,
+            add: false,
+            manageLink: true,
+        });
+    });
+
+    test("nothing for a guest, or in a frozen community", () => {
+        expect(communityInviteAccess(client(true), community(ROLE_ADMIN, true), true)).toEqual({
+            kind: "not_allowed",
+        });
+        expect(
+            communityInviteAccess(client(true, true), community(ROLE_ADMIN, true), false),
+        ).toEqual({ kind: "not_allowed" });
+    });
+
+    test("nothing for a member who may not invite, even to a public community", () => {
+        // the details' permissions offer nothing without Invite users (communityDetailsPermissions)
+        expect(communityInviteAccess(client(false), community(ROLE_MEMBER, true), false)).toEqual({
+            kind: "not_allowed",
+        });
+        expect(communityInviteAccess(client(true), community(ROLE_NONE, true), false)).toEqual({
+            kind: "not_allowed",
+        });
     });
 });

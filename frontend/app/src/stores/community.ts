@@ -6,15 +6,18 @@ import {
     ROLE_OWNER,
 } from "@client";
 
-const defaultPermissions: CommunityPermissions = {
-    changeRoles: ROLE_ADMIN,
-    updateDetails: ROLE_ADMIN,
-    inviteUsers: ROLE_ADMIN,
-    removeMembers: ROLE_ADMIN,
-    createPublicChannel: ROLE_ADMIN,
-    createPrivateChannel: ROLE_ADMIN,
-    manageUserGroups: ROLE_ADMIN,
-};
+/** A new community's permissions: everything is the admins'. */
+export function defaultCommunityPermissions(): CommunityPermissions {
+    return {
+        changeRoles: ROLE_ADMIN,
+        updateDetails: ROLE_ADMIN,
+        inviteUsers: ROLE_ADMIN,
+        removeMembers: ROLE_ADMIN,
+        createPublicChannel: ROLE_ADMIN,
+        createPrivateChannel: ROLE_ADMIN,
+        manageUserGroups: ROLE_ADMIN,
+    };
+}
 
 export function createCandidateCommunity(id: string, index: number): CommunitySummary {
     return {
@@ -27,7 +30,7 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         banner: {},
         gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
         public: true,
-        permissions: defaultPermissions,
+        permissions: defaultCommunityPermissions(),
         historyVisible: true,
         frozen: false,
         level: "community",

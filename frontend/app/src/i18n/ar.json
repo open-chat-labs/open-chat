@@ -2602,6 +2602,27 @@
                 "invite": "الدعوة والمشاركة"
             }
         },
+        "communitySettings": {
+            "edit": "تعديل المجتمع",
+            "photo": "صورة المجتمع",
+            "banner": "الغلاف",
+            "changeBanner": "تغيير الغلاف",
+            "namePlaceholder": "اسم المجتمع",
+            "public": "مجتمع عام",
+            "publicHelp": "يمكن لأي شخص العثور على مجتمع عام والانضمام إليه. أما المجتمع الخاص فهو للمدعوين فقط.",
+            "permissions": {
+                "channels": "القنوات ومجموعات المستخدمين",
+                "perm": {
+                    "changeRoles": "تغيير أدوار الأعضاء",
+                    "updateDetails": "تعديل معلومات المجتمع",
+                    "inviteUsers": "دعوة الأشخاص",
+                    "removeMembers": "إزالة الأعضاء أو حظرهم",
+                    "createPublicChannel": "إنشاء قنوات عامة",
+                    "createPrivateChannel": "إنشاء قنوات خاصة",
+                    "manageUserGroups": "إدارة مجموعات المستخدمين"
+                }
+            }
+        },
         "explore": {
             "title": "استكشاف",
             "search": "ابحث عن مجتمعات",

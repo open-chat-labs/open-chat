@@ -2602,6 +2602,27 @@
                 "invite": "Inviter et partager"
             }
         },
+        "communitySettings": {
+            "edit": "Modifier la communauté",
+            "photo": "Photo de la communauté",
+            "banner": "Bannière",
+            "changeBanner": "Changer la bannière",
+            "namePlaceholder": "Nom de la communauté",
+            "public": "Communauté publique",
+            "publicHelp": "Tout le monde peut trouver une communauté publique et la rejoindre. Une communauté privée est réservée aux personnes invitées.",
+            "permissions": {
+                "channels": "Chaînes et groupes d'utilisateurs",
+                "perm": {
+                    "changeRoles": "Changer les rôles",
+                    "updateDetails": "Modifier les infos de la communauté",
+                    "inviteUsers": "Inviter des personnes",
+                    "removeMembers": "Retirer ou bloquer des membres",
+                    "createPublicChannel": "Créer des chaînes publiques",
+                    "createPrivateChannel": "Créer des chaînes privées",
+                    "manageUserGroups": "Gérer les groupes d'utilisateurs"
+                }
+            }
+        },
         "explore": {
             "title": "Explorer",
             "search": "Rechercher des communautés",

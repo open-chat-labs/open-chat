@@ -161,9 +161,9 @@ export const screens: Screens = {
     // a community's details, from its page's header and Manage (N8a)
     community_details: () => import("../communities/CommunityDetailsScreen.svelte"),
 
-    // a community's settings pages (channels, user groups, invite, gates, rules, permissions, bots,
-    // stats), from its details' Manage and its page's menu (N7)
-    community_settings: undefined,
+    // a community's settings pages (edit, channels, user groups, invite, gates, rules, permissions,
+    // bots, stats), from its details' Manage and Edit, and its page's menu (N7)
+    community_settings: () => import("../communitySettings/CommunitySettingsScreen.svelte"),
 
     // Create community, from the Communities switcher's sheet (N8b)
     new_community: undefined,

@@ -2511,6 +2511,27 @@
                 "invite": "Invite and share"
             }
         },
+        "communitySettings": {
+            "edit": "Edit community",
+            "photo": "Community photo",
+            "banner": "Banner",
+            "changeBanner": "Change banner",
+            "namePlaceholder": "Community name",
+            "public": "Public community",
+            "publicHelp": "Anyone can find a public community and join it. A private one is for the people invited.",
+            "permissions": {
+                "channels": "Channels and user groups",
+                "perm": {
+                    "changeRoles": "Change member roles",
+                    "updateDetails": "Edit community info",
+                    "inviteUsers": "Invite people",
+                    "removeMembers": "Remove or block members",
+                    "createPublicChannel": "Create public channels",
+                    "createPrivateChannel": "Create private channels",
+                    "manageUserGroups": "Manage user groups"
+                }
+            }
+        },
         "explore": {
             "title": "Explore",
             "search": "Search communities",

@@ -2602,6 +2602,27 @@
                 "invite": "Mời và chia sẻ"
             }
         },
+        "communitySettings": {
+            "edit": "Chỉnh sửa cộng đồng",
+            "photo": "Ảnh cộng đồng",
+            "banner": "Ảnh bìa",
+            "changeBanner": "Đổi ảnh bìa",
+            "namePlaceholder": "Tên cộng đồng",
+            "public": "Cộng đồng công khai",
+            "publicHelp": "Ai cũng có thể tìm và tham gia một cộng đồng công khai. Cộng đồng riêng tư dành cho những người được mời.",
+            "permissions": {
+                "channels": "Kênh và nhóm người dùng",
+                "perm": {
+                    "changeRoles": "Đổi vai trò thành viên",
+                    "updateDetails": "Sửa thông tin cộng đồng",
+                    "inviteUsers": "Mời người khác",
+                    "removeMembers": "Xóa hoặc chặn thành viên",
+                    "createPublicChannel": "Tạo kênh công khai",
+                    "createPrivateChannel": "Tạo kênh riêng tư",
+                    "manageUserGroups": "Quản lý nhóm người dùng"
+                }
+            }
+        },
         "explore": {
             "title": "Khám phá",
             "search": "Tìm cộng đồng",

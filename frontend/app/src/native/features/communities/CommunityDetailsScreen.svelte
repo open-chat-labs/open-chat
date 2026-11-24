@@ -2,8 +2,8 @@
      and its menu's Manage, without a URL of its own (as the web opens its panel): the cover (its banner) with back,
      its avatar, name and "Public · 1,284 members"; About (the description, its language); then, read only for
      every member, its Channels (a tap opens one), Rules and Access gates (the preview's card, without the
-     statuses); and Manage for owners and admins (Channels, User groups, Invite and share, Access gates, Rules,
-     Permissions, Bots and webhooks, Stats: N7's settings pages, placeholders until then). -->
+     statuses); and for owners and admins the cover's Edit (Edit community) and Manage (Channels, User groups,
+     Invite and share, Access gates, Rules, Permissions, Bots and webhooks, Stats: N7's settings pages). -->
 <script lang="ts">
     import {
         anonUserStore,
@@ -107,7 +107,16 @@
                 favourite={false}
                 onBack={context.back}
                 onFavourite={undefined}
-                onMore={undefined} />
+                onMore={undefined}
+                onEdit={manage
+                    ? () =>
+                          context.push({
+                              kind: "community_settings",
+                              communityId: community.id,
+                              page: "edit",
+                          })
+                    : undefined}
+                editLabel={$_("native.communitySettings.edit")} />
 
             <div class="content">
                 <SettingsGroup label={$_("native.you.about")}>

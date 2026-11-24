@@ -2602,6 +2602,27 @@
                 "invite": "دعوت و اشتراک‌گذاری"
             }
         },
+        "communitySettings": {
+            "edit": "ویرایش انجمن",
+            "photo": "عکس انجمن",
+            "banner": "بنر",
+            "changeBanner": "تغییر بنر",
+            "namePlaceholder": "نام انجمن",
+            "public": "انجمن عمومی",
+            "publicHelp": "هر کسی می‌تواند یک انجمن عمومی را پیدا کند و به آن بپیوندد. انجمن خصوصی برای افراد دعوت‌شده است.",
+            "permissions": {
+                "channels": "کانال‌ها و گروه‌های کاربری",
+                "perm": {
+                    "changeRoles": "تغییر نقش اعضا",
+                    "updateDetails": "ویرایش اطلاعات انجمن",
+                    "inviteUsers": "دعوت افراد",
+                    "removeMembers": "حذف یا مسدود کردن اعضا",
+                    "createPublicChannel": "ایجاد کانال‌های عمومی",
+                    "createPrivateChannel": "ایجاد کانال‌های خصوصی",
+                    "manageUserGroups": "مدیریت گروه‌های کاربری"
+                }
+            }
+        },
         "explore": {
             "title": "کاوش",
             "search": "جستجوی انجمن‌ها",

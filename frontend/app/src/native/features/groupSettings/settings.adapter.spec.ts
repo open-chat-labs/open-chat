@@ -22,6 +22,7 @@ import { MAX_RULES_LENGTH } from "@src/logic/groupOrCommunity/groupOrCommunity.s
 import { describe, expect, test } from "vitest";
 import {
     canAddEntry,
+    changeQuestion,
     changedPermissions,
     customisedPerType,
     draftSavable,
@@ -536,5 +537,19 @@ describe("Create group's Settings card", () => {
         expect(invitable({ kind: "user", userId: "a" }, "me")).toBe(true);
         expect(invitable({ kind: "bot", userId: "b" }, "me")).toBe(false);
         expect(invitable({ kind: "user", userId: "me" }, "me")).toBe(false);
+    });
+});
+
+describe("the question a save waits on", () => {
+    test("a verified rename first, then a change of who can see it", () => {
+        const none = { showingVerificationWarning: false, confirming: false };
+        expect(changeQuestion(none, true)).toBeUndefined();
+        expect(changeQuestion({ ...none, showingVerificationWarning: true }, true)).toBe(
+            "verified.nameChangeWarning",
+        );
+        expect(changeQuestion({ ...none, confirming: true }, true)).toBe("confirmMakeGroupPublic");
+        expect(changeQuestion({ ...none, confirming: true }, false)).toBe(
+            "confirmMakeGroupPrivate",
+        );
     });
 });

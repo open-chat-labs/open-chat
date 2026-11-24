@@ -528,6 +528,20 @@ export function threadsAsSaved(
         : candidate.permissions.threadPermissions;
 }
 
+/**
+ * The key of the question a save is waiting on (the old pages' words, for a group's, channel's or
+ * community's level): renaming a verified one, or changing who can see it (`isPublic`, the draft's
+ * visibility); undefined while none is.
+ */
+export function changeQuestion(
+    state: { showingVerificationWarning: boolean; confirming: boolean },
+    isPublic: boolean,
+): string | undefined {
+    if (state.showingVerificationWarning) return "verified.nameChangeWarning";
+    if (state.confirming) return `confirmMakeGroup${isPublic ? "Public" : "Private"}`;
+    return undefined;
+}
+
 /** Why the rules can't be saved: switched on with no text, or text too long; undefined if they can. */
 export function rulesProblem(rules: { enabled: boolean; text: string }): "needed" | "tooLong" | undefined {
     if (!rules.enabled) return undefined;

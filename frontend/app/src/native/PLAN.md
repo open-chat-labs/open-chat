@@ -115,6 +115,14 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   pushed from (N8a; Create community's Settings step is N8b's): the gates and rules pages work on
   a community's draft as they are (`UpdateGroupOrCommunityState`); Edit community and the
   community's permissions are to build. What it left is in GAPS.md ("Native group settings").
+- **Built:** N7's community settings, first part
+  ([#10373](https://github.com/open-chat-labs/open-chat/issues/10373)), to the plan's 12
+  "Community details" on 11's pages: Edit community (from the details' cover: banner, photo,
+  name, description, language, Public) and Manage's Invite and share (Invite people for the
+  community), Access gates, Rules and Permissions (the community's seven), each a draft on the
+  shared `UpdateCommunityState` saved through the client's `updateCommunity`, in the group
+  pages' frame. Left: Channels and User groups (next), Bots and webhooks and Stats (a group's
+  too). What it left is in GAPS.md ("Native community settings").
 - **Built:** N10a the Wallet tab's root and a token's page
   ([#10377](https://github.com/open-chat-labs/open-chat/issues/10377)), to the plan's 13: the
   total with the display currency and the eye, the "today" pill from snapshots kept on the device,

@@ -1344,14 +1344,15 @@ design export needs. Each entry says where it came up.
     (it isn't a favourite); Create goes by the same checks as Save (`draftSavable`), and the
     Rules row says why when the rules can't be saved (empty, or too long); two Create groups open
     each keep their draft for their pages (`newGroupDraft` holds a stack).
-  - **Not built**: Bots and webhooks and Stats (Manage's last two rows) are still placeholders:
-    the plan has "Bots: list + Add a bot; webhooks: Add webhook. Stats: as in the prototype", and
-    the web has no Stats page either (the backend keeps only all-time counters). A community's
-    settings: they come with its details, which push them (N8a; Create community's Settings step
-    is N8b's). The gates and rules pages take a community's draft as they are (they're on
-    `UpdateGroupOrCommunityState`); Edit community (its banner, 25-character name, no history or
-    disappearing messages) and the community's permissions (owner / admin / member, its own
-    seven) are to build.
+  - **Not built**: Bots and webhooks and Stats (Manage's last two rows, a group's and a
+    community's) are still placeholders: the plan has "Bots: list + Add a bot; webhooks: Add
+    webhook. Stats: as in the prototype (not specified further yet; ask if unclear)", the
+    prototype export wasn't available to check against, and the web has no Stats page either (the
+    backend keeps only all-time counters). Open question for the user. A community's settings
+    are "Native community settings" (below).
+  - **The frame** (header, Back's "Discard changes?", the pinned Save, the save's questions) is
+    `SettingsEditorFrame`, shared with a community's pages since N7's community half; the
+    question's words come from `changeQuestion`.
   - **Checked** in a 412×915 touch browser on the native tree against the local replica (the
     emulator wasn't running), N6 Book Club as its owner: Edit group's description saved and shown
     in About, a permission changed (in the accent) and reset, a rules template saved and shown in
@@ -1425,9 +1426,8 @@ design export needs. Each entry says where it came up.
   screen around the conversation's own list and composer, as the web's thread panel); the
   followed threads of a community (`?threads`: the library's ThreadList under the native page
   header, `header={false}`, EXPORT-LOG 2026-11-23). Left, or decided where the plan is silent:
-  - **Placeholders**: Manage's eight pages, and the kebab's Invite people, push
-    `community_settings` (N7's community pages: Edit community, its permissions, Bots and
-    webhooks, Stats; and plan 10's Invite people for a community); the sheet's Create pushes
+  - **Manage's pages**, the cover's Edit and the kebab's Invite people push `community_settings`,
+    N7's community pages ("Native community settings", below); the sheet's Create pushes
     `new_community` (N8b PR 5).
   - **The channels not joined** are those `exploreChannels` finds (its first page of 100, as the
     old mobile list's "Other channels") that the user can read: public ones, or private ones
@@ -1481,6 +1481,50 @@ design export needs. Each entry says where it came up.
     and by a drag, the kebab, a channel's thread from its link and from the menu's Reply in
     thread, a reply sent there, the Threads row and list, a thread from the list, the details.
     Not checked: the reorder drag on a device, iOS, the Android emulator, the dark theme.
+- **Native community settings** (native N7's community half, #10373; the native plan's 12
+  "Community details" → Manage, on 11's pages; `src/native/features/communitySettings`). Built,
+  pushed without a URL (the local `community_settings` screen) from the details' Manage rows, the
+  details' cover's Edit (owners and admins) and the page's kebab (Invite people): Edit community,
+  Invite and share, Access gates, Rules and Permissions, each its own draft on the shared
+  `UpdateCommunityState` (made from the community and its rules as the page opens; Rules waits for
+  them) in the group pages' frame (`SettingsEditorFrame`: Save, "Discard changes?", the save's
+  questions), saved through the client's `updateCommunity`, back to the details with "Changes
+  saved". What the viewer's role can't change shows read only (`communityManageAccess`).
+  Left, or decided where the plan is silent (the prototype export wasn't available to check
+  against):
+  - **Edit community** isn't in the plan's Manage list; it's the cover's pencil, as Edit group is
+    a group's. Its fields are Create community's Details as the plan lists them ("banner, avatar,
+    name check, description, language sheet"), as Edit profile draws a cover and a photo: the
+    banner (picked, cropped 2:1 in start's crop sheet, `BANNER_SIZE`), the photo over it (cropped
+    square), the name (3 to 25 characters, trimmed; no live check, as there's nothing to check an
+    existing community's name against but the save), the description, and a Settings card with
+    Language (start's language sheet, one language; the details' About shows it) and Public
+    community (the owner's; making it private asks first, the client's question). Both images go
+    with the save. TODO(design).
+  - **Invite and share** is Invite people's screen (plan 10: People | Invite link) for the
+    community: the details' InvitePeopleScreen is now `InvitePeople` on a group, channel or
+    community, the screen a wrapper. Who gets which tab is `communityInviteAccess` (the web
+    Manage's: "Invite users" for both, no adding). Suggested looks the DM partners up among the
+    community's members (the client's `lookupDirectChatUsersAmongMembers(true)`: a new argument,
+    the old callers unchanged). Its title is "Invite people", as the group's (the plan's row says
+    "Invite and share").
+  - **Access gates and Rules** are the group's pages on the community's draft, unchanged; the
+    gates' intro names the community.
+  - **Permissions**: a community's seven, in two cards (the plan draws a group's; the split is
+    ours): Members (change roles, edit the community, invite, remove) and Channels and user groups
+    (public channels, private channels, user groups), each with owners, admins or everyone, in the
+    accent where it isn't the default (`defaultCommunityPermissions`, now exported from
+    `stores/community`), and Reset to defaults. A community has no message or thread permissions.
+  - **Not built yet** (placeholders): Channels and User groups (a second PR of this issue), Bots
+    and webhooks and Stats (under-specified: "Native group settings").
+  - **Checked** in a 390×844 touch browser on the native tree against the local replica, as
+    seedcommunity1 in Seed Private Lab (its owner): the description saved and shown in About, then
+    put back; the language sheet; a permission saved (Invite people → Everyone) and reset; the
+    "Keep it civil" rules saved and shown in the details, then off with the seed's default text
+    put back; a Diamond gate saved and shown, then taken off; the invite link switched on (QR,
+    Copy, Share, Reset) and off; Invite people from the kebab; a channel's Edit (the shared frame)
+    with Discard changes. Not checked: iOS, the dark theme, the Android emulator, the banner and
+    photo upload.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a

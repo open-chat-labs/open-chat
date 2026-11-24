@@ -2602,6 +2602,27 @@
                 "invite": "招待と共有"
             }
         },
+        "communitySettings": {
+            "edit": "コミュニティを編集",
+            "photo": "コミュニティの写真",
+            "banner": "バナー",
+            "changeBanner": "バナーを変更",
+            "namePlaceholder": "コミュニティ名",
+            "public": "公開コミュニティ",
+            "publicHelp": "公開コミュニティは誰でも見つけて参加できます。非公開コミュニティは招待された人のためのものです。",
+            "permissions": {
+                "channels": "チャンネルとユーザーグループ",
+                "perm": {
+                    "changeRoles": "メンバーのロールを変更",
+                    "updateDetails": "コミュニティ情報を編集",
+                    "inviteUsers": "人を招待",
+                    "removeMembers": "メンバーを削除・ブロック",
+                    "createPublicChannel": "公開チャンネルを作成",
+                    "createPrivateChannel": "非公開チャンネルを作成",
+                    "manageUserGroups": "ユーザーグループを管理"
+                }
+            }
+        },
         "explore": {
             "title": "探す",
             "search": "コミュニティを検索",
