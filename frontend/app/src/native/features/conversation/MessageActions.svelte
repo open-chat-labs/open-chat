@@ -25,6 +25,7 @@
         type ChatSummary,
         type EventWrapper,
         type Message,
+        type MessageContext,
         type OpenChat,
         type ReportReason,
     } from "@client";
@@ -74,9 +75,13 @@
          * the reader is still in the conversation, or has gone to another screen.
          */
         onSettled?: (exit: MenuExit) => void;
+        /** In a thread (N8a): its root message, which following it follows. */
+        threadRoot?: Message;
+        /** Reply in thread: opens the message's thread (a new one starts as it opens). */
+        onOpenThread?: (threadRootMessageIndex: number) => void;
     };
 
-    let { chat, context, onSettled }: Props = $props();
+    let { chat, context, onSettled, threadRoot, onOpenThread }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     // the shell's, the same for the screen's life
@@ -88,6 +93,8 @@
     // the message whose menu is open (or was, while it fades), and what it offers
     type Pressed = {
         chatId: ChatIdentifier;
+        /** Where the message is: the chat, or a thread in it (whose root is the chat's). */
+        where: MessageContext;
         evt: EventWrapper<Message>;
         el: HTMLElement;
         offered: MessageOffer;
@@ -106,7 +113,7 @@
     // its "Don't ask again", kept once the delete is confirmed (the web's toggle, the same setting)
     let dontAskAgain = $state(false);
     // a link's preview the sender asked to take off, waiting on their confirm
-    let removing = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message>; url: string }>();
+    let removing = $state<{ where: MessageContext; evt: EventWrapper<Message>; url: string }>();
 
     /**
      * Opens the message's menu over it (`el`, its row), offering what `offered` says. True if it's
@@ -117,6 +124,7 @@
         el: HTMLElement | undefined,
         offered: MessageOffer,
         failed: boolean,
+        where?: MessageContext,
     ): boolean {
         if (chat === undefined || el === undefined || !offered.menu) return false;
         // the long-press's one haptic (the chat's MessageGroup plays none); once, should a press
@@ -125,6 +133,7 @@
         clearSelectionIn(el);
         pressed = {
             chatId: chat.id,
+            where: where ?? { chatId: chat.id },
             evt,
             el,
             offered,
@@ -192,8 +201,12 @@
     }
 
     /** Asks the sender to confirm taking the link's preview off their message (notes §1: a small alert). */
-    export function removePreview(evt: EventWrapper<Message>, url: string): void {
-        if (chat !== undefined) removing = { chatId: chat.id, evt, url };
+    export function removePreview(
+        evt: EventWrapper<Message>,
+        url: string,
+        where?: MessageContext,
+    ): void {
+        if (chat !== undefined) removing = { where: where ?? { chatId: chat.id }, evt, url };
     }
 
     // another chat takes this one's place (a notification tapped, a link): what was open on its
@@ -229,14 +242,19 @@
         const at = removing;
         removing = undefined;
         if (at === undefined) return;
-        const failure = await removeLinkPreview(client, { chatId: at.chatId }, at.evt, at.url);
+        const failure = await removeLinkPreview(client, at.where, at.evt, at.url);
         if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
     const items = $derived(
         pressed === undefined
             ? []
-            : messageMenuItems(pressed.offered.actions, !pressed.offered.inert, (key) => $_(key)),
+            : messageMenuItems(
+                  pressed.offered.actions,
+                  // a message's info is the chat's (MessageInfoScreen): none for a thread's
+                  !pressed.offered.inert && pressed.where.threadRootMessageIndex === undefined,
+                  (key) => $_(key),
+              ),
     );
     const reactions = $derived(
         pressed?.offered.react ? quickReactions($recentReactions) : [],
@@ -244,13 +262,14 @@
     const mine = $derived(pressed === undefined ? [] : myReactions(pressed.evt.event.reactions, me));
 
     function react(at: Pressed, emoji: string) {
-        void toggleReaction(client, { chatId: at.chatId }, at.evt.event, emoji);
+        void toggleReaction(client, at.where, at.evt.event, emoji);
     }
 
     function target(at: Pressed, confirmDelete: boolean): MessageActionTarget {
         return {
             client,
-            context: { chatId: at.chatId },
+            context: at.where,
+            threadRoot,
             evt: at.evt,
             failed: at.failed,
             me,
@@ -382,9 +401,11 @@
                     context.toast($_("native.conversation.message.restored"));
                 }
                 return;
-            // a delete is deleteWithUndo's; threads aren't offered here (N8a)
-            case "deleted":
             case "open_thread":
+                leave(() => onOpenThread?.(outcome.threadRootMessageIndex));
+                return;
+            // a delete is deleteWithUndo's
+            case "deleted":
                 return;
         }
     }
@@ -406,7 +427,7 @@
             undo: {
                 pending: restoring,
                 run: async () => {
-                    if (await undeleteMessage(client, { chatId: at.chatId }, at.evt.event)) {
+                    if (await undeleteMessage(client, at.where, at.evt.event)) {
                         return restored;
                     }
                     toastStore.showFailureToast(i18nKey("undeleteMessageFailed"));
@@ -444,7 +465,7 @@
         const pending = context.pendingToast($_("native.conversation.report.reporting"));
         const reported = await client.reportMessage(
             at.chatId,
-            undefined,
+            at.where.threadRootMessageIndex,
             at.evt.event.messageId,
             deleteToo,
             reason,

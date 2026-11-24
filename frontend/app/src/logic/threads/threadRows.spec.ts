@@ -1,6 +1,6 @@
 import type { ChatSummary, EventWrapper, Message, ThreadPreview } from "@client";
 import { describe, expect, test, vi } from "vitest";
-import { threadListGroups, threadSummaryProps, type ThreadListContext } from "./thread.adapter";
+import { threadListGroups, threadSummaryProps, type ThreadListContext } from "./threadRows";
 
 function message(messageIndex: number, sender: string, fields: Partial<Message> = {}) {
     return {
@@ -85,6 +85,7 @@ describe("threadListGroups", () => {
     function context(fields: Partial<ThreadListContext> = {}): ThreadListContext {
         return {
             ...words,
+            gradient: (swatch) => `gradient:${swatch}`,
             chat: (id) => chats.get(id.kind === "group_chat" ? id.groupId : ""),
             replies: (n) => `${n} replies`,
             unread: () => 0,
@@ -118,6 +119,7 @@ describe("threadListGroups", () => {
             unread: 2,
             selected: true,
         });
+        expect(group.threads[0].grad).toMatch(/^gradient:/);
     });
 
     test("a root's mentions are the @names typed", () => {

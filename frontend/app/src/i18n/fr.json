@@ -2563,11 +2563,43 @@
                 "any": "En remplir une seule suffit.",
                 "channelMembers": "{count, plural, one {# membre} other {# membres}}",
                 "recheck": {
-                "minute": "{count, plural, one {Les membres sont revérifiés chaque minute.} other {Les membres sont revérifiés toutes les # minutes.}}",
-                "hour": "{count, plural, one {Les membres sont revérifiés chaque heure.} other {Les membres sont revérifiés toutes les # heures.}}",
-                "day": "{count, plural, one {Les membres sont revérifiés chaque jour.} other {Les membres sont revérifiés tous les # jours.}}",
-                "week": "{count, plural, one {Les membres sont revérifiés chaque semaine.} other {Les membres sont revérifiés toutes les # semaines.}}"
-            }
+                    "minute": "{count, plural, one {Les membres sont revérifiés chaque minute.} other {Les membres sont revérifiés toutes les # minutes.}}",
+                    "hour": "{count, plural, one {Les membres sont revérifiés chaque heure.} other {Les membres sont revérifiés toutes les # heures.}}",
+                    "day": "{count, plural, one {Les membres sont revérifiés chaque jour.} other {Les membres sont revérifiés tous les # jours.}}",
+                    "week": "{count, plural, one {Les membres sont revérifiés chaque semaine.} other {Les membres sont revérifiés toutes les # semaines.}}"
+                }
+            },
+            "details": "Détails de la communauté",
+            "options": "Options de la communauté",
+            "threads": "Fils",
+            "notJoined": "Non rejoint · touchez pour lire",
+            "menu": {
+                "moveToTop": "Placer en premier",
+                "invite": "Inviter des personnes",
+                "manage": "Gérer"
+            },
+            "toast": {
+                "mutedAll": "Tous les canaux sont en sourdine",
+                "muteFailed": "Impossible de mettre les canaux en sourdine",
+                "left": "Vous avez quitté {name}"
+            },
+            "switcher": {
+                "label": "Communautés",
+                "expand": "Déplier les communautés",
+                "collapse": "Replier les communautés",
+                "explore": "Explorer les communautés",
+                "exploreButton": "Explorer",
+                "create": "Créer",
+                "search": "Rechercher dans vos communautés",
+                "yours": "Vos communautés",
+                "reorder": "Vos communautés, faites glisser pour réorganiser",
+                "moveUp": "Monter {name}"
+            },
+            "language": "Langue",
+            "manage": {
+                "channels": "Canaux",
+                "userGroups": "Groupes d'utilisateurs",
+                "invite": "Inviter et partager"
             }
         },
         "explore": {

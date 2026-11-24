@@ -2563,11 +2563,43 @@
                 "any": "Eine davon zu erfüllen reicht.",
                 "channelMembers": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
                 "recheck": {
-                "minute": "{count, plural, one {Mitglieder werden jede Minute erneut geprüft.} other {Mitglieder werden alle # Minuten erneut geprüft.}}",
-                "hour": "{count, plural, one {Mitglieder werden jede Stunde erneut geprüft.} other {Mitglieder werden alle # Stunden erneut geprüft.}}",
-                "day": "{count, plural, one {Mitglieder werden jeden Tag erneut geprüft.} other {Mitglieder werden alle # Tage erneut geprüft.}}",
-                "week": "{count, plural, one {Mitglieder werden jede Woche erneut geprüft.} other {Mitglieder werden alle # Wochen erneut geprüft.}}"
-            }
+                    "minute": "{count, plural, one {Mitglieder werden jede Minute erneut geprüft.} other {Mitglieder werden alle # Minuten erneut geprüft.}}",
+                    "hour": "{count, plural, one {Mitglieder werden jede Stunde erneut geprüft.} other {Mitglieder werden alle # Stunden erneut geprüft.}}",
+                    "day": "{count, plural, one {Mitglieder werden jeden Tag erneut geprüft.} other {Mitglieder werden alle # Tage erneut geprüft.}}",
+                    "week": "{count, plural, one {Mitglieder werden jede Woche erneut geprüft.} other {Mitglieder werden alle # Wochen erneut geprüft.}}"
+                }
+            },
+            "details": "Community-Details",
+            "options": "Community-Optionen",
+            "threads": "Threads",
+            "notJoined": "Nicht beigetreten · zum Lesen tippen",
+            "menu": {
+                "moveToTop": "Nach oben verschieben",
+                "invite": "Personen einladen",
+                "manage": "Verwalten"
+            },
+            "toast": {
+                "mutedAll": "Alle Kanäle stummgeschaltet",
+                "muteFailed": "Die Kanäle konnten nicht stummgeschaltet werden",
+                "left": "Du hast {name} verlassen"
+            },
+            "switcher": {
+                "label": "Communities",
+                "expand": "Communities aufklappen",
+                "collapse": "Communities zuklappen",
+                "explore": "Communities entdecken",
+                "exploreButton": "Entdecken",
+                "create": "Erstellen",
+                "search": "Deine Communities durchsuchen",
+                "yours": "Deine Communities",
+                "reorder": "Deine Communities, zum Umsortieren ziehen",
+                "moveUp": "{name} nach oben verschieben"
+            },
+            "language": "Sprache",
+            "manage": {
+                "channels": "Kanäle",
+                "userGroups": "Benutzergruppen",
+                "invite": "Einladen und teilen"
             }
         },
         "explore": {

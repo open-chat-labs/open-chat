@@ -2563,11 +2563,43 @@
                 "any": "いずれか 1 つを満たせば参加できます。",
                 "channelMembers": "メンバー {count} 人",
                 "recheck": {
-                "minute": "{count, plural, other {メンバーは # 分ごとに再確認されます。}}",
-                "hour": "{count, plural, other {メンバーは # 時間ごとに再確認されます。}}",
-                "day": "{count, plural, other {メンバーは # 日ごとに再確認されます。}}",
-                "week": "{count, plural, other {メンバーは # 週間ごとに再確認されます。}}"
-            }
+                    "minute": "{count, plural, other {メンバーは # 分ごとに再確認されます。}}",
+                    "hour": "{count, plural, other {メンバーは # 時間ごとに再確認されます。}}",
+                    "day": "{count, plural, other {メンバーは # 日ごとに再確認されます。}}",
+                    "week": "{count, plural, other {メンバーは # 週間ごとに再確認されます。}}"
+                }
+            },
+            "details": "コミュニティの詳細",
+            "options": "コミュニティのオプション",
+            "threads": "スレッド",
+            "notJoined": "未参加 · タップして読む",
+            "menu": {
+                "moveToTop": "一番上に移動",
+                "invite": "メンバーを招待",
+                "manage": "管理"
+            },
+            "toast": {
+                "mutedAll": "すべてのチャンネルをミュートしました",
+                "muteFailed": "チャンネルをミュートできませんでした",
+                "left": "{name} から退出しました"
+            },
+            "switcher": {
+                "label": "コミュニティ",
+                "expand": "コミュニティを展開",
+                "collapse": "コミュニティを折りたたむ",
+                "explore": "コミュニティを探す",
+                "exploreButton": "探す",
+                "create": "作成",
+                "search": "コミュニティを検索",
+                "yours": "あなたのコミュニティ",
+                "reorder": "あなたのコミュニティ（ドラッグで並べ替え）",
+                "moveUp": "{name} を上へ移動"
+            },
+            "language": "言語",
+            "manage": {
+                "channels": "チャンネル",
+                "userGroups": "ユーザーグループ",
+                "invite": "招待と共有"
             }
         },
         "explore": {

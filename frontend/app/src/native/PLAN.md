@@ -130,8 +130,18 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   (`?panel=activity`). On the web feed's logic, moved to `logic/activity` (the items, the chat's
   name, the context, the loading, marking read) and the library's `lib/activityFeed` (the tabs,
   badges, days and marks that roll back). What it left is in GAPS.md ("Native Activity").
-- **Next:** the screens. N11 needs only N3; N10b needs N10a; N8a (communities) can start now that
-  N6 is in; N9 (the builders) needs N10b too.
+- **Built:** N8a the Communities tab, its switcher, channels and threads
+  ([#10374](https://github.com/open-chat-labs/open-chat/issues/10374)), to the plan's 12 and 10
+  "Threads": a member's page (the header and its menu, the Threads row, the channels, those not
+  joined to read), the switcher strip ↔ sheet on one factor (`switcher.ts`), reordered by drag,
+  a community's long-press menu, its details (About, Channels, Rules and Access gates read only,
+  Manage for owners and admins), a message's thread (the replies link turned on, Reply in thread
+  and Follow in the long-press menu, the thread screen: ThreadPanel around the conversation's own
+  list and composer) and the followed threads list. Manage's pages and a community's Invite
+  people are N7's, pushed as placeholders (`community_settings`); Create community is N8b's
+  (`new_community`). What it left is in GAPS.md ("Native Communities tab").
+- **Next:** the screens. N11 needs only N3; N10b needs N10a; N9 (the builders) needs N10b
+  too; N8b's Create community and N7's community pages can start now that N8a is in.
 
 ## Workstreams
 

@@ -7,6 +7,7 @@ import {
     type ChatSummary,
     type ReadonlyMap,
     type ReadonlySet,
+    type ThreadSyncDetails,
 } from "@shared";
 
 // A chat list: the chats in a scope, in the order the list shows them. chatSummariesStore and
@@ -66,4 +67,23 @@ export function chatListOrder(
     }
     unpinned.sort(([a], [b]) => (a === b ? 0 : a < b ? 1 : -1));
     return pinned.concat(unpinned.map(([, chat]) => chat));
+}
+
+/**
+ * The threads the user follows in each of `chats` that has any (a group's or channel's
+ * `latestThreads`): threadsByChatStore is this for the route's scope, and a view that lists a
+ * scope of its own (the native Communities tab's threads) calls it with that scope's chats.
+ */
+export function followedThreadsByChat(chats: ChatMap<ChatSummary>): ChatMap<ThreadSyncDetails[]> {
+    const result = new ChatMap<ThreadSyncDetails[]>();
+    for (const [, chat] of chats.entries()) {
+        if (
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            chat.membership &&
+            chat.membership.latestThreads.length > 0
+        ) {
+            result.set(chat.id, chat.membership.latestThreads);
+        }
+    }
+    return result;
 }

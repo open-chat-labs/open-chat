@@ -2563,11 +2563,43 @@
                 "any": "Basta soddisfarne uno.",
                 "channelMembers": "{count, plural, one {# membro} other {# membri}}",
                 "recheck": {
-                "minute": "{count, plural, one {I membri vengono ricontrollati ogni minuto.} other {I membri vengono ricontrollati ogni # minuti.}}",
-                "hour": "{count, plural, one {I membri vengono ricontrollati ogni ora.} other {I membri vengono ricontrollati ogni # ore.}}",
-                "day": "{count, plural, one {I membri vengono ricontrollati ogni giorno.} other {I membri vengono ricontrollati ogni # giorni.}}",
-                "week": "{count, plural, one {I membri vengono ricontrollati ogni settimana.} other {I membri vengono ricontrollati ogni # settimane.}}"
-            }
+                    "minute": "{count, plural, one {I membri vengono ricontrollati ogni minuto.} other {I membri vengono ricontrollati ogni # minuti.}}",
+                    "hour": "{count, plural, one {I membri vengono ricontrollati ogni ora.} other {I membri vengono ricontrollati ogni # ore.}}",
+                    "day": "{count, plural, one {I membri vengono ricontrollati ogni giorno.} other {I membri vengono ricontrollati ogni # giorni.}}",
+                    "week": "{count, plural, one {I membri vengono ricontrollati ogni settimana.} other {I membri vengono ricontrollati ogni # settimane.}}"
+                }
+            },
+            "details": "Dettagli della community",
+            "options": "Opzioni della community",
+            "threads": "Thread",
+            "notJoined": "Non iscritto · tocca per leggere",
+            "menu": {
+                "moveToTop": "Sposta in cima",
+                "invite": "Invita persone",
+                "manage": "Gestisci"
+            },
+            "toast": {
+                "mutedAll": "Tutti i canali silenziati",
+                "muteFailed": "Impossibile silenziare i canali",
+                "left": "Hai lasciato {name}"
+            },
+            "switcher": {
+                "label": "Community",
+                "expand": "Espandi le community",
+                "collapse": "Comprimi le community",
+                "explore": "Esplora le community",
+                "exploreButton": "Esplora",
+                "create": "Crea",
+                "search": "Cerca nelle tue community",
+                "yours": "Le tue community",
+                "reorder": "Le tue community, trascina per riordinare",
+                "moveUp": "Sposta {name} in su"
+            },
+            "language": "Lingua",
+            "manage": {
+                "channels": "Canali",
+                "userGroups": "Gruppi di utenti",
+                "invite": "Invita e condividi"
             }
         },
         "explore": {

@@ -26,10 +26,8 @@
         communitiesStore,
         currentUserIdStore,
         favouritesStore,
-        i18nKey,
         latestSuccessfulUpdatesLoop,
         messagesRead,
-        pinChatFailureMessage,
         pinnedChatsStore,
         routeForChatIdentifier,
         translationsStore,
@@ -39,7 +37,6 @@
         type ChatSummary,
         type DirectChatIdentifier,
         type GroupChatIdentifier,
-        type LeaveOrDelete,
         type OpenChat,
     } from "@client";
     import { interpolateNewUi } from "@i18n/i18n";
@@ -72,7 +69,6 @@
     import { chitButton } from "@src/logic/chit/chitButton";
     import { chatListFilterStore, disableChit, hideChitIcon } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
-    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -80,8 +76,7 @@
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
     import ChatSearch, { SEARCH_LEAVE_MS, type SearchSection } from "./ChatSearch.svelte";
-    import { favouriteWithToast, muteWithToast } from "./chatToasts";
-    import { removeWithUndo as removeChatWithUndo } from "./removeWithUndo";
+    import { runRowAction } from "./rowActions";
     import {
         chatResult,
         foundResults,
@@ -271,98 +266,9 @@
     function onRowMenu(id: string) {
         const item = pressed?.listed;
         const action = pressedActions.find((a) => a === id);
-        if (item !== undefined && action !== undefined) void act(action, item);
-    }
-
-    async function act(action: ChatRowAction, { chat, row, key }: Listed) {
-        switch (action) {
-            case "pin":
-            case "unpin": {
-                const pin = action === "pin";
-                if (await (pin ? client.pinChat(chat.id) : client.unpinChat(chat.id))) {
-                    context.toast(
-                        $_(pin ? "native.chats.toast.pinned" : "native.chats.toast.unpinned"),
-                    );
-                } else {
-                    toastStore.showFailureToast(pinChatFailureMessage(pin));
-                }
-                break;
-            }
-            case "favourite":
-            case "unfavourite": {
-                const adding = action === "favourite";
-                await favouriteWithToast(
-                    client,
-                    context,
-                    chat.id,
-                    adding,
-                    $_(
-                        adding
-                            ? "native.chats.toast.favourited"
-                            : "native.chats.toast.unfavourited",
-                    ),
-                );
-                break;
-            }
-            case "mute":
-            case "unmute": {
-                const mute = action === "mute";
-                await muteWithToast(
-                    client,
-                    context,
-                    chat.id,
-                    mute,
-                    $_(mute ? "native.chats.toast.muted" : "native.chats.toast.unmuted"),
-                    $_,
-                );
-                break;
-            }
-            case "mark_read":
-                client.markAllRead(chat);
-                break;
-            case "archive":
-                // one column: archiving the open chat goes to the list, never another chat
-                if (await client.archiveChat(chat.id, true)) {
-                    context.toast($_("native.chats.toast.archived"), () => void unarchive(chat));
-                } else {
-                    toastStore.showFailureToast(i18nKey("archiveChatFailed"));
-                }
-                break;
-            case "unarchive":
-                await unarchive(chat);
-                break;
-            case "leave":
-                if (chat.kind !== "direct_chat") {
-                    removeWithUndo(
-                        key,
-                        { kind: "leave", chatId: chat.id },
-                        $_("native.chats.toast.left", { values: { name: row.title } }),
-                    );
-                }
-                break;
-            case "delete":
-                if (chat.kind === "direct_chat") {
-                    removeWithUndo(
-                        key,
-                        { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
-                        $_("native.chats.toast.deleted"),
-                    );
-                }
-                break;
-            case "remove":
-                client.removeFromList(chat);
-                break;
-        }
-    }
-
-    function removeWithUndo(key: string, action: LeaveOrDelete, message: string) {
-        removeChatWithUndo(client, context, key, action, message);
-    }
-
-    async function unarchive(chat: ChatSummary) {
-        if (!(await client.unarchiveChats([chat.id]))) {
-            toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
-        }
+        if (item === undefined || action === undefined) return;
+        const { chat, row, key } = item;
+        void runRowAction(action, { chat, title: row.title, key }, client, context, $_);
     }
 
     // ---- search: the user's chats that match, and the people and public groups found on

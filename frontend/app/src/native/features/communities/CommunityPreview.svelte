@@ -14,11 +14,8 @@
         routeForChatIdentifier,
         type CommunitySummary,
         type OpenChat,
-        type ResourceKey,
     } from "@client";
-    import { interpolateNewUi, supportedLanguagesByCode } from "@i18n/i18n";
-    import Icon from "@openchat/ui/src/lib/components/Icon.svelte";
-    import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
+    import { supportedLanguagesByCode } from "@i18n/i18n";
     import { communityPreviewBar } from "@src/logic/join/previewBar";
     import { swatchFor } from "@src/logic/swatch";
     import { appStoreBuild } from "@src/utils/features";
@@ -30,14 +27,15 @@
     import DetailsHead from "../details/DetailsHead.svelte";
     import { joinButton } from "../join/joinBar.adapter";
     import JoinButton from "../join/JoinButton.svelte";
+    import ChannelsCard from "./ChannelsCard.svelte";
     import { requirementCard } from "./communityPreview.adapter";
+    import RequirementsCard from "./RequirementsCard.svelte";
 
     type Props = { community: CommunitySummary; context: ScreenContext };
 
     let { community, context }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const text = (key: ResourceKey) => interpolateNewUi($_, key);
 
     // what the client's calls read through `.value`, so these follow it: a lapse or a join (the
     // communities), Diamond bought or CHIT earned (the user), a top-up (balances)
@@ -75,7 +73,8 @@
     // the channels someone not in the community can read
     const channels = $derived(community.channels.filter((c) => c.public));
 
-    // a pushed preview goes back; the tab's root cancels the preview, back where it was opened from
+    // pushed over Explore (N8a: locations), it goes back there; at the tab's root (a cold link,
+    // before the community is known) it cancels the preview, back where it was opened from
     function back() {
         if (context.back !== undefined) context.back();
         else navigate(client.cancelPreview(community.id));
@@ -120,50 +119,17 @@
                 <p class="about">{community.description}</p>
             {/if}
             {#if card !== undefined && card.rows.length > 0}
-                <SettingsGroup
+                <RequirementsCard
                     label={$_("native.community.preview.requirements")}
-                    note={card.notes.map(text).join(" ")}>
-                    {#each card.rows as row (row.id)}
-                        <div class="settings-row requirement">
-                            <span class="req-icon"><Icon icon={row.icon} size={19} /></span>
-                            <span class="texts">
-                                <span class="label">{text(row.label)}</span>
-                                {#if row.detail !== undefined}
-                                    <span class="detail">{text(row.detail)}</span>
-                                {/if}
-                            </span>
-                            <span
-                                class="status"
-                                class:met={row.state === "met"}
-                                class:short={row.state === "short"}>
-                                {#if row.state === "met"}<Icon icon="check" size={13} />{/if}
-                                {text(row.status)}
-                            </span>
-                        </div>
-                    {/each}
-                </SettingsGroup>
+                    {card}
+                    status />
             {/if}
             {#if channels.length > 0}
-                <SettingsGroup
+                <ChannelsCard
                     label={$_("native.community.preview.channels")}
-                    note={$_("native.community.preview.channelsNote")}>
-                    {#each channels as channel (channel.id.channelId)}
-                        <button
-                            type="button"
-                            class="settings-row channel"
-                            onclick={() =>
-                                navigate(routeForChatIdentifier("community", channel.id))}>
-                            <span class="hash">#</span>
-                            <span class="channel-name">{channel.name}</span>
-                            <span class="count">
-                                {$_("native.community.preview.channelMembers", {
-                                    values: { count: channel.memberCount },
-                                })}
-                            </span>
-                            <span class="chevron"></span>
-                        </button>
-                    {/each}
-                </SettingsGroup>
+                    note={$_("native.community.preview.channelsNote")}
+                    {channels}
+                    onOpen={(id) => navigate(routeForChatIdentifier("community", id))} />
             {/if}
         </div>
     </div>
@@ -202,107 +168,6 @@
         font: 400 14.5px/1.5 var(--font-sans);
         color: var(--ink-2);
         text-wrap: pretty;
-    }
-
-    .requirement {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        min-height: 60px;
-        padding: 10px 16px;
-        box-sizing: border-box;
-    }
-
-    .req-icon {
-        flex: none;
-        display: flex;
-        color: var(--ink-3);
-    }
-
-    .texts {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .label {
-        font: 500 15px/1.2 var(--font-sans);
-    }
-
-    .detail {
-        font: 500 12.5px/1.3 var(--font-sans);
-        color: var(--ink-4);
-    }
-
-    .status {
-        flex: none;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font: 600 12.5px/1 var(--font-sans);
-        color: var(--ink-3);
-
-        &.met {
-            color: var(--status-online);
-        }
-
-        &.short {
-            color: var(--status-warning);
-        }
-    }
-
-    .channel {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        width: 100%;
-        min-height: 52px;
-        padding: 0 16px;
-        border: 0;
-        background: none;
-        color: var(--ink);
-        text-align: start;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-
-        &:active {
-            background: var(--overlay-1);
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
-    }
-
-    .hash {
-        font: 700 16px/1 var(--font-mono);
-        color: var(--ink-4);
-    }
-
-    .channel-name {
-        flex: 1;
-        min-width: 0;
-        font: 500 15px/1.2 var(--font-sans);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .count {
-        font: 500 12.5px/1 var(--font-sans);
-        color: var(--ink-4);
-    }
-
-    .chevron {
-        flex: none;
-        @include icon(chevron-right, 14px);
-        color: var(--ink-4);
-
-        &:dir(rtl) {
-            transform: rotate(180deg);
-        }
     }
 
     // Join on the tab's root, over the tab bar

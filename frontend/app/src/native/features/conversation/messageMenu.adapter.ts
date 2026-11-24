@@ -15,10 +15,13 @@ type Entry = { id: NativeMessageAction; label: string; icon: string };
 // offered and the native tree carries out
 const ITEMS: Entry[] = [
     { id: "reply", label: "reply", icon: "reply" },
+    { id: "start_thread", label: "thread.menu", icon: "threads" },
     { id: "forward", label: "forward", icon: "forward" },
     { id: "copy", label: "copy", icon: "copy" },
     { id: "info", label: "native.conversation.message.info", icon: "info" },
     { id: "edit", label: "editMessage", icon: "edit" },
+    { id: "follow_thread", label: "followThread", icon: "bell" },
+    { id: "unfollow_thread", label: "unfollowThread", icon: "bell-off" },
     { id: "reply_privately", label: "replyPrivately", icon: "dm" },
     { id: "translate", label: "translateMessage", icon: "lang" },
     { id: "untranslate", label: "untranslateMessage", icon: "lang" },
@@ -44,8 +47,8 @@ const DANGER: Entry[] = [
 
 /**
  * A message's long-press menu rows for what it offers, with Info where it's `withInfo`, labelled by
- * `label` (the app's words for a resource key). Threads (N8a), reminders and tips aren't offered
- * here yet (GAPS.md, "Native conversation").
+ * `label` (the app's words for a resource key). Reminders and tips aren't offered here yet
+ * (GAPS.md, "Native conversation").
  */
 export function messageMenuItems(
     actions: ReadonlySet<OfferedAction>,

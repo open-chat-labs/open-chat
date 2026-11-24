@@ -1,6 +1,6 @@
 import { ChatMap, ChatSet, type ChatIdentifier, type ChatSummary } from "@shared";
 import { describe, expect, test } from "vitest";
-import { chatListOrder, chatsInScope } from "./chatList";
+import { chatListOrder, chatsInScope, followedThreadsByChat } from "./chatList";
 
 // only what the list reads: the kind, the id and the date it sorts by
 function dm(userId: string, created: bigint): ChatSummary {
@@ -37,6 +37,22 @@ const all = ChatMap.fromList([alice, bob, hikers, general, other]);
 
 const ids = (chats: Iterable<ChatSummary>) => [...chats].map((c) => JSON.stringify(c.id));
 const idsOf = (...chats: ChatSummary[]) => chats.map((c) => JSON.stringify(c.id));
+
+describe("followedThreadsByChat", () => {
+    test("each group's or channel's followed threads, none for a chat without any", () => {
+        const thread = {
+            threadRootMessageIndex: 4,
+            lastUpdated: 1n,
+            latestEventIndex: 2,
+            latestMessageIndex: 2,
+        };
+        const withThreads = { ...general, membership: { latestThreads: [thread] } } as ChatSummary;
+        const none: (typeof thread)[] = [];
+        const without = { ...hikers, membership: { latestThreads: none } } as ChatSummary;
+        const followed = followedThreadsByChat(ChatMap.fromList([alice, withThreads, without]));
+        expect([...followed.entries()]).toEqual([[general.id, [thread]]]);
+    });
+});
 
 describe("chatsInScope", () => {
     test("chats are the DMs and groups", () => {

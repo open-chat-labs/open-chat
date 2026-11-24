@@ -1,5 +1,6 @@
 import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
+import { backAction } from "../shell/back";
 import {
     afterChatRemoved,
     showsTabBar,
@@ -65,6 +66,55 @@ describe("where a URL is in the native tree", () => {
         );
     });
 
+    // N8a, from testing: Explore → a community's preview → a channel; Back, Back went to Chats
+    test("a community being previewed is pushed over Explore, and Back goes back through them", () => {
+        const previewing: LocationContext = {
+            ...signedIn,
+            previewing: (id) => id.communityId === "c9",
+        };
+        expect(stack("/communities", previewing)).toBe(
+            "communities: communities@/community/c1 > explore@/communities",
+        );
+        expect(stack("/community/c9", previewing)).toBe(
+            "communities: communities@/community/c1 > explore@/communities > communities@/community/c9",
+        );
+        expect(stack("/community/c9/channel/4", previewing)).toBe(
+            "communities: communities@/community/c1 > explore@/communities > communities@/community/c9 > conversation@/community/c9/channel/4",
+        );
+        // Android's back: each goes to the screen under it, never to the Chats tab
+        const back = (url: string) => {
+            const location = at(url, previewing);
+            if (location.area !== "tabs") throw new Error(`${url} is ${location.area}`);
+            return backAction({
+                overlayOpen: false,
+                localTop: false,
+                location,
+                backUrl: location.steps.at(-2)?.url,
+                chatsUrl: "/chats",
+                startBack: false,
+            });
+        };
+        expect(back("/community/c9/channel/4")).toEqual({ kind: "navigate", url: "/community/c9" });
+        expect(back("/community/c9")).toEqual({ kind: "navigate", url: "/communities" });
+        expect(back("/communities")).toEqual({ kind: "navigate", url: "/community/c1" });
+    });
+
+    test("with no community of the user's, a preview is pushed over Explore at the root", () => {
+        const none: LocationContext = {
+            ...signedIn,
+            community: community("c9"),
+            previewing: (id) => id.communityId === "c9",
+        };
+        expect(stack("/community/c9", none)).toBe(
+            "communities: explore@/communities > communities@/community/c9",
+        );
+    });
+
+    test("a community the user is in is the tab's root", () => {
+        const previewing: LocationContext = { ...signedIn, previewing: () => false };
+        expect(stack("/community/c2", previewing)).toBe("communities: communities@/community/c2");
+    });
+
     test("favourites are the Chats tab, a favourite channel included", () => {
         expect(stack("/favourite")).toBe("chats: chats@/favourite");
         expect(stack("/favourite/user/u1")).toBe(
@@ -87,10 +137,41 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/community/c2?threads")).toBe(
             "communities: communities@/community/c2 > threads@/community/c2?threads",
         );
-        // a thread opened from the list keeps it under the conversation
+        // a thread opened from the list is pushed straight over it: its channel wasn't opened
         expect(stack("/community/c2/channel/9/12?open=true&threads")).toBe(
-            "communities: communities@/community/c2 > threads@/community/c2?threads > conversation@/community/c2/channel/9 > thread@/community/c2/channel/9/12?open=true&threads",
+            "communities: communities@/community/c2 > threads@/community/c2?threads > thread@/community/c2/channel/9/12?open=true&threads",
         );
+    });
+
+    // N8a, from testing: community → Threads → a thread; Back went to the channel first
+    test("Back from a thread goes to where it was opened from: the threads list, or its channel", () => {
+        const back = (url: string) => {
+            const location = at(url);
+            if (location.area !== "tabs") throw new Error(`${url} is ${location.area}`);
+            return backAction({
+                overlayOpen: false,
+                localTop: false,
+                location,
+                backUrl: location.steps.at(-2)?.url,
+                chatsUrl: "/chats",
+                startBack: false,
+            });
+        };
+        // from the list: the thread, then the list, then the community
+        expect(back("/community/c2/channel/9/12?open=true&threads")).toEqual({
+            kind: "navigate",
+            url: "/community/c2?threads",
+        });
+        expect(back("/community/c2?threads")).toEqual({ kind: "navigate", url: "/community/c2" });
+        // from the channel (its replies link, or Reply in thread): the thread, then the channel
+        expect(stack("/community/c2/channel/9/12?open=true")).toBe(
+            "communities: communities@/community/c2 > conversation@/community/c2/channel/9 > thread@/community/c2/channel/9/12?open=true",
+        );
+        expect(back("/community/c2/channel/9/12?open=true")).toEqual({
+            kind: "navigate",
+            url: "/community/c2/channel/9",
+        });
+        expect(back("/community/c2/channel/9")).toEqual({ kind: "navigate", url: "/community/c2" });
     });
 
     test("Explore is pushed over the Communities tab's community, or is its root without one", () => {
@@ -376,6 +457,11 @@ describe("a toast", () => {
     test("sits above the composer in a conversation, a DM's or a channel's", () => {
         expect(above("/chats/user/u1")).toBe("footer");
         expect(above("/community/c2/channel/9")).toBe("footer");
+    });
+
+    // a thread's composer is its footer too (N8a)
+    test("sits above the composer in a thread", () => {
+        expect(above("/community/c2/channel/9/5?open=true")).toBe("footer");
     });
 
     test("sits above the safe area on any other pushed screen, a chat's details too", () => {

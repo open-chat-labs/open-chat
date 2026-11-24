@@ -27,10 +27,14 @@
     groups: { name: string; grad: string; radius: string; threads: Thread[] }[];
     /** Match the chat list header: 54px plain, 62px with the community avatar. */
     headerHeight?: string;
+    /** The list's own header (back, title, scope); false where the host has its own (the native page header). */
+    header?: boolean;
+    /** The groups are a community's channels: each headed "#name", without the mark or the count (the native list). */
+    channelHeads?: boolean;
     onBack?: () => void;
   }
 
-  let { scopeLabel = 'ui.threadList.scopeChats', groups, headerHeight = '54px', onBack }: Props = $props();
+  let { scopeLabel = 'ui.threadList.scopeChats', groups, headerHeight = '54px', header = true, channelHeads = false, onBack }: Props = $props();
   const t = useT();
 
   let filter = $state(0);
@@ -40,10 +44,12 @@
 </script>
 
 <div class="threads">
-  <div class="header" style:height={headerHeight}>
-    <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
-    <span class="heading"><span class="title">{t('ui.threadList.title')}</span><span class="scope">{t(scopeLabel)}</span></span>
-  </div>
+  {#if header}
+    <div class="header" style:height={headerHeight}>
+      <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
+      <span class="heading"><span class="title">{t('ui.threadList.title')}</span><span class="scope">{t(scopeLabel)}</span></span>
+    </div>
+  {/if}
   <div class="filter">
     <SegmentedTabs labels={[t('ui.threadList.all'), t('ui.threadList.unread')]} counts={[null, unreadCount || null]} dotOnLast={false} selectedIndex={filter} onSelect={(i) => (filter = i)} />
   </div>
@@ -51,9 +57,13 @@
     {#each shown as g}
       <div class="group">
         <div class="group-head">
-          <span class="group-mark" style:border-radius={g.radius} style:background={g.grad}></span>
-          <span class="group-name">{g.name}</span>
-          <span class="group-count">{g.threads.length}</span>
+          {#if channelHeads}
+            <span class="group-name channel">#{g.name}</span>
+          {:else}
+            <span class="group-mark" style:border-radius={g.radius} style:background={g.grad}></span>
+            <span class="group-name">{g.name}</span>
+            <span class="group-count">{g.threads.length}</span>
+          {/if}
         </div>
         {#each g.threads as th}
           <div class="thread" class:selected={th.selected} onclick={th.onOpen} role="button" tabindex="0" aria-current={th.selected}>
@@ -159,6 +169,12 @@
     flex: none;
     width: 18px;
     height: 18px;
+  }
+
+  /* a channel's name as it's written everywhere else ("#general"), not upper-cased */
+  .group-name.channel {
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   .group-name {

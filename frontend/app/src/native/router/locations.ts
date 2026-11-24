@@ -69,6 +69,20 @@ export type SettingsPage =
  */
 export type GroupSettingsPage = "edit" | "gates" | "rules" | "permissions" | "bots" | "stats";
 
+/**
+ * A community's settings page, from its details' Manage (native plan 12 "Community details": N7's
+ * screens, placeholders until then); Invite people too, from its page's menu.
+ */
+export type CommunitySettingsPage =
+    | "channels"
+    | "user_groups"
+    | "invite"
+    | "gates"
+    | "rules"
+    | "permissions"
+    | "bots"
+    | "stats";
+
 /** Create group's gates, rules and permissions, pushed from its Settings card (N7). */
 export type NewGroupSettingsPage = "gates" | "rules" | "permissions";
 
@@ -100,7 +114,13 @@ export type LocalScreen =
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat
     | { kind: "builder"; builder: ComposerBuilder; chatId: ChatIdentifier }
     // an Explore shelf's View all (N8b)
-    | { kind: "explore_list"; shelf: ExploreShelfKey };
+    | { kind: "explore_list"; shelf: ExploreShelfKey }
+    // a community's details, from its page's header and Manage (N8a)
+    | { kind: "community_details"; communityId: CommunityIdentifier }
+    // a community's settings page, from its details' Manage and its page's menu (N7's, to come)
+    | { kind: "community_settings"; communityId: CommunityIdentifier; page: CommunitySettingsPage }
+    // Create community, from the Communities switcher's sheet (N8b)
+    | { kind: "new_community" };
 
 /** A local screen's identity in its stack (StackStep.key, after "local:"). */
 export function localKey(screen: LocalScreen): string {
@@ -108,6 +128,7 @@ export function localKey(screen: LocalScreen): string {
         case "settings":
         case "group_settings":
         case "new_group_settings":
+        case "community_settings":
             return `${screen.kind}:${screen.page}`;
         default:
             return screen.kind;
@@ -154,6 +175,11 @@ export type LocationContext = {
      */
     community: CommunityIdentifier | undefined;
     /**
+     * Whether a community is only being previewed (not joined, or lapsed): its page is pushed over
+     * Explore rather than being the tab's root. None: every community is the user's.
+     */
+    previewing?: (id: CommunityIdentifier) => boolean;
+    /**
      * Whether this build has the wallet. An app store build has none (`disableWalletFeature`):
      * no tab, and a wallet URL (/wallet, a token's page, a flow) opens the Chats tab instead, as an
      * unknown page does (the epic's store build: no way to reach the wallet).
@@ -196,27 +222,22 @@ export function locationFor(
         case "global_chat_selected_route":
             return tabs("chats", url, [chatsRoot(route.scope), ...chatSteps(route, query)]);
         case "selected_channel_route":
-            // a favourite channel is in Chats (Favourites), any other in its community
+            // a favourite channel is in Chats (Favourites), any other in its community: a
+            // previewed one's over its preview, pushed over Explore
             return route.scope.kind === "favourite"
                 ? tabs("chats", url, [chatsRoot(route.scope), ...chatSteps(route, query)])
                 : tabs("communities", url, [
-                      communitiesRoot(route.communityId),
+                      ...communitySteps(route.communityId, context),
                       ...chatSteps(route, query),
                   ]);
         case "selected_community_route":
             return tabs("communities", url, [
-                communitiesRoot(route.communityId),
+                ...communitySteps(route.communityId, context),
                 ...threadsStep({ kind: "community", id: route.communityId }, query),
             ]);
         case "communities_route":
         case "welcome_route":
-            return tabs(
-                "communities",
-                url,
-                context.community !== undefined
-                    ? [communitiesRoot(context.community), exploreStep()]
-                    : [exploreStep()],
-            );
+            return tabs("communities", url, exploreSteps(context));
         case "wallet_route":
             return context.wallet
                 ? tabs("wallet", url, [walletRoot(), ...walletSteps(route)])
@@ -250,15 +271,16 @@ export function showsTabBar(steps: readonly StackStep[], hiddenByTop = false): b
 
 /**
  * What a toast sits above on this stack (native design notes §1: toasts sit above the tab bar):
- * the tab bar on a tab's root, the composer on a conversation (its footer), and the safe area on
- * any other pushed screen, or a root that has hidden the tab bar (`hiddenByTop`).
+ * the tab bar on a tab's root, the composer on a conversation or a thread (its footer), and the
+ * safe area on any other pushed screen, or a root that has hidden the tab bar (`hiddenByTop`).
  */
 export function toastsAbove(
     steps: readonly StackStep[],
     hiddenByTop = false,
 ): "tabBar" | "footer" | "none" {
     if (showsTabBar(steps, hiddenByTop)) return "tabBar";
-    return steps[steps.length - 1]?.screen.kind === "conversation" ? "footer" : "none";
+    const top = steps[steps.length - 1]?.screen.kind;
+    return top === "conversation" || top === "thread" ? "footer" : "none";
 }
 
 /** The chat a stack has open (its conversation, or a thread in it), if any. */
@@ -346,6 +368,32 @@ function exploreStep(): StackStep {
     return step("explore", { kind: "explore" }, "/communities");
 }
 
+// The tab's member community, if it has one (not one only being previewed)
+function memberCommunity(context: LocationContext): CommunityIdentifier | undefined {
+    const shown = context.community;
+    return shown === undefined || context.previewing?.(shown) ? undefined : shown;
+}
+
+// Explore, over the community the tab shows (none: Explore is the root)
+function exploreSteps(context: LocationContext): StackStep[] {
+    const member = memberCommunity(context);
+    return member !== undefined ? [communitiesRoot(member), exploreStep()] : [exploreStep()];
+}
+
+// A community's page: the tab's root for one the user's in; one being previewed is pushed over
+// Explore, where it's found (Back goes there, never to another tab)
+function communitySteps(id: CommunityIdentifier, context: LocationContext): StackStep[] {
+    if (!context.previewing?.(id)) return [communitiesRoot(id)];
+    return [
+        ...exploreSteps(context),
+        step(
+            `preview:${id.communityId}`,
+            { kind: "communities", communityId: id },
+            communityUrl(id),
+        ),
+    ];
+}
+
 function walletRoot(): StackStep {
     return step("wallet", { kind: "wallet" }, "/wallet");
 }
@@ -394,26 +442,28 @@ function threadsStep(scope: ChatListScope, query: URLSearchParams): StackStep[] 
         : [];
 }
 
-// A chat's screens: the threads list it was opened from (?threads), the conversation, and the
-// thread open in it (`/:rootIndex?open=true`, or `/:rootIndex/:threadIndex`)
+// A chat's screens: the conversation, and the thread open in it (`/:rootIndex?open=true`, or
+// `/:rootIndex/:threadIndex`). A thread opened from the list of threads (`?threads`) is pushed
+// straight over the list, with no conversation between them: it was never opened on the way, so
+// Back from the thread goes back to the list (N8a, from testing).
 function chatSteps(route: ChatRoute, query: URLSearchParams): StackStep[] {
     const chat = chatKey(route.chatId);
-    const steps = [
-        ...threadsStep(route.scope, query),
-        step(
-            `conversation:${chat}`,
-            { kind: "conversation", route },
-            routeForChatIdentifier(route.scope.kind, route.chatId),
-        ),
-    ];
-    if (
+    const base = routeForChatIdentifier(route.scope.kind, route.chatId);
+    const thread =
         route.messageIndex !== undefined &&
         (route.open || route.threadMessageIndex !== undefined)
-    ) {
-        const url = `${routeForChatIdentifier(route.scope.kind, route.chatId)}/${route.messageIndex}?open=true`;
-        steps.push(step(`thread:${chat}:${route.messageIndex}`, { kind: "thread", route }, url));
+            ? step(
+                  `thread:${chat}:${route.messageIndex}`,
+                  { kind: "thread", route },
+                  `${base}/${route.messageIndex}?open=true`,
+              )
+            : undefined;
+    const listed = threadsStep(route.scope, query);
+    if (listed.length > 0 && thread !== undefined) {
+        return [...listed, { ...thread, url: `${thread.url}&threads` }];
     }
-    return steps;
+    const conversation = step(`conversation:${chat}`, { kind: "conversation", route }, base);
+    return [...listed, conversation, ...(thread === undefined ? [] : [thread])];
 }
 
 // The wallet's pages: a token's, and Send / Receive / Swap over the token they started from

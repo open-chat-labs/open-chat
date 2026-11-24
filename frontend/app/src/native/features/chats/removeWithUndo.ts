@@ -24,15 +24,19 @@ export function removeWithUndo(
 /**
  * Something the backend can't undo (a leave, a member removed), offered with Undo: it's hidden
  * at once under `key` (the shell's PendingRemovals), and `commit` sends it once the toast has gone;
- * Undo sends nothing and brings it back.
+ * Undo sends nothing and brings it back, then runs `onUndo` (going back to what was left).
  */
 export function sendAfterUndo(
     context: Pick<ScreenContext, "toast" | "removals">,
     key: string,
     message: string,
     commit: () => Promise<void>,
+    onUndo?: () => void,
 ): void {
-    const dismiss = context.toast(message, () => context.removals.undo(key));
+    const dismiss = context.toast(message, () => {
+        context.removals.undo(key);
+        onUndo?.();
+    });
     context.removals.remove(
         key,
         () => void commit(),

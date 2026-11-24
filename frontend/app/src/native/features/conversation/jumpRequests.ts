@@ -32,6 +32,11 @@ export function requestJump(chatKey: string, messageIndex: number): boolean {
     return handle !== undefined;
 }
 
+/** Whether the conversation for `chatKey` is there (under a thread opened from it). */
+export function hasConversation(chatKey: string): boolean {
+    return conversations.has(chatKey);
+}
+
 /** The pinned messages the conversation for `chatKey` holds, if it's there. */
 export function conversationPins(chatKey: string): PinnedMessages | undefined {
     return conversations.get(chatKey)?.pinned;

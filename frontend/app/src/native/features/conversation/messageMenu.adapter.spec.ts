@@ -66,11 +66,19 @@ describe("a message's long-press menu", () => {
         ]);
     });
 
-    test("Info only where it's given; threads, reminders and tips aren't listed", () => {
+    test("Info only where it's given; reminders and tips aren't listed", () => {
         expect(ids(["copy"], false)).toEqual(["copy"]);
-        expect(ids(["start_thread", "follow_thread", "remind", "tip", "copy"])).toEqual([
+        expect(ids(["remind", "tip", "copy"])).toEqual(["copy", "info"]);
+    });
+
+    test("Reply in thread after Reply, following it after Edit", () => {
+        expect(ids(["unfollow_thread", "edit", "copy", "start_thread", "reply"])).toEqual([
+            "reply",
+            "start_thread",
             "copy",
             "info",
+            "edit",
+            "unfollow_thread",
         ]);
     });
 });
@@ -79,7 +87,8 @@ describe("a picked row", () => {
     test("does what its id says, and nothing for an id that isn't a row's", () => {
         expect(nativeMessageAction("info")).toBe("info");
         expect(nativeMessageAction("delete_for_me")).toBe("delete_for_me");
-        expect(nativeMessageAction("start_thread")).toBeUndefined();
+        expect(nativeMessageAction("start_thread")).toBe("start_thread");
+        expect(nativeMessageAction("remind")).toBeUndefined();
         expect(nativeMessageAction("nonsense")).toBeUndefined();
     });
 });

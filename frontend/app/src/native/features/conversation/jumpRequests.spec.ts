@@ -1,6 +1,6 @@
 import type { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
 import { describe, expect, test, vi } from "vitest";
-import { conversationPins, onJumpRequest, requestJump } from "./jumpRequests";
+import { conversationPins, hasConversation, onJumpRequest, requestJump } from "./jumpRequests";
 
 const pins = {} as PinnedMessages;
 
@@ -45,5 +45,14 @@ describe("the conversation's pinned messages", () => {
         expect(conversationPins("g1")).toBe(mine);
         expect(conversationPins("g2")).toBeUndefined();
         off();
+    });
+
+    // a thread opened from the list of threads has none under it (N8a)
+    test("say whether the chat's conversation is there", () => {
+        expect(hasConversation("g7")).toBe(false);
+        const off = onJumpRequest("g7", { jump: vi.fn(), pinned: pins });
+        expect(hasConversation("g7")).toBe(true);
+        off();
+        expect(hasConversation("g7")).toBe(false);
     });
 });

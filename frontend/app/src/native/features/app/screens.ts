@@ -87,11 +87,11 @@ export const screens: Screens = {
     // a conversation (N5b)
     conversation: () => import("../conversation/ConversationScreen.svelte"),
 
-    // a thread (N8a)
-    thread: undefined,
+    // a thread (N8a): the conversation's screen, for the thread
+    thread: () => import("../conversation/ConversationScreen.svelte"),
 
     // the followed threads (N8a)
-    threads: undefined,
+    threads: () => import("../threads/ThreadsScreen.svelte"),
 
     // Explore (N8b)
     explore: () => import("../explore/ExploreScreen.svelte"),
@@ -157,6 +157,16 @@ export const screens: Screens = {
 
     // a group's or channel's pinned messages, from the conversation's pinned strip (plan 04)
     pinned_messages: () => import("../conversation/PinnedMessagesScreen.svelte"),
+
+    // a community's details, from its page's header and Manage (N8a)
+    community_details: () => import("../communities/CommunityDetailsScreen.svelte"),
+
+    // a community's settings pages (channels, user groups, invite, gates, rules, permissions, bots,
+    // stats), from its details' Manage and its page's menu (N7)
+    community_settings: undefined,
+
+    // Create community, from the Communities switcher's sheet (N8b)
+    new_community: undefined,
 };
 
 /**

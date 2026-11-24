@@ -5,6 +5,7 @@ import {
     headerMenuItems,
     isDisappearingItem,
     listWaiting,
+    threadWaiting,
     type HeaderMenuState,
 } from "./conversation.adapter";
 
@@ -146,5 +147,21 @@ describe("the list's spinner", () => {
 
     test("none for a chat with nothing in it", () => {
         expect(listWaiting({ initialised: true, items: 0 })).toBe(false);
+    });
+});
+
+describe("a thread's spinner", () => {
+    test("while its replies are on their way", () => {
+        expect(threadWaiting({ initialised: false, replies: 0, exists: true })).toBe(true);
+    });
+
+    // Reply in thread on a message without one: nothing to load
+    test("none for a thread that doesn't exist yet", () => {
+        expect(threadWaiting({ initialised: false, replies: 0, exists: false })).toBe(false);
+    });
+
+    test("none once replies are in, or the first load has ended", () => {
+        expect(threadWaiting({ initialised: false, replies: 3, exists: true })).toBe(false);
+        expect(threadWaiting({ initialised: true, replies: 0, exists: true })).toBe(false);
     });
 });

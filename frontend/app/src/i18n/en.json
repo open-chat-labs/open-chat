@@ -2472,11 +2472,43 @@
                 "any": "Meeting any one of these is enough.",
                 "channelMembers": "{count, plural, one {# member} other {# members}}",
                 "recheck": {
-                "minute": "{count, plural, one {Members are re-checked every minute.} other {Members are re-checked every # minutes.}}",
-                "hour": "{count, plural, one {Members are re-checked every hour.} other {Members are re-checked every # hours.}}",
-                "day": "{count, plural, one {Members are re-checked every day.} other {Members are re-checked every # days.}}",
-                "week": "{count, plural, one {Members are re-checked every week.} other {Members are re-checked every # weeks.}}"
-            }
+                    "minute": "{count, plural, one {Members are re-checked every minute.} other {Members are re-checked every # minutes.}}",
+                    "hour": "{count, plural, one {Members are re-checked every hour.} other {Members are re-checked every # hours.}}",
+                    "day": "{count, plural, one {Members are re-checked every day.} other {Members are re-checked every # days.}}",
+                    "week": "{count, plural, one {Members are re-checked every week.} other {Members are re-checked every # weeks.}}"
+                }
+            },
+            "details": "Community details",
+            "options": "Community options",
+            "threads": "Threads",
+            "notJoined": "Not joined · tap to read",
+            "menu": {
+                "moveToTop": "Move to top",
+                "invite": "Invite people",
+                "manage": "Manage"
+            },
+            "toast": {
+                "mutedAll": "All channels muted",
+                "muteFailed": "Couldn't mute the channels",
+                "left": "You left {name}"
+            },
+            "switcher": {
+                "label": "Communities",
+                "expand": "Expand communities",
+                "collapse": "Collapse communities",
+                "explore": "Explore communities",
+                "exploreButton": "Explore",
+                "create": "Create",
+                "search": "Search your communities",
+                "yours": "Your communities",
+                "reorder": "Your communities, drag to reorder",
+                "moveUp": "Move {name} up"
+            },
+            "language": "Language",
+            "manage": {
+                "channels": "Channels",
+                "userGroups": "User groups",
+                "invite": "Invite and share"
             }
         },
         "explore": {

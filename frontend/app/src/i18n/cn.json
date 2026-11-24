@@ -2563,11 +2563,43 @@
                 "any": "满足其中任意一项即可。",
                 "channelMembers": "{count} 位成员",
                 "recheck": {
-                "minute": "{count, plural, other {成员每 # 分钟重新检查一次。}}",
-                "hour": "{count, plural, other {成员每 # 小时重新检查一次。}}",
-                "day": "{count, plural, other {成员每 # 天重新检查一次。}}",
-                "week": "{count, plural, other {成员每 # 周重新检查一次。}}"
-            }
+                    "minute": "{count, plural, other {成员每 # 分钟重新检查一次。}}",
+                    "hour": "{count, plural, other {成员每 # 小时重新检查一次。}}",
+                    "day": "{count, plural, other {成员每 # 天重新检查一次。}}",
+                    "week": "{count, plural, other {成员每 # 周重新检查一次。}}"
+                }
+            },
+            "details": "社区详情",
+            "options": "社区选项",
+            "threads": "话题",
+            "notJoined": "未加入 · 点按阅读",
+            "menu": {
+                "moveToTop": "移到顶部",
+                "invite": "邀请他人",
+                "manage": "管理"
+            },
+            "toast": {
+                "mutedAll": "已将所有频道设为静音",
+                "muteFailed": "无法将频道设为静音",
+                "left": "你已离开 {name}"
+            },
+            "switcher": {
+                "label": "社区",
+                "expand": "展开社区",
+                "collapse": "收起社区",
+                "explore": "探索社区",
+                "exploreButton": "探索",
+                "create": "创建",
+                "search": "搜索你的社区",
+                "yours": "你的社区",
+                "reorder": "你的社区，拖动以重新排序",
+                "moveUp": "将 {name} 上移"
+            },
+            "language": "语言",
+            "manage": {
+                "channels": "频道",
+                "userGroups": "用户组",
+                "invite": "邀请和分享"
             }
         },
         "explore": {
