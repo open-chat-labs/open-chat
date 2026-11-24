@@ -58,21 +58,21 @@
     }
 
     .hash {
-        font: 700 16px/1 var(--font-mono);
+        font: var(--weight-bold) text-size(16px) / 1 var(--font-mono);
         color: var(--ink-4);
     }
 
     .channel-name {
         flex: 1;
         min-width: 0;
-        font: 500 15px/1.2 var(--font-sans);
+        font: var(--weight-medium) text-size(15px) / 1.2 var(--font-sans);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     .count {
-        font: 500 12.5px/1 var(--font-sans);
+        font: var(--weight-medium) text-size(12.5px) / 1 var(--font-sans);
         color: var(--ink-4);
     }
 

@@ -651,7 +651,7 @@
         border-radius: 9px;
         background: var(--accent);
         color: var(--on-accent);
-        font: var(--weight-bold) 10.5px / 18px var(--font-sans);
+        font: var(--weight-bold) text-size(10.5px) / 18px var(--font-sans);
         text-align: center;
     }
 

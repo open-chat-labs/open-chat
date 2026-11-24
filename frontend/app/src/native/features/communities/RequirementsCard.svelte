@@ -38,6 +38,8 @@
 </SettingsGroup>
 
 <style lang="scss">
+    @use "@openchat/ui/src/lib/styles/mixins" as *;
+
     .requirement {
         display: flex;
         align-items: center;
@@ -62,11 +64,11 @@
     }
 
     .label {
-        font: 500 15px/1.2 var(--font-sans);
+        font: var(--weight-medium) text-size(15px) / 1.2 var(--font-sans);
     }
 
     .detail {
-        font: 500 12.5px/1.3 var(--font-sans);
+        font: var(--weight-medium) text-size(12.5px) / 1.3 var(--font-sans);
         color: var(--ink-4);
     }
 
@@ -75,7 +77,7 @@
         display: flex;
         align-items: center;
         gap: 5px;
-        font: 600 12.5px/1 var(--font-sans);
+        font: var(--weight-semibold) text-size(12.5px) / 1 var(--font-sans);
         color: var(--ink-3);
 
         &.met {

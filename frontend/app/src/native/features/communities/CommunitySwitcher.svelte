@@ -555,7 +555,7 @@
         border-radius: 9px;
         background: var(--accent);
         color: var(--on-accent);
-        font: var(--weight-bold) 10.5px / 18px var(--font-sans);
+        font: var(--weight-bold) text-size(10.5px) / 18px var(--font-sans);
         text-align: center;
     }
 
@@ -621,7 +621,7 @@
 
     .label {
         padding-inline-start: 2px;
-        font: var(--weight-semibold) 11.5px / 1 var(--font-mono);
+        font: var(--weight-semibold) text-size(11.5px) / 1 var(--font-mono);
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--ink-4);
