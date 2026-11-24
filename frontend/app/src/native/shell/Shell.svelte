@@ -15,11 +15,13 @@
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
     import { Presence } from "@openchat/ui/src/native/presence.svelte";
     import { previewingCommunity } from "@src/logic/join/previewBar";
+    import { shownAsPreview } from "../features/communities/community.adapter";
     import { disableWalletFeature } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
     import {
         allUsersStore,
         anonUserStore,
+        chatsInitialisedStore,
         communitiesStore,
         currentUserIdStore,
         defaultCommunity,
@@ -122,9 +124,12 @@
             $sortedCommunitiesStore.filter((c) => !previewingCommunity(c)),
         )?.id,
     );
-    // a community being previewed is pushed over Explore (locations: communitySteps)
+    // a community being previewed, or on its way to be, is pushed over Explore (locations:
+    // communitySteps; shownAsPreview)
     function previewing(id: CommunityIdentifier): boolean {
-        return previewingCommunity($communitiesStore.get(id));
+        return shownAsPreview($communitiesStore.get(id), $chatsInitialisedStore, (c) =>
+            previewingCommunity(c),
+        );
     }
 
     function communityShown(): CommunityIdentifier | undefined {

@@ -308,3 +308,39 @@ describe("a tab given its root before it's opened", () => {
         expect(urls(stacks.steps)).toEqual(["/wallet"]);
     });
 });
+
+// N8a, from testing: a community's preview opened from Explore slid in from the left
+describe("a community's preview, as the stack changes", () => {
+    // c9 is previewed (or on its way to be); c1 is the user's
+    const previewAt = (url: string, previewing = true) => {
+        const location = locationFor(resolve(url), url, {
+            signedOut: false,
+            community: community("c1"),
+            previewing: (id) => previewing && id.communityId === "c9",
+            wallet: true,
+        });
+        if (location.area !== "tabs") throw new Error(`${url} isn't in the tabs`);
+        return location.steps;
+    };
+    const change = (from: string, to: string) =>
+        mergeStack(previewAt(from), previewAt(to)).change;
+
+    test("Explore → the preview is a push", () => {
+        expect(change("/communities", "/community/c9")).toBe("push");
+    });
+
+    test("the preview → Back to Explore is a pop", () => {
+        expect(change("/community/c9", "/communities")).toBe("pop");
+    });
+
+    test("the preview → one of its channels is a push, and Back from it a pop", () => {
+        expect(change("/community/c9", "/community/c9/channel/4")).toBe("push");
+        expect(change("/community/c9/channel/4", "/community/c9")).toBe("pop");
+    });
+
+    // joined, it's the tab's root: another root, which takes the tab's place as a whole
+    test("joining makes it the tab's root: a replace, never a pop", () => {
+        const joined = previewAt("/community/c9", false);
+        expect(mergeStack(previewAt("/community/c9"), joined).change).toBe("replace");
+    });
+});

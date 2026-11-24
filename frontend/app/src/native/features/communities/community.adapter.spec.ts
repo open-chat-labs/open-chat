@@ -16,6 +16,7 @@ import {
     nextCommunity,
     notJoinedRow,
     rowMenuItems,
+    shownAsPreview,
     switcherCommunities,
     type CommunityMenuState,
 } from "./community.adapter";
@@ -122,6 +123,25 @@ function counts(unmuted: number): CombinedUnreadCounts {
     const none = { muted: 0, unmuted: 0, mentions: false };
     return { chats: { ...none, unmuted }, threads: none };
 }
+
+describe("a community shown as a preview, over Explore", () => {
+    const previewing = (c: CommunitySummary) => c.id.communityId === "p";
+
+    test("one being previewed", () => {
+        expect(shownAsPreview(community("p"), true, previewing)).toBe(true);
+        expect(shownAsPreview(community("a"), true, previewing)).toBe(false);
+    });
+
+    // tapped in Explore, it's previewed a moment later: over Explore from the start (no slide back)
+    test("one the client doesn't have yet, once the user's communities are in", () => {
+        expect(shownAsPreview(undefined, true, previewing)).toBe(true);
+    });
+
+    // a cold start: the user's own community, not loaded yet
+    test("not before the user's communities are in", () => {
+        expect(shownAsPreview(undefined, false, previewing)).toBe(false);
+    });
+});
 
 describe("the switcher's communities", () => {
     const id = (communityId: string): CommunityIdentifier => ({ kind: "community", communityId });

@@ -185,6 +185,22 @@ export function switcherCommunities(
         }));
 }
 
+/**
+ * Whether the Communities tab shows a community as a preview, pushed over Explore
+ * (locations' communitySteps), rather than as the tab's root: one being previewed, and one the
+ * client doesn't have yet once the user's communities are in (it's on its way to be previewed).
+ * Deciding that only once it's previewed put it at the root first (Explore taken off: a pop),
+ * then over Explore again, so opening it from Explore slid in from the left (from testing).
+ * Before the user's communities are in, an unknown one is taken for the user's (a cold start).
+ */
+export function shownAsPreview(
+    community: CommunitySummary | undefined,
+    communitiesLoaded: boolean,
+    previewing: (community: CommunitySummary) => boolean,
+): boolean {
+    return community === undefined ? communitiesLoaded : previewing(community);
+}
+
 /** A community's key in the shell's PendingRemovals (a leave waiting out its Undo). */
 export function communityKey(id: CommunityIdentifier): string {
     return `community/${id.communityId}`;
