@@ -72,6 +72,8 @@
         serverThreadEventsStore,
         threadEventsStore,
         threadOpenStore,
+        selectedThreadIdStore,
+        routeForChatIdentifier,
         threadsFollowedByMeStore,
         type MessageContext,
         type ChatEvent,
@@ -215,7 +217,7 @@
     import RulesSheet from "./RulesSheet.svelte";
     import SearchBar from "./SearchBar.svelte";
     import { onSearchRequest } from "./searchRequests";
-    import { onJumpRequest, requestJump } from "./jumpRequests";
+    import { hasConversation, onJumpRequest, requestJump } from "./jumpRequests";
     import {
         nextPin,
         stripBar,
@@ -1445,13 +1447,51 @@
         }
     }
 
-    // back to the conversation, which goes to the root and marks it (jumpRequests)
+    // back to the conversation under the thread, which goes to the root and marks it
+    // (jumpRequests); a thread opened from the list of threads has none under it: its conversation
+    // opens at the root
     function jumpToRoot() {
         if (chat === undefined || rootIndex === undefined) return;
-        const key = chatIdentifierToString(chat.id);
-        context.back?.();
-        requestJump(key, rootIndex);
+        if (requestJump(chatIdentifierToString(chat.id), rootIndex)) {
+            context.back?.();
+        } else {
+            navigate(
+                `${routeForChatIdentifier(screen.route.scope.kind, chat.id)}/${rootIndex}`,
+            );
+        }
     }
+
+    // The client opens a thread from its URL as the chat's list finds its root (ChatEventList),
+    // or, for a chat already selected, as the URL changes (RouteEffects). A thread opened from the
+    // list of threads has no conversation under it to find the root, so it's opened here once its
+    // root is in (the client loads the chat's events around it as it selects the chat)
+    let threadOpened = false;
+    $effect(() => {
+        const current = chat;
+        const at = root;
+        if (threadOpened || !inThread || current === undefined || at === undefined || !onScreen) {
+            return;
+        }
+        threadOpened = true;
+        // over its conversation, the client opens it (RouteEffects, the conversation's list)
+        if (hasConversation(chatIdentifierToString(current.id))) return;
+        const open = $selectedThreadIdStore;
+        if (
+            open !== undefined &&
+            chatIdentifiersEqual(open.chatId, current.id) &&
+            open.threadRootMessageIndex === at.event.messageIndex
+        ) {
+            return;
+        }
+        untrack(() =>
+            client.openThread(
+                current.id,
+                at,
+                at.event.thread === undefined,
+                screen.route.threadMessageIndex,
+            ),
+        );
+    });
 
     // whether the reader has read an event: in a thread, its root and the replies of a thread
     // they don't follow always count as read

@@ -137,10 +137,41 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/community/c2?threads")).toBe(
             "communities: communities@/community/c2 > threads@/community/c2?threads",
         );
-        // a thread opened from the list keeps it under the conversation
+        // a thread opened from the list is pushed straight over it: its channel wasn't opened
         expect(stack("/community/c2/channel/9/12?open=true&threads")).toBe(
-            "communities: communities@/community/c2 > threads@/community/c2?threads > conversation@/community/c2/channel/9?threads > thread@/community/c2/channel/9/12?open=true&threads",
+            "communities: communities@/community/c2 > threads@/community/c2?threads > thread@/community/c2/channel/9/12?open=true&threads",
         );
+    });
+
+    // N8a, from testing: community → Threads → a thread; Back went to the channel first
+    test("Back from a thread goes to where it was opened from: the threads list, or its channel", () => {
+        const back = (url: string) => {
+            const location = at(url);
+            if (location.area !== "tabs") throw new Error(`${url} is ${location.area}`);
+            return backAction({
+                overlayOpen: false,
+                localTop: false,
+                location,
+                backUrl: location.steps.at(-2)?.url,
+                chatsUrl: "/chats",
+                startBack: false,
+            });
+        };
+        // from the list: the thread, then the list, then the community
+        expect(back("/community/c2/channel/9/12?open=true&threads")).toEqual({
+            kind: "navigate",
+            url: "/community/c2?threads",
+        });
+        expect(back("/community/c2?threads")).toEqual({ kind: "navigate", url: "/community/c2" });
+        // from the channel (its replies link, or Reply in thread): the thread, then the channel
+        expect(stack("/community/c2/channel/9/12?open=true")).toBe(
+            "communities: communities@/community/c2 > conversation@/community/c2/channel/9 > thread@/community/c2/channel/9/12?open=true",
+        );
+        expect(back("/community/c2/channel/9/12?open=true")).toEqual({
+            kind: "navigate",
+            url: "/community/c2/channel/9",
+        });
+        expect(back("/community/c2/channel/9")).toEqual({ kind: "navigate", url: "/community/c2" });
     });
 
     test("Explore is pushed over the Communities tab's community, or is its root without one", () => {

@@ -442,30 +442,28 @@ function threadsStep(scope: ChatListScope, query: URLSearchParams): StackStep[] 
         : [];
 }
 
-// A chat's screens: the threads list it was opened from (?threads), the conversation, and the
-// thread open in it (`/:rootIndex?open=true`, or `/:rootIndex/:threadIndex`)
+// A chat's screens: the conversation, and the thread open in it (`/:rootIndex?open=true`, or
+// `/:rootIndex/:threadIndex`). A thread opened from the list of threads (`?threads`) is pushed
+// straight over the list, with no conversation between them: it was never opened on the way, so
+// Back from the thread goes back to the list (N8a, from testing).
 function chatSteps(route: ChatRoute, query: URLSearchParams): StackStep[] {
     const chat = chatKey(route.chatId);
-    // opened from the list of threads: the screens over it keep it (`?threads`), so Back from a
-    // thread goes to its conversation with the list still under it
-    const listed = query.has("threads");
     const base = routeForChatIdentifier(route.scope.kind, route.chatId);
-    const steps = [
-        ...threadsStep(route.scope, query),
-        step(
-            `conversation:${chat}`,
-            { kind: "conversation", route },
-            listed ? `${base}?threads` : base,
-        ),
-    ];
-    if (
+    const thread =
         route.messageIndex !== undefined &&
         (route.open || route.threadMessageIndex !== undefined)
-    ) {
-        const url = `${base}/${route.messageIndex}?open=true${listed ? "&threads" : ""}`;
-        steps.push(step(`thread:${chat}:${route.messageIndex}`, { kind: "thread", route }, url));
+            ? step(
+                  `thread:${chat}:${route.messageIndex}`,
+                  { kind: "thread", route },
+                  `${base}/${route.messageIndex}?open=true`,
+              )
+            : undefined;
+    const listed = threadsStep(route.scope, query);
+    if (listed.length > 0 && thread !== undefined) {
+        return [...listed, { ...thread, url: `${thread.url}&threads` }];
     }
-    return steps;
+    const conversation = step(`conversation:${chat}`, { kind: "conversation", route }, base);
+    return [...listed, conversation, ...(thread === undefined ? [] : [thread])];
 }
 
 // The wallet's pages: a token's, and Send / Receive / Swap over the token they started from

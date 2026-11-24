@@ -1462,8 +1462,10 @@ design export needs. Each entry says where it came up.
   - **The threads list** keeps the library's All / Unread at its own size (the plan's compact
     40px tabs are 99's library follow-up); a community's groups are headed "#channel", with no
     mark or count (ThreadList's `channelHeads`, the user's decision, 2026-11-24). A new thread
-    (Reply in thread) shows its root and composer at once, with no spinner. A thread opened from it keeps the list
-    under the conversation (`?threads`).
+    (Reply in thread) shows its root and composer at once, with no spinner. A thread opened from
+    the list is pushed straight over it (`?threads`), with no conversation between them, so Back
+    goes back to the list (from testing, 2026-11-24); its Jump to message opens the conversation
+    at the root. One opened from a channel (its link, Reply in thread) is over the channel.
   - **A community's preview** opened from Explore is pushed over it (and a channel read there
     over the preview), so Back goes back through them to Explore and the community the tab was
     on; it was the tab's root, so Back from it went to the Chats tab (from testing, 2026-11-24).
