@@ -11,6 +11,7 @@ export * from "./i18n";
 export * from "./icrcAccount";
 export * from "./identity";
 export * from "./identityStorage";
+export * from "./signUpPasskeyStorage";
 export * from "./immutable";
 export * from "./lazy";
 export * from "./linkPreviews";

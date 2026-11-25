@@ -20,6 +20,7 @@
         boundaryErrorHandler,
         followDocumentDirection,
         initialiseAppLogger,
+        sayWhenSignUpInterrupted,
         subscribeToSessionEvents,
     } from "@utils/appRoot.svelte";
     import {
@@ -114,6 +115,7 @@
             onUserIdChanged: () => startAgain(client),
         });
         clearChatShortcutsOnLogout(client);
+        const stopSayingSignUpInterrupted = sayWhenSignUpInterrupted();
         // the Android app reports its system bars itself
         const stopFollowingBars = isAndroidTauriApp() ? followAndroidSystemBars(root) : () => {};
         // iOS mustn't zoom in on a field taking the focus (viewport.ts)
@@ -129,6 +131,7 @@
         return () => {
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubscribe();
+            stopSayingSignUpInterrupted();
             stopFollowingBars();
             delete root.dataset.platform;
             delete root.dataset.os;

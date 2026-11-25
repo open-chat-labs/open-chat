@@ -27,6 +27,22 @@ export function showsSignedOut(
     );
 }
 
+/**
+ * Whether Landing sends someone on to the app, whose sign-up form (AuthScreen) carries on their
+ * sign-up: signed in without an account with nothing of Landing's own dialog going on (a sign-in
+ * there, or a sign-up that failed there and says why) and no sign-in walked away from, which is
+ * being signed out. That's a sign-up from before a reload (#10596): Landing's dialog doesn't open
+ * by itself, so the page would show Sign in and Create account to someone halfway through one.
+ */
+export function resumesSignUpInApp(
+    state: IdentityState,
+    signingInOnPage: boolean,
+    signupFailedOnPage: boolean,
+    abandoned: boolean,
+): boolean {
+    return withoutAccount(state) && !signingInOnPage && !signupFailedOnPage && !abandoned;
+}
+
 export type AuthDialogKind = "login" | "signup";
 
 /**

@@ -17,6 +17,7 @@
         boundaryErrorHandler,
         followDocumentDirection,
         initialiseAppLogger,
+        sayWhenSignUpInterrupted,
         subscribeToSessionEvents,
     } from "@utils/appRoot.svelte";
     import { createOpenChatClient, NEW_UI_BEHAVIOUR } from "@utils/openchatClient";
@@ -88,12 +89,14 @@
 
     onMount(() => {
         const unsubscribe = subscribeToSessionEvents(client);
+        const stopSayingSignUpInterrupted = sayWhenSignUpInterrupted();
         window.addEventListener("unhandledrejection", unhandledError);
         // the platform moderators' and operators' console hooks, as the old App has them
         const uninstallConsoleHooks = installConsoleHooks(client);
         return () => {
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubscribe();
+            stopSayingSignUpInterrupted();
             uninstallConsoleHooks();
             document.documentElement.style.removeProperty("--text-scale");
         };

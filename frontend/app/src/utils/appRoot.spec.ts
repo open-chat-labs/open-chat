@@ -1,20 +1,47 @@
 import { publish } from "@shared";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-const { broadcastLoggedInUser, recordError } = vi.hoisted(() => ({
+const { broadcastLoggedInUser, recordError, showFailureToast } = vi.hoisted(() => ({
     broadcastLoggedInUser: vi.fn(),
     recordError: vi.fn(),
+    showFailureToast: vi.fn(),
 }));
 
 vi.mock("@client", async () => {
     const shared = await import("@shared");
-    return { subscribe: shared.subscribe, inititaliseLogger: vi.fn() };
+    // the client's store as the helper uses it: subscribe, set and its value
+    let value = false;
+    const subscribers = new Set<(v: boolean) => void>();
+    return {
+        subscribe: shared.subscribe,
+        i18nKey: shared.i18nKey,
+        inititaliseLogger: vi.fn(),
+        signUpInterruptedStore: {
+            subscribe(fn: (v: boolean) => void) {
+                subscribers.add(fn);
+                fn(value);
+                return () => subscribers.delete(fn);
+            },
+            set(next: boolean) {
+                value = next;
+                subscribers.forEach((fn) => fn(next));
+            },
+            get value() {
+                return value;
+            },
+        },
+    };
 });
 vi.mock("@stores/xframe", () => ({ broadcastLoggedInUser }));
+vi.mock("@stores/toast", () => ({ toastStore: { showFailureToast } }));
 vi.mock("@utils/errorPostmortem", () => ({ recordError }));
 
-import type { Logger, OpenChat } from "@client";
-import { boundaryErrorHandler, subscribeToSessionEvents } from "./appRoot.svelte";
+import { signUpInterruptedStore, type Logger, type OpenChat } from "@client";
+import {
+    boundaryErrorHandler,
+    sayWhenSignUpInterrupted,
+    subscribeToSessionEvents,
+} from "./appRoot.svelte";
 
 describe("the session events every App root handles", () => {
     const client = { logout: vi.fn() } as unknown as OpenChat;
@@ -61,6 +88,32 @@ describe("the session events every App root handles", () => {
         publish("sessionExpired");
         expect(broadcastLoggedInUser).not.toHaveBeenCalled();
         expect(client.logout).not.toHaveBeenCalled();
+    });
+});
+
+describe("a sign-up interrupted by a reload (#10596)", () => {
+    afterEach(() => {
+        vi.clearAllMocks();
+        signUpInterruptedStore.set(false);
+    });
+
+    test("is said once, as a failure toast", () => {
+        const stop = sayWhenSignUpInterrupted();
+        expect(showFailureToast).not.toHaveBeenCalled();
+
+        signUpInterruptedStore.set(true);
+        expect(showFailureToast).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({ key: "signUpInterrupted" }),
+        );
+        expect(signUpInterruptedStore.value).toBe(false);
+        stop();
+    });
+
+    test("one from before the root mounted is said too", () => {
+        signUpInterruptedStore.set(true);
+        const stop = sayWhenSignUpInterrupted();
+        expect(showFailureToast).toHaveBeenCalledOnce();
+        stop();
     });
 });
 
