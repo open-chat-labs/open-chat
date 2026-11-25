@@ -68,6 +68,17 @@ function sameSteps(a: StackStep[], b: StackStep[]): boolean {
     return a.length === b.length && a.every((s, i) => s.key === b[i].key && s.url === b[i].url);
 }
 
+/**
+ * Whether a stack still shows the screen a URL names, the local screens pushed over it aside: the
+ * same URL can name another screen once what it shows has changed (a community joined from its
+ * preview: the preview pushed over Explore becomes the tab's root). The screens under it may
+ * differ (Explore, once a community is joined, would go over it): those stay as they were.
+ */
+export function sameScreen(current: StackStep[], next: StackStep[]): boolean {
+    const urlBacked = current.filter((s) => !s.local);
+    return urlBacked[urlBacked.length - 1]?.key === next[next.length - 1]?.key;
+}
+
 export class TabStacks {
     // replaced whole on every change, never mutated
     #stacks = $state.raw<Partial<Record<NativeTabId, StackStep[]>>>({});
@@ -97,12 +108,18 @@ export class TabStacks {
     /**
      * Takes in the place the URL names: that tab shows, and its stack goes there. The URL showing
      * keeps the stack it was entered with: the same URL again (its place worked out afresh after the
-     * user's communities changed, say) changes nothing, so nothing moves under the user.
+     * user's communities changed, say) changes nothing, so nothing moves under the user, unless it
+     * now names other screens (a community joined from its preview: the preview, pushed over
+     * Explore, becomes the tab's root, with the tab bar; it stayed pushed, with no tab bar).
      */
     arrive(location: TabsLocation): void {
         const current = this.#stacks[location.tab];
         const switched = location.tab !== this.#tab;
-        if (current !== undefined && topUrl(current) === topUrl(location.steps)) {
+        if (
+            current !== undefined &&
+            topUrl(current) === topUrl(location.steps) &&
+            sameScreen(current, location.steps)
+        ) {
             // back to a tab left as it was, local screens and all
             if (switched) {
                 this.#change = "switch";

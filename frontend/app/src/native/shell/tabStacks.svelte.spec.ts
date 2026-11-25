@@ -1,6 +1,6 @@
 import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
-import { locationFor, type StackStep, type TabsLocation } from "../router/locations";
+import { locationFor, showsTabBar, type StackStep, type TabsLocation } from "../router/locations";
 import { mergeStack, TabStacks } from "./tabStacks.svelte";
 
 const community = (communityId: string): CommunityIdentifier => ({
@@ -322,8 +322,7 @@ describe("a community's preview, as the stack changes", () => {
         if (location.area !== "tabs") throw new Error(`${url} isn't in the tabs`);
         return location.steps;
     };
-    const change = (from: string, to: string) =>
-        mergeStack(previewAt(from), previewAt(to)).change;
+    const change = (from: string, to: string) => mergeStack(previewAt(from), previewAt(to)).change;
 
     test("Explore → the preview is a push", () => {
         expect(change("/communities", "/community/c9")).toBe("push");
@@ -342,5 +341,58 @@ describe("a community's preview, as the stack changes", () => {
     test("joining makes it the tab's root: a replace, never a pop", () => {
         const joined = previewAt("/community/c9", false);
         expect(mergeStack(previewAt("/community/c9"), joined).change).toBe("replace");
+    });
+
+    // From testing on Android: joined from the preview (the URL unchanged), the stack kept the
+    // preview pushed over Explore, and the member's page showed there with no tab bar
+    test("joined from the preview, at the same URL, the tab shows it as its root, with the tab bar", () => {
+        const stacks = new TabStacks();
+        const tabsAt = (steps: StackStep[]): TabsLocation => ({
+            area: "tabs",
+            tab: "communities",
+            steps,
+        });
+        stacks.arrive(tabsAt(previewAt("/communities")));
+        stacks.arrive(tabsAt(previewAt("/community/c9")));
+        expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c1", "explore", "preview:c9"]);
+        stacks.arrive(tabsAt(previewAt("/community/c9", false)));
+        expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c9"]);
+        expect(stacks.change).toBe("replace");
+        expect(showsTabBar(stacks.steps)).toBe(true);
+    });
+
+    // a channel joined from its join bar: the conversation stays as it is; Back from it is to the
+    // community's page, the tab's root by then
+    test("joined from a channel's join bar, the conversation stays", () => {
+        const stacks = new TabStacks();
+        const tabsAt = (steps: StackStep[]): TabsLocation => ({
+            area: "tabs",
+            tab: "communities",
+            steps,
+        });
+        stacks.arrive(tabsAt(previewAt("/community/c9/channel/4")));
+        const steps = stacks.steps;
+        stacks.arrive(tabsAt(previewAt("/community/c9/channel/4", false)));
+        expect(stacks.steps).toBe(steps);
+        stacks.arrive(tabsAt(previewAt("/community/c9", false)));
+        expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c9"]);
+        expect(showsTabBar(stacks.steps)).toBe(true);
+    });
+
+    test("a cold link to it: once it's known to be a preview, it's pushed over Explore", () => {
+        const stacks = new TabStacks();
+        const tabsAt = (steps: StackStep[]): TabsLocation => ({
+            area: "tabs",
+            tab: "communities",
+            steps,
+        });
+        // before the user's communities are in, taken for theirs: the tab's root
+        stacks.arrive(tabsAt(previewAt("/community/c9", false)));
+        stacks.arrive(tabsAt(previewAt("/community/c9")));
+        expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c1", "explore", "preview:c9"]);
+        // joined
+        stacks.arrive(tabsAt(previewAt("/community/c9", false)));
+        expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c9"]);
+        expect(showsTabBar(stacks.steps)).toBe(true);
     });
 });
