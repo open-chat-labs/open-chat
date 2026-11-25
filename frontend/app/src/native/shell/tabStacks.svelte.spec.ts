@@ -357,7 +357,8 @@ describe("a community's preview, as the stack changes", () => {
         expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c1", "explore", "preview:c9"]);
         stacks.arrive(tabsAt(previewAt("/community/c9", false)));
         expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c9"]);
-        expect(stacks.change).toBe("replace");
+        // the page showing stays where it is: nothing slides
+        expect(stacks.change).toBe("same");
         expect(showsTabBar(stacks.steps)).toBe(true);
     });
 
@@ -376,6 +377,9 @@ describe("a community's preview, as the stack changes", () => {
         expect(stacks.steps).toBe(steps);
         stacks.arrive(tabsAt(previewAt("/community/c9", false)));
         expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c9"]);
+        // Back to a page the stack had (by URL), though now the tab's root: a pop, which slides
+        // the conversation off
+        expect(stacks.change).toBe("pop");
         expect(showsTabBar(stacks.steps)).toBe(true);
     });
 
@@ -390,9 +394,31 @@ describe("a community's preview, as the stack changes", () => {
         stacks.arrive(tabsAt(previewAt("/community/c9", false)));
         stacks.arrive(tabsAt(previewAt("/community/c9")));
         expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c1", "explore", "preview:c9"]);
+        // the page already showing doesn't slide in again
+        expect(stacks.change).toBe("same");
         // joined
         stacks.arrive(tabsAt(previewAt("/community/c9", false)));
         expect(stacks.steps.map((s) => s.key)).toEqual(["communities:c9"]);
         expect(showsTabBar(stacks.steps)).toBe(true);
+    });
+});
+
+describe("going back to another root", () => {
+    const step = (key: string, url: string): StackStep => ({
+        key,
+        url,
+        screen: { kind: "communities", communityId: community("c9") },
+    });
+
+    test("is a pop when the stack had it (by URL), a replace when it didn't", () => {
+        const current = [
+            step("communities:c1", "/community/c1"),
+            step("preview:c9", "/community/c9"),
+            step("x", "/x"),
+        ];
+        expect(mergeStack(current, [step("communities:c9", "/community/c9")]).change).toBe("pop");
+        expect(mergeStack(current, [step("communities:c2", "/community/c2")]).change).toBe(
+            "replace",
+        );
     });
 });

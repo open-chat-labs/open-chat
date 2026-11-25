@@ -16,7 +16,8 @@ import {
 /**
  * How a tab's stack changed, for the push motion: `push` adds screens over the old top, `pop`
  * takes screens off it, `replace` swaps the top for another (the screens under it stay), `same`
- * changes nothing that shows (a URL's detail), and `switch` is another tab.
+ * changes nothing that shows (a URL's detail, or the screen showing restacked under it: no
+ * motion), and `switch` is another tab.
  */
 export type StackChange = "push" | "pop" | "replace" | "same" | "switch";
 
@@ -33,7 +34,7 @@ export function mergeStack(
     next: StackStep[],
 ): { steps: StackStep[]; change: StackChange } {
     if (current === undefined || current.length === 0 || current[0].key !== next[0]?.key) {
-        return { steps: next, change: "replace" };
+        return { steps: next, change: backToRoot(current, next) ? "pop" : "replace" };
     }
     for (let j = next.length - 1; j >= 0; j--) {
         const i = current.findIndex((s) => s.key === next[j].key);
@@ -43,6 +44,25 @@ export function mergeStack(
         }
     }
     return { steps: next, change: "replace" };
+}
+
+/**
+ * Whether another root is a screen the old stack had under its top (by URL): going back to it is
+ * a pop, which slides the top off, though the stack starts again (a channel joined from its join
+ * bar: Back is to the community's page, now the tab's root rather than its preview over Explore).
+ */
+function backToRoot(current: StackStep[] | undefined, next: StackStep[]): boolean {
+    const top = next[next.length - 1];
+    if (current === undefined || next.length !== 1 || top === undefined) return false;
+    return current.slice(0, -1).some((s) => s.url === top.url);
+}
+
+/**
+ * Whether two screens are the same screen showing: its URL and kind, whatever its key (a
+ * community's page, previewed or joined, at the root or over Explore).
+ */
+function sameShowing(a: StackStep | undefined, b: StackStep | undefined): boolean {
+    return a !== undefined && b !== undefined && a.url === b.url && a.screen.kind === b.screen.kind;
 }
 
 function changeOf(before: StackStep[], after: StackStep[]): StackChange {
@@ -130,7 +150,13 @@ export class TabStacks {
         const { steps, change } = mergeStack(current, location.steps);
         if (!switched && current !== undefined && sameSteps(current, steps)) return;
         this.#stacks = { ...this.#stacks, [location.tab]: steps };
-        this.#change = switched ? "switch" : change;
+        // the same screen showing, its stack worked out again (a cold link's community, known
+        // to be a preview once the user's communities are in; one joined): no motion, it's there
+        // already
+        const unmoved =
+            current !== undefined &&
+            sameShowing(current[current.length - 1], steps[steps.length - 1]);
+        this.#change = switched ? "switch" : unmoved ? "same" : change;
         this.#tab = location.tab;
     }
 
