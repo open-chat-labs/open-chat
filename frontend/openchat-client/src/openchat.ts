@@ -831,7 +831,11 @@ import {
     movePreviousWalletFunds,
     PREVIOUS_WALLETS_RETRY_INTERVAL,
 } from "./utils/previousWalletFunds";
-import { openChatIdentityOrSignOut } from "./utils/openChatIdentity";
+import {
+    openChatIdentityOrSignOut,
+    signUpOpenChatIdentity,
+    withoutOpenChatIdentity,
+} from "./utils/openChatIdentity";
 import { identityLoadFailed, type IdentityLoad } from "./utils/identityLoad";
 import { jwtExpiryMs } from "./utils/jwt";
 import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
@@ -1406,6 +1410,7 @@ export class OpenChat {
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.#ocIdentityPrincipal = undefined;
+        this.#signUpWithoutOpenChatIdentity = false;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const setAuthIdentityResponse = await this.#worker.send({
@@ -1433,14 +1438,26 @@ export class OpenChat {
                         webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                     }),
                 (reason) => {
+                    const signsOut = withoutOpenChatIdentity(registering) === "sign_out";
                     this.#logger.error(
-                        "No OpenChat identity for the signed-in principal, signing out",
+                        signsOut
+                            ? "No OpenChat identity for the signed-in principal, signing out"
+                            : "No OpenChat identity for the passkey just made for sign-up",
                         new Error(reason),
                     );
-                    this.logout();
+                    if (signsOut) this.logout();
                 },
             );
-            if (ocIdentity === undefined) return "signed_out";
+            if (ocIdentity === undefined) {
+                if (withoutOpenChatIdentity(registering) === "sign_out") return "signed_out";
+                // The sign-up's passkey identity stays, without an account: signUp says the
+                // sign-up failed, and its next try makes the OpenChat identity with the same
+                // passkey (#10580). Walking away from it signs out (abandonSignIn).
+                this.#signUpWithoutOpenChatIdentity = true;
+                this.updateIdentityState({ kind: "registering" });
+                this.onCreatedUser(anonymousUser());
+                return "no_oc_identity";
+            }
 
             this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
             this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
@@ -8969,6 +8986,9 @@ export class OpenChat {
     #refusedReferralCodes = new Set<string>();
     // a passkey was made for the sign-up in progress; another would leave the person two
     #passkeyMadeForSignUp = false;
+    // the sign-up's passkey identity loaded without an OpenChat identity, which the sign-up's
+    // next try makes (#10580)
+    #signUpWithoutOpenChatIdentity = false;
 
     /**
      * Makes the account: a passkey first, unless the identity signed in already has no account
@@ -8993,12 +9013,14 @@ export class OpenChat {
         if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
         selectedAuthProviderStore.set(AuthProvider.PASSKEY);
         // a passkey already made for this sign-up isn't made again
+        let passkeyMadeThisTry = false;
         if (identityStateStore.value.kind !== "registering" && !this.#passkeyMadeForSignUp) {
             try {
                 await (this.isNativeApp()
                     ? this.signUpWithAndroidWebAuthn(true, username)
                     : this.signUpWithWebAuthn(true, username));
                 this.#passkeyMadeForSignUp = true;
+                passkeyMadeThisTry = true;
             } catch (err) {
                 // the passkey was made and its identity was being loaded when it failed
                 if (identityStateStore.value.kind === "loading_user") {
@@ -9017,6 +9039,17 @@ export class OpenChat {
         const state = identityStateStore.value.kind;
         if (state !== "registering" && !(this.#passkeyMadeForSignUp && state === "loading_user")) {
             return { kind: "failed", reason: i18nKey("unexpectedError") };
+        }
+        // the passkey's OpenChat identity, which its load couldn't make (#10580): this try says so,
+        // and the next makes it again with the same passkey
+        switch (signUpOpenChatIdentity(!this.#signUpWithoutOpenChatIdentity, passkeyMadeThisTry)) {
+            case "failed":
+                return { kind: "failed", reason: i18nKey("unexpectedError") };
+            case "make_again":
+                if (!(await this.#loadSignUpIdentityAgain())) {
+                    return { kind: "failed", reason: i18nKey("unexpectedError") };
+                }
+                if (signal?.aborted) return { kind: "cancelled" };
         }
         // a code turned down before is never sent again
         const code = this.#referralCode;
@@ -9039,6 +9072,20 @@ export class OpenChat {
             kind: "failed",
             reason: i18nKey(registerFailureKey(resp.kind) ?? "unexpectedError"),
         };
+    }
+
+    // Loads the sign-up's passkey identity again, from the delegation stored when the passkey was
+    // made, so its OpenChat identity is made with that passkey's credential: whether it now has one
+    async #loadSignUpIdentityAgain(): Promise<boolean> {
+        try {
+            const stored = await this.#authIdentityStorage.getKeyAndChain();
+            if (stored === undefined) return false;
+            await this.#loadedAuthenticationIdentity(stored, AuthProvider.PASSKEY, true);
+        } catch (err) {
+            this.logError("Unable to load the signed-up identity again", err);
+            return false;
+        }
+        return !this.#signUpWithoutOpenChatIdentity && this.#ocIdentityPrincipal !== undefined;
     }
 
     // the new account's photo: the person can set another later, so a failure is only logged
