@@ -43,6 +43,7 @@
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
     import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import { recordError } from "@utils/errorPostmortem";
+    import { afterLoadsInFlight } from "./afterLoadsInFlight";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "@openchat/ui/src/lib/virtual/vclDebug";
     import VirtualChatList from "@openchat/ui/src/lib/virtual/VirtualChatList.svelte";
@@ -566,19 +567,31 @@
         }
     }
 
-    function chatsUpdated(ctx: MessageContext) {
+    async function chatsUpdated(ctx: MessageContext) {
         // Never start a background new-message load while a message navigation
         // is in flight: loadEventWindow clears the event store before its
         // window arrives, and a concurrent load merging the latest messages
         // into the empty store makes the window fail the contiguity check and
         // get dropped — the navigation then lands nowhere (observed as pinned
         // message navigation failing on busy channels most of the time).
-        if (messageContextsEqual(ctx, messageContext) && !scrollingToMessage) {
-            // I *think* chatsUpdated is only going to be because there are new messages to load
-            // so there is no need to load more previous messages. It's better that we don't even check
-            // here because in certain race conditions we might ending up loading the previous messages twice.
-            loadNewMessagesIfRequired();
+        const wanted = () => messageContextsEqual(ctx, messageContext) && !scrollingToMessage;
+        if (!wanted()) return;
+        // The load in flight may have started before this update and not bring in what it added,
+        // so check again once it's over, or the update is lost (#10584). With none in flight the
+        // check is made at once, as it always was
+        if (
+            inflightLoad !== undefined &&
+            !(await afterLoadsInFlight(
+                () => inflightLoad,
+                () => !destroyed && wanted(),
+            ))
+        ) {
+            return;
         }
+        // I *think* chatsUpdated is only going to be because there are new messages to load
+        // so there is no need to load more previous messages. It's better that we don't even check
+        // here because in certain race conditions we might ending up loading the previous messages twice.
+        loadNewMessagesIfRequired();
     }
 
     function sendingMessage(ctx: MessageContext) {
