@@ -8,6 +8,7 @@
         type ChatRowAction,
     } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
+    import { swatchFor } from "@src/logic/swatch";
     import { signInFirst } from "@src/logic/auth/guestPass";
     import {
         communityDetailsPermissions,
@@ -458,6 +459,7 @@
         headerVisibility={community?.public === false ? "Private" : "Public"}
         headerMembers={community?.memberCount ?? 0}
         headerAvatarUrl={community?.avatar.blobUrl}
+        headerColor={community && swatchFor(community.id.communityId)}
         {headerMenuItems}
         {onHeaderMenu}
         onCreateGroup={createGroup}
