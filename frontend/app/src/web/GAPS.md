@@ -1679,6 +1679,11 @@ design export needs. Each entry says where it came up.
   `profileAvatarUrl`; the rail had one fixed gradient), `ConversationHeader`'s and `MessageGroup`'s
   `avatarUrl` (a picture over the colour), and a `GroupPanel` member's `image` (`MemberRow` took one
   for bots and webhooks only).
+- **The chat list's community header picture** (by hand, #10624, EXPORT-LOG 2026-11-24), to take
+  back to the design export: `ChatListHeader` takes `avatarUrl` (the community's own picture over
+  its swatch, which shows while it loads and if it fails) and `ChatListPanel` passes it on as
+  `headerAvatarUrl`; the header's swatch is the community's own (`headerColor`, `swatchFor`), as on
+  the rail, where it was always teal.
 - **Chat row avatars, mentions and typing** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to
   the design export: `Avatar` takes `url`, an image over the gradient (which shows while it loads
   and if it fails); `ChatRow` takes `avatarUrl`, `mentions` (an "@" pill before the unread count,
@@ -2009,7 +2014,8 @@ design export needs. Each entry says where it came up.
   community's identicon), which the old trees keep. Own pictures come from `ownUserAvatarUrl` /
   `ownGroupAvatarUrl` (`@client`), a profile's from `profileAvatarUrl`, a community's from its
   `avatar.blobUrl`; bots and system users keep their fixed pictures (OpenChatBot's robot, the bot
-  picture). They are: the chat list and its search, the rail's profile button and community pins,
+  picture). They are: the chat list and its search, the chat list's community header, the rail's
+  profile button and community pins,
   ProfileDialog (and its communities), UserDialog, DmPanel, GroupPanel and Manage (and the members
   lists), the conversation's header and its senders, the preview bar, the composer's @mentions
   (the library's user icon without a picture), Explore and Landing's communities. Still swatches

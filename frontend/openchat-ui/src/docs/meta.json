@@ -8741,6 +8741,17 @@
         "doc": ""
       },
       {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Community: its picture, over the `color` swatch (the swatch alone without one)."
+      },
+      {
         "name": "menuItems",
         "type": "MenuItem[]",
         "default": null,
@@ -8950,6 +8961,17 @@
         "required": false,
         "componentDefault": "'teal'",
         "doc": ""
+      },
+      {
+        "name": "headerAvatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The community header's picture (ChatListHeader's `avatarUrl`)."
       },
       {
         "name": "headerMenuItems",
