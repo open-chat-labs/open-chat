@@ -2497,7 +2497,8 @@
                 "removeFrom": "Quitar del {level}",
                 "lapsedNotAllowed": "Tu rol no te permite quitar miembros aquí.",
                 "blockedNotAllowed": "Tu rol no te permite desbloquear a nadie aquí."
-            }
+            },
+            "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
         },
         "call": {
             "askToSpeak": "Pedir la palabra",
@@ -2628,6 +2629,12 @@
             "deleted": "{name} eliminada",
             "noRules": "Esta comunidad no tiene reglas.",
             "noGates": "Cualquiera puede unirse: esta comunidad no tiene requisitos de acceso."
+        },
+        "communitySearch": {
+            "joined": "Tus canales",
+            "others": "Otros canales",
+            "placeholder": "Buscar en {name}",
+            "noResultsHint": "Prueba con otro nombre de canal."
         },
         "communitySettings": {
             "edit": "Editar comunidad",

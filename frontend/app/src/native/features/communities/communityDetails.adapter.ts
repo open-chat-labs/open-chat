@@ -18,15 +18,8 @@ export function communityTiles(
         ...(state.canInvite
             ? [{ id: "invite" as const, icon: "plus", label: t("native.details.tiles.invite"), on: false }]
             : []),
-        // TODO(design): the design has Search, and the app has no search of a community's own to
-        // open from here (the user's to decide); it shows, disabled
-        {
-            id: "search" as const,
-            icon: "search",
-            label: t("native.details.tiles.search"),
-            on: false,
-            disabled: true,
-        },
+        // the community's search: its channels (CommunitySearchScreen)
+        { id: "search" as const, icon: "search", label: t("native.details.tiles.search"), on: false },
         {
             id: "mute" as const,
             icon: state.muted ? "bell" : "bell-off",

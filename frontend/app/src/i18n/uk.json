@@ -2497,7 +2497,8 @@
                 "removeFrom": "Видалити ({level})",
                 "lapsedNotAllowed": "Ваша роль не дозволяє тут видаляти учасників.",
                 "blockedNotAllowed": "Ваша роль не дозволяє тут розблоковувати."
-            }
+            },
+            "membersCount": "{count, plural, one {# учасник} few {# учасники} many {# учасників} other {# учасника}}"
         },
         "call": {
             "askToSpeak": "Попросити слово",
@@ -2628,6 +2629,12 @@
             "deleted": "{name} видалено",
             "noRules": "У цієї спільноти немає правил.",
             "noGates": "Приєднатися може будь-хто: у цієї спільноти немає умов доступу."
+        },
+        "communitySearch": {
+            "joined": "Ваші канали",
+            "others": "Інші канали",
+            "placeholder": "Пошук у {name}",
+            "noResultsHint": "Спробуйте іншу назву каналу."
         },
         "communitySettings": {
             "edit": "Редагувати спільноту",

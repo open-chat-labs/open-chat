@@ -2497,7 +2497,8 @@
                 "removeFrom": "حذف از {level}",
                 "lapsedNotAllowed": "نقش شما اجازه حذف اعضا را در اینجا نمی‌دهد.",
                 "blockedNotAllowed": "نقش شما اجازه رفع مسدودیت را در اینجا نمی‌دهد."
-            }
+            },
+            "membersCount": "{count, plural, one {# عضو} other {# عضو}}"
         },
         "call": {
             "askToSpeak": "درخواست صحبت",
@@ -2628,6 +2629,12 @@
             "deleted": "{name} حذف شد",
             "noRules": "این انجمن قانونی ندارد.",
             "noGates": "هر کسی می‌تواند بپیوندد: این انجمن شرط ورود ندارد."
+        },
+        "communitySearch": {
+            "joined": "کانال‌های شما",
+            "others": "کانال‌های دیگر",
+            "placeholder": "جستجو در {name}",
+            "noResultsHint": "نام کانال دیگری را امتحان کنید."
         },
         "communitySettings": {
             "edit": "ویرایش انجمن",

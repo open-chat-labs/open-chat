@@ -2497,7 +2497,8 @@
                 "removeFrom": "从{level}中移除",
                 "lapsedNotAllowed": "你的角色无权在这里移除成员。",
                 "blockedNotAllowed": "你的角色无权在这里解除屏蔽。"
-            }
+            },
+            "membersCount": "{count, plural, other {# 位成员}}"
         },
         "call": {
             "askToSpeak": "申请发言",
@@ -2628,6 +2629,12 @@
             "deleted": "已删除 {name}",
             "noRules": "这个社区没有规则。",
             "noGates": "任何人都可以加入：这个社区没有访问门槛。"
+        },
+        "communitySearch": {
+            "joined": "你的频道",
+            "others": "其他频道",
+            "placeholder": "搜索 {name}",
+            "noResultsHint": "试试其他频道名称。"
         },
         "communitySettings": {
             "edit": "编辑社区",

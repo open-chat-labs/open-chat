@@ -2406,7 +2406,8 @@
                 "removeFrom": "Remove from {level}",
                 "lapsedNotAllowed": "Your role doesn't let you remove members here.",
                 "blockedNotAllowed": "Your role doesn't let you unblock people here."
-            }
+            },
+            "membersCount": "{count, plural, one {# member} other {# members}}"
         },
         "call": {
             "askToSpeak": "Ask to speak",
@@ -2537,6 +2538,12 @@
             "deleted": "Deleted {name}",
             "noRules": "This community has no rules.",
             "noGates": "Anyone can join: this community has no access gates."
+        },
+        "communitySearch": {
+            "joined": "Your channels",
+            "others": "Other channels",
+            "placeholder": "Search {name}",
+            "noResultsHint": "Try another channel name."
         },
         "communitySettings": {
             "edit": "Edit community",

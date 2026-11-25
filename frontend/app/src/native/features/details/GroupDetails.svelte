@@ -2,7 +2,7 @@
      community's banner) with back, favourite and Edit (N7's Edit group, for those who may edit it; its
      link is shared from Invite people); the avatar, the name and "Private · 48 members"; the tiles Mute
      / Search / Invite; About (the description, when it was created, whether new members see the
-     history); Members, a few faces and View all, to the Members screen; This chat (the
+     history); Members (MembersRow: "Members" over "N members", a few faces) to the Members screen; This chat (the
      disappearing messages, the library's TimedToggle for those its settings let change them
      (DisappearingRow), read only for the rest, then muting @everyone); the rules, read only; Manage for owners and admins (Access gates, Rules,
      Permissions, Bots and webhooks, Stats: N7's group_settings); Leave and Delete, each with Undo. What
@@ -28,7 +28,6 @@
         type MultiUserChat,
         type OpenChat,
     } from "@client";
-    import AvatarStack from "@openchat/ui/src/lib/components/AvatarStack.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
@@ -57,6 +56,7 @@
     import DetailTiles from "./DetailTiles.svelte";
     import DisappearingRow from "./DisappearingRow.svelte";
     import FactRow from "./FactRow.svelte";
+    import MembersRow from "./MembersRow.svelte";
     import TextRow from "./TextRow.svelte";
     import { openInvite } from "./openInvite";
     import {
@@ -130,7 +130,7 @@
         ),
     );
     const faces = $derived(
-        members.slice(0, 5).map((m) => ({
+        members.slice(0, 4).map((m) => ({
             src: m.blobUrl,
             grad: AVATAR_GRADIENTS[senderColor(m.userId)],
         })),
@@ -260,17 +260,11 @@
             <FactRow label={$_("native.details.history")} value={historyValue(chat.historyVisible, t)} />
         </SettingsGroup>
 
-        <SettingsGroup label={$_("members")}>
-            <button
-                type="button"
-                class="settings-row members-row"
-                onclick={() => context.push({ kind: "chat_members", chatId: chat.id })}>
-                <AvatarStack people={faces} max={5} size={30} ring="var(--surface-0)" />
-                <span class="view-all">
-                    {$_("native.details.viewAll", { values: { count: chat.memberCount } })}
-                </span>
-                <span class="chevron"></span>
-            </button>
+        <SettingsGroup>
+            <MembersRow
+                count={chat.memberCount}
+                {faces}
+                onOpen={() => context.push({ kind: "chat_members", chatId: chat.id })} />
         </SettingsGroup>
 
         {#if member}
@@ -335,7 +329,6 @@
     </div>
 </div>
 
-
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
 
@@ -351,46 +344,5 @@
         flex-direction: column;
         gap: 22px;
         padding: 20px var(--space-16) var(--scroll-end);
-    }
-
-    .members-row {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-height: 60px;
-        padding: 10px 16px;
-        box-sizing: border-box;
-        border: 0;
-        background: none;
-        color: var(--ink);
-        text-align: start;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-
-        &:active {
-            background: var(--overlay-1);
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
-    }
-
-    .view-all {
-        flex: 1;
-        min-width: 0;
-        text-align: end;
-        font: var(--weight-semibold) text-size(13.5px) / 1.2 var(--font-sans);
-        color: var(--accent-bright);
-        @include truncate;
-    }
-
-    .chevron {
-        @include icon(chevron-right, 14px, var(--ink-4));
-
-        &:dir(rtl) {
-            transform: scaleX(-1);
-        }
     }
 </style>

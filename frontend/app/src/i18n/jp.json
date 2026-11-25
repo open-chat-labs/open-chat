@@ -2497,7 +2497,8 @@
                 "removeFrom": "{level}から削除",
                 "lapsedNotAllowed": "あなたの役割では、ここでメンバーを削除できません。",
                 "blockedNotAllowed": "あなたの役割では、ここでブロックを解除できません。"
-            }
+            },
+            "membersCount": "{count, plural, other {#人のメンバー}}"
         },
         "call": {
             "askToSpeak": "発言をリクエスト",
@@ -2628,6 +2629,12 @@
             "deleted": "{name}を削除しました",
             "noRules": "このコミュニティにはルールがありません。",
             "noGates": "誰でも参加できます：このコミュニティには参加条件がありません。"
+        },
+        "communitySearch": {
+            "joined": "あなたのチャンネル",
+            "others": "その他のチャンネル",
+            "placeholder": "{name}を検索",
+            "noResultsHint": "別のチャンネル名で試してください。"
         },
         "communitySettings": {
             "edit": "コミュニティを編集",

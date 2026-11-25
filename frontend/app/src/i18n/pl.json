@@ -2497,7 +2497,8 @@
                 "removeFrom": "Usuń ({level})",
                 "lapsedNotAllowed": "Twoja rola nie pozwala tu usuwać członków.",
                 "blockedNotAllowed": "Twoja rola nie pozwala tu nikogo odblokować."
-            }
+            },
+            "membersCount": "{count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}"
         },
         "call": {
             "askToSpeak": "Poproś o głos",
@@ -2628,6 +2629,12 @@
             "deleted": "Usunięto {name}",
             "noRules": "Ta społeczność nie ma zasad.",
             "noGates": "Każdy może dołączyć: ta społeczność nie ma warunków dostępu."
+        },
+        "communitySearch": {
+            "joined": "Twoje kanały",
+            "others": "Inne kanały",
+            "placeholder": "Szukaj w {name}",
+            "noResultsHint": "Spróbuj innej nazwy kanału."
         },
         "communitySettings": {
             "edit": "Edytuj społeczność",

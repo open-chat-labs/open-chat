@@ -2497,7 +2497,8 @@
                 "removeFrom": "إزالة من {level}",
                 "lapsedNotAllowed": "لا يسمح لك دورك بإزالة الأعضاء هنا.",
                 "blockedNotAllowed": "لا يسمح لك دورك بإلغاء الحظر هنا."
-            }
+            },
+            "membersCount": "{count, plural, one {عضو واحد} other {# أعضاء}}"
         },
         "call": {
             "askToSpeak": "طلب التحدث",
@@ -2628,6 +2629,12 @@
             "deleted": "تم حذف {name}",
             "noRules": "لا توجد قواعد لهذا المجتمع.",
             "noGates": "يمكن لأي شخص الانضمام: لا توجد شروط وصول."
+        },
+        "communitySearch": {
+            "joined": "قنواتك",
+            "others": "قنوات أخرى",
+            "placeholder": "ابحث في {name}",
+            "noResultsHint": "جرّب اسم قناة آخر."
         },
         "communitySettings": {
             "edit": "تعديل المجتمع",

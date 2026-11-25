@@ -1498,14 +1498,30 @@ design export needs. Each entry says where it came up.
       `muteAllChannels` takes `muted`, default true: the old callers unchanged). Muted is every
       channel of the user's muted, as the web's and the old menus' rule. The page's menu still
       only mutes (the user's decision of 2026-11-24); say if it should follow.
-    - **Search** (the tile): no search of a community's own to open; shown disabled.
-      TODO(design).
+    - **Search** (the tile, from the user's review of 2026-11-25): a screen on the Chats tab's
+      search (`ChatSearch`) over the community's channels: the user's, by name, and those they're
+      not in that they can read, found by the community (`exploreChannels`, the old desktop's
+      Browse channels); a tap opens the channel (`CommunitySearchScreen`, `community_search`,
+      `communitySearch.adapter`). Not there: a search of a community's messages (the app's
+      message search is one chat's, `searchChat`), nor its members (the Members screen has
+      that).
     - **Share**: a public community's link, as its preview shares it; a private one has none here
       (its link is Invite and share's). TODO(design).
     - **⋯**: Edit community (for those who may edit it; the pencil's place before) and Mark all as
       read, the page's menu's items the details don't have otherwise. TODO(design).
-    - **Created**: the client knows no community's creation date, so About shows the language
-      alone. TODO.
+    - **Created**: the backend sends no community's creation date to the app, so About shows the
+      language alone. The community canister keeps it (`date_created`,
+      `backend/canisters/community/impl/src/lib.rs` 687, set at 806) but returns it only in its
+      operational metrics (`Metrics.date_created`, 534 and 1554, the HTTP `/metrics` route) and
+      as its first event, which `community_events` gives owners only (its
+      `queries/community_events.rs`; the app doesn't call it). Neither the summary
+      (`CommunityCanisterCommunitySummary`, `libraries/types/src/community_summary.rs` 13–49)
+      nor `selected_initial` carries it, so the agent and `CommunitySummary` have nothing to map.
+      A group's comes from its first event (`groupCreated`). TODO: a backend change (a
+      `date_created` on the summary, as `chat_summary.rs` 21 has for groups).
+    - **Members row** (the user's review): "Members" over "N members" (`MembersRow`), the
+      group details' too, which had a "Members" label over "View all (N)" and five faces (now
+      four, 26px).
     - **Sizes**: the cover, avatar ring and tiles are the group details' (DetailsHead,
       DetailTiles: a 132px cover under the status bar, 186px with an iPhone's, the avatar's
       corners a third of it, 68px tiles); Manage's rows are the kit's 60px.

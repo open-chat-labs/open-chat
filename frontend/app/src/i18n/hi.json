@@ -2497,7 +2497,8 @@
                 "removeFrom": "{level} से हटाएँ",
                 "lapsedNotAllowed": "आपकी भूमिका यहाँ सदस्यों को हटाने की अनुमति नहीं देती।",
                 "blockedNotAllowed": "आपकी भूमिका यहाँ अनब्लॉक करने की अनुमति नहीं देती।"
-            }
+            },
+            "membersCount": "{count, plural, one {# सदस्य} other {# सदस्य}}"
         },
         "call": {
             "askToSpeak": "बोलने का अनुरोध",
@@ -2628,6 +2629,12 @@
             "deleted": "{name} हटाई गई",
             "noRules": "इस कम्युनिटी के कोई नियम नहीं हैं।",
             "noGates": "कोई भी जुड़ सकता है: इस कम्युनिटी में प्रवेश की कोई शर्त नहीं है।"
+        },
+        "communitySearch": {
+            "joined": "आपके चैनल",
+            "others": "दूसरे चैनल",
+            "placeholder": "{name} में खोजें",
+            "noResultsHint": "कोई दूसरा चैनल नाम आज़माएं।"
         },
         "communitySettings": {
             "edit": "कम्युनिटी संपादित करें",

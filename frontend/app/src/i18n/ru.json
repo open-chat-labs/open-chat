@@ -2497,7 +2497,8 @@
                 "removeFrom": "Удалить ({level})",
                 "lapsedNotAllowed": "Ваша роль не позволяет здесь удалять участников.",
                 "blockedNotAllowed": "Ваша роль не позволяет здесь разблокировать."
-            }
+            },
+            "membersCount": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участника}}"
         },
         "call": {
             "askToSpeak": "Попросить слово",
@@ -2628,6 +2629,12 @@
             "deleted": "{name} удалено",
             "noRules": "У этого сообщества нет правил.",
             "noGates": "Вступить может любой: у этого сообщества нет условий доступа."
+        },
+        "communitySearch": {
+            "joined": "Ваши каналы",
+            "others": "Другие каналы",
+            "placeholder": "Поиск в {name}",
+            "noResultsHint": "Попробуйте другое название канала."
         },
         "communitySettings": {
             "edit": "Изменить сообщество",

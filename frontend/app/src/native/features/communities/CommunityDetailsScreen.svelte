@@ -4,11 +4,11 @@
      - the cover (its banner) with Back, Share (a public community's link: the preview's share) and
        ⋯ (Edit community for those who may edit it, Mark all as read);
      - the avatar, the name and "Public · 1,248 members";
-     - the tiles Invite (for those who may invite: communityInviteAccess), Search (TODO(design): no
-       search of a community's own to open, so it's shown disabled) and Mute / Unmute;
-     - About (the description, then its language; when it was created isn't known to the client:
-       TODO);
-     - Members (a few faces, the count) to the Members screen (plan 10) and, for a regular member,
+     - the tiles Invite (for those who may invite: communityInviteAccess), Search (its channels,
+       CommunitySearchScreen) and Mute / Unmute;
+     - About (the description, then its language; when it was created isn't sent to the client:
+       TODO, GAPS.md);
+     - Members (MembersRow: "Members" over "N members", a few faces) to the Members screen (plan 10) and, for a regular member,
        Channels, Rules and Access gates, read only;
      - Manage for owners and admins, each row with what it holds (Channels, User groups, Invite and
        share, Access gates, Rules, Permissions, Bots and webhooks, Stats: N7's settings pages);
@@ -38,7 +38,6 @@
         type OpenChat,
     } from "@client";
     import { supportedLanguagesByCode } from "@i18n/i18n";
-    import AvatarStack from "@openchat/ui/src/lib/components/AvatarStack.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import ListSectionLabel from "@openchat/ui/src/lib/components/ListSectionLabel.svelte";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
@@ -65,6 +64,7 @@
     import type { ScreenProps } from "../app/screens";
     import DetailsHead from "../details/DetailsHead.svelte";
     import DetailTiles from "../details/DetailTiles.svelte";
+    import MembersRow from "../details/MembersRow.svelte";
     import type { DetailTileId } from "../details/details.adapter";
     import TextRow from "../details/TextRow.svelte";
     import { shownGates } from "../groupSettings/settings.adapter";
@@ -202,8 +202,10 @@
             case "mute":
                 void setMuted(!muted);
                 return;
+            case "search":
+                context.push({ kind: "community_search", communityId: community.id });
+                return;
             default:
-                // Search: TODO(design), disabled
                 return;
         }
     }
@@ -368,19 +370,11 @@
                 {/if}
 
                 <SettingsGroup>
-                    <button
-                        type="button"
-                        class="settings-row members-row"
-                        onclick={() =>
-                            context.push({ kind: "community_members", communityId: community.id })}>
-                        <span class="members-icon" aria-hidden="true"></span>
-                        <span class="members-text">
-                            <span class="members-label">{$_("members")}</span>
-                            <span class="members-count">{community.memberCount.toLocaleString()}</span>
-                        </span>
-                        <AvatarStack people={faces} max={4} size={26} ring="var(--surface-0)" />
-                        <span class="chevron"></span>
-                    </button>
+                    <MembersRow
+                        count={community.memberCount}
+                        {faces}
+                        onOpen={() =>
+                            context.push({ kind: "community_members", communityId: community.id })} />
                     {#if sections.info}
                         {#each info as row (row.page)}
                             <SettingsLink
@@ -540,61 +534,6 @@
         font: 700 text-size(15px) / 1.3 var(--font-sans);
         color: var(--ink);
         @include truncate;
-    }
-
-    .members-row {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        min-height: 60px;
-        padding: 10px 16px;
-        box-sizing: border-box;
-        border: 0;
-        background: none;
-        color: var(--ink);
-        text-align: start;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-
-        &:active {
-            background: var(--overlay-1);
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
-    }
-
-    .members-icon {
-        @include icon(users, 19px, var(--ink-3));
-        flex: none;
-    }
-
-    .members-text {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-    }
-
-    .members-label {
-        font: var(--weight-medium) text-size(15px) / 1.2 var(--font-sans);
-    }
-
-    .members-count {
-        font: var(--weight-medium) text-size(13px) / 1.2 var(--font-sans);
-        color: var(--ink-4);
-    }
-
-    .chevron {
-        @include icon(chevron-right, 14px, var(--ink-4));
-        flex: none;
-
-        &:dir(rtl) {
-            transform: scaleX(-1);
-        }
     }
 
     .section {

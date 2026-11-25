@@ -2497,7 +2497,8 @@
                 "removeFrom": "Xóa khỏi {level}",
                 "lapsedNotAllowed": "Vai trò của bạn không cho phép xóa thành viên ở đây.",
                 "blockedNotAllowed": "Vai trò của bạn không cho phép bỏ chặn ở đây."
-            }
+            },
+            "membersCount": "{count, plural, other {# thành viên}}"
         },
         "call": {
             "askToSpeak": "Xin phát biểu",
@@ -2628,6 +2629,12 @@
             "deleted": "Đã xóa {name}",
             "noRules": "Cộng đồng này không có quy tắc.",
             "noGates": "Ai cũng có thể tham gia: cộng đồng này không có điều kiện truy cập."
+        },
+        "communitySearch": {
+            "joined": "Kênh của bạn",
+            "others": "Kênh khác",
+            "placeholder": "Tìm trong {name}",
+            "noResultsHint": "Thử tên kênh khác."
         },
         "communitySettings": {
             "edit": "Chỉnh sửa cộng đồng",

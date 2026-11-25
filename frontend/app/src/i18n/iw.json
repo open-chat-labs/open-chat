@@ -2497,7 +2497,8 @@
                 "removeFrom": "הסרה מה{level}",
                 "lapsedNotAllowed": "התפקיד שלכם לא מאפשר להסיר חברים כאן.",
                 "blockedNotAllowed": "התפקיד שלכם לא מאפשר לבטל חסימות כאן."
-            }
+            },
+            "membersCount": "{count, plural, one {חבר אחד} other {# חברים}}"
         },
         "call": {
             "askToSpeak": "בקשת רשות דיבור",
@@ -2628,6 +2629,12 @@
             "deleted": "{name} נמחקה",
             "noRules": "לקהילה הזו אין כללים.",
             "noGates": "כל אחד יכול להצטרף: לקהילה הזו אין תנאי גישה."
+        },
+        "communitySearch": {
+            "joined": "הערוצים שלך",
+            "others": "ערוצים אחרים",
+            "placeholder": "חיפוש ב{name}",
+            "noResultsHint": "נסה שם ערוץ אחר."
         },
         "communitySettings": {
             "edit": "עריכת הקהילה",

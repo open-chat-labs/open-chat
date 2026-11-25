@@ -19,7 +19,7 @@ const t = (key: string, values?: Record<string, string | number>) =>
 const channel = (muted: boolean) => ({ membership: { notificationsMuted: muted } }) as never;
 
 describe("the tiles", () => {
-    test("Invite for someone who may invite, Search (disabled), then Mute or Unmute", () => {
+    test("Invite for someone who may invite, Search, then Mute or Unmute", () => {
         expect(communityTiles({ canInvite: true, muted: false }, t).map((x) => x.id)).toEqual([
             "invite",
             "search",
@@ -27,7 +27,7 @@ describe("the tiles", () => {
         ]);
         const tiles = communityTiles({ canInvite: false, muted: true }, t);
         expect(tiles.map((x) => x.id)).toEqual(["search", "mute"]);
-        expect(tiles[0].disabled).toBe(true);
+        expect(tiles[0].disabled).toBeUndefined();
         expect(tiles[1]).toMatchObject({
             icon: "bell",
             label: "native.details.tiles.unmute",
