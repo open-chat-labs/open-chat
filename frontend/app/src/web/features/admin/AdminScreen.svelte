@@ -83,7 +83,10 @@
     let tab = $state(0);
     let panel = $state<Panel | undefined>(undefined);
 
+    // The open tab, picked again, stays as it is (SegmentedTabs reports it too): the old console
+    // only remounted a tab when another was picked
     function select(index: number) {
+        if (index === tab && panel !== undefined) return;
         tab = index;
         panel = panelFor(index);
     }

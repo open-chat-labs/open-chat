@@ -4034,17 +4034,6 @@ design export needs. Each entry says where it came up.
   - **The old main menu's Admin item** (operators only), which the console came with: its
     place would be the profile dialog's rail foot, above Log out (a new `ProfileDialog` prop). An
     operator opens `/admin` by its URL meanwhile.
-  - **Report review**: the moderation channel's report cards (`moderation_report_content`; the
-    old `ModerationReportContent`, `FileAuthorityReport`, `VaultMediaViewer`, `VaultAccessLog`)
-    show as the text "Moderation report": no verdicts (uphold, uphold as CSAM with urgent,
-    dismiss), no media review through the vault (`MediaReviewGate` is already shared), access
-    log, NCA filing (or recording one), copying the hashes, link to the checklist
-    (`/csea-reporting`, built in 9a) or clearing a stale filing attempt. Nor the older reported
-    message card (`reported_message_content`). `MessageGroup` has no kind for an app's own card,
-    so the library needs one first.
-  Both are to be ported plainly, as operator- or moderator-only screens on library parts,
-  without a design (the user's decision, 2026-11-12): the console is PLAN L6b, the report review
-  cards L6c.
   - **The native half**: `src/native` has none of the above (nor did components_mobile have
     the console hooks or the console); not needed while native builds keep the old UI (PLAN L6).
     The native apps' event listeners and `svelteReady` are "Native apps" (above).
