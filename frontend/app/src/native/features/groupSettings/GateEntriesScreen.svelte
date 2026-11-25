@@ -37,7 +37,7 @@
     import { gateLabel } from "@src/utils/access";
     import { onDestroy, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
-    import { aboveKeyboard } from "../../aboveKeyboard.svelte";
+    import { aboveKeyboard, softKeyboard } from "../../aboveKeyboard.svelte";
     import type { NativeScreen } from "../../router/locations";
     import type { ScreenProps } from "../app/screens";
     import { gatesEditor, takeOffGates } from "./gatesEditor.svelte";
@@ -471,7 +471,8 @@
                 </div>
             {/if}
         </form>
-        <div class="footer">
+        <!-- the button rides up with the soft keyboard, so Add / Save stays in reach while typing -->
+        <div class="footer" class:lifted={softKeyboard.covering > 0} style:--lift="{softKeyboard.covering}px">
             <Button
                 label={$_(
                     changing
@@ -806,5 +807,15 @@
     .footer {
         flex: none;
         padding: 12px var(--space-16) var(--bar-end);
+        transition: transform 0.2s var(--ease-out, ease-out);
+
+        // over the keyboard: up by what it covers, and without the bar's inset under it
+        &.lifted {
+            transform: translateY(calc(-1 * var(--lift) + var(--bar-end) - 12px));
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
     }
 </style>
