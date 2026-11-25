@@ -181,6 +181,8 @@ export type LocalDialog =
     // (`quarantined`: through the vault, access-logged), whose outcome (`onResult`, as it closes)
     // opens the card's verdicts; the vault access log of its media; filing with the NCA, or
     // recording a filing (`onFiled`, the portal reference; `onFilingStarted`, the automated
+    // service took it; `stillDue`, whether the report still owes a filing: once it doesn't, the
+    // dialog closes, as the old cards' did
     // service took it)
     | {
           kind: "vault_media";
@@ -195,6 +197,7 @@ export type LocalDialog =
           urgent: boolean;
           onFiled: (portalReference: string) => void;
           onFilingStarted: () => void;
+          stillDue: () => boolean;
       };
 
 /**

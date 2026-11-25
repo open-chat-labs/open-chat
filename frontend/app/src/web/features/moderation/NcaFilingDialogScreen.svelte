@@ -5,7 +5,8 @@
      P1 and P2 an acknowledgement that they'll phone; once the service takes it the dialog closes
      and the card shows the filing under way. Recording a filing (platform operators): the portal
      reference, which the card then shows. An operator may switch between the two. A failure says
-     so inline, for another try.
+     so inline, for another try. It closes once the report no longer owes a filing (`stillDue`),
+     as the old cards' form did.
      TODO(design): the design has no NCA filing; DialogShell with the old dialog's words. -->
 <script lang="ts">
     import { platformOperatorStore, type OpenChat } from "@client";
@@ -25,6 +26,13 @@
     // the dialog's own value, fixed for its life
     const { reportIndex, urgent, onFiled, onFilingStarted } = dialog;
     const form = new NcaFilingForm(client, reportIndex, urgent, ncaReporterUrl);
+
+    // the old cards showed the form only while the report owed a filing: once it's under way or
+    // filed (another moderator's automated filing, another operator's reference), it goes, so a
+    // manual reference can't overwrite an automated attempt in flight
+    $effect(() => {
+        if (!dialog.stillDue()) onClose();
+    });
 
     async function submitManual() {
         const outcome = await form.submitManual();

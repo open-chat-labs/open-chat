@@ -97,6 +97,7 @@
             urgent: card.filingUrgent,
             onFiled: (ref) => card.filed(ref),
             onFilingStarted: () => card.filingStarted(),
+            stillDue: () => card.filingOpen,
         });
     }
 </script>
