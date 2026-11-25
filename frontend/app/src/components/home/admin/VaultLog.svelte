@@ -1,78 +1,32 @@
 <script lang="ts">
-    import type { OpenChat, VaultLogEntry } from "@client";
+    import type { OpenChat } from "@client";
     import { Row } from "component-lib";
     import { getContext, onMount } from "svelte";
+    import { VaultLog, shortHash } from "../../../logic/admin/vaultLog.svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Input from "../../Input.svelte";
     import Select from "../../Select.svelte";
 
     const client = getContext<OpenChat>("client");
+    const log = new VaultLog(client);
 
-    const PAGE_SIZE = 100;
-
-    let bucketCanisterId = $state("");
-    let buckets: string[] = $state([]);
-    let entries: VaultLogEntry[] = $state([]);
-    let total = $state<bigint | undefined>(undefined);
-    let busy = $state(false);
-    let error = $state<string | undefined>(undefined);
+    let buckets = $derived(log.buckets);
+    let entries = $derived(log.entries);
+    let total = $derived(log.total);
+    let busy = $derived(log.busy);
+    let error = $derived(log.error);
 
     onMount(() => {
-        client.vaultBuckets().then((b) => {
-            buckets = b;
-            if (bucketCanisterId === "" && b.length > 0) {
-                bucketCanisterId = b[0];
-            }
-        });
+        void log.loadBuckets();
     });
 
-    // The vault access log is readable only by designated vault reviewers: the chain of
-    // custody evidence. prev_hash of each entry is the hash of the one before it, so the
-    // chain can be verified externally.
-    // The bucket whose entries are currently loaded: loadMore must page the SAME bucket even
-    // if the select has since changed, or entries from two buckets (with clashing per-bucket
-    // indexes) end up interleaved in one list
-    let loadedCanisterId = $state("");
-
     function load() {
-        const canisterId = bucketCanisterId.trim();
-        if (canisterId === "" || busy) return;
-        busy = true;
-        error = undefined;
-        entries = [];
-        total = undefined;
-        loadedCanisterId = canisterId;
-        client
-            .vaultLog(canisterId, 0n, PAGE_SIZE, undefined)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    entries = resp.entries;
-                    total = resp.total;
-                } else {
-                    error = "Not authorized - the vault log is readable by vault reviewers only";
-                }
-            })
-            .catch(() => (error = "Failed to fetch the vault log"))
-            .finally(() => (busy = false));
+        void log.load();
     }
 
     function loadMore() {
-        if (busy || total === undefined || BigInt(entries.length) >= total) return;
-        busy = true;
-        error = undefined;
-        client
-            .vaultLog(loadedCanisterId, BigInt(entries.length), PAGE_SIZE, undefined)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    entries = [...entries, ...resp.entries];
-                    total = resp.total;
-                } else {
-                    error = "Not authorized - the vault log is readable by vault reviewers only";
-                }
-            })
-            .catch(() => (error = "Failed to fetch more of the vault log"))
-            .finally(() => (busy = false));
+        void log.loadMore();
     }
 </script>
 
@@ -85,18 +39,18 @@
     <Row crossAxisAlignment="center" gap="md">
         <div class="canisterId">
             {#if buckets.length > 1}
-                <Select bind:value={bucketCanisterId}>
+                <Select bind:value={log.bucketCanisterId}>
                     {#each buckets as bucket (bucket)}
                         <option value={bucket}>{bucket}</option>
                     {/each}
                 </Select>
             {:else}
-                <Input bind:value={bucketCanisterId} />
+                <Input bind:value={log.bucketCanisterId} />
             {/if}
         </div>
         <Button
             tiny
-            disabled={busy || bucketCanisterId.trim() === ""}
+            disabled={busy || log.bucketCanisterId.trim() === ""}
             loading={busy}
             onClick={load}
         >
@@ -121,7 +75,7 @@
                         <td>{entry.index}</td>
                         <td>{new Date(Number(entry.timestamp)).toLocaleString()}</td>
                         <td>{entry.event}</td>
-                        <td class="hash" title={entry.prevHash}>{entry.prevHash.slice(0, 12)}…</td>
+                        <td class="hash" title={entry.prevHash}>{shortHash(entry.prevHash)}</td>
                     </tr>
                 {/each}
             </tbody>

@@ -3967,8 +3967,23 @@ design export needs. Each entry says where it came up.
     TODO(design): no suspend dialog, busy button, suspend or pending toast in the design; naming
     the user in a member row under the title is ours.
   - **`/admin`** (`features/admin/AdminScreen`): someone who isn't a platform operator gets the
-    old page's refusal ("Unauthorised", Back to safety); an operator gets a note that the console
-    isn't built here yet, pointing at the console hooks (English only, as the old console).
+    old page's refusal ("Unauthorised", Back to safety); an operator gets **the operator console**
+    (L6b #10609), the old desktop's `home/admin` ported plainly, without a design (the user's
+    decision, 2026-11-12): the same five tabs (a `SegmentedTabs`), each made afresh when it's
+    opened as the old ones were, with the same forms, words (English only, as the old console's),
+    client calls and toasts. Its logic was extracted to `app/src/logic/admin`, which the old
+    console now runs on too: `TranslationCorrections` (the list, approve, reject for its meaning
+    or its length, preview, the suggestion in English, the translators' CHAT balance),
+    `OperatorFunctions` (every form, its validation and its busy button, the dual authorized
+    proposals and their "NOT yet applied" toast, a refused legal hold clear proposed instead),
+    `DailyPuzzleOperator` (the kill switch, regenerate today), `PendingProposals` (confirm, not
+    your own; reject; the proposers looked up), `AuthorityReports` (due and filed, overdue against
+    the internal SLA targets) and `VaultLog` (the bucket picked or pasted, pages of 100 from the
+    bucket loaded). Translation corrections' row actions are the library's `ContextMenu` from a ⋯
+    button, as the old row's menu. A failure the old console showed under the form still is
+    (`admin-error`), besides its toast. No dialogs: the old console had none. TODO(design): plain
+    cards, fields (`input`, `select`), tables and a danger zone card, styled from the tokens in
+    `AdminScreen` (`admin-*`); the library has no text field, select, table or card.
 
   Not yet, and both needed before cutover (the old desktop has the only ones; both are big
   screens with no design):
@@ -4016,9 +4031,9 @@ design export needs. Each entry says where it came up.
       words ("Moderation report") in a text bubble, as before: moderators work from a desktop.
       Native can draw them the same way, with the same logic, if they're wanted there.
     TODO(design): no report cards or their dialogs in the design.
-  Both are to be ported plainly, as operator- or moderator-only screens on library parts,
-  without a design (the user's decision, 2026-11-12): the console is PLAN L6b, the report review
-  cards L6c.
+  - **The old main menu's Admin item** (operators only), which the console came with: its
+    place would be the profile dialog's rail foot, above Log out (a new `ProfileDialog` prop). An
+    operator opens `/admin` by its URL meanwhile.
   - **The native half**: `src/native` has none of the above (nor did components_mobile have
     the console hooks or the console); not needed while native builds keep the old UI (PLAN L6).
     The native apps' event listeners and `svelteReady` are "Native apps" (above).

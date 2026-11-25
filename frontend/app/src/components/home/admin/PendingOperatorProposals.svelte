@@ -1,125 +1,61 @@
 <script lang="ts">
-    import { allUsersStore, currentUserIdStore, type OpenChat, type ResourceKey } from "@client";
+    import { allUsersStore, currentUserIdStore, type OpenChat } from "@client";
     import { Body, BodySmall, Column, Row, Subtitle } from "component-lib";
     import { getContext, onMount } from "svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import {
+        PendingProposals,
+        formatProposalTimestamp,
+        isOwnProposal as isOwn,
+        proposerName,
+        type PendingProposal,
+        type ProposalOutcome,
+    } from "../../../logic/admin/pendingProposals.svelte";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
-    type PendingProposal = {
-        id: number;
-        summary: string;
-        proposed_by: string;
-        proposed_at: number;
-        expires_at: number;
-    };
-
     const client = getContext<OpenChat>("client");
+    const proposals = new PendingProposals(client);
 
-    let pending: PendingProposal[] = $state([]);
-    let loading = $state(true);
-    let busy = $state(new Set<number>());
-    let error: ResourceKey | undefined = $state(undefined);
+    let pending = $derived(proposals.pending);
+    let loading = $derived(proposals.loading);
+    let busy = $derived(proposals.busy);
+    let error = $derived(proposals.error);
 
     onMount(refresh);
 
     function refresh(): void {
-        loading = true;
-        error = undefined;
-        client
-            .protectedActions()
-            .then((json) => {
-                if (json === undefined) {
-                    error = i18nKey("Failed to load the pending proposals");
-                    return;
-                }
-                try {
-                    pending = JSON.parse(json).pending ?? [];
-                } catch {
-                    pending = [];
-                }
-                hydrateProposers();
-            })
-            .catch(() => (error = i18nKey("Failed to load the pending proposals")))
-            .finally(() => (loading = false));
+        void proposals.refresh();
     }
 
-    function confirm(id: number): void {
-        error = undefined;
-        busy.add(id);
-        busy = new Set(busy);
-        client
-            .confirmProtectedAction(BigInt(id))
-            .then((result) => {
-                if (result.kind === "success") {
-                    toastStore.showSuccessToast(i18nKey("Proposal confirmed and applied"));
-                } else {
-                    // The confirmation is re-validated by the canister, which says WHY it was
-                    // refused (a legal hold now stands, the report is against your own
-                    // message); only fall back to guesswork when it says nothing
-                    error = i18nKey(
-                        result.message ??
-                            "Failed to confirm the proposal - it may have been superseded, cancelled or expired",
-                    );
-                    toastStore.showFailureToast(error);
-                }
-                refresh();
-            })
-            .finally(() => {
-                busy.delete(id);
-                busy = new Set(busy);
-            });
-    }
-
-    function reject(id: number): void {
-        error = undefined;
-        busy.add(id);
-        busy = new Set(busy);
-        client
-            .cancelProtectedAction(BigInt(id))
-            .then((result) => {
-                if (result.kind === "success") {
-                    toastStore.showSuccessToast(i18nKey("Proposal rejected"));
-                } else {
-                    error = i18nKey(result.message ?? "Failed to reject the proposal");
-                    toastStore.showFailureToast(error);
-                }
-                refresh();
-            })
-            .finally(() => {
-                busy.delete(id);
-                busy = new Set(busy);
-            });
-    }
-
-    // Operators are not necessarily in the local user cache (you may share no chats with
-    // them), so pull in any proposer we do not already know. getUser populates the store,
-    // which the template reads reactively
-    function hydrateProposers(): void {
-        const missing = new Set(
-            pending.map((p) => p.proposed_by).filter((id) => !$allUsersStore.has(id)),
-        );
-        for (const userId of missing) {
-            client.getUser(userId);
+    function report(outcome: ProposalOutcome): void {
+        if (outcome.kind === "success") {
+            toastStore.showSuccessToast(outcome.message);
+        } else {
+            toastStore.showFailureToast(outcome.message);
         }
     }
 
+    async function confirm(id: number): Promise<void> {
+        report(await proposals.confirm(id));
+    }
+
+    async function reject(id: number): Promise<void> {
+        report(await proposals.reject(id));
+    }
+
     function proposedBy(userId: string): string {
-        const user = $allUsersStore.get(userId);
-        return user === undefined ? userId : `@${user.username}`;
+        return proposerName(userId, $allUsersStore.get(userId));
     }
 
     function formatTimestamp(ms: number): string {
-        return new Date(ms).toLocaleString();
+        return formatProposalTimestamp(ms);
     }
 
-    // The canister rejects a confirmation from the proposer; disable it here so the operator
-    // is told why rather than finding out through a failed call
     function isOwnProposal(proposal: PendingProposal): boolean {
-        return proposal.proposed_by === $currentUserIdStore;
+        return isOwn(proposal, $currentUserIdStore);
     }
 </script>
 
