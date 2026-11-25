@@ -1217,3 +1217,7 @@
 - `MessageGroup`: `customContent` (optional, `Record<string, Snippet<[index: number]>>`, keyed by `customKind`): a custom message is drawn by its snippet, given the message's index, full width in the column up to 560px, under its reply quote if it has one; its reactions, tips and thread link under it, its hover bar and menu, as for the other kinds that aren't text. With no snippet for its kind it's a text bubble with `fallback`. The library knows nothing of what the kinds are. `meta.json` (`customContent`).
 - Used by the app (web L6c): the moderation channel's report cards (`moderation_report_content`, `reported_message_content`), which the app draws itself; the native conversation passes none, so it shows their words as before.
 - Not in the design export: the export has no way to hand MessageGroup a kind of the host's (the app's `GAPS.md`, "Platform operators and moderators").
+## 2026-11-24 — ChatListHeader: the community's picture, by hand
+- `ChatListHeader`: `avatarUrl` (optional), the community's picture over its `color` swatch, as the header's comment says it shows ("the community's avatar"); it drew the swatch only, so the web's chat list never showed a community's picture. `ChatListPanel`: `headerAvatarUrl`, passed to it. Without them, as before. `meta.json` (both).
+- Used by the app: the web's chat list passes the community's `avatar.blobUrl` (none: the swatch, as everywhere on the web).
+- Not in the design export: its header draws a swatch for its sample community.

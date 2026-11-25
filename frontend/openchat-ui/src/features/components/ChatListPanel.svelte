@@ -61,6 +61,8 @@
     headerVisibility?: HeaderProps['visibility'];
     headerMembers?: number;
     headerColor?: HeaderProps['color'];
+    /** The community header's picture (ChatListHeader's `avatarUrl`). */
+    headerAvatarUrl?: string;
     headerMenuItems?: MenuItem[];
     /** Header ⋯ menu pick: the item's id (see ChatListHeader). */
     onHeaderMenu?: (id: string) => void;
@@ -105,6 +107,7 @@
     headerVisibility = 'Public',
     headerMembers = 0,
     headerColor = 'teal',
+    headerAvatarUrl,
     headerMenuItems,
     onHeaderMenu,
     headerCanEdit = false,
@@ -232,6 +235,7 @@
         visibility={headerVisibility}
         memberCount={headerMembers}
         color={headerColor}
+        avatarUrl={headerAvatarUrl}
         menuItems={headerMenuItems}
         canEdit={headerCanEdit}
         canCreateChannel={headerCanCreateChannel}

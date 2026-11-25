@@ -457,6 +457,7 @@
             (scope.kind === "favourite" ? $_("communities.favourites") : undefined)}
         headerVisibility={community?.public === false ? "Private" : "Public"}
         headerMembers={community?.memberCount ?? 0}
+        headerAvatarUrl={community?.avatar.blobUrl}
         {headerMenuItems}
         {onHeaderMenu}
         onCreateGroup={createGroup}

@@ -39,6 +39,8 @@
     /** Overrides the "Public · 248 members" line. Resource key (or literal text). */
     meta?: string;
     color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+    /** Community: its picture, over the `color` swatch (the swatch alone without one). */
+    avatarUrl?: string;
     /** Replaces the default menu; give items an `id` to be told which was picked. */
     menuItems?: ActionItem[];
     /** Community: show Edit community. */
@@ -60,6 +62,7 @@
     memberCount = 0,
     meta,
     color = 'teal',
+    avatarUrl,
     menuItems,
     canEdit = false,
     canCreateChannel = false,
@@ -109,7 +112,7 @@
 <div class="header">
   {#if community}
     <div class="community" onclick={openDetails} role="button" tabindex="0">
-      <div class="avatar"><Avatar size={38} shape="squircle" {color} online={false} /></div>
+      <div class="avatar"><Avatar size={38} shape="squircle" {color} url={avatarUrl} online={false} /></div>
       <div class="names">
         <span class="name">{title}</span>
         <div class="meta-line">
