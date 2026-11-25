@@ -11,6 +11,7 @@ import {
 } from "@client";
 import type { ActivityItem } from "@openchat/ui/src/lib/activityFeed.svelte";
 import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
+import { tipChips, type TipChipContext } from "@src/logic/conversation/messageRow";
 import { swatchFor } from "@src/logic/swatch";
 
 // The activity feed's events to ActivityPanel's items (web DATA.md, ActivityPanel), in the old
@@ -28,6 +29,10 @@ export type ActivityContext = {
     /** "Message content unavailable", for an event without its message. */
     missing: string;
     userName: (userId: string) => string;
+    /** A person's own picture (`ownUserAvatarUrl`); none, and their swatch shows alone. */
+    avatar: (userId: string) => string | undefined;
+    /** A ledger's token, for a tip's chips; undefined for one the registry doesn't carry. */
+    token: TipChipContext["token"];
     /** Who a message is shown as from, which for one a bridge bot relayed isn't its sender. */
     author: (message: Message) => string;
     /** The chat an event happened in, as the old feed named it ("Community > channel"). */
@@ -51,7 +56,7 @@ const TYPES: Record<MessageActivityEvent["activity"], ActivityItem["type"]> = {
     tip: "payment",
     crypto: "payment",
     p2p_swap_accepted: "payment",
-    // not one of the panel's kinds: shown under All only
+    // no tab of its own, on the web or native: under All only (the user's decision, web L3)
     poll_vote: undefined,
 };
 
@@ -85,11 +90,15 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
                 : `${ctx.author(message)}: ${ctx.mentionsAsTyped(ctx.contentText(message.content))}`,
         time: ctx.time(event.timestamp),
         unread: event.timestamp > ctx.readUpTo,
-        // their swatch, as everywhere (swatchFor)
+        // their swatch, as everywhere (swatchFor), under their own picture if they have one (the
+        // event's user, as the old rows showed)
         color: swatchFor(event.userId ?? id),
+        avatarUrl: event.userId === undefined ? undefined : ctx.avatar(event.userId),
         kind: "user",
         reactions:
             event.activity === "reaction" ? (message?.reactions.map((r) => r.reaction) ?? []) : [],
+        // only a tip shows the message's tips, as the old rows did
+        tips: event.activity === "tip" && message !== undefined ? tipChips(message.tips, ctx) : [],
         type: TYPES[event.activity],
         chatId: chatIdentifierToString(event.messageContext.chatId),
         messageId: String(event.messageId),

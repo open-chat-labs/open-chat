@@ -508,15 +508,18 @@ type KindBase = {
 } & ThreadFields &
     QuoteFields;
 
+/** What `tipChips` needs: who's reading, how people are named, and the tokens. */
+export type TipChipContext = Pick<ConversationContext, "me" | "you" | "userName"> & {
+    token: (ledger: string) => Pick<TransferToken, "symbol" | "logo" | "amount"> | undefined;
+};
+
 /**
  * The tips a message got, a chip per token (its logo and the total), the reader's own marked, with
  * who tipped as its tooltip, as the old trees' tip thumbnails sum them. A token the registry
  * doesn't carry has no chip. TODO(design): the design has no tips; they go before the reactions.
+ * The conversation's messages and the activity feed's tip rows both show these.
  */
-export function tipChips(
-    tips: TipsReceived,
-    ctx: Pick<ConversationContext, "me" | "you" | "token" | "userName">,
-): NonNullable<GroupMessage["tips"]> {
+export function tipChips(tips: TipsReceived, ctx: TipChipContext): NonNullable<GroupMessage["tips"]> {
     const chips: NonNullable<GroupMessage["tips"]> = [];
     for (const [ledger, byUser] of Object.entries(tips)) {
         const token = ctx.token(ledger);

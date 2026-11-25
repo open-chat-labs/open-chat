@@ -1,4 +1,5 @@
 <!-- Activity feed: reactions, mentions, replies and payments, grouped by day, filtered by All / Mentions / Payments.
+     By hand (web L3): each row's picture (`avatarUrl`) and tips.
      Opening a row calls onOpen(item) (chatId + messageId land on the message, payments included) and marks it read through
      onMarkRead; "Mark all read" calls onMarkAllRead. Read state comes from `unread` on each item; local marks are optimistic
      and roll back with an error if the host rejects. Items are identified by `id`, never by title. -->
@@ -88,8 +89,10 @@
             time={it.time}
             unread={isUnread(it)}
             color={it.color ?? 'violet'}
+            avatarUrl={it.avatarUrl}
             kind={it.kind ?? 'user'}
             reactions={it.reactions ?? []}
+            tips={it.tips ?? []}
             onClick={() => open(it)}
           />
         </div>

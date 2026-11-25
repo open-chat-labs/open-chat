@@ -1,8 +1,11 @@
 <!-- One activity feed entry: avatar, title, where it happened, optional preview and reactions, time and unread dot.
-     Channels and groups read as squircles, people as circles. -->
+     Channels and groups read as squircles, people as circles.
+     By hand (web L3, TODO(design)): `avatarUrl`, the person's picture over the colour, and `tips`, a tip's chips (the
+     token's logo and the total, as ReactionChips' tips) before the reactions, the first four then "+N". -->
 <script lang="ts">
   import Avatar from './Avatar.svelte';
   import { useT } from '../i18n';
+  import { foldTips, type ActivityTip } from '../activityFeed.svelte';
 
   interface Props {
     title: string;
@@ -12,22 +15,39 @@
     time: string;
     unread?: boolean;
     color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+    /** The person's own picture, over `color` (which shows while it loads, and without one). */
+    avatarUrl?: string;
     kind?: 'user' | 'group';
     reactions?: string[];
+    /** The tips the message got, a chip per token before the reactions: the first four, then "+N". */
+    tips?: ActivityTip[];
     onClick?: () => void;
   }
 
-  let { title, context, preview = '', time, unread = false, color = 'violet', kind = 'user', reactions = [], onClick }: Props = $props();
+  let { title, context, preview = '', time, unread = false, color = 'violet', avatarUrl, kind = 'user', reactions = [], tips = [], onClick }: Props = $props();
   const t = useT();
+  const tipChips = $derived(foldTips(tips));
 </script>
 
 <div class="row" onclick={onClick} role="button" tabindex="0">
-  <div class="avatar"><Avatar size={36} shape={kind === 'group' ? 'squircle' : 'circle'} {color} online={false} /></div>
+  <div class="avatar"><Avatar size={36} shape={kind === 'group' ? 'squircle' : 'circle'} {color} url={avatarUrl} online={false} /></div>
   <div class="main">
     <span class="title">{title}</span>
     <span class="context">{context}</span>
     {#if preview}
       <span class="preview">{preview}</span>
+    {/if}
+    {#if tips.length > 0}
+      <div class="tips">
+        {#each tipChips.shown as tip}
+          <span class="tip" title={tip.label}
+            ><span class="coin" style:background={tip.logo} aria-hidden="true"></span>{tip.amount} {tip.symbol}</span
+          >
+        {/each}
+        {#if tipChips.more > 0}
+          <span class="tip more">+{tipChips.more}</span>
+        {/if}
+      </div>
     {/if}
     {#if reactions.length > 0}
       <div class="reactions">
@@ -116,6 +136,37 @@
     background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-2);
+  }
+
+  .tips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    min-width: 0;
+    padding-block-start: var(--space-6);
+  }
+
+  .tip {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    /* grows with the text scale (L4) rather than clipping it */
+    min-height: 24px;
+    padding: var(--space-4) var(--space-8);
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .coin {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
   }
 
   .side {

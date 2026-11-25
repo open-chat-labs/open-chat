@@ -13,6 +13,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { buildDisplayName } from "../../../utils/user";
+    import { activityChatName } from "@src/logic/activity/activityChatName";
     import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
     import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -33,35 +34,13 @@
 
     let { event, onClick, message }: Props = $props();
 
+    // where it happened, as every tree names it (the old rows keep their English "Thread")
     function getChatName(ctx: MessageContext): string | undefined {
-        const chat = client.lookupChatSummary(ctx.chatId);
-        const parts = [];
-        if (chat !== undefined) {
-            switch (chat.kind) {
-                case "direct_chat":
-                    parts.push(client.getDisplayName(chat.them.userId));
-                    break;
-                case "group_chat":
-                    parts.push(chat.name);
-                    break;
-                case "channel": {
-                    const community = $communitiesStore.get({
-                        kind: "community",
-                        communityId: chat.id.communityId,
-                    });
-                    if (community) {
-                        parts.push(community.name);
-                    }
-                    parts.push(chat.name);
-                    break;
-                }
-            }
-            if (ctx.threadRootMessageIndex !== undefined) {
-                parts.push("Thread");
-            }
-            return parts.join(" > ");
-        }
-        return undefined;
+        return activityChatName(client.lookupChatSummary(ctx.chatId), ctx, {
+            displayName: (userId) => client.getDisplayName(userId),
+            communityName: (id) => $communitiesStore.get(id)?.name,
+            thread: "Thread",
+        });
     }
 
     function formatLatestMessage(username: string): string {

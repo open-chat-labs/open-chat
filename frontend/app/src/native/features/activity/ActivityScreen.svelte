@@ -12,6 +12,7 @@
         allUsersStore,
         bridgedUsersStore,
         communitiesStore,
+        cryptoLookup,
         currentUserIdStore,
         messageActivitySummaryStore,
         userGroupSummariesStore,
@@ -65,6 +66,7 @@
             users: $allUsersStore,
             bridgedUsers: $bridgedUsersStore,
             userGroups: { get: (id) => $userGroupSummariesStore.get(id) },
+            tokens: $cryptoLookup,
             communityName: (id) => $communitiesStore.get(id)?.name,
             readUpTo: $messageActivitySummaryStore.readUpToTimestamp,
         });
@@ -173,8 +175,10 @@
                             time={item.time}
                             unread={isUnread(item)}
                             color={item.color ?? "violet"}
+                            avatarUrl={item.avatarUrl}
                             kind={item.kind ?? "user"}
                             reactions={item.reactions ?? []}
+                            tips={item.tips ?? []}
                             onClick={() => open(item)}
                         />
                     </div>

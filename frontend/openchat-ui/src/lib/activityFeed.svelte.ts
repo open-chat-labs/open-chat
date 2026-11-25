@@ -1,6 +1,11 @@
 // The activity feed's rules, the same wherever it's shown (ActivityPanel on the web, the native
 // Activity tab): its item, the All / Mentions / Payments tabs, each tab's unread badge, the day
-// headings, and marks read that show at once and roll back if the host rejects them.
+// headings, a row's tip chips, and marks read that show at once and roll back if the host rejects
+// them.
+
+import type { Tip as ActivityTip } from './components/ReactionChips.svelte';
+
+export type { ActivityTip };
 
 /** One entry of the feed (ActivityPanel re-exports it). */
 export interface ActivityItem {
@@ -13,8 +18,13 @@ export interface ActivityItem {
   time: string;
   unread?: boolean;
   color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+  /** The person's own picture, over `color` (which shows while it loads, and without one). */
+  avatarUrl?: string;
   kind?: 'user' | 'group';
   reactions?: string[];
+  /** The tips the message got, a chip per token (a tip's item only). */
+  tips?: ActivityTip[];
+  /** Which tab besides All shows it; none (a poll vote) is under All only. */
   type?: 'reaction' | 'mention' | 'reply' | 'payment';
   /** Chat to open. */
   chatId: string;
@@ -22,7 +32,10 @@ export interface ActivityItem {
   messageId?: string;
 }
 
-/** The tabs, in order: All, Mentions, Payments. */
+/**
+ * The tabs, in order, the same on the web and native: All, Mentions, Payments. Poll votes have no
+ * tab of their own, only All (the user's decision, web L3, 2026-11-24).
+ */
 export const ACTIVITY_TABS = ['all', 'mention', 'payment'] as const;
 export type ActivityTab = (typeof ACTIVITY_TABS)[number];
 
@@ -38,6 +51,11 @@ export function activityTabItems(items: ActivityItem[], tab: number): ActivityIt
 /** Each tab's unread count, in `ACTIVITY_TABS` order: null where there's none, so it has no badge. */
 export function activityTabCounts(items: ActivityItem[], isUnread: (item: ActivityItem) => boolean): (number | null)[] {
   return ACTIVITY_TABS.map((_, tab) => activityTabItems(items, tab).filter(isUnread).length || null);
+}
+
+/** A row's tip chips: the first `max` (the row is one line in a narrow feed), and how many more. */
+export function foldTips(tips: ActivityTip[], max = 4): { shown: ActivityTip[]; more: number } {
+  return { shown: tips.slice(0, max), more: Math.max(0, tips.length - max) };
 }
 
 /** Whether the item at `index` of a tab's items starts a new day, so a heading goes above it. */

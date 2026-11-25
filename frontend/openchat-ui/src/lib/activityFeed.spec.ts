@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import type { ActivityItem } from './activityFeed.svelte';
-import { ActivityReadMarks, activityTabCounts, activityTabItems, startsDay } from './activityFeed.svelte';
+import { ACTIVITY_TAB_LABELS, ACTIVITY_TABS, ActivityReadMarks, activityTabCounts, activityTabItems, foldTips, startsDay } from './activityFeed.svelte';
 
 const item = (id: string, fields: Partial<ActivityItem> = {}): ActivityItem => ({
   id,
@@ -17,6 +17,7 @@ const items = [
   item('m1', { type: 'mention', unread: true }),
   item('m2', { type: 'mention' }),
   item('p', { type: 'payment', day: 'Yesterday' }),
+  // a poll vote: no type, so under All only
   item('v', { day: 'Yesterday', unread: true }),
 ];
 
@@ -30,6 +31,13 @@ describe('the activity tabs', () => {
   test('a badge only on a tab with unread items', () => {
     expect(activityTabCounts(items, (i) => !!i.unread)).toEqual([3, 1, null]);
     expect(activityTabCounts(items, () => false)).toEqual([null, null, null]);
+  });
+
+  test('three tabs, the same on the web and native, and a poll vote only under All', () => {
+    expect(ACTIVITY_TABS).toEqual(['all', 'mention', 'payment']);
+    expect(ACTIVITY_TAB_LABELS).toEqual(['ui.activityPanel.tabAll', 'ui.activityPanel.tabMentions', 'ui.activityPanel.tabPayments']);
+    const inTabs = ACTIVITY_TABS.map((_, tab) => activityTabItems(items, tab).some((i) => i.id === 'v'));
+    expect(inTabs).toEqual([true, false, false]);
   });
 
   test('a day heading above the first item of each day', () => {
@@ -76,5 +84,16 @@ describe('marks read', () => {
     marks.markAll(items, undefined, each);
     expect(each).toHaveBeenCalledWith(['r', 'm1', 'v']);
     expect(items.some((i) => marks.isUnread(i))).toBe(false);
+  });
+});
+
+describe("a row's tips", () => {
+  const tip = (symbol: string) => ({ amount: '1', symbol, logo: 'none' });
+
+  test('show the first four, then how many more', () => {
+    const tips = ['A', 'B', 'C', 'D', 'E', 'F'].map(tip);
+    expect(foldTips(tips)).toEqual({ shown: tips.slice(0, 4), more: 2 });
+    expect(foldTips(tips.slice(0, 4))).toEqual({ shown: tips.slice(0, 4), more: 0 });
+    expect(foldTips([])).toEqual({ shown: [], more: 0 });
   });
 });
