@@ -1,14 +1,10 @@
 <script lang="ts">
-    import {
-        type DailyPuzzleConfig,
-        type OCError,
-        type OpenChat,
-        type ResourceKey,
-        type Success,
-    } from "@client";
+    import type { OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
-    import { SvelteSet } from "svelte/reactivity";
-    import { i18nKey } from "../../../i18n/i18n";
+    import {
+        DailyPuzzleOperator,
+        type DailyPuzzleOutcome,
+    } from "../../../logic/admin/dailyPuzzleOperator.svelte";
     import { toastStore } from "../../../stores/toast";
     import { dailyPuzzleGames } from "@src/core/dailyPuzzle/registry";
     import { regenerateOptions } from "../../../utils/dailyPuzzleOperator";
@@ -20,79 +16,31 @@
 
     const client = getContext<OpenChat>("client");
 
-    // Two levers, deliberately (2026-09-13, #9357): the kill switch, and regenerating a bad
-    // puzzle. Prices, rewards, caps and the rota are code, so changing them gets a review.
-    let error: ResourceKey | undefined = $state(undefined);
-    const busy = $state(new SvelteSet<number>());
-    let config: DailyPuzzleConfig | undefined = $state(undefined);
-    let enabled = $state(false);
-    let regenerateGameId = $state("");
+    const puzzle = new DailyPuzzleOperator(client);
     const regenerate = regenerateOptions(Object.keys(dailyPuzzleGames));
 
-    function fail(what: string, resp: OCError | unknown) {
-        const detail =
-            typeof resp === "object" && resp !== null && "kind" in resp && resp.kind === "error"
-                ? ((resp as OCError).message ?? `code ${(resp as OCError).code}`)
-                : String(resp);
-        error = i18nKey(`${what}: ${detail}`);
-        toastStore.showFailureToast(error);
-    }
+    let config = $derived(puzzle.config);
+    let busy = $derived(puzzle.busy);
+    let error = $derived(puzzle.error);
 
-    // Shown state is what the canister holds now, never what was just sent
-    async function refresh(): Promise<void> {
-        const current = await client.dailyPuzzleConfig();
-        if ("kind" in current) {
-            fail("Failed to read the daily puzzle config", current);
-        } else {
-            config = current;
-            enabled = current.enabled;
+    function report(outcome: DailyPuzzleOutcome | undefined) {
+        if (outcome?.kind === "success") {
+            toastStore.showSuccessToast(outcome.message);
+        } else if (outcome?.kind === "failed") {
+            toastStore.showFailureToast(outcome.message);
         }
     }
 
-    onMount(() => {
-        refresh();
+    onMount(async () => {
+        report(await puzzle.refresh());
     });
 
-    function run(
-        index: number,
-        what: string,
-        action: () => Promise<Success | OCError>,
-        successMessage: string,
-    ): void {
-        error = undefined;
-        busy.add(index);
-        action()
-            .then(async (resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(i18nKey(successMessage));
-                    await refresh();
-                    // The operator's own client sees the change now, not at the next poll
-                    await client.dailyPuzzleFetch();
-                } else {
-                    fail(what, resp);
-                }
-            })
-            .catch((err) => fail(what, err))
-            .finally(() => busy.delete(index));
-    }
-
     function saveEnabled() {
-        run(
-            0,
-            "Failed to set the daily puzzle enabled flag",
-            () => client.dailyPuzzleSetEnabled(enabled),
-            `Daily puzzle ${enabled ? "enabled" : "disabled"}; pushed to every local user index`,
-        );
+        void puzzle.saveEnabled(report);
     }
 
     function regenerateToday() {
-        const gameId = regenerateGameId === "" ? undefined : regenerateGameId;
-        run(
-            1,
-            "Regenerate failed",
-            () => client.dailyPuzzleRegenerateToday(gameId),
-            `Today's puzzle regenerated${gameId === undefined ? " as scheduled" : ` as ${gameId}`}`,
-        );
+        void puzzle.regenerateToday(report);
     }
 </script>
 
@@ -109,10 +57,10 @@
         <div class="name-value">
             <div class="label">Enabled:</div>
             <div class="value">
-                <Toggle id="daily-puzzle-enabled" small bind:checked={enabled} />
+                <Toggle id="daily-puzzle-enabled" small bind:checked={puzzle.enabled} />
             </div>
         </div>
-        <Button tiny disabled={busy.has(0)} loading={busy.has(0)} onClick={saveEnabled}
+        <Button tiny disabled={busy.has("enabled")} loading={busy.has("enabled")} onClick={saveEnabled}
             >Save</Button>
     </section>
 
@@ -126,13 +74,13 @@
         <div class="name-value">
             <div class="label">Game:</div>
             <div class="value schedule-row">
-                <Select bind:value={regenerateGameId}>
+                <Select bind:value={puzzle.regenerateGameId}>
                     {#each regenerate as option (option.value)}
                         <option value={option.value}>{option.label}</option>
                     {/each}
                 </Select>
             </div>
-            <Button disabled={busy.has(1)} loading={busy.has(1)} onClick={regenerateToday}
+            <Button disabled={busy.has("regenerate")} loading={busy.has("regenerate")} onClick={regenerateToday}
                 >Regenerate</Button>
         </div>
     </section>

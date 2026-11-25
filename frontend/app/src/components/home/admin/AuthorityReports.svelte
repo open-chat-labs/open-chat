@@ -1,71 +1,35 @@
 <script lang="ts">
     import type { OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
+    import {
+        AuthorityReports,
+        ageOf as ageAt,
+        filedFlags,
+        formatAge,
+        isOverdue,
+        type DueRow,
+    } from "../../../logic/admin/authorityReports.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
 
     const client = getContext<OpenChat>("client");
+    const register = new AuthorityReports(client);
 
-    type DueRow = {
-        report_index: number;
-        urgent: boolean;
-        created: number;
-    };
-    type FiledRow = {
-        report_index: number;
-        portal_reference: string;
-        filed_at: number;
-        urgent: boolean;
-        unverified: boolean;
-    };
-
-    let due: DueRow[] = $state([]);
-    let filed: FiledRow[] = $state([]);
-    let loaded = $state(false);
-    let error = $state<string | undefined>(undefined);
-
-    // The authority-reports register: "due" rows are created by UpheldAsCsam verdicts (the
-    // s.66 reporting duty), and move to "filed" once the CSEA-IRP portal reference (URN) is
-    // recorded. The filed list is the compliance evidence that reporting deadlines were met.
-    function load() {
-        error = undefined;
-        client
-            .authorityReports()
-            .then((json) => {
-                if (json === undefined) {
-                    error = "Failed to load the register (platform operators only)";
-                    return;
-                }
-                const register = JSON.parse(json);
-                due = (register.due ?? []).sort((a: DueRow, b: DueRow) => a.created - b.created);
-                filed = (register.filed ?? []).sort(
-                    (a: FiledRow, b: FiledRow) => b.filed_at - a.filed_at,
-                );
-                loaded = true;
-            })
-            .catch(() => (error = "Failed to load the register"));
-    }
-
-    // Internal SLA targets, NOT statutory deadlines: the regulations require reporting "as
-    // soon as reasonably practicable" with no fixed period, so these are the operating
-    // targets we hold ourselves to (and the evidence we would point to)
-    const URGENT_SLA_MS = 24 * 60 * 60 * 1000;
-    const STANDARD_SLA_MS = 72 * 60 * 60 * 1000;
+    let due = $derived(register.due);
+    let filed = $derived(register.filed);
+    let loaded = $derived(register.loaded);
+    let error = $derived(register.error);
 
     function ageOf(row: DueRow): number {
-        return Date.now() - row.created;
+        return ageAt(row, Date.now());
     }
 
     function overdue(row: DueRow): boolean {
-        return ageOf(row) > (row.urgent ? URGENT_SLA_MS : STANDARD_SLA_MS);
+        return isOverdue(row, Date.now());
     }
 
-    function formatAge(ms: number): string {
-        const hours = Math.floor(ms / (60 * 60 * 1000));
-        if (hours < 48) return `${hours}h`;
-        return `${Math.floor(hours / 24)}d`;
-    }
-
-    onMount(load);
+    onMount(() => {
+        void register.load();
+    });
 </script>
 
 <div class="authority-reports">
@@ -129,14 +93,7 @@
                         <td>#{row.report_index}</td>
                         <td class="ref">{row.portal_reference}</td>
                         <td>{new Date(row.filed_at).toLocaleString()}</td>
-                        <td>
-                            {[
-                                row.urgent ? "urgent" : undefined,
-                                row.unverified ? "unverified" : undefined,
-                            ]
-                                .filter((f) => f !== undefined)
-                                .join(", ")}
-                        </td>
+                        <td>{filedFlags(row)}</td>
                     </tr>
                 {/each}
             </tbody>

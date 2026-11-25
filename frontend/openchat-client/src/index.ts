@@ -227,7 +227,7 @@ export {
     walletConfigForMode,
 } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
-export { toRecord } from "./utils/list";
+export { toRecord, toRecord2 } from "./utils/list";
 export {
     MAX_MENTION_CANDIDATES_SHOWN,
     mentionCandidateKey,

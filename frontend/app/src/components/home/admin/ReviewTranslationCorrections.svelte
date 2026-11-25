@@ -1,22 +1,17 @@
 <script lang="ts">
     import { menuCloser } from "component-lib";
-    import type {
-        CandidateTranslations,
-        OpenChat,
-        RejectReason,
-        TranslationCorrection,
-    } from "@client";
-    import { allUsersStore, iconSize } from "@client";
+    import type { OpenChat, RejectReason, TranslationCorrection } from "@client";
+    import { allUsersStore, formatTokens, iconSize } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
-    import { SvelteSet } from "svelte/reactivity";
-    import { _, locale } from "svelte-i18n";
+    import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
-    import { i18nKey, reviewingTranslations } from "../../../i18n/i18n";
+    import { reviewingTranslations } from "../../../i18n/i18n";
+    import { TranslationCorrections } from "../../../logic/admin/translationCorrections.svelte";
     import { toastStore } from "../../../stores/toast";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
@@ -24,104 +19,34 @@
     import MenuItem from "../../MenuItem.svelte";
 
     const client = getContext<OpenChat>("client");
+    const review = new TranslationCorrections(client);
 
-    let corrections: TranslationCorrection[] = $state([]);
-    let verifying: TranslationCorrection | undefined = $state(undefined);
-    const verifications: Record<number, string> = {};
-    let chatBalance = $state(0n);
-    let refreshing = $state(false);
-    const processing = new SvelteSet<bigint>();
+    let corrections = $derived(review.corrections);
+    let refreshing = $derived(review.refreshing);
+    let processing = $derived(review.processing);
+    let verifying = $derived(review.verifying);
+    let formattedBalance = $derived(formatTokens(review.chatBalance, 8));
 
-    let formattedBalance = $derived(client.formatTokens(chatBalance, 8));
-
-    onMount(async () => {
+    onMount(() => {
         reviewingTranslations.set(true);
-        await client.getProposedTranslationCorrections().then(async (res) => {
-            corrections = await loadRequiredLocales(flattenCorrections(res));
-        });
+        void review.load();
         refreshBalance();
     });
 
     onDestroy(() => reviewingTranslations.set(false));
 
-    // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
-    // and trigger the loading of the current translations for each of those locales.
-    async function loadRequiredLocales(
-        corrections: TranslationCorrection[],
-    ): Promise<TranslationCorrection[]> {
-        const currentLocale = $locale;
-        const locales = corrections.reduce((all, c) => {
-            all.add(c.locale);
-            return all;
-        }, new Set<string>());
-        for (const l of locales) {
-            await locale.set(l);
-        }
-        await locale.set(currentLocale);
-        return corrections;
-    }
-
     function refreshBalance() {
-        refreshing = true;
-        client
-            .refreshTranslationsBalance()
-            .then((val) => (chatBalance = val))
-            .finally(() => (refreshing = false));
+        void review.refreshBalance();
     }
 
-    function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
-        return corrections
-            .flatMap((group) =>
-                group.candidates.map((correction) => ({
-                    id: correction.id,
-                    locale: group.locale,
-                    key: group.key,
-                    value: correction.value,
-                    proposedBy: correction.proposedBy,
-                    proposedAt: correction.proposedAt,
-                })),
-            )
-            .sort((a, b) => a.key.localeCompare(b.key));
+    async function approveCorrection(correction: TranslationCorrection) {
+        const outcome = await review.approve(correction);
+        if (outcome.kind === "failed") toastStore.showFailureToast(outcome.message);
     }
 
-    function removeCorrection(id: bigint) {
-        corrections = corrections.filter((c) => c.id !== id);
-    }
-
-    function approveCorrection({ id }: TranslationCorrection) {
-        processing.add(id);
-        client
-            .approveTranslationCorrection(id)
-            .then((success) => {
-                if (success) {
-                    removeCorrection(id);
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey("Sorry we were unable to approve this correction"),
-                    );
-                }
-            })
-            .finally(() => {
-                processing.delete(id);
-            });
-    }
-
-    function rejectCorrection({ id }: TranslationCorrection, reason: RejectReason) {
-        processing.add(id);
-        client
-            .rejectTranslationCorrection(id, reason)
-            .then((success) => {
-                if (success) {
-                    removeCorrection(id);
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey("Sorry we were unable to reject this correction"),
-                    );
-                }
-            })
-            .finally(() => {
-                processing.delete(id);
-            });
+    async function rejectCorrection(correction: TranslationCorrection, reason: RejectReason) {
+        const outcome = await review.reject(correction, reason);
+        if (outcome.kind === "failed") toastStore.showFailureToast(outcome.message);
     }
 
     function previewCorrection(correction: TranslationCorrection) {
@@ -129,25 +54,7 @@
     }
 
     function verifyCorrection(correction: TranslationCorrection) {
-        verifying = { ...correction };
-        verifying.value = "Translating to English ...";
-        getEnglish(correction).then((english) => {
-            verifying = { ...correction, value: english };
-        });
-    }
-
-    function getEnglish(correction: TranslationCorrection) {
-        const key = Number(correction.id);
-        if (verifications[key]) {
-            return Promise.resolve(verifications[key]);
-        }
-        return client.translateText(correction.value, "en").then((english) => {
-            if (english !== undefined) {
-                verifications[key] = english;
-                return english;
-            }
-            return "Unable to get english translation at the moment";
-        });
+        void review.verify(correction);
     }
 </script>
 
@@ -215,7 +122,7 @@
                                         {/snippet}
                                     </MenuItem>
                                     {#if verifying !== undefined && verifying.id === correction.id}
-                                        <MenuItem onclick={() => (verifying = undefined)}>
+                                        <MenuItem onclick={() => review.showProposed()}>
                                             {#snippet icon()}
                                                 <Translate
                                                     size={$iconSize}

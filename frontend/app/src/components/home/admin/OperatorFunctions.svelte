@@ -1,18 +1,15 @@
 <script lang="ts">
-    import {
-        BRIDGE_PLATFORM_NAMES,
-        MODERATION_CATEGORY_NAMES,
-        type BridgePlatform,
-        type DiamondMembershipFees,
-        type OpenChat,
-        type ProposedProtectedAction,
-        type ResourceKey,
-    } from "@client";
-    import { Principal } from "@icp-sdk/core/principal";
+    import { BRIDGE_PLATFORM_NAMES, type BridgePlatform, type OpenChat } from "@client";
     import { Body, BodySmall, ColourVars, Column, Row, Subtitle, Title } from "component-lib";
     import { getContext, onMount, type Snippet } from "svelte";
-    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
+    import {
+        BRIDGE_PLATFORMS,
+        OperatorFunctions,
+        REFERRAL_CATEGORIES,
+        type OperatorAction,
+        type OperatorOutcome,
+    } from "../../../logic/admin/operatorFunctions.svelte";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -23,643 +20,48 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import DailyPuzzleOperator from "./DailyPuzzleOperator.svelte";
 
-    type Fees = {
-        token: "CHAT" | "ICP";
-        oneMonth: string;
-        threeMonths: string;
-        oneYear: string;
-        lifetime: string;
-    };
-
     const client = getContext<OpenChat>("client");
+    const ops = new OperatorFunctions(client);
 
-    let error: ResourceKey | undefined = $state(undefined);
-    let groupUpgradeConcurrency = $state("10");
-    let communityUpgradeConcurrency = $state("10");
-    let multiUserCanisterLocalUserIndex = $state("");
-    const busy = $state(new SvelteSet<number>());
-    let governanceCanisterId = $state("");
-    let stake = $state("0");
+    let error = $derived(ops.error);
+    let busy = $derived(ops.busy);
 
-    let currentFees: Record<"ICP" | "CHAT", Fees> | undefined = $state();
-    let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
-    let feesTab: "ICP" | "CHAT" = $state("ICP");
-    let tokenLedger = $state("");
-    let tokenEnabled = $state(true);
-    let openAiApiKey = $state("");
-    let alchemyApiKey = $state("");
-    let miniAppServicePrincipal = $state("");
-    const bridgeBotIds = $state<Record<BridgePlatform, string>>({
-        discord: "",
-        telegram: "",
-        twitch: "",
-    });
-    let moderationCommunityId = $state("");
-    let moderationChannelId = $state("");
-    // sexual/minors always takes the CSAM auto-sanction path so is not offered here.
-    // Empty threshold = category disabled; thresholds are per category because the right
-    // value differs between eg. sexual (catch the target content) and harassment (keep
-    // noise out of the queue)
-    let referralThresholds: Record<number, string> = $state({});
-    let vaultReviewerIds = $state("");
-    let legalHoldReportIndex = $state("");
-    let legalHoldReference = $state("");
-    let destroyReportIndex = $state("");
-    let destroyRequestRef = $state("");
+    onMount(() => ops.load());
 
-    const CSAM_CATEGORY_BIT = 2;
-    let referralThresholdsInvalid = $derived.by(() => {
-        return Object.values(referralThresholds).some((t) => {
-            if (t === "") return false;
-            const threshold = Number(t);
-            return isNaN(threshold) || threshold < 0 || threshold > 1;
-        });
-    });
-    let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
-    let communityUpgradeConcurrencyInvalid = $derived(
-        isNaN(parseInt(communityUpgradeConcurrency, 0)),
-    );
-    let multiUserCanisterLocalUserIndexInvalid = $derived(
-        multiUserCanisterLocalUserIndex.trim() === "" ||
-            !isValidPrincipal(multiUserCanisterLocalUserIndex.trim()),
-    );
-    let tokenLedgerValid = $derived(tokenLedger.length > 0);
-
-    let openAiKeySet = $state(false);
-    // The native call push kill switch (#9456): the toggle shows what the user index holds
-    let callPushEnabled = $state(false);
-    let mediaScanEnabled = $state(false);
-    let mediaScanScanners = $state("");
-    let currentMediaScan = $state("");
-    let authorityReporter = $state("");
-    let currentAuthorityReporter = $state("");
-    // Current values shown alongside the proposed ones, so an operator can see what a proposal
-    // would actually change
-    let currentVaultReviewers = $state("");
-    let currentModerationChannel = $state("");
-
-    // The four irreversible operator actions are dual authorized: proposing one only queues
-    // it, and a DIFFERENT operator must confirm before it executes.
-    function onProposed(proposed: ProposedProtectedAction | undefined, what: string): void {
-        if (proposed === undefined) {
-            error = i18nKey(`Failed to propose ${what}`);
-            toastStore.showFailureToast(error);
-            return;
-        }
-        // Deliberately NOT a success toast: nothing has taken effect yet, and the previous
-        // wording read as though the change had been applied
-        toastStore.showSuccessToast(
-            i18nKey(
-                proposed.alreadyPending
-                    ? `An identical ${what} change is already pending as action #${proposed.actionId} - it still needs a different platform operator to confirm it`
-                    : `Proposed ${what} as action #${proposed.actionId} - NOT yet applied: a different platform operator must confirm it under Pending proposals`,
-            ),
-        );
-    }
-
-    function refreshCallPush() {
-        client
-            .callPushEnabled()
-            .then((enabled) => (callPushEnabled = enabled))
-            .catch(() => undefined);
-    }
-
-    // Flips the switch on the user index, which fans it out to every local user index
-    function applyCallPush(): Promise<void> {
-        busy.add(20);
-        return client
-            .setCallPushEnabled(callPushEnabled)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(
-                        i18nKey(`Native call push ${callPushEnabled ? "enabled" : "disabled"}`),
-                    );
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey(
-                            `Failed to update native call push: ${resp.message ?? `code ${resp.code}`}`,
-                        ),
-                    );
-                }
-            })
-            .catch((err) =>
-                toastStore.showFailureToast(i18nKey("Failed to update native call push"), err),
-            )
-            .finally(() => {
-                busy.delete(20);
-                refreshCallPush();
-            });
-    }
-
-    // Sets the key on the user index, which passes it on to every MultiUser canister. Unsetting it has
-    // its own button, so that a second click on Set can't unset it.
-    function setAlchemyApiKey(apiKey: string | undefined): Promise<void> {
-        busy.add(21);
-        return client
-            .setAlchemyApiKey(apiKey)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(
-                        i18nKey(
-                            apiKey === undefined ? "Alchemy API key unset" : "Alchemy API key set",
-                        ),
-                    );
-                    alchemyApiKey = "";
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey(
-                            `Failed to set the Alchemy API key: ${resp.message ?? `code ${resp.code}`}`,
-                        ),
-                    );
-                }
-            })
-            .catch((err) =>
-                toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
-            )
-            .finally(() => busy.delete(21));
-    }
-
-    // Sets the MiniApp service's principal on the user index, which passes it on to every
-    // LocalUserIndex. Only that principal can post a MiniApp card or write to one
-    function setMiniAppServicePrincipal(): Promise<void> {
-        error = undefined;
-        const principal = miniAppServicePrincipal.trim();
-        if (!isValidPrincipal(principal)) {
-            error = i18nKey(`"${principal}" is not a valid principal`);
-            toastStore.showFailureToast(error);
-            return Promise.resolve();
-        }
-        busy.add(23);
-        return client
-            .setMiniAppServicePrincipal(principal)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(i18nKey("MiniApp service principal set"));
-                    miniAppServicePrincipal = "";
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey(
-                            `Failed to set the MiniApp service principal: ${resp.message ?? `code ${resp.code}`}`,
-                        ),
-                    );
-                }
-            })
-            .catch((err) =>
-                toastStore.showFailureToast(
-                    i18nKey("Failed to set the MiniApp service principal"),
-                    err,
-                ),
-            )
-            .finally(() => busy.delete(23));
-    }
-
-    // Sets the bot that bridges a platform, eg. Discord, on the user index, which passes it on to
-    // every LocalUserIndex. Only that bot can relay messages from the platform
-    function setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<void> {
-        const name = BRIDGE_PLATFORM_NAMES[platform];
-        busy.add(22);
-        return client
-            .setBridgeBot(platform, botId)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(
-                        i18nKey(
-                            botId === undefined ? `${name} bridge bot unset` : `${name} bridge bot set`,
-                        ),
-                    );
-                    bridgeBotIds[platform] = "";
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey(
-                            `Failed to set the ${name} bridge bot: ${resp.message ?? `code ${resp.code}`}`,
-                        ),
-                    );
-                }
-            })
-            .catch((err) =>
-                toastStore.showFailureToast(i18nKey(`Failed to set the ${name} bridge bot`), err),
-            )
-            .finally(() => busy.delete(22));
-    }
-
-    onMount(() => {
-        refreshCallPush();
-        // Pre-fill the moderation config so the forms show what is actually set rather than
-        // being write-only
-        client.moderationConfig().then((config) => {
-            if (config === undefined) return;
-            openAiKeySet = config.openaiApiKeySet;
-            if (config.internalModerationChannel !== undefined) {
-                moderationCommunityId = config.internalModerationChannel.communityId;
-                moderationChannelId = config.internalModerationChannel.channelId.toString();
-                currentModerationChannel = `${config.internalModerationChannel.communityId} / ${config.internalModerationChannel.channelId}`;
-            }
-            if (config.referralConfig !== undefined) {
-                referralThresholds = Object.fromEntries(
-                    config.referralConfig.categories.map((c) => [
-                        c.category,
-                        c.scoreThreshold.toString(),
-                    ]),
-                );
-            }
-            vaultReviewerIds = config.vaultReviewers.join(", ");
-            currentVaultReviewers = config.vaultReviewers.join(", ");
-            mediaScanEnabled = config.mediaScanEnabled;
-            mediaScanScanners = config.mediaScanners.join(", ");
-            currentMediaScan = `${config.mediaScanEnabled ? "Enabled" : "Disabled"} (${
-                config.mediaScanners.length === 0 ? "no scanners" : config.mediaScanners.join(", ")
-            })`;
-            authorityReporter = config.authorityReporter ?? "";
-            currentAuthorityReporter = config.authorityReporter ?? "";
-        });
-        client.diamondMembershipFees().then((fees) => {
-            originalFees = client.toRecord(fees, (f) => f.token);
-            currentFees = client.toRecord2(
-                fees,
-                (f) => f.token,
-                (f) => ({
-                    token: f.token,
-                    oneMonth: f.oneMonth.toString(),
-                    threeMonths: f.threeMonths.toString(),
-                    oneYear: f.oneYear.toString(),
-                    lifetime: f.lifetime.toString(),
-                }),
-            );
-        });
-    });
-
-    function addBusy(n: number) {
-        busy.add(n);
-    }
-
-    function removeBusy(n: number) {
-        busy.delete(n);
-    }
-
-    function setGroupUpgradeConcurrency(): void {
-        error = undefined;
-        addBusy(0);
-        client
-            .setGroupUpgradeConcurrency(parseInt(groupUpgradeConcurrency, 0))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(`Group upgrade concurrency set to ${groupUpgradeConcurrency}`),
-                    );
-                } else {
-                    error = i18nKey(
-                        `Failed to set group upgrade concurrency to ${groupUpgradeConcurrency}`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(0);
-            });
-    }
-
-    function setCommunityUpgradeConcurrency(): void {
-        error = undefined;
-        addBusy(1);
-        client
-            .setCommunityUpgradeConcurrency(parseInt(communityUpgradeConcurrency, 10))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(
-                            `Community upgrade concurrency set to ${communityUpgradeConcurrency}`,
-                        ),
-                    );
-                } else {
-                    error = i18nKey(
-                        `Failed to set community upgrade concurrency to ${communityUpgradeConcurrency}`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(1);
-            });
-    }
-
-    function createMultiUserCanister(): void {
-        error = undefined;
-        const localUserIndex = multiUserCanisterLocalUserIndex.trim();
-        addBusy(15);
-        client
-            .createMultiUserCanister(localUserIndex)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(
-                        i18nKey(`MultiUser canister created: ${resp.canisterId}`),
-                    );
-                } else {
-                    error = i18nKey(
-                        resp.kind === "local_user_index_not_found"
-                            ? `LocalUserIndex not found: ${localUserIndex}`
-                            : `Failed to create MultiUser canister: ${resp.error ?? "unknown error"}`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(15);
-            });
-    }
-
-    function strToBigInt(str: string): bigint | undefined {
-        const n = Number(str);
-        return isNaN(n) ? undefined : BigInt(n);
-    }
-
-    function mapFees(): DiamondMembershipFees[] {
-        if (currentFees === undefined) return [];
-        const mapped = Object.values(currentFees).reduce((res, val) => {
-            res[val.token] = {
-                token: val.token,
-                oneMonth: strToBigInt(val.oneMonth) ?? res[val.token].oneMonth,
-                threeMonths: strToBigInt(val.threeMonths) ?? res[val.token].threeMonths,
-                oneYear: strToBigInt(val.oneYear) ?? res[val.token].oneYear,
-                lifetime: strToBigInt(val.lifetime) ?? res[val.token].lifetime,
-            };
-            return res;
-        }, originalFees);
-        return Object.values(mapped);
-    }
-
-    function setDiamondMembershipFees(): void {
-        error = undefined;
-        addBusy(3);
-        const mappedFees = mapFees();
-        client
-            .setDiamondMembershipFees(mappedFees)
-            .then((success) => {
-                if (success) {
-                    originalFees = client.toRecord(mappedFees, (f) => f.token);
-                    toastStore.showSuccessToast(i18nKey(`Diamond membership fees set`));
-                } else {
-                    error = i18nKey(`Failed to set diamond membership fees`);
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(3);
-            });
-    }
-
-    function stakeNeuronForSubmittingProposals(): void {
-        error = undefined;
-        const stakeVal = strToBigInt(stake);
-        if (stakeVal !== undefined) {
-            addBusy(4);
-            client
-                .stakeNeuronForSubmittingProposals(governanceCanisterId, stakeVal)
-                .then((success) => {
-                    if (success) {
-                        toastStore.showSuccessToast(i18nKey("Neuron staked successfully"));
-                    } else {
-                        error = i18nKey("Failed to stake neuron");
-                        toastStore.showFailureToast(error);
-                    }
-                })
-                .finally(() => {
-                    removeBusy(4);
-                });
+    function report(outcome: OperatorOutcome | undefined): void {
+        if (outcome?.kind === "success") {
+            toastStore.showSuccessToast(outcome.message);
+        } else if (outcome?.kind === "failed") {
+            toastStore.showFailureToast(outcome.message, outcome.err);
         }
     }
 
-    function proposeSetOpenAIApiKey(): void {
-        error = undefined;
-        addBusy(7);
-        client
-            .proposeSetOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
-            .then((proposed) => onProposed(proposed, "OpenAI API key"))
-            .finally(() => removeBusy(7));
+    async function run(action: () => Promise<OperatorOutcome | undefined>): Promise<void> {
+        report(await action());
     }
 
-    function setModerationReferralConfig(): void {
-        error = undefined;
-        addBusy(9);
-        const categories = Object.entries(referralThresholds)
-            .filter(([_, t]) => t !== "")
-            .map(([bit, t]) => ({ category: Number(bit), scoreThreshold: Number(t) }));
-        const config = categories.length === 0 ? undefined : { categories };
-        client
-            .setModerationReferralConfig(config)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(
-                            config === undefined
-                                ? "Moderation referral disabled"
-                                : "Moderation referral config updated",
-                        ),
-                    );
-                } else {
-                    error = i18nKey("Failed to update moderation referral config");
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => removeBusy(9));
-    }
-
-    function proposeSetMediaScanConfig(): void {
-        error = undefined;
-        const scanners = mediaScanScanners
-            .split(",")
-            .map((id) => id.trim())
-            .filter((id) => id !== "");
-        const invalid = scanners.find((id) => !isValidPrincipal(id));
-        if (invalid !== undefined) {
-            error = i18nKey(`"${invalid}" is not a valid principal`);
-            toastStore.showFailureToast(error);
-            return;
-        }
-        addBusy(13);
-        client
-            .proposeSetMediaScanConfig(mediaScanEnabled, scanners)
-            .then((proposed) => onProposed(proposed, "media scan config"))
-            .finally(() => removeBusy(13));
-    }
-
-    // Registers (or clears) the off-chain NCA reporting service's principal
-    function proposeSetAuthorityReporter(): void {
-        error = undefined;
-        const principal = authorityReporter.trim();
-        if (principal !== "" && !isValidPrincipal(principal)) {
-            error = i18nKey(`"${principal}" is not a valid principal`);
-            toastStore.showFailureToast(error);
-            return;
-        }
-        addBusy(14);
-        client
-            .proposeSetAuthorityReporter(principal === "" ? undefined : principal)
-            .then((proposed) => onProposed(proposed, "authority reporter"))
-            .finally(() => removeBusy(14));
-    }
-
-    // Replaces the full reviewer set: user ids must already be platform moderators
-    function proposeSetVaultReviewers(): void {
-        error = undefined;
-        const userIds = vaultReviewerIds
-            .split(",")
-            .map((id) => id.trim())
-            .filter((id) => id !== "");
-        const invalid = userIds.find((id) => !isValidPrincipal(id));
-        if (invalid !== undefined) {
-            error = i18nKey(`"${invalid}" is not a valid user id`);
-            toastStore.showFailureToast(error);
-            return;
-        }
-        addBusy(10);
-        client
-            .proposeSetVaultReviewers(userIds)
-            .then((proposed) => onProposed(proposed, "vault reviewers"))
-            .finally(() => removeBusy(10));
-    }
-
-    // A preservation request stops the retention clock deleting the evidence; clearing the hold
-    // performs any release which was deferred while it was set
-    function setVaultLegalHold(legalHold: boolean): void {
-        error = undefined;
-        const reportIndex = parseReportIndex(legalHoldReportIndex);
-        if (reportIndex === undefined || legalHoldReference.trim() === "") {
-            error = i18nKey("A report index and a request reference are both required");
-            toastStore.showFailureToast(error);
-            return;
-        }
-        addBusy(11);
-        client
-            .setVaultLegalHold(reportIndex, legalHold, legalHoldReference.trim())
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(legalHold ? "Legal hold set" : "Legal hold cleared"),
-                    );
-                    return;
-                }
-                // Clearing a hold whose release is already pending performs that release, so
-                // the canister refuses it here and it has to be proposed instead. The propose
-                // runs its own validation, so a clear which failed for another reason (a bad
-                // report index, say) surfaces that failure here rather than being swallowed
-                if (!legalHold) {
-                    return client
-                        .proposeSetVaultLegalHold(reportIndex, false, legalHoldReference.trim())
-                        .then((proposed) =>
-                            onProposed(
-                                proposed,
-                                "clearing this legal hold (it would release the evidence)",
-                            ),
-                        );
-                }
-                error = i18nKey("Failed to update the legal hold");
-                toastStore.showFailureToast(error);
-            })
-            .finally(() => removeBusy(11));
-    }
-
-    // Irreversible, so dual authorized: this only proposes the destruction. A DIFFERENT
-    // platform operator must confirm it below before anything is destroyed. A standing legal
-    // hold blocks destruction outright - clear the hold first, as a separate act.
-    function proposeDestroyVaultEvidence(): void {
-        error = undefined;
-        const reportIndex = parseReportIndex(destroyReportIndex);
-        if (reportIndex === undefined || destroyRequestRef.trim() === "") {
-            error = i18nKey("A report index and a law enforcement reference are both required");
-            toastStore.showFailureToast(error);
-            return;
-        }
-        addBusy(12);
-        client
-            .proposeDestroyVaultEvidence(reportIndex, destroyRequestRef.trim())
-            .then((proposed) => {
-                if (proposed !== undefined) {
-                    destroyReportIndex = "";
-                    destroyRequestRef = "";
-                }
-                onProposed(proposed, "destruction of vaulted evidence");
-            })
-            .finally(() => removeBusy(12));
-    }
-
-    function isValidPrincipal(value: string): boolean {
-        try {
-            Principal.fromText(value);
-            return true;
-        } catch {
-            return false;
-        }
-    }
-
-    function parseReportIndex(value: string): bigint | undefined {
-        const trimmed = value.trim();
-        return /^\d+$/.test(trimmed) ? BigInt(trimmed) : undefined;
-    }
-
-    function proposeSetInternalModerationChannel(): void {
-        error = undefined;
-        const communityId = moderationCommunityId.trim();
-        const channelId = moderationChannelId.trim();
-
-        // Both blank is the deliberate "switch alerts off" case. Anything else must be a
-        // complete, well-formed pair: partial or malformed input previously fell through to
-        // `undefined`, silently proposing to unset the channel
-        let channel: { communityId: string; channelId: number } | undefined;
-        if (communityId !== "" || channelId !== "") {
-            if (communityId === "" || channelId === "") {
-                error = i18nKey(
-                    "A community id and a channel id are both required (leave both blank to unset the channel)",
-                );
-                toastStore.showFailureToast(error);
-                return;
-            }
-            if (!isValidPrincipal(communityId)) {
-                error = i18nKey("That is not a valid community id");
-                toastStore.showFailureToast(error);
-                return;
-            }
-            const channelIdNum = Number(channelId);
-            if (!/^\d+$/.test(channelId) || !Number.isSafeInteger(channelIdNum)) {
-                error = i18nKey("The channel id must be a whole number");
-                toastStore.showFailureToast(error);
-                return;
-            }
-            channel = { communityId, channelId: channelIdNum };
-        }
-
-        addBusy(8);
-        client
-            .proposeSetInternalModerationChannel(channel)
-            .then((proposed) =>
-                onProposed(
-                    proposed,
-                    channel === undefined
-                        ? "unsetting the internal moderation channel"
-                        : "internal moderation channel",
-                ),
-            )
-            .finally(() => removeBusy(8));
-    }
-
-    function setTokenEnabled(): void {
-        error = undefined;
-        addBusy(6);
-        client
-            .setTokenEnabled(tokenLedger, tokenEnabled)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(`Token enabled set successfully: ${tokenLedger}, ${tokenEnabled}`),
-                    );
-                } else {
-                    error = i18nKey(`Failed to set token enabled: ${tokenLedger}, ${tokenEnabled}`);
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(6);
-            });
-    }
+    const applyCallPush = () => run(() => ops.applyCallPush());
+    const setAlchemyApiKey = (apiKey: string | undefined) =>
+        run(() => ops.setAlchemyApiKey(apiKey));
+    const setMiniAppServicePrincipal = () => run(() => ops.setMiniAppServicePrincipal());
+    const setBridgeBot = (platform: BridgePlatform, botId: string | undefined) =>
+        run(() => ops.setBridgeBot(platform, botId));
+    const setGroupUpgradeConcurrency = () => run(() => ops.setGroupUpgradeConcurrency());
+    const setCommunityUpgradeConcurrency = () => run(() => ops.setCommunityUpgradeConcurrency());
+    const createMultiUserCanister = () => run(() => ops.createMultiUserCanister());
+    const setDiamondMembershipFees = () => run(() => ops.setDiamondMembershipFees());
+    const stakeNeuronForSubmittingProposals = () =>
+        run(() => ops.stakeNeuronForSubmittingProposals());
+    const proposeSetOpenAIApiKey = () => run(() => ops.proposeSetOpenAIApiKey());
+    const setModerationReferralConfig = () => run(() => ops.setModerationReferralConfig());
+    const proposeSetMediaScanConfig = () => run(() => ops.proposeSetMediaScanConfig());
+    const proposeSetAuthorityReporter = () => run(() => ops.proposeSetAuthorityReporter());
+    const proposeSetVaultReviewers = () => run(() => ops.proposeSetVaultReviewers());
+    const setVaultLegalHold = (legalHold: boolean) => run(() => ops.setVaultLegalHold(legalHold));
+    const proposeDestroyVaultEvidence = () => run(() => ops.proposeDestroyVaultEvidence());
+    const proposeSetInternalModerationChannel = () =>
+        run(() => ops.proposeSetInternalModerationChannel());
+    const setTokenEnabled = () => run(() => ops.setTokenEnabled());
 </script>
 
 {#snippet proposedDestroyVaultView()}
@@ -667,66 +69,66 @@
         {@const labelWidth = { size: "8rem" }}
         <Row gap="md">
             <BodySmall width={labelWidth} colour="textSecondary" uppercase>Report index:</BodySmall>
-            <Input bind:value={destroyReportIndex} />
+            <Input bind:value={ops.destroyReportIndex} />
         </Row>
         <Row gap="md">
             <BodySmall width={labelWidth} colour="textSecondary" uppercase
                 >LE request reference:</BodySmall>
-            <Input bind:value={destroyRequestRef} />
+            <Input bind:value={ops.destroyRequestRef} />
         </Row>
     </Column>
 {/snippet}
 
 {#snippet currentModerationChannelView()}
-    <Input disabled value={currentModerationChannel || "Not set"} />
+    <Input disabled value={ops.currentModerationChannel || "Not set"} />
 {/snippet}
 
 {#snippet proposedModerationChannelView()}
-    <Input bind:value={moderationCommunityId} placeholder={i18nKey("Community id")} />
-    <Input bind:value={moderationChannelId} placeholder={i18nKey("Channel id")} />
+    <Input bind:value={ops.moderationCommunityId} placeholder={i18nKey("Community id")} />
+    <Input bind:value={ops.moderationChannelId} placeholder={i18nKey("Channel id")} />
 {/snippet}
 
 {#snippet currentVaultReviewersView()}
-    <Input disabled value={currentVaultReviewers || "None"} />
+    <Input disabled value={ops.currentVaultReviewers || "None"} />
 {/snippet}
 
 {#snippet proposedVaultReviewersView()}
-    <Input bind:value={vaultReviewerIds} placeholder={i18nKey("Comma separated reviewer Ids")} />
+    <Input bind:value={ops.vaultReviewerIds} placeholder={i18nKey("Comma separated reviewer Ids")} />
 {/snippet}
 
 {#snippet currentOpenAIKey()}
-    <Input disabled value={openAiKeySet ? "Set" : "Not set"} />
+    <Input disabled value={ops.openAiKeySet ? "Set" : "Not set"} />
 {/snippet}
 
 {#snippet currentAuthorityReporterView()}
-    <Input disabled value={currentAuthorityReporter || "None"} />
+    <Input disabled value={ops.currentAuthorityReporter || "None"} />
 {/snippet}
 
 {#snippet proposedAuthorityReporterView()}
     <Input
-        bind:value={authorityReporter}
+        bind:value={ops.authorityReporter}
         placeholder={i18nKey("Service principal (blank to unregister)")} />
 {/snippet}
 
 {#snippet currentMediaScanView()}
-    <Input disabled value={currentMediaScan || "Disabled (no scanners)"} />
+    <Input disabled value={ops.currentMediaScan || "Disabled (no scanners)"} />
 {/snippet}
 
 {#snippet proposedMediaScanView()}
-    <Toggle small id="media-scan-enabled" bind:checked={mediaScanEnabled} />
+    <Toggle small id="media-scan-enabled" bind:checked={ops.mediaScanEnabled} />
     <Input
-        bind:value={mediaScanScanners}
+        bind:value={ops.mediaScanScanners}
         placeholder={i18nKey("Comma separated scanner principals")} />
 {/snippet}
 
 {#snippet proposedOpenAIKey()}
-    <Input bind:value={openAiApiKey} placeholder={i18nKey("New key (blank to unset)")} />
+    <Input bind:value={ops.openAiApiKey} placeholder={i18nKey("New key (blank to unset)")} />
 {/snippet}
 
 {#snippet dualSetting(
     name: string,
     desc: string,
-    index: number,
+    action: OperatorAction,
     onPropose: () => void,
     proposed: Snippet<[]>,
     current?: Snippet<[]>,
@@ -750,7 +152,7 @@
         {:else}
             {@render proposed()}
         {/if}
-        <Button disabled={busy.has(index)} loading={busy.has(index)} onClick={onPropose}>
+        <Button disabled={busy.has(action)} loading={busy.has(action)} onClick={onPropose}>
             Propose
         </Button>
     </Column>
@@ -760,11 +162,11 @@
     <section class="operator-function">
         <div class="title">Set group upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <Input invalid={groupUpgradeConcurrencyInvalid} bind:value={groupUpgradeConcurrency} />
+            <Input invalid={ops.groupUpgradeConcurrencyInvalid} bind:value={ops.groupUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
-                loading={busy.has(0)}
+                disabled={busy.has("groupUpgradeConcurrency") || ops.groupUpgradeConcurrencyInvalid}
+                loading={busy.has("groupUpgradeConcurrency")}
                 onClick={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
@@ -773,12 +175,12 @@
         <div class="title">Set community upgrade concurrency</div>
         <ButtonGroup align="fill">
             <Input
-                invalid={communityUpgradeConcurrencyInvalid}
-                bind:value={communityUpgradeConcurrency} />
+                invalid={ops.communityUpgradeConcurrencyInvalid}
+                bind:value={ops.communityUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
-                loading={busy.has(1)}
+                disabled={busy.has("communityUpgradeConcurrency") || ops.communityUpgradeConcurrencyInvalid}
+                loading={busy.has("communityUpgradeConcurrency")}
                 onClick={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
@@ -787,24 +189,24 @@
         <div class="title">Create MultiUser canister</div>
         <ButtonGroup align="fill">
             <Input
-                invalid={multiUserCanisterLocalUserIndexInvalid}
+                invalid={ops.multiUserCanisterLocalUserIndexInvalid}
                 placeholder={i18nKey("LocalUserIndex canister id")}
-                bind:value={multiUserCanisterLocalUserIndex} />
+                bind:value={ops.multiUserCanisterLocalUserIndex} />
             <Button
                 tiny
-                disabled={busy.has(15) || multiUserCanisterLocalUserIndexInvalid}
-                loading={busy.has(15)}
+                disabled={busy.has("multiUserCanister") || ops.multiUserCanisterLocalUserIndexInvalid}
+                loading={busy.has("multiUserCanister")}
                 onClick={createMultiUserCanister}>Create</Button>
         </ButtonGroup>
     </section>
 
-    {#if currentFees !== undefined}
+    {#if ops.currentFees !== undefined}
         <section class="operator-function">
             <div class="title">Set Diamond membership fees</div>
             <div class="name-value">
                 <div class="label">Token:</div>
                 <div class="value">
-                    <Select bind:value={feesTab}>
+                    <Select bind:value={ops.feesTab}>
                         <option value="ICP">ICP</option>
                         <option value="CHAT">CHAT</option>
                     </Select>
@@ -813,31 +215,31 @@
             <div class="name-value">
                 <div class="label">One month:</div>
                 <div class="value">
-                    <Input bind:value={currentFees[feesTab].oneMonth} />
+                    <Input bind:value={ops.currentFees[ops.feesTab].oneMonth} />
                 </div>
             </div>
             <div class="name-value">
                 <div class="label">Three month:</div>
                 <div class="value">
-                    <Input bind:value={currentFees[feesTab].threeMonths} />
+                    <Input bind:value={ops.currentFees[ops.feesTab].threeMonths} />
                 </div>
             </div>
             <div class="name-value">
                 <div class="label">One year:</div>
                 <div class="value">
-                    <Input bind:value={currentFees[feesTab].oneYear} />
+                    <Input bind:value={ops.currentFees[ops.feesTab].oneYear} />
                 </div>
             </div>
             <div class="name-value">
                 <div class="label">Lifetime:</div>
                 <div class="value">
-                    <Input bind:value={currentFees[feesTab].lifetime} />
+                    <Input bind:value={ops.currentFees[ops.feesTab].lifetime} />
                 </div>
             </div>
             <Button
                 tiny
-                disabled={busy.has(3)}
-                loading={busy.has(3)}
+                disabled={busy.has("diamondFees")}
+                loading={busy.has("diamondFees")}
                 onClick={setDiamondMembershipFees}>Apply</Button>
         </section>
     {/if}
@@ -847,31 +249,31 @@
         <div class="name-value">
             <div class="label">Governance Canister Id:</div>
             <div class="value">
-                <Input bind:value={governanceCanisterId} />
+                <Input bind:value={ops.governanceCanisterId} />
             </div>
         </div>
         <div class="name-value">
             <div class="label">Stake:</div>
             <div class="value">
-                <Input bind:value={stake} />
+                <Input bind:value={ops.stake} />
             </div>
         </div>
         <Button
             tiny
-            disabled={busy.has(4)}
-            loading={busy.has(4)}
+            disabled={busy.has("stakeNeuron")}
+            loading={busy.has("stakeNeuron")}
             onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
     </section>
 
     <section class="operator-function">
         <div class="title">Set token enabled</div>
         <ButtonGroup align="fill">
-            <Input invalid={!tokenLedgerValid} bind:value={tokenLedger} />
-            <Toggle small id="token-enabled" bind:checked={tokenEnabled} />
+            <Input invalid={!ops.tokenLedgerValid} bind:value={ops.tokenLedger} />
+            <Toggle small id="token-enabled" bind:checked={ops.tokenEnabled} />
             <Button
                 tiny
-                disabled={busy.has(6) || !tokenLedgerValid}
-                loading={busy.has(6)}
+                disabled={busy.has("tokenEnabled") || !ops.tokenLedgerValid}
+                loading={busy.has("tokenEnabled")}
                 onClick={setTokenEnabled}>Apply</Button>
         </ButtonGroup>
     </section>
@@ -882,23 +284,23 @@
             Per-category score thresholds (0-1) above which a message is referred for human
             moderator review. Leave a category blank to disable it. All blank = referral disabled.
         </div>
-        {#each MODERATION_CATEGORY_NAMES.filter(([bit, _]) => bit !== CSAM_CATEGORY_BIT) as [bit, name] (bit)}
+        {#each REFERRAL_CATEGORIES as [bit, name] (bit)}
             <div class="name-value">
                 <div class="label">{name}:</div>
                 <div class="value">
                     <Input
                         placeholder={i18nKey("disabled")}
                         bind:value={
-                            () => referralThresholds[bit] ?? "",
-                            (v) => (referralThresholds[bit] = v)
+                            () => ops.referralThreshold(bit),
+                            (v) => ops.setReferralThreshold(bit, v)
                         } />
                 </div>
             </div>
         {/each}
         <Button
             tiny
-            disabled={busy.has(9) || referralThresholdsInvalid}
-            loading={busy.has(9)}
+            disabled={busy.has("referralConfig") || ops.referralThresholdsInvalid}
+            loading={busy.has("referralConfig")}
             onClick={setModerationReferralConfig}>Apply</Button>
     </section>
 
@@ -917,26 +319,26 @@
         <div class="name-value">
             <div class="label">Report index:</div>
             <div class="value">
-                <Input bind:value={legalHoldReportIndex} />
+                <Input bind:value={ops.legalHoldReportIndex} />
             </div>
         </div>
         <div class="name-value">
             <div class="label">Request reference:</div>
             <div class="value">
-                <Input bind:value={legalHoldReference} />
+                <Input bind:value={ops.legalHoldReference} />
             </div>
         </div>
         <ButtonGroup align="fill">
             <Button
                 tiny
-                disabled={busy.has(11)}
-                loading={busy.has(11)}
+                disabled={busy.has("legalHold")}
+                loading={busy.has("legalHold")}
                 onClick={() => setVaultLegalHold(true)}>Set hold</Button>
             <Button
                 tiny
                 secondary
-                disabled={busy.has(11)}
-                loading={busy.has(11)}
+                disabled={busy.has("legalHold")}
+                loading={busy.has("legalHold")}
                 onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
         </ButtonGroup>
     </section>
@@ -946,58 +348,58 @@
         <div class="name-value">
             <div class="label">Enabled:</div>
             <div class="value">
-                <Toggle small id="call-push-enabled" bind:checked={callPushEnabled} />
+                <Toggle small id="call-push-enabled" bind:checked={ops.callPushEnabled} />
             </div>
         </div>
-        <Button tiny loading={busy.has(20)} disabled={busy.has(20)} onClick={applyCallPush}>
+        <Button tiny loading={busy.has("callPush")} disabled={busy.has("callPush")} onClick={applyCallPush}>
             Apply
         </Button>
     </section>
 
     <section class="operator-function">
         <div class="title">Alchemy API key (Solana RPC)</div>
-        <Input bind:value={alchemyApiKey} placeholder={i18nKey("New key")} />
+        <Input bind:value={ops.alchemyApiKey} placeholder={i18nKey("New key")} />
         <ButtonGroup align="fill">
             <Button
                 tiny
-                loading={busy.has(21)}
-                disabled={busy.has(21) || alchemyApiKey.trim() === ""}
-                onClick={() => setAlchemyApiKey(alchemyApiKey.trim())}>Set</Button>
+                loading={busy.has("alchemyKey")}
+                disabled={busy.has("alchemyKey") || ops.alchemyApiKey.trim() === ""}
+                onClick={() => setAlchemyApiKey(ops.alchemyApiKey.trim())}>Set</Button>
             <Button
                 tiny
                 secondary
-                loading={busy.has(21)}
-                disabled={busy.has(21)}
+                loading={busy.has("alchemyKey")}
+                disabled={busy.has("alchemyKey")}
                 onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <div class="title">MiniApp service principal</div>
-        <Input bind:value={miniAppServicePrincipal} placeholder={i18nKey("Service principal")} />
+        <Input bind:value={ops.miniAppServicePrincipal} placeholder={i18nKey("Service principal")} />
         <Button
             tiny
-            loading={busy.has(23)}
-            disabled={busy.has(23) || miniAppServicePrincipal.trim() === ""}
+            loading={busy.has("miniAppPrincipal")}
+            disabled={busy.has("miniAppPrincipal") || ops.miniAppServicePrincipal.trim() === ""}
             onClick={setMiniAppServicePrincipal}>Set</Button>
     </section>
 
-    {#each Object.keys(BRIDGE_PLATFORM_NAMES) as BridgePlatform[] as platform}
+    {#each BRIDGE_PLATFORMS as platform}
         <section class="operator-function">
             <div class="title">{BRIDGE_PLATFORM_NAMES[platform]} bridge bot</div>
-            <Input bind:value={bridgeBotIds[platform]} placeholder={i18nKey("Bot id")} />
+            <Input bind:value={ops.bridgeBotIds[platform]} placeholder={i18nKey("Bot id")} />
             <ButtonGroup align="fill">
                 <Button
                     tiny
-                    loading={busy.has(22)}
-                    disabled={busy.has(22) || bridgeBotIds[platform].trim() === ""}
-                    onClick={() => setBridgeBot(platform, bridgeBotIds[platform].trim())}
+                    loading={busy.has("bridgeBot")}
+                    disabled={busy.has("bridgeBot") || ops.bridgeBotIds[platform].trim() === ""}
+                    onClick={() => setBridgeBot(platform, ops.bridgeBotIds[platform].trim())}
                     >Set</Button>
                 <Button
                     tiny
                     secondary
-                    loading={busy.has(22)}
-                    disabled={busy.has(22)}
+                    loading={busy.has("bridgeBot")}
+                    disabled={busy.has("bridgeBot")}
                     onClick={() => setBridgeBot(platform, undefined)}>Unset</Button>
             </ButtonGroup>
         </section>
@@ -1042,7 +444,7 @@
         {@render dualSetting(
             "OpenAI API key (moderation)",
             "Arms the classification pipeline on every local user index. Setting it starts proactive detection and the reporting duties which follow from it.",
-            7,
+            "openAiKey",
             proposeSetOpenAIApiKey,
             proposedOpenAIKey,
             currentOpenAIKey,
@@ -1051,7 +453,7 @@
         {@render dualSetting(
             "Media scanning (known-CSAM hash matching)",
             "Arms the media scan pipeline on every local user index and registers the worker principals allowed to collect scan jobs and submit verdicts. The toggle is the kill switch: while disabled, scan requests are dropped. Enabling requires at least one scanner principal.",
-            13,
+            "mediaScan",
             proposeSetMediaScanConfig,
             proposedMediaScanView,
             currentMediaScanView,
@@ -1060,7 +462,7 @@
         {@render dualSetting(
             "NCA reporting service (authority reporter)",
             "Registers the principal of the off-chain service which files CSEA reports with the NCA. The principal alone exports nothing: every filing additionally needs a signed, report-scoped token from a vault reviewer. Registering also delivers the OC public key to the storage buckets. Blank unregisters and disables automated filing.",
-            14,
+            "authorityReporter",
             proposeSetAuthorityReporter,
             proposedAuthorityReporterView,
             currentAuthorityReporterView,
@@ -1069,7 +471,7 @@
         {@render dualSetting(
             "Vault reviewers",
             "Grants access to quarantined material. Comma-separated user ids; replaces the whole set; each must already be a platform moderator. An empty list revokes all reviewers.",
-            10,
+            "vaultReviewers",
             proposeSetVaultReviewers,
             proposedVaultReviewersView,
             currentVaultReviewersView,
@@ -1078,7 +480,7 @@
         {@render dualSetting(
             "Internal moderation channel",
             "Where moderation alerts - including report excerpts and context - are posted.",
-            8,
+            "moderationChannel",
             proposeSetInternalModerationChannel,
             proposedModerationChannelView,
             currentModerationChannelView,
@@ -1087,7 +489,7 @@
         {@render dualSetting(
             "Destroy vaulted evidence",
             "Law enforcement destruction request. Irreversible: the blobs are removed even if a message still references them. A standing legal hold blocks destruction - clear the hold first, as a separate act. The reference and both operator identities are recorded in the vault log, which survives the destruction. ",
-            12,
+            "destroyEvidence",
             proposeDestroyVaultEvidence,
             proposedDestroyVaultView,
         )}
