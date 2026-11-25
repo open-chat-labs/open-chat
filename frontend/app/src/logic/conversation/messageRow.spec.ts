@@ -1446,3 +1446,37 @@ describe("a conversation's context", () => {
         expect(ctx.avatar("nobody")).toBeUndefined();
     });
 });
+
+describe("the moderation channel's report cards (L6c)", () => {
+    const report = {
+        kind: "moderation_report_content",
+        reportIndex: 3n,
+        chatId: { kind: "group_chat", groupId: "g" },
+        threadRootMessageIndex: undefined,
+        messageIndex: 1,
+        messageId: 9n,
+        sender: "bob",
+        reporters: [],
+        flaggedCategories: 0,
+        classificationFailed: false,
+        authorityReport: undefined,
+        autoSanctioned: false,
+        contentExcerpt: undefined,
+        blobReferences: [],
+        reportedAt: 0n,
+        status: { kind: "pending" },
+    };
+    const reported = { kind: "reported_message_content", total: 1, reports: [] };
+
+    test("are the screen's own kind, keyed by the content's kind, with their words to fall back on", () => {
+        for (const content of [report, reported]) {
+            const shown = messageRow(
+                message({ content: content as Message["content"] }),
+                "sent",
+                ctx,
+            ).message;
+            expect(shown).toMatchObject({ kind: "custom", customKind: content.kind, id: "42" });
+            expect("fallback" in shown && shown.fallback).toBeTruthy();
+        }
+    });
+});

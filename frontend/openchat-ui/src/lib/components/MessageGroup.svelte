@@ -11,16 +11,19 @@
      `pressVibration={false}` no vibration of its own on a long-press (the host plays its haptic as the menu opens). The host may set
      `--group-gap` (the avatar's gap), `--group-ring` (the avatar's ring), and the marked row's tint: `--message-mark`
      (its colour), `--message-mark-start` / `--message-mark-end` (how far it reaches past the message) and
-     `--message-mark-radius`. -->
+     `--message-mark-radius`.
+     A message of a kind the library doesn't draw (`kind: 'custom'`) is drawn by the host's `customContent` snippet for its
+     `customKind`, given the message's index (by hand, 2026-11-25). -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { onDestroy, type ComponentProps } from 'svelte';
+  import { onDestroy, type ComponentProps, type Snippet } from 'svelte';
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
   import DailyResultMessage from './DailyResultMessage.svelte';
   import { barBeside, barPlacement, overBubble, type BarPlacement } from '../hoverBar';
   import ReactionChips from './ReactionChips.svelte';
+  import ReplyQuote from './ReplyQuote.svelte';
   import FileMessage from './FileMessage.svelte';
   import LinkPreview from './LinkPreview.svelte';
   import MediaMessage from './MediaMessage.svelte';
@@ -94,6 +97,12 @@
     /** A short vibration as a touch long-press opens the message's menu (web). Off where the host plays its own haptic
      *  as it opens the menu (native), so a long-press gives one. */
     pressVibration?: boolean;
+    /**
+     * The host's own message kinds (by hand, 2026-11-25): a `kind: 'custom'` message is drawn by the snippet for its
+     * `customKind`, given the message's index, full width in the column; one with no snippet shows its `fallback` in a
+     * text bubble. The library stays out of what they are.
+     */
+    customContent?: Record<string, Snippet<[index: number]>>;
   }
 
   let {
@@ -123,6 +132,7 @@
     swipeStyle = 'gutter',
     hoverBar = true,
     pressVibration = true,
+    customContent = {},
   }: Props = $props();
   const t = useT();
 
@@ -543,6 +553,16 @@
           <ProposalMessage {...m} lastInGroup={last} />
         {:else if m.kind === 'daily_result'}
           <DailyResultMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
+        {:else if m.kind === 'custom'}
+          {@const draw = customContent[m.customKind]}
+          {#if draw}
+            <div class="custom" data-custom-kind={m.customKind}>
+              {#if m.quoteName}<ReplyQuote name={m.quoteName} text={m.quoteText} sent={side === 'sent'} onOpen={m.onQuote} />{/if}
+              {@render draw(i)}
+            </div>
+          {:else}
+            <ChatBubble text={m.fallback ?? ''} time={m.time} quoteName={m.quoteName} quoteText={m.quoteText} onQuote={m.onQuote} {side} lastInGroup={last} mirror={mirrored} />
+          {/if}
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={onReact ? (c) => onReact(i, c) : undefined} onTip={onTip ? (id) => onTip(i, id) : undefined} />
         {/if}
@@ -723,6 +743,15 @@
 
   .sender {
     cursor: pointer;
+  }
+
+  /* the host's own kind: as wide as the column allows, up to a card's width */
+  .custom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-width: 0;
+    max-width: 560px;
   }
 
   .message {
