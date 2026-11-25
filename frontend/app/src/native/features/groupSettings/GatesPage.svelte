@@ -145,7 +145,11 @@
                 onClick={() => navigate(DIAMOND_URL)} />
         </SettingsGroup>
     {:else}
-        <SettingsGroup label={$_("native.groupSettings.gates.card")}>
+        <!-- without Diamond (lapsed), the gates there can be taken off but none added: said
+             under the card, rather than switches that are just disabled -->
+        <SettingsGroup
+            label={$_("native.groupSettings.gates.card")}
+            note={$isDiamondStore ? "" : $_("native.groupSettings.gates.diamondOnly")}>
             {#each rows as row (row.gate)}
                 {#if row.kind === "switch"}
                     <SettingsSwitch

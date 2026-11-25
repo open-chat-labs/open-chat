@@ -2387,6 +2387,7 @@
             "sentBoth": "已添加 {added} 人 · 已邀请 {invited} 人",
             "shareViaLink": "通过链接分享",
             "shareViaLinkHelp": "任何拥有链接的人都可以加入此{level}。",
+            "alwaysOnHelp": "这是公开的：任何人都能找到并加入，因此链接始终开启。",
             "linkOff": "链接分享已关闭。只有你邀请的人可以加入。",
             "copyLink": "复制链接",
             "share": "分享",

@@ -1221,3 +1221,7 @@
 - `ChatListHeader`: `avatarUrl` (optional), the community's picture over its `color` swatch, as the header's comment says it shows ("the community's avatar"); it drew the swatch only, so the web's chat list never showed a community's picture. `ChatListPanel`: `headerAvatarUrl`, passed to it. Without them, as before. `meta.json` (both).
 - Used by the app: the web's chat list passes the community's `avatar.blobUrl` (none: the swatch, as everywhere on the web).
 - Not in the design export: its header draws a swatch for its sample community.
+## 2026-11-24 — Toggle: a white thumb when off, by hand
+- `Toggle`: the off thumb is white (with a small shadow) as the on one is, on a stronger track (`--overlay-3`, was `--overlay-2`). Its grey (`--ink-4`) off thumb read as a disabled switch on the device (native N7, Access gates, from testing on Android). Disabled is unchanged (the whole switch at 0.4). No props changed, so `meta.json` is as it was.
+- Used everywhere the library's switch is: the web and the native settings rows (`SettingsSwitch`).
+- Not in the design export: the export draws the off thumb grey. TODO(design): confirm the off state.

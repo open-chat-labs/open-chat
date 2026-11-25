@@ -67,7 +67,7 @@
     import { aboveKeyboard } from "../../aboveKeyboard.svelte";
     import type { ScreenContext } from "../app/screens";
     import { sendAfterUndo } from "../chats/removeWithUndo";
-    import { chipName, linkTabView, sendLabel, sentToast } from "./invite.adapter";
+    import { chipName, linkSwitch, linkTabView, sendLabel, sentToast } from "./invite.adapter";
     import InviteRow from "./InviteRow.svelte";
 
     type Props = {
@@ -273,11 +273,11 @@
     const linkView = $derived(
         linkTabView(management?.inviteLinkLoad ?? { kind: "idle" }, sharing.current, url),
     );
-    const switchable = $derived(
-        access.kind === "allowed" &&
-            access.manageLink &&
-            (link?.kind === "enabled" || link?.kind === "disabled"),
+    // a public one's link is always on (it has no code to turn off): the switch says so
+    const switchState = $derived(
+        linkSwitch(link, access.kind === "allowed" && access.manageLink),
     );
+    const switchable = $derived(switchState === "switch");
 
     async function toggleSharing(on: boolean) {
         const members = management;
@@ -447,7 +447,11 @@
             <SettingsGroup>
                 <SettingsSwitch
                     label={$_("native.invite.shareViaLink")}
-                    help={tl("native.invite.shareViaLinkHelp")}
+                    help={tl(
+                        switchState === "always_on"
+                            ? "native.invite.alwaysOnHelp"
+                            : "native.invite.shareViaLinkHelp",
+                    )}
                     on={sharing.current}
                     disabled={!switchable || linkBusy}
                     onChange={(on) => void toggleSharing(on)} />

@@ -2387,6 +2387,7 @@
             "sentBoth": "{added} ajoutés · {invited} invités",
             "shareViaLink": "Partager par lien",
             "shareViaLinkHelp": "Toute personne ayant le lien peut rejoindre.",
+            "alwaysOnHelp": "C'est public : tout le monde peut le trouver et rejoindre, le lien reste donc toujours actif.",
             "linkOff": "Le partage par lien est désactivé. Seules les personnes invitées peuvent rejoindre.",
             "copyLink": "Copier le lien",
             "share": "Partager",

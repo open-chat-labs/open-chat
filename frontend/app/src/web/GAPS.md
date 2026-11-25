@@ -1507,7 +1507,17 @@ design export needs. Each entry says where it came up.
     Manage's: "Invite users" for both, no adding). Suggested looks the DM partners up among the
     community's members (the client's `lookupDirectChatUsersAmongMembers(true)`: a new argument,
     the old callers unchanged). Its title is "Invite people", as the group's (the plan's row says
-    "Invite and share").
+    "Invite and share"). From testing (2026-11-24, an admin of a public community): a public
+    community's or group's link has no code (the client's `#inviteCodeId`, as the old UIs and the
+    web's Manage have it), so it's always on and its switch can't turn it off; the switch said
+    nothing about why. Its help now says so (`native.invite.alwaysOnHelp`, `linkSwitch`). The
+    backend refuses nobody here: enabling and resetting a code is `can_invite_users`, which the
+    switch already goes by for a private one.
+  - **Access gates without Diamond** (from testing): the gates there can be taken off but none
+    added, so the switches for Diamond gates are disabled; the Gates card now says why under it.
+    Only Members must meet and Re-check dim until they apply. The off switch looked dimmed
+    anyway: the library's `Toggle` drew its off thumb grey; it's white now (EXPORT-LOG
+    2026-11-24).
   - **Access gates and Rules** are the group's pages on the community's draft, unchanged; the
     gates' intro names the community.
   - **Permissions**: a community's seven, in two cards (the plan draws a group's; the split is

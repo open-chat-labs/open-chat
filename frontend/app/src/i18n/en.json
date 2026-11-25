@@ -2296,6 +2296,7 @@
             "sentBoth": "{added} added · {invited} invited",
             "shareViaLink": "Share via link",
             "shareViaLinkHelp": "Anyone with the link can join this {level}.",
+            "alwaysOnHelp": "This {level} is public: anyone can find it and join, so its link is always on.",
             "linkOff": "Link sharing is off. Only people you invite can join.",
             "copyLink": "Copy link",
             "share": "Share",

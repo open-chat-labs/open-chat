@@ -2387,6 +2387,7 @@
             "sentBoth": "Đã thêm {added} · đã mời {invited}",
             "shareViaLink": "Chia sẻ qua liên kết",
             "shareViaLinkHelp": "Bất kỳ ai có liên kết đều có thể tham gia {level} này.",
+            "alwaysOnHelp": "Đây là công khai: ai cũng có thể tìm và tham gia, nên liên kết luôn bật.",
             "linkOff": "Chia sẻ qua liên kết đang tắt. Chỉ những người bạn mời mới tham gia được.",
             "copyLink": "Sao chép liên kết",
             "share": "Chia sẻ",

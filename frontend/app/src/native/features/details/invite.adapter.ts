@@ -1,3 +1,4 @@
+import type { InviteLink } from "@client";
 import type { InviteWay } from "@src/logic/members/invitePeople";
 import type { InviteLinkLoad } from "@src/logic/members/memberManagement.svelte";
 
@@ -71,6 +72,20 @@ export function linkTabView(
     if (!on) return { kind: "off" };
     if (url === undefined) return { kind: "loading" };
     return { kind: "link", url, gatesIgnored: load.link.kind === "enabled" };
+}
+
+/**
+ * What the Invite link tab's switch is: one the viewer turns on and off (a private group's or
+ * community's, for someone who may invite), always on (a public one's: it has no code to turn off,
+ * so the switch says why rather than sitting disabled), or locked (the link still loading, or a
+ * viewer who may only share it).
+ */
+export type LinkSwitch = "switch" | "always_on" | "locked";
+
+export function linkSwitch(link: InviteLink | undefined, manageLink: boolean): LinkSwitch {
+    if (link?.kind === "public") return "always_on";
+    if (manageLink && (link?.kind === "enabled" || link?.kind === "disabled")) return "switch";
+    return "locked";
 }
 
 /** A chip's name: the first word of their name ("Sofia" for "Sofia Marín"), else their username. */

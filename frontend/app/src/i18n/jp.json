@@ -2387,6 +2387,7 @@
             "sentBoth": "{added} 人を追加 · {invited} 人を招待",
             "shareViaLink": "リンクで共有",
             "shareViaLinkHelp": "リンクを知っている人は誰でもこの{level}に参加できます。",
+            "alwaysOnHelp": "この{level}は公開されています。誰でも見つけて参加できるため、リンクは常にオンです。",
             "linkOff": "リンク共有はオフです。招待した人だけが参加できます。",
             "copyLink": "リンクをコピー",
             "share": "共有",

@@ -2387,6 +2387,7 @@
             "sentBoth": "{added} hinzugefügt · {invited} eingeladen",
             "shareViaLink": "Per Link teilen",
             "shareViaLinkHelp": "Jeder mit dem Link kann beitreten.",
+            "alwaysOnHelp": "Öffentlich: Jeder kann es finden und beitreten, daher ist der Link immer an.",
             "linkOff": "Teilen per Link ist aus. Nur eingeladene Personen können beitreten.",
             "copyLink": "Link kopieren",
             "share": "Teilen",
