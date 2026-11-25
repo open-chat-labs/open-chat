@@ -114,6 +114,8 @@
     import { applyShared, sharedHere } from "@src/logic/dailyPuzzle/shareResult";
     import { dailyPuzzleGame, drawsResultGrid } from "@src/core/dailyPuzzle/registry";
     import DailyResultBoard from "@src/core/dailyPuzzle/DailyResultBoard.svelte";
+    import ModerationReportCard from "../moderation/ModerationReportCard.svelte";
+    import ReportedMessageCard from "../moderation/ReportedMessageCard.svelte";
     import { cardOffersPlayWith } from "@src/logic/dailyPuzzle/dailyResultCard";
     import { DailyResultVerifier } from "@src/logic/dailyPuzzle/dailyResultVerifier.svelte";
     import { openLinked } from "../app/linkedDialogs.svelte";
@@ -1898,6 +1900,15 @@
                     <DailyResultBoard {content} />
                 {/if}
             {/snippet}
+            <!-- the moderation channel's report cards, which the library leaves to the app
+                 (MessageGroup's customContent; L6c) -->
+            {#snippet reportCard(_: number)}
+                {#if content.kind === "moderation_report_content"}
+                    <ModerationReportCard {content} onOpenDialog={(d) => screen.dialogs.open(d)} />
+                {:else if content.kind === "reported_message_content"}
+                    <ReportedMessageCard {content} />
+                {/if}
+            {/snippet}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="row"
@@ -1950,6 +1961,12 @@
                         ? (_, ledger) => openTip(where, evt, ledger)
                         : undefined}
                     messages={messagesFor(row, body, markdown !== undefined, evt, offers, preview)}
+                    customContent={row.message.kind === "custom"
+                        ? {
+                              moderation_report_content: reportCard,
+                              reported_message_content: reportCard,
+                          }
+                        : undefined}
                 />
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}

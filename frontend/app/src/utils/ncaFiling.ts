@@ -43,7 +43,7 @@ export function contactValid(contact: NcaReporterContact): boolean {
 export type StartFilingResult = { kind: "started" } | { kind: "error"; message: string };
 
 export async function startAutomatedFiling(
-    client: OpenChat,
+    client: Pick<OpenChat, "authorityReportToken">,
     reportIndex: bigint,
     priority: NcaPriority,
     reporter: NcaReporterContact,

@@ -81,7 +81,25 @@ export type GroupMessage = GroupMessageBase &
     | ({ kind: 'prize' } & KindProps<typeof PrizeMessage>)
     | ({ kind: 'proposal' } & KindProps<typeof ProposalMessage>)
     | ({ kind: 'daily_result' } & KindProps<typeof DailyResultMessage>)
+    | CustomGroupMessage
   );
+
+/**
+ * A message of a kind the library doesn't draw: the host draws it, with MessageGroup's `customContent` snippet for its
+ * `customKind` (by hand, 2026-11-25). Reactions, tips, its thread link, the hover bar and menu are the group's, as for
+ * any other kind. With no snippet for its kind it shows `fallback` (plain text) in a text bubble.
+ */
+export interface CustomGroupMessage {
+  kind: 'custom';
+  /** Which of the host's snippets draws it (MessageGroup `customContent`). */
+  customKind: string;
+  /** Resource key (or literal text) shown in a text bubble where the host has no snippet for `customKind`. */
+  fallback?: string;
+  /** Reply quote, as the other kinds': it shows above the host's content. */
+  quoteName?: string;
+  quoteText?: string;
+  onQuote?: () => void;
+}
 
 /** One sender's run of messages, as rendered by MessageGroup (ThreadPanel `replies`). */
 export interface MessageGroupItem {

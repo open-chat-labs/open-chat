@@ -4500,6 +4500,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": "A short vibration as a touch long-press opens the message's menu (web). Off where the host plays its own haptic as it opens the menu (native), so a long-press gives one."
+      },
+      {
+        "name": "customContent",
+        "type": "Record<string, Snippet<[index: number]>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "{}",
+        "doc": "The host's own message kinds (by hand, 2026-11-25): a `kind: 'custom'` message is drawn by the snippet for its `customKind`, given the message's index, full width in the column; one with no snippet shows its `fallback` in a text bubble."
       }
     ],
     "group": "library"

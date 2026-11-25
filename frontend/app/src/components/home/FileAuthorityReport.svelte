@@ -1,15 +1,10 @@
 <script lang="ts">
-    import type { NcaPriority, OpenChat } from "@client";
+    import type { OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { mobileWidth, platformOperatorStore } from "@client";
-    import {
-        NCA_PRIORITY_LABELS,
-        contactValid,
-        ncaReporterUrl,
-        outsideNcaBusinessHours,
-        startAutomatedFiling,
-    } from "../../utils/ncaFiling";
+    import { NCA_PRIORITY_LABELS, ncaReporterUrl } from "../../utils/ncaFiling";
+    import { NcaFilingForm } from "@src/logic/moderation/ncaFilingForm.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Checkbox from "../Checkbox.svelte";
@@ -33,75 +28,21 @@
 
     let { reportIndex, urgent, onFiled, onFilingStarted, onClose }: Props = $props();
 
-    // Automated filing is offered whenever the reporting service is configured; recording a
-    // manual portal filing stays available to platform operators (the original path)
-    const autoAvailable = ncaReporterUrl !== "";
-    let mode = $state<"auto" | "manual">(ncaReporterUrl !== "" ? "auto" : "manual");
+    // The form's state and submits are logic/moderation's (ncaFilingForm), shared with the other
+    // tree's dialog and the new web UI's
+    const form = new NcaFilingForm(client, reportIndex, urgent, ncaReporterUrl);
 
-    // --- manual mode ---
-    let reference = $state("");
-
-    // --- automated mode ---
-    // The moderator's own assessment; urgent verdicts suggest P1 but never decide it
-    let priority = $state<NcaPriority>(urgent ? "P1" : "P3");
-    let firstName = $state("");
-    let lastName = $state("");
-    let countryCallingCode = $state("+44");
-    let phone = $state("");
-    let email = $state("");
-    let oohAcknowledged = $state(false);
-    const outOfHours = outsideNcaBusinessHours();
-    let needsOohAck = $derived(outOfHours && (priority === "P1" || priority === "P2"));
-
-    let busy = $state(false);
-    let failed = $state(false);
-    let failureMessage = $state<string | undefined>(undefined);
-
-    let contact = $derived({
-        firstName,
-        lastName,
-        phone,
-        countryCallingCode,
-        email,
-    });
-    let autoValid = $derived(contactValid(contact) && (!needsOohAck || oohAcknowledged));
-
-    // Records that the NCA (CSEA-IRP) filing was made on the portal by hand: captures the
-    // returned reference (URN) in the register
-    function submitManual() {
-        const trimmed = reference.trim();
-        if (trimmed === "" || busy) return;
-        busy = true;
-        failed = false;
-        client.recordAuthorityReportFiled(reportIndex, trimmed, urgent, false).then((success) => {
-            busy = false;
-            if (success) {
-                onFiled(trimmed);
-            } else {
-                failed = true;
-            }
-        });
+    async function submitManual() {
+        const outcome = await form.submitManual();
+        if (outcome?.kind === "filed") onFiled(outcome.portalReference);
     }
 
-    // Opens a signed filing window and hands it to the reporting service; the card tracks
-    // the outcome via its authorityReport state
-    function submitAuto() {
-        if (!autoValid || busy) return;
-        busy = true;
-        failed = false;
-        failureMessage = undefined;
-        startAutomatedFiling(client, reportIndex, priority, contact, oohAcknowledged).then(
-            (result) => {
-                busy = false;
-                if (result.kind === "started") {
-                    onFilingStarted?.();
-                    onClose();
-                } else {
-                    failed = true;
-                    failureMessage = result.message;
-                }
-            },
-        );
+    async function submitAuto() {
+        const outcome = await form.submitAuto();
+        if (outcome?.kind === "started") {
+            onFilingStarted?.();
+            onClose();
+        }
     }
 </script>
 
@@ -110,7 +51,7 @@
         {#snippet header()}
             <Translatable
                 resourceKey={i18nKey(
-                    mode === "auto"
+                    form.mode === "auto"
                         ? "moderationReport.fileAutomatically"
                         : "moderationReport.recordFiling",
                 )} />
@@ -123,57 +64,57 @@
                             urgent ? "moderationReport.ncaDueUrgent" : "moderationReport.ncaDue",
                         )} />
                 </p>
-                {#if autoAvailable && $platformOperatorStore}
+                {#if form.autoAvailable && $platformOperatorStore}
                     <div class="mode">
                         <Button
                             tiny
-                            secondary={mode !== "auto"}
-                            onClick={() => (mode = "auto")}>
+                            secondary={form.mode !== "auto"}
+                            onClick={() => (form.mode = "auto")}>
                             <Translatable
                                 resourceKey={i18nKey("moderationReport.fileAutomatically")} />
                         </Button>
                         <Button
                             tiny
-                            secondary={mode !== "manual"}
-                            onClick={() => (mode = "manual")}>
+                            secondary={form.mode !== "manual"}
+                            onClick={() => (form.mode = "manual")}>
                             <Translatable resourceKey={i18nKey("moderationReport.recordFiling")} />
                         </Button>
                     </div>
                 {/if}
-                {#if mode === "manual"}
+                {#if form.mode === "manual"}
                     <Legend label={i18nKey("moderationReport.filingReference")} />
-                    <Input bind:value={reference} />
+                    <Input bind:value={form.reference} />
                 {:else}
                     <Legend label={i18nKey("moderationReport.priority")} />
                     {#each NCA_PRIORITY_LABELS as [value, label] (value)}
                         <Radio
                             id={`nca-priority-${value}`}
                             group="nca-priority"
-                            checked={priority === value}
-                            onChange={() => (priority = value)}
+                            checked={form.priority === value}
+                            onChange={() => (form.priority = value)}
                             label={i18nKey(label)} />
                     {/each}
                     <Legend label={i18nKey("moderationReport.reporterContact")} />
                     <div class="contact-row">
                         <Input
-                            bind:value={firstName}
+                            bind:value={form.firstName}
                             placeholder={i18nKey("moderationReport.firstName")} />
                         <Input
-                            bind:value={lastName}
+                            bind:value={form.lastName}
                             placeholder={i18nKey("moderationReport.lastName")} />
                     </div>
                     <div class="contact-row">
                         <div class="dialling">
                             <Input
-                                bind:value={countryCallingCode}
+                                bind:value={form.countryCallingCode}
                                 placeholder={i18nKey("moderationReport.diallingCode")} />
                         </div>
                         <Input
-                            bind:value={phone}
+                            bind:value={form.phone}
                             placeholder={i18nKey("moderationReport.phone")} />
                     </div>
-                    <Input bind:value={email} placeholder={i18nKey("moderationReport.email")} />
-                    {#if needsOohAck}
+                    <Input bind:value={form.email} placeholder={i18nKey("moderationReport.email")} />
+                    {#if form.needsOohAck}
                         <div class="ooh">
                             <p>
                                 <Translatable
@@ -183,15 +124,15 @@
                                 id="ooh-ack"
                                 small
                                 label={i18nKey("moderationReport.oohAck")}
-                                checked={oohAcknowledged}
-                                onChange={() => (oohAcknowledged = !oohAcknowledged)} />
+                                checked={form.oohAcknowledged}
+                                onChange={() => (form.oohAcknowledged = !form.oohAcknowledged)} />
                         </div>
                     {/if}
                 {/if}
-                {#if failed}
+                {#if form.failed}
                     <ErrorMessage>
-                        {#if failureMessage !== undefined}
-                            {failureMessage}
+                        {#if form.failureMessage !== undefined}
+                            {form.failureMessage}
                         {:else}
                             <Translatable resourceKey={i18nKey("moderationReport.failed")} />
                         {/if}
@@ -204,12 +145,12 @@
                 <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
-                {#if mode === "manual"}
+                {#if form.mode === "manual"}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        disabled={busy || reference.trim() === ""}
-                        loading={busy}
+                        disabled={form.busy || form.reference.trim() === ""}
+                        loading={form.busy}
                         onClick={submitManual}>
                         <Translatable resourceKey={i18nKey("moderationReport.filingSubmit")} />
                     </Button>
@@ -217,8 +158,8 @@
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        disabled={busy || !autoValid}
-                        loading={busy}
+                        disabled={form.busy || !form.autoValid}
+                        loading={form.busy}
                         onClick={submitAuto}>
                         <Translatable resourceKey={i18nKey("moderationReport.startFiling")} />
                     </Button>

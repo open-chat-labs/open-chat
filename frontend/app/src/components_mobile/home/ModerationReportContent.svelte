@@ -1,12 +1,9 @@
 <script lang="ts">
     import {
         allUsersStore,
-        MODERATION_CATEGORY_NAMES,
         platformModeratorStore,
         platformOperatorStore,
-        routeForMessage,
         type ModerationReportContent,
-        type ModerationVerdict,
         type OpenChat,
     } from "@client";
     import Markdown from "@src/core/Markdown.svelte";
@@ -19,7 +16,14 @@
     import { ncaReporterUrl } from "../../utils/ncaFiling";
     import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
-    import { MediaReviewGate } from "@src/logic/moderation/vaultMediaReview.svelte";
+    import {
+        flaggedCategoryNames,
+        hashMatchLine as formatHashMatchLine,
+        reportIsCsam,
+        reportMessageUrl,
+        reportPeople,
+    } from "@src/logic/moderation/moderationReport";
+    import { ModerationReportCard } from "@src/logic/moderation/moderationReportCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -29,194 +33,36 @@
 
     let { content }: Props = $props();
 
-    let busy = $state(false);
-    let failed = $state(false);
-    // The canister explains WHY a verdict was refused (your own assertion, already
-    // resolved); showing "failed" alone leaves the moderator guessing
-    let failureReason: string | undefined = $state(undefined);
-    let resolved = $state(false);
-    let urgent = $state(false);
+    // The card's state and what it offers are logic/moderation's (moderationReportCard), shared
+    // with the other tree's card and the new web UI's
+    const card = new ModerationReportCard(
+        client,
+        () => ({
+            content,
+            isModerator: $platformModeratorStore,
+            isOperator: $platformOperatorStore,
+        }),
+        { ncaReporterUrl, copy: copyToClipboard },
+    );
+    const gate = card.gate;
     let showViewer = $state(false);
     let showAccessLog = $state(false);
     let showFiling = $state(false);
-    // Set once a filing is recorded from this card, ahead of the content update round-trip
-    let filedReference = $state<string | undefined>(undefined);
-    // Set once an automated filing was accepted by the reporting service, ahead of the
-    // on-chain attempt marker reaching the card. The overlay lapses as soon as the on-chain
-    // state changes (whatever it changes to - the service may have failed before opening a
-    // marker) and after a bounded time regardless, so a genuine return to Due is never hidden
-    let filingStartedAt = $state<number | undefined>(undefined);
-    const OPTIMISTIC_ATTEMPT_MS = 2 * 60 * 1000;
-    // Ticks so the time-based states below re-evaluate while the card stays mounted
-    let now = $state(Date.now());
-    $effect(() => {
-        const interval = setInterval(() => (now = Date.now()), 30_000);
-        return () => clearInterval(interval);
-    });
-    $effect(() => {
-        void content.authorityReport;
-        filingStartedAt = undefined;
-        attemptCleared = false;
-    });
-    let authorityReport = $derived.by(() => {
-        if (filedReference !== undefined) {
-            return { kind: "filed" as const, portalReference: filedReference };
-        }
-        const onChain = content.authorityReport;
-        if (
-            filingStartedAt !== undefined &&
-            now - filingStartedAt < OPTIMISTIC_ATTEMPT_MS &&
-            onChain !== undefined &&
-            onChain.kind !== "filed" &&
-            onChain.kind !== "attempting"
-        ) {
-            return { kind: "attempting" as const, startedAt: BigInt(filingStartedAt) };
-        }
-        return onChain;
-    });
-    // An attempt marker much older than a filing takes means the service crashed mid-flight:
-    // a human must check the portal before anything re-files
-    const STALE_ATTEMPT_MS = 30 * 60 * 1000;
-    let attemptIsStale = $derived(
-        authorityReport?.kind === "attempting" &&
-            now - Number(authorityReport.startedAt) > STALE_ATTEMPT_MS,
-    );
-    // Operator reconciliation of an orphaned marker: clears it on chain so the report returns
-    // to Due (the card update carries the new state)
-    let clearingAttempt = $state(false);
-    let attemptCleared = $state(false);
-    let clearAttemptFailed = $state(false);
-    function clearAttempt() {
-        if (content.reportIndex === undefined) return;
-        clearingAttempt = true;
-        clearAttemptFailed = false;
-        client.clearAuthorityReportAttempt(content.reportIndex).then((ok) => {
-            clearingAttempt = false;
-            attemptCleared = ok;
-            clearAttemptFailed = !ok;
-        });
-    }
-    let canOpenFiling = $derived(
-        content.reportIndex !== undefined &&
-            ($platformOperatorStore || (ncaReporterUrl !== "" && $platformModeratorStore)),
-    );
-    // A verdict on a media report requires the media to have been reviewed first: deciding
-    // without looking is exactly what this system exists to prevent
-    const gate = new MediaReviewGate();
-
-    let moderatorId = $derived(
-        content.status.kind !== "pending" && content.status.kind !== "contested"
-            ? content.status.moderator
-            : undefined,
-    );
-    let moderator = $derived(
-        moderatorId ? ($allUsersStore.get(moderatorId)?.username ?? moderatorId) : undefined,
-    );
-    let sender = $derived($allUsersStore.get(content.sender)?.username ?? content.sender);
-    let reporters = $derived(content.reporters.map((r) => $allUsersStore.get(r)?.username ?? r));
-    // autoSanctioned always means CSAM (classifier detection, reporter assertion, or a
-    // protective quarantine applied after classification): the flagged bits alone miss the
-    // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
-    let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
-    // Non-empty when the detection was a media hash match rather than the text classifier.
-    // Report content restored from the IndexedDB cache can pre-date the field entirely.
-    let mediaMatches = $derived(content.mediaMatches ?? []);
-    let hashMatchLine = $derived(
-        mediaMatches
-            .map(
-                (m) =>
-                    `${m.provider}${m.matchId !== undefined ? ` record ${m.matchId}` : ""} (distance ${m.matchDistance})`,
-            )
-            .join("; "),
-    );
-    let categories = $derived(
-        MODERATION_CATEGORY_NAMES.filter(([bit, _name]) => (content.flaggedCategories & bit) !== 0)
-            .map(([_bit, name]) => name)
-            .join(", "),
-    );
-    // Direct-chat routes resolve relative to the viewer, so a link to someone
-    // else's private chat would be dead for moderators — show no link instead.
-    let url = $derived(
-        content.chatId.kind === "direct_chat"
-            ? undefined
-            : routeForMessage(
-                  content.chatId.kind === "channel" ? "community" : "chats",
-                  {
-                      chatId: content.chatId,
-                      threadRootMessageIndex: content.threadRootMessageIndex,
-                  },
-                  content.messageIndex,
-              ),
-    );
-    let needsMediaReview = $derived(content.blobReferences.length > 0 && !gate.reviewed);
-    // Assembles the hash lines for the NCA report: the vault sha256 per quarantined blob
-    // (reviewer-gated query) plus the scanner's perceptual hash per match
-    let hashCopyState = $state<"idle" | "copied" | "failed">("idle");
-    async function copyHashes() {
-        const lines: string[] = [];
-        for (const ref of content.blobReferences) {
-            const resp = await client.vaultFileInfo(ref.canisterId, ref.blobId);
-            if (resp.kind === "success") {
-                lines.push(
-                    `file ${ref.blobId}: sha256 ${resp.hash} (${resp.mimeType}, ${resp.size} bytes)`,
-                );
-            }
-        }
-        for (const m of mediaMatches) {
-            if (m.hash !== undefined) {
-                lines.push(`file ${m.blobId}: ${m.provider} hash ${m.hash}`);
-            }
-        }
-        const ok = lines.length > 0 && (await copyToClipboard(lines.join("\n")));
-        hashCopyState = ok ? "copied" : "failed";
-        window.setTimeout(() => (hashCopyState = "idle"), 2000);
-    }
-
-    // The manual-filing checklist opens in its own tab so the moderator can keep the
-    // report card open while working through it
-    let checklistUrl = $derived.by(() => {
-        const params = new URLSearchParams();
-        if (content.reportIndex !== undefined) {
-            params.set("report", content.reportIndex.toString());
-        }
-        params.set("origin", mediaMatches.length > 0 ? "hash" : "manual");
-        if (content.authorityReport?.kind === "due" && content.authorityReport.urgent) {
-            params.set("urgent", "true");
-        }
-        if (content.authorityReport?.kind === "contingency_required") {
-            params.set("state", "contingency");
-        } else if (content.authorityReport?.kind === "validation_failed") {
-            params.set("state", "validation");
-        } else if (content.authorityReport?.kind === "attempting") {
-            params.set("state", "reconcile");
-        }
-        return `/csea-reporting?${params}`;
-    });
-    let canResolve = $derived(
-        $platformModeratorStore &&
-            content.reportIndex !== undefined &&
-            !content.isBlockedAttempt &&
-            (content.status.kind === "pending" || content.status.kind === "contested"),
-    );
-
-    function resolve(verdict: ModerationVerdict) {
-        if (content.reportIndex === undefined || busy || resolved) return;
-        busy = true;
-        failed = false;
-        failureReason = undefined;
-        client
-            .resolveModerationReport(
-                content.reportIndex,
-                verdict,
-                verdict === "upheld_as_csam" ? urgent : undefined,
-            )
-            .then((result) => {
-                busy = false;
-                resolved = result.kind === "success";
-                failed = result.kind !== "success";
-                failureReason = result.kind === "error" ? result.message : undefined;
-            });
-    }
+    let authorityReport = $derived(card.authorityReport);
+    let attemptIsStale = $derived(card.attemptIsStale);
+    let canOpenFiling = $derived(card.canOpenFiling);
+    let people = $derived(reportPeople(content, (id) => $allUsersStore.get(id)?.username));
+    let moderator = $derived(people.moderator);
+    let sender = $derived(people.sender);
+    let reporters = $derived(people.reporters);
+    let csam = $derived(reportIsCsam(content));
+    let mediaMatches = $derived(card.mediaMatches);
+    let hashMatchLine = $derived(formatHashMatchLine(mediaMatches));
+    let categories = $derived(flaggedCategoryNames(content.flaggedCategories).join(", "));
+    let url = $derived(reportMessageUrl(content));
+    let needsMediaReview = $derived(card.needsMediaReview);
+    let checklistUrl = $derived(card.checklistUrl);
+    let canResolve = $derived(card.canResolve);
 </script>
 
 <Column padding={["sm", "sm", "lg", "sm"]} gap="md">
@@ -334,12 +180,12 @@
                 {/if}
                 {#if content.blobReferences.length > 0 || mediaMatches.length > 0}
                     <Row gap="sm">
-                        <Button secondary disabled={hashCopyState !== "idle"} onClick={copyHashes}>
+                        <Button secondary disabled={card.hashCopyState !== "idle"} onClick={() => card.copyHashes()}>
                             <Translatable
                                 resourceKey={i18nKey(
-                                    hashCopyState === "idle"
+                                    card.hashCopyState === "idle"
                                         ? "moderationReport.copyHashes"
-                                        : hashCopyState === "copied"
+                                        : card.hashCopyState === "copied"
                                           ? "moderationReport.hashesCopied"
                                           : "moderationReport.hashesFailed",
                                 )}
@@ -365,13 +211,13 @@
                         )} />
                 </Body>
                 {#if attemptIsStale}
-                    {#if $platformOperatorStore && !attemptCleared}
+                    {#if $platformOperatorStore && !card.attemptCleared}
                         <Row gap="sm">
                             <Button
                                 danger
-                                disabled={clearingAttempt}
-                                loading={clearingAttempt}
-                                onClick={clearAttempt}>
+                                disabled={card.clearingAttempt}
+                                loading={card.clearingAttempt}
+                                onClick={() => card.clearAttempt()}>
                                 <Translatable
                                     resourceKey={i18nKey("moderationReport.clearAttempt")} />
                             </Button>
@@ -380,7 +226,7 @@
                     <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
                         <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                     </a>
-                    {#if clearAttemptFailed}
+                    {#if card.clearAttemptFailed}
                         <Body colour="validationError">
                             <Translatable
                                 resourceKey={i18nKey("moderationReport.clearAttemptFailed")} />
@@ -477,7 +323,7 @@
         {/if}
         {#if !needsMediaReview && !gate.reviewerRequired}
             <Row gap="sm">
-                <Switch bind:checked={urgent}>
+                <Switch bind:checked={card.urgent}>
                     <Body width={"hug"} colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("moderationReport.urgent")} />
                     </Body>
@@ -485,34 +331,34 @@
             </Row>
             <Row gap="sm" padding={["zero", "zero", "md", "zero"]}>
                 <Button
-                    disabled={busy || resolved}
-                    loading={busy}
-                    onClick={() => resolve("upheld")}
+                    disabled={card.busy || card.resolved}
+                    loading={card.busy}
+                    onClick={() => card.resolve("upheld")}
                 >
                     <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
                 </Button>
                 <Button
                     danger
-                    disabled={busy || resolved}
-                    loading={busy}
-                    onClick={() => resolve("upheld_as_csam")}
+                    disabled={card.busy || card.resolved}
+                    loading={card.busy}
+                    onClick={() => card.resolve("upheld_as_csam")}
                 >
                     <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
                 </Button>
                 <Button
                     secondary
-                    disabled={busy || resolved}
-                    loading={busy}
-                    onClick={() => resolve("dismissed")}
+                    disabled={card.busy || card.resolved}
+                    loading={card.busy}
+                    onClick={() => card.resolve("dismissed")}
                 >
                     <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
                 </Button>
             </Row>
         {/if}
-        {#if failed}
+        {#if card.failed}
             <Body colour="validationError" fontWeight="bold">
-                {#if failureReason !== undefined}
-                    {failureReason}
+                {#if card.failureReason !== undefined}
+                    {card.failureReason}
                 {:else}
                     <Translatable resourceKey={i18nKey("moderationReport.failed")} />
                 {/if}
@@ -536,10 +382,10 @@
         reportIndex={content.reportIndex}
         urgent={authorityReport.urgent}
         onFiled={(ref) => {
-            filedReference = ref;
+            card.filed(ref);
             showFiling = false;
         }}
-        onFilingStarted={() => (filingStartedAt = Date.now())}
+        onFilingStarted={() => card.filingStarted()}
         onClose={() => (showFiling = false)}
     />
 {/if}

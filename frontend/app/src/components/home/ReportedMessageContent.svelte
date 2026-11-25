@@ -7,6 +7,7 @@
     import Legend from "../Legend.svelte";
     import TextArea from "../TextArea.svelte";
     import Markdown from "@src/core/Markdown.svelte";
+    import { reportedMessageText } from "@src/logic/moderation/reportedMessage";
 
     interface Props {
         content: ReportedMessageContent;
@@ -18,24 +19,13 @@
     let index = $state(0);
 
     let report = $derived(content.reports[index]);
-    const reasons = [
-        $_("report.threat"),
-        $_("report.child"),
-        $_("report.nonConsensual"),
-        $_("report.selfHarm"),
-        $_("report.violence"),
-        $_("report.scam"),
-        $_("report.other"),
-    ];
+    // The report's line is logic/moderation's (reportedMessage), shared with the other tree's card
+    // and the new web UI's
     let message = $derived(
-        $_("report.messageReport", {
-            values: {
-                username:
-                    $allUsersStore.get(report.reportedBy)?.username ??
-                    `unknown user (${report.reportedBy}))`,
-                timestamp: client.toDatetimeString(new Date(report.timestamp)),
-                reason: reasons[report.reasonCode],
-            },
+        reportedMessageText(report, {
+            username: (id) => $allUsersStore.get(id)?.username,
+            datetime: (date) => client.toDatetimeString(date),
+            translate: $_,
         }),
     );
 </script>

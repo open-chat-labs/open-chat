@@ -1,4 +1,5 @@
 import type {
+    BlobReference,
     BotInstallationLocation,
     ChatIdentifier,
     CommunityIdentifier,
@@ -17,6 +18,7 @@ import type {
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { FreezeTarget } from "@src/logic/moderation/freeze";
+import type { ReviewOutcome } from "@src/logic/moderation/vaultMediaReview.svelte";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { JoinTarget } from "@src/logic/join/joinFlow.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
@@ -174,7 +176,29 @@ export type LocalDialog =
     // asking before something takes a staged prize, transfer or swap offer's place in the draft
     // (`replaceNeedsConfirm`): Replace goes on with `next`; Cancel, × and the backdrop keep what's
     // staged and close it, with nothing to go back to
-    | { kind: "replace_staged"; question: ReplaceQuestion; next: ReplaceNext };
+    | { kind: "replace_staged"; question: ReplaceQuestion; next: ReplaceNext }
+    // a moderation report card's (L6c, platform moderators): reviewing the reported media
+    // (`quarantined`: through the vault, access-logged), whose outcome (`onResult`, as it closes)
+    // opens the card's verdicts; the vault access log of its media; filing with the NCA, or
+    // recording a filing (`onFiled`, the portal reference; `onFilingStarted`, the automated
+    // service took it; `stillDue`, whether the report still owes a filing: once it doesn't, the
+    // dialog closes, as the old cards' did
+    // service took it)
+    | {
+          kind: "vault_media";
+          blobReferences: BlobReference[];
+          quarantined: boolean;
+          onResult: (outcome: ReviewOutcome) => void;
+      }
+    | { kind: "vault_access_log"; blobReferences: BlobReference[] }
+    | {
+          kind: "nca_filing";
+          reportIndex: bigint;
+          urgent: boolean;
+          onFiled: (portalReference: string) => void;
+          onFilingStarted: () => void;
+          stillDue: () => boolean;
+      };
 
 /**
  * What a replace confirmed goes on to: another builder, opened in the confirm's place over the
@@ -305,6 +329,11 @@ export const dialogs: Dialogs = {
 
     // asking before a staged prize, transfer or swap offer is replaced (5c)
     replace_staged: () => import("../conversation/ReplaceStagedDialogScreen.svelte"),
+
+    // a moderation report card's media review, access log and NCA filing (L6c)
+    vault_media: () => import("../moderation/VaultMediaDialogScreen.svelte"),
+    vault_access_log: () => import("../moderation/VaultAccessLogDialogScreen.svelte"),
+    nca_filing: () => import("../moderation/NcaFilingDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

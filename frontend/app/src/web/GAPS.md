@@ -3986,14 +3986,36 @@ design export needs. Each entry says where it came up.
     first extracts it to `app/src/logic/admin`, as the rules say. With it comes the old main
     menu's Admin item (operators only), whose place would be the profile dialog's rail foot,
     above Log out (a new `ProfileDialog` prop).
-  - **Report review**: the moderation channel's report cards (`moderation_report_content`; the
-    old `ModerationReportContent`, `FileAuthorityReport`, `VaultMediaViewer`, `VaultAccessLog`)
-    show as the text "Moderation report": no verdicts (uphold, uphold as CSAM with urgent,
-    dismiss), no media review through the vault (`MediaReviewGate` is already shared), access
-    log, NCA filing (or recording one), copying the hashes, link to the checklist
-    (`/csea-reporting`, built in 9a) or clearing a stale filing attempt. Nor the older reported
-    message card (`reported_message_content`). `MessageGroup` has no kind for an app's own card,
-    so the library needs one first.
+  - **Report review** (built, L6c #10610, `features/moderation`): the moderation channel's
+    report cards, ported plainly on library parts (the user's decision, 2026-11-12), drawn in
+    the conversation through `MessageGroup`'s `customContent` (by hand, EXPORT-LOG 2026-11-25;
+    `messageRow` maps both kinds to `kind: 'custom'`, keyed by the content's kind).
+    `ModerationReportCard` (`moderation_report_content`) is the old desktop card's layout and
+    words, which are the fuller (the resolution's "sanction stands / reversed" lines; mobile has
+    a shorter "Upheld by …"): the verdicts (Uphold, CSAM with the urgent flag, Dismiss, once at a
+    time, a refusal's reason inline), the review-before-verdict gate, media review
+    (`vault_media`, the shared `VaultMediaReview`), the access log (`vault_access_log`), NCA
+    filing or recording one (`nca_filing`), copying the hashes, the checklist link
+    (`/csea-reporting`, in a new tab) and an operator clearing a stale filing attempt.
+    `ReportedMessageCard` (`reported_message_content`): one report at a time, a numbered button
+    for each, how many of all. Their logic, extracted from the old cards, which use it too and
+    behave as before: `logic/moderation`'s `moderationReport` (what the card shows and who may
+    act), `ModerationReportCard` (the card's state: a verdict, a filing just recorded or started,
+    clearing an attempt, copying hashes), `NcaFilingForm`, `VaultAccessLog` and `reportedMessage`.
+    The three dialogs are local dialogs, each on its own (none opens another), so none has a
+    back arrow; ×, the backdrop and Esc close them, as the old overlays. As in the old trees,
+    a verdict doesn't ask first. New string: `report.notes` (a report's notes' label; the old
+    card showed the untranslated "Notes"). Left:
+    - the cards show to whoever reads the channel, as in the old trees; only a platform
+      moderator (or operator) gets the actions;
+    - a card scrolled out of the list and back (the list is virtual) starts afresh, as an old
+      card did when remounted: a verdict under way still lands, but its spinner, an unreviewed
+      gate's state and a filing just started from it aren't kept; the dialogs it opened stay up
+      and still report back to it while it's gone;
+    - native: `src/native`'s conversation passes no `customContent`, so both kinds show their
+      words ("Moderation report") in a text bubble, as before: moderators work from a desktop.
+      Native can draw them the same way, with the same logic, if they're wanted there.
+    TODO(design): no report cards or their dialogs in the design.
   Both are to be ported plainly, as operator- or moderator-only screens on library parts,
   without a design (the user's decision, 2026-11-12): the console is PLAN L6b, the report review
   cards L6c.

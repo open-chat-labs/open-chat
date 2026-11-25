@@ -779,6 +779,17 @@ function kindMessage(
                 : swapMessage(msg.sender, sendingSwap(content, ctx.now), ctx, base, true);
         case "daily_result":
             return dailyResultMessage(content, ctx, base);
+        case "moderation_report_content":
+        case "reported_message_content":
+            // the moderation channel's report cards, which the screen draws itself (MessageGroup's
+            // `customContent`; the web's, L6c); where it doesn't (native), its words in a text
+            // bubble, as before
+            return {
+                ...base,
+                kind: "custom",
+                customKind: content.kind,
+                fallback: messageText(content, ctx),
+            };
         case "file_content":
             return {
                 ...base,
