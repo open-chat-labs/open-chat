@@ -724,7 +724,9 @@
                         class="pushed"
                         class:below={i < pushed.length - 1}
                         inert={i < pushed.length - 1}
-                        in:pushIn={{ play: () => stacks.change !== "pop" }}
+                        in:pushIn={{
+                            play: () => stacks.change !== "pop" && stacks.change !== "same",
+                        }}
                         out:popOut={{ play: () => stacks.change === "pop" }}
                     >
                         <ScreenHost

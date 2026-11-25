@@ -1469,6 +1469,10 @@ design export needs. Each entry says where it came up.
   - **A community's preview** opened from Explore is pushed over it (and a channel read there
     over the preview), so Back goes back through them to Explore and the community the tab was
     on; it was the tab's root, so Back from it went to the Chats tab (from testing, 2026-11-24).
+    Joined from there, at the same URL, the community becomes the tab's root, with the tab bar and
+    the switcher's strip (`TabStacks.arrive` goes again when the URL's screen is another:
+    `sameScreen`); it stayed pushed over Explore, with no tab bar (from testing, 2026-11-25). A
+    channel joined from its join bar stays as it is; Back from it is to the community's page.
   - **The details** have no tiles, Members, mute toggle or Leave (the prototype has them; the
     plan's members' details are Channels, Rules and Access gates). Access gates show the
     preview's card without the statuses.
