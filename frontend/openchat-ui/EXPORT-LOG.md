@@ -1230,3 +1230,11 @@
 - `SettingsLink`: `quiet` (optional, default false), the value in `--ink-4` rather than `--ink-2`, for a row that holds nothing set (None, Off, Default). `meta.json` (`quiet`).
 - Used by the app: the native community details' Manage rows (the user's design prompt: "`--ink-2` when set, `--ink-4` for None/Off/Default").
 - Not in the design export.
+
+## 2026-11-25 — settings rows for the native Access gates page, by hand
+- `SettingsSwitch`: `icon` (optional), an icons.js name before the label, 19px, `--ink-3`, in `--accent` while the switch is on.
+- `SettingsLink`: `iconAccent` (optional, default false), the icon in `--accent`; `helpSummary` (optional, default false), the help as a one-line summary in `--ink-2`, clipped, rather than a description; `disabled` (optional, default false), the row at 0.45 and not pressable.
+- `SettingsValue`: `icon` and `disabled`, handed to its `SettingsLink`.
+- `meta.json` updated for all three.
+- Used by the app: the native Access gates page (groups, channels and communities), to match the design's gate rows (an icon in the accent while the gate is on, what the gate is under its name, or for a gate with setup that's on, a summary of its entries, with On / Off) and its Gate settings rows (an icon, a help line that follows the state, the value, and a menu; dimmed until they apply).
+- In the design export (the native prototype's Access gates page).

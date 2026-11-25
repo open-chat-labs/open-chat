@@ -89,9 +89,52 @@ const SETUP_GATES: SetupGateKind[] = [
 
 export type GateEntry = { gate: ActiveLeafGate; key: string; text: string };
 
+/**
+ * A row of the Gates card (the design's): its icon and label, with what the gate is under it, or,
+ * for a gate with setup that's on, a summary of its entries. A gate with setup shows On / Off and
+ * opens the gate sheet; its entries are listed there.
+ */
 export type GateRow =
-    | { kind: "switch"; gate: SwitchGateKind; label: string; on: boolean }
-    | { kind: "setup"; gate: SetupGateKind; label: string; entries: GateEntry[] };
+    | {
+          kind: "switch";
+          gate: SwitchGateKind;
+          label: string;
+          help: string;
+          icon: string;
+          on: boolean;
+      }
+    | {
+          kind: "setup";
+          gate: SetupGateKind;
+          label: string;
+          help: string;
+          icon: string;
+          on: boolean;
+          summary: string;
+          entries: GateEntry[];
+      };
+
+const GATE_ICON: Record<SwitchGateKind | SetupGateKind, string> = {
+    diamond_gate: "diamond",
+    lifetime_diamond_gate: "diamond",
+    locked_gate: "lock",
+    credential_gate: "shield",
+    payment_gate: "wallet",
+    token_balance_gate: "coins",
+    neuron_gate: "lock",
+    chit_earned_gate: "zap",
+};
+
+const GATE_HELP: Record<SwitchGateKind | SetupGateKind, string> = {
+    diamond_gate: "native.groupSettings.gates.help.diamond",
+    lifetime_diamond_gate: "native.groupSettings.gates.help.lifetime",
+    locked_gate: "native.groupSettings.gates.help.locked",
+    credential_gate: "native.groupSettings.gates.help.credential",
+    payment_gate: "native.groupSettings.gates.help.payment",
+    token_balance_gate: "native.groupSettings.gates.help.balance",
+    neuron_gate: "native.groupSettings.gates.help.neuron",
+    chit_earned_gate: "native.groupSettings.gates.help.chit",
+};
 
 /** The gates the editor shows: not the suspended unique-person gate, nor ones it has no row for. */
 export function shownGates(config: AccessGateConfig): ActiveLeafGate[] {
@@ -163,8 +206,64 @@ export function gateEntryText(
 }
 
 /**
+ * An entry in a row's summary, short: the token's amount ("3 ICP"), the nervous system's name, the
+ * CHIT minimum.
+ */
+export function gateEntryShort(
+    gate: ActiveLeafGate,
+    lookups: GateLookups,
+    t: Translate,
+    locale: string,
+): string {
+    switch (gate.kind) {
+        case "payment_gate": {
+            const token = lookups.tokens.get(gate.ledgerCanister);
+            return t("native.groupSettings.gates.amountOf", {
+                amount: gateAmountText(gate.amount, token?.decimals),
+                symbol: token?.symbol ?? gate.ledgerCanister,
+            });
+        }
+        case "token_balance_gate": {
+            const token = lookups.tokens.get(gate.ledgerCanister);
+            return t("native.groupSettings.gates.amountOf", {
+                amount: gateAmountText(gate.minBalance, token?.decimals),
+                symbol: token?.symbol ?? gate.ledgerCanister,
+            });
+        }
+        case "neuron_gate":
+            return (
+                lookups.nervousSystems.get(gate.governanceCanister)?.token.name ??
+                gate.governanceCanister
+            );
+        default:
+            return gateEntryText(gate, lookups, t, locale);
+    }
+}
+
+/**
+ * A gate with setup's summary under its row: its first two entries, joined as the gates combine
+ * ("3 ICP or 20 CHAT" under Any one gate, "… and …" under All: the backend has one All / Any for
+ * every gate, so a second token isn't an alternative under All), then "+N" for the rest.
+ */
+export function gateSummary(
+    entries: string[],
+    operator: "and" | "or",
+    t: Translate,
+    locale: string,
+): string {
+    if (entries.length === 0) return "";
+    const list = new Intl.ListFormat(locale, {
+        type: operator === "or" ? "disjunction" : "conjunction",
+    }).format(entries.slice(0, 2));
+    return entries.length > 2
+        ? t("native.groupSettings.gates.more", { list, count: entries.length - 2 })
+        : list;
+}
+
+/**
  * The Gates card: the switch gates, on where the group has one (a locked or credential gate only
- * where it has one), then each gate with setup with its entries.
+ * where it has one), then each gate with setup, on with its entries' summary, or off with what
+ * it is.
  */
 export function gateRows(
     config: AccessGateConfig,
@@ -173,19 +272,108 @@ export function gateRows(
     locale: string,
 ): GateRow[] {
     const shown = shownGates(config);
+    const operator = gateOperator(config);
     const has = (kind: ActiveLeafGate["kind"]) => shown.some((g) => g.kind === kind);
     const switches: GateRow[] = [...SWITCH_GATES, ...KEPT_GATES.filter((kind) => has(kind))].map(
-        (gate) => ({ kind: "switch", gate, label: t(gateLabel[gate]), on: has(gate) }),
+        (gate) => ({
+            kind: "switch",
+            gate,
+            label: t(gateLabel[gate]),
+            help: t(GATE_HELP[gate]),
+            icon: GATE_ICON[gate],
+            on: has(gate),
+        }),
     );
-    const setups: GateRow[] = SETUP_GATES.map((gate) => ({
-        kind: "setup",
-        gate,
-        label: t(gateLabel[gate]),
-        entries: shown
-            .filter((g) => g.kind === gate)
-            .map((g) => ({ gate: g, key: gateKey(g), text: gateEntryText(g, lookups, t, locale) })),
-    }));
+    const setups: GateRow[] = SETUP_GATES.map((gate) => {
+        const mine = shown.filter((g) => g.kind === gate);
+        return {
+            kind: "setup",
+            gate,
+            label: t(gateLabel[gate]),
+            help: t(GATE_HELP[gate]),
+            icon: GATE_ICON[gate],
+            on: mine.length > 0,
+            summary: gateSummary(
+                mine.map((g) => gateEntryShort(g, lookups, t, locale)),
+                operator,
+                t,
+                locale,
+            ),
+            entries: mine.map((g) => ({
+                gate: g,
+                key: gateKey(g),
+                text: gateEntryText(g, lookups, t, locale),
+            })),
+        };
+    });
     return [...switches, ...setups];
+}
+
+/** The gate sheet's list: an entry's value under its token ("3 ICP to join", "At least 20 CHAT"). */
+export function gateEntryValue(
+    gate: ActiveLeafGate,
+    lookups: GateLookups,
+    t: Translate,
+    locale: string,
+): string {
+    switch (gate.kind) {
+        case "payment_gate":
+            return t("native.groupSettings.gates.payValue", {
+                amount: gateEntryShort(gate, lookups, t, locale),
+            });
+        case "token_balance_gate":
+            return t("native.groupSettings.gates.balanceValue", {
+                amount: gateEntryShort(gate, lookups, t, locale),
+            });
+        case "neuron_gate": {
+            const parts: string[] = [];
+            const ns = lookups.nervousSystems.get(gate.governanceCanister);
+            if (gate.minStakeE8s) {
+                parts.push(
+                    t("native.groupSettings.gates.stakeEntry", {
+                        amount: gateAmountText(BigInt(gate.minStakeE8s), ns?.token.decimals),
+                        symbol: ns?.token.symbol ?? "",
+                    }),
+                );
+            }
+            if (gate.minDissolveDelay) {
+                parts.push(dissolveDelayLabel(gate.minDissolveDelay / DAY_MS, t));
+            }
+            return parts.length > 0 ? parts.join(" · ") : t("native.groupSettings.gates.anyNeuron");
+        }
+        default:
+            return gateEntryText(gate, lookups, t, locale);
+    }
+}
+
+/** The dissolve delay choices, in days (0: any), as the design has them. */
+export const DISSOLVE_DAYS = [0, 30, 182, 365] as const;
+
+const DISSOLVE_LABEL: Record<number, string> = {
+    0: "native.groupSettings.gates.delayAny",
+    30: "native.groupSettings.gates.delayMonth",
+    182: "native.groupSettings.gates.delaySixMonths",
+    365: "native.groupSettings.gates.delayYear",
+};
+
+/** How a dissolve delay reads as a choice ("1 month", or "45 days" for one set elsewhere). */
+export function dissolveDelayLabel(days: number, t: Translate): string {
+    return DISSOLVE_LABEL[days] !== undefined
+        ? t(DISSOLVE_LABEL[days])
+        : t("native.groupSettings.gates.delayDays", { count: days });
+}
+
+/**
+ * The dissolve delay chips: the design's four, and the entry's own delay where it's another (set
+ * elsewhere), in order of length, so it shows and stays picked.
+ */
+export function dissolveOptions(current: number, t: Translate): { days: number; label: string }[] {
+    const days: number[] = [...DISSOLVE_DAYS];
+    if (!days.includes(current)) {
+        days.push(current);
+        days.sort((a, b) => a - b);
+    }
+    return days.map((d) => ({ days: d, label: dissolveDelayLabel(d, t) }));
 }
 
 /** The gate a switch adds; none for a credential gate, which names a credential (it can only go). */

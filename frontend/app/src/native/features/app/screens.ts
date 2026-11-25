@@ -148,6 +148,10 @@ export const screens: Screens = {
     // Create group's gates, rules and permissions, from its Settings card (N7)
     new_group_settings: () => import("../groupSettings/NewGroupSettingsScreen.svelte"),
 
+    // a payment, minimum balance or neuron gate's entries, picking a token or nervous system,
+    // and its value, from Access gates (N7)
+    gate_entries: () => import("../groupSettings/GateEntriesScreen.svelte"),
+
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)
     builder: undefined,

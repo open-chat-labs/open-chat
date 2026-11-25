@@ -1262,17 +1262,34 @@ design export needs. Each entry says where it came up.
     with the old pages' words (a `NativeAlert`); No keeps the other edits, as the web's. Back
     (the header's or Android's) with unsaved changes asks "Discard changes?" (Keep editing /
     Discard), as the web's Manage does; the plan doesn't say. TODO(design).
-  - **Access gates**: the intro, the Gates card (Diamond and Lifetime Diamond as switches; a
-    locked or credential gate only where the group already has one, to see it and take it off;
-    Payment, Minimum token balance, Neuron holder and Minimum CHIT as rows with Add, each entry
-    under its row in words, tapped to change it, × to take it off with Undo), then Gate settings,
-    always there and dimmed (0.45) until they apply: Members must meet (All gates / Any one gate,
-    from two gates) and Re-check members (Never / Weekly / Monthly / Quarterly, from one gate; an
-    interval set elsewhere, say 14 days, shows as "Every 14 days" and stays picked). The gate
-    sheet keeps one height (74%) for its two steps: the token or nervous system (a search, those
-    the gate already names marked Added), then the value (Payment's amount, a balance's minimum,
-    a neuron's dissolve delay in days and stake, both optional; CHIT has only this step).
-    TODO(design): the dimmed look, the entry rows and the sheet's steps are ours.
+  - **Access gates** (to the design's page and screens, 2026-11-25): the intro, the Gates
+    card, each gate with its icon (in the accent while it's on) and what it is under its name:
+    Diamond and Lifetime Diamond as switches (a locked or credential gate only where the group
+    already has one, to see it and take it off); Payment, Minimum token balance, Neuron holder
+    and Minimum CHIT as rows with On / Off and a chevron, showing a summary of their entries
+    while on (the first two, joined as the gates combine, "3 ICP or 20 CHAT" under Any one gate,
+    then "+N"). Then Gate settings, always there and dimmed (0.45) until they apply: Members must
+    meet (All gates / Any one gate, from two gates) and Re-check members (Never / Weekly /
+    Monthly / Quarterly, from one gate; an interval set elsewhere, say 14 days, shows as "Every
+    14 days" and stays picked), each a row with an icon, a help line that follows the state, the
+    value and a menu from the row.
+    - Payment, Minimum token balance and Neuron holder push their own screens (`gate_entries`,
+      local, on the page's draft held by `gatesEditor`): the list (what the gate is, its tokens
+      or nervous systems with their values, tap to change, × to take one out with Undo, Add a
+      token / Add a nervous system (Diamond's), Remove gate with Undo while it has any; empty:
+      "No tokens yet. Add one to turn this gate on."), then Choose a token (a search; those
+      already in the gate left out), then the value (the picked one with Change, back to the
+      search; a payment's price or a balance's minimum with its dollar worth where the token
+      has a price; a neuron's minimum stake, optional, and its dissolve delay as the design's
+      chips, Any / 1 month / 6 months / 1 year, plus a delay set elsewhere), with Add token /
+      Save pinned, which lands back on the list ("ICP added"). Changes go into the page's draft
+      at once; the page's Save sends them.
+    - Minimum CHIT keeps a sheet (one value): what it is, the minimum, Save, Remove gate.
+    - Ours, where the design is silent: the intro keeps the app's words (who can join, and that
+      people you invite don't have to meet the gates), not the design's; the design's "add more
+      than one to accept any of them" is left out of the help (see Not offered); a locked or
+      credential gate's help; a gate's entries screens opened with the page gone (a cold start)
+      show only their header.
   - **Not offered**: the unique-person gate (the plan lists it, but DecideAI is suspended: the
     web and the old pages hide it too, and one already there is kept, unseen). The plan says
     several entries of a kind are allowed and "any one satisfies that gate"; the backend has one

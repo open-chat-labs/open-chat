@@ -11,10 +11,12 @@
     help?: string;
     on: boolean;
     disabled?: boolean;
+    /** An icons.js name, before the label, in the accent while on (Access gates' list). */
+    icon?: string;
     onChange: (on: boolean) => void;
   }
 
-  let { label, help = '', on, disabled = false, onChange }: Props = $props();
+  let { label, help = '', on, disabled = false, icon, onChange }: Props = $props();
   const t = useT();
 
   // the switch flips itself; a tap elsewhere on the row flips it too
@@ -27,6 +29,7 @@
 <!-- the switch is the control (keyboard included); the row's tap is a bigger target for touch -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="settings-row switch-row" class:disabled onclick={rowTap}>
+  {#if icon}<span class="icon" class:on style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{/if}
   <span class="text">
     <span class="label">{t(label)}</span>
     {#if help}<span class="help">{t(help)}</span>{/if}
@@ -49,6 +52,17 @@
 
     &.disabled {
       cursor: default;
+    }
+  }
+
+  .icon {
+    flex: none;
+    width: 19px;
+    height: 19px;
+    background: var(--ink-3);
+
+    &.on {
+      background: var(--accent);
     }
   }
 

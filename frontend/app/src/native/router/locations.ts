@@ -87,6 +87,12 @@ export type CommunitySettingsPage =
 /** Create group's gates, rules and permissions, pushed from its Settings card (N7). */
 export type NewGroupSettingsPage = "gates" | "rules" | "permissions";
 
+/** A gate with entries (several tokens or nervous systems), whose entries get their own screens. */
+export type GateWithEntries = "payment_gate" | "token_balance_gate" | "neuron_gate";
+
+/** Its screens: the entries, picking a token or nervous system, then its value. */
+export type GateEntriesStep = "list" | "pick" | "value";
+
 /**
  * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen
  * showing without changing the URL, as the web opens a local dialog (TabStacks.push).
@@ -110,6 +116,9 @@ export type LocalScreen =
     | { kind: "group_settings"; chatId: MultiUserChatIdentifier; page: GroupSettingsPage }
     // Create group's gates, rules or permissions, from its Settings card (N7): its draft's
     | { kind: "new_group_settings"; page: NewGroupSettingsPage }
+    // a payment, minimum balance or neuron gate's entries, from Access gates (N7, the design's
+    // screens): the access gates page's draft's (gatesEditor)
+    | { kind: "gate_entries"; gate: GateWithEntries; step: GateEntriesStep }
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" }
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat
@@ -135,6 +144,8 @@ export function localKey(screen: LocalScreen): string {
         case "new_group_settings":
         case "community_settings":
             return `${screen.kind}:${screen.page}`;
+        case "gate_entries":
+            return `${screen.kind}:${screen.gate}:${screen.step}`;
         default:
             return screen.kind;
     }

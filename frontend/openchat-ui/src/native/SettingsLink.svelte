@@ -18,19 +18,42 @@
     accent?: boolean;
     /** The value quieter (`--ink-4`): nothing set (None, Off, Default). */
     quiet?: boolean;
+    /** The icon in the accent: the thing the row sets is on (Access gates' list). */
+    iconAccent?: boolean;
+    /** The help as a one-line summary (`--ink-2`, clipped) rather than a description. */
+    helpSummary?: boolean;
+    /** Dimmed and not pressable: the setting doesn't apply yet. */
+    disabled?: boolean;
     /** Gets the row, to anchor a menu to. */
     onClick: (row: HTMLElement) => void;
   }
 
-  let { label, help = '', value = '', icon, chevron = 'right', accent = false, quiet = false, onClick }: Props = $props();
+  let {
+    label,
+    help = '',
+    value = '',
+    icon,
+    chevron = 'right',
+    accent = false,
+    quiet = false,
+    iconAccent = false,
+    helpSummary = false,
+    disabled = false,
+    onClick,
+  }: Props = $props();
   const t = useT();
 </script>
 
-<button type="button" class="settings-row link-row" aria-haspopup={chevron === 'down' ? 'menu' : undefined} onclick={(e) => onClick(e.currentTarget)}>
-  {#if icon}<span class="icon" style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{/if}
+<button
+  type="button"
+  class="settings-row link-row"
+  {disabled}
+  aria-haspopup={chevron === 'down' ? 'menu' : undefined}
+  onclick={(e) => onClick(e.currentTarget)}>
+  {#if icon}<span class="icon" class:accent={iconAccent} style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{/if}
   <span class="text">
     <span class="label">{t(label)}</span>
-    {#if help}<span class="help">{t(help)}</span>{/if}
+    {#if help}<span class="help" class:summary={helpSummary}>{t(help)}</span>{/if}
   </span>
   {#if value}<span class="value" class:accent class:quiet>{t(value)}</span>{/if}
   <span class="chevron {chevron}"></span>
@@ -54,8 +77,13 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 
-    &:active {
+    &:active:not(:disabled) {
       background: var(--overlay-1);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
     }
   }
 
@@ -64,6 +92,10 @@
     width: 19px;
     height: 19px;
     background: var(--ink-3);
+
+    &.accent {
+      background: var(--accent);
+    }
   }
 
   .text {
@@ -82,6 +114,11 @@
     font: var(--weight-medium) var(--text-md) / 1.35 var(--font-sans);
     color: var(--ink-4);
     text-wrap: pretty;
+
+    &.summary {
+      color: var(--ink-2);
+      @include truncate;
+    }
   }
 
   .value {

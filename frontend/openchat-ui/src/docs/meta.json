@@ -23605,6 +23605,39 @@
         "doc": "The value quieter (`--ink-4`): nothing set (None, Off, Default)."
       },
       {
+        "name": "iconAccent",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The icon in the accent: the thing the row sets is on (Access gates' list)."
+      },
+      {
+        "name": "helpSummary",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The help as a one-line summary (`--ink-2`, clipped) rather than a description."
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Dimmed and not pressable: the setting doesn't apply yet."
+      },
+      {
         "name": "onClick",
         "type": "(row: HTMLElement) => void",
         "default": null,
@@ -23844,6 +23877,17 @@
         "doc": ""
       },
       {
+        "name": "icon",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An icons.js name, before the label, in the accent while on (Access gates' list)."
+      },
+      {
         "name": "onChange",
         "type": "(on: boolean) => void",
         "default": null,
@@ -23921,6 +23965,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": "The value in the accent: a setting changed from its default."
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An icons.js name, before the label."
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Dimmed and not pressable: the setting doesn't apply yet."
       },
       {
         "name": "onChange",

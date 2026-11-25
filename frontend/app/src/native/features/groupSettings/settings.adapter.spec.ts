@@ -1,4 +1,5 @@
 import {
+    type ActiveLeafGate,
     defaultChatPermissions,
     defaultChatRules,
     nullMembership,
@@ -25,6 +26,10 @@ import {
     changeQuestion,
     changedPermissions,
     customisedPerType,
+    dissolveDelayLabel,
+    dissolveOptions,
+    gateEntryValue,
+    gateSummary,
     draftSavable,
     gateOperator,
     gateRemovalLosses,
@@ -79,6 +84,89 @@ const lookups: GateLookups = {
 const config = (gate: AccessGateConfig["gate"], expiry?: bigint): AccessGateConfig => ({
     gate,
     expiry,
+});
+
+describe("the Gates card's rows (the design's)", () => {
+    test("each row has its icon and what it is; a gate with setup is off with no entries", () => {
+        const rows = gateRows(config({ kind: "no_gate" }), lookups, t, "en");
+        const pay = rows.find((r) => r.gate === "payment_gate");
+        expect(pay).toMatchObject({
+            icon: "wallet",
+            help: "native.groupSettings.gates.help.payment",
+            on: false,
+            summary: "",
+        });
+        expect(rows.find((r) => r.gate === "diamond_gate")).toMatchObject({
+            icon: "diamond",
+            help: "native.groupSettings.gates.help.diamond",
+            on: false,
+        });
+    });
+
+    test("a gate with setup that's on sums up its entries, joined as the gates combine", () => {
+        const pay = (amount: bigint, ledger = "icp"): ActiveLeafGate => ({
+            kind: "payment_gate",
+            ledgerCanister: ledger,
+            amount,
+            fee: 0n,
+        });
+        const or = gateRows(
+            config({
+                kind: "composite_gate",
+                operator: "or",
+                gates: [pay(300_000_000n), pay(200_000_000n, "other")],
+            }),
+            lookups,
+            t,
+            "en",
+        ).find((r) => r.gate === "payment_gate");
+        expect(or).toMatchObject({ on: true });
+        expect(or?.kind === "setup" && or.summary).toBe(
+            'native.groupSettings.gates.amountOf {"amount":"3.00","symbol":"ICP"} or native.groupSettings.gates.amountOf {"amount":"","symbol":"other"}',
+        );
+    });
+
+    test("the summary shows two entries, then how many more", () => {
+        expect(gateSummary(["a", "b", "c", "d"], "and", t, "en")).toBe(
+            'native.groupSettings.gates.more {"list":"a and b","count":2}',
+        );
+        expect(gateSummary(["a", "b"], "or", t, "en")).toBe("a or b");
+        expect(gateSummary([], "or", t, "en")).toBe("");
+    });
+});
+
+describe("the gate sheet", () => {
+    test("an entry's value under its token", () => {
+        expect(
+            gateEntryValue(
+                { kind: "token_balance_gate", ledgerCanister: "icp", minBalance: 2_000_000_000n },
+                lookups,
+                t,
+                "en",
+            ),
+        ).toBe(
+            'native.groupSettings.gates.balanceValue {"amount":"native.groupSettings.gates.amountOf {\\"amount\\":\\"20.00\\",\\"symbol\\":\\"ICP\\"}"}',
+        );
+        expect(
+            gateEntryValue(
+                {
+                    kind: "neuron_gate",
+                    governanceCanister: "gov",
+                    minDissolveDelay: undefined,
+                    minStakeE8s: undefined,
+                },
+                lookups,
+                t,
+                "en",
+            ),
+        ).toBe("native.groupSettings.gates.anyNeuron");
+    });
+
+    test("the dissolve delay chips are the design's four, plus one set elsewhere", () => {
+        expect(dissolveOptions(30, t).map((o) => o.days)).toEqual([0, 30, 182, 365]);
+        expect(dissolveOptions(90, t).map((o) => o.days)).toEqual([0, 30, 90, 182, 365]);
+        expect(dissolveDelayLabel(90, t)).toBe('native.groupSettings.gates.delayDays {"count":90}');
+    });
 });
 
 describe("the settings pages' titles", () => {
