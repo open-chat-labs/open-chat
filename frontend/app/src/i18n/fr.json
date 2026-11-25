@@ -2845,7 +2845,6 @@
                 "moderation": "Modération",
                 "messages": "Messages",
                 "threads": "Fils",
-                "note": "Chaque permission est attribuée au rôle le plus bas qui l'a. Les rôles supérieurs l'ont aussi.",
                 "perm": {
                     "changeRoles": "Changer les rôles",
                     "updateGroup": "Modifier les infos du groupe",

@@ -2,11 +2,10 @@
      Members card (change roles, edit the community, invite, remove) and the Channels card (public
      and private channels, user groups), a row per permission with the lowest role that has it at
      the end (owners, admins or everyone; in the accent where it's not the default) opening the role
-     menu, and Reset to defaults. A community has no message or thread permissions: those are each
+     menu, and Reset to defaults (a text link under the cards, as the design has it). A community has no message or thread permissions: those are each
      channel's. It edits the draft until it's saved. Someone whose role can't change them (the
      owner's, as the backend has it) sees the roles only. -->
 <script lang="ts">
-    import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import SettingsValue from "@openchat/ui/src/native/SettingsValue.svelte";
     import type { UpdateCommunityState } from "@src/logic/groupOrCommunity/community.svelte";
@@ -52,8 +51,7 @@
                 card.card === "members"
                     ? "native.groupSettings.permissions.members"
                     : "native.communitySettings.permissions.channels",
-            )}
-            note={card.card === "members" ? $_("native.groupSettings.permissions.note") : ""}>
+            )}>
             {#each communityPermissionRows(permissions, card.card, t) as row (row.key)}
                 {#if readOnly}
                     <FactRow label={row.label} value={label(row.value)} />
@@ -70,16 +68,32 @@
     {/each}
 
     {#if !readOnly && changed}
-        <SettingsGroup>
-            <SettingsAction
-                icon="rotate-back"
-                label={$_("native.groupSettings.permissions.reset")}
-                onClick={reset} />
-        </SettingsGroup>
+        <!-- the design's: a text link under the cards -->
+        <button type="button" class="reset" onclick={reset}>
+            {$_("native.groupSettings.permissions.reset")}
+        </button>
     {/if}
 </div>
 
 <style lang="scss">
+    @use "@openchat/ui/src/lib/styles/mixins" as *;
+
+    .reset {
+        align-self: center;
+        min-height: var(--touch-target);
+        padding: 0 var(--space-16);
+        border: 0;
+        background: none;
+        font: var(--weight-semibold) text-size(14px) / 1 var(--font-sans);
+        color: var(--accent-bright);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:focus-visible {
+            @include focus-ring;
+        }
+    }
+
     .permissions {
         display: flex;
         flex-direction: column;

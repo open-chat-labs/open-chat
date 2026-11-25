@@ -4,8 +4,8 @@
      message type" (the types' rows, each its own role or Same as default, under the switch; off,
      the types are as the defaults have them, so swap offers stay with nobody); the Threads card
      with "Separate thread permissions" (the same rows for threads under it, against the
-     messages'); and
-     Reset to defaults (the client's defaultChatPermissions). It edits the draft until it's saved.
+     messages'); and Reset to defaults (the client's defaultChatPermissions), a text link under
+     the cards, as the design has it. It edits the draft until it's saved.
      Someone whose role can't change them (`readOnly`: the owner's, as the backend has it) sees the
      roles only. -->
 <script lang="ts">
@@ -14,7 +14,6 @@
         type ChatPermissions,
         type MessagePermissions,
     } from "@client";
-    import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import SettingsSwitch from "@openchat/ui/src/native/SettingsSwitch.svelte";
     import SettingsValue from "@openchat/ui/src/native/SettingsValue.svelte";
@@ -166,9 +165,7 @@
 
 <div class="permissions">
     {#each PERMISSION_CARDS as card (card.card)}
-        <SettingsGroup
-            label={$_(`native.groupSettings.permissions.${card.card}`)}
-            note={card.card === "members" ? $_("native.groupSettings.permissions.note") : ""}>
+        <SettingsGroup label={$_(`native.groupSettings.permissions.${card.card}`)}>
             {#each generalRows(permissions, card.card, t) as row (row.key)}
                 {@render roleRow(row, (id) => setGeneral(row.key as GeneralPermission, id))}
             {/each}
@@ -202,16 +199,32 @@
     </SettingsGroup>
 
     {#if !readOnly && changed}
-        <SettingsGroup>
-            <SettingsAction
-                icon="rotate-back"
-                label={$_("native.groupSettings.permissions.reset")}
-                onClick={reset} />
-        </SettingsGroup>
+        <!-- the design's: a text link under the cards -->
+        <button type="button" class="reset" onclick={reset}>
+            {$_("native.groupSettings.permissions.reset")}
+        </button>
     {/if}
 </div>
 
 <style lang="scss">
+    @use "@openchat/ui/src/lib/styles/mixins" as *;
+
+    .reset {
+        align-self: center;
+        min-height: var(--touch-target);
+        padding: 0 var(--space-16);
+        border: 0;
+        background: none;
+        font: var(--weight-semibold) text-size(14px) / 1 var(--font-sans);
+        color: var(--accent-bright);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:focus-visible {
+            @include focus-ring;
+        }
+    }
+
     .permissions {
         display: flex;
         flex-direction: column;

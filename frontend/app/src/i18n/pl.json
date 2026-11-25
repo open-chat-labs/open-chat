@@ -2845,7 +2845,6 @@
                 "moderation": "Moderacja",
                 "messages": "Wiadomości",
                 "threads": "Wątki",
-                "note": "Każde uprawnienie ma najniższa rola, która je posiada. Wyższe role też je mają.",
                 "perm": {
                     "changeRoles": "Zmiana ról członków",
                     "updateGroup": "Edycja informacji o grupie",

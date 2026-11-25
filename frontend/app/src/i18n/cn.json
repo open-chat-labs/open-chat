@@ -2845,7 +2845,6 @@
                 "moderation": "管理",
                 "messages": "消息",
                 "threads": "话题串",
-                "note": "每项权限设为拥有它的最低角色。更高的角色也拥有它。",
                 "perm": {
                     "changeRoles": "更改成员角色",
                     "updateGroup": "编辑群组信息",

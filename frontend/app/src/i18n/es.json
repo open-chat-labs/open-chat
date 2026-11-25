@@ -2845,7 +2845,6 @@
                 "moderation": "Moderación",
                 "messages": "Mensajes",
                 "threads": "Hilos",
-                "note": "Cada permiso se asigna al rol más bajo que lo tiene. Los roles superiores también lo tienen.",
                 "perm": {
                     "changeRoles": "Cambiar roles de miembros",
                     "updateGroup": "Editar la información del grupo",

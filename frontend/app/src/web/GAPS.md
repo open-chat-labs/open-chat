@@ -1310,7 +1310,8 @@ design export needs. Each entry says where it came up.
     switching it off puts the types back as the defaults have them, so swap offers never open to
     everyone unseen), the Threads card (Separate thread permissions, the same rows for threads
     under it, marked and counted against the messages'), and Reset to defaults
-    (`defaultChatPermissions`) while anything differs. Someone whose role can't change them (not
+    (`defaultChatPermissions`, a text link under the cards, as the design has it; 2026-11-25)
+    while anything differs. Someone whose role can't change them (not
     the owner) sees the roles only, with no Save. Save counts only what a save would send
     (`hasSavableChanges`): threads given just "members send" send nothing (the client compares
     them with that), so they read as no change.
@@ -1591,7 +1592,8 @@ design export needs. Each entry says where it came up.
     ours): Members (change roles, edit the community, invite, remove) and Channels and user groups
     (public channels, private channels, user groups), each with owners, admins or everyone, in the
     accent where it isn't the default (`defaultCommunityPermissions`, now exported from
-    `stores/community`), and Reset to defaults. A community has no message or thread permissions.
+    `stores/community`), and Reset to defaults (the design's text link). A community has no message
+    or thread permissions. No note under the Members card (the design has none; 2026-11-25).
   - **Not built yet** (placeholders): Channels and User groups (a second PR of this issue), Bots
     and webhooks and Stats (under-specified: "Native group settings").
   - **Checked** in a 390×844 touch browser on the native tree against the local replica, as

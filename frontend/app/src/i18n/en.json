@@ -2754,7 +2754,6 @@
                 "moderation": "Moderation",
                 "messages": "Messages",
                 "threads": "Threads",
-                "note": "Each permission is set to the lowest role that has it. Higher roles have it too.",
                 "perm": {
                     "changeRoles": "Change member roles",
                     "updateGroup": "Edit group info",

@@ -2845,7 +2845,6 @@
                 "moderation": "Kiểm duyệt",
                 "messages": "Tin nhắn",
                 "threads": "Chủ đề con",
-                "note": "Mỗi quyền được đặt ở vai trò thấp nhất có quyền đó. Các vai trò cao hơn cũng có.",
                 "perm": {
                     "changeRoles": "Đổi vai trò thành viên",
                     "updateGroup": "Sửa thông tin nhóm",

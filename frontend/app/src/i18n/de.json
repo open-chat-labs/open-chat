@@ -2845,7 +2845,6 @@
                 "moderation": "Moderation",
                 "messages": "Nachrichten",
                 "threads": "Threads",
-                "note": "Jede Berechtigung gilt ab der niedrigsten Rolle, die sie hat. Höhere Rollen haben sie auch.",
                 "perm": {
                     "changeRoles": "Rollen ändern",
                     "updateGroup": "Gruppeninfos bearbeiten",
