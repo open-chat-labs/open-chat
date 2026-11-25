@@ -2603,6 +2603,32 @@
                 "invite": "Zaproś i udostępnij"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "Powiadomienia zależą od ustawień każdego kanału.",
+            "muteHelpOn": "Nie dostaniesz powiadomień z żadnego kanału.",
+            "none": "Brak",
+            "rulesCount": "{count, plural, one {# zasada} few {# zasady} many {# zasad} other {# zasady}}",
+            "gatesCount": "{count, plural, one {# warunek} few {# warunki} many {# warunków} other {# warunku}}",
+            "channelsCount": "{count, plural, one {# kanał} few {# kanały} many {# kanałów} other {# kanału}}",
+            "linkOn": "Link włączony",
+            "botsCount": "{count, plural, one {# bot} few {# boty} many {# botów} other {# bota}}",
+            "unmutedAll": "Wyciszenie wszystkich kanałów wyłączone",
+            "unmuteFailed": "Nie udało się wyłączyć wyciszenia",
+            "language": "Język",
+            "you": "Ty w tej społeczności",
+            "muteAll": "Wycisz wszystkie kanały",
+            "leave": "Opuść społeczność",
+            "delete": "Usuń społeczność",
+            "leaveTitle": "Opuścić {name}?",
+            "leaveMessage": "Opuścisz wszystkie jej kanały. Możesz dołączyć ponownie, jeśli na to pozwala.",
+            "leaveConfirm": "Opuść",
+            "deleteTitle": "Usunąć {name}?",
+            "deleteMessage": "Zniknie dla wszystkich, ze wszystkimi kanałami i wiadomościami. Tego nie da się cofnąć.",
+            "deleteConfirm": "Usuń",
+            "deleted": "Usunięto {name}",
+            "noRules": "Ta społeczność nie ma zasad.",
+            "noGates": "Każdy może dołączyć: ta społeczność nie ma warunków dostępu."
+        },
         "communitySettings": {
             "edit": "Edytuj społeczność",
             "photo": "Zdjęcie społeczności",

@@ -2400,13 +2400,22 @@ export class OpenChat {
             });
     }
 
-    muteAllChannels(communityId: CommunityIdentifier, atEveryOne: boolean): Promise<boolean> {
+    /**
+     * Mutes every channel of the community (or only their @everyone, with `atEveryOne`). With
+     * `muted` false it unmutes them all instead, which the community canister takes as it takes a
+     * mute (its toggle_mute_notifications with no channel applies to them all).
+     */
+    muteAllChannels(
+        communityId: CommunityIdentifier,
+        atEveryOne: boolean,
+        muted: boolean = true,
+    ): Promise<boolean> {
         const community = communitiesStore.value.get(communityId);
         if (community === undefined) {
             return Promise.resolve(false);
         }
 
-        const mute = atEveryOne ? undefined : true;
+        const mute = atEveryOne ? undefined : muted;
         const muteAtEveryone = atEveryOne ? true : undefined;
 
         const undos = community.channels.map((c) =>

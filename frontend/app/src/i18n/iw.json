@@ -2603,6 +2603,32 @@
                 "invite": "הזמנה ושיתוף"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "ההתראות פועלות לפי ההגדרות של כל ערוץ.",
+            "muteHelpOn": "לא תקבל התראות מאף ערוץ.",
+            "none": "אין",
+            "rulesCount": "{count, plural, one {כלל אחד} other {# כללים}}",
+            "gatesCount": "{count, plural, one {תנאי אחד} other {# תנאים}}",
+            "channelsCount": "{count, plural, one {ערוץ אחד} other {# ערוצים}}",
+            "linkOn": "הקישור פעיל",
+            "botsCount": "{count, plural, one {בוט אחד} other {# בוטים}}",
+            "unmutedAll": "ההשתקה הוסרה מכל הערוצים",
+            "unmuteFailed": "לא ניתן היה להסיר את ההשתקה",
+            "language": "שפה",
+            "you": "אתה בקהילה הזו",
+            "muteAll": "השתקת כל הערוצים",
+            "leave": "עזיבת הקהילה",
+            "delete": "מחיקת הקהילה",
+            "leaveTitle": "לעזוב את {name}?",
+            "leaveMessage": "תעזוב את כל הערוצים שבה. תוכל להצטרף שוב אם היא מאפשרת.",
+            "leaveConfirm": "עזיבה",
+            "deleteTitle": "למחוק את {name}?",
+            "deleteMessage": "היא תימחק לכולם, עם כל הערוצים וההודעות. אי אפשר לבטל.",
+            "deleteConfirm": "מחיקה",
+            "deleted": "{name} נמחקה",
+            "noRules": "לקהילה הזו אין כללים.",
+            "noGates": "כל אחד יכול להצטרף: לקהילה הזו אין תנאי גישה."
+        },
         "communitySettings": {
             "edit": "עריכת הקהילה",
             "photo": "תמונת הקהילה",

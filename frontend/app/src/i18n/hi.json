@@ -2603,6 +2603,32 @@
                 "invite": "आमंत्रित करें और साझा करें"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "सूचनाएं हर चैनल की सेटिंग के अनुसार आती हैं।",
+            "muteHelpOn": "आपको किसी चैनल से सूचनाएं नहीं मिलेंगी।",
+            "none": "कोई नहीं",
+            "rulesCount": "{count, plural, one {# नियम} other {# नियम}}",
+            "gatesCount": "{count, plural, one {# शर्त} other {# शर्तें}}",
+            "channelsCount": "{count, plural, one {# चैनल} other {# चैनल}}",
+            "linkOn": "लिंक चालू",
+            "botsCount": "{count, plural, one {# बॉट} other {# बॉट}}",
+            "unmutedAll": "सभी चैनल अनम्यूट हुए",
+            "unmuteFailed": "चैनल अनम्यूट नहीं हो सके",
+            "language": "भाषा",
+            "you": "इस कम्युनिटी में आप",
+            "muteAll": "सभी चैनल म्यूट करें",
+            "leave": "कम्युनिटी छोड़ें",
+            "delete": "कम्युनिटी हटाएं",
+            "leaveTitle": "{name} छोड़ें?",
+            "leaveMessage": "आप इसके सभी चैनल छोड़ देंगे। अनुमति हो तो फिर से जुड़ सकते हैं।",
+            "leaveConfirm": "छोड़ें",
+            "deleteTitle": "{name} हटाएं?",
+            "deleteMessage": "यह सभी के लिए, सभी चैनलों और संदेशों के साथ हट जाएगी। इसे पूर्ववत नहीं किया जा सकता।",
+            "deleteConfirm": "हटाएं",
+            "deleted": "{name} हटाई गई",
+            "noRules": "इस कम्युनिटी के कोई नियम नहीं हैं।",
+            "noGates": "कोई भी जुड़ सकता है: इस कम्युनिटी में प्रवेश की कोई शर्त नहीं है।"
+        },
         "communitySettings": {
             "edit": "कम्युनिटी संपादित करें",
             "photo": "कम्युनिटी फ़ोटो",

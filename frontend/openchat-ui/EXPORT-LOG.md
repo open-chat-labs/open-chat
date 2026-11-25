@@ -1225,3 +1225,8 @@
 - `Toggle`: the off thumb is white (with a small shadow) as the on one is, on a stronger track (`--overlay-3`, was `--overlay-2`). Its grey (`--ink-4`) off thumb read as a disabled switch on the device (native N7, Access gates, from testing on Android). Disabled is unchanged (the whole switch at 0.4). No props changed, so `meta.json` is as it was.
 - Used everywhere the library's switch is: the web and the native settings rows (`SettingsSwitch`).
 - Not in the design export: the export draws the off thumb grey. TODO(design): confirm the off state.
+
+## 2026-11-25 — SettingsLink: a quiet value, by hand
+- `SettingsLink`: `quiet` (optional, default false), the value in `--ink-4` rather than `--ink-2`, for a row that holds nothing set (None, Off, Default). `meta.json` (`quiet`).
+- Used by the app: the native community details' Manage rows (the user's design prompt: "`--ink-2` when set, `--ink-4` for None/Off/Default").
+- Not in the design export.

@@ -100,7 +100,10 @@ native/
                      its page (CommunityHome: the header and its menu, the Threads row, the
                      channels and those not joined) with the switcher, strip ↔ sheet
                      (CommunitySwitcher on switcher.ts' one factor); the community's details
-                     (CommunityDetailsScreen, community_details, pushed locally)
+                     (CommunityDetailsScreen, community_details, pushed locally: its tiles, Info,
+                     Manage's values, the mute and Leave / Delete in communityDetails.adapter,
+                     leaveCommunity) and its members (CommunityMembersScreen, community_members,
+                     on details' Members)
     communitySettings/  a community's settings pages (N7), pushed from its details' Manage and
                      Edit and its page's menu (community_settings): Edit community
                      (CommunityGeneralPage), Access gates and Rules (groupSettings' pages) and

@@ -17,6 +17,7 @@
             class="tile"
             class:on={tile.on}
             aria-pressed={tile.id === "mute" ? tile.on : undefined}
+            disabled={tile.disabled}
             onclick={() => onTile(tile.id)}>
             <span class="icon" style:mask="var(--icon-{tile.icon}) center/contain no-repeat"></span>
             <span class="label">{tile.label}</span>
@@ -48,8 +49,13 @@
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
 
-        &:active {
+        &:active:not(:disabled) {
             background: var(--overlay-2);
+        }
+
+        &:disabled {
+            cursor: default;
+            opacity: 0.45;
         }
 
         &:focus-visible {

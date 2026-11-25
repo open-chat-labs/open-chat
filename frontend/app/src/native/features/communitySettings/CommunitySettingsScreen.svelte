@@ -8,24 +8,30 @@
      slides out once it isn't selected. -->
 <script lang="ts">
     import {
+        anonUserStore,
         communitiesStore,
         selectedCommunityIdStore,
         selectedCommunityRulesStore,
+        type OpenChat,
         type VersionedRules,
     } from "@client";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
+    import { communityManageAccess } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import type { ScreenProps } from "../app/screens";
     import Placeholder from "../app/Placeholder.svelte";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
     import InvitePeople from "../details/InvitePeople.svelte";
+    import CommunityInfoPage from "./CommunityInfoPage.svelte";
     import CommunitySettingsEditor from "./CommunitySettingsEditor.svelte";
     import { communityPageTitle, communitySettingsReady } from "./communitySettings.adapter";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "community_settings" }>> =
         $props();
 
+    const client = getContext<OpenChat>("client");
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
 
     const community = $derived($communitiesStore.get(screen.communityId));
@@ -38,10 +44,18 @@
     // the Rules page's draft is made from them, so it waits for them: made without, it would show
     // the default rules, and saving would put those in place of the community's
     const ready = $derived(communitySettingsReady(screen.page, community, rules));
+    // a member who may not change the community sees its channels, rules and gates read only
+    // (the details' Info card)
+    const readOnly = $derived(
+        community !== undefined &&
+            communityManageAccess(client, community, $anonUserStore).kind === "about",
+    );
 </script>
 
 <div class="community-settings">
-    {#if screen.page === "channels" || screen.page === "user_groups" || screen.page === "bots" || screen.page === "stats"}
+    {#if readOnly && community !== undefined && (screen.page === "channels" || screen.page === "rules" || screen.page === "gates")}
+        <CommunityInfoPage {community} {rules} page={screen.page} {context} />
+    {:else if screen.page === "channels" || screen.page === "user_groups" || screen.page === "bots" || screen.page === "stats"}
         <!-- not built yet (GAPS.md, "Native community settings") -->
         <Placeholder
             title={communityPageTitle(screen.page, t)}

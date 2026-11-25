@@ -118,6 +118,8 @@ export type LocalScreen =
     | { kind: "explore_list"; shelf: ExploreShelfKey }
     // a community's details, from its page's header and Manage (N8a)
     | { kind: "community_details"; communityId: CommunityIdentifier }
+    // a community's members, from its details' Members row (plan 10's Members screen)
+    | { kind: "community_members"; communityId: CommunityIdentifier }
     // a community's settings page, from its details' Manage and Edit, and its page's menu (N7)
     | { kind: "community_settings"; communityId: CommunityIdentifier; page: CommunitySettingsPage }
     // Create community, from the Communities switcher's sheet (N8b)

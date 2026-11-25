@@ -2603,6 +2603,32 @@
                 "invite": "الدعوة والمشاركة"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "تتبع الإشعارات إعدادات كل قناة.",
+            "muteHelpOn": "لن تصلك إشعارات من أي قناة.",
+            "none": "لا شيء",
+            "rulesCount": "{count, plural, one {قاعدة واحدة} other {# قواعد}}",
+            "gatesCount": "{count, plural, one {شرط واحد} other {# شروط}}",
+            "channelsCount": "{count, plural, one {قناة واحدة} other {# قنوات}}",
+            "linkOn": "الرابط مفعّل",
+            "botsCount": "{count, plural, one {بوت واحد} other {# بوتات}}",
+            "unmutedAll": "تم إلغاء كتم كل القنوات",
+            "unmuteFailed": "تعذّر إلغاء كتم القنوات",
+            "language": "اللغة",
+            "you": "أنت في هذا المجتمع",
+            "muteAll": "كتم كل القنوات",
+            "leave": "مغادرة المجتمع",
+            "delete": "حذف المجتمع",
+            "leaveTitle": "مغادرة {name}؟",
+            "leaveMessage": "ستغادر كل قنواته. يمكنك الانضمام مجددًا إن سمح بذلك.",
+            "leaveConfirm": "مغادرة",
+            "deleteTitle": "حذف {name}؟",
+            "deleteMessage": "سيُحذف للجميع مع كل قنواته ورسائله. لا يمكن التراجع عن ذلك.",
+            "deleteConfirm": "حذف",
+            "deleted": "تم حذف {name}",
+            "noRules": "لا توجد قواعد لهذا المجتمع.",
+            "noGates": "يمكن لأي شخص الانضمام: لا توجد شروط وصول."
+        },
         "communitySettings": {
             "edit": "تعديل المجتمع",
             "photo": "صورة المجتمع",

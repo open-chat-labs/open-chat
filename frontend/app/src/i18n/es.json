@@ -2603,6 +2603,32 @@
                 "invite": "Invitar y compartir"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "Las notificaciones siguen los ajustes de cada canal.",
+            "muteHelpOn": "No recibirás notificaciones de ningún canal.",
+            "none": "Ninguno",
+            "rulesCount": "{count, plural, one {# regla} other {# reglas}}",
+            "gatesCount": "{count, plural, one {# requisito} other {# requisitos}}",
+            "channelsCount": "{count, plural, one {# canal} other {# canales}}",
+            "linkOn": "Enlace activo",
+            "botsCount": "{count, plural, one {# bot} other {# bots}}",
+            "unmutedAll": "Todos los canales con sonido",
+            "unmuteFailed": "No se pudo quitar el silencio a los canales",
+            "language": "Idioma",
+            "you": "Tú en esta comunidad",
+            "muteAll": "Silenciar todos los canales",
+            "leave": "Salir de la comunidad",
+            "delete": "Eliminar comunidad",
+            "leaveTitle": "¿Salir de {name}?",
+            "leaveMessage": "Saldrás de todos sus canales. Puedes volver a unirte si lo permite.",
+            "leaveConfirm": "Salir",
+            "deleteTitle": "¿Eliminar {name}?",
+            "deleteMessage": "Se elimina para todos, con todos sus canales y mensajes. No se puede deshacer.",
+            "deleteConfirm": "Eliminar",
+            "deleted": "{name} eliminada",
+            "noRules": "Esta comunidad no tiene reglas.",
+            "noGates": "Cualquiera puede unirse: esta comunidad no tiene requisitos de acceso."
+        },
         "communitySettings": {
             "edit": "Editar comunidad",
             "photo": "Foto de la comunidad",

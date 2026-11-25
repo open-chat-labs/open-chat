@@ -23594,6 +23594,17 @@
         "doc": "The value in the accent: a setting changed from its default."
       },
       {
+        "name": "quiet",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The value quieter (`--ink-4`): nothing set (None, Off, Default)."
+      },
+      {
         "name": "onClick",
         "type": "(row: HTMLElement) => void",
         "default": null,

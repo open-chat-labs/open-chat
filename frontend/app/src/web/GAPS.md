@@ -1476,6 +1476,40 @@ design export needs. Each entry says where it came up.
   - **The details** have no tiles, Members, mute toggle or Leave (the prototype has them; the
     plan's members' details are Channels, Rules and Access gates). Access gates show the
     preview's card without the statuses.
+  - **The details** (rebuilt to the user's design prompt of 2026-11-25, N7 #10617; the
+    prototype file wasn't available, so built from the prompt): the cover with Back, Share and ⋯;
+    the avatar, name and "Public · N members"; the tiles Invite (for those who may invite, as
+    the page's menu offers it: `communityInviteAccess`), Search and Mute / Unmute; About (the
+    description, then the language); Members (faces, the count) to the Members screen, which is
+    now details' `Members` on a group, channel or community (`community_members`); for a regular
+    member, Channels, Rules and Access gates, read only (`CommunityInfoPage`); Manage for owners
+    and admins with what each row holds (`communityDetails.adapter`'s `manageMeta`; the
+    library's `SettingsLink` gained `quiet`, EXPORT-LOG 2026-11-25); "You in this community",
+    Mute all channels; Leave, or Delete for the owner, confirmed in a small alert, then gone with
+    Undo (`removeCommunityWithUndo`, which the page's menu's Leave now uses too). Left, or
+    decided where the prompt is silent:
+    - **No moderators**: the prompt has Manage for moderators, read only where the permissions
+      say; a community's roles are owner, admin and member (the backend's `CommunityRole`,
+      `communityRoles`), so Manage is for owners and admins who may edit it
+      (`communityDetailsPermissions`' canEdit, a frozen community none). Open question for the
+      user.
+    - **Mute both ways**: the community canister's `toggle_mute_notifications` with no channel
+      mutes or unmutes them all, so the tile and the switch unmute too (the client's
+      `muteAllChannels` takes `muted`, default true: the old callers unchanged). Muted is every
+      channel of the user's muted, as the web's and the old menus' rule. The page's menu still
+      only mutes (the user's decision of 2026-11-24); say if it should follow.
+    - **Search** (the tile): no search of a community's own to open; shown disabled.
+      TODO(design).
+    - **Share**: a public community's link, as its preview shares it; a private one has none here
+      (its link is Invite and share's). TODO(design).
+    - **⋯**: Edit community (for those who may edit it; the pencil's place before) and Mark all as
+      read, the page's menu's items the details don't have otherwise. TODO(design).
+    - **Created**: the client knows no community's creation date, so About shows the language
+      alone. TODO.
+    - **Sizes**: the cover, avatar ring and tiles are the group details' (DetailsHead,
+      DetailTiles: a 132px cover under the status bar, 186px with an iPhone's, the avatar's
+      corners a third of it, 68px tiles); Manage's rows are the kit's 60px.
+    - **Rules count**: "N rules" counts the rules text's lines with something on them.
   - **Checked** in a 390×844 touch browser on the native tree against the local replica, as a
     fresh user in Sci-Fi Book Club and Meme Factory: the page, the strip, the sheet by its handle
     and by a drag, the kebab, a channel's thread from its link and from the menu's Reply in

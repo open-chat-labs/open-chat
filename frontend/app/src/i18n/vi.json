@@ -2603,6 +2603,32 @@
                 "invite": "Mời và chia sẻ"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "Thông báo theo cài đặt của từng kênh.",
+            "muteHelpOn": "Bạn sẽ không nhận thông báo từ kênh nào.",
+            "none": "Không có",
+            "rulesCount": "{count, plural, other {# quy tắc}}",
+            "gatesCount": "{count, plural, other {# điều kiện}}",
+            "channelsCount": "{count, plural, other {# kênh}}",
+            "linkOn": "Liên kết bật",
+            "botsCount": "{count, plural, other {# bot}}",
+            "unmutedAll": "Đã bật tiếng tất cả các kênh",
+            "unmuteFailed": "Không thể bật tiếng các kênh",
+            "language": "Ngôn ngữ",
+            "you": "Bạn trong cộng đồng này",
+            "muteAll": "Tắt tiếng tất cả các kênh",
+            "leave": "Rời cộng đồng",
+            "delete": "Xóa cộng đồng",
+            "leaveTitle": "Rời {name}?",
+            "leaveMessage": "Bạn sẽ rời mọi kênh trong đó. Bạn có thể tham gia lại nếu được phép.",
+            "leaveConfirm": "Rời",
+            "deleteTitle": "Xóa {name}?",
+            "deleteMessage": "Cộng đồng sẽ bị xóa với mọi người, cùng tất cả kênh và tin nhắn. Không thể hoàn tác.",
+            "deleteConfirm": "Xóa",
+            "deleted": "Đã xóa {name}",
+            "noRules": "Cộng đồng này không có quy tắc.",
+            "noGates": "Ai cũng có thể tham gia: cộng đồng này không có điều kiện truy cập."
+        },
         "communitySettings": {
             "edit": "Chỉnh sửa cộng đồng",
             "photo": "Ảnh cộng đồng",

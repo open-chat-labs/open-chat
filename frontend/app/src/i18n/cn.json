@@ -2603,6 +2603,32 @@
                 "invite": "邀请和分享"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "通知遵循每个频道的设置。",
+            "muteHelpOn": "你不会收到任何频道的通知。",
+            "none": "无",
+            "rulesCount": "{count, plural, other {# 条规则}}",
+            "gatesCount": "{count, plural, other {# 个门槛}}",
+            "channelsCount": "{count, plural, other {# 个频道}}",
+            "linkOn": "链接已开启",
+            "botsCount": "{count, plural, other {# 个机器人}}",
+            "unmutedAll": "已取消所有频道的静音",
+            "unmuteFailed": "无法取消频道静音",
+            "language": "语言",
+            "you": "你在这个社区",
+            "muteAll": "静音所有频道",
+            "leave": "离开社区",
+            "delete": "删除社区",
+            "leaveTitle": "离开 {name}？",
+            "leaveMessage": "你将离开其中所有频道。如果允许，你可以再次加入。",
+            "leaveConfirm": "离开",
+            "deleteTitle": "删除 {name}？",
+            "deleteMessage": "它将对所有人删除，包括所有频道和消息。此操作无法撤销。",
+            "deleteConfirm": "删除",
+            "deleted": "已删除 {name}",
+            "noRules": "这个社区没有规则。",
+            "noGates": "任何人都可以加入：这个社区没有访问门槛。"
+        },
         "communitySettings": {
             "edit": "编辑社区",
             "photo": "社区照片",

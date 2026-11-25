@@ -2603,6 +2603,32 @@
                 "invite": "Einladen und teilen"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "Benachrichtigungen folgen den Einstellungen jedes Kanals.",
+            "muteHelpOn": "Du bekommst von keinem Kanal Benachrichtigungen.",
+            "none": "Keine",
+            "rulesCount": "{count, plural, one {# Regel} other {# Regeln}}",
+            "gatesCount": "{count, plural, one {# Zugangsbedingung} other {# Zugangsbedingungen}}",
+            "channelsCount": "{count, plural, one {# Kanal} other {# Kanäle}}",
+            "linkOn": "Link an",
+            "botsCount": "{count, plural, one {# Bot} other {# Bots}}",
+            "unmutedAll": "Stummschaltung aller Kanäle aufgehoben",
+            "unmuteFailed": "Stummschaltung konnte nicht aufgehoben werden",
+            "language": "Sprache",
+            "you": "Du in dieser Community",
+            "muteAll": "Alle Kanäle stummschalten",
+            "leave": "Community verlassen",
+            "delete": "Community löschen",
+            "leaveTitle": "{name} verlassen?",
+            "leaveMessage": "Du verlässt alle ihre Kanäle. Du kannst wieder beitreten, wenn sie es zulässt.",
+            "leaveConfirm": "Verlassen",
+            "deleteTitle": "{name} löschen?",
+            "deleteMessage": "Sie wird für alle gelöscht, mit allen Kanälen und Nachrichten. Das lässt sich nicht rückgängig machen.",
+            "deleteConfirm": "Löschen",
+            "deleted": "{name} gelöscht",
+            "noRules": "Diese Community hat keine Regeln.",
+            "noGates": "Jeder kann beitreten: Diese Community hat keine Zugangsbedingungen."
+        },
         "communitySettings": {
             "edit": "Community bearbeiten",
             "photo": "Community-Foto",

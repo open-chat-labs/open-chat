@@ -2603,6 +2603,32 @@
                 "invite": "Inviter et partager"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "Les notifications suivent les réglages de chaque chaîne.",
+            "muteHelpOn": "Vous ne recevrez de notifications d'aucune chaîne.",
+            "none": "Aucune",
+            "rulesCount": "{count, plural, one {# règle} other {# règles}}",
+            "gatesCount": "{count, plural, one {# condition} other {# conditions}}",
+            "channelsCount": "{count, plural, one {# chaîne} other {# chaînes}}",
+            "linkOn": "Lien actif",
+            "botsCount": "{count, plural, one {# bot} other {# bots}}",
+            "unmutedAll": "Toutes les chaînes réactivées",
+            "unmuteFailed": "Impossible de réactiver les chaînes",
+            "language": "Langue",
+            "you": "Vous dans cette communauté",
+            "muteAll": "Mettre toutes les chaînes en sourdine",
+            "leave": "Quitter la communauté",
+            "delete": "Supprimer la communauté",
+            "leaveTitle": "Quitter {name} ?",
+            "leaveMessage": "Vous quitterez toutes ses chaînes. Vous pourrez la rejoindre à nouveau si elle le permet.",
+            "leaveConfirm": "Quitter",
+            "deleteTitle": "Supprimer {name} ?",
+            "deleteMessage": "Elle disparaît pour tout le monde, avec ses chaînes et ses messages. C'est irréversible.",
+            "deleteConfirm": "Supprimer",
+            "deleted": "{name} supprimée",
+            "noRules": "Cette communauté n'a pas de règles.",
+            "noGates": "Tout le monde peut rejoindre : cette communauté n'a pas de conditions d'accès."
+        },
         "communitySettings": {
             "edit": "Modifier la communauté",
             "photo": "Photo de la communauté",

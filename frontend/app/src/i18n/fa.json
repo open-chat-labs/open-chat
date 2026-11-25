@@ -2603,6 +2603,32 @@
                 "invite": "دعوت و اشتراک‌گذاری"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "اعلان‌ها از تنظیمات هر کانال پیروی می‌کنند.",
+            "muteHelpOn": "از هیچ کانالی اعلان دریافت نمی‌کنید.",
+            "none": "هیچ",
+            "rulesCount": "{count, plural, one {# قانون} other {# قانون}}",
+            "gatesCount": "{count, plural, one {# شرط} other {# شرط}}",
+            "channelsCount": "{count, plural, one {# کانال} other {# کانال}}",
+            "linkOn": "پیوند روشن",
+            "botsCount": "{count, plural, one {# ربات} other {# ربات}}",
+            "unmutedAll": "صدای همه کانال‌ها باز شد",
+            "unmuteFailed": "باز کردن صدای کانال‌ها ممکن نشد",
+            "language": "زبان",
+            "you": "شما در این انجمن",
+            "muteAll": "بی‌صدا کردن همه کانال‌ها",
+            "leave": "ترک انجمن",
+            "delete": "حذف انجمن",
+            "leaveTitle": "{name} را ترک می‌کنید؟",
+            "leaveMessage": "از همه کانال‌های آن خارج می‌شوید. اگر اجازه دهد، می‌توانید دوباره بپیوندید.",
+            "leaveConfirm": "ترک",
+            "deleteTitle": "{name} حذف شود؟",
+            "deleteMessage": "برای همه، با همه کانال‌ها و پیام‌هایش حذف می‌شود. قابل بازگشت نیست.",
+            "deleteConfirm": "حذف",
+            "deleted": "{name} حذف شد",
+            "noRules": "این انجمن قانونی ندارد.",
+            "noGates": "هر کسی می‌تواند بپیوندد: این انجمن شرط ورود ندارد."
+        },
         "communitySettings": {
             "edit": "ویرایش انجمن",
             "photo": "عکس انجمن",

@@ -2603,6 +2603,32 @@
                 "invite": "招待と共有"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "通知は各チャンネルの設定に従います。",
+            "muteHelpOn": "どのチャンネルからも通知は届きません。",
+            "none": "なし",
+            "rulesCount": "{count, plural, other {#件のルール}}",
+            "gatesCount": "{count, plural, other {#件の参加条件}}",
+            "channelsCount": "{count, plural, other {#個のチャンネル}}",
+            "linkOn": "リンクはオン",
+            "botsCount": "{count, plural, other {#個のボット}}",
+            "unmutedAll": "すべてのチャンネルのミュートを解除しました",
+            "unmuteFailed": "チャンネルのミュートを解除できませんでした",
+            "language": "言語",
+            "you": "このコミュニティでのあなた",
+            "muteAll": "すべてのチャンネルをミュート",
+            "leave": "コミュニティを退出",
+            "delete": "コミュニティを削除",
+            "leaveTitle": "{name}を退出しますか？",
+            "leaveMessage": "すべてのチャンネルから退出します。許可されていれば再参加できます。",
+            "leaveConfirm": "退出",
+            "deleteTitle": "{name}を削除しますか？",
+            "deleteMessage": "すべてのチャンネルとメッセージとともに、全員から削除されます。元に戻せません。",
+            "deleteConfirm": "削除",
+            "deleted": "{name}を削除しました",
+            "noRules": "このコミュニティにはルールがありません。",
+            "noGates": "誰でも参加できます：このコミュニティには参加条件がありません。"
+        },
         "communitySettings": {
             "edit": "コミュニティを編集",
             "photo": "コミュニティの写真",

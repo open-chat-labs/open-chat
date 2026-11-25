@@ -2512,6 +2512,32 @@
                 "invite": "Invite and share"
             }
         },
+        "communityDetails": {
+            "muteHelpOff": "Notifications follow each channel's settings.",
+            "muteHelpOn": "You won't get notifications from any channel.",
+            "none": "None",
+            "rulesCount": "{count, plural, one {# rule} other {# rules}}",
+            "gatesCount": "{count, plural, one {# gate} other {# gates}}",
+            "channelsCount": "{count, plural, one {# channel} other {# channels}}",
+            "linkOn": "Link on",
+            "botsCount": "{count, plural, one {# bot} other {# bots}}",
+            "unmutedAll": "All channels unmuted",
+            "unmuteFailed": "Couldn't unmute the channels",
+            "language": "Language",
+            "you": "You in this community",
+            "muteAll": "Mute all channels",
+            "leave": "Leave community",
+            "delete": "Delete community",
+            "leaveTitle": "Leave {name}?",
+            "leaveMessage": "You'll leave every channel in it. You can join again if it lets you.",
+            "leaveConfirm": "Leave",
+            "deleteTitle": "Delete {name}?",
+            "deleteMessage": "It goes for everyone, with all its channels and messages. This can't be undone.",
+            "deleteConfirm": "Delete",
+            "deleted": "Deleted {name}",
+            "noRules": "This community has no rules.",
+            "noGates": "Anyone can join: this community has no access gates."
+        },
         "communitySettings": {
             "edit": "Edit community",
             "photo": "Community photo",

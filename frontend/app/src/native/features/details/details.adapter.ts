@@ -29,6 +29,8 @@ export type DetailTile = {
     label: string;
     /** A toggle that's on (muted): accent-tinted, as the web panel's tiles. */
     on: boolean;
+    /** Shown, but there's nothing for it to do yet (a community's Search: TODO(design)). */
+    disabled?: boolean;
 };
 
 function muteTile(muted: boolean, t: Translate): DetailTile {

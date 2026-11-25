@@ -161,6 +161,9 @@ export const screens: Screens = {
     // a community's details, from its page's header and Manage (N8a)
     community_details: () => import("../communities/CommunityDetailsScreen.svelte"),
 
+    // a community's members, from its details (plan 10's Members screen)
+    community_members: () => import("../communities/CommunityMembersScreen.svelte"),
+
     // a community's settings pages (edit, channels, user groups, invite, gates, rules, permissions,
     // bots, stats), from its details' Manage and Edit, and its page's menu (N7)
     community_settings: () => import("../communitySettings/CommunitySettingsScreen.svelte"),

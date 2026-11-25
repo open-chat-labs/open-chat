@@ -52,21 +52,17 @@
     import { communityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
     import { previewingCommunity } from "@src/logic/join/previewBar";
     import { swatchFor } from "@src/logic/swatch";
-    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
     import { nativeChatRow, rowMenuItems as chatMenuItems } from "../chats/chats.adapter";
-    import { sendAfterUndo } from "../chats/removeWithUndo";
     import { runRowAction } from "../chats/rowActions";
     import {
         channelsNotJoined,
         communityAction,
-        communityKey,
         headerMenuItems,
-        nextCommunity,
         notJoinedRow,
         rowMenuItems,
         switcherCommunities,
@@ -74,6 +70,7 @@
         type SwitcherCommunity,
     } from "./community.adapter";
     import CommunitySwitcher from "./CommunitySwitcher.svelte";
+    import { removeCommunityWithUndo } from "./leaveCommunity";
 
     type Props = { community: CommunitySummary; context: ScreenContext };
 
@@ -263,26 +260,16 @@
         }
     }
 
-    // Leaving with Undo (notes §1): it goes from the switcher at once, the tab moving on to the next
-    // community if it's the one showing, and the leave is sent once the toast has gone (the shell's
-    // PendingRemovals); Undo sends nothing, puts it back and, if it was showing, shows it again
+    // Leaving with Undo (notes §1), as the details' Leave after its confirm (removeCommunityWithUndo)
     function leave(target: CommunitySummary) {
-        const key = communityKey(target.id);
-        const showing = target.id.communityId === community.id.communityId;
-        if (showing) {
-            const next = nextCommunity(switcher, target.id);
-            navigate(next === undefined ? "/communities" : `/community/${next.communityId}`);
-        }
-        const url = `/community/${target.id.communityId}`;
-        sendAfterUndo(
+        removeCommunityWithUndo(
+            client,
             context,
-            key,
+            target,
+            "leave",
+            community.id,
+            switcher,
             $_("native.community.toast.left", { values: { name: target.name } }),
-            async () =>
-                toastStore.showOutcome(
-                    await client.leaveOrDelete({ kind: "leave_community", id: target.id }, true),
-                ),
-            showing ? () => navigate(url) : undefined,
         );
     }
 
