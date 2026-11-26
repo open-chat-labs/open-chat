@@ -9,10 +9,24 @@
      Native hosts: the + and emoji buttons can sit after the text (plusPlacement / emojiPlacement), the host can own the
      + and emoji surfaces (onPlus / plusActive, onEmoji / emojiActive: keyboard-area panels instead of the popovers), type
      into the draft without focusing it (insert), and size the bar with --composer-radius, --composer-min-h,
-     --composer-pad, --composer-btn and --composer-btn-radius. -->
+     --composer-pad, --composer-btn and --composer-btn-radius.
+     A host's own editor (a rich-text one) can stand in for the textarea (`editor`): the composer drives it through
+     ComposerEditor and keeps the draft as the text it gives; without one, or until it's given, the textarea. -->
 <script lang="ts">
-  import { onMount, tick, untrack } from 'svelte';
-  import type { ComposerAttachKind, ComposerAttachment, ComposerCommand, ComposerContext, ComposerGif, ComposerGifs, ComposerMention, MenuItem } from '../types';
+  import { onMount, tick, untrack, type Snippet } from 'svelte';
+  import type {
+    ComposerAttachKind,
+    ComposerAttachment,
+    ComposerCommand,
+    ComposerContext,
+    ComposerEditor,
+    ComposerEditorArgs,
+    ComposerEditorMention,
+    ComposerGif,
+    ComposerGifs,
+    ComposerMention,
+    MenuItem,
+  } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
@@ -147,6 +161,9 @@
     onClearMedia?: () => void;
     /** Resource key (or literal text): Clear's label. */
     clearMediaLabel?: string;
+    /** The host's own editor in the textarea's place (a rich-text one), once it can be shown: it registers itself
+     *  (ComposerEditor) and gives the text as it changes. Without it, the textarea. */
+    editor?: Snippet<[ComposerEditorArgs]>;
   }
 
   let {
@@ -195,11 +212,21 @@
     mediaLabel,
     onClearMedia,
     clearMediaLabel = 'ui.messageComposer.clearMedia',
+    editor,
   }: Props = $props();
   const t = useT();
 
   let root: HTMLDivElement;
   let input = $state<HTMLTextAreaElement>();
+  // the host's editor, while it's registered (in the textarea's place)
+  let hostEditor = $state<ComposerEditor>();
+  // the "@word" at its caret, as it says
+  let editorMention = $state<ComposerEditorMention>();
+  // a textarea with the focus as the host's editor takes its place hands the focus on
+  let focusEditor = false;
+  $effect.pre(() => {
+    if (editor && untrack(() => input !== undefined && document.activeElement === input)) focusEditor = true;
+  });
   let search = $state<HTMLInputElement>();
   let wave = $state<HTMLDivElement>();
 
@@ -319,6 +346,36 @@
     el.style.overflowY = h > 160 ? 'auto' : 'hidden';
   }
 
+  // the draft set from outside the text box (an edit's text, emptied after a send): the host's editor takes it too
+  function setDraft(next: string) {
+    draft = next;
+    hostEditor?.setText(next);
+  }
+
+  /** The text box takes the focus: the host's editor, else the textarea. */
+  function focusField(options?: FocusOptions) {
+    if (hostEditor) hostEditor.focus();
+    else if (input) input.focus(options);
+    // the host's editor is on its way (it registers once it's made): it takes the focus then
+    else if (editor) focusEditor = true;
+  }
+
+  // the host's editor registers as it's made: it starts from the draft (typed in the textarea before it came, say)
+  function registerEditor(ed: ComposerEditor): () => void {
+    hostEditor = ed;
+    if (draft) ed.setText(draft);
+    if (focusEditor) {
+      focusEditor = false;
+      ed.focus();
+    }
+    return () => {
+      if (hostEditor === ed) {
+        hostEditor = undefined;
+        editorMention = undefined;
+      }
+    };
+  }
+
   // an edit at the selection (the end of the draft without a field): the caret moves with it; `focus` takes focus too
   async function editDraft(edit: (text: string, start: number, end: number) => TextEdit, focus: boolean) {
     const el = input;
@@ -370,10 +427,10 @@
     }
     if (sent) {
       // anything typed meanwhile stays
-      if (draft === at) draft = '';
+      if (draft === at) setDraft('');
       await tick();
       grow();
-      input?.focus();
+      focusField();
     } else dismissedCommand = draft;
   }
 
@@ -409,7 +466,7 @@
   let mentionIndex = $state(0);
   // Esc closes the list for that "@word" (until it's gone)
   let dismissedAt = $state<number | undefined>(undefined);
-  const mention = $derived(focused ? mentionAt(draft, Math.min(caret, draft.length)) : undefined);
+  const mention = $derived(!focused ? undefined : hostEditor ? editorMention : mentionAt(draft, Math.min(caret, draft.length)));
   const mentionOpen = $derived(!!mention && mentions.length > 0 && !menu && !voice && !commandOpen && dismissedAt !== mention.start);
   const activeMention = $derived(Math.min(mentionIndex, mentions.length - 1));
 
@@ -430,7 +487,8 @@
   function pickMention(m: ComposerMention) {
     const at = mention;
     if (!at) return;
-    void editDraft((d, _start, end) => insertMention(d, at.start, end, m.handle), true);
+    if (hostEditor) hostEditor.insertMention(m);
+    else void editDraft((d, _start, end) => insertMention(d, at.start, end, m.handle), true);
   }
 
   // the list's keys, while it's open: true when the key was the list's
@@ -462,7 +520,8 @@
 
   // the composer's own emoji picker: at the caret, focusing the field
   function insert(text: string) {
-    void editDraft((d, a, b) => insertAt(d, a, b, text), true);
+    if (hostEditor) hostEditor.insertText(text, true);
+    else void editDraft((d, a, b) => insertAt(d, a, b, text), true);
   }
 
   // GIFs: the host searches what the tab asks for (`onGifSearch`), once per change, or again after it failed
@@ -505,7 +564,7 @@
     clearTimeout(gifTimer);
     menu = null;
     onPickGif?.(gif);
-    if (!hostPanelOn) input?.focus({ preventScroll: true });
+    if (!hostPanelOn) focusField({ preventScroll: true });
   }
 
   // near the grid's end, the next page (not while one is on its way)
@@ -521,7 +580,13 @@
     if (!next || next.key === lastInsert) return;
     lastInsert = next.key;
     // "\b" deletes the selection, or the whole character (an emoji with its skin tone, a flag) before the caret
-    untrack(() => void editDraft(next.text === '\b' ? deleteBackward : (d, a, b) => insertAt(d, a, b, next.text), false));
+    untrack(() => {
+      const ed = hostEditor;
+      if (ed) {
+        if (next.text === '\b') ed.deleteBackward();
+        else ed.insertText(next.text, false);
+      } else void editDraft(next.text === '\b' ? deleteBackward : (d, a, b) => insertAt(d, a, b, next.text), false);
+    });
   });
 
   async function send() {
@@ -540,22 +605,22 @@
         // false: the user backed out (the host kept it), so the draft stays without an error
         const sent = await result;
         // anything typed while it was sending stays
-        if (sent !== false && draft.trim() === text) draft = '';
+        if (sent !== false && draft.trim() === text) setDraft('');
       } catch {
         failure = 'send';
       } finally {
         sending = false;
       }
-    } else draft = '';
+    } else setDraft('');
     await tick();
     grow();
     // not into the text box while the host's panel shows in the keyboard's place: focus would raise the keyboard
-    if (!hostPanelOn) input?.focus();
+    if (!hostPanelOn) focusField();
   }
 
   /** Focuses the text box (a native host's keyboard glyph, bringing the keyboard back in place of its panel). */
   export function focus() {
-    input?.focus({ preventScroll: true });
+    focusField({ preventScroll: true });
   }
 
   function startTicking() {
@@ -788,7 +853,7 @@
     } else if (menu) {
       e.stopPropagation();
       menu = null;
-      input?.focus();
+      focusField();
     } else if (voice || starting) {
       e.stopPropagation();
       discardVoice();
@@ -857,13 +922,13 @@
     clearInterval(playTimer);
     menu = null;
     voice = null;
-    draft = '';
+    setDraft('');
     picked = 0;
     playing = false;
     playPos = 0;
     focused = false;
     if (d === 'typing') {
-      draft = 'Shipping the composer today — anyone want a preview?';
+      setDraft('Shipping the composer today — anyone want a preview?');
       focused = true;
     } else if (d === 'plus') menu = 'plus';
     else if (d === 'emoji') menu = 'picker';
@@ -899,10 +964,12 @@
       if (next?.mode === 'edit') {
         // edit → another edit keeps the draft saved from before the first one
         if (prev?.mode !== 'edit') savedDraft = draft;
-        draft = next.text ?? '';
+        setDraft(next.text ?? '');
         menu = null;
         await tick();
-        if (input) {
+        // the host's editor has its caret at the end already
+        if (hostEditor) hostEditor.focus();
+        else if (input) {
           input.focus({ preventScroll: true });
           input.selectionStart = input.selectionEnd = input.value.length;
           grow();
@@ -910,12 +977,12 @@
       } else {
         // leaving edit (cancel, or straight into a reply) drops the edited message's text
         if (prev?.mode === 'edit') {
-          draft = savedDraft ?? '';
+          setDraft(savedDraft ?? '');
           savedDraft = null;
           await tick();
           grow();
         }
-        if (next) input?.focus({ preventScroll: true });
+        if (next) focusField({ preventScroll: true });
       }
     });
   });
@@ -928,7 +995,7 @@
     // a draft the composer starts from takes the height it needs
     if (draft) tick().then(grow);
     // a dialog that opened first (say from a link) keeps the focus
-    if (autofocus && !document.querySelector('[aria-modal="true"]')) input?.focus({ preventScroll: true });
+    if (autofocus && !document.querySelector('[aria-modal="true"]')) focusField({ preventScroll: true });
     // bar count follows the available width: one 3px bar per ~5px, so spacing stays tight at any size
     const fit = () => (barCount = Math.max(16, Math.min(120, Math.floor((root.getBoundingClientRect().width - 170) / 5))));
     const ro = new ResizeObserver(fit);
@@ -946,6 +1013,37 @@
       void finishTake(false);
       dropClip();
     };
+  });
+
+  // the text box's keys: the lists' first, then Enter to send
+  function fieldKey(e: KeyboardEvent) {
+    if (commandKey(e)) return;
+    if (mentionKey(e)) return;
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      send();
+    }
+  }
+
+  // what the host's editor is given: the textarea's placeholder, sizes, aria and keys
+  const editorArgs: ComposerEditorArgs = $derived({
+    placeholder: t(att ? attachedPlaceholder : placeholder),
+    minHeight: 22,
+    maxHeight: 160,
+    aria: {
+      ...(onMentionQuery || onCommandQuery ? { 'aria-autocomplete': 'list' } : {}),
+      ...(commandOpen
+        ? { 'aria-controls': commandListId, 'aria-activedescendant': `${commandListId}-${activeCommand}` }
+        : mentionOpen
+          ? { 'aria-controls': mentionListId, 'aria-activedescendant': `${mentionListId}-${activeMention}` }
+          : {}),
+    },
+    onText: (next: string) => (draft = next),
+    onKeydown: fieldKey,
+    onFocus: () => (focused = true),
+    onBlur: () => (focused = false),
+    onMention: (m: ComposerEditorMention | undefined) => (editorMention = m),
+    register: registerEditor,
   });
 
   const contextLabel = $derived(
@@ -972,8 +1070,8 @@
   bind:this={root}
   onkeydown={rootKey}
   onfocusin={(e) => {
-    const tag = (e.target as HTMLElement | null)?.tagName;
-    if (tag === 'TEXTAREA' || tag === 'INPUT') onInputFocus?.();
+    const el = e.target as HTMLElement | null;
+    if (el?.tagName === 'TEXTAREA' || el?.tagName === 'INPUT' || el?.isContentEditable) onInputFocus?.();
   }}
   role="group"
 >
@@ -1221,36 +1319,33 @@
         </div>
       {/if}
       <div class="input-wrap">
-        <textarea
-          bind:this={input}
-          rows="1"
-          value={draft}
-          oninput={(e) => {
-            draft = e.currentTarget.value;
-            syncCaret();
-            grow();
-          }}
-          onkeydown={(e) => {
-            if (commandKey(e)) return;
-            if (mentionKey(e)) return;
-            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          onkeyup={syncCaret}
-          onclick={syncCaret}
-          onfocus={() => {
-            focused = true;
-            syncCaret();
-          }}
-          onblur={() => (focused = false)}
-          aria-autocomplete={onMentionQuery || onCommandQuery ? 'list' : undefined}
-          aria-controls={commandOpen ? commandListId : mentionOpen ? mentionListId : undefined}
-          aria-activedescendant={commandOpen ? `${commandListId}-${activeCommand}` : mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
-          placeholder={t(att ? attachedPlaceholder : placeholder)}
-          aria-label={t(att ? attachedPlaceholder : placeholder)}
-        ></textarea>
+        {#if editor}
+          {@render editor(editorArgs)}
+        {:else}
+          <textarea
+            bind:this={input}
+            rows="1"
+            value={draft}
+            oninput={(e) => {
+              draft = e.currentTarget.value;
+              syncCaret();
+              grow();
+            }}
+            onkeydown={fieldKey}
+            onkeyup={syncCaret}
+            onclick={syncCaret}
+            onfocus={() => {
+              focused = true;
+              syncCaret();
+            }}
+            onblur={() => (focused = false)}
+            aria-autocomplete={onMentionQuery || onCommandQuery ? 'list' : undefined}
+            aria-controls={commandOpen ? commandListId : mentionOpen ? mentionListId : undefined}
+            aria-activedescendant={commandOpen ? `${commandListId}-${activeCommand}` : mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
+            placeholder={t(att ? attachedPlaceholder : placeholder)}
+            aria-label={t(att ? attachedPlaceholder : placeholder)}
+          ></textarea>
+        {/if}
       </div>
       {#if emojiPlacement === 'end'}{@render emojiTool()}{/if}
       {#if showPlus && plusPlacement === 'end'}{@render plusTool()}{/if}

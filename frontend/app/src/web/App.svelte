@@ -23,7 +23,8 @@
     import { createOpenChatClient, NEW_UI_BEHAVIOUR } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import { installConsoleHooks } from "@src/logic/moderation/consoleHooks";
-    import { botState, fontScaleStore, OpenChat } from "@client";
+    import { botState, fontScaleStore, identityStateStore, OpenChat } from "@client";
+    import { warmRichTextEditor } from "@src/core/richText/richTextEditorLoader";
     import { textScaleOf } from "@src/logic/profile/appearance";
     import { onMount, setContext } from "svelte";
     import { accentStore } from "@theme/accent";
@@ -86,6 +87,12 @@
     });
 
     followDocumentDirection();
+
+    // the rich-text editor's chunk, loaded at idle once signed in, so a composer has it at once: a
+    // phone raises its keyboard only for a focus inside the tap (richTextEditorLoader, #10576)
+    $effect(() => {
+        if ($identityStateStore.kind === "logged_in") warmRichTextEditor();
+    });
 
     onMount(() => {
         const unsubscribe = subscribeToSessionEvents(client);

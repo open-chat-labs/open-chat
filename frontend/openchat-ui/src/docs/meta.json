@@ -2695,6 +2695,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Passed to the composer."
+      },
+      {
+        "name": "editor",
+        "type": "ComposerProps['editor']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's own editor in place of the text box, passed to the composer (see MessageComposer)."
       }
     ],
     "group": "library"
@@ -15647,6 +15658,17 @@
         "required": false,
         "componentDefault": "'ui.messageComposer.clearMedia'",
         "doc": "Resource key (or literal text): the media header's Clear label."
+      },
+      {
+        "name": "editor",
+        "type": "Snippet<[ComposerEditorArgs]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "The host's own editor in the textarea's place (a rich-text one), once it can be shown: it registers itself (ComposerEditor) and gives the text as it changes. Without it, the textarea."
       }
     ],
     "group": "library"

@@ -202,6 +202,7 @@
         threadReplyEvents,
     } from "@src/logic/conversation/threadTimeline";
     import { openThreadInColumn } from "../app/rightPanel";
+    import { mentionedUsers, pickedMention } from "@src/core/richText/composerEditor";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         confirmMessageDeletion,
@@ -893,14 +894,15 @@
         memberFinder.typed(query);
     }
 
-    const mentions = $derived.by(() => {
+    const mentionCandidates = $derived.by(() => {
         if (mentionQuery === undefined) return [];
         // what the lookup reads through `.value`: it changes as members not held are found
         void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
-        return mentionsFor(client, mentionQuery, me).map((candidate) =>
-            composerMention(candidate, ownUserAvatarUrl),
-        );
+        return mentionsFor(client, mentionQuery, me);
     });
+    const mentions = $derived(
+        mentionCandidates.map((candidate) => composerMention(candidate, ownUserAvatarUrl)),
+    );
 
     // a file picked, pasted or dropped goes to the chat or thread it was picked in, if it may be
     // sent there: one that may not is refused at once; one that may asks first in place of a
@@ -1001,10 +1003,14 @@
     // sendComposed, which a thread sends to the thread with)
     async function send(context: MessageContext, text: string): Promise<false | undefined> {
         return composerAnswer(
-            await sendComposed(client, chat, context, text, {
-                content: draftAttachment(draft),
-                shown: staged !== null,
-            }),
+            await sendComposed(
+                client,
+                chat,
+                context,
+                text,
+                { content: draftAttachment(draft), shown: staged !== null },
+                mentionedUsers(text, $allUsersStore),
+            ),
         );
     }
 
@@ -2076,6 +2082,7 @@
                     onMentionQuery={mentionQueried}
                     onVoiceActive={(active) => (voiceActive = active)}
                     {mentions}
+                    resolveMention={(mention) => pickedMention(mentionCandidates, mention)}
                     onGif={gifsAllowed ? (content) => pickGif(context, content) : undefined}
                     onCommandQuery={commandQueried}
                     {commands}

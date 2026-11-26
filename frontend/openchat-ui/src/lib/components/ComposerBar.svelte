@@ -61,6 +61,8 @@
     emojiActive?: ComposerProps['emojiActive'];
     onInputFocus?: ComposerProps['onInputFocus'];
     insert?: ComposerProps['insert'];
+    /** The host's own editor in place of the text box, passed to the composer (see MessageComposer). */
+    editor?: ComposerProps['editor'];
   }
 
   let {

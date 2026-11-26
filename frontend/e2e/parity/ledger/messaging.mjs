@@ -202,7 +202,7 @@ export const rows = [
         id: "msg-rich-composer",
         capability: "Formatting shown live while writing (rich-text composer)",
         legacy: ["core/richText/RichTextEditor.svelte"],
-        ...both({ missing: "a plain text box; to be ported, Julian 2026-11-20 (#10576)" }),
+        ...both({ untested: "built (#10576); no spec yet" }),
     },
     {
         id: "msg-emoji-insert",

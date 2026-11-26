@@ -18,6 +18,7 @@ import {
     type OpenChat,
     type ResourceKey,
     type SendMessageOutcome,
+    type User,
     type UserGroupDetails,
     type UserLookup,
     type UserOrUserGroup,
@@ -556,7 +557,8 @@ export function composerAnswer(sent: ComposedSend): false | undefined {
 /**
  * Sends what the composer holds to the chat or thread it's in (`context`): the text, with the
  * draft's attachment it captions, as the client's send does it (mentions typed as @username, block
- * markdown detected). In a direct chat with a bot the text goes to the bot as its direct-message
+ * markdown detected), mentioning those picked from the mention list (`mentioned`: the rich-text
+ * editor's mentions, in the text as `@UserId`). In a direct chat with a bot the text goes to the bot as its direct-message
  * command. Refused, nothing is sent: a payment the composer doesn't show, or one an external
  * wallet would have to approve first (the web tree's builders pay from the OpenChat wallet only),
  * which would otherwise be taken from the OpenChat wallet.
@@ -567,6 +569,7 @@ export async function sendComposed(
     context: MessageContext,
     text: string,
     attachment: { content: AttachmentContent | undefined; shown: boolean },
+    mentioned: User[] = [],
 ): Promise<ComposedSend> {
     const markdown = detectMarkdown(text);
     if (
@@ -589,7 +592,7 @@ export async function sendComposed(
         text === "" ? undefined : text,
         markdown,
         taken.attachment,
-        [],
+        mentioned,
         "prompt",
     );
     return composedSend(outcome);

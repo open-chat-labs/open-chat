@@ -49,6 +49,7 @@
     import { followAndroidSystemBars } from "./systemBars";
     import Router from "./router/Router.svelte";
     import Shell from "./shell/Shell.svelte";
+    import { warmRichTextEditor } from "@src/core/richText/richTextEditorLoader";
 
     addUiMessages();
     installBehaviours();
@@ -147,6 +148,12 @@
     if ($identityStateStore.kind === "logged_in") {
         setUpNativeApp();
     }
+
+    // the rich-text editor's chunk, loaded at idle once signed in, so a composer has it at once: a
+    // phone raises its keyboard only for a focus inside the tap (richTextEditorLoader, #10576)
+    $effect(() => {
+        if ($identityStateStore.kind === "logged_in") warmRichTextEditor();
+    });
 
     function unhandledError(ev: Event) {
         handleUnhandledError(ev, () => client.logout());

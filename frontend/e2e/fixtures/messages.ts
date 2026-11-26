@@ -81,7 +81,7 @@ export async function react(
 export async function editMessage(user: User, text: string, edited: string): Promise<void> {
     await messageAction(user, text, "edit");
     // the composer takes the message's text: wait for it, or it lands over what's typed next
-    await expect(composer(user)).toHaveValue(text);
+    await expect.poll(() => composerText(user)).toBe(text);
     await composer(user).fill(edited);
     await submit(user, true);
 }
@@ -125,7 +125,7 @@ export async function sendPhoto(user: User, caption: string): Promise<void> {
         await page.getByRole("button", { name: "Photos & videos" }).click();
     }
     await (await chooser).setFiles({ name: "photo.png", mimeType: "image/png", buffer: PHOTO });
-    const box = page.getByPlaceholder(/caption/i);
+    const box = page.getByRole("textbox", { name: /caption/i });
     await box.fill(caption);
     if (user.tree === "desktop") {
         await box.press("Enter");
@@ -156,9 +156,19 @@ export async function expectMessage(user: User, text: string): Promise<void> {
     await expect(messageRow(user, text)).toBeVisible();
 }
 
-/** The composer's text box. */
+/**
+ * The composer's text box: the rich-text editor (#10576), or the plain text box it stands in for
+ * until its code has loaded. Both are named by the placeholder.
+ */
 export function composer(user: User): Locator {
-    return user.page.getByPlaceholder(/message/i);
+    return user.page.getByRole("textbox", { name: /message/i });
+}
+
+/** The text in the composer's text box, whichever it is. */
+export async function composerText(user: User): Promise<string> {
+    return composer(user).evaluate((el) =>
+        el instanceof HTMLTextAreaElement ? el.value : (el.textContent ?? ""),
+    );
 }
 
 /** Sends what's in the composer: Enter on desktop, the send (or save) button on a phone. */

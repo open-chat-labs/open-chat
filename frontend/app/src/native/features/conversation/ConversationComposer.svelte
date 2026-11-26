@@ -44,6 +44,10 @@
     import { interpolateNewUi } from "@i18n/i18n";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import MessageComposer from "@openchat/ui/src/lib/components/MessageComposer.svelte";
+    import type { ComposerEditorArgs } from "@openchat/ui/src/lib/types";
+    import ComposerRichText from "@src/core/richText/ComposerRichText.svelte";
+    import { mentionedUsers, pickedMention } from "@src/core/richText/composerEditor";
+    import { RichTextEditorLoad } from "@src/core/richText/richTextEditorLoad.svelte";
     import {
         attachRefusal,
         canAttachNow,
@@ -318,14 +322,20 @@
         memberFinder.typed(query);
     }
 
-    const mentions = $derived.by(() => {
+    const mentionCandidates = $derived.by(() => {
         if (mentionQuery === undefined) return [];
         // what the lookup reads through `.value`: it changes as members not held are found
         void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
-        return mentionsFor(client, mentionQuery, me).map((candidate) =>
-            composerMention(candidate, (user) => client.userAvatarUrl(user)),
-        );
+        return mentionsFor(client, mentionQuery, me);
     });
+    const mentions = $derived(
+        mentionCandidates.map((candidate) =>
+            composerMention(candidate, (user) => client.userAvatarUrl(user)),
+        ),
+    );
+
+    // the rich-text editor in the composer's text box, once its chunk is here (warmed by App)
+    const richText = new RichTextEditorLoad();
     // the others hear while the reader types; leaving, their "typing" runs out by itself
     const typing = new TypingNotifier(
         () => client.startTyping(chat.id, me, thread?.rootIndex),
@@ -349,15 +359,21 @@
     // meanwhile stay for the next. None could be prepared (each has said so): the caption alone.
     async function send(text: string): Promise<false | undefined> {
         typing.stopped();
+        // those picked from the mention list, written as @UserId by the editor
+        const mentioned = mentionedUsers(text, $allUsersStore);
         const ids = picks.ids();
         if (ids.length > 0) {
             const taken = await picks.take(ids);
             const { contents } = taken;
             if (contents.length > 0) {
-                const sent = await sendComposed(client, chat, context, text, {
-                    content: contents[0],
-                    shown: true,
-                });
+                const sent = await sendComposed(
+                    client,
+                    chat,
+                    context,
+                    text,
+                    { content: contents[0], shown: true },
+                    mentioned,
+                );
                 if (sent.kind !== "posted") return composerAnswer(sent);
                 picks.removeSent(taken.picks);
                 slot.close();
@@ -367,10 +383,14 @@
             if (text.trim() === "") throw new Error("nothing prepared");
         }
         return composerAnswer(
-            await sendComposed(client, chat, context, text, {
-                content: draftAttachment(draft),
-                shown: staged !== null,
-            }),
+            await sendComposed(
+                client,
+                chat,
+                context,
+                text,
+                { content: draftAttachment(draft), shown: staged !== null },
+                mentioned,
+            ),
         );
     }
 
@@ -550,12 +570,19 @@
             : new KeyboardPanelState(panelKind === "emoji" || gallery),
     );
 
+    // the composer's text box: the rich-text editor, or the textarea until it's here
+    function isComposerField(el: Element | null): el is HTMLElement {
+        return (
+            el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable)
+        );
+    }
+
     // the keyboard asked for (the emoji panel's keyboard glyph) hasn't come: Android drops a focus's
     // keyboard while the last is still going down, so the field is focused afresh, once
     $effect(() => {
         slot.onMissed = () => {
             const field = document.activeElement;
-            if (!(field instanceof HTMLTextAreaElement) || composer === undefined) return false;
+            if (!isComposerField(field) || composer === undefined) return false;
             field.blur();
             composer.focus();
             return true;
@@ -569,7 +596,7 @@
         slot.onRefocus = () => {
             composer?.focus();
             const field = document.activeElement;
-            return field instanceof HTMLTextAreaElement && field.closest(".pill") !== null;
+            return isComposerField(field) && field.closest(".pill") !== null;
         };
         return () => (slot.onRefocus = undefined);
     });
@@ -663,7 +690,16 @@
             emojiActive={slot.panel === "emoji"}
             onInputFocus={() => slot.inputFocused()}
             insert={inserted}
+            editor={richText.component === undefined ? undefined : richTextField}
         />
+        {#snippet richTextField(args: ComposerEditorArgs)}
+            {#if richText.component !== undefined}
+                <ComposerRichText
+                    Editor={richText.component}
+                    {args}
+                    resolveMention={(mention) => pickedMention(mentionCandidates, mention)} />
+            {/if}
+        {/snippet}
     </div>
     {#if attachable}
         <input

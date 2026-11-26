@@ -472,6 +472,14 @@ describe("sending what the composer holds", () => {
         expect(c.sendMessage).toHaveBeenCalledWith(thread, "hi", false, undefined, [], "prompt");
     });
 
+    test("#10576 invariant 2: mentions those picked in the rich-text editor, with the text as written", async () => {
+        const c = client();
+        const bob = { userId: "rrkah-fqaaa-aaaaa-aaaaq-cai", username: "bob", displayName: "Bob" };
+        const text = `hi @UserId(${bob.userId})`;
+        await sendComposed(c, chat, thread, text, none, [bob]);
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, text, false, undefined, [bob], "prompt");
+    });
+
     test("is refused, keeping the draft, when the client doesn't post it", async () => {
         const c = client({ kind: "throttled" });
         expect(await sendComposed(c, chat, { chatId: chat.id }, "hi", none)).toEqual({

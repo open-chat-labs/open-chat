@@ -311,6 +311,51 @@ export interface ComposerMention {
   group?: boolean;
 }
 
+/**
+ * A host's own editor in MessageComposer's text box (its `editor` snippet, e.g. a rich-text editor), as the composer
+ * drives it. The draft stays the composer's, as the text the editor gives (`onText`): what's sent, saved and checked
+ * for being empty.
+ */
+export interface ComposerEditor {
+  /** Takes the focus, synchronously (a phone raises its keyboard only for a focus inside the tap). */
+  focus(): void;
+  /** Replaces the text (a draft, an edit's text, emptied after a send), the caret at its end, without focusing. */
+  setText(text: string): void;
+  /** Puts text in at the caret (an emoji); `focus` takes the focus too (without, no keyboard opens). */
+  insertText(text: string, focus: boolean): void;
+  /** As Backspace, without focusing: the selection, or the character before the caret. */
+  deleteBackward(): void;
+  /** Puts the one picked from the composer's mention list in place of the "@word" at the caret. */
+  insertMention(mention: ComposerMention): void;
+}
+
+/** The "@word" being typed in a host's editor: where its "@" is (the editor's position) and what's typed after it. */
+export interface ComposerEditorMention {
+  start: number;
+  query: string;
+}
+
+/** What MessageComposer hands its `editor` snippet. */
+export interface ComposerEditorArgs {
+  /** Translated: the placeholder, which is also the text box's label. */
+  placeholder: string;
+  /** The text box's least and greatest height in px (it grows with its text, then scrolls). */
+  minHeight: number;
+  maxHeight: number;
+  /** The aria the composer's lists need on the text box (`aria-autocomplete`, `aria-controls`, `aria-activedescendant`). */
+  aria: Record<string, string>;
+  /** The text as the user changes it (typed, pasted, a mention or emoji put in). */
+  onText: (text: string) => void;
+  /** Every key first: the composer's lists, Enter to send. A key it handles is `defaultPrevented`. */
+  onKeydown: (e: KeyboardEvent) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  /** The "@word" at the caret as it changes; undefined once there's none. */
+  onMention: (mention: ComposerEditorMention | undefined) => void;
+  /** The editor is made: the composer drives it through `editor` until the returned function is called. */
+  register: (editor: ComposerEditor) => () => void;
+}
+
 /** A GIF the composer's GIF tab shows (the host's search results). */
 export interface ComposerGif {
   /** The same while it's the same GIF. */

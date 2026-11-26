@@ -36,6 +36,6 @@ export async function groupOfTwo(
     const groupId = await createPrivateGroup(owner, name, [memberId]);
     await openGroup(member, groupId);
     await member.page.getByRole("button", { name: /^Join/ }).first().click();
-    await expect(member.page.getByPlaceholder(/message/i)).toBeVisible();
+    await expect(member.page.getByRole("textbox", { name: /message/i })).toBeVisible();
     return groupId;
 }
