@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "创建私人频道",
                     "manageUserGroups": "管理用户组"
                 }
+            },
+            "channels": {
+                "yours": "你的频道",
+                "note": "点按频道即可编辑。"
+            },
+            "userGroups": {
+                "intro": "用 @名称 一次提及整组成员。",
+                "none": "还没有用户组。",
+                "new": "新建用户组",
+                "edit": "编辑用户组",
+                "members": "{count, plural, other {# 位成员}}",
+                "namePlaceholder": "名称",
+                "nameHint": "成员通过名称提及该组。",
+                "mention": "提及方式：{mention}",
+                "nameTaken": "已有其他用户组使用此名称。",
+                "noMembers": "还没有成员",
+                "search": "搜索社区成员",
+                "create": "创建用户组",
+                "delete": "删除用户组",
+                "deleteTitle": "删除此用户组？",
+                "deleteMessage": "{name} 将被删除，之后无法再提及。",
+                "deleted": "已删除 {name}",
+                "confirmDelete": "删除",
+                "people": "社区成员"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "正在创建…",
                 "done": "完成",
                 "discardTitle": "放弃这个群组？",
-                "discardMessage": "你输入的内容不会保留。"
+                "discardMessage": "你输入的内容不会保留。",
+                "createChannel": "创建频道",
+                "discardChannelTitle": "放弃这个频道？"
             }
         },
         "activity": {

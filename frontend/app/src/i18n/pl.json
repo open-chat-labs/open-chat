@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "Tworzenie kanałów prywatnych",
                     "manageUserGroups": "Zarządzanie grupami użytkowników"
                 }
+            },
+            "channels": {
+                "yours": "Twoje kanały",
+                "note": "Stuknij kanał, aby go edytować."
+            },
+            "userGroups": {
+                "intro": "Wspomnij całą grupę członków naraz jej @nazwą.",
+                "none": "Nie ma jeszcze grup użytkowników.",
+                "new": "Nowa grupa użytkowników",
+                "edit": "Edytuj grupę użytkowników",
+                "members": "{count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",
+                "namePlaceholder": "nazwa",
+                "nameHint": "Członkowie wspominają grupę jej nazwą.",
+                "mention": "Wspominana jako {mention}",
+                "nameTaken": "Inna grupa użytkowników ma tę nazwę.",
+                "noMembers": "Nikogo jeszcze nie ma",
+                "search": "Szukaj członków społeczności",
+                "create": "Utwórz grupę użytkowników",
+                "delete": "Usuń grupę użytkowników",
+                "deleteTitle": "Usunąć tę grupę użytkowników?",
+                "deleteMessage": "{name} zniknie i nie będzie można jej już wspomnieć.",
+                "deleted": "Usunięto {name}",
+                "confirmDelete": "Usuń",
+                "people": "Członkowie społeczności"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "Tworzenie…",
                 "done": "Gotowe",
                 "discardTitle": "Odrzucić tę grupę?",
-                "discardMessage": "To, co wpisano, nie zostanie zachowane."
+                "discardMessage": "To, co wpisano, nie zostanie zachowane.",
+                "createChannel": "Utwórz kanał",
+                "discardChannelTitle": "Odrzucić ten kanał?"
             }
         },
         "activity": {

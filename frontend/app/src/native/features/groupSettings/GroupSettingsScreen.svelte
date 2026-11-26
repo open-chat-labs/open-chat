@@ -1,9 +1,13 @@
 <!-- A group's or channel's settings page (native plan 11), pushed from its details without a URL:
      Edit group from the cover, and Manage's Access gates, Rules and Permissions (Bots and webhooks
-     and Stats aren't built: GAPS.md). The chat is the selected one, held while the screen slides
-     out once it isn't; its page is GroupSettingsEditor's, mounted once the chat is in (and for Rules, its rules). -->
+     and Stats aren't built: GAPS.md), and Edit channel from a community's Channels page. The chat
+     is the selected one, or for a channel's Edit from its community, one of the user's chats
+     (allChatsStore), held while the screen slides out once it isn't; its page is
+     GroupSettingsEditor's, mounted once the chat is in (and for Rules, its rules, which only the
+     selected chat has). -->
 <script lang="ts">
     import {
+        allChatsStore,
         chatIdentifiersEqual,
         selectedChatRulesStore,
         selectedChatSummaryStore,
@@ -29,11 +33,19 @@
             $selectedChatSummaryStore.kind !== "direct_chat" &&
             chatIdentifiersEqual($selectedChatSummaryStore.id, screen.chatId),
     );
+    // a channel edited from its community's Channels page isn't selected: it's one of the user's
+    const unselected = $derived.by(() => {
+        if (selected) return undefined;
+        const found = $allChatsStore.get(screen.chatId);
+        return found === undefined || found.kind === "direct_chat" ? undefined : found;
+    });
     const held = new HeldWhileLeaving<MultiUserChat | undefined>(undefined);
     const chat = $derived(
         held.of(
-            selected,
-            $selectedChatSummaryStore?.kind === "direct_chat" ? undefined : $selectedChatSummaryStore,
+            selected || unselected !== undefined,
+            selected && $selectedChatSummaryStore?.kind !== "direct_chat"
+                ? $selectedChatSummaryStore
+                : unselected,
         ),
     );
     // its rules, in with its details (a moment after it's selected), held as the chat is

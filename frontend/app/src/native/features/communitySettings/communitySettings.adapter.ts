@@ -132,6 +132,37 @@ export function communityPermissionRows(
     }));
 }
 
+// ── user groups ──
+
+export type UserGroupRow = { id: number; mention: string; members: string };
+
+/** The User groups page's rows: each group as it's mentioned, with its size, by name. */
+export function userGroupRows(
+    groups: Iterable<{ id: number; name: string; members: ReadonlySet<string> }>,
+    t: Translate,
+): UserGroupRow[] {
+    return [...groups]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((g) => ({
+            id: g.id,
+            mention: `@${g.name}`,
+            members: t("native.communitySettings.userGroups.members", { count: g.members.size }),
+        }));
+}
+
+/**
+ * The people a user group's page offers: the community's members it knows of matching the search
+ * (`matches`: by name or @username, `memberMatchesSearch`; the user too, as the old editors had
+ * it), by name.
+ */
+export function userGroupPeople<U extends { username: string; displayName?: string }>(
+    members: readonly U[],
+    matches: (user: U) => boolean,
+): U[] {
+    const name = (u: U) => u.displayName ?? u.username;
+    return members.filter(matches).sort((a, b) => name(a).localeCompare(name(b)));
+}
+
 /** How many of the permissions are other than the defaults. */
 export function changedCommunityPermissions(permissions: CommunityPermissions): number {
     const defaults = defaultCommunityPermissions();

@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "إنشاء قنوات خاصة",
                     "manageUserGroups": "إدارة مجموعات المستخدمين"
                 }
+            },
+            "channels": {
+                "yours": "قنواتك",
+                "note": "اضغط على قناة لتعديلها."
+            },
+            "userGroups": {
+                "intro": "اذكر مجموعة كاملة من الأعضاء دفعة واحدة باسمها @.",
+                "none": "لا توجد مجموعات مستخدمين بعد.",
+                "new": "مجموعة مستخدمين جديدة",
+                "edit": "تعديل مجموعة المستخدمين",
+                "members": "{count, plural, one {عضو واحد} other {# أعضاء}}",
+                "namePlaceholder": "الاسم",
+                "nameHint": "يذكر الأعضاء المجموعة باسمها.",
+                "mention": "تُذكر باسم {mention}",
+                "nameTaken": "هناك مجموعة مستخدمين أخرى بهذا الاسم.",
+                "noMembers": "لا أحد فيها بعد",
+                "search": "ابحث في أعضاء المجتمع",
+                "create": "إنشاء مجموعة مستخدمين",
+                "delete": "حذف مجموعة المستخدمين",
+                "deleteTitle": "حذف مجموعة المستخدمين هذه؟",
+                "deleteMessage": "ستُحذف {name} ولن يمكن ذكرها بعد الآن.",
+                "deleted": "تم حذف {name}",
+                "confirmDelete": "حذف",
+                "people": "أعضاء المجتمع"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "جارٍ الإنشاء…",
                 "done": "تم",
                 "discardTitle": "تجاهل هذه المجموعة؟",
-                "discardMessage": "لن يُحفظ ما أدخلته."
+                "discardMessage": "لن يُحفظ ما أدخلته.",
+                "createChannel": "إنشاء قناة",
+                "discardChannelTitle": "تجاهل هذه القناة؟"
             }
         },
         "activity": {

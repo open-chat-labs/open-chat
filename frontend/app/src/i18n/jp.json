@@ -2655,6 +2655,30 @@
                     "createPrivateChannel": "非公開チャンネルを作成",
                     "manageUserGroups": "ユーザーグループを管理"
                 }
+            },
+            "channels": {
+                "yours": "あなたのチャンネル",
+                "note": "チャンネルをタップして編集します。"
+            },
+            "userGroups": {
+                "intro": "@名前 でメンバーのグループ全体を一度にメンションできます。",
+                "none": "ユーザーグループはまだありません。",
+                "new": "新しいユーザーグループ",
+                "edit": "ユーザーグループを編集",
+                "members": "{count, plural, other {#人のメンバー}}",
+                "namePlaceholder": "名前",
+                "nameHint": "メンバーは名前でグループをメンションします。",
+                "mention": "{mention} でメンション",
+                "nameTaken": "同じ名前のユーザーグループがあります。",
+                "noMembers": "まだ誰もいません",
+                "search": "コミュニティのメンバーを検索",
+                "create": "ユーザーグループを作成",
+                "delete": "ユーザーグループを削除",
+                "deleteTitle": "このユーザーグループを削除しますか？",
+                "deleteMessage": "{name} は削除され、今後メンションできなくなります。",
+                "deleted": "{name} を削除しました",
+                "confirmDelete": "削除",
+                "people": "コミュニティのメンバー"
             }
         },
         "explore": {
@@ -2899,7 +2923,9 @@
                 "creating": "作成中…",
                 "done": "完了",
                 "discardTitle": "このグループを破棄しますか？",
-                "discardMessage": "入力した内容は保存されません。"
+                "discardMessage": "入力した内容は保存されません。",
+                "createChannel": "チャンネルを作成",
+                "discardChannelTitle": "このチャンネルを破棄しますか？"
             }
         },
         "activity": {
