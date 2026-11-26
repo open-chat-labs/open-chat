@@ -24,6 +24,9 @@
     helpSummary?: boolean;
     /** Dimmed and not pressable: the setting doesn't apply yet. */
     disabled?: boolean;
+    /** Shown, not changeable (someone whose role can't change it): the same row as a plain element, with no
+        chevron, no press and no focus. */
+    readOnly?: boolean;
     /** Gets the row, to anchor a menu to. */
     onClick: (row: HTMLElement) => void;
   }
@@ -39,25 +42,34 @@
     iconAccent = false,
     helpSummary = false,
     disabled = false,
+    readOnly = false,
     onClick,
   }: Props = $props();
   const t = useT();
 </script>
 
-<button
-  type="button"
-  class="settings-row link-row"
-  {disabled}
-  aria-haspopup={chevron === 'down' ? 'menu' : undefined}
-  onclick={(e) => onClick(e.currentTarget)}>
+{#snippet content()}
   {#if icon}<span class="icon" class:accent={iconAccent} style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{/if}
   <span class="text">
     <span class="label">{t(label)}</span>
     {#if help}<span class="help" class:summary={helpSummary}>{t(help)}</span>{/if}
   </span>
   {#if value}<span class="value" class:accent class:quiet>{t(value)}</span>{/if}
-  <span class="chevron {chevron}"></span>
-</button>
+{/snippet}
+
+{#if readOnly}
+  <div class="settings-row link-row read-only">{@render content()}</div>
+{:else}
+  <button
+    type="button"
+    class="settings-row link-row"
+    {disabled}
+    aria-haspopup={chevron === 'down' ? 'menu' : undefined}
+    onclick={(e) => onClick(e.currentTarget)}>
+    {@render content()}
+    <span class="chevron {chevron}"></span>
+  </button>
+{/if}
 
 <style lang="scss">
   @use '../lib/styles/mixins' as *;
@@ -83,6 +95,10 @@
 
     &:disabled {
       opacity: 0.45;
+      cursor: default;
+    }
+
+    &.read-only {
       cursor: default;
     }
   }

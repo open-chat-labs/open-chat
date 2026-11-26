@@ -11,7 +11,6 @@
     import type { UpdateCommunityState } from "@src/logic/groupOrCommunity/community.svelte";
     import { defaultCommunityPermissions } from "@src/stores/community";
     import { _ } from "svelte-i18n";
-    import FactRow from "../details/FactRow.svelte";
     import {
         changedCommunityPermissions,
         COMMUNITY_PERMISSION_CARDS,
@@ -28,7 +27,6 @@
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
     const permissions = $derived(editor.candidateCommunity.permissions);
     const roles = $derived(communityRoleOptions(t));
-    const label = (id: string) => roles.find((r) => r.id === id)?.label ?? "";
 
     function set(key: CommunityPermission, id: string) {
         const role = communityRoleOf(id);
@@ -53,16 +51,13 @@
                     : "native.communitySettings.permissions.channels",
             )}>
             {#each communityPermissionRows(permissions, card.card, t) as row (row.key)}
-                {#if readOnly}
-                    <FactRow label={row.label} value={label(row.value)} />
-                {:else}
-                    <SettingsValue
-                        label={row.label}
-                        options={roles}
-                        value={row.value}
-                        accent={row.changed}
-                        onChange={(id) => set(row.key as CommunityPermission, id)} />
-                {/if}
+                <SettingsValue
+                    label={row.label}
+                    options={roles}
+                    value={row.value}
+                    accent={row.changed}
+                    {readOnly}
+                    onChange={(id) => set(row.key as CommunityPermission, id)} />
             {/each}
         </SettingsGroup>
     {/each}

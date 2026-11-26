@@ -1238,3 +1238,10 @@
 - `meta.json` updated for all three.
 - Used by the app: the native Access gates page (groups, channels and communities), to match the design's gate rows (an icon in the accent while the gate is on, what the gate is under its name, or for a gate with setup that's on, a summary of its entries, with On / Off) and its Gate settings rows (an icon, a help line that follows the state, the value, and a menu; dimmed until they apply).
 - In the design export (the native prototype's Access gates page).
+
+## 2026-11-26 — SettingsLink and SettingsValue: a read-only row, by hand
+- `SettingsLink`: `readOnly` (optional, default false), the same row as a plain element (a div, not a button): the same layout and type (label medium 15px `--ink`, value medium 13px `--ink-2`, `--accent-bright` when `accent`, at least 60px, 10px 16px), with no chevron, no menu, no pressed state, not focusable.
+- `SettingsValue`: `readOnly`, handed to its `SettingsLink`; no AnchoredMenu while it's set.
+- `meta.json` updated for both.
+- Used by the app: the native Permissions pages (groups, channels and communities) for someone who can't change them, in place of the details' `FactRow`, so the read-only rows look like the editable ones (the user's design prompt, 2026-11-26).
+- Not in the design export.

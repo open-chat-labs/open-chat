@@ -20,7 +20,6 @@
     import type { UpdateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
     import { untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import FactRow from "../details/FactRow.svelte";
     import {
         changedPermissions,
         customisedPerType,
@@ -45,8 +44,6 @@
     const permissions = $derived(editor.candidateGroup.permissions);
     const roles = $derived(roleOptions(t, false));
     const typeRoles = $derived(roleOptions(t, true));
-    const label = (id: string) => roles.find((r) => r.id === id)?.label ?? "";
-    const typeLabel = (id: string) => typeRoles.find((r) => r.id === id)?.label ?? "";
 
     // what each set is compared with (messageBaseline): the defaults for the messages', the
     // messages' for threads'
@@ -120,16 +117,13 @@
 </script>
 
 {#snippet roleRow(row: PermissionRow, onChange: (id: string) => void, sameAsDefault = false)}
-    {#if readOnly}
-        <FactRow label={row.label} value={sameAsDefault ? typeLabel(row.value) : label(row.value)} />
-    {:else}
-        <SettingsValue
-            label={row.label}
-            options={sameAsDefault ? typeRoles : roles}
-            value={row.value}
-            accent={row.changed}
-            {onChange} />
-    {/if}
+    <SettingsValue
+        label={row.label}
+        options={sameAsDefault ? typeRoles : roles}
+        value={row.value}
+        accent={row.changed}
+        {readOnly}
+        {onChange} />
 {/snippet}
 
 {#snippet messageRows(scope: Scope, current: MessagePermissions, on: boolean)}
@@ -178,13 +172,15 @@
 
     <SettingsGroup label={$_("native.groupSettings.permissions.threads")}>
         {#if readOnly}
-            <FactRow
+            <SettingsValue
                 label={$_("native.groupSettings.permissions.separateThreads")}
-                value={$_(
-                    permissions.threadPermissions === undefined
-                        ? "native.you.off"
-                        : "native.groupSettings.on",
-                )} />
+                options={[
+                    { id: "on", label: "native.groupSettings.on" },
+                    { id: "off", label: "native.you.off" },
+                ]}
+                value={permissions.threadPermissions === undefined ? "off" : "on"}
+                readOnly
+                onChange={() => {}} />
         {:else}
             <SettingsSwitch
                 label={$_("native.groupSettings.permissions.separateThreads")}

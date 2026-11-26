@@ -23638,6 +23638,17 @@
         "doc": "Dimmed and not pressable: the setting doesn't apply yet."
       },
       {
+        "name": "readOnly",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Shown, not changeable (someone whose role can't change it): the same row as a plain element, with no chevron, no press and no focus."
+      },
+      {
         "name": "onClick",
         "type": "(row: HTMLElement) => void",
         "default": null,
@@ -23987,6 +23998,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Dimmed and not pressable: the setting doesn't apply yet."
+      },
+      {
+        "name": "readOnly",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Shown, not changeable: the same row with no chevron and no menu (SettingsLink's readOnly)."
       },
       {
         "name": "onChange",

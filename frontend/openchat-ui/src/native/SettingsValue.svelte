@@ -21,15 +21,38 @@
     icon?: string;
     /** Dimmed and not pressable: the setting doesn't apply yet. */
     disabled?: boolean;
+    /** Shown, not changeable: the same row with no chevron and no menu (SettingsLink's `readOnly`). */
+    readOnly?: boolean;
     onChange: (id: string) => void;
   }
 
-  let { label, help = '', options, value, accent = false, icon, disabled = false, onChange }: Props = $props();
+  let {
+    label,
+    help = '',
+    options,
+    value,
+    accent = false,
+    icon,
+    disabled = false,
+    readOnly = false,
+    onChange,
+  }: Props = $props();
 
   let anchor = $state<HTMLElement | null>(null);
   const current = $derived(options.find((o) => o.id === value)?.label ?? '');
   const items = $derived<NativeMenuItem[]>(options.map((o) => ({ id: o.id, label: o.label, selected: o.id === value })));
 </script>
 
-<SettingsLink {label} {help} value={current} {accent} {icon} {disabled} chevron="down" onClick={(row) => (anchor = row)} />
-<AnchoredMenu {anchor} {items} {label} onSelect={onChange} onClose={() => (anchor = null)} />
+<SettingsLink
+  {label}
+  {help}
+  value={current}
+  {accent}
+  {icon}
+  {disabled}
+  {readOnly}
+  chevron="down"
+  onClick={(row) => (anchor = row)} />
+{#if !readOnly}
+  <AnchoredMenu {anchor} {items} {label} onSelect={onChange} onClose={() => (anchor = null)} />
+{/if}
