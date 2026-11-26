@@ -15,12 +15,16 @@ export function resumedSignUpCredentialId(
 }
 
 /**
- * How an identity load that got no OpenChat identity for its principal ends: signed out either way
- * (#9635). The session stored from before (`fromStorage`: the page loading) is a passkey sign-up
- * interrupted before its account was made, by a reload or the app being closed, that can't be
- * carried on (its passkey's key or credential id gone), so the page that follows says why. A
- * sign-in going on now ends in its own flow's failure.
+ * Whether a load that got no OpenChat identity for its principal, and is signed out for it (#9635),
+ * is a passkey sign-up from before a reload that couldn't be carried on (its passkey's cached key
+ * gone), which the page after the sign-out says. Only when the session from before is loading
+ * (`fromStorage`) with a sign-up passkey stored for its principal (`resumingSignUp`): any other
+ * session (one with an account whose identity lookup failed, say) is signed out as before, since
+ * telling an account holder to create their account again would point them at a second one.
  */
-export function withoutOpenChatIdentity(fromStorage: boolean): "sign_out" | "sign_up_interrupted" {
-    return fromStorage ? "sign_up_interrupted" : "sign_out";
+export function signsOutAsInterruptedSignUp(
+    fromStorage: boolean,
+    resumingSignUp: boolean,
+): boolean {
+    return fromStorage && resumingSignUp;
 }

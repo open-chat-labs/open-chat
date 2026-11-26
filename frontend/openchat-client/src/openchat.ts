@@ -843,7 +843,7 @@ import {
     loadWithoutOpenChatIdentity,
 } from "./utils/openChatIdentity";
 import { identityLoadFailed, type IdentityLoad } from "./utils/identityLoad";
-import { resumedSignUpCredentialId, withoutOpenChatIdentity } from "./utils/signUpResume";
+import { resumedSignUpCredentialId, signsOutAsInterruptedSignUp } from "./utils/signUpResume";
 import { jwtExpiryMs } from "./utils/jwt";
 import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
 import { SyncPuller } from "./utils/syncPuller";
@@ -1371,6 +1371,7 @@ export class OpenChat {
     // is gone (`noDelegation`: expired, or the reload came before it was stored) with its passkey's
     // details still stored. Either way that sign-up's details are dropped.
     async #noteInterruptedSignUp(noDelegation: boolean): Promise<void> {
+        if (!this.config.resumeSignUpAfterReload) return;
         const storage = this.#authIdentityStorage.storage;
         try {
             let interrupted = await takeSignUpInterrupted(storage);
@@ -1488,7 +1489,16 @@ export class OpenChat {
                             : "No OpenChat identity for the passkey just made for sign-up",
                         new Error(reason),
                     );
-                    if (signsOut) void this.#signOutWithoutOpenChatIdentity(fromStorage);
+                    // a sign-up's load keeps its identity (#10580); every other load signs out,
+                    // saying why when it was carrying on a sign-up from before a reload (#10596)
+                    if (signsOut) {
+                        void this.#signOutWithoutOpenChatIdentity(
+                            signsOutAsInterruptedSignUp(
+                                fromStorage,
+                                resumedCredentialId !== undefined,
+                            ),
+                        );
+                    }
                 },
             );
             if (ocIdentity === undefined) {
@@ -1537,8 +1547,10 @@ export class OpenChat {
     }
 
     // The credential id stored by a passkey sign-up for this principal, if one is going on
-    // (signUpPasskeyStorage); one stored for anyone else is dropped.
+    // (signUpPasskeyStorage); one stored for anyone else is dropped. Only the new trees carry a
+    // sign-up on over a reload (`resumeSignUpAfterReload`); the old ones sign out as before.
     async #signUpCredentialFor(authPrincipal: string | undefined): Promise<Uint8Array | undefined> {
+        if (!this.config.resumeSignUpAfterReload) return undefined;
         const storage = this.#authIdentityStorage.storage;
         try {
             const stored = await getSignUpPasskey(storage);
@@ -1561,11 +1573,11 @@ export class OpenChat {
         }
     }
 
-    // No OpenChat identity for the principal signed in, so it's signed out (#9635); when that's
-    // the session from before, it's an interrupted sign-up that can't be carried on, which the
-    // page after the sign-out says (#noteInterruptedSignUp)
-    async #signOutWithoutOpenChatIdentity(fromStorage: boolean): Promise<void> {
-        if (withoutOpenChatIdentity(fromStorage) === "sign_up_interrupted") {
+    // No OpenChat identity for the principal signed in, so it's signed out (#9635); an interrupted
+    // sign-up that can't be carried on (signsOutAsInterruptedSignUp) is said by the page after the
+    // sign-out (#noteInterruptedSignUp)
+    async #signOutWithoutOpenChatIdentity(interruptedSignUp: boolean): Promise<void> {
+        if (interruptedSignUp) {
             try {
                 await storeSignUpInterrupted(this.#authIdentityStorage.storage);
             } catch (err) {
@@ -13773,11 +13785,12 @@ export class OpenChat {
     // carry the sign-up on with it (#10596). It's kept with the principal of the delegation the
     // sign-up stores, whose root is `delegationKey` (the temporary key the passkey signs for), as
     // that's the principal the identity loads as. Without it the sign-up still goes on: only a
-    // reload would then be the end of it.
+    // reload would then be the end of it. Only the new trees (`resumeSignUpAfterReload`).
     async #rememberSignUpPasskey(
         delegationKey: SignIdentity,
         webAuthnIdentity: WebAuthnIdentity,
     ): Promise<void> {
+        if (!this.config.resumeSignUpAfterReload) return;
         try {
             await storeSignUpPasskey(this.#authIdentityStorage.storage, {
                 authPrincipal: delegationKey.getPrincipal().toString(),

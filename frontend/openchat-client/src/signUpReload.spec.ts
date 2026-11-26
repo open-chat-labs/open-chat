@@ -45,7 +45,10 @@ const posted: Request[] = [];
 
 // The identity canister as it is after a passkey was made and before the reload: no OpenChat
 // identity for its principal, and one can only be created with the passkey's credential id
-// (without it the canister can't check the passkey: originating_canister_invalid)
+// (without it the canister can't check the passkey: originating_canister_invalid). A credential id
+// whose key the cache no longer has (GONE) fails to hydrate, as the agent's does.
+const GONE = 0;
+
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
     postMessage(msg: Request) {
@@ -54,6 +57,10 @@ class FakeWorker {
             this.answer(msg, { kind: "oc_identity_not_found" });
         }
         if (msg.kind === "createOpenChatIdentity") {
+            if (msg.webAuthnCredentialId?.[0] === GONE) {
+                this.fail(msg, "Failed to find WebAuthnKey details");
+                return;
+            }
             this.answer(
                 msg,
                 msg.webAuthnCredentialId === undefined
@@ -77,11 +84,22 @@ class FakeWorker {
         };
         void Promise.resolve().then(() => this.onmessage?.({ data } as MessageEvent));
     }
+    fail(msg: Request, error: string) {
+        const data = {
+            kind: "worker_error",
+            requestKind: msg.kind,
+            correlationId: msg.correlationId,
+            error: JSON.stringify({ message: error }),
+        };
+        void Promise.resolve().then(() => this.onmessage?.({ data } as MessageEvent));
+    }
     addEventListener() {}
 }
 
-function config(): OpenChatConfig {
+// the new trees' client; the old trees' leaves `resumeSignUpAfterReload` off
+function config(resumeSignUpAfterReload = true): OpenChatConfig {
     return {
+        resumeSignUpAfterReload,
         mobileLayout: "v1",
         websiteVersion: "test",
         logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), log: vi.fn() },
@@ -139,9 +157,12 @@ describe("a reload partway through passkey sign-up (#10596)", () => {
         signUpInterruptedStore.set(false);
     });
 
-    async function startWith(session: IdentityKeyAndChain | undefined): Promise<void> {
+    async function startWith(
+        session: IdentityKeyAndChain | undefined,
+        newTrees = true,
+    ): Promise<void> {
         vi.spyOn(IdentityStorage.prototype, "getKeyAndChain").mockResolvedValue(session);
-        new OpenChat(config());
+        new OpenChat(config(newTrees));
         await vi.advanceTimersByTimeAsync(0);
     }
 
@@ -161,20 +182,55 @@ describe("a reload partway through passkey sign-up (#10596)", () => {
         expect(signUpInterruptedStore.value).toBe(false);
     });
 
-    /** Invariant 2: a sign-up that can't be carried on is signed out, saying why on the page after
-     * the sign-out's navigation. */
-    test("a session with no passkey stored for it is signed out as an interrupted sign-up", async () => {
-        const { session } = await passkeySession();
+    /** Invariant 2: a sign-up that can't be carried on (its passkey's key gone) is signed out,
+     * saying why on the page after the sign-out's navigation. */
+    test("a sign-up whose passkey can't be used is signed out as interrupted", async () => {
+        const { session, principal } = await passkeySession();
+        await storeSignUpPasskey(storage, {
+            authPrincipal: principal,
+            credentialId: Uint8Array.from([GONE]),
+        });
 
         await startWith(session);
 
         expect(created()).toHaveLength(1);
-        expect(created()[0].webAuthnCredentialId).toBeUndefined();
         expect(logout).toHaveBeenCalledOnce();
 
         // the page the sign-out navigates to
         await startWith(undefined);
         expect(signUpInterruptedStore.value).toBe(true);
+    });
+
+    /** A session with no sign-up stored for it isn't known to be one: it may have an account whose
+     * identity lookup failed, and telling its holder to create their account again would point
+     * them at a second one. It's signed out as before, without the message. */
+    test("a session with no sign-up passkey stored is signed out without the message", async () => {
+        const { session } = await passkeySession();
+
+        await startWith(session);
+
+        expect(created()[0].webAuthnCredentialId).toBeUndefined();
+        expect(logout).toHaveBeenCalledOnce();
+        await startWith(undefined);
+        expect(signUpInterruptedStore.value).toBe(false);
+    });
+
+    /** The old trees don't take part: nothing's sent or dropped for them, and they sign out as
+     * before, without the message. */
+    test("the old trees' client neither uses nor drops a stored passkey", async () => {
+        const { session, principal } = await passkeySession();
+        await storeSignUpPasskey(storage, {
+            authPrincipal: principal,
+            credentialId: Uint8Array.from([1, 2, 3]),
+        });
+
+        await startWith(session, false);
+
+        expect(created()[0].webAuthnCredentialId).toBeUndefined();
+        expect(logout).toHaveBeenCalledOnce();
+        expect(await getSignUpPasskey(storage)).toBeDefined();
+        await startWith(undefined, false);
+        expect(signUpInterruptedStore.value).toBe(false);
     });
 
     test("says so once", async () => {

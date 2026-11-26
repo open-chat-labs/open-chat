@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { resumedSignUpCredentialId, withoutOpenChatIdentity } from "./signUpResume";
+import { resumedSignUpCredentialId, signsOutAsInterruptedSignUp } from "./signUpResume";
 
 const passkey = { authPrincipal: "signing-up", credentialId: Uint8Array.from([1, 2]) };
 
@@ -18,12 +18,17 @@ describe("resumedSignUpCredentialId", () => {
     });
 });
 
-describe("withoutOpenChatIdentity", () => {
-    test("the session from before is an interrupted sign-up, which says why it's signed out", () => {
-        expect(withoutOpenChatIdentity(true)).toBe("sign_up_interrupted");
+describe("signsOutAsInterruptedSignUp", () => {
+    test("the session from before, with a sign-up passkey stored for it, is an interrupted sign-up", () => {
+        expect(signsOutAsInterruptedSignUp(true, true)).toBe(true);
+    });
+
+    test("a session from before with no sign-up stored may have an account: no message", () => {
+        expect(signsOutAsInterruptedSignUp(true, false)).toBe(false);
     });
 
     test("a sign-in going on now signs out as before", () => {
-        expect(withoutOpenChatIdentity(false)).toBe("sign_out");
+        expect(signsOutAsInterruptedSignUp(false, true)).toBe(false);
+        expect(signsOutAsInterruptedSignUp(false, false)).toBe(false);
     });
 });
