@@ -11,7 +11,9 @@
      the draft's attachment, sent with Send, the text its caption (the user's decision of
      2026-11-19, not 06's "Picking sends the GIF"). A "/" at the start of the text lists the bot
      commands the screen offers for it; a pick runs it, or asks for its arguments first (the
-     screen's). Mount it once per chat (keyed). -->
+     screen's). The text box is the old trees' rich-text editor (core/richText, #10576), once its
+     chunk is here (App warms it): formatting shows as it's typed, a mention picked goes in as one
+     (sent as `@UserId`), and the draft is its markdown. Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
@@ -21,10 +23,13 @@
         ComposerAttachment,
         ComposerCommand,
         ComposerContext,
+        ComposerEditorArgs,
         ComposerGif,
         ComposerMention,
     } from "@openchat/ui/src/lib/types";
-    import type { GiphyContent } from "@client";
+    import type { GiphyContent, UserOrUserGroup } from "@client";
+    import ComposerRichText from "@src/core/richText/ComposerRichText.svelte";
+    import { RichTextEditorLoad } from "@src/core/richText/richTextEditorLoad.svelte";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
     import {
@@ -67,6 +72,7 @@
         voiceMaxBytes,
         onMentionQuery,
         mentions,
+        resolveMention,
         onVoiceActive,
         onGif,
         onCommandQuery,
@@ -125,6 +131,8 @@
         // the "@word" being typed, and who's offered for it
         onMentionQuery: (query: string | undefined) => void;
         mentions: ComposerMention[];
+        // who a mention picked from the list is (the editor puts them in as a mention)
+        resolveMention: (mention: ComposerMention) => UserOrUserGroup | undefined;
         // a voice message is being recorded or reviewed, or that's over (nothing can be attached
         // meanwhile: sending it posts the draft)
         onVoiceActive: (active: boolean) => void;
@@ -138,6 +146,9 @@
         commands: ComposerCommand[];
         onPickCommand: (command: ComposerCommand) => Promise<boolean>;
     } = $props();
+
+    // the rich-text editor in the text box, once its chunk is here
+    const richText = new RichTextEditorLoad();
 
     // the GIF tab's search (Klipy's: trending, or what's typed), in a build with a Klipy key
     const feed = klipyApiKey === undefined ? undefined : new GifFeed(klipyApiKey);
@@ -256,7 +267,13 @@
             onPickGif={gifs === undefined ? undefined : pickGif}
             {onCommandQuery}
             {commands}
-            {onPickCommand} />
+            {onPickCommand}
+            editor={richText.component === undefined ? undefined : richTextField} />
+        {#snippet richTextField(args: ComposerEditorArgs)}
+            {#if richText.component !== undefined}
+                <ComposerRichText Editor={richText.component} {args} {resolveMention} />
+            {/if}
+        {/snippet}
     </div>
     {#if onFile !== undefined}
         <input

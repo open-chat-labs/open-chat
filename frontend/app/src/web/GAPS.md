@@ -22,7 +22,8 @@ design export needs. Each entry says where it came up.
   rather than a `--text-*` token stays as designed, at any setting (the tokens cover most text,
   the chat list and the messages included). In `lib/components`: `RequirementChip`,
   `MessageActions`, `QuickAmountChips`, `SwapOffer`, `MessageGroup`, `PrizeMessage`, `EmojiPicker`,
-  `MessageComposer` (the composer's text), `ComposerBar`, `LinkPreview`, `LinkCard`, `Pill`,
+  `MessageComposer` (its menus' and strips' text; the text being written, in the rich-text editor,
+  follows `--text-base`, #10576), `ComposerBar`, `LinkPreview`, `LinkCard`, `Pill`,
   `Tooltip`, `StepIndicator`, `ProposalMessage`, `MediaMessage`, `TransferMessage`, `FileMessage`,
   `PollMessage`, `CallEvent`, `DetailRow`, `ChatPicker`, `CopyButton`, `ProgressTimeline`,
   `ListSectionLabel`, `SortableInputList`, `AmountCard`, `UndoToast`; and 26 of the app components
@@ -3644,9 +3645,11 @@ design export needs. Each entry says where it came up.
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
   media, voice, the @mention picker and GIFs came with 5c, the "+" menu's builders with 5d (below).
-  There's no rich-text
-  editor (the old one showed
-  markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
+  The text box is the old trees' rich-text editor (#10576, `core/richText`, through
+  `MessageComposer`'s `editor`; the textarea until its chunk is here): markdown shows formatted as
+  it's typed, code blocks are highlighted, a mention picked goes in as one and is sent as
+  `@UserId`, and pasted formatting is kept, as markdown. Its ":word" emoji list isn't offered (see
+  the ledger's `msg-emoji-autocomplete`). The old desktop entry's link-count note ("Link previews are hidden
   for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
   any more, since `extractEnabledLinks` stops at the 3 links that get previews
   (`MAX_LINK_PREVIEWS`) so it never counts past 5, and nothing hides a message's previews past 5

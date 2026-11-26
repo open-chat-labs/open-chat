@@ -84,3 +84,6 @@ Last updated: 2026-11-02. Nothing below has been re-exported to Svelte yet; that
 
 ## MessageComposer — 2026-11-03
 - Edit/focus ring outside the field; reply/edit card concentric with the composer; card-to-input gap 6px. Web-visible (same fixes).
+
+## MessageComposer — 2026-11-26
+- `editor`: a host's own editor in the textarea's place (#10576). The native composer puts the old trees' rich-text editor there (`core/richText`), warmed at idle by App so a tap focuses it at once (the keyboard). The emoji panel's typing and Backspace go into it without focusing it, as into the textarea. Web gets the same. EXPORT-LOG 2026-11-26.

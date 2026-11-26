@@ -52,6 +52,10 @@
         query: string;
     };
 
+    // The "@word" being typed at the caret, for a host with its own mention list: where its "@" is
+    // and what's typed after it
+    type MentionQuery = { query: string; from: number };
+
     interface Props {
         placeholder?: string;
         autofocus?: boolean;
@@ -62,8 +66,22 @@
         onKeydown?: (e: KeyboardEvent) => void;
         members?: ReadonlyMap<string, Member>;
         empty?: boolean;
-        mentionPicker: Snippet<[MentionPickerArgs]>;
-        emojiPicker: Snippet<[EmojiPickerArgs]>;
+        // The editor's own pickers. A host without them shows its own mention list (from
+        // `onMentionQuery`) and offers no ":word" emoji list
+        mentionPicker?: Snippet<[MentionPickerArgs]>;
+        emojiPicker?: Snippet<[EmojiPickerArgs]>;
+        // The "@word" at the caret as it changes (undefined once there's none), for a host's own
+        // mention list; it puts the one picked in with `insertMention`
+        onMentionQuery?: (query: MentionQuery | undefined) => void;
+        // Attributes for the editable element (aria), as they change
+        attributes?: Record<string, string>;
+        // The editor is made and its methods work
+        onReady?: () => void;
+        // Text put in more than a character at once (an autofill, an autocorrected or dictated word,
+        // a test's fill) goes in as it is, not through the markdown shortcuts (input rules): they
+        // expect one character at a time, and a chunk that completes one (`**bold**`) empties the
+        // editor. Typed one character at a time, the shortcuts work as ever
+        plainTextChunks?: boolean;
     }
 
     let {
@@ -78,6 +96,10 @@
         empty = $bindable(true),
         mentionPicker,
         emojiPicker,
+        onMentionQuery,
+        attributes,
+        onReady,
+        plainTextChunks = false,
     }: Props = $props();
 
     let editorEl: HTMLDivElement;
@@ -111,7 +133,7 @@
         }
     }
 
-    function insertMention(user: UserOrUserGroup) {
+    export function insertMention(user: UserOrUserGroup): void {
         if (!mentionSuggestion) return;
         const { from: cursorPos } = editor.state.selection;
         editor
@@ -128,7 +150,7 @@
         const textBefore = editor.state.doc.textBetween(Math.max(0, from - 30), from, "\n");
 
         const emojiMatch = /:([\w]{1,20})$/.exec(textBefore);
-        if (emojiMatch) {
+        if (emojiMatch && emojiPicker) {
             const colonPos = from - emojiMatch[0].length;
             const coords = editor.view.coordsAtPos(colonPos);
             const height = editor.view.dom.clientHeight;
@@ -144,7 +166,7 @@
         }
 
         const mentionMatch = /@([\w]{0,30})$/.exec(textBefore);
-        if (mentionMatch && members) {
+        if (mentionMatch && (members || onMentionQuery)) {
             const atPos = from - mentionMatch[0].length;
             const coords = editor.view.coordsAtPos(atPos);
             const height = editor.view.dom.clientHeight;
@@ -158,6 +180,19 @@
         } else {
             mentionSuggestion = undefined;
         }
+        reportMention();
+    }
+
+    let reportedMention: MentionQuery | undefined;
+    function reportMention() {
+        if (onMentionQuery === undefined) return;
+        const next =
+            mentionSuggestion === undefined
+                ? undefined
+                : { query: mentionSuggestion.query, from: mentionSuggestion.from };
+        if (next?.query === reportedMention?.query && next?.from === reportedMention?.from) return;
+        reportedMention = next;
+        onMentionQuery(next);
     }
 
     function emojiToContent(emoji: SelectedEmoji): Content {
@@ -180,6 +215,45 @@
 
     export function insertEmoji(emoji: SelectedEmoji): void {
         editor?.chain().focus().insertContent(emojiToContent(emoji)).run();
+    }
+
+    // Text put in at the caret; without `focus` the editor isn't focused, so no keyboard opens
+    export function insertText(text: string, focus: boolean): void {
+        if (!editor) return;
+        const chain = editor.chain();
+        if (focus) chain.focus();
+        chain.insertContent(text).run();
+    }
+
+    // As Backspace: the selection, or the whole character (an emoji with its skin tone, a flag) or
+    // the mention before the caret, without focusing the editor
+    export function deleteBackward(): void {
+        if (!editor) return;
+        const { selection } = editor.state;
+        if (!selection.empty) {
+            editor.commands.deleteSelection();
+            return;
+        }
+        const { from } = selection;
+        const before = selection.$from.nodeBefore;
+        if (before === null) {
+            editor.commands.joinBackward();
+            return;
+        }
+        const size = before.isText ? lastCharacterLength(before.text ?? "") : before.nodeSize;
+        editor
+            .chain()
+            .command(({ tr }) => {
+                tr.delete(from - size, from);
+                return true;
+            })
+            .run();
+    }
+
+    function lastCharacterLength(text: string): number {
+        let last = "";
+        for (const { segment } of new Intl.Segmenter().segment(text)) last = segment;
+        return last.length;
     }
 
     function onMentionSelect(user: UserOrUserGroup) {
@@ -233,11 +307,16 @@
         editor?.commands.focus();
     }
 
-    export function setContent(markdown: string): void {
+    // Without `focus` the caret goes to the end but the editor isn't focused (no keyboard opens)
+    export function setContent(markdown: string, focus = true): void {
         editor?.commands.setContent(resolveMentionLabels(markdownToDoc(markdown)), {
             emitUpdate: false,
         });
-        editor?.commands.focus("end");
+        if (focus) {
+            editor?.commands.focus("end");
+        } else if (editor) {
+            editor.commands.setTextSelection(editor.state.doc.content.size);
+        }
         afterContentSet();
     }
 
@@ -289,7 +368,13 @@
                 CodeBlockLowlight.configure({ lowlight, enableTabIndentation: true }),
             ],
             editorProps: {
+                attributes,
                 transformPastedHTML,
+                handleTextInput: (view, from, to, text) => {
+                    if (!plainTextChunks || [...text].length <= 1) return false;
+                    view.dispatch(view.state.tr.insertText(text, from, to));
+                    return true;
+                },
                 handleKeyDown: (_view, event) => {
                     if (emojiSuggestion !== undefined) {
                         switch (event.key) {
@@ -305,7 +390,7 @@
                             }
                         }
                     }
-                    if (mentionSuggestion !== undefined) {
+                    if (mentionSuggestion !== undefined && mentionPicker) {
                         switch (event.key) {
                             case "Escape":
                                 mentionSuggestion = undefined;
@@ -414,6 +499,15 @@
         }
 
         empty = editor.isEmpty;
+        onReady?.();
+    });
+
+    // the editable element's attributes follow the prop (aria-activedescendant moves as a host's
+    // list is walked)
+    $effect(() => {
+        const next = attributes;
+        if (next === undefined || !editor) return;
+        editor.setOptions({ editorProps: { ...editor.options.editorProps, attributes: next } });
     });
 
     onDestroy(() => {
@@ -428,7 +522,7 @@
     dir={$rtlStore ? "rtl" : "ltr"}>
 </div>
 
-{#if emojiSuggestion}
+{#if emojiSuggestion && emojiPicker}
     {@render emojiPicker({
         onSelect: onEmojiSelect,
         onClose: () => (emojiSuggestion = undefined),
@@ -436,7 +530,7 @@
     })}
 {/if}
 
-{#if mentionSuggestion}
+{#if mentionSuggestion && mentionPicker}
     {@render mentionPicker({
         onMention: onMentionSelect,
         onClose: () => (mentionSuggestion = undefined),

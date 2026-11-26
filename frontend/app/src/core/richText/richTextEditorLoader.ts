@@ -11,7 +11,7 @@ import type RichTextEditor from "./RichTextEditor.svelte";
 // raise the soft keyboard for a focus() that is synchronous within the user
 // gesture, so tap → await import() → focus() would leave the keyboard closed.
 
-type EditorComponent = typeof RichTextEditor;
+export type EditorComponent = typeof RichTextEditor;
 
 let loaded: EditorComponent | undefined;
 let loading: Promise<EditorComponent> | undefined;

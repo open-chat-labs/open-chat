@@ -62,7 +62,7 @@ test("a group joined just before a reload opens as a member, not a preview", asy
     await openGroup(guest, groupId);
 
     // the chat list's updates have brought the group in, with the guest a member
-    await expect(guest.page.getByPlaceholder(/message/i)).toBeVisible();
+    await expect(guest.page.getByRole("textbox", { name: /message/i })).toBeVisible();
     // the race was forced: the preview's request was held back (renaming the method, or the page
     // no longer previewing the group, would otherwise leave this passing without testing anything)
     expect(held).toBeGreaterThan(0);
@@ -74,5 +74,5 @@ test("a group joined just before a reload opens as a member, not a preview", asy
         groupId,
     );
     expect(previewing).toBe(false);
-    await expect(guest.page.getByPlaceholder(/message/i)).toBeVisible();
+    await expect(guest.page.getByRole("textbox", { name: /message/i })).toBeVisible();
 });
