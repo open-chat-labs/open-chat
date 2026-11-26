@@ -111,6 +111,11 @@ export function achievementsCount(entries: AchievementEntry[]): { total: number;
     return { total: entries.length, left: entries.filter((e) => !e.done).length };
 }
 
+/** The group (AchievementsDialog's) an earned achievement is in: its own, or "partners" for a partner's. */
+export function earnedAchievementGroup(earned: EarnedAchievement): string {
+    return earned.kind === "internal" ? GROUPS[earned.id] : "partners";
+}
+
 /** An achievement the user has earned, from their CHIT events: what it paid, and when (ms). */
 export type EarnedAchievement =
     | { kind: "internal"; id: Achievement; amount: number; at: number }

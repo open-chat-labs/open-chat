@@ -2676,7 +2676,7 @@
     "name": "ClaimCalendar",
     "source": "by hand (8e, 2026-10-24)",
     "hash": "",
-    "description": "The CHIT claim calendar: a month of daily claims, always six weeks (42 cells, neighbouring months dimmed), Local / UTC claim times, a popover per claimed day, and Claim on today while it's open.",
+    "description": "The CHIT claim calendar: a month of daily claims, always six weeks (42 cells, neighbouring months dimmed), Local / UTC claim times, a popover per claimed day, and Claim on today while it's open. layout=\"card\" is the native CHIT screen's: a heading and the month over a card of square days, a picked day described under the grid, the totals and the toggle at its foot.",
     "preview": {
       "width": 560,
       "height": 460
@@ -2769,6 +2769,31 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "layout",
+        "type": "'bar' | 'card'",
+        "default": "bar",
+        "editor": "select",
+        "options": [
+          "bar",
+          "card"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'bar'",
+        "doc": "\"bar\": the month bar over the grid, a popover per day. \"card\": the native CHIT screen's, a heading and the month over a card, a picked day described under the grid, the totals and the toggle at the foot."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the heading over the card (layout \"card\" only)."
       }
     ],
     "group": "features"

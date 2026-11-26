@@ -1,5 +1,10 @@
 import { achievementList, achievements, type ChitEvent } from "@client";
-import { achievementItems, achievementsCount, latestAchievements } from "./achievements";
+import {
+    achievementItems,
+    achievementsCount,
+    earnedAchievementGroup,
+    latestAchievements,
+} from "./achievements";
 
 const NOW = 10 * 24 * 60 * 60 * 1000;
 
@@ -79,5 +84,22 @@ describe("the latest achievements", () => {
             event(1, { kind: "achievement_unlocked", type: "sent_text" }),
         ];
         expect(latestAchievements(twice, 4)).toHaveLength(1);
+    });
+});
+
+describe("an earned achievement's group", () => {
+    test("is the dialog's group for one of ours", () => {
+        expect(
+            earnedAchievementGroup({ kind: "internal", id: "sent_image", amount: 250, at: 0 }),
+        ).toBe("messaging");
+        expect(
+            earnedAchievementGroup({ kind: "internal", id: "streak_30", amount: 5000, at: 0 }),
+        ).toBe("streaks");
+    });
+
+    test("is partners for a partner's", () => {
+        expect(
+            earnedAchievementGroup({ kind: "external", name: "Taggr", amount: 100, at: 0 }),
+        ).toBe("partners");
     });
 });

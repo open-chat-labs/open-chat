@@ -1431,12 +1431,17 @@ design export needs. Each entry says where it came up.
     tab bar's dot gone, no error), the empty feed, light and dark. Not checked: iOS, Android.
 - **Native CHIT** (native N11, #10379; the native plan's 14 of 2026-11-08;
   `src/native/features/chit`). Built: the CHIT screen, pushed from the Chats header's bolt and the
-  You tab's CHIT card (a local push, no URL): the hero (the balance, "N CHIT earned in all", the
-  streak in a ring filling towards the next milestone, the line to the next milestone, the last
-  seven days as a strip, the 52px Claim with the confetti inside the screen, the streak insurance
-  row and today's puzzle row), Streak milestones (each with what a claim pays from it on), the
-  four latest achievements with View all, and the claim history calendar (`ClaimCalendar`, Local
-  / UTC, its own Claim on today); the gear pushes CHIT's settings. Streak insurance (the 7-slot
+  You tab's CHIT card (a local push, no URL): the hero (the balance, "Lifetime N", the streak's
+  pill, the last seven days as bars, the 52px Claim with the confetti inside the screen, and along
+  the hero's foot the streak insurance row, "Insured for N days · streak covered" with a pip a
+  day or "No insurance · streak at risk" on a warning tint, and today's puzzle row, "Daily puzzle ·
+  Bridges" with Play / Continue / Solved), Streak milestones (each with what a claim pays a day
+  from it on, the next with a bar and "streak / days"), "Achievements · N of M" (the partners'
+  counted, as the Achievements screen counts) over the four latest with their group and View all,
+  and the claim history calendar (`ClaimCalendar`'s `layout="card"`, as the prototype's: the month
+  over a card of square days, the picked day, today at first, described under the grid, the
+  month's totals and Local / UTC at its foot, its own Claim on today); the gear pushes CHIT's
+  settings. Streak insurance (the 7-slot
   holding, the stepper, the price ladder, the pinned "Buy N days · X CHAT"), the Achievements
   screen, and the daily puzzle as its own screen (the board centred, Start / Reset / Hint at the
   bottom, "How to play" in the header; a solve made there plays the "Challenge solved" banner
@@ -1464,7 +1469,13 @@ design export needs. Each entry says where it came up.
   - **The 7-day strip** is the last seven days, today last (claimed, insured, missed, open, or
     before the account was made), from the claim history: the plan names it only.
   - **Streak milestones** list the claim schedule's milestones (3, 7, 14, 30, 100, 365) with the
-    daily CHIT each pays from then on; the plan names the section only.
+    daily CHIT each pays from then on ("1,000/day"): the prototype shows a one-off reward a
+    milestone pays ("+5,000"), which the backend has no such thing as. TODO(design): the value at a
+    milestone's end, if a rate isn't it.
+  - **The claimed button**: once today's is claimed the prototype's button turns into a plain bar
+    (tint, a check, "Claimed · next in …"), so it's drawn as that, not as a disabled Button.
+  - **An earned achievement's icon** is its group's (`ACHIEVEMENT_GROUPS`): the app has no icon per
+    achievement, the prototype draws one each.
   - **Latest achievements** are the four most recently earned, from the CHIT events the calendar
     loads (newest first); with none, a line saying each one pays CHIT. The Achievements screen
     (View all) lists every achievement by AchievementsDialog's groups (its `ACHIEVEMENT_GROUPS`,
