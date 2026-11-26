@@ -3587,6 +3587,7 @@
     "showPreview": "ショープレビュー",
     "showTweet": "ツイートを表示",
     "showVideo": "ビデオを表示",
+    "signUpInterrupted": "アカウントが作成される前に登録が中断されたため、サインアウトされました。もう一度アカウントを作成してください。",
     "skip": "スキップ",
     "startNewChat": "新規チャットを開始する",
     "stats": {

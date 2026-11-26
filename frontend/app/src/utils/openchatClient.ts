@@ -10,10 +10,17 @@ export const websiteVersion: string = import.meta.env.OC_WEBSITE_VERSION!;
 export const videoBridgeUrl: string | undefined = import.meta.env.OC_VIDEO_BRIDGE_URL || undefined;
 
 /** What only the new trees (web, native) turn on (see OpenChatConfig). */
-export type NewUiBehaviour = Pick<OpenChatConfig, "chatsBeforeUsers" | "queueOfflineSends">;
+export type NewUiBehaviour = Pick<
+    OpenChatConfig,
+    "chatsBeforeUsers" | "queueOfflineSends" | "resumeSignUpAfterReload"
+>;
 
-/** The new trees' behaviour: both on. */
-export const NEW_UI_BEHAVIOUR: NewUiBehaviour = { chatsBeforeUsers: true, queueOfflineSends: true };
+/** The new trees' behaviour: all on. */
+export const NEW_UI_BEHAVIOUR: NewUiBehaviour = {
+    chatsBeforeUsers: true,
+    queueOfflineSends: true,
+    resumeSignUpAfterReload: true,
+};
 
 // The one OpenChat client config, built from the OC_* build env. Each App tree (components,
 // components_mobile, web) creates its client with this once at startup. `newUi`: only the new
@@ -27,6 +34,7 @@ export function createOpenChatClient(
         mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
         chatsBeforeUsers: newUi.chatsBeforeUsers ?? false,
         queueOfflineSends: newUi.queueOfflineSends ?? false,
+        resumeSignUpAfterReload: newUi.resumeSignUpAfterReload ?? false,
         icUrl: import.meta.env.OC_IC_URL,
         webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
         iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,

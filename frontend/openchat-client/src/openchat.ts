@@ -69,6 +69,7 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
+    getSignUpPasskey,
     i18nKey,
     indexRangeForChat,
     isAccountOfMultiUserCanisterUserId,
@@ -91,6 +92,7 @@ import {
     random128,
     random64,
     removeEmailSignInSession,
+    removeSignUpPasskey,
     removeOpenGraphPreviews,
     routeForChatIdentifier,
     routeForMessage,
@@ -99,6 +101,9 @@ import {
     rolloverDelay,
     stateFor,
     storeEmailSignInSession,
+    storeSignUpInterrupted,
+    storeSignUpPasskey,
+    takeSignUpInterrupted,
     stripLinkDisabledMarker,
     todaysPuzzle,
     APPROVAL_VALIDITY_MS,
@@ -491,6 +496,7 @@ import {
     hasFlag,
     identityStateStore,
     identityLoadFailedStore,
+    signUpInterruptedStore,
     initNotificationStores,
     isDiamondStore,
     isLifetimeDiamondStore,
@@ -837,6 +843,7 @@ import {
     loadWithoutOpenChatIdentity,
 } from "./utils/openChatIdentity";
 import { identityLoadFailed, type IdentityLoad } from "./utils/identityLoad";
+import { resumedSignUpCredentialId, signsOutAsInterruptedSignUp } from "./utils/signUpResume";
 import { jwtExpiryMs } from "./utils/jwt";
 import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
 import { SyncPuller } from "./utils/syncPuller";
@@ -1349,12 +1356,32 @@ export class OpenChat {
         try {
             await this.#authClient;
             const authIdentity = await this.#authIdentityStorage.getKeyAndChain();
-            await this.#loadedAuthenticationIdentity(authIdentity, undefined, false, attempt);
+            await this.#noteInterruptedSignUp(authIdentity === undefined);
+            await this.#loadedAuthenticationIdentity(authIdentity, undefined, false, attempt, true);
         } catch (err) {
             this.logError("Couldn't load the stored identity", err);
             if (identityLoadFailed("threw", attempt, this.#identityLoads)) {
                 identityLoadFailedStore.set(true);
             }
+        }
+    }
+
+    // A passkey sign-up from before a reload that couldn't be carried on says so once the page is
+    // back (signUpInterruptedStore): one signed out for it (#loadIdentity), or one whose delegation
+    // is gone (`noDelegation`: expired, or the reload came before it was stored) with its passkey's
+    // details still stored. Either way that sign-up's details are dropped.
+    async #noteInterruptedSignUp(noDelegation: boolean): Promise<void> {
+        if (!this.config.resumeSignUpAfterReload) return;
+        const storage = this.#authIdentityStorage.storage;
+        try {
+            let interrupted = await takeSignUpInterrupted(storage);
+            if (noDelegation && (await getSignUpPasskey(storage)) !== undefined) {
+                await removeSignUpPasskey(storage);
+                interrupted = true;
+            }
+            if (interrupted) signUpInterruptedStore.set(true);
+        } catch (err) {
+            console.warn("Couldn't read the stored sign-up", err);
         }
     }
 
@@ -1373,11 +1400,17 @@ export class OpenChat {
         authProvider: AuthProvider | undefined,
         registering: boolean = false,
         attempt: number = ++this.#identityLoads,
+        fromStorage: boolean = false,
     ): Promise<IdentityLoad> {
         identityLoadFailedStore.set(false);
         let result: IdentityLoad | "threw" = "threw";
         try {
-            result = await this.#loadIdentity(identityKeyAndChain, authProvider, registering);
+            result = await this.#loadIdentity(
+                identityKeyAndChain,
+                authProvider,
+                registering,
+                fromStorage,
+            );
             return result;
         } finally {
             if (identityLoadFailed(result, attempt, this.#identityLoads)) {
@@ -1390,6 +1423,8 @@ export class OpenChat {
         identityKeyAndChain: IdentityKeyAndChain | undefined,
         authProvider: AuthProvider | undefined,
         registering: boolean,
+        // the session stored from before: the page loading (#loadStoredIdentity)
+        fromStorage: boolean,
     ): Promise<IdentityLoad> {
         const anon = identityKeyAndChain === undefined;
         const identity = anon
@@ -1431,13 +1466,20 @@ export class OpenChat {
         let createdUser: CreatedUser | undefined;
         let signedOut = false;
         let userLoadFailed = false;
+        // a passkey sign-up from before a reload carries on with its passkey, for its own
+        // principal only; anyone else's load drops it (#10596)
+        const resumedCredentialId = await this.#signUpCredentialFor(
+            anon ? undefined : authPrincipal,
+        );
+
         if (!anon) {
             const ocIdentity = await openChatIdentityOrSignOut(
                 setAuthIdentityResponse,
                 () =>
                     this.#worker.send({
                         kind: "createOpenChatIdentity",
-                        webAuthnCredentialId: this.#webAuthnKey?.credentialId,
+                        webAuthnCredentialId:
+                            resumedCredentialId ?? this.#webAuthnKey?.credentialId,
                     }),
                 (reason) => {
                     const signsOut = loadWithoutOpenChatIdentity(registering) === "sign_out";
@@ -1447,7 +1489,16 @@ export class OpenChat {
                             : "No OpenChat identity for the passkey just made for sign-up",
                         new Error(reason),
                     );
-                    if (signsOut) this.logout();
+                    // a sign-up's load keeps its identity (#10580); every other load signs out,
+                    // saying why when it was carrying on a sign-up from before a reload (#10596)
+                    if (signsOut) {
+                        void this.#signOutWithoutOpenChatIdentity(
+                            signsOutAsInterruptedSignUp(
+                                fromStorage,
+                                resumedCredentialId !== undefined,
+                            ),
+                        );
+                    }
                 },
             );
             if (ocIdentity === undefined) {
@@ -1469,6 +1520,7 @@ export class OpenChat {
                 .then((user) => {
                     switch (user.kind) {
                         case "created_user":
+                            void this.#forgetSignUpPasskey();
                             return user;
                         case "unknown_user":
                             this.updateIdentityState({ kind: "registering" });
@@ -1492,6 +1544,47 @@ export class OpenChat {
 
         this.onCreatedUser(createdUser ?? anonymousUser());
         return signedOut ? "signed_out" : userLoadFailed ? "user_load_failed" : "loaded";
+    }
+
+    // The credential id stored by a passkey sign-up for this principal, if one is going on
+    // (signUpPasskeyStorage); one stored for anyone else is dropped. Only the new trees carry a
+    // sign-up on over a reload (`resumeSignUpAfterReload`); the old ones sign out as before.
+    async #signUpCredentialFor(authPrincipal: string | undefined): Promise<Uint8Array | undefined> {
+        if (!this.config.resumeSignUpAfterReload) return undefined;
+        const storage = this.#authIdentityStorage.storage;
+        try {
+            const stored = await getSignUpPasskey(storage);
+            const credentialId = resumedSignUpCredentialId(stored, authPrincipal);
+            if (stored !== undefined && credentialId === undefined) {
+                await removeSignUpPasskey(storage);
+            }
+            return credentialId;
+        } catch (err) {
+            console.warn("Couldn't read the stored sign-up", err);
+            return undefined;
+        }
+    }
+
+    async #forgetSignUpPasskey(): Promise<void> {
+        try {
+            await removeSignUpPasskey(this.#authIdentityStorage.storage);
+        } catch (err) {
+            console.warn("Couldn't remove the stored sign-up", err);
+        }
+    }
+
+    // No OpenChat identity for the principal signed in, so it's signed out (#9635); an interrupted
+    // sign-up that can't be carried on (signsOutAsInterruptedSignUp) is said by the page after the
+    // sign-out (#noteInterruptedSignUp)
+    async #signOutWithoutOpenChatIdentity(interruptedSignUp: boolean): Promise<void> {
+        if (interruptedSignUp) {
+            try {
+                await storeSignUpInterrupted(this.#authIdentityStorage.storage);
+            } catch (err) {
+                console.warn("Couldn't store the interrupted sign-up", err);
+            }
+        }
+        await this.logout();
     }
 
     #reportEmptyChat(reason: string, context: Record<string, unknown>): void {
@@ -1843,6 +1936,8 @@ export class OpenChat {
         // chats count as loaded meanwhile: the trees' loader would take down the sign-up still
         // finishing under it (the old trees' Home), and the new chats fold in when they come.
         this.#resetChatsSession(false);
+        // the account is made: a reload no longer has a sign-up to carry on (#10596)
+        void this.#forgetSignUpPasskey();
         this.onCreatedUser(user);
         userStore.addUser({
             kind: user.isBot ? "bot" : "user",
@@ -2225,8 +2320,10 @@ export class OpenChat {
         const teardown = Promise.allSettled([
             this.#worker.send({ kind: "logout" }),
             this.#authClient.then((c) => c.logout()),
+            // a sign-up's passkey goes with the delegation it was stored for (#10596)
+            removeSignUpPasskey(this.#authIdentityStorage.storage),
         ]).then((results) => {
-            const names = ["worker logout", "auth client logout"];
+            const names = ["worker logout", "auth client logout", "sign-up passkey removal"];
             results.forEach((r, i) => {
                 if (r.status === "rejected") {
                     this.#logger.error(`Logout: ${names[i]} failed`, r.reason);
@@ -13680,7 +13777,28 @@ export class OpenChat {
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
 
+        if (assumeIdentity) await this.#rememberSignUpPasskey(tempKey, webAuthnIdentity);
         return this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity, true);
+    }
+
+    // The passkey a sign-up just made, kept until the account is made, so a reload before then can
+    // carry the sign-up on with it (#10596). It's kept with the principal of the delegation the
+    // sign-up stores, whose root is `delegationKey` (the temporary key the passkey signs for), as
+    // that's the principal the identity loads as. Without it the sign-up still goes on: only a
+    // reload would then be the end of it. Only the new trees (`resumeSignUpAfterReload`).
+    async #rememberSignUpPasskey(
+        delegationKey: SignIdentity,
+        webAuthnIdentity: WebAuthnIdentity,
+    ): Promise<void> {
+        if (!this.config.resumeSignUpAfterReload) return;
+        try {
+            await storeSignUpPasskey(this.#authIdentityStorage.storage, {
+                authPrincipal: delegationKey.getPrincipal().toString(),
+                credentialId: new Uint8Array(webAuthnIdentity.rawId),
+            });
+        } catch (err) {
+            console.warn("Couldn't store the sign-up's passkey", err);
+        }
     }
 
     async signUpWithAndroidWebAuthn(
@@ -13695,6 +13813,7 @@ export class OpenChat {
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
 
+        if (assumeIdentity) await this.#rememberSignUpPasskey(tempKey, webAuthnIdentity);
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 

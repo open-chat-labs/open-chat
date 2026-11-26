@@ -1,6 +1,7 @@
 import {
     afterAbandoned,
     referralCode,
+    resumesSignUpInApp,
     nextAuthKind,
     onAuthClosed,
     showsSignedOut,
@@ -103,6 +104,32 @@ describe("an identity without an account", () => {
         expect(withoutAccount({ kind: "loading_user", registering: true })).toBe(true);
         expect(withoutAccount({ kind: "loading_user", registering: false })).toBe(false);
         expect(withoutAccount({ kind: "logged_in" })).toBe(false);
+    });
+});
+
+describe("Landing after a reload partway through sign-up (#10596)", () => {
+    test("sends someone signed in without an account on to the app's sign-up form", () => {
+        expect(resumesSignUpInApp({ kind: "registering" }, false, false, false)).toBe(true);
+        expect(
+            resumesSignUpInApp({ kind: "loading_user", registering: true }, false, false, false),
+        ).toBe(true);
+    });
+
+    test("not while Landing's own dialog has a sign-in going or a failed sign-up to show", () => {
+        expect(resumesSignUpInApp({ kind: "registering" }, true, false, false)).toBe(false);
+        expect(resumesSignUpInApp({ kind: "registering" }, false, true, false)).toBe(false);
+    });
+
+    test("not for a sign-in walked away from, which is being signed out", () => {
+        expect(resumesSignUpInApp({ kind: "registering" }, false, false, true)).toBe(false);
+    });
+
+    test("not for anyone else", () => {
+        expect(resumesSignUpInApp({ kind: "anon" }, false, false, false)).toBe(false);
+        expect(resumesSignUpInApp({ kind: "logged_in" }, false, false, false)).toBe(false);
+        expect(
+            resumesSignUpInApp({ kind: "loading_user", registering: false }, false, false, false),
+        ).toBe(false);
     });
 });
 

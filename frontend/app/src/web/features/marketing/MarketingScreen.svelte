@@ -37,7 +37,8 @@
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { AuthDialogProps, pageSignIns } from "@src/logic/auth/authDialog.svelte";
-    import { createAuth } from "../auth/signIn";
+    import { resumesSignUpInApp } from "@src/logic/auth/authFlow";
+    import { createAuth, signInAbandoned } from "../auth/signIn";
     import { accentStore } from "@theme/accent";
     import { LazyModule } from "../../lazyModule.svelte";
     import DiamondPageScreen from "../diamond/DiamondPageScreen.svelte";
@@ -231,6 +232,20 @@
             route.kind === "home_landing_route" ||
             route.kind === "features_route",
     );
+
+    // someone halfway through a sign-up when the page reloaded (signed in, no account yet) carries
+    // it on in the app's sign-up form, rather than being shown Sign in and Create account (#10596)
+    $effect(() => {
+        const state = $identityStateStore;
+        if (!landing) return;
+        const resume = resumesSignUpInApp(
+            state,
+            pageSignIns.signingIn,
+            pageSignIns.signupFailed,
+            untrack(signInAbandoned),
+        );
+        if (resume) untrack(enterApp);
+    });
 
     // Landing's featured communities: the OpenChat community, then Explore's top ones as Explore
     // shows them, asked for once the client can answer (FeaturedCommunities)

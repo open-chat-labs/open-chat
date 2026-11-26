@@ -1,9 +1,18 @@
-import { inititaliseLogger, subscribe, type Logger, type OpenChat } from "@client";
+import {
+    i18nKey,
+    inititaliseLogger,
+    signUpInterruptedStore,
+    subscribe,
+    type Logger,
+    type OpenChat,
+} from "@client";
 import { rtlStore } from "@stores/rtl";
+import { toastStore } from "@stores/toast";
 import { broadcastLoggedInUser } from "@stores/xframe";
 import { recordError } from "@utils/errorPostmortem";
 
-// Wiring every App tree's root (components, components_mobile, web) does the same way.
+// Wiring every App tree's root (components, components_mobile, web) does the same way, and some
+// only the new trees' roots (web, native) do.
 
 export function initialiseAppLogger(): Logger {
     return inititaliseLogger(
@@ -52,4 +61,15 @@ export function subscribeToSessionEvents(
         subscribe("currentUserIdChanged", onUserIdChanged),
     ];
     return () => unsubs.forEach((u) => u());
+}
+
+// A passkey sign-up from before a reload that couldn't be carried on left the page signed out
+// (signUpInterruptedStore, #10596): the new trees' roots say why, as a failure toast, which stays
+// until it's closed. Returns the unsubscribe.
+export function sayWhenSignUpInterrupted(): () => void {
+    return signUpInterruptedStore.subscribe((interrupted) => {
+        if (!interrupted) return;
+        signUpInterruptedStore.set(false);
+        toastStore.showFailureToast(i18nKey("signUpInterrupted"));
+    });
 }

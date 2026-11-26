@@ -3587,6 +3587,7 @@
     "showPreview": "显示预览",
     "showTweet": "显示推文",
     "showVideo": "显示视频",
+    "signUpInterrupted": "你的注册在账户创建之前被中断，因此你已被退出登录。请重新创建账户。",
     "skip": "跳过",
     "startNewChat": "新建聊天",
     "stats": {

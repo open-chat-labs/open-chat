@@ -1445,6 +1445,11 @@ export const identityStateStore = writable<IdentityState>(
 // old ones keep their spinner (#10562).
 export const identityLoadFailedStore = writable<boolean>(false);
 
+// The page loaded signed out because a passkey sign-up from before a reload couldn't be carried on
+// (its passkey's details were gone, so no OpenChat identity could be made for it, #10596). The new
+// UIs say so, and set it back to false; the old ones don't read it.
+export const signUpInterruptedStore = writable<boolean>(false);
+
 export const failedMessagesStore = localUpdates.failedMessages;
 // The failed messages which are only waiting for the connection (`OpenChatConfig.queueOfflineSends`)
 export const queuedMessagesStore = localUpdates.queuedMessages;

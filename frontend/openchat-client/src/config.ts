@@ -8,6 +8,10 @@ export type OpenChatConfig = {
     // Whether a message sent without a connection waits, shown as sending, and goes once the app is
     // back online (`OfflineSendQueue`), rather than failing with Retry. Only the new trees set it.
     queueOfflineSends?: boolean;
+    // Whether a passkey sign-up interrupted by a reload carries on with the same passkey after it,
+    // or the page says why it was signed out when it can't (#10596), rather than signing out without
+    // a word. Only the new trees set it.
+    resumeSignUpAfterReload?: boolean;
     icUrl?: string;
     webAuthnOrigin: string | undefined;
     iiDerivationOrigin?: string;
