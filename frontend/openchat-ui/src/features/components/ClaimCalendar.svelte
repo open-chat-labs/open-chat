@@ -317,7 +317,6 @@
             <button
               type="button"
               class="tile {cell.kind}"
-              class:today={cell.today}
               class:picked={cell.key === pickedKey}
               class:claiming={cell.kind === 'claim' && claiming}
               onclick={() => pick(cell)}
@@ -796,10 +795,6 @@
 
     &.picked {
       box-shadow: inset 0 0 0 1.5px var(--ink-2);
-    }
-
-    &.today:not(.claim) {
-      box-shadow: inset 0 0 0 1.5px var(--accent);
     }
 
     &.outside {
