@@ -60,6 +60,8 @@ export async function loadLocales(locales: string[]): Promise<void> {
 
 export class TranslationCorrections {
     corrections = $state<TranslationCorrection[]>([]);
+    /** Whether the list has come (the new web UI's console shows a loading and a failed state). */
+    status = $state<"loading" | "ready" | "failed">("loading");
     /** The correction shown in English instead of as proposed, if any. */
     verifying = $state<TranslationCorrection | undefined>(undefined);
     chatBalance = $state(0n);
@@ -79,10 +81,17 @@ export class TranslationCorrections {
     }
 
     async load(): Promise<void> {
-        const res = await this.#client.getProposedTranslationCorrections();
-        const corrections = flattenCorrections(res);
-        await this.#loadLocales(requiredLocales(corrections));
-        this.corrections = corrections;
+        this.status = "loading";
+        try {
+            const res = await this.#client.getProposedTranslationCorrections();
+            const corrections = flattenCorrections(res);
+            await this.#loadLocales(requiredLocales(corrections));
+            this.corrections = corrections;
+            this.status = "ready";
+        } catch (err) {
+            console.warn("Unable to load the translation corrections", err);
+            this.status = "failed";
+        }
     }
 
     async refreshBalance(): Promise<void> {

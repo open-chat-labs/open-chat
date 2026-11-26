@@ -32,7 +32,7 @@ const ROUTE_MATCHERS: Array<{ regexp: RegExp; kind: RouteParams["kind"] }> = (
     [
         { path: "/", kind: "chat_list_route" },
         { path: "/share", kind: "share_route" },
-        { path: "/admin", kind: "admin_route" },
+        { path: "/admin/:section?", kind: "admin_route" },
         { path: "/welcome", kind: "welcome_route" },
         { path: "/wallet/:segment?", kind: "wallet_route" },
         { path: "/communities", kind: "communities_route" },

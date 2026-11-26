@@ -1118,6 +1118,369 @@
     "group": "library"
   },
   {
+    "name": "CompareRow",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "A setting's current value (read only, mono) beside the field for the proposed one, for changes another person confirms. Stacks on a narrow card, the current value captioned.",
+    "preview": {
+      "width": 560,
+      "height": 60
+    },
+    "props": [
+      {
+        "name": "current",
+        "type": "string",
+        "default": "dgegb-daaaa-aaaar-arlhq-cai",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Literal text: the value now; blank shows `empty`."
+      },
+      {
+        "name": "empty",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.compareRow.notSet'",
+        "doc": "Resource key (or literal text): a blank current value."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the current value's accessible name."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The field for the proposed value."
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "ConfirmDialog",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "Asks before something that can't be taken back: what will happen, the facts it acts on (values in mono), and the action in the danger colour beside Cancel; with `confirmWord`, the action waits until that word is typed. On DialogShell.",
+    "preview": {
+      "width": 520,
+      "height": 360
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": "Propose destroying this evidence?",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "body",
+        "type": "string",
+        "default": "Once another operator confirms, the evidence is destroyed for good.",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): what will happen."
+      },
+      {
+        "name": "facts",
+        "type": "{ label: string; value: string }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "What it acts on: labels are resource keys or literal text, values literal."
+      },
+      {
+        "name": "confirmWord",
+        "type": "string",
+        "default": "1102",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Literal text to type before the action is on."
+      },
+      {
+        "name": "confirmLabel",
+        "type": "string",
+        "default": "Propose destruction",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "busy",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The action is under way."
+      },
+      {
+        "name": "onConfirm",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "DataTable",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "Records on a card: heading with count and actions, sticky mono-caps column headings, rows drawn by the host (`cell`), row tones (danger, warning, busy), loading (shimmer rows), empty and error (Retry) states, sideways scroll under `minWidth`, `maxHeight` scroll, a footer for Load more.",
+    "preview": {
+      "width": 720,
+      "height": 320
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": "Due",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "count",
+        "type": "number | string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Beside the title."
+      },
+      {
+        "name": "columns",
+        "type": "{ key: string; label: string; width?: string; nowrap?: boolean }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The columns: a key for `cell`, its heading, a width, kept on one line."
+      },
+      {
+        "name": "rows",
+        "type": "T[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "rowKey",
+        "type": "(row: T) => string | number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "cell",
+        "type": "Snippet<[T, string]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Draws a row's cell for a column key."
+      },
+      {
+        "name": "rowTone",
+        "type": "(row: T) => 'default' | 'danger' | 'warning' | 'busy'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "state",
+        "type": "'ready' | 'loading' | 'empty' | 'error'",
+        "default": "ready",
+        "editor": "enum",
+        "options": [
+          "ready",
+          "loading",
+          "empty",
+          "error"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'ready'",
+        "doc": ""
+      },
+      {
+        "name": "emptyTitle",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.dataTable.emptyTitle'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "emptyBody",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "errorTitle",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.dataTable.errorTitle'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "errorBody",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "onRetry",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "minWidth",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "640",
+        "doc": "px: narrower than this it scrolls sideways."
+      },
+      {
+        "name": "maxHeight",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A CSS length: taller than this it scrolls under its headings."
+      },
+      {
+        "name": "actions",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "At the end of the heading's line."
+      },
+      {
+        "name": "footer",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Under the rows."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "ReactionChips",
     "source": "lib/ChatBubble.dc.html (its reaction chips), by hand (2026-11-06)",
     "hash": "",
@@ -1364,6 +1727,571 @@
         "required": true,
         "componentDefault": null,
         "doc": "What it wraps: the placeholder's contents, or the bin."
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "SectionNav",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "A list panel of sections for a workspace whose list column holds pages rather than chats: a title with an optional tag pill, groups under mono caps headings, and rows of an icon tile, label, a toned status line and an optional count. The open row is marked; a danger row is red.",
+    "preview": {
+      "width": 350,
+      "height": 520
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": "Admin",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "tag",
+        "type": "string",
+        "default": "Operator",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a pill after the title (\"Operator\")."
+      },
+      {
+        "name": "groups",
+        "type": "SectionNavGroup[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "selected",
+        "type": "string",
+        "default": "proposals",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The open section's id."
+      },
+      {
+        "name": "ariaLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the list's accessible name."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "SelectInput",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "A choice of a few values in TextInput's look (44px, the field surface, a chevron), on the browser's own select.",
+    "preview": {
+      "width": 320,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "value",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "options",
+        "type": "{ value: string; label: string }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Each option's value and its label (resource key or literal text)."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a label over the field."
+      },
+      {
+        "name": "ariaLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the accessible name without a label."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): under the field."
+      },
+      {
+        "name": "mono",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Ids and keys."
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": ""
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The select's id; one of its own by default."
+      },
+      {
+        "name": "onChange",
+        "type": "(value: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "SettingsCard",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "One settings form as a card: icon tile, title and help, the fields in one or two columns, and a footer with the last outcome inline (busy, success, proposed, failed) beside the form's buttons. A single-switch form puts the switch on the title line. Tones for the danger zone and destructive forms; `dual` heads CompareRows with Current and Proposed.",
+    "preview": {
+      "width": 640,
+      "height": 260
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": "Group upgrade concurrency",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": "How many group canisters are upgraded in parallel.",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): what the form does."
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "default": "layers",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'gear'",
+        "doc": "Icon name for the tile."
+      },
+      {
+        "name": "tone",
+        "type": "'default' | 'danger' | 'destructive'",
+        "default": "default",
+        "editor": "enum",
+        "options": [
+          "default",
+          "danger",
+          "destructive"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'default'",
+        "doc": ""
+      },
+      {
+        "name": "tag",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a pill at the end of the title line."
+      },
+      {
+        "name": "tagTone",
+        "type": "'neutral' | 'success' | 'warning' | 'danger' | 'accent'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'neutral'",
+        "doc": ""
+      },
+      {
+        "name": "cols",
+        "type": "1 | 2",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "The fields' columns; they stack when the card is narrow."
+      },
+      {
+        "name": "dual",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Current and Proposed headings over the fields (CompareRows)."
+      },
+      {
+        "name": "outcome",
+        "type": "{ kind: 'busy' | 'success' | 'proposed' | 'failed'; text: string }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How the last attempt went; text is a resource key or literal text."
+      },
+      {
+        "name": "aside",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "At the end of the title line: a single switch."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The fields."
+      },
+      {
+        "name": "notice",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Under the fields: a note about something waiting."
+      },
+      {
+        "name": "actions",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The form's buttons, at the footer's end."
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "TextInput",
+    "source": "by hand (admin console, 2026-11-26)",
+    "hash": "",
+    "description": "A single-line form field at the library Field's height (44px): placeholder, optional label and aside, help or a mono note, an error said under it, mono, a unit, Paste and Copy for ids, and a tick once valid.",
+    "preview": {
+      "width": 360,
+      "height": 110
+    },
+    "props": [
+      {
+        "name": "value",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "placeholder",
+        "type": "string",
+        "default": "LocalUserIndex canister id",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): what goes in. Also the accessible name without a label."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a label over the field, where the placeholder can't say it."
+      },
+      {
+        "name": "aside",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): beside the label, at its end."
+      },
+      {
+        "name": "ariaLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the accessible name, when it's neither the label nor the placeholder."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): under the field."
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Literal text after the help, in mono: what the value comes to."
+      },
+      {
+        "name": "error",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): why the value can't be used; outlines the field."
+      },
+      {
+        "name": "mono",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Ids, keys and amounts."
+      },
+      {
+        "name": "unit",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "After the value (\"e8s\")."
+      },
+      {
+        "name": "type",
+        "type": "'text' | 'password'",
+        "default": "text",
+        "editor": "enum",
+        "options": [
+          "text",
+          "password"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'text'",
+        "doc": ""
+      },
+      {
+        "name": "inputmode",
+        "type": "'text' | 'numeric' | 'decimal'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'text'",
+        "doc": ""
+      },
+      {
+        "name": "valid",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A tick at the end: the value is checked and good."
+      },
+      {
+        "name": "paste",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A Paste button, which sets the value to the clipboard's."
+      },
+      {
+        "name": "copy",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A Copy button, while there's a value."
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": ""
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The input's id; one of its own by default."
+      },
+      {
+        "name": "onInput",
+        "type": "(value: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
       }
     ],
     "group": "library"

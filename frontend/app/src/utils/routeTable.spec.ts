@@ -81,6 +81,12 @@ describe("the web UI's route table", () => {
         });
     });
 
+    test("routes the console's sections, /admin alone being none", () => {
+        expect(resolve("/admin")).toMatchObject({ kind: "admin_route" });
+        expect(resolve("/admin")).not.toHaveProperty("section");
+        expect(resolve("/admin/danger")).toMatchObject({ kind: "admin_route", section: "danger" });
+    });
+
     test("routes the wallet's views and token pages", () => {
         expect(resolve("/wallet")).toMatchObject({ kind: "wallet_route", view: "all" });
         expect(resolve("/wallet/send?token=ryjl3-tyaaa-aaaaa-aaaba-cai")).toMatchObject({

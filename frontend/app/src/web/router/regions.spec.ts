@@ -266,6 +266,29 @@ describe("the rail's destinations", () => {
     });
 });
 
+describe("the operator console", () => {
+    test("lists its sections beside the one open, the first for /admin or one it hasn't", () => {
+        expect(regionsFor(route({ kind: "admin_route", scope: none }), false)).toEqual({
+            area: "app",
+            left: { kind: "admin" },
+            middle: { kind: "admin", section: "proposals" },
+            narrowView: "left",
+            rightColumn: false,
+        });
+        const danger = regionsFor(route({ kind: "admin_route", scope: none, section: "danger" }), false);
+        expect(danger).toMatchObject({ middle: { kind: "admin", section: "danger" }, narrowView: "middle" });
+        expect(
+            regionsFor(route({ kind: "admin_route", scope: none, section: "nope" }), false),
+        ).toMatchObject({ middle: { section: "proposals" } });
+    });
+
+    test("goes back to its sections on a narrow screen", () => {
+        expect(
+            narrowBack(regionsFor(route({ kind: "admin_route", scope: none, section: "vault" }), false)),
+        ).toBe("/admin");
+    });
+});
+
 describe("a narrow screen's Back from the middle", () => {
     test("goes to the list the conversation was opened from", () => {
         expect(narrowBack(regionsFor(groupChat, false))).toBe("/chats");

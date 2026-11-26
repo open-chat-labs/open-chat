@@ -55,7 +55,8 @@ export type OperatorAction =
     | "miniAppPrincipal";
 
 export type OperatorOutcome =
-    | { kind: "success"; message: ResourceKey }
+    // `proposed`: the success only queued the change for another operator to confirm
+    | { kind: "success"; message: ResourceKey; proposed?: true }
     | { kind: "failed"; message: ResourceKey; err?: unknown };
 
 type ReferralCategory = [bit: number, name: string];
@@ -201,6 +202,7 @@ export function proposalOutcome(
     // wording read as though the change had been applied
     return {
         kind: "success",
+        proposed: true,
         message: i18nKey(
             proposed.alreadyPending
                 ? `An identical ${what} change is already pending as action #${proposed.actionId} - it still needs a different platform operator to confirm it`

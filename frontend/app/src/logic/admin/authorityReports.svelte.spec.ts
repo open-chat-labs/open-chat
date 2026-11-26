@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
     AuthorityReports,
+    byUrgency,
+    formatSlaLeft,
+    slaStanding,
     STANDARD_SLA_MS,
     URGENT_SLA_MS,
     filedFlags,
@@ -103,5 +106,32 @@ describe("AuthorityReports", () => {
         const garbled = new AuthorityReports({ authorityReports: async () => "not json" });
         await garbled.load();
         expect(garbled.error).toBe("Failed to load the register");
+    });
+});
+
+describe("the SLA standing", () => {
+    const HOUR = 60 * 60 * 1000;
+    const now = 1_000 * HOUR;
+    const row = (report_index: number, hours: number, urgent: boolean) => ({
+        report_index,
+        urgent,
+        created: now - hours * HOUR,
+    });
+
+    test("is overdue past the target, due soon in its last quarter, else on time", () => {
+        expect(slaStanding(row(1, 30, true), now).state).toBe("overdue");
+        expect(slaStanding(row(2, 64, false), now).state).toBe("soon");
+        expect(slaStanding(row(3, 6, true), now).state).toBe("on_time");
+        expect(slaStanding(row(3, 6, true), now).used).toBeCloseTo(0.25);
+    });
+
+    test("says what's left, or how late it is", () => {
+        expect(formatSlaLeft(slaStanding(row(2, 64, false), now))).toBe("8h left of 72h");
+        expect(formatSlaLeft(slaStanding(row(1, 30, true), now))).toBe("Overdue by 6h");
+    });
+
+    test("puts the most urgent first", () => {
+        const sorted = byUrgency([row(3, 6, true), row(2, 64, false), row(1, 30, true)], now);
+        expect(sorted.map((r) => r.report_index)).toEqual([1, 2, 3]);
     });
 });

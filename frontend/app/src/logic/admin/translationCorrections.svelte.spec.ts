@@ -86,9 +86,24 @@ describe("TranslationCorrections", () => {
         });
         const loading = corrections.load();
         expect(corrections.corrections).toEqual([]);
+        expect(corrections.status).toBe("loading");
         await loading;
         expect(order).toEqual(["locales de,fr"]);
         expect(corrections.corrections).toHaveLength(4);
+        expect(corrections.status).toBe("ready");
+    });
+
+    test("a list that can't be loaded says so", async () => {
+        const failing = {
+            ...client(),
+            getProposedTranslationCorrections: async () => {
+                throw new Error("offline");
+            },
+        };
+        const corrections = new TranslationCorrections(failing, async () => undefined);
+        await corrections.load();
+        expect(corrections.status).toBe("failed");
+        expect(corrections.corrections).toEqual([]);
     });
 
     test("an approved correction leaves the list; one that fails stays and says so", async () => {
