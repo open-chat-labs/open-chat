@@ -171,6 +171,27 @@ export function hintButtonKeys(button: HintButton): ResourceKey[] {
     }
 }
 
+/**
+ * The hint button as the native puzzle screen draws it (the prototype's): "Use a hint" with what
+ * it costs and what's left beside it, in mono ("100 CHIT · 3 left", each tree joining the parts
+ * with " · "); a button that can't hint says why, with nothing beside it.
+ */
+export function hintButtonParts(button: HintButton): { label: ResourceKey; meta: ResourceKey[] } {
+    switch (button.kind) {
+        case "mistake":
+        case "noneLeft":
+            return { label: hintButtonKeys(button)[0], meta: [] };
+        case "hint":
+            return {
+                label: i18nKey("dailyPuzzle.useHint"),
+                meta: [
+                    i18nKey("dailyPuzzle.hintPrice", { price: button.price }),
+                    ...hintButtonKeys(button).slice(1),
+                ],
+            };
+    }
+}
+
 export function tierKey(tier: number): string {
     return `dailyPuzzle.tier.${tier}`;
 }

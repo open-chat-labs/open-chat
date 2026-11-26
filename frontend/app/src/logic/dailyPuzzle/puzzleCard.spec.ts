@@ -1,5 +1,5 @@
 import type { DailyPuzzleRow, DailyPuzzleStatus, PublicDailyPuzzle, ResourceKey } from "@client";
-import { puzzleCardProps, puzzleTitle, shareItem } from "./puzzleCard";
+import { puzzleCardProps, puzzleHeading, puzzleTitle, shareItem } from "./puzzleCard";
 
 const NOW = 1_000_000_000;
 
@@ -103,6 +103,29 @@ describe("the puzzle dialog's title", () => {
             'dailyPuzzle.number{"number":7} · dailyPuzzle.games.tents.name · dailyPuzzle.tier.0',
         );
         expect(puzzleTitle(undefined, translate)).toBe("dailyPuzzle.title");
+    });
+});
+
+describe("the native puzzle screen's header", () => {
+    test("is the number over the game and tier", () => {
+        expect(puzzleHeading(puzzle("tents"), false, translate)).toEqual({
+            title: 'dailyPuzzle.number{"number":7}',
+            sub: "dailyPuzzle.games.tents.name · dailyPuzzle.tier.0",
+        });
+    });
+
+    test("is how the game works over the number while its tutorial shows", () => {
+        expect(puzzleHeading(puzzle("tents"), true, translate)).toEqual({
+            title: 'dailyPuzzle.howGameWorks{"game":"dailyPuzzle.games.tents.name"}',
+            sub: 'dailyPuzzle.number{"number":7}',
+        });
+    });
+
+    test("is The Daily alone before the puzzle is known", () => {
+        expect(puzzleHeading(undefined, false, translate)).toEqual({
+            title: "dailyPuzzle.title",
+            sub: undefined,
+        });
     });
 });
 

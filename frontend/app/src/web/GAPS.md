@@ -1444,10 +1444,13 @@ design export needs. Each entry says where it came up.
   settings. Streak insurance (as the prototype: "Insured for N days" or "No insurance" over a
   bar a day of cover, Add cover's stepper with a line a day added and its price, the CHAT balance
   and the pinned "Buy N days · X CHAT" with the shield), the Achievements
-  screen, and the daily puzzle as its own screen (the board centred, Start / Reset / Hint at the
-  bottom, "How to play" in the header; a solve made there plays the "Challenge solved" banner
-  first, a tap skipping it, then the solved view: the 160px trophy, the time, the countdown to
-  the next puzzle, the tiles, Share to chat and Done). Share to chat is a sheet of the chats the
+  screen, and the daily puzzle as its own screen, laid out as the prototype's PuzzleDialog
+  `layout="screen"` and the same for every game (the puzzle's number over its game and tier, or
+  "How Bridges works" while the demo shows; the time, hints and streak as three chips; the board
+  on a card; Reset over "Use a hint · 100 CHIT · 3 left" at the bottom, Start before the game
+  starts; a solve made there plays the "Challenge solved" banner just above the bottom buttons,
+  a tap skipping it, then the solved view: the 160px trophy tile, "Solved in 3:44" over the
+  number, the countdown to the next puzzle, the tiles, Share to chat and Done side by side). Share to chat is a sheet of the chats the
   user can send in; the chat picked opens with the result card staged in its composer (the
   web's `sharedToChatStore`, which the native conversation now takes, asking first in place of a
   staged payment). A result card's Play in a conversation pushes the puzzle (`cardOffersPlayWith`,
@@ -1464,9 +1467,16 @@ design export needs. Each entry says where it came up.
     only, so the native puzzle is a screen around the app's own boards, as the web's dialog is
     (`PuzzleSession`'s flow, laid out to the plan). Its tutorial is the game's demo with its
     dots (GameDemo), not the plan's text Back / Next with an inline Start.
-  - **No Undo** on the puzzle: the shared game (`DailyPuzzleGame`) has none, so the bottom row is
-    Reset and Hint (and Start before the game starts). The buttons are the library's 52px `lg`,
-    not the plan's 48px.
+  - **No Undo** on the puzzle: the shared game (`DailyPuzzleGame`) has none, so Reset has the
+    prototype's Undo / Reset row to itself. The buttons are the library's 52px `lg`, not the
+    prototype's 48px.
+  - **The boards keep their own colours**: the prototype draws Bridges on the dark dotted card;
+    the app's boards are light on purpose, the same in every theme (`games/README.md`), and
+    shared with the web and the result cards, so they sit on the card as they are.
+  - **No "Islands complete" bar**: it's Bridges' own count, and the shared game has no progress
+    for every game to show.
+  - **The solved tiles** are Hints, Day streak and the CHIT won: the prototype's Time is in the
+    title already. No "Remind me each day?": the app has no puzzle reminder (as CHIT's settings).
   - **The 7-day strip** is the last seven days, today last (claimed, insured, missed, open, or
     before the account was made), from the claim history: the plan names it only.
   - **Streak milestones** list the claim schedule's milestones (3, 7, 14, 30, 100, 365) with the

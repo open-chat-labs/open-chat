@@ -1,6 +1,7 @@
 <!-- Today's daily puzzle as its own screen (native plan 14, design notes §3.10), pushed from CHIT's
-     puzzle row and a result card's Play: the header (Back, the puzzle's number, game and tier,
-     "How to play") over a play session (PuzzlePlay). It waits for today's puzzles to load (a
+     puzzle row and a result card's Play: the header (Back, the puzzle's number over its game and
+     tier, or "How Bridges works" over the number while the tutorial shows, and "How to play")
+     over a play session (PuzzlePlay). It waits for today's puzzles to load (a
      link can land before the first fetch), says so when there's none, and makes a new session for
      another game. Share to chat opens the chat sheet (PuzzleShareSheet) over it: the chat picked
      takes the result card into its draft (sharedToChatStore, as the web's share; the conversation
@@ -30,7 +31,7 @@
     import { draftAttachment } from "@src/logic/composer/composer";
     import { replaceQuestionText, type ReplaceQuestion } from "@src/logic/composer/replaceStaged";
     import { shareableResultCard } from "@src/logic/dailyPuzzle/dailyResultCard";
-    import { puzzleTitle, shareItem } from "@src/logic/dailyPuzzle/puzzleCard";
+    import { puzzleHeading, shareItem } from "@src/logic/dailyPuzzle/puzzleCard";
     import { shareStep } from "@src/logic/dailyPuzzle/shareResult";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
@@ -66,9 +67,10 @@
     // the puzzle the session plays, as it reports it, and its tutorial's toggle
     let playing = $state<PublicDailyPuzzle>();
     let howToPlay = $state<() => void>();
-    const title = $derived(puzzleTitle(available ? playing : undefined, tr));
+    let tutorial = $state(false);
+    const heading = $derived(puzzleHeading(available ? playing : undefined, tutorial, tr));
     const actions = $derived<NativeHeaderAction[]>(
-        howToPlay === undefined
+        howToPlay === undefined || tutorial
             ? []
             : [{ icon: "info", label: $_("dailyPuzzle.howToPlay"), onClick: () => howToPlay?.() }],
     );
@@ -76,7 +78,11 @@
     // ---- Share to chat
 
     let sharing = $state<{ gameId: string; card: DailyResultContent }>();
-    let asking = $state<{ question: ReplaceQuestion; chatId: ChatIdentifier; card: DailyResultContent }>();
+    let asking = $state<{
+        question: ReplaceQuestion;
+        chatId: ChatIdentifier;
+        card: DailyResultContent;
+    }>();
     useOverlay(
         overlays,
         () => sharing !== undefined,
@@ -116,20 +122,23 @@
         navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
     }
 
-    const askingText = $derived(asking === undefined ? undefined : replaceQuestionText(asking.question));
+    const askingText = $derived(
+        asking === undefined ? undefined : replaceQuestionText(asking.question),
+    );
 </script>
 
 <div class="puzzle">
-    <NativePageHeader {title} onBack={context.back} {actions} />
+    <NativePageHeader title={heading.title} sub={heading.sub} onBack={context.back} {actions} />
 
     {#if available}
         {#key screen.gameId ?? ""}
             <PuzzlePlay
                 gameId={screen.gameId}
                 onFailure={(message) => context.toast(message)}
-                onPuzzle={(puzzle, toggle) => {
+                onPuzzle={(puzzle, toggle, showingTutorial) => {
                     playing = puzzle;
                     howToPlay = toggle;
+                    tutorial = showingTutorial;
                 }}
                 onShare={share}
                 onDone={() => context.back?.()} />

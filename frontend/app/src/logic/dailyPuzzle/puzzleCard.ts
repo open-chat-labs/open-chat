@@ -95,6 +95,27 @@ export function puzzleTitle(
 }
 
 /**
+ * The native puzzle screen's header (the prototype's): the puzzle's number over its game and
+ * tier ("The Daily #12" over "Bridges · Easy"); while its tutorial shows, "How Bridges works"
+ * over the number. Before the puzzle is known, "The Daily" alone. Given translated (`translate`).
+ */
+export function puzzleHeading(
+    puzzle: PublicDailyPuzzle | undefined,
+    tutorial: boolean,
+    translate: (key: ResourceKey) => string,
+): { title: string; sub: string | undefined } {
+    if (puzzle === undefined) {
+        return { title: translate(i18nKey("dailyPuzzle.title")), sub: undefined };
+    }
+    const number = translate(i18nKey("dailyPuzzle.number", { number: puzzle.number }));
+    const game = translate(i18nKey(gameNameKey(puzzle.gameId)));
+    if (tutorial) {
+        return { title: translate(i18nKey("dailyPuzzle.howGameWorks", { game })), sub: number };
+    }
+    return { title: number, sub: `${game} · ${translate(i18nKey(tierKey(puzzle.tier)))}` };
+}
+
+/**
  * What the chat picker shows it's sharing for a result card (#10236): the puzzle's number, then
  * its game, its tier and the solve's time. Given translated (`translate`).
  */
