@@ -1,13 +1,17 @@
 <!-- Streak insurance (native plan 14, design notes §3.10), pushed from CHIT's hero: the cover held
-     as seven slots, a stepper for the days to add, the price ladder (each day of cover costs twice
-     the one before it, priced on its place in the cover), and the pinned "Buy N days · X CHAT". Paid
+     (insured for N days, or none and the streak at risk) over a bar a day of cover, Add cover with
+     its stepper and what each day added costs (each day of cover costs twice the one before it,
+     priced on its place in the cover), and pinned under it the CHAT balance and "Buy N days · X
+     CHAT". Paid
      in CHAT as the web's StreakInsuranceDialog (logic/chit/streakInsurance: the prices, the
      spendable balance and what's sent, worked out from the cover bought, never the screen's
      figure). Never in an app store build (screens.ts): no purchase in tokens. A user with a PIN is
      told it comes with the wallet's PIN sheet (N10b), which the client's prompt needs. -->
 <script lang="ts">
     import {
+        chitStateStore,
         cryptoBalanceStore,
+        currentStreak,
         enhancedCryptoLookup,
         LEDGER_CANISTER_CHAT,
         pinNumberRequiredStore,
@@ -24,6 +28,7 @@
         streakInsuranceDialogPrices,
         streakInsurancePurchase,
     } from "@src/logic/chit/streakInsurance";
+    import { now500 } from "@src/stores/time";
     import { getContext, onMount, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
@@ -49,13 +54,25 @@
 
     let picked = $state(1);
     const quote = $derived(
-        insuranceQuote(streakInsuranceDialogPrices($streakInsuranceStore), $streakInsuranceStore, picked, balance),
+        insuranceQuote(
+            streakInsuranceDialogPrices($streakInsuranceStore),
+            $streakInsuranceStore,
+            picked,
+            balance,
+        ),
     );
 
-    // seven slots of cover held; more than seven shows as "+N" on the last
+    // a bar a day of cover: held, being added, or still open; seven at least, a row of seven each
     const SLOTS = 7;
-    const slots = $derived(Array.from({ length: SLOTS }, (_, i) => i < quote.held));
-    const overflow = $derived(Math.max(quote.held - SLOTS, 0));
+    const slots = $derived(
+        Array.from({ length: Math.max(SLOTS, quote.held + quote.days) }, (_, i) =>
+            i < quote.held ? "held" : i < quote.held + quote.days ? "adding" : "open",
+        ),
+    );
+    const covered = $derived(quote.held > 0);
+    const streak = $derived(currentStreak($chitStateStore, $now500));
+    // the cheapest day to add, for "Cover starts at …"
+    const firstPrice = $derived(quote.ladder[0]?.price);
 
     let buying = $state(false);
     let pinNotice = $state(false);
@@ -100,34 +117,54 @@
     <NativePageHeader title={$_("native.chit.insurance")} onBack={context.back} />
 
     <div class="body">
-        <p class="intro">{$_("native.chit.insuranceIntro")}</p>
-
-        <SettingsGroup
-            label={$_("native.chit.insuranceHolding")}
-            note={quote.used > 0
-                ? $_("native.chit.insuranceUsed", { values: { count: quote.used } })
-                : ""}>
-            <div class="settings-row holding">
-                <div class="slots" role="img" aria-label={$_("native.chit.insuranceHeld", { values: { count: quote.held } })}>
-                    {#each slots as held, i (i)}
-                        <span class="slot" class:held class:adding={!held && i < quote.held + quote.days}>
-                            {#if i === SLOTS - 1 && overflow > 0}
-                                <span class="more">+{overflow}</span>
-                            {:else}
-                                <span class="slot-icon"></span>
-                            {/if}
-                        </span>
-                    {/each}
-                </div>
-                <span class="holding-text">
-                    {$_("native.chit.insuranceHeld", { values: { count: quote.held } })}
+        <section class="hero" class:covered>
+            <span class="hero-tile"><span class="hero-icon"></span></span>
+            <span class="hero-text">
+                <span class="hero-title">
+                    {covered
+                        ? $_("native.chit.insuredFor", { values: { count: quote.held } })
+                        : $_("native.chit.noInsurance")}
                 </span>
-            </div>
-        </SettingsGroup>
+                <span class="hero-hint">
+                    {covered
+                        ? $_("native.chit.insuranceHintOn", { values: { streak } })
+                        : $_("native.chit.insuranceHintOff", {
+                              values: { streak, price: num(firstPrice ?? 0) },
+                          })}
+                </span>
+            </span>
+            <ol
+                class="slots"
+                aria-label={covered
+                    ? $_("native.chit.insuredFor", { values: { count: quote.held } })
+                    : $_("native.chit.noInsurance")}>
+                {#each slots as state, i (i)}
+                    <li class="slot" data-state={state} aria-hidden="true">
+                        <span class="slot-bar"></span>
+                        <span class="slot-n">{i + 1}</span>
+                    </li>
+                {/each}
+            </ol>
+            {#if quote.used > 0}
+                <span class="used">
+                    {$_("native.chit.insuranceUsed", { values: { count: quote.used } })}
+                </span>
+            {/if}
+        </section>
 
         {#if quote.room > 0}
-            <SettingsGroup label={$_("native.chit.insuranceAdd")}>
+            <SettingsGroup
+                label={$_("native.chit.insuranceAdd")}
+                note={$_("native.chit.insuranceLadderNote")}>
                 <div class="settings-row stepper">
+                    <span class="stepper-text">
+                        <span class="stepper-days" aria-live="polite">
+                            {$_("native.you.chit.streak", { values: { count: quote.days } })}
+                        </span>
+                        <span class="stepper-room">
+                            {$_("native.chit.insuranceUpTo", { values: { count: quote.room } })}
+                        </span>
+                    </span>
                     <button
                         type="button"
                         class="step"
@@ -136,9 +173,7 @@
                         onclick={() => (picked = Math.max(quote.days - 1, 1))}>
                         <span class="step-icon minus"></span>
                     </button>
-                    <span class="count" aria-live="polite">
-                        {$_("native.you.chit.streak", { values: { count: quote.days } })}
-                    </span>
+                    <span class="count">{num(quote.days)}</span>
                     <button
                         type="button"
                         class="step"
@@ -148,11 +183,8 @@
                         <span class="step-icon plus"></span>
                     </button>
                 </div>
-            </SettingsGroup>
-
-            <SettingsGroup label={$_("native.chit.insuranceLadder")} note={$_("native.chit.insuranceLadderNote")}>
-                {#each quote.ladder as rung (rung.position)}
-                    <div class="settings-row rung" class:adding={rung.adding}>
+                {#each quote.ladder.filter((r) => r.adding) as rung (rung.position)}
+                    <div class="settings-row rung">
                         <span class="rung-day">
                             {$_("native.chit.insuranceDay", { values: { n: rung.position + 1 } })}
                         </span>
@@ -164,14 +196,14 @@
     </div>
 
     <div class="footer">
-        {#if quote.room > 0 && !quote.affordable}
-            <p class="short">
-                {$_("native.chit.insuranceShort", { values: { amount: num(balance) } })}
-            </p>
-        {/if}
+        <span class="balance" class:short={quote.room > 0 && !quote.affordable}>
+            {$_("native.chit.insuranceBalance")}
+            <span class="balance-amount">{num(balance)} CHAT</span>
+        </span>
         <Button
             size="lg"
             fullWidth
+            icon="shield"
             busy={buying}
             disabled={!quote.canBuy}
             label={quote.room === 0
@@ -207,88 +239,154 @@
         scrollbar-width: none;
         display: flex;
         flex-direction: column;
-        gap: 22px;
-        padding: 8px var(--space-16) var(--space-16);
+        gap: 24px;
+        padding: 12px var(--space-16) var(--space-16);
     }
 
-    .intro {
-        margin: 0;
-        padding: 0 4px;
-        font: var(--weight-regular) text-size(14px) / 1.5 var(--font-sans);
-        color: var(--ink-2);
-    }
+    // ---- the cover held: a warning tint with none, the online colour once there's some
 
-    .holding {
+    .hero {
+        --hero-ink: var(--status-warning);
+        flex: none;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        padding: 16px;
+        align-items: center;
+        gap: 14px;
+        padding: 24px 18px 20px;
+        border-radius: 20px;
+        background: color-mix(in oklch, var(--status-warning) 10%, transparent);
+        text-align: center;
+
+        &.covered {
+            --hero-ink: var(--status-online);
+            background: var(--overlay-1);
+        }
     }
 
-    .slots {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
+    .hero-tile {
+        width: 64px;
+        height: 64px;
+        @include flex-center;
+        border-radius: 20px;
+        background: color-mix(in oklch, var(--hero-ink) 18%, transparent);
+
+        .covered & {
+            background: color-mix(in oklch, var(--hero-ink) 14%, transparent);
+        }
+    }
+
+    .hero-icon {
+        @include icon(shield, 30px, var(--hero-ink));
+    }
+
+    .hero-text {
+        display: flex;
+        flex-direction: column;
         gap: 6px;
     }
 
+    .hero-title {
+        font: 800 text-size(22px) / 1.15 var(--font-sans);
+    }
+
+    .hero-hint {
+        font: var(--weight-medium) text-size(13.5px) / 1.45 var(--font-sans);
+        color: var(--ink-3);
+        text-wrap: pretty;
+    }
+
+    .slots {
+        align-self: stretch;
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 10px 6px;
+        margin: 0;
+        padding: 4px 0 0;
+        list-style: none;
+    }
+
     .slot {
-        aspect-ratio: 1;
-        @include flex-center;
-        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .slot-bar {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
         background: var(--overlay-2);
 
-        &.held {
-            background: var(--status-chit);
+        [data-state="held"] & {
+            background: var(--status-online);
         }
 
-        &.adding {
-            box-shadow: inset 0 0 0 2px var(--status-chit);
-            background: color-mix(in oklch, var(--status-chit) 16%, transparent);
-        }
-    }
-
-    .slot-icon {
-        @include icon(shield, 16px, var(--ink-4));
-
-        .held & {
-            background: var(--on-accent);
-        }
-
-        .adding & {
-            background: var(--status-chit);
+        [data-state="adding"] & {
+            background: color-mix(in oklch, var(--accent) 45%, transparent);
+            box-shadow: inset 0 0 0 1px var(--accent);
         }
     }
 
-    .more {
-        font: 800 text-size(12px) / 1 var(--font-mono);
-        color: var(--on-accent);
+    .slot-n {
+        font: var(--weight-semibold) text-size(10px) / 1 var(--font-mono);
+        color: var(--ink-4);
+
+        [data-state="held"] & {
+            color: var(--status-online);
+        }
+
+        [data-state="adding"] & {
+            color: var(--accent-bright);
+        }
     }
 
-    .holding-text {
-        font: var(--weight-semibold) text-size(14px) / 1.2 var(--font-sans);
+    .used {
+        font: var(--weight-medium) text-size(12px) / 1.3 var(--font-sans);
+        color: var(--ink-4);
     }
+
+    // ---- Add cover: the stepper, then a line a day added with its price
 
     .stepper {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 12px;
-        padding: 8px;
+        min-height: 64px;
+        padding: 10px 10px 10px 16px;
+        box-sizing: border-box;
+    }
+
+    .stepper-text {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .stepper-days {
+        font: var(--weight-semibold) text-size(15px) / 1.2 var(--font-sans);
+    }
+
+    .stepper-room {
+        font: var(--weight-regular) text-size(12.5px) / 1.3 var(--font-sans);
+        color: var(--ink-3);
     }
 
     .step {
         flex: none;
-        width: var(--touch-target);
-        height: var(--touch-target);
+        width: 44px;
+        height: 44px;
         @include flex-center;
         padding: 0;
         border: 0;
-        border-radius: var(--radius-circle);
+        border-radius: 12px;
         background: var(--overlay-2);
         cursor: pointer;
 
         &:disabled {
-            opacity: 0.4;
+            opacity: 0.35;
             cursor: default;
         }
 
@@ -299,54 +397,64 @@
 
     .step-icon {
         &.minus {
-            @include icon(minus, 18px, var(--ink));
+            @include icon(minus, 16px, var(--ink));
         }
 
         &.plus {
-            @include icon(plus, 18px, var(--ink));
+            @include icon(plus, 16px, var(--ink));
         }
     }
 
     .count {
-        font: 800 text-size(18px) / 1 var(--font-mono);
+        min-width: 28px;
+        text-align: center;
+        font: var(--weight-bold) text-size(17px) / 1 var(--font-mono);
     }
 
     .rung {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        min-height: 48px;
-        padding: 8px 16px;
+        min-height: 44px;
+        padding: 0 16px;
         box-sizing: border-box;
-        font: var(--weight-medium) text-size(14px) / 1.2 var(--font-sans);
-        color: var(--ink-3);
+    }
 
-        &.adding {
-            color: var(--ink);
-            background: color-mix(in oklch, var(--status-chit) 12%, transparent);
-        }
+    .rung-day {
+        flex: 1;
+        font: var(--weight-medium) text-size(13.5px) / 1 var(--font-sans);
+        color: var(--ink-2);
     }
 
     .rung-price {
         font: var(--weight-semibold) text-size(13.5px) / 1 var(--font-mono);
-
-        .adding & {
-            color: var(--status-chit);
-        }
     }
+
+    // ---- pinned: the balance, then Buy
 
     .footer {
         flex: none;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
         padding: 12px var(--space-16) var(--bar-end);
     }
 
-    .short {
-        margin: 0;
-        text-align: center;
-        font: var(--weight-medium) text-size(12.5px) / 1.3 var(--font-sans);
-        color: var(--status-danger);
+    .balance {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        font: var(--weight-medium) text-size(12.5px) / 1 var(--font-sans);
+        color: var(--ink-3);
+    }
+
+    .balance-amount {
+        font-family: var(--font-mono);
+        font-weight: var(--weight-semibold);
+        color: var(--ink-2);
+
+        // too little for the days picked
+        .short & {
+            color: var(--status-danger);
+        }
     }
 </style>

@@ -1441,8 +1441,9 @@ design export needs. Each entry says where it came up.
   and the claim history calendar (`ClaimCalendar`'s `layout="card"`, as the prototype's: the month
   over a card of square days, the picked day, today at first, described under the grid, the
   month's totals and Local / UTC at its foot, its own Claim on today); the gear pushes CHIT's
-  settings. Streak insurance (the 7-slot
-  holding, the stepper, the price ladder, the pinned "Buy N days · X CHAT"), the Achievements
+  settings. Streak insurance (as the prototype: "Insured for N days" or "No insurance" over a
+  bar a day of cover, Add cover's stepper with a line a day added and its price, the CHAT balance
+  and the pinned "Buy N days · X CHAT" with the shield), the Achievements
   screen, and the daily puzzle as its own screen (the board centred, Start / Reset / Hint at the
   bottom, "How to play" in the header; a solve made there plays the "Challenge solved" banner
   first, a tap skipping it, then the solved view: the 160px trophy, the time, the countdown to
@@ -1480,8 +1481,11 @@ design export needs. Each entry says where it came up.
     loads (newest first); with none, a line saying each one pays CHIT. The Achievements screen
     (View all) lists every achievement by AchievementsDialog's groups (its `ACHIEVEMENT_GROUPS`,
     now exported) in the settings kit's cards: the plan has no layout for it.
-  - **The 7-slot holding** shows up to seven days held; cover held past seven (the backend allows
-    30) shows as "+N" on the last slot.
+  - **The cover's bars**: the prototype has seven and stops there; the backend allows 30, so
+    there are seven at least and another row of seven as the cover held and added passes them.
+    The prices are the backend's (each day twice the one before), not the prototype's sample
+    (1, 2, 4, 12, 28, 60, 124). Days used so far show under the bars (the prototype has none).
+    Too little CHAT shows as the balance in the danger colour, Buy disabled.
   - **Buying insurance with a PIN**: the client asks for the PIN through a prompt the native tree
     doesn't show yet (N10b's PIN sheet), so with a PIN set, Buy says so in a small alert and
     points to oc.app; without a PIN it buys (paid in CHAT, the approval's fee on top, the price
