@@ -370,9 +370,11 @@
             editorProps: {
                 attributes,
                 transformPastedHTML,
-                handleTextInput: (view, from, to, text) => {
+                // ProseMirror's own insert (`deflt`: the DOM's selection, the composition, scrolled into
+                // view), handled here so that tiptap's input rules don't see the chunk
+                handleTextInput: (view, _from, _to, text, deflt) => {
                     if (!plainTextChunks || [...text].length <= 1) return false;
-                    view.dispatch(view.state.tr.insertText(text, from, to));
+                    view.dispatch(deflt());
                     return true;
                 },
                 handleKeyDown: (_view, event) => {
