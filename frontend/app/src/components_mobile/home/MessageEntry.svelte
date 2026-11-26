@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import type RichTextEditor from "@src/core/richText/RichTextEditor.svelte";
     import {
         loadRichTextEditor,
         richTextEditorIfLoaded,
-    } from "@shared_components/richTextEditorLoader";
+    } from "@src/core/richText/richTextEditorLoader";
     import { keyboard } from "@src/stores/keyboard.svelte";
     import { isIosTauriApp } from "@shared";
     import { trackedEffect } from "@src/utils/effects.svelte";

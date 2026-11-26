@@ -35,7 +35,7 @@
         subscribe,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
+    import { warmRichTextEditor } from "@src/core/richText/richTextEditorLoader";
     import {
         boundaryErrorHandler,
         followDocumentDirection,
