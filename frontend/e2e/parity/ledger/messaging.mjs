@@ -201,7 +201,7 @@ export const rows = [
     {
         id: "msg-rich-composer",
         capability: "Formatting shown live while writing (rich-text composer)",
-        legacy: ["components_shared/RichTextEditor.svelte"],
+        legacy: ["core/richText/RichTextEditor.svelte"],
         ...both({ missing: "a plain text box; to be ported, Julian 2026-11-20 (#10576)" }),
     },
     {

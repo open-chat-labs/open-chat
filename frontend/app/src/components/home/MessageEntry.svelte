@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import type RichTextEditor from "@src/core/richText/RichTextEditor.svelte";
     import {
         loadRichTextEditor,
         richTextEditorIfLoaded,
-    } from "@shared_components/richTextEditorLoader";
+    } from "@src/core/richText/richTextEditorLoader";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import type {
