@@ -1262,17 +1262,34 @@ design export needs. Each entry says where it came up.
     with the old pages' words (a `NativeAlert`); No keeps the other edits, as the web's. Back
     (the header's or Android's) with unsaved changes asks "Discard changes?" (Keep editing /
     Discard), as the web's Manage does; the plan doesn't say. TODO(design).
-  - **Access gates**: the intro, the Gates card (Diamond and Lifetime Diamond as switches; a
-    locked or credential gate only where the group already has one, to see it and take it off;
-    Payment, Minimum token balance, Neuron holder and Minimum CHIT as rows with Add, each entry
-    under its row in words, tapped to change it, × to take it off with Undo), then Gate settings,
-    always there and dimmed (0.45) until they apply: Members must meet (All gates / Any one gate,
-    from two gates) and Re-check members (Never / Weekly / Monthly / Quarterly, from one gate; an
-    interval set elsewhere, say 14 days, shows as "Every 14 days" and stays picked). The gate
-    sheet keeps one height (74%) for its two steps: the token or nervous system (a search, those
-    the gate already names marked Added), then the value (Payment's amount, a balance's minimum,
-    a neuron's dissolve delay in days and stake, both optional; CHIT has only this step).
-    TODO(design): the dimmed look, the entry rows and the sheet's steps are ours.
+  - **Access gates** (to the design's page and screens, 2026-11-25): the intro, the Gates
+    card, each gate with its icon (in the accent while it's on) and what it is under its name:
+    Diamond and Lifetime Diamond as switches (a locked or credential gate only where the group
+    already has one, to see it and take it off); Payment, Minimum token balance, Neuron holder
+    and Minimum CHIT as rows with On / Off and a chevron, showing a summary of their entries
+    while on (the first two, joined as the gates combine, "3 ICP or 20 CHAT" under Any one gate,
+    then "+N"). Then Gate settings, always there and dimmed (0.45) until they apply: Members must
+    meet (All gates / Any one gate, from two gates) and Re-check members (Never / Weekly /
+    Monthly / Quarterly, from one gate; an interval set elsewhere, say 14 days, shows as "Every
+    14 days" and stays picked), each a row with an icon, a help line that follows the state, the
+    value and a menu from the row.
+    - Payment, Minimum token balance and Neuron holder push their own screens (`gate_entries`,
+      local, on the page's draft held by `gatesEditor`): the list (what the gate is, its tokens
+      or nervous systems with their values, tap to change, × to take one out with Undo, Add a
+      token / Add a nervous system (Diamond's), Remove gate with Undo while it has any; empty:
+      "No tokens yet. Add one to turn this gate on."), then Choose a token (a search; those
+      already in the gate left out), then the value (the picked one with Change, back to the
+      search; a payment's price or a balance's minimum with its dollar worth where the token
+      has a price; a neuron's minimum stake, optional, and its dissolve delay as the design's
+      chips, Any / 1 month / 6 months / 1 year, plus a delay set elsewhere), with Add token /
+      Save pinned, which lands back on the list ("ICP added"). Changes go into the page's draft
+      at once; the page's Save sends them.
+    - Minimum CHIT keeps a sheet (one value): what it is, the minimum, Save, Remove gate.
+    - Ours, where the design is silent: the intro keeps the app's words (who can join, and that
+      people you invite don't have to meet the gates), not the design's; the design's "add more
+      than one to accept any of them" is left out of the help (see Not offered); a locked or
+      credential gate's help; a gate's entries screens opened with the page gone (a cold start)
+      show only their header.
   - **Not offered**: the unique-person gate (the plan lists it, but DecideAI is suspended: the
     web and the old pages hide it too, and one already there is kept, unseen). The plan says
     several entries of a kind are allowed and "any one satisfies that gate"; the backend has one
@@ -1293,7 +1310,8 @@ design export needs. Each entry says where it came up.
     switching it off puts the types back as the defaults have them, so swap offers never open to
     everyone unseen), the Threads card (Separate thread permissions, the same rows for threads
     under it, marked and counted against the messages'), and Reset to defaults
-    (`defaultChatPermissions`) while anything differs. Someone whose role can't change them (not
+    (`defaultChatPermissions`, a text link under the cards, as the design has it; 2026-11-25)
+    while anything differs. Someone whose role can't change them (not
     the owner) sees the roles only, with no Save. Save counts only what a save would send
     (`hasSavableChanges`): threads given just "members send" send nothing (the client compares
     them with that), so they read as no change.
@@ -1344,14 +1362,15 @@ design export needs. Each entry says where it came up.
     (it isn't a favourite); Create goes by the same checks as Save (`draftSavable`), and the
     Rules row says why when the rules can't be saved (empty, or too long); two Create groups open
     each keep their draft for their pages (`newGroupDraft` holds a stack).
-  - **Not built**: Bots and webhooks and Stats (Manage's last two rows) are still placeholders:
-    the plan has "Bots: list + Add a bot; webhooks: Add webhook. Stats: as in the prototype", and
-    the web has no Stats page either (the backend keeps only all-time counters). A community's
-    settings: they come with its details, which push them (N8a; Create community's Settings step
-    is N8b's). The gates and rules pages take a community's draft as they are (they're on
-    `UpdateGroupOrCommunityState`); Edit community (its banner, 25-character name, no history or
-    disappearing messages) and the community's permissions (owner / admin / member, its own
-    seven) are to build.
+  - **Not built**: Bots and webhooks and Stats (Manage's last two rows, a group's and a
+    community's) are still placeholders: the plan has "Bots: list + Add a bot; webhooks: Add
+    webhook. Stats: as in the prototype (not specified further yet; ask if unclear)", the
+    prototype export wasn't available to check against, and the web has no Stats page either (the
+    backend keeps only all-time counters). Open question for the user. A community's settings
+    are "Native community settings" (below).
+  - **The frame** (header, Back's "Discard changes?", the pinned Save, the save's questions) is
+    `SettingsEditorFrame`, shared with a community's pages since N7's community half; the
+    question's words come from `changeQuestion`.
   - **Checked** in a 412×915 touch browser on the native tree against the local replica (the
     emulator wasn't running), N6 Book Club as its owner: Edit group's description saved and shown
     in About, a permission changed (in the accent) and reset, a rules template saved and shown in
@@ -1425,9 +1444,8 @@ design export needs. Each entry says where it came up.
   screen around the conversation's own list and composer, as the web's thread panel); the
   followed threads of a community (`?threads`: the library's ThreadList under the native page
   header, `header={false}`, EXPORT-LOG 2026-11-23). Left, or decided where the plan is silent:
-  - **Placeholders**: Manage's eight pages, and the kebab's Invite people, push
-    `community_settings` (N7's community pages: Edit community, its permissions, Bots and
-    webhooks, Stats; and plan 10's Invite people for a community); the sheet's Create pushes
+  - **Manage's pages**, the cover's Edit and the kebab's Invite people push `community_settings`,
+    N7's community pages ("Native community settings", below); the sheet's Create pushes
     `new_community` (N8b PR 5).
   - **The channels not joined** are those `exploreChannels` finds (its first page of 100, as the
     old mobile list's "Other channels") that the user can read: public ones, or private ones
@@ -1476,11 +1494,116 @@ design export needs. Each entry says where it came up.
   - **The details** have no tiles, Members, mute toggle or Leave (the prototype has them; the
     plan's members' details are Channels, Rules and Access gates). Access gates show the
     preview's card without the statuses.
+  - **The details** (rebuilt to the user's design prompt of 2026-11-25, N7 #10617; the
+    prototype file wasn't available, so built from the prompt): the cover with Back, Share and ⋯;
+    the avatar, name and "Public · N members"; the tiles Invite (for those who may invite, as
+    the page's menu offers it: `communityInviteAccess`), Search and Mute / Unmute; About (the
+    description, then the language); Members (faces, the count) to the Members screen, which is
+    now details' `Members` on a group, channel or community (`community_members`); for a regular
+    member, Channels, Rules and Access gates, read only (`CommunityInfoPage`); Manage for owners
+    and admins with what each row holds (`communityDetails.adapter`'s `manageMeta`; the
+    library's `SettingsLink` gained `quiet`, EXPORT-LOG 2026-11-25); "You in this community",
+    Mute all channels; Leave, or Delete for the owner, confirmed in a small alert, then gone with
+    Undo (`removeCommunityWithUndo`, which the page's menu's Leave now uses too). Left, or
+    decided where the prompt is silent:
+    - **No moderators**: the prompt has Manage for moderators, read only where the permissions
+      say; a community's roles are owner, admin and member (the backend's `CommunityRole`,
+      `communityRoles`), so Manage is for owners and admins who may edit it
+      (`communityDetailsPermissions`' canEdit, a frozen community none). Open question for the
+      user.
+    - **Mute both ways**: the community canister's `toggle_mute_notifications` with no channel
+      mutes or unmutes them all, so the tile and the switch unmute too (the client's
+      `muteAllChannels` takes `muted`, default true: the old callers unchanged). Muted is every
+      channel of the user's muted, as the web's and the old menus' rule. The page's menu still
+      only mutes (the user's decision of 2026-11-24); say if it should follow.
+    - **Search** (the tile, from the user's review of 2026-11-25): a screen on the Chats tab's
+      search (`ChatSearch`) over the community's channels: the user's, by name, and those they're
+      not in that they can read, found by the community (`exploreChannels`, the old desktop's
+      Browse channels); a tap opens the channel (`CommunitySearchScreen`, `community_search`,
+      `communitySearch.adapter`). Not there: a search of a community's messages (the app's
+      message search is one chat's, `searchChat`), nor its members (the Members screen has
+      that).
+    - **Share**: a public community's link, as its preview shares it; a private one has none here
+      (its link is Invite and share's). TODO(design).
+    - **⋯**: Edit community (for those who may edit it; the pencil's place before) and Mark all as
+      read, the page's menu's items the details don't have otherwise. TODO(design).
+    - **Created**: the backend sends no community's creation date to the app, so About shows the
+      language alone. The community canister keeps it (`date_created`,
+      `backend/canisters/community/impl/src/lib.rs` 687, set at 806) but returns it only in its
+      operational metrics (`Metrics.date_created`, 534 and 1554, the HTTP `/metrics` route) and
+      as its first event, which `community_events` gives owners only (its
+      `queries/community_events.rs`; the app doesn't call it). Neither the summary
+      (`CommunityCanisterCommunitySummary`, `libraries/types/src/community_summary.rs` 13–49)
+      nor `selected_initial` carries it, so the agent and `CommunitySummary` have nothing to map.
+      A group's comes from its first event (`groupCreated`). TODO: a backend change (a
+      `date_created` on the summary, as `chat_summary.rs` 21 has for groups).
+    - **Members row** (the user's review): "Members" over "N members" (`MembersRow`), the
+      group details' too, which had a "Members" label over "View all (N)" and five faces (now
+      four, 26px).
+    - **Sizes**: the cover, avatar ring and tiles are the group details' (DetailsHead,
+      DetailTiles: a 132px cover under the status bar, 186px with an iPhone's, the avatar's
+      corners a third of it, 68px tiles); Manage's rows are the kit's 60px.
+    - **Rules count**: "N rules" counts the rules text's lines with something on them.
   - **Checked** in a 390×844 touch browser on the native tree against the local replica, as a
     fresh user in Sci-Fi Book Club and Meme Factory: the page, the strip, the sheet by its handle
     and by a drag, the kebab, a channel's thread from its link and from the menu's Reply in
     thread, a reply sent there, the Threads row and list, a thread from the list, the details.
     Not checked: the reorder drag on a device, iOS, the Android emulator, the dark theme.
+- **Native community settings** (native N7's community half, #10373; the native plan's 12
+  "Community details" → Manage, on 11's pages; `src/native/features/communitySettings`). Built,
+  pushed without a URL (the local `community_settings` screen) from the details' Manage rows, the
+  details' cover's Edit (owners and admins) and the page's kebab (Invite people): Edit community,
+  Invite and share, Access gates, Rules and Permissions, each its own draft on the shared
+  `UpdateCommunityState` (made from the community and its rules as the page opens; Rules waits for
+  them) in the group pages' frame (`SettingsEditorFrame`: Save, "Discard changes?", the save's
+  questions), saved through the client's `updateCommunity`, back to the details with "Changes
+  saved". What the viewer's role can't change shows read only (`communityManageAccess`).
+  Left, or decided where the plan is silent (the prototype export wasn't available to check
+  against):
+  - **Edit community** isn't in the plan's Manage list; it's the cover's pencil, as Edit group is
+    a group's. Its fields are Create community's Details as the plan lists them ("banner, avatar,
+    name check, description, language sheet"), as Edit profile draws a cover and a photo: the
+    banner (picked, cropped 2:1 in start's crop sheet, `BANNER_SIZE`), the photo over it (cropped
+    square), the name (3 to 25 characters, trimmed; no live check, as there's nothing to check an
+    existing community's name against but the save), the description, and a Settings card with
+    Language (start's language sheet, one language; the details' About shows it) and Public
+    community (the owner's; making it private asks first, the client's question). Both images go
+    with the save. TODO(design).
+  - **Invite and share** is Invite people's screen (plan 10: People | Invite link) for the
+    community: the details' InvitePeopleScreen is now `InvitePeople` on a group, channel or
+    community, the screen a wrapper. Who gets which tab is `communityInviteAccess` (the web
+    Manage's: "Invite users" for both, no adding). Suggested looks the DM partners up among the
+    community's members (the client's `lookupDirectChatUsersAmongMembers(true)`: a new argument,
+    the old callers unchanged). Its title is "Invite people", as the group's (the plan's row says
+    "Invite and share"). From testing (2026-11-24, an admin of a public community): a public
+    community's or group's link has no code (the client's `#inviteCodeId`, as the old UIs and the
+    web's Manage have it), so it's always on and its switch can't turn it off; the switch said
+    nothing about why. Its help now says so (`native.invite.alwaysOnHelp`, `linkSwitch`). The
+    backend refuses nobody here: enabling and resetting a code is `can_invite_users`, which the
+    switch already goes by for a private one.
+  - **Access gates without Diamond** (from testing): the gates there can be taken off but none
+    added, so the switches for Diamond gates are disabled; the Gates card now says why under it.
+    Only Members must meet and Re-check dim until they apply. The off switch looked dimmed
+    anyway: the library's `Toggle` drew its off thumb grey; it's white now (EXPORT-LOG
+    2026-11-24).
+  - **Access gates and Rules** are the group's pages on the community's draft, unchanged; the
+    gates' intro names the community.
+  - **Permissions**: a community's seven, in two cards (the plan draws a group's; the split is
+    ours): Members (change roles, edit the community, invite, remove) and Channels and user groups
+    (public channels, private channels, user groups), each with owners, admins or everyone, in the
+    accent where it isn't the default (`defaultCommunityPermissions`, now exported from
+    `stores/community`), and Reset to defaults (the design's text link). A community has no message
+    or thread permissions. No note under the Members card (the design has none; 2026-11-25).
+  - **Not built yet** (placeholders): Channels and User groups (a second PR of this issue), Bots
+    and webhooks and Stats (under-specified: "Native group settings").
+  - **Checked** in a 390×844 touch browser on the native tree against the local replica, as
+    seedcommunity1 in Seed Private Lab (its owner): the description saved and shown in About, then
+    put back; the language sheet; a permission saved (Invite people → Everyone) and reset; the
+    "Keep it civil" rules saved and shown in the details, then off with the seed's default text
+    put back; a Diamond gate saved and shown, then taken off; the invite link switched on (QR,
+    Copy, Share, Reset) and off; Invite people from the kebab; a channel's Edit (the shared frame)
+    with Discard changes. Not checked: iOS, the dark theme, the Android emulator, the banner and
+    photo upload.
 - **A search field password managers leave alone; a settings action with a line under it** (by
   hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
   `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a

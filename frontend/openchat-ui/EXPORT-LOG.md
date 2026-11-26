@@ -1221,3 +1221,27 @@
 - `ChatListHeader`: `avatarUrl` (optional), the community's picture over its `color` swatch, as the header's comment says it shows ("the community's avatar"); it drew the swatch only, so the web's chat list never showed a community's picture. `ChatListPanel`: `headerAvatarUrl`, passed to it. Without them, as before. `meta.json` (both).
 - Used by the app: the web's chat list passes the community's `avatar.blobUrl` (none: the swatch, as everywhere on the web).
 - Not in the design export: its header draws a swatch for its sample community.
+## 2026-11-24 — Toggle: a white thumb when off, by hand
+- `Toggle`: the off thumb is white (with a small shadow) as the on one is, on a stronger track (`--overlay-3`, was `--overlay-2`). Its grey (`--ink-4`) off thumb read as a disabled switch on the device (native N7, Access gates, from testing on Android). Disabled is unchanged (the whole switch at 0.4). No props changed, so `meta.json` is as it was.
+- Used everywhere the library's switch is: the web and the native settings rows (`SettingsSwitch`).
+- Not in the design export: the export draws the off thumb grey. TODO(design): confirm the off state.
+
+## 2026-11-25 — SettingsLink: a quiet value, by hand
+- `SettingsLink`: `quiet` (optional, default false), the value in `--ink-4` rather than `--ink-2`, for a row that holds nothing set (None, Off, Default). `meta.json` (`quiet`).
+- Used by the app: the native community details' Manage rows (the user's design prompt: "`--ink-2` when set, `--ink-4` for None/Off/Default").
+- Not in the design export.
+
+## 2026-11-25 — settings rows for the native Access gates page, by hand
+- `SettingsSwitch`: `icon` (optional), an icons.js name before the label, 19px, `--ink-3`, in `--accent` while the switch is on.
+- `SettingsLink`: `iconAccent` (optional, default false), the icon in `--accent`; `helpSummary` (optional, default false), the help as a one-line summary in `--ink-2`, clipped, rather than a description; `disabled` (optional, default false), the row at 0.45 and not pressable.
+- `SettingsValue`: `icon` and `disabled`, handed to its `SettingsLink`.
+- `meta.json` updated for all three.
+- Used by the app: the native Access gates page (groups, channels and communities), to match the design's gate rows (an icon in the accent while the gate is on, what the gate is under its name, or for a gate with setup that's on, a summary of its entries, with On / Off) and its Gate settings rows (an icon, a help line that follows the state, the value, and a menu; dimmed until they apply).
+- In the design export (the native prototype's Access gates page).
+
+## 2026-11-26 — SettingsLink and SettingsValue: a read-only row, by hand
+- `SettingsLink`: `readOnly` (optional, default false), the same row as a plain element (a div, not a button): the same layout and type (label medium 15px `--ink`, value medium 13px `--ink-2`, `--accent-bright` when `accent`, at least 60px, 10px 16px), with no chevron, no menu, no pressed state, not focusable.
+- `SettingsValue`: `readOnly`, handed to its `SettingsLink`; no AnchoredMenu while it's set.
+- `meta.json` updated for both.
+- Used by the app: the native Permissions pages (groups, channels and communities) for someone who can't change them, in place of the details' `FactRow`, so the read-only rows look like the editable ones (the user's design prompt, 2026-11-26).
+- Not in the design export.

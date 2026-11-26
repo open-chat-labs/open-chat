@@ -148,6 +148,10 @@ export const screens: Screens = {
     // Create group's gates, rules and permissions, from its Settings card (N7)
     new_group_settings: () => import("../groupSettings/NewGroupSettingsScreen.svelte"),
 
+    // a payment, minimum balance or neuron gate's entries, picking a token or nervous system,
+    // and its value, from Access gates (N7)
+    gate_entries: () => import("../groupSettings/GateEntriesScreen.svelte"),
+
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)
     builder: undefined,
@@ -161,9 +165,15 @@ export const screens: Screens = {
     // a community's details, from its page's header and Manage (N8a)
     community_details: () => import("../communities/CommunityDetailsScreen.svelte"),
 
-    // a community's settings pages (channels, user groups, invite, gates, rules, permissions, bots,
-    // stats), from its details' Manage and its page's menu (N7)
-    community_settings: undefined,
+    // a community's members, from its details (plan 10's Members screen)
+    community_members: () => import("../communities/CommunityMembersScreen.svelte"),
+
+    // a community's search (its channels), from its details' Search tile
+    community_search: () => import("../communities/CommunitySearchScreen.svelte"),
+
+    // a community's settings pages (edit, channels, user groups, invite, gates, rules, permissions,
+    // bots, stats), from its details' Manage and Edit, and its page's menu (N7)
+    community_settings: () => import("../communitySettings/CommunitySettingsScreen.svelte"),
 
     // Create community, from the Communities switcher's sheet (N8b)
     new_community: undefined,

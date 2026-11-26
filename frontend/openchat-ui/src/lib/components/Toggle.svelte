@@ -95,7 +95,7 @@
     align-items: center;
     cursor: pointer;
     transition: background var(--duration-base) var(--ease-out);
-    background: var(--overlay-2);
+    background: var(--overlay-3);
 
     &.on {
       background: var(--accent);
@@ -116,11 +116,12 @@
       transform var(--duration-base) var(--ease-out),
       background var(--duration-base) var(--ease-out);
     transform: translateX(0);
-    background: var(--ink-4);
+    // a plain white thumb, on or off (an off one in grey read as disabled: native N7's testing)
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 
     .on & {
       transform: translateX(calc(var(--oc-dir) * 16px));
-      background: #fff;
     }
   }
 </style>

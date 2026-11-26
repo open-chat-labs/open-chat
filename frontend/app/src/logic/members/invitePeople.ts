@@ -8,7 +8,10 @@ import {
     type MultiUserChat,
     type OpenChat,
 } from "@client";
-import { chatDetailsPermissions } from "../groupOrCommunity/detailsPermissions";
+import {
+    chatDetailsPermissions,
+    communityDetailsPermissions,
+} from "../groupOrCommunity/detailsPermissions";
 
 // Who may open the Invite people screen (the native design's plan 10) and what it offers them: its
 // People tab (inviting people by name, or adding a private community's members to a channel) and
@@ -90,6 +93,28 @@ export function chatInviteAccess(
             client.canAddMembers(chat.id),
         canInviteByLink: permissions.canInvite,
         public: chat.public,
+    });
+}
+
+/**
+ * `inviteAccess` for a community (its details' Invite and share, its page's Invite people): the
+ * details' permissions (`communityDetailsPermissions`: nothing for a guest or in a frozen
+ * community), inviting by name and by link as "Invite users" allows, as the web's Manage has it.
+ * Adding is a private community's channel's only.
+ */
+export function communityInviteAccess(
+    client: OpenChat,
+    community: CommunitySummary,
+    anon: boolean,
+): InviteAccess {
+    const permissions = communityDetailsPermissions(client, community, anon);
+    return inviteAccess({
+        member: community.membership.role !== ROLE_NONE,
+        active: permissions.canOpenInvite,
+        canInviteUsers: client.canInviteUsers(community.id),
+        canAddMembers: false,
+        canInviteByLink: permissions.canInvite,
+        public: community.public,
     });
 }
 

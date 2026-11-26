@@ -16,23 +16,60 @@
     chevron?: 'right' | 'down';
     /** The value in the accent: a setting changed from its default. */
     accent?: boolean;
+    /** The value quieter (`--ink-4`): nothing set (None, Off, Default). */
+    quiet?: boolean;
+    /** The icon in the accent: the thing the row sets is on (Access gates' list). */
+    iconAccent?: boolean;
+    /** The help as a one-line summary (`--ink-2`, clipped) rather than a description. */
+    helpSummary?: boolean;
+    /** Dimmed and not pressable: the setting doesn't apply yet. */
+    disabled?: boolean;
+    /** Shown, not changeable (someone whose role can't change it): the same row as a plain element, with no
+        chevron, no press and no focus. */
+    readOnly?: boolean;
     /** Gets the row, to anchor a menu to. */
     onClick: (row: HTMLElement) => void;
   }
 
-  let { label, help = '', value = '', icon, chevron = 'right', accent = false, onClick }: Props = $props();
+  let {
+    label,
+    help = '',
+    value = '',
+    icon,
+    chevron = 'right',
+    accent = false,
+    quiet = false,
+    iconAccent = false,
+    helpSummary = false,
+    disabled = false,
+    readOnly = false,
+    onClick,
+  }: Props = $props();
   const t = useT();
 </script>
 
-<button type="button" class="settings-row link-row" aria-haspopup={chevron === 'down' ? 'menu' : undefined} onclick={(e) => onClick(e.currentTarget)}>
-  {#if icon}<span class="icon" style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{/if}
+{#snippet content()}
+  {#if icon}<span class="icon" class:accent={iconAccent} style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{/if}
   <span class="text">
     <span class="label">{t(label)}</span>
-    {#if help}<span class="help">{t(help)}</span>{/if}
+    {#if help}<span class="help" class:summary={helpSummary}>{t(help)}</span>{/if}
   </span>
-  {#if value}<span class="value" class:accent>{t(value)}</span>{/if}
-  <span class="chevron {chevron}"></span>
-</button>
+  {#if value}<span class="value" class:accent class:quiet>{t(value)}</span>{/if}
+{/snippet}
+
+{#if readOnly}
+  <div class="settings-row link-row read-only">{@render content()}</div>
+{:else}
+  <button
+    type="button"
+    class="settings-row link-row"
+    {disabled}
+    aria-haspopup={chevron === 'down' ? 'menu' : undefined}
+    onclick={(e) => onClick(e.currentTarget)}>
+    {@render content()}
+    <span class="chevron {chevron}"></span>
+  </button>
+{/if}
 
 <style lang="scss">
   @use '../lib/styles/mixins' as *;
@@ -52,8 +89,17 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 
-    &:active {
+    &:active:not(:disabled) {
       background: var(--overlay-1);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    &.read-only {
+      cursor: default;
     }
   }
 
@@ -62,6 +108,10 @@
     width: 19px;
     height: 19px;
     background: var(--ink-3);
+
+    &.accent {
+      background: var(--accent);
+    }
   }
 
   .text {
@@ -80,6 +130,11 @@
     font: var(--weight-medium) var(--text-md) / 1.35 var(--font-sans);
     color: var(--ink-4);
     text-wrap: pretty;
+
+    &.summary {
+      color: var(--ink-2);
+      @include truncate;
+    }
   }
 
   .value {
@@ -91,6 +146,10 @@
 
     &.accent {
       color: var(--accent-bright);
+    }
+
+    &.quiet {
+      color: var(--ink-4);
     }
   }
 

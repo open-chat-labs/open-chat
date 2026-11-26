@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chipName, linkTabView, sendLabel, sentToast } from "./invite.adapter";
+import { chipName, linkSwitch, linkTabView, sendLabel, sentToast } from "./invite.adapter";
 
 const t = (key: string, values?: Record<string, string | number>) =>
     values === undefined ? key : `${key}(${Object.values(values).join(",")})`;
@@ -70,5 +70,19 @@ describe("the Invite people screen's words", () => {
     test("a chip shows the first name, else the username", () => {
         expect(chipName("Sofia Marín", "sofia")).toBe("Sofia");
         expect(chipName("  ", "sofia")).toBe("sofia");
+    });
+});
+
+describe("the invite link's switch", () => {
+    test("a private one's, for someone who may invite, once it's loaded", () => {
+        expect(linkSwitch({ kind: "enabled", code: "1" }, true)).toBe("switch");
+        expect(linkSwitch({ kind: "disabled" }, true)).toBe("switch");
+        expect(linkSwitch(undefined, true)).toBe("locked");
+        expect(linkSwitch({ kind: "disabled" }, false)).toBe("locked");
+    });
+
+    test("a public one's is always on, whoever's looking (an admin too)", () => {
+        expect(linkSwitch({ kind: "public" }, true)).toBe("always_on");
+        expect(linkSwitch({ kind: "public" }, false)).toBe("always_on");
     });
 });

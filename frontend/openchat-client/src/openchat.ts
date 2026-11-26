@@ -2400,13 +2400,22 @@ export class OpenChat {
             });
     }
 
-    muteAllChannels(communityId: CommunityIdentifier, atEveryOne: boolean): Promise<boolean> {
+    /**
+     * Mutes every channel of the community (or only their @everyone, with `atEveryOne`). With
+     * `muted` false it unmutes them all instead, which the community canister takes as it takes a
+     * mute (its toggle_mute_notifications with no channel applies to them all).
+     */
+    muteAllChannels(
+        communityId: CommunityIdentifier,
+        atEveryOne: boolean,
+        muted: boolean = true,
+    ): Promise<boolean> {
         const community = communitiesStore.value.get(communityId);
         if (community === undefined) {
             return Promise.resolve(false);
         }
 
-        const mute = atEveryOne ? undefined : true;
+        const mute = atEveryOne ? undefined : muted;
         const muteAtEveryone = atEveryOne ? true : undefined;
 
         const undos = community.channels.map((c) =>
@@ -4667,15 +4676,21 @@ export class OpenChat {
     // the selected channel and its community, where it holds only some of its members, so that the
     // members held say which of them are members. Then those who are members already aren't offered
     // to invite (a group's or channel's members held being only its first page), and those who are
-    // members of the community, but not the channel, are offered to add to the channel.
-    async lookupDirectChatUsersAmongMembers(): Promise<void> {
+    // members of the community, but not the channel, are offered to add to the channel. With
+    // `community`, among the selected community's members instead (inviting to the community).
+    async lookupDirectChatUsersAmongMembers(community: boolean = false): Promise<void> {
+        const userIds = [...serverDirectChatsStore.value.values()]
+            .map((c) => c.them.userId)
+            .filter((u) => userStore.get(u)?.kind !== "bot");
+        if (community) {
+            const communityId = selectedCommunityIdStore.value;
+            if (communityId !== undefined) await this.#membersAmong(communityId, userIds);
+            return;
+        }
         const chatId = selectedChatIdStore.value;
         if (chatId === undefined || chatId.kind === "direct_chat") {
             return;
         }
-        const userIds = [...serverDirectChatsStore.value.values()]
-            .map((c) => c.them.userId)
-            .filter((u) => userStore.get(u)?.kind !== "bot");
         if (chatId.kind === "group_chat") {
             await this.#membersAmong(chatId, userIds);
             return;

@@ -80,7 +80,8 @@ native/
     details/         a chat's details (N6), pushed from the conversation without a URL: a DM's
                      (DmDetails) or a group's or channel's (GroupDetails) on ChatDetailsScreen,
                      the Members screen with its tabs (MembersScreen, chat_members), Invite
-                     people (InvitePeopleScreen, invite_people; openInvite decides whether
+                     people (InvitePeopleScreen, invite_people, on InvitePeople, which a
+                     community's Invite and share uses too; openInvite decides whether
                      Invite pushes it or says who can) and a member's profile sheet;
                      the disappearing messages, the library's TimedToggle (DisappearingRow), one
                      setting with the conversation menu's submenu; the Search tile goes back to
@@ -89,9 +90,9 @@ native/
     groupSettings/   a group's or channel's settings pages (N7), pushed from its details
                      (group_settings): Edit group (GeneralPage), Access gates (GatesPage and the
                      gate sheet, GateSheet), Rules and Permissions, each on its own draft
-                     (GroupSettingsEditor: the shared UpdateGroupState, a pinned Save, the
-                     questions a save can need, Discard changes); Bots and webhooks and Stats
-                     are still placeholders; Create group (NewGroupScreen,
+                     (GroupSettingsEditor: the shared UpdateGroupState, in SettingsEditorFrame:
+                     a pinned Save, the questions a save can need, Discard changes); Bots and
+                     webhooks and Stats are still placeholders; Create group (NewGroupScreen,
                      new_group: Members, then Details), whose gates, rules and permissions are
                      the same pages on its draft (NewGroupSettingsScreen, new_group_settings,
                      newGroupDraft)
@@ -99,7 +100,18 @@ native/
                      its page (CommunityHome: the header and its menu, the Threads row, the
                      channels and those not joined) with the switcher, strip ↔ sheet
                      (CommunitySwitcher on switcher.ts' one factor); the community's details
-                     (CommunityDetailsScreen, community_details, pushed locally)
+                     (CommunityDetailsScreen, community_details, pushed locally: its tiles, Info,
+                     Manage's values, the mute and Leave / Delete in communityDetails.adapter,
+                     leaveCommunity) and its members (CommunityMembersScreen, community_members,
+                     on details' Members)
+    communitySettings/  a community's settings pages (N7), pushed from its details' Manage and
+                     Edit and its page's menu (community_settings): Edit community
+                     (CommunityGeneralPage), Access gates and Rules (groupSettings' pages) and
+                     Permissions (CommunityPermissionsPage), each on its own draft
+                     (CommunitySettingsEditor: the shared UpdateCommunityState, in
+                     groupSettings' SettingsEditorFrame); Invite and share is details'
+                     InvitePeople for the community; Channels, User groups, Bots and webhooks
+                     and Stats are still placeholders
     threads/         the followed threads of a scope (`?threads`, ThreadsScreen); a thread itself
                      is the conversation's screen for it (`thread`: ThreadPanel around its list
                      and composer)
