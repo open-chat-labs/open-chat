@@ -154,6 +154,22 @@ const refused: SendMessageResponse = {
 
 type SendRequest = Extract<WorkerRequest, { kind: "sendMessage" }>;
 
+// The worker's answer to a send comes once the message shows in the chat, as over the network.
+// A new message is shown a moment after it's posted (#postSendMessage defers it, and drops any
+// failed copy with its id then), so an answer on a fixed timer could beat it under load: the
+// failure was recorded, then dropped, and the message vanished. This waits for the real condition.
+function answerOnceShown(req: SendRequest, answer: () => void) {
+    const shown = () => localUpdates.isUnconfirmed(req.messageContext, req.event.event.messageId);
+    const check = (left: number) => {
+        if (shown() || left === 0) {
+            answer();
+        } else {
+            setTimeout(() => check(left - 1), 0);
+        }
+    };
+    setTimeout(() => check(1000), 0);
+}
+
 describe("a send refused for the rules", () => {
     let client: OpenChat;
     // the sends that reached the worker
@@ -182,9 +198,8 @@ describe("a send refused for the rules", () => {
             const answer = answers.shift();
             return {
                 subscribe: ({ onResult }: { onResult: (r: unknown) => void }) => {
-                    // after the message shows, as over the network
                     if (answer !== undefined) {
-                        setTimeout(() => onResult([answer, req.event.event]), 5);
+                        answerOnceShown(req, () => onResult([answer, req.event.event]));
                     }
                 },
             };
