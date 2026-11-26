@@ -13,6 +13,7 @@
     import { aboveKeyboard } from "../../aboveKeyboard.svelte";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
+    import { guardsLeaving } from "./editorBack";
 
     type Props = {
         title: string;
@@ -42,12 +43,14 @@
         () => onSave(false),
     );
 
-    // ---- leaving with unsaved changes asks first, from the header's Back and Android's
+    // ---- leaving with unsaved changes asks first, from the header's Back and Android's. The
+    // guard is registered only while this is its tab's top screen (guardsLeaving): with a screen
+    // pushed over it (a gate's entries), Android's back pops that one instead
 
     let discarding = $state(false);
     useOverlay(
         overlays,
-        () => changed && !discarding && !busy,
+        () => guardsLeaving({ onTop: context.onTop(), changed, discarding, busy }),
         () => (discarding = true),
     );
     useOverlay(
