@@ -21,6 +21,7 @@
         moderationFlagsEnabledStore,
         notificationStatus,
         offensiveEnabledStore,
+        platformOperatorStore,
         adultEnabledStore,
         underReviewEnabledStore,
         OpenChat,
@@ -80,6 +81,7 @@
         changedChatSettings,
         chatSettingsProps,
         profileProps,
+        railFootItemsProps,
         ringtoneKeyOf,
         statsProps,
         type AppChatSettings,
@@ -109,6 +111,7 @@
         type LinkOutcome,
     } from "@src/logic/auth/identityLinking.svelte";
     import { shareLink } from "@src/utils/share";
+    import { navigate } from "@src/utils/navigation";
     import { websiteVersion } from "@src/utils/openchatClient";
     import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
@@ -626,6 +629,11 @@
     onSave={save}
     {checkHandle}
     onLogout={() => client.logout()}
+    railFootItems={railFootItemsProps(
+        $platformOperatorStore,
+        translate(i18nKey("adminConsole")),
+        () => navigate("/admin"),
+    )}
     onChatSettings={changeChatSettings}
     onPreviewRingtone={previewRingtone}
     onAppearance={changeAppearance}

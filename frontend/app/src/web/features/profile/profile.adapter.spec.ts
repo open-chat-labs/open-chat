@@ -18,6 +18,7 @@ import {
     chatSettingsProps,
     profileAvatarUrl,
     profileProps,
+    railFootItemsProps,
     ringtoneKeyOf,
     statsProps,
     type AppChatSettings,
@@ -250,5 +251,19 @@ describe("someone's own picture from their profile", () => {
         expect(profileAvatarUrl(pattern, OPENCHAT_BOT_USER_ID, undefined)).toBe(
             OPENCHAT_BOT_AVATAR_URL,
         );
+    });
+});
+
+describe("the rail's links above Log out", () => {
+    const openAdmin = () => {};
+
+    test("are the Admin console's for a platform operator", () => {
+        expect(railFootItemsProps(true, "Admin", openAdmin)).toEqual([
+            { label: "Admin", icon: "shield", onClick: openAdmin },
+        ]);
+    });
+
+    test("are none for anyone else, a group's or community's admins included", () => {
+        expect(railFootItemsProps(false, "Admin", openAdmin)).toEqual([]);
     });
 });

@@ -84,5 +84,5 @@ export type { InvitePerson } from './components/InviteDialog.svelte';
 export type { ExploreLanguage, ExploreQuery } from './components/ExploreCommunities.svelte';
 export type { AuthPerson } from './components/AuthDialog.svelte';
 export type { ClaimDay } from './components/ClaimCalendar.svelte';
-export type { ProfileCommunity } from './components/ProfileDialog.svelte';
+export type { ProfileCommunity, ProfileRailItem } from './components/ProfileDialog.svelte';
 export type { DisappearSetting } from './components/DmChatSettings.svelte';

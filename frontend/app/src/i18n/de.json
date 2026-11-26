@@ -178,6 +178,7 @@
         "title": "Adressbuch"
     },
     "admin": "Administrator",
+    "adminConsole": "Verwaltung",
     "advanced": "Fortgeschritten",
     "airdropWarning": "Um sich für den nächsten Airdrop zu qualifizieren, müssen Sie Mitglied des Kanals **{channelName}** in der Community **{communityName}** sein. [Klicken Sie hier, um beizutreten.]({url})",
     "andNMore": ", und {n} mehr",

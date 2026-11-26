@@ -178,6 +178,7 @@
         "title": "Carnet d'adresses"
     },
     "admin": "administrateur",
+    "adminConsole": "Administration",
     "advanced": "Avancé",
     "airdropWarning": "Pour pouvoir participer au prochain Airdrop, vous devez être membre du canal **{channelName}** de la communauté **{communityName}**. [Cliquez ici pour nous rejoindre.]({url})",
     "andNMore": ", et {n} de plus",

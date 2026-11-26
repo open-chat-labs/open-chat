@@ -67,6 +67,16 @@
     utc?: boolean;
   }
 
+  /** A link of the host's at the rail's foot, above Log out (the app's Admin, for platform operators). */
+  export interface ProfileRailItem {
+    /** Resource key or literal text. */
+    label: string;
+    /** Icon name (the library's icon set). */
+    icon: string;
+    /** Called once the dialog has closed (its exit played). */
+    onClick: () => void;
+  }
+
   type NavItem = [ProfileSection, string, string, ('chit' | 'diamond' | 'danger')?];
 
   const NAV: { label: string; items: NavItem[] }[] = [
@@ -308,6 +318,8 @@
     checkHandle?: (handle: string) => Promise<boolean>;
     /** Log out; the dialog closes once it resolves. Hidden without it. */
     onLogout?: () => Promise<unknown> | void;
+    /** Links of the host's at the rail's foot, above Log out; each closes the dialog, then calls its onClick. */
+    railFootItems?: ProfileRailItem[];
     /** Delete the account after the user typed their handle; the host re-authenticates. Hidden without it. */
     onDeleteAccount?: (confirmedHandle: string) => Promise<unknown> | void;
     onShareApp?: (link: string) => void;
@@ -396,6 +408,7 @@
     onSave,
     checkHandle,
     onLogout,
+    railFootItems = [],
     onDeleteAccount,
     onShareApp,
     onCoverEdit,
@@ -1051,7 +1064,7 @@
 
 <div class="layer oc-dialog-layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : escape}>
   <div class="oc-veil" onclick={() => close(onClose)} aria-hidden="true"></div>
-  <div class="card">
+  <div class="card" style:--rail-foot-items={railFootItems.length}>
     <div class="rail">
       <div class="rail-scroll">
         {#each NAV as group}
@@ -1074,6 +1087,12 @@
         {/each}
       </div>
       <div class="rail-foot">
+        {#each railFootItems as item}
+          <div class="nav-item" onclick={() => close(item.onClick)} role="button" tabindex="0">
+            <span class="nav-icon" style:mask={icon(item.icon)}></span>
+            <span class="nav-title">{t(item.label)}</span>
+          </div>
+        {/each}
         {#if onLogout}
         <div
           class="nav-item"
@@ -1910,7 +1929,10 @@
     display: flex;
     width: 100%;
     max-width: 860px;
-    height: 770px;
+    /* the rail's sections and Log out, and a row (36px and the foot's 4px gap) for each of the host's links
+       (railFootItems), without a scrollbar; the window caps it (the layer's box: the viewport less its padding), and
+       then the rail and the section each scroll on their own */
+    height: calc(770px + var(--rail-foot-items, 0) * 40px);
     max-height: 100%;
     box-sizing: border-box;
     border: 1px solid var(--line-2);
@@ -2030,6 +2052,9 @@
 
   .rail-foot {
     flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     padding: 8px 10px;
     border-block-start: 1px solid var(--line-1);
   }

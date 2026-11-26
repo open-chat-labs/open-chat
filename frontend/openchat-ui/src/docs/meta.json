@@ -17717,6 +17717,17 @@
         "doc": "Log out; the dialog closes once it resolves. Hidden without it."
       },
       {
+        "name": "railFootItems",
+        "type": "ProfileRailItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Links of the host's at the rail's foot, above Log out; each closes the dialog, then calls its onClick."
+      },
+      {
         "name": "onDeleteAccount",
         "type": "(confirmedHandle: string) => Promise<unknown> | void",
         "default": null,
