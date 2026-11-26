@@ -1410,7 +1410,9 @@ export class OpenChat {
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.#ocIdentityPrincipal = undefined;
-        this.#signUpWithoutOpenChatIdentity = false;
+        // a sign-up's load is without its OpenChat identity until it has one, however it ends
+        // (no identity made, or setAuthIdentity throwing first): signUp's next try loads it again
+        this.#signUpWithoutOpenChatIdentity = registering;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const setAuthIdentityResponse = await this.#worker.send({
@@ -1453,13 +1455,13 @@ export class OpenChat {
                 // The sign-up's passkey identity stays, without an account: signUp says the
                 // sign-up failed, and its next try makes the OpenChat identity with the same
                 // passkey (#10580). Walking away from it signs out (abandonSignIn).
-                this.#signUpWithoutOpenChatIdentity = true;
                 this.updateIdentityState({ kind: "registering" });
                 this.onCreatedUser(anonymousUser());
                 return "no_oc_identity";
             }
 
             this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
+            this.#signUpWithoutOpenChatIdentity = false;
             this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
             this.#startAuthPrincipalLinkPoller(authPrincipal);
 
@@ -8986,8 +8988,8 @@ export class OpenChat {
     #refusedReferralCodes = new Set<string>();
     // a passkey was made for the sign-up in progress; another would leave the person two
     #passkeyMadeForSignUp = false;
-    // the sign-up's passkey identity loaded without an OpenChat identity, which the sign-up's
-    // next try makes (#10580)
+    // the sign-up's passkey identity has no OpenChat identity: its load (#loadIdentity) didn't get
+    // that far, or couldn't make one. The sign-up's next try loads it again (#10580)
     #signUpWithoutOpenChatIdentity = false;
 
     /**
@@ -9027,7 +9029,8 @@ export class OpenChat {
                     this.#passkeyMadeForSignUp = true;
                     // failed before it had an OpenChat identity (setAuthIdentity on a busy
                     // replica): the next try loads it again, rather than registering on the
-                    // worker's anonymous agent (#9635)
+                    // worker's anonymous agent (#9635). The web passkey's load says so itself
+                    // (`registering`); the Android one's doesn't
                     if (this.#ocIdentityPrincipal === undefined) {
                         this.#signUpWithoutOpenChatIdentity = true;
                     }

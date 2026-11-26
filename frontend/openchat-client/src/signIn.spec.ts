@@ -732,6 +732,31 @@ describe("signing in", () => {
                 expect(register).toHaveBeenCalledOnce();
                 expect(logout).not.toHaveBeenCalled();
             });
+
+            // the load made again throws the same way: the try after still loads it again
+            test("a load that throws again is made again on the try after", async () => {
+                vi.spyOn(client, "logError").mockImplementation(() => {});
+                authIdentity
+                    .mockRejectedValueOnce(new Error("replica stalled"))
+                    .mockRejectedValueOnce(new Error("replica stalled"));
+                createIdentity.mockReset().mockResolvedValue({
+                    kind: "success",
+                    ocIdentityPrincipal: "oc-principal",
+                    ocIdentityExpiry: Date.now() + 86_400_000,
+                });
+                set({ kind: "anon" });
+                expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
+                expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
+                expect(register).not.toHaveBeenCalled();
+
+                expect(await client.signUp("newperson", undefined, true)).toEqual({
+                    kind: "success",
+                });
+                expect(passkey).toHaveBeenCalledOnce();
+                expect(authIdentity).toHaveBeenCalledTimes(3);
+                expect(register).toHaveBeenCalledOnce();
+                expect(logout).not.toHaveBeenCalled();
+            });
         });
 
         describe("with a photo", () => {
