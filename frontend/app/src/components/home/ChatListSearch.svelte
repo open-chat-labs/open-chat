@@ -2,9 +2,10 @@
     import {
         chatListScopeStore,
         chatListSearchMatches,
-        chatListSearchResults,
         type BotMatch,
         type ChatListScope,
+        type ChatListSearch,
+        type GroupMatch,
         type GroupSearchResponse,
         type OpenChat,
         type ResourceKey,
@@ -70,7 +71,7 @@
                         legacySearch(term);
                         break;
                     case "chats":
-                        userAndBotSearch(term);
+                        chatsSearch(term);
                 }
             } catch (err) {
                 console.warn("search failed with: ", err);
@@ -91,12 +92,28 @@
         }
     }
 
-    // people, then bots that take direct chats (the client's searchChatList)
-    async function userAndBotSearch(term: string) {
-        userAndBotsSearchResults = chatListSearchResults(client.searchChatList(term)).then(
-            chatListSearchMatches,
-        );
-        await userAndBotsSearchResults.then(postSearch);
+    // people, then bots that take direct chats, and the public groups (the client's
+    // searchChatList): the groups arrive on their own, as the people and bots do
+    async function chatsSearch(term: string) {
+        const found = client.searchChatList(term, { groups: true });
+        groupSearchResults = asGroupSearchResponse(found.groups);
+        userAndBotsSearchResults = usersAndBots(found);
+        await Promise.all([groupSearchResults, userAndBotsSearchResults]);
+        postSearch();
+    }
+
+    // the people and bots, without waiting for the groups
+    async function usersAndBots(found: ChatListSearch): Promise<(UserSummary | BotMatch)[]> {
+        const [users, bots] = await Promise.all([found.users, found.bots]);
+        return chatListSearchMatches({ users, bots });
+    }
+
+    // the public groups as the chat list's "Public groups" section takes them
+    async function asGroupSearchResponse(
+        groups: Promise<GroupMatch[]>,
+    ): Promise<GroupSearchResponse> {
+        const matches = await groups;
+        return { kind: "success", matches, total: matches.length };
     }
 
     async function legacySearch(term: string) {
