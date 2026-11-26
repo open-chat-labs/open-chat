@@ -35,7 +35,7 @@ export async function openChatIdentityOrSignOut(
  * so the sign-up can say it failed and make the OpenChat identity on its next try with the same
  * passkey. Signing out there left the person on the landing page with no word why (#10580).
  */
-export function withoutOpenChatIdentity(registering: boolean): "sign_out" | "keep_for_sign_up" {
+export function loadWithoutOpenChatIdentity(registering: boolean): "sign_out" | "keep_for_sign_up" {
     return registering ? "keep_for_sign_up" : "sign_out";
 }
 

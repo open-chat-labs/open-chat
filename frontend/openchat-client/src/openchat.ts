@@ -834,7 +834,7 @@ import {
 import {
     openChatIdentityOrSignOut,
     signUpOpenChatIdentity,
-    withoutOpenChatIdentity,
+    loadWithoutOpenChatIdentity,
 } from "./utils/openChatIdentity";
 import { identityLoadFailed, type IdentityLoad } from "./utils/identityLoad";
 import { jwtExpiryMs } from "./utils/jwt";
@@ -1438,7 +1438,7 @@ export class OpenChat {
                         webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                     }),
                 (reason) => {
-                    const signsOut = withoutOpenChatIdentity(registering) === "sign_out";
+                    const signsOut = loadWithoutOpenChatIdentity(registering) === "sign_out";
                     this.#logger.error(
                         signsOut
                             ? "No OpenChat identity for the signed-in principal, signing out"
@@ -1449,7 +1449,7 @@ export class OpenChat {
                 },
             );
             if (ocIdentity === undefined) {
-                if (withoutOpenChatIdentity(registering) === "sign_out") return "signed_out";
+                if (loadWithoutOpenChatIdentity(registering) === "sign_out") return "signed_out";
                 // The sign-up's passkey identity stays, without an account: signUp says the
                 // sign-up failed, and its next try makes the OpenChat identity with the same
                 // passkey (#10580). Walking away from it signs out (abandonSignIn).
@@ -9025,6 +9025,12 @@ export class OpenChat {
                 // the passkey was made and its identity was being loaded when it failed
                 if (identityStateStore.value.kind === "loading_user") {
                     this.#passkeyMadeForSignUp = true;
+                    // failed before it had an OpenChat identity (setAuthIdentity on a busy
+                    // replica): the next try loads it again, rather than registering on the
+                    // worker's anonymous agent (#9635)
+                    if (this.#ocIdentityPrincipal === undefined) {
+                        this.#signUpWithoutOpenChatIdentity = true;
+                    }
                     this.logError("Unable to load the signed-up identity", err);
                     return { kind: "failed", reason: i18nKey("unexpectedError") };
                 }

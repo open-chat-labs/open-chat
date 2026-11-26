@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
     openChatIdentityOrSignOut,
     signUpOpenChatIdentity,
-    withoutOpenChatIdentity,
+    loadWithoutOpenChatIdentity,
 } from "./openChatIdentity";
 
 const IDENTITY: GetOpenChatIdentitySuccess = {
@@ -96,13 +96,13 @@ describe("openChatIdentityOrSignOut", () => {
 
 // #10580: a sign-up ends signed in or says why; it never leaves the person signed out on the
 // landing page without a word
-describe("withoutOpenChatIdentity", () => {
+describe("loadWithoutOpenChatIdentity", () => {
     test("a sign-in without an OpenChat identity signs out", () => {
-        expect(withoutOpenChatIdentity(false)).toBe("sign_out");
+        expect(loadWithoutOpenChatIdentity(false)).toBe("sign_out");
     });
 
     test("a passkey sign-up keeps its identity, so the sign-up can fail and try again", () => {
-        expect(withoutOpenChatIdentity(true)).toBe("keep_for_sign_up");
+        expect(loadWithoutOpenChatIdentity(true)).toBe("keep_for_sign_up");
     });
 });
 

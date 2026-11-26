@@ -563,8 +563,10 @@ describe("signing in", () => {
             expect(register).not.toHaveBeenCalled();
         });
 
-        /** Invariant 8: a passkey made whose identity then failed to load isn't made again; the
-         * next try goes on to the account with the identity it has. */
+        /** Invariant 8: a passkey made whose identity then failed to load isn't made again. The
+         * next try loads that identity again (see "when the passkey's OpenChat identity can't be
+         * made"); with nothing stored to load, it fails, and asks for no account on the worker's
+         * anonymous agent (#9635). */
         test("a passkey made but not loaded isn't made again", async () => {
             vi.spyOn(client, "logError").mockImplementation(() => {});
             passkey.mockImplementation(async () => {
@@ -572,10 +574,9 @@ describe("signing in", () => {
                 throw new Error("worker gone");
             });
             expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
-            expect(register).not.toHaveBeenCalled();
-            expect(await client.signUp("newperson", undefined, true)).toEqual({ kind: "success" });
+            expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
             expect(passkey).toHaveBeenCalledOnce();
-            expect(register).toHaveBeenCalledOnce();
+            expect(register).not.toHaveBeenCalled();
         });
 
         test("a dismissed passkey prompt is cancelled, and the next try asks again", async () => {
@@ -630,6 +631,7 @@ describe("signing in", () => {
         // replica stalled or refused): the sign-up ends signed in or says why, and never signs out
         describe("when the passkey's OpenChat identity can't be made", () => {
             let createIdentity: Mock<(req: unknown) => Promise<unknown>>;
+            let authIdentity: Mock<() => Promise<unknown>>;
             let logout: ReturnType<typeof vi.fn>;
 
             beforeEach(() => {
@@ -658,12 +660,15 @@ describe("signing in", () => {
                         ocIdentityPrincipal: "oc-principal",
                         ocIdentityExpiry: Date.now() + 86_400_000,
                     });
+                authIdentity = vi
+                    .fn<() => Promise<unknown>>()
+                    .mockResolvedValue({ kind: "oc_identity_not_found" });
                 vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: {
                     kind: string;
                 }) => {
                     switch (req.kind) {
                         case "setAuthIdentity":
-                            return Promise.resolve({ kind: "oc_identity_not_found" });
+                            return authIdentity();
                         case "createOpenChatIdentity":
                             return createIdentity(req);
                         default:
@@ -698,6 +703,32 @@ describe("signing in", () => {
                 });
                 expect(passkey).toHaveBeenCalledOnce();
                 expect(createIdentity).toHaveBeenCalledTimes(2);
+                expect(register).toHaveBeenCalledOnce();
+                expect(logout).not.toHaveBeenCalled();
+            });
+
+            // a step earlier: setAuthIdentity (which checks for the OpenChat identity) fails, so the
+            // load throws with no OpenChat identity. The next try loads it again rather than
+            // registering on the worker's anonymous agent (#9635)
+            test("a load that threw before the OpenChat identity is made again on the next try", async () => {
+                vi.spyOn(client, "logError").mockImplementation(() => {});
+                authIdentity.mockRejectedValueOnce(new Error("replica stalled"));
+                createIdentity.mockReset().mockResolvedValue({
+                    kind: "success",
+                    ocIdentityPrincipal: "oc-principal",
+                    ocIdentityExpiry: Date.now() + 86_400_000,
+                });
+                set({ kind: "anon" });
+                const failed = await client.signUp("newperson", undefined, true);
+                expect(failed.kind === "failed" && failed.reason.key).toBe("unexpectedError");
+                expect(register).not.toHaveBeenCalled();
+
+                expect(await client.signUp("newperson", undefined, true)).toEqual({
+                    kind: "success",
+                });
+                expect(passkey).toHaveBeenCalledOnce();
+                expect(authIdentity).toHaveBeenCalledTimes(2);
+                expect(createIdentity).toHaveBeenCalledOnce();
                 expect(register).toHaveBeenCalledOnce();
                 expect(logout).not.toHaveBeenCalled();
             });
