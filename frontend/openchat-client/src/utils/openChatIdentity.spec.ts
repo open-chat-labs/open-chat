@@ -1,6 +1,10 @@
 import type { CreateOpenChatIdentityResponse, GetOpenChatIdentitySuccess } from "@shared";
 import { describe, expect, test, vi } from "vitest";
-import { openChatIdentityOrSignOut } from "./openChatIdentity";
+import {
+    openChatIdentityOrSignOut,
+    signUpOpenChatIdentity,
+    loadWithoutOpenChatIdentity,
+} from "./openChatIdentity";
 
 const IDENTITY: GetOpenChatIdentitySuccess = {
     kind: "success",
@@ -87,5 +91,32 @@ describe("openChatIdentityOrSignOut", () => {
         expect(result).toBeUndefined();
         expect(create).not.toHaveBeenCalled();
         expect(signOut).toHaveBeenCalledExactlyOnceWith("setAuthIdentity: auth_identity_not_found");
+    });
+});
+
+// #10580: a sign-up ends signed in or says why; it never leaves the person signed out on the
+// landing page without a word
+describe("loadWithoutOpenChatIdentity", () => {
+    test("a sign-in without an OpenChat identity signs out", () => {
+        expect(loadWithoutOpenChatIdentity(false)).toBe("sign_out");
+    });
+
+    test("a passkey sign-up keeps its identity, so the sign-up can fail and try again", () => {
+        expect(loadWithoutOpenChatIdentity(true)).toBe("keep_for_sign_up");
+    });
+});
+
+describe("signUpOpenChatIdentity", () => {
+    test("with an OpenChat identity, the account is asked for", () => {
+        expect(signUpOpenChatIdentity(true, true)).toBe("register");
+        expect(signUpOpenChatIdentity(true, false)).toBe("register");
+    });
+
+    test("without one, the try that just made the passkey fails: its load already tried", () => {
+        expect(signUpOpenChatIdentity(false, true)).toBe("failed");
+    });
+
+    test("without one, a later try makes it again with the same passkey", () => {
+        expect(signUpOpenChatIdentity(false, false)).toBe("make_again");
     });
 });

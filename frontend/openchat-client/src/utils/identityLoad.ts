@@ -4,6 +4,9 @@ export type IdentityLoad =
     | "loaded"
     // signed out instead (no OpenChat identity, or a stale local root key)
     | "signed_out"
+    // a passkey sign-up's identity, kept without an OpenChat identity (registering): the sign-up
+    // says it failed, and its next try makes one (#10580)
+    | "no_oc_identity"
     // the OpenChat identity loaded, but not the user: getCurrentUser failed with nothing cached
     | "user_load_failed";
 

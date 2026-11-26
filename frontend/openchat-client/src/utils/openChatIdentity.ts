@@ -28,3 +28,27 @@ export async function openChatIdentityOrSignOut(
     signOut(`createOpenChatIdentity: ${created}`);
     return undefined;
 }
+
+/**
+ * What a load does when it gets no OpenChat identity (openChatIdentityOrSignOut): a sign-in signs
+ * out, but a passkey sign-up (`registering`) keeps the identity it just made, without an account,
+ * so the sign-up can say it failed and make the OpenChat identity on its next try with the same
+ * passkey. Signing out there left the person on the landing page with no word why (#10580).
+ */
+export function loadWithoutOpenChatIdentity(registering: boolean): "sign_out" | "keep_for_sign_up" {
+    return registering ? "keep_for_sign_up" : "sign_out";
+}
+
+/**
+ * Where a sign-up stands once its passkey's identity is signed in (registering) and before the
+ * account is asked for: with an OpenChat identity it registers; without one (its load couldn't
+ * make it), a try that has only just made the passkey fails, as that load has already tried, and
+ * a later try makes the OpenChat identity again with the same passkey first (#10580).
+ */
+export function signUpOpenChatIdentity(
+    hasOpenChatIdentity: boolean,
+    passkeyMadeThisTry: boolean,
+): "register" | "failed" | "make_again" {
+    if (hasOpenChatIdentity) return "register";
+    return passkeyMadeThisTry ? "failed" : "make_again";
+}

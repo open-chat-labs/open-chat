@@ -831,7 +831,11 @@ import {
     movePreviousWalletFunds,
     PREVIOUS_WALLETS_RETRY_INTERVAL,
 } from "./utils/previousWalletFunds";
-import { openChatIdentityOrSignOut } from "./utils/openChatIdentity";
+import {
+    openChatIdentityOrSignOut,
+    signUpOpenChatIdentity,
+    loadWithoutOpenChatIdentity,
+} from "./utils/openChatIdentity";
 import { identityLoadFailed, type IdentityLoad } from "./utils/identityLoad";
 import { jwtExpiryMs } from "./utils/jwt";
 import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
@@ -1406,6 +1410,9 @@ export class OpenChat {
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.#ocIdentityPrincipal = undefined;
+        // a sign-up's load is without its OpenChat identity until it has one, however it ends
+        // (no identity made, or setAuthIdentity throwing first): signUp's next try loads it again
+        this.#signUpWithoutOpenChatIdentity = registering;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const setAuthIdentityResponse = await this.#worker.send({
@@ -1433,16 +1440,28 @@ export class OpenChat {
                         webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                     }),
                 (reason) => {
+                    const signsOut = loadWithoutOpenChatIdentity(registering) === "sign_out";
                     this.#logger.error(
-                        "No OpenChat identity for the signed-in principal, signing out",
+                        signsOut
+                            ? "No OpenChat identity for the signed-in principal, signing out"
+                            : "No OpenChat identity for the passkey just made for sign-up",
                         new Error(reason),
                     );
-                    this.logout();
+                    if (signsOut) this.logout();
                 },
             );
-            if (ocIdentity === undefined) return "signed_out";
+            if (ocIdentity === undefined) {
+                if (loadWithoutOpenChatIdentity(registering) === "sign_out") return "signed_out";
+                // The sign-up's passkey identity stays, without an account: signUp says the
+                // sign-up failed, and its next try makes the OpenChat identity with the same
+                // passkey (#10580). Walking away from it signs out (abandonSignIn).
+                this.updateIdentityState({ kind: "registering" });
+                this.onCreatedUser(anonymousUser());
+                return "no_oc_identity";
+            }
 
             this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
+            this.#signUpWithoutOpenChatIdentity = false;
             this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
             this.#startAuthPrincipalLinkPoller(authPrincipal);
 
@@ -8984,6 +9003,9 @@ export class OpenChat {
     #refusedReferralCodes = new Set<string>();
     // a passkey was made for the sign-up in progress; another would leave the person two
     #passkeyMadeForSignUp = false;
+    // the sign-up's passkey identity has no OpenChat identity: its load (#loadIdentity) didn't get
+    // that far, or couldn't make one. The sign-up's next try loads it again (#10580)
+    #signUpWithoutOpenChatIdentity = false;
 
     /**
      * Makes the account: a passkey first, unless the identity signed in already has no account
@@ -9008,16 +9030,25 @@ export class OpenChat {
         if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
         selectedAuthProviderStore.set(AuthProvider.PASSKEY);
         // a passkey already made for this sign-up isn't made again
+        let passkeyMadeThisTry = false;
         if (identityStateStore.value.kind !== "registering" && !this.#passkeyMadeForSignUp) {
             try {
                 await (this.isNativeApp()
                     ? this.signUpWithAndroidWebAuthn(true, username)
                     : this.signUpWithWebAuthn(true, username));
                 this.#passkeyMadeForSignUp = true;
+                passkeyMadeThisTry = true;
             } catch (err) {
                 // the passkey was made and its identity was being loaded when it failed
                 if (identityStateStore.value.kind === "loading_user") {
                     this.#passkeyMadeForSignUp = true;
+                    // failed before it had an OpenChat identity (setAuthIdentity on a busy
+                    // replica): the next try loads it again, rather than registering on the
+                    // worker's anonymous agent (#9635). The web passkey's load says so itself
+                    // (`registering`); the Android one's doesn't
+                    if (this.#ocIdentityPrincipal === undefined) {
+                        this.#signUpWithoutOpenChatIdentity = true;
+                    }
                     this.logError("Unable to load the signed-up identity", err);
                     return { kind: "failed", reason: i18nKey("unexpectedError") };
                 }
@@ -9032,6 +9063,17 @@ export class OpenChat {
         const state = identityStateStore.value.kind;
         if (state !== "registering" && !(this.#passkeyMadeForSignUp && state === "loading_user")) {
             return { kind: "failed", reason: i18nKey("unexpectedError") };
+        }
+        // the passkey's OpenChat identity, which its load couldn't make (#10580): this try says so,
+        // and the next makes it again with the same passkey
+        switch (signUpOpenChatIdentity(!this.#signUpWithoutOpenChatIdentity, passkeyMadeThisTry)) {
+            case "failed":
+                return { kind: "failed", reason: i18nKey("unexpectedError") };
+            case "make_again":
+                if (!(await this.#loadSignUpIdentityAgain())) {
+                    return { kind: "failed", reason: i18nKey("unexpectedError") };
+                }
+                if (signal?.aborted) return { kind: "cancelled" };
         }
         // a code turned down before is never sent again
         const code = this.#referralCode;
@@ -9054,6 +9096,20 @@ export class OpenChat {
             kind: "failed",
             reason: i18nKey(registerFailureKey(resp.kind) ?? "unexpectedError"),
         };
+    }
+
+    // Loads the sign-up's passkey identity again, from the delegation stored when the passkey was
+    // made, so its OpenChat identity is made with that passkey's credential: whether it now has one
+    async #loadSignUpIdentityAgain(): Promise<boolean> {
+        try {
+            const stored = await this.#authIdentityStorage.getKeyAndChain();
+            if (stored === undefined) return false;
+            await this.#loadedAuthenticationIdentity(stored, AuthProvider.PASSKEY, true);
+        } catch (err) {
+            this.logError("Unable to load the signed-up identity again", err);
+            return false;
+        }
+        return !this.#signUpWithoutOpenChatIdentity && this.#ocIdentityPrincipal !== undefined;
     }
 
     // the new account's photo: the person can set another later, so a failure is only logged

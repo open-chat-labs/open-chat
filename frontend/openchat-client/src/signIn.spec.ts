@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from "vitest";
 
 // A store the client builds at import time reads the screen width through
 // matchMedia, which jsdom does not provide
@@ -48,12 +48,13 @@ vi.mock("./utils/webAuthn", async (importOriginal) => {
 });
 
 import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-import { AuthProvider, IdentityStorage, type IdentityState } from "@shared";
+import { AuthProvider, IdentityStorage, Stream, type IdentityState } from "@shared";
 import type { OpenChat as OpenChatType } from "./openchat";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { identityStateStore, selectedAuthProviderStore } from "./state";
 import { MultiWebAuthnIdentity } from "./utils/webAuthn";
+import { WorkerAgent } from "./workerAgent";
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -562,8 +563,10 @@ describe("signing in", () => {
             expect(register).not.toHaveBeenCalled();
         });
 
-        /** Invariant 8: a passkey made whose identity then failed to load isn't made again; the
-         * next try goes on to the account with the identity it has. */
+        /** Invariant 8: a passkey made whose identity then failed to load isn't made again. The
+         * next try loads that identity again (see "when the passkey's OpenChat identity can't be
+         * made"); with nothing stored to load, it fails, and asks for no account on the worker's
+         * anonymous agent (#9635). */
         test("a passkey made but not loaded isn't made again", async () => {
             vi.spyOn(client, "logError").mockImplementation(() => {});
             passkey.mockImplementation(async () => {
@@ -571,10 +574,9 @@ describe("signing in", () => {
                 throw new Error("worker gone");
             });
             expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
-            expect(register).not.toHaveBeenCalled();
-            expect(await client.signUp("newperson", undefined, true)).toEqual({ kind: "success" });
+            expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
             expect(passkey).toHaveBeenCalledOnce();
-            expect(register).toHaveBeenCalledOnce();
+            expect(register).not.toHaveBeenCalled();
         });
 
         test("a dismissed passkey prompt is cancelled, and the next try asks again", async () => {
@@ -623,6 +625,138 @@ describe("signing in", () => {
                 register.mock.invocationCallOrder[1],
             );
             expect(await client.getReferringUser()).toBeUndefined();
+        });
+
+        // #10580: the passkey made, its identity loaded, but no OpenChat identity made for it (the
+        // replica stalled or refused): the sign-up ends signed in or says why, and never signs out
+        describe("when the passkey's OpenChat identity can't be made", () => {
+            let createIdentity: Mock<(req: unknown) => Promise<unknown>>;
+            let authIdentity: Mock<() => Promise<unknown>>;
+            let logout: ReturnType<typeof vi.fn>;
+
+            beforeEach(() => {
+                // the real passkey sign-up, with the browser's prompt and the worker faked
+                passkey.mockImplementation((...args: [boolean, string?]) =>
+                    OpenChat.prototype.signUpWithWebAuthn.apply(client, args),
+                );
+                browserPasskey.create = async () => ({
+                    getPublicKey: () => ({ toDer: () => new ArrayBuffer(8) }),
+                    rawId: new ArrayBuffer(4),
+                });
+                let stored: unknown = undefined;
+                vi.spyOn(IdentityStorage.prototype, "set").mockImplementation(
+                    async (key, delegation) => {
+                        stored = { key, delegation };
+                    },
+                );
+                vi.spyOn(IdentityStorage.prototype, "getKeyAndChain").mockImplementation(
+                    async () => stored as never,
+                );
+                createIdentity = vi
+                    .fn<(req: unknown) => Promise<unknown>>()
+                    .mockRejectedValueOnce(new Error("replica stalled"))
+                    .mockResolvedValue({
+                        kind: "success",
+                        ocIdentityPrincipal: "oc-principal",
+                        ocIdentityExpiry: Date.now() + 86_400_000,
+                    });
+                authIdentity = vi
+                    .fn<() => Promise<unknown>>()
+                    .mockResolvedValue({ kind: "oc_identity_not_found" });
+                vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: {
+                    kind: string;
+                }) => {
+                    switch (req.kind) {
+                        case "setAuthIdentity":
+                            return authIdentity();
+                        case "createOpenChatIdentity":
+                            return createIdentity(req);
+                        default:
+                            return new Promise(() => {});
+                    }
+                }) as never);
+                vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: {
+                    kind: string;
+                }) =>
+                    req.kind === "getCurrentUser"
+                        ? Stream.fromAsync(async (resolve) =>
+                              resolve({ kind: "unknown_user" } as never, true),
+                          )
+                        : new Stream(() => {})) as never);
+                logout = vi.fn(async () => {});
+                vi.spyOn(client, "logout").mockImplementation(logout as never);
+            });
+
+            afterEach(() => (browserPasskey.create = undefined));
+
+            test("it fails without signing out, and the next try finishes with the same passkey", async () => {
+                set({ kind: "anon" });
+                const failed = await client.signUp("newperson", undefined, true);
+                expect(failed.kind === "failed" && failed.reason.key).toBe("unexpectedError");
+                expect(logout).not.toHaveBeenCalled();
+                expect(register).not.toHaveBeenCalled();
+                // still signed in without an account, so the sign-up form stays up
+                expect(identityStateStore.value.kind).toBe("registering");
+
+                expect(await client.signUp("newperson", undefined, true)).toEqual({
+                    kind: "success",
+                });
+                expect(passkey).toHaveBeenCalledOnce();
+                expect(createIdentity).toHaveBeenCalledTimes(2);
+                expect(register).toHaveBeenCalledOnce();
+                expect(logout).not.toHaveBeenCalled();
+            });
+
+            // a step earlier: setAuthIdentity (which checks for the OpenChat identity) fails, so the
+            // load throws with no OpenChat identity. The next try loads it again rather than
+            // registering on the worker's anonymous agent (#9635)
+            test("a load that threw before the OpenChat identity is made again on the next try", async () => {
+                vi.spyOn(client, "logError").mockImplementation(() => {});
+                authIdentity.mockRejectedValueOnce(new Error("replica stalled"));
+                createIdentity.mockReset().mockResolvedValue({
+                    kind: "success",
+                    ocIdentityPrincipal: "oc-principal",
+                    ocIdentityExpiry: Date.now() + 86_400_000,
+                });
+                set({ kind: "anon" });
+                const failed = await client.signUp("newperson", undefined, true);
+                expect(failed.kind === "failed" && failed.reason.key).toBe("unexpectedError");
+                expect(register).not.toHaveBeenCalled();
+
+                expect(await client.signUp("newperson", undefined, true)).toEqual({
+                    kind: "success",
+                });
+                expect(passkey).toHaveBeenCalledOnce();
+                expect(authIdentity).toHaveBeenCalledTimes(2);
+                expect(createIdentity).toHaveBeenCalledOnce();
+                expect(register).toHaveBeenCalledOnce();
+                expect(logout).not.toHaveBeenCalled();
+            });
+
+            // the load made again throws the same way: the try after still loads it again
+            test("a load that throws again is made again on the try after", async () => {
+                vi.spyOn(client, "logError").mockImplementation(() => {});
+                authIdentity
+                    .mockRejectedValueOnce(new Error("replica stalled"))
+                    .mockRejectedValueOnce(new Error("replica stalled"));
+                createIdentity.mockReset().mockResolvedValue({
+                    kind: "success",
+                    ocIdentityPrincipal: "oc-principal",
+                    ocIdentityExpiry: Date.now() + 86_400_000,
+                });
+                set({ kind: "anon" });
+                expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
+                expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
+                expect(register).not.toHaveBeenCalled();
+
+                expect(await client.signUp("newperson", undefined, true)).toEqual({
+                    kind: "success",
+                });
+                expect(passkey).toHaveBeenCalledOnce();
+                expect(authIdentity).toHaveBeenCalledTimes(3);
+                expect(register).toHaveBeenCalledOnce();
+                expect(logout).not.toHaveBeenCalled();
+            });
         });
 
         describe("with a photo", () => {
