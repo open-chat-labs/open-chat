@@ -38,6 +38,7 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { DemoSteps } from "@src/core/dailyPuzzle/demoSteps.svelte";
+    import { tutorialSwipeAxis, tutorialSwipeStep } from "./tutorialSwipe";
     import { openDailyPuzzle } from "@src/core/dailyPuzzle/registry";
     import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import {
@@ -91,6 +92,49 @@
 
     const current = $derived(game?.puzzle ?? opened.puzzle);
     const demo = $derived(game?.showsDemo === true && steps !== undefined);
+
+    // a sideways swipe on the tutorial steps it on or back (tutorialSwipe.ts); touch and pen only
+    let swipe: { id: number; x0: number; y0: number; x: number; t: number; v: number } | undefined;
+    // a swipe ends in a click on the board, which would step it again
+    let swiped = false;
+
+    function swipeStart(e: PointerEvent) {
+        if (e.pointerType === "mouse" || !e.isPrimary) return;
+        swipe = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, t: e.timeStamp, v: 0 };
+        swiped = false;
+    }
+
+    function swipeMove(e: PointerEvent) {
+        if (swipe === undefined || e.pointerId !== swipe.id) return;
+        const dt = e.timeStamp - swipe.t;
+        if (dt > 0) swipe.v = (e.clientX - swipe.x) / dt;
+        swipe.x = e.clientX;
+        swipe.t = e.timeStamp;
+        if (tutorialSwipeAxis(e.clientX - swipe.x0, e.clientY - swipe.y0) !== "undecided") swiped = true;
+    }
+
+    function swipeEnd(e: PointerEvent) {
+        if (swipe === undefined || e.pointerId !== swipe.id || steps === undefined) return;
+        const drag = {
+            dx: e.clientX - swipe.x0,
+            dy: e.clientY - swipe.y0,
+            width: (e.currentTarget as HTMLElement).getBoundingClientRect().width,
+            velocity: swipe.v,
+        };
+        swipe = undefined;
+        const to = tutorialSwipeStep(drag, steps.index, steps.count, document.documentElement.dir === "rtl");
+        if (to === undefined) return;
+        if (to > steps.index) steps.next();
+        else steps.prev();
+    }
+
+    function tapBoard() {
+        if (swiped) {
+            swiped = false;
+            return;
+        }
+        steps?.tapBoard();
+    }
     $effect.pre(() => {
         const info: PuzzleSessionInfo = {
             puzzle: current,
@@ -176,11 +220,16 @@
     {@const demoBoard = steps.board}
     <div class="play">
         <div class="stage">
-            <div class="demo">
-                <!-- the arrows below step through it; a tap on the board is a shortcut -->
+            <div
+                class="demo"
+                onpointerdown={swipeStart}
+                onpointermove={swipeMove}
+                onpointerup={swipeEnd}
+                onpointercancel={() => (swipe = undefined)}>
+                <!-- the arrows below step through it; a tap on the board, or a swipe, is a shortcut -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="board" onclick={() => steps.tapBoard()}>
+                <div class="board" onclick={tapBoard}>
                     <demoBoard.Board
                         board={demoBoard}
                         violations={steps.violations}
@@ -460,6 +509,8 @@
 
     .demo {
         width: min(100%, 420px);
+        // sideways drags are the tutorial's swipe; up and down still scroll
+        touch-action: pan-y;
         display: flex;
         flex-direction: column;
         gap: var(--space-16);
