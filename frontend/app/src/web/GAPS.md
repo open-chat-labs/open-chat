@@ -3424,8 +3424,10 @@ design export needs. Each entry says where it came up.
   the design export): `ConversationHeader`'s calls, pins, kebab and panel toggle are 40px
   (`--control-lg`, `IconButton`'s new `size="lg"`, a 20px icon) where the design has 34px
   (`--control-md`), at the user's request. The header keeps its height (the 42px avatar sets it).
-  The middle's stand-in toolbar (`MiddleToolbar`) matches. Left at 34px: the threads panel's and
-  the list of threads' Back / Close and the chat list's (a community's) kebab.
+  The middle's stand-in toolbar (`MiddleToolbar`) matches, and so, at the user's call, do the
+  threads panel's Back / Close (`ThreadPanel`), the list of threads' Back (`ThreadList`) and the
+  chat list's kebab, a community's included (`ChatListHeader`, whose height stays as designed:
+  the button takes back the 6px it grew). No other header changes.
 - **Sticky date** (`features/conversation`, L2): as web/05 says ("Date pills stick: the date of
   the messages at the top of the window stays pinned at the top of the conversation while
   scrolling"), the list (a thread's too) pins the day of the messages at its top, in the inline

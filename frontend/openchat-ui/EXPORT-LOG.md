@@ -1270,9 +1270,10 @@
 - Used by the app: the operator console (`/admin/:section`), laid out from the Claude Design canvas "Admin Console" (2026-11-26).
 - Not in the design export (the canvas is the app's, not the export's): to take back to it.
 
-## 2026-11-27 — ConversationHeader: its buttons one size up (#10643), by hand
+## 2026-11-27 — the headers' buttons one size up (#10643), by hand
 - `IconButton`: `size` (optional, default `md`, 34px as before); `lg` is `--control-lg` (40px) with a 20px icon (17px at md). Not for `overlay`.
 - `ConversationHeader`: the voice and video calls, the actions (pins), the kebab and the panel toggle are 40px (the toggle's icon 20px), where they were 34px; the header's height doesn't change (the 42px avatar sets it). `global.css`: a narrow header's call slot is `--control-lg` wide to match.
+- `ThreadPanel`'s Back and Close, `ThreadList`'s Back and `ChatListHeader`'s kebab (a community's too) are `size="lg"` as well, to match. `ThreadPanel` and `ThreadList` keep their heights (66px, and the host's `headerHeight`); `ChatListHeader`'s kebab takes back the 6px it grew (`margin-block` of (`--control-md` − `--control-lg`) / 2), so that header stays 54px (58px with a community).
 - `meta.json` updated (`IconButton.size`).
-- Used by the app: the web conversation's header, at the user's request (v3 web UI polish, #10637).
+- Used by the app: the web conversation's header, the threads panel, the list of threads and the chat list's header, at the user's request (v3 web UI polish, #10637).
 - Not in the design export: to take back to it.
