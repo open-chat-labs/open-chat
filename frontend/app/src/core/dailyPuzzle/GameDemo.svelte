@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import type { Violation } from "@client";
     import type { DailyPuzzleGameDef } from "./registry";
-    import type { DemoFrame } from "./games/types";
+    import { DemoSteps } from "./demoSteps.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
@@ -14,39 +14,11 @@
 
     let { def }: Props = $props();
 
-    const spec = def.demo;
-    const last = spec === undefined ? 0 : spec.frames.length - 1;
-
-    // The reader steps through the frames themselves; nothing advances on a timer.
-    let index: number = $state(0);
-    let frame: DemoFrame | undefined = $derived(spec?.frames[index]);
-
-    // The frame's marks on the demo puzzle, parsed and checked by the game itself, so a
-    // malformed demo fails here rather than drawing something the real board could never show.
-    let board = $derived(
-        spec === undefined || frame === undefined
-            ? undefined
-            : def.newBoard(spec.description, frame.marks),
-    );
-    let violations: Violation[] = $derived(board?.violations ?? []);
-    // On a frame that breaks a rule the checker's red IS the message, and the translucent blue
-    // "look here" wash sits on top of it and turns the red pink. Let the mistake speak alone.
-    let pointed = $derived(
-        violations.length > 0 ? new Set<number>() : new Set(frame?.target ?? []),
-    );
-
-    function prev() {
-        index = Math.max(0, index - 1);
-    }
-
-    function next() {
-        index = Math.min(last, index + 1);
-    }
-
-    // Tapping the board past the last step starts the tutorial again.
-    function tapBoard() {
-        index = index === last ? 0 : index + 1;
-    }
+    // the stepping is shared with the native tutorial (DemoSteps)
+    const steps = new DemoSteps(untrack(() => def));
+    const spec = untrack(() => def.demo);
+    const board = $derived(steps.board);
+    const frame = $derived(steps.frame);
 </script>
 
 {#if spec !== undefined && board !== undefined && frame !== undefined}
@@ -54,29 +26,37 @@
         <!-- Keyboard users step with the arrow buttons below; tapping the board is a shortcut. -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="board" onclick={tapBoard}>
+        <div class="board" onclick={() => steps.tapBoard()}>
             <board.Board
                 {board}
-                {violations}
-                focus={pointed}
-                target={pointed}
+                violations={steps.violations}
+                focus={steps.pointed}
+                target={steps.pointed}
                 disabled
                 onTap={() => {}} />
         </div>
         <div class="step">
-            <button class="arrow" aria-label={$_("back")} disabled={index === 0} onclick={prev}>
+            <button
+                class="arrow"
+                aria-label={$_("back")}
+                disabled={steps.isFirst}
+                onclick={() => steps.prev()}>
                 <ChevronLeft size={"1.6em"} color={"currentColor"} />
             </button>
             <p class="caption">
                 <Translatable resourceKey={i18nKey(`${def.i18nPrefix}.${frame.caption}`)} />
             </p>
-            <button class="arrow" aria-label={$_("next")} disabled={index === last} onclick={next}>
+            <button
+                class="arrow"
+                aria-label={$_("next")}
+                disabled={steps.isLast}
+                onclick={() => steps.next()}>
                 <ChevronRight size={"1.6em"} color={"currentColor"} />
             </button>
         </div>
         <div class="dots">
             {#each spec.frames as _f, i (i)}
-                <span class="dot" class:on={i === index}></span>
+                <span class="dot" class:on={i === steps.index}></span>
             {/each}
         </div>
     </div>

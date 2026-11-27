@@ -97,12 +97,14 @@ export function puzzleTitle(
 /**
  * The native puzzle screen's header (the prototype's): the puzzle's number over its game and
  * tier ("The Daily #12" over "Bridges · Easy"); while its tutorial shows, "How Bridges works"
- * over the number. Before the puzzle is known, "The Daily" alone. Given translated (`translate`).
+ * over the number, or over "Step 2 of 6" where the screen steps through the demo (`step`). Before
+ * the puzzle is known, "The Daily" alone. Given translated (`translate`).
  */
 export function puzzleHeading(
     puzzle: PublicDailyPuzzle | undefined,
     tutorial: boolean,
     translate: (key: ResourceKey) => string,
+    step?: { index: number; count: number },
 ): { title: string; sub: string | undefined } {
     if (puzzle === undefined) {
         return { title: translate(i18nKey("dailyPuzzle.title")), sub: undefined };
@@ -110,7 +112,15 @@ export function puzzleHeading(
     const number = translate(i18nKey("dailyPuzzle.number", { number: puzzle.number }));
     const game = translate(i18nKey(gameNameKey(puzzle.gameId)));
     if (tutorial) {
-        return { title: translate(i18nKey("dailyPuzzle.howGameWorks", { game })), sub: number };
+        const title = translate(i18nKey("dailyPuzzle.howGameWorks", { game }));
+        // the demo's step, where the screen steps through it (native), else the puzzle's number
+        const sub =
+            step === undefined
+                ? number
+                : translate(
+                      i18nKey("dailyPuzzle.demoStep", { step: step.index + 1, count: step.count }),
+                  );
+        return { title, sub };
     }
     return { title: number, sub: `${game} · ${translate(i18nKey(tierKey(puzzle.tier)))}` };
 }

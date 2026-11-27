@@ -1,6 +1,7 @@
 <!-- Today's daily puzzle as its own screen (native plan 14, design notes §3.10), pushed from CHIT's
      puzzle row and a result card's Play: the header (Back, the puzzle's number over its game and
-     tier, or "How Bridges works" over the number while the tutorial shows, and "How to play")
+     tier, or "How Bridges works" over the step while the tutorial shows, with Skip or Back to
+     puzzle; "How to play" otherwise)
      over a play session (PuzzlePlay). It waits for today's puzzles to load (a
      link can land before the first fetch), says so when there's none, and makes a new session for
      another game. Share to chat opens the chat sheet (PuzzleShareSheet) over it: the chat picked
@@ -19,7 +20,6 @@
         type ChatIdentifier,
         type DailyResultContent,
         type OpenChat,
-        type PublicDailyPuzzle,
         type ResourceKey,
     } from "@client";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
@@ -39,7 +39,7 @@
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
-    import PuzzlePlay from "./PuzzlePlay.svelte";
+    import PuzzlePlay, { type PuzzleSessionInfo } from "./PuzzlePlay.svelte";
     import PuzzleShareSheet from "./PuzzleShareSheet.svelte";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "daily_puzzle" }>> =
@@ -64,15 +64,26 @@
         ready && openablePuzzle($dailyPuzzleStore, screen.gameId) !== undefined,
     );
 
-    // the puzzle the session plays, as it reports it, and its tutorial's toggle
-    let playing = $state<PublicDailyPuzzle>();
-    let howToPlay = $state<() => void>();
-    let tutorial = $state(false);
-    const heading = $derived(puzzleHeading(available ? playing : undefined, tutorial, tr));
+    // what the session reports for the header: its puzzle, how to play, and the tutorial's step
+    let session = $state<PuzzleSessionInfo>();
+    const heading = $derived(
+        puzzleHeading(
+            available ? session?.puzzle : undefined,
+            session?.tutorial ?? false,
+            tr,
+            session?.step,
+        ),
+    );
     const actions = $derived<NativeHeaderAction[]>(
-        howToPlay === undefined || tutorial
+        session?.howToPlay === undefined
             ? []
-            : [{ icon: "info", label: $_("dailyPuzzle.howToPlay"), onClick: () => howToPlay?.() }],
+            : [
+                  {
+                      icon: "info",
+                      label: $_("dailyPuzzle.howToPlay"),
+                      onClick: () => session?.howToPlay?.(),
+                  },
+              ],
     );
 
     // ---- Share to chat
@@ -128,18 +139,19 @@
 </script>
 
 <div class="puzzle">
-    <NativePageHeader title={heading.title} sub={heading.sub} onBack={context.back} {actions} />
+    <NativePageHeader title={heading.title} sub={heading.sub} onBack={context.back} {actions}>
+        {#if available && session?.leaveDemo !== undefined}
+            {@const leave = session.leaveDemo}
+            <button type="button" class="leave" onclick={() => leave.run()}>{leave.label}</button>
+        {/if}
+    </NativePageHeader>
 
     {#if available}
         {#key screen.gameId ?? ""}
             <PuzzlePlay
                 gameId={screen.gameId}
                 onFailure={(message) => context.toast(message)}
-                onPuzzle={(puzzle, toggle, showingTutorial) => {
-                    playing = puzzle;
-                    howToPlay = toggle;
-                    tutorial = showingTutorial;
-                }}
+                onPuzzle={(info) => (session = info)}
                 onShare={share}
                 onDone={() => context.back?.()} />
         {/key}
@@ -183,6 +195,31 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
+    }
+
+    // Skip, or Back to puzzle: the tutorial's way out, at the header's end
+    .leave {
+        flex: none;
+        height: 32px;
+        padding: 0 var(--space-10);
+        margin-inline-end: 8px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: none;
+        font: var(--weight-semibold) text-size(13px) / 1 var(--font-sans);
+        color: var(--ink-3);
+        white-space: nowrap;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:active {
+            background: var(--overlay-1);
+            color: var(--ink);
+        }
+
+        &:focus-visible {
+            @include focus-ring;
+        }
     }
 
     .text {

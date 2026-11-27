@@ -837,6 +837,7 @@
         "fixMistakeFirst": "اول خانه‌های قرمز را درست کنید",
         "howToPlay": "نحوه بازی",
         "howGameWorks": "{game} چطور کار می‌کند",
+        "demoStep": "گام {step} از {count}",
         "backToPuzzle": "بازگشت به معما",
         "noFreeChecks": "بررسی رایگانی برای معمای امروز باقی نمانده",
         "checksLeft": "{count} بررسی باقی‌مانده",

@@ -837,6 +837,7 @@
         "fixMistakeFirst": "Corrigez d'abord les cases rouges",
         "howToPlay": "Comment jouer",
         "howGameWorks": "Comment marche {game}",
+        "demoStep": "Étape {step} sur {count}",
         "backToPuzzle": "Retour au puzzle",
         "noFreeChecks": "Plus de vérifications gratuites pour le puzzle du jour",
         "checksLeft": "{count} vérifications restantes",

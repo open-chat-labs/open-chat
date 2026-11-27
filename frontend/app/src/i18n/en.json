@@ -815,6 +815,7 @@
         "fixMistakeFirst": "Fix the red cells first",
         "howToPlay": "How to play",
         "howGameWorks": "How {game} works",
+        "demoStep": "Step {step} of {count}",
         "backToPuzzle": "Back to puzzle",
         "noFreeChecks": "No free checks left for today's puzzle",
         "checksLeft": "{count} checks left",

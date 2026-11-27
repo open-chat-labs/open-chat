@@ -1465,8 +1465,15 @@ design export needs. Each entry says where it came up.
   silent (to ask):
   - **PuzzleDialog's `layout="screen"`** isn't ported: the library's PuzzleDialog plays Bridges
     only, so the native puzzle is a screen around the app's own boards, as the web's dialog is
-    (`PuzzleSession`'s flow, laid out to the plan). Its tutorial is the game's demo with its
-    dots (GameDemo), not the plan's text Back / Next with an inline Start.
+    (`PuzzleSession`'s flow, laid out to the plan). Its tutorial is the prototype's, on the
+    game's demo (stepped by `core/dailyPuzzle/DemoSteps`, as the web's `GameDemo`): the board on
+    the play card without the chips, the step's text under it, text Back / the step dots / Next,
+    and on the last step an inline Start pill (with the entry fee) or Back to puzzle; the header
+    says "Step 2 of 6" (the demo's own frame count) and has Skip, which leaves the inert board and
+    Start until "How to play" shows the demo again (`DailyPuzzleGame.skipDemo`). Not there: the
+    prototype's step titles and "about 30 seconds" (a demo frame has one caption, and each game's
+    demo has its own length), and finishing a little board yourself (the demo's frames are
+    stills, the same for every game).
   - **No Undo** on the puzzle: the shared game (`DailyPuzzleGame`) has none, so Reset has the
     prototype's Undo / Reset row to itself. The buttons are the library's 52px `lg`, not the
     prototype's 48px.

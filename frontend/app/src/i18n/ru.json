@@ -837,6 +837,7 @@
         "fixMistakeFirst": "Сначала исправьте красные клетки",
         "howToPlay": "Как играть",
         "howGameWorks": "Как устроена игра {game}",
+        "demoStep": "Шаг {step} из {count}",
         "backToPuzzle": "Назад к головоломке",
         "noFreeChecks": "Бесплатных проверок на сегодняшнюю головоломку не осталось",
         "checksLeft": "Проверок осталось: {count}",

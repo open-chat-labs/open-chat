@@ -1033,6 +1033,34 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         g.toggleTutorial();
         expect(g.tutorialOpen).toBe(false);
     });
+    test("the demo before Start can be skipped for the inert board, and asked for again", () => {
+        const g = build(undefined, fakeClient(), true);
+        expect(g.showsDemo).toBe(true);
+        expect(g.canSkipDemo).toBe(true);
+        expect(g.offersHowToPlay).toBe(false);
+        g.skipDemo();
+        expect(g.showsDemo).toBe(false);
+        expect(g.canSkipDemo).toBe(false);
+        expect(g.offersHowToPlay).toBe(true);
+        g.showHowToPlay();
+        expect(g.showsDemo).toBe(true);
+    });
+
+    test("how to play over a game under way is the tutorial", () => {
+        const g = build(userState(), fakeClient(), true);
+        expect(g.canSkipDemo).toBe(false);
+        expect(g.offersHowToPlay).toBe(true);
+        g.showHowToPlay();
+        expect(g.tutorialOpen).toBe(true);
+        expect(g.offersHowToPlay).toBe(false);
+    });
+
+    test("a game without a demo offers neither", () => {
+        const g = build(undefined, fakeClient(), false);
+        expect(g.canSkipDemo).toBe(false);
+        g.skipDemo();
+        expect(g.offersHowToPlay).toBe(false);
+    });
 });
 
 describe("DailyPuzzleGame is the one source of truth for a play session (#9824)", () => {

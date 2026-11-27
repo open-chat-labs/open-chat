@@ -837,6 +837,7 @@
         "fixMistakeFirst": "पहले लाल खाने ठीक करें",
         "howToPlay": "कैसे खेलें",
         "howGameWorks": "{game} कैसे खेलें",
+        "demoStep": "चरण {step} / {count}",
         "backToPuzzle": "पहेली पर वापस जाएँ",
         "noFreeChecks": "आज की पहेली के लिए कोई मुफ़्त जाँच नहीं बची",
         "checksLeft": "{count} जाँच बाकी",

@@ -837,6 +837,7 @@
         "fixMistakeFirst": "Korrigieren Sie zuerst die roten Zellen",
         "howToPlay": "So wird gespielt",
         "howGameWorks": "So funktioniert {game}",
+        "demoStep": "Schritt {step} von {count}",
         "backToPuzzle": "Zurück zum Rätsel",
         "noFreeChecks": "Keine kostenlosen Prüfungen mehr für das heutige Rätsel",
         "checksLeft": "{count} Prüfungen übrig",

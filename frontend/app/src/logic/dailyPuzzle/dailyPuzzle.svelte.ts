@@ -240,6 +240,9 @@ export class DailyPuzzleGame {
     // Opened on how to play (openTutorial): a puzzle the poll swaps in under way asks for the
     // tutorial again, so the view still teaches. Closing it by hand ends that.
     #tutorialPinned = false;
+    // Skip on the demo before Start (the native tutorial's): the inert board and Start instead,
+    // until how to play is asked for again
+    #demoSkipped = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
     // The server refused a hint for `max_hints`: it has the last word on which step is next, so
@@ -484,9 +487,33 @@ export class DailyPuzzleGame {
         return this.#tutorialRequested && this.canToggleTutorial;
     }
 
-    /** The board area shows the demo: before Start, or while the tutorial is open (#9822). */
+    /** The board area shows the demo: before Start unless it was skipped, or while the tutorial
+     *  is open (#9822). */
     get showsDemo(): boolean {
-        return this.hasDemo && (!this.started || this.tutorialOpen);
+        return this.hasDemo && ((!this.started && !this.#demoSkipped) || this.tutorialOpen);
+    }
+
+    /** The demo before Start can be skipped for the inert board and Start. */
+    get canSkipDemo(): boolean {
+        return this.hasDemo && !this.started && !this.#demoSkipped;
+    }
+
+    skipDemo(): void {
+        if (this.canSkipDemo) this.#demoSkipped = true;
+    }
+
+    /** "How to play" is offered: the tutorial over a game under way, or the demo again once it
+     *  was skipped before Start; not while either shows. */
+    get offersHowToPlay(): boolean {
+        if (this.showsDemo) return false;
+        return this.canToggleTutorial || (this.hasDemo && !this.started && this.#demoSkipped);
+    }
+
+    /** Shows how to play: the demo again before Start, else the tutorial over the game. */
+    showHowToPlay(): void {
+        if (!this.offersHowToPlay) return;
+        if (!this.started) this.#demoSkipped = false;
+        else this.toggleTutorial();
     }
 
     /** The demo teaches the rules, so the paragraph is only for a game without one. */

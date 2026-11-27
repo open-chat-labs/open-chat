@@ -121,6 +121,13 @@ describe("the native puzzle screen's header", () => {
         });
     });
 
+    test("says which step of the demo shows, where the screen steps through it", () => {
+        expect(puzzleHeading(puzzle("tents"), true, translate, { index: 1, count: 6 })).toEqual({
+            title: 'dailyPuzzle.howGameWorks{"game":"dailyPuzzle.games.tents.name"}',
+            sub: 'dailyPuzzle.demoStep{"step":2,"count":6}',
+        });
+    });
+
     test("is The Daily alone before the puzzle is known", () => {
         expect(puzzleHeading(undefined, false, translate)).toEqual({
             title: "dailyPuzzle.title",

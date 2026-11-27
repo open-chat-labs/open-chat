@@ -837,6 +837,7 @@
         "fixMistakeFirst": "صحّح الخلايا الحمراء أولًا",
         "howToPlay": "طريقة اللعب",
         "howGameWorks": "كيف تعمل {game}",
+        "demoStep": "الخطوة {step} من {count}",
         "backToPuzzle": "العودة إلى اللغز",
         "noFreeChecks": "لم يتبقَّ فحوصات مجانية للغز اليوم",
         "checksLeft": "{count} فحوصات متبقية",
