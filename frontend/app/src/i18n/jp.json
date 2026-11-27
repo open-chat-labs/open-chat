@@ -839,6 +839,7 @@
         "howGameWorks": "{game} の遊び方",
         "demoStep": "ステップ {step} / {count}",
         "backToPuzzle": "パズルに戻る",
+        "resume": "再開",
         "noFreeChecks": "今日のパズルの無料チェックは使い切りました",
         "checksLeft": "残りチェック {count} 回",
         "reset": "リセット",

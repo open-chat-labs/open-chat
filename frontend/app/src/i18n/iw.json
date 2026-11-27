@@ -839,6 +839,7 @@
         "howGameWorks": "איך {game} עובד",
         "demoStep": "שלב {step} מתוך {count}",
         "backToPuzzle": "חזרה לחידה",
+        "resume": "המשך",
         "noFreeChecks": "לא נותרו בדיקות חינם לחידה של היום",
         "checksLeft": "נותרו {count} בדיקות",
         "reset": "איפוס",

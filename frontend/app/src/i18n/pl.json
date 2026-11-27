@@ -839,6 +839,7 @@
         "howGameWorks": "Jak działa {game}",
         "demoStep": "Krok {step} z {count}",
         "backToPuzzle": "Wróć do łamigłówki",
+        "resume": "Wznów",
         "noFreeChecks": "Brak darmowych sprawdzeń do dzisiejszej łamigłówki",
         "checksLeft": "Pozostałe sprawdzenia: {count}",
         "reset": "Resetuj",

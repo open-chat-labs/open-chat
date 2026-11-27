@@ -839,6 +839,7 @@
         "howGameWorks": "Come funziona {game}",
         "demoStep": "Passo {step} di {count}",
         "backToPuzzle": "Torna al puzzle",
+        "resume": "Riprendi",
         "noFreeChecks": "Nessun controllo gratuito rimasto per il puzzle di oggi",
         "checksLeft": "{count} controlli rimasti",
         "reset": "Azzera",

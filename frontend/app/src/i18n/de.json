@@ -839,6 +839,7 @@
         "howGameWorks": "So funktioniert {game}",
         "demoStep": "Schritt {step} von {count}",
         "backToPuzzle": "Zurück zum Rätsel",
+        "resume": "Fortsetzen",
         "noFreeChecks": "Keine kostenlosen Prüfungen mehr für das heutige Rätsel",
         "checksLeft": "{count} Prüfungen übrig",
         "reset": "Zurücksetzen",

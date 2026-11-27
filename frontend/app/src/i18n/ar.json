@@ -839,6 +839,7 @@
         "howGameWorks": "كيف تعمل {game}",
         "demoStep": "الخطوة {step} من {count}",
         "backToPuzzle": "العودة إلى اللغز",
+        "resume": "استئناف",
         "noFreeChecks": "لم يتبقَّ فحوصات مجانية للغز اليوم",
         "checksLeft": "{count} فحوصات متبقية",
         "reset": "إعادة تعيين",

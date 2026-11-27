@@ -839,6 +839,7 @@
         "howGameWorks": "Comment marche {game}",
         "demoStep": "Étape {step} sur {count}",
         "backToPuzzle": "Retour au puzzle",
+        "resume": "Reprendre",
         "noFreeChecks": "Plus de vérifications gratuites pour le puzzle du jour",
         "checksLeft": "{count} vérifications restantes",
         "reset": "Réinitialiser",

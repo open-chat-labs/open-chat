@@ -817,6 +817,7 @@
         "howGameWorks": "How {game} works",
         "demoStep": "Step {step} of {count}",
         "backToPuzzle": "Back to puzzle",
+        "resume": "Resume",
         "noFreeChecks": "No free checks left for today's puzzle",
         "checksLeft": "{count} checks left",
         "reset": "Reset",

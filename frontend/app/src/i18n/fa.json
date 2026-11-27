@@ -839,6 +839,7 @@
         "howGameWorks": "{game} چطور کار می‌کند",
         "demoStep": "گام {step} از {count}",
         "backToPuzzle": "بازگشت به معما",
+        "resume": "ادامه",
         "noFreeChecks": "بررسی رایگانی برای معمای امروز باقی نمانده",
         "checksLeft": "{count} بررسی باقی‌مانده",
         "reset": "بازنشانی",

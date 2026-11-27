@@ -839,6 +839,7 @@
         "howGameWorks": "Как устроена игра {game}",
         "demoStep": "Шаг {step} из {count}",
         "backToPuzzle": "Назад к головоломке",
+        "resume": "Продолжить",
         "noFreeChecks": "Бесплатных проверок на сегодняшнюю головоломку не осталось",
         "checksLeft": "Проверок осталось: {count}",
         "reset": "Сбросить",

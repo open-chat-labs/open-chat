@@ -839,6 +839,7 @@
         "howGameWorks": "Cách chơi {game}",
         "demoStep": "Bước {step}/{count}",
         "backToPuzzle": "Quay lại câu đố",
+        "resume": "Tiếp tục",
         "noFreeChecks": "Đã hết lượt kiểm tra miễn phí cho câu đố hôm nay",
         "checksLeft": "Còn {count} lượt kiểm tra",
         "reset": "Đặt lại",

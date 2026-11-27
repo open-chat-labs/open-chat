@@ -839,6 +839,7 @@
         "howGameWorks": "{game} 怎么玩",
         "demoStep": "第 {step} 步，共 {count} 步",
         "backToPuzzle": "返回谜题",
+        "resume": "继续",
         "noFreeChecks": "今日谜题的免费检查已用完",
         "checksLeft": "剩余 {count} 次检查",
         "reset": "重置",

@@ -269,17 +269,9 @@
                         {$_("dailyPuzzle.backToPuzzle")}<span class="step-chevron"></span>
                     </button>
                 {:else}
-                    <button
-                        type="button"
-                        class="step-go"
-                        disabled={!game.canStart || game.busy}
-                        aria-busy={game.busy}
-                        onclick={() => game.start()}>
-                        {#if game.busy}<Spinner size={15} tone="ink" />{/if}
-                        {game.entryFee === 0
-                            ? $_("dailyPuzzle.startFree")
-                            : tr(i18nKey("dailyPuzzle.startFee", { fee: game.entryFee }))}
-                        <span class="step-chevron"></span>
+                    <!-- back to the puzzle, where Start (with its fee) is: the tutorial doesn't charge -->
+                    <button type="button" class="step-go" onclick={() => game.skipDemo()}>
+                        {$_("dailyPuzzle.resume")}<span class="step-chevron"></span>
                     </button>
                 {/if}
             </span>
