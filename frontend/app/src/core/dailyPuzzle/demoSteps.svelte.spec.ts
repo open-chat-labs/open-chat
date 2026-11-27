@@ -42,6 +42,18 @@ describe("stepping through a game's demo", () => {
         }
     });
 
+    test("draws any frame, not only the current one, the same way", () => {
+        const steps = new DemoSteps(bridges);
+        steps.index = 2;
+        const still = steps.at(2);
+        expect(still?.frame).toBe(steps.frame);
+        expect(still?.violations).toEqual(steps.violations);
+        expect([...(still?.pointed ?? [])]).toEqual([...steps.pointed]);
+        expect(steps.at(3)?.frame).toBe(bridges.demo?.frames[3]);
+        expect(steps.at(-1)).toBeUndefined();
+        expect(steps.at(steps.count)).toBeUndefined();
+    });
+
     test("a game without a demo has no frames", () => {
         const steps = new DemoSteps({ demo: undefined, newBoard: bridges.newBoard });
         expect(steps.count).toBe(0);

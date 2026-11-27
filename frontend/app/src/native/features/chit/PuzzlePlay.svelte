@@ -37,8 +37,20 @@
     import AchievementToast from "@openchat/ui/src/features/components/AchievementToast.svelte";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
-    import { DemoSteps } from "@src/core/dailyPuzzle/demoSteps.svelte";
-    import { tutorialSwipeAxis, tutorialSwipeStep } from "./tutorialSwipe";
+    import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
+    import { DemoSteps, type DemoStill } from "@src/core/dailyPuzzle/demoSteps.svelte";
+    import type { SwipeAxis } from "../../shell/tabSwipe";
+    import {
+        stepDotWeight,
+        tutorialDragView,
+        tutorialSlide,
+        tutorialSpringBack,
+        tutorialSwipeAxis,
+        tutorialSwipeStarts,
+        tutorialSwipeStep,
+        type TutorialDragView,
+        type TutorialSlide,
+    } from "./tutorialSwipe";
     import { openDailyPuzzle } from "@src/core/dailyPuzzle/registry";
     import { i18nKey, interpolateNewUi } from "@src/i18n/i18n";
     import {
@@ -48,7 +60,7 @@
     } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
     import { SolveReveal } from "@src/logic/dailyPuzzle/solveReveal.svelte";
     import { now500 } from "@src/stores/time";
-    import { getContext, onDestroy, untrack } from "svelte";
+    import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
 
     type Props = {
@@ -86,6 +98,7 @@
     const steps = def?.demo === undefined ? undefined : new DemoSteps(def);
 
     function howToPlay(): void {
+        settleDone();
         steps?.restart();
         game?.showHowToPlay();
     }
@@ -93,39 +106,176 @@
     const current = $derived(game?.puzzle ?? opened.puzzle);
     const demo = $derived(game?.showsDemo === true && steps !== undefined);
 
-    // a sideways swipe on the tutorial steps it on or back (tutorialSwipe.ts); touch and pen only
-    let swipe: { id: number; x0: number; y0: number; x: number; t: number; v: number } | undefined;
+    // ---- Swiping between the tutorial's steps, as between the shell's tabs (tutorialSwipe.ts): the
+    // step follows the finger with its neighbour beside it, and on release goes on or springs back.
+    // Back, Next and a tap on the board slide the same way. Touch and pen only (a mouse drag
+    // selects text); a drag that starts mostly vertical is the stage's scroll, and one at the
+    // window's side the system's back gesture.
+
+    type Gesture = {
+        pointerId: number;
+        x0: number;
+        y0: number;
+        width: number;
+        axis: SwipeAxis;
+        samples: DragSample[];
+    };
+    let gesture: Gesture | undefined;
+    // the drag showing: the step `offset` px across, and its neighbour beside it
+    let drag = $state<TutorialDragView | undefined>();
+    // the step drawn beside the one showing: the neighbour a drag brings in, or the one leaving
+    let side = $state<number | undefined>();
+    const sideStill = $derived(side === undefined ? undefined : steps?.at(side));
+    let demoEl = $state<HTMLElement>();
+    let currentEl = $state<HTMLElement>();
+    let sideEl = $state<HTMLElement>();
+    // the slide running, so a later one (or a new drag) takes over from it
+    let slideId = 0;
     // a swipe ends in a click on the board, which would step it again
     let swiped = false;
 
-    function swipeStart(e: PointerEvent) {
-        if (e.pointerType === "mouse" || !e.isPrimary) return;
-        swipe = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, t: e.timeStamp, v: 0 };
-        swiped = false;
+    function rtl(): boolean {
+        return document.documentElement.dir === "rtl";
     }
 
-    function swipeMove(e: PointerEvent) {
-        if (swipe === undefined || e.pointerId !== swipe.id) return;
-        const dt = e.timeStamp - swipe.t;
-        if (dt > 0) swipe.v = (e.clientX - swipe.x) / dt;
-        swipe.x = e.clientX;
-        swipe.t = e.timeStamp;
-        if (tutorialSwipeAxis(e.clientX - swipe.x0, e.clientY - swipe.y0) !== "undecided") swiped = true;
+    function reducedMotion(): boolean {
+        return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    }
+
+    function ease(): string {
+        return (
+            getComputedStyle(document.documentElement).getPropertyValue("--ease-out").trim() ||
+            "ease-out"
+        );
+    }
+
+    /** Stops the slide running, where it is, and draws no step beside. */
+    function settleDone(): void {
+        slideId += 1;
+        for (const el of [currentEl, sideEl]) el?.getAnimations().forEach((a) => a.cancel());
+        side = undefined;
+    }
+
+    /** Plays `slide`: the step showing from its incoming place, the one beside it its outgoing. */
+    async function play(slide: TutorialSlide, id: number): Promise<void> {
+        const options = { duration: slide.duration, easing: ease() };
+        const at = (x: number) => `translateX(${x}px)`;
+        currentEl?.animate(
+            [{ transform: at(slide.incoming[0]) }, { transform: at(slide.incoming[1]) }],
+            options,
+        );
+        // the one beside is hidden once the slide ends: it stays visible while it goes
+        const out = (side === undefined ? undefined : sideEl)?.animate(
+            [
+                { transform: at(slide.outgoing[0]), visibility: "visible" },
+                { transform: at(slide.outgoing[1]), visibility: "visible" },
+            ],
+            options,
+        );
+        try {
+            await out?.finished;
+        } catch {
+            return; // cancelled by the next slide or drag, which owns `side` now
+        }
+        if (id === slideId) side = undefined;
+    }
+
+    /**
+     * Makes a step change (`change`, one of DemoSteps' own) and slides to it: from where a drag
+     * left the step (`offset`), or in from the new step's side. Not at all with reduced motion.
+     */
+    async function step(change: () => void, offset = 0): Promise<void> {
+        if (steps === undefined) return;
+        const width = currentEl?.clientWidth ?? 0;
+        const from = steps.index;
+        settleDone();
+        change();
+        const to = steps.index;
+        if (to === from || reducedMotion() || width === 0) return;
+        const id = slideId;
+        side = from;
+        await tick();
+        if (id === slideId) play(tutorialSlide(from, to, width, rtl(), offset), id);
+    }
+
+    function swipeStart(e: PointerEvent & { currentTarget: HTMLElement }) {
+        if (e.pointerType === "mouse" || !e.isPrimary || steps === undefined) return;
+        swiped = false;
+        if (!tutorialSwipeStarts(e.clientX, document.documentElement.clientWidth)) return;
+        gesture = {
+            pointerId: e.pointerId,
+            x0: e.clientX,
+            y0: e.clientY,
+            // the step's own width, which its neighbour sits a whole of beside it
+            width: (currentEl ?? e.currentTarget).getBoundingClientRect().width,
+            axis: "undecided",
+            samples: [{ t: e.timeStamp, y: e.clientX }],
+        };
+    }
+
+    function swipeMove(e: PointerEvent & { currentTarget: HTMLElement }) {
+        if (gesture === undefined || e.pointerId !== gesture.pointerId || steps === undefined) {
+            return;
+        }
+        const dx = e.clientX - gesture.x0;
+        if (gesture.axis === "undecided") {
+            gesture.axis = tutorialSwipeAxis(dx, e.clientY - gesture.y0);
+            if (gesture.axis === "vertical") {
+                gesture = undefined;
+                return;
+            }
+            if (gesture.axis === "sideways") {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                swiped = true;
+                settleDone();
+            }
+        }
+        if (gesture.axis !== "sideways") return;
+        // the samples' y is the pointer's x: releaseVelocity reads one axis
+        gesture.samples.push({ t: e.timeStamp, y: e.clientX });
+        const view = tutorialDragView(
+            dx,
+            gesture.width,
+            steps.index,
+            steps.count,
+            rtl(),
+            reducedMotion(),
+        );
+        drag = view;
+        side = view.neighbour;
     }
 
     function swipeEnd(e: PointerEvent) {
-        if (swipe === undefined || e.pointerId !== swipe.id || steps === undefined) return;
-        const drag = {
-            dx: e.clientX - swipe.x0,
-            dy: e.clientY - swipe.y0,
-            width: (e.currentTarget as HTMLElement).getBoundingClientRect().width,
-            velocity: swipe.v,
-        };
-        swipe = undefined;
-        const to = tutorialSwipeStep(drag, steps.index, steps.count, document.documentElement.dir === "rtl");
-        if (to === undefined) return;
-        if (to > steps.index) steps.next();
-        else steps.prev();
+        const ended = gesture;
+        if (ended === undefined || e.pointerId !== ended.pointerId || steps === undefined) return;
+        gesture = undefined;
+        if (ended.axis !== "sideways") return;
+        const shown = drag;
+        drag = undefined;
+        const to =
+            e.type === "pointerup"
+                ? tutorialSwipeStep(
+                      {
+                          dx: e.clientX - ended.x0,
+                          dy: e.clientY - ended.y0,
+                          width: ended.width,
+                          velocity: releaseVelocity(ended.samples, e.timeStamp),
+                      },
+                      steps.index,
+                      steps.count,
+                      rtl(),
+                  )
+                : undefined;
+        if (to !== undefined) {
+            const forward = to > steps.index;
+            step(() => (forward ? steps.next() : steps.prev()), shown?.offset ?? 0);
+        } else if (shown !== undefined && shown.offset !== 0) {
+            // back into place, the neighbour back out beside it
+            if (shown.neighbour === undefined) side = undefined;
+            play(tutorialSpringBack(shown.offset, ended.width), slideId);
+        } else {
+            side = undefined;
+        }
     }
 
     function tapBoard() {
@@ -133,8 +283,26 @@
             swiped = false;
             return;
         }
-        steps?.tapBoard();
+        step(() => steps?.tapBoard());
     }
+
+    // Once a drag is sideways the stage mustn't scroll under it (touch-action doesn't stop a pan
+    // that has started), which would cancel the pointer; only a listener that isn't passive can.
+    $effect(() => {
+        const el = demoEl;
+        if (el === undefined) return;
+        const holdPan = (e: TouchEvent) => {
+            if (gesture?.axis === "sideways" && e.cancelable) e.preventDefault();
+        };
+        el.addEventListener("touchmove", holdPan, { passive: false });
+        return () => el.removeEventListener("touchmove", holdPan);
+    });
+
+    // the step a drag has more than half brought in, for the step dots
+    const dotIndex = $derived(
+        drag?.neighbour !== undefined && drag.progress >= 0.5 ? drag.neighbour : steps?.index,
+    );
+
     $effect.pre(() => {
         const info: PuzzleSessionInfo = {
             puzzle: current,
@@ -217,57 +385,91 @@
         </div>
     </div>
 {:else if demo && steps !== undefined && steps.board !== undefined && steps.frame !== undefined}
-    {@const demoBoard = steps.board}
+    {#snippet still(shown: DemoStill, live: boolean)}
+        <!-- the arrows below step through it; a tap on the board, or a swipe, is a shortcut -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="board" onclick={live ? tapBoard : undefined}>
+            <shown.board.Board
+                board={shown.board}
+                violations={shown.violations}
+                focus={shown.pointed}
+                target={shown.pointed}
+                disabled
+                onTap={() => {}} />
+        </div>
+        <!-- the step's title over its text, read out together as the step changes -->
+        <div class="step-copy" aria-live={live ? "polite" : undefined} aria-atomic={live || undefined}>
+            <h3 class="step-title">
+                {tr(i18nKey(`${def?.i18nPrefix}.${shown.frame.title}`))}
+            </h3>
+            <p class="step-text">
+                {tr(i18nKey(`${def?.i18nPrefix}.${shown.frame.caption}`))}
+            </p>
+        </div>
+    {/snippet}
     <div class="play">
         <div class="stage">
+            <!-- the swipe is a touch shortcut for Back and Next, which keyboards and readers use -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="demo"
+                bind:this={demoEl}
                 onpointerdown={swipeStart}
                 onpointermove={swipeMove}
                 onpointerup={swipeEnd}
-                onpointercancel={() => (swipe = undefined)}>
-                <!-- the arrows below step through it; a tap on the board, or a swipe, is a shortcut -->
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="board" onclick={tapBoard}>
-                    <demoBoard.Board
-                        board={demoBoard}
-                        violations={steps.violations}
-                        focus={steps.pointed}
-                        target={steps.pointed}
-                        disabled
-                        onTap={() => {}} />
+                onpointercancel={swipeEnd}>
+                <div
+                    class="step"
+                    bind:this={currentEl}
+                    style:transform={drag === undefined ? undefined : `translateX(${drag.offset}px)`}>
+                    {@render still(
+                        {
+                            frame: steps.frame,
+                            board: steps.board,
+                            violations: steps.violations,
+                            pointed: steps.pointed,
+                        },
+                        true,
+                    )}
                 </div>
-                <!-- the step's title over its text, read out together as the step changes -->
-                <div class="step-copy" aria-live="polite" aria-atomic="true">
-                    <h3 class="step-title">
-                        {tr(i18nKey(`${def?.i18nPrefix}.${steps.frame.title}`))}
-                    </h3>
-                    <p class="step-text">
-                        {tr(i18nKey(`${def?.i18nPrefix}.${steps.frame.caption}`))}
-                    </p>
-                </div>
+                {#if sideStill !== undefined}
+                    <!-- the step coming in beside it, or the one going out -->
+                    <div
+                        class="step side"
+                        class:shown={drag?.neighbour !== undefined}
+                        aria-hidden="true"
+                        inert
+                        bind:this={sideEl}
+                        style:transform={drag?.neighbour === undefined
+                            ? undefined
+                            : `translateX(calc(${drag.offset}px ${drag.offset < 0 ? "+" : "-"} 100%))`}>
+                        {@render still(sideStill, false)}
+                    </div>
+                {/if}
             </div>
         </div>
         <div class="step-bar">
             <span class="step-side">
                 {#if !steps.isFirst}
-                    <button type="button" class="step-back" onclick={() => steps.prev()}>
+                    <button type="button" class="step-back" onclick={() => step(() => steps.prev())}>
                         <span class="step-chevron back"></span>{$_("back")}
                     </button>
                 {/if}
             </span>
-            <span class="step-dots" aria-hidden="true">
+            <!-- the long dot follows a drag across, as the step does -->
+            <span class="step-dots" class:dragging={drag !== undefined} aria-hidden="true">
                 {#each { length: steps.count } as _dot, i (i)}
                     <span
                         class="step-dot"
-                        class:done={i <= steps.index}
-                        class:on={i === steps.index}></span>
+                        class:done={dotIndex !== undefined && i <= dotIndex}
+                        style:--on={stepDotWeight(i, steps.index, drag?.neighbour, drag?.progress ?? 0)}
+                    ></span>
                 {/each}
             </span>
             <span class="step-side end">
                 {#if !steps.isLast}
-                    <button type="button" class="step-next" onclick={() => steps.next()}>
+                    <button type="button" class="step-next" onclick={() => step(() => steps.next())}>
                         {$_("next")}<span class="step-chevron"></span>
                     </button>
                 {:else if game.tutorialOpen}
@@ -505,10 +707,22 @@
 
     // ---- the tutorial (the demo, as the prototype's screen draws it)
 
+    // the steps, edge to edge across the stage so the one coming in shows from the screen's side
     .demo {
-        width: min(100%, 420px);
+        position: relative;
+        align-self: stretch;
+        margin-inline: calc(-1 * var(--space-16));
+        overflow-x: clip;
         // sideways drags are the tutorial's swipe; up and down still scroll
         touch-action: pan-y;
+    }
+
+    // one step: its board and its title and text
+    .step {
+        box-sizing: border-box;
+        width: min(100%, calc(420px + 2 * var(--space-16)));
+        margin-inline: auto;
+        padding-inline: var(--space-16);
         display: flex;
         flex-direction: column;
         gap: var(--space-16);
@@ -516,6 +730,22 @@
         .board {
             width: 100%;
             cursor: pointer;
+        }
+
+        // the step beside it, over the same place, seen only while it's dragged or slid in or out
+        &.side {
+            position: absolute;
+            inset-block-start: 0;
+            inset-inline: 0;
+            visibility: hidden;
+
+            &.shown {
+                visibility: visible;
+            }
+
+            .board {
+                cursor: default;
+            }
         }
     }
 
@@ -626,8 +856,9 @@
         padding: 0 10px;
     }
 
+    // --on: how much it's the current step's (the long one), 0 to 1
     .step-dot {
-        width: 6px;
+        width: calc(6px + 16px * var(--on, 0));
         height: 6px;
         border-radius: 3px;
         background: var(--overlay-3);
@@ -639,8 +870,8 @@
             background: var(--accent);
         }
 
-        &.on {
-            width: 22px;
+        .dragging & {
+            transition: background 200ms;
         }
     }
 

@@ -6,6 +6,17 @@ import type { DailyPuzzleGameDef } from "./registry";
 // does: the web's and the old trees' GameDemo, and the native puzzle screen's tutorial, each
 // drawing it its own way. The reader steps through the frames; nothing advances on a timer.
 
+type DemoBoard = ReturnType<DailyPuzzleGameDef["newBoard"]>;
+
+/** One of the demo's frames, as drawn. */
+export type DemoStill = {
+    frame: DemoFrame;
+    board: DemoBoard;
+    violations: Violation[];
+    /** What the frame points at, with the hint highlight. */
+    pointed: Set<number>;
+};
+
 export class DemoSteps {
     index = $state(0);
     readonly #def: Pick<DailyPuzzleGameDef, "demo" | "newBoard">;
@@ -31,25 +42,38 @@ export class DemoSteps {
         return this.index === this.last;
     }
 
-    frame: DemoFrame | undefined = $derived.by(() => this.#def.demo?.frames[this.index]);
-
-    // The frame's marks on the demo puzzle, parsed and checked by the game itself, so a
-    // malformed demo fails here rather than drawing something the real board could never show.
-    board = $derived.by(() => {
+    /**
+     * Frame `index` as drawn: its marks on the demo puzzle, parsed and checked by the game itself
+     * (so a malformed demo fails here rather than drawing something the real board could never
+     * show), and what it points at. Any frame, not only the current one: the native tutorial draws
+     * the next or the one before alongside while a swipe drags it in.
+     */
+    at(index: number): DemoStill | undefined {
         const spec = this.#def.demo;
-        const frame = this.frame;
-        return spec === undefined || frame === undefined
-            ? undefined
-            : this.#def.newBoard(spec.description, frame.marks);
-    });
+        const frame = spec?.frames[index];
+        if (spec === undefined || frame === undefined) return undefined;
+        const board = this.#def.newBoard(spec.description, frame.marks);
+        const violations: Violation[] = board.violations;
+        return {
+            frame,
+            board,
+            violations,
+            // On a frame that breaks a rule the checker's red IS the message, and the translucent
+            // blue "look here" wash sits on top of it and turns the red pink. Let the mistake
+            // speak alone.
+            pointed: violations.length > 0 ? new Set<number>() : new Set(frame.target ?? []),
+        };
+    }
 
-    violations: Violation[] = $derived(this.board?.violations ?? []);
+    #still: DemoStill | undefined = $derived(this.at(this.index));
 
-    // On a frame that breaks a rule the checker's red IS the message, and the translucent blue
-    // "look here" wash sits on top of it and turns the red pink. Let the mistake speak alone.
-    pointed: Set<number> = $derived(
-        this.violations.length > 0 ? new Set<number>() : new Set(this.frame?.target ?? []),
-    );
+    frame: DemoFrame | undefined = $derived(this.#still?.frame);
+
+    board: DemoBoard | undefined = $derived(this.#still?.board);
+
+    violations: Violation[] = $derived(this.#still?.violations ?? []);
+
+    pointed: Set<number> = $derived(this.#still?.pointed ?? new Set<number>());
 
     prev(): void {
         this.index = Math.max(0, this.index - 1);
