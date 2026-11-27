@@ -1291,3 +1291,11 @@
 - No prop changes, so `meta.json` is unchanged.
 - Used by the app: the web tree's rail with many communities (#10641).
 - Not in the design export, which shows a few communities.
+
+## 2026-11-27 — NavRail: communities reordered by drag and drop (#10642), by hand
+- `NavRail`: `onReorderPins` (optional), `(ids: string[]) => void`. With it (and not for a guest, and with two or more pins) the user reorders the pins: a pointer press that moves 5px becomes a drag (`pinDrag.ts`, with its spec: the drop index from the pin's centre, the room the others make, the edge auto-scroll). The dragged pin follows the pointer on `--overlay-1` with `--shadow-panel` on its picture, the others slide a row to make room (`--duration-base`, none under reduced motion), the list scrolls while the pin is held within 36px of its edges, the accent bar follows an active pin, and Esc or a lost pointer puts it back. The click that ends a drag isn't a pick. Touch doesn't drag (it scrolls the list).
+- From the keyboard: Move up / Move down (`ui.navRail.moveUp` / `moveDown`, arrow icons) after the host's own items in a pin's menu (right-click, Shift+F10; a pin has a menu now whenever it can move), and Alt+↑ / Alt+↓ on a focused pin, which keeps the focus.
+- The rail shows the new order at once and keeps it until the host passes new `pins`; the selected pin follows by id.
+- `meta.json` updated.
+- Used by the app: the web tree's rail, which saves the order with the client's `updateCommunityIndexes` (#10642).
+- Not in the design export.

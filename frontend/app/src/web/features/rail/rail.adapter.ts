@@ -46,6 +46,22 @@ export function pinsFor(
     });
 }
 
+/**
+ * The rail's pins, reordered by the user (NavRail's `onReorderPins`), back as the communities
+ * `updateCommunityIndexes` takes, in that order. A community the rail didn't have yet (joined
+ * while a pin was being dragged) goes after them, where it was, as the old lists' drag does
+ * (DragList.finalize); an id no longer among the communities is left out.
+ */
+export function communitiesInOrder(
+    ids: string[],
+    communities: CommunitySummary[],
+): CommunitySummary[] {
+    const byId = new Map(communities.map((c) => [c.id.communityId, c]));
+    const ordered = ids.flatMap((id) => byId.get(id) ?? []);
+    const placed = new Set(ids);
+    return [...ordered, ...communities.filter((c) => !placed.has(c.id.communityId))];
+}
+
 /** What the rail's items count as unread (the stores of the same names). */
 export type RailUnread = {
     /** unreadDirectAndGroupCountsStore */

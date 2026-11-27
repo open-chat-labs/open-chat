@@ -4,6 +4,8 @@
      expanded rail floats over the content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
      Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl.
      The pins fill the rail down to Create and Explore, and past that scroll on their own.
+     With onReorderPins the user can reorder the pins: drag one by pointer, or Move up / Move down in its menu (or
+     Alt+↑ / Alt+↓ on a focused pin); the rail shows the new order at once and reports the ids in it.
      A pin with a `menu` opens it on right-click (at the pointer) or Shift+F10 / the Menu key (under the pin).
      `footItems` are the host's own destinations at the rail's foot, above CHIT (the app's Admin, for platform
      operators); onSelectFoot reports one's id. -->
@@ -29,6 +31,7 @@
   import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
   import type { MenuItem } from '../../lib/types';
   import { barJumps, barPlacement, type BarClip, type ListView } from './railBar';
+  import { autoScrollStep, dragStarted, dropIndex, moveItem, shiftFor } from './pinDrag';
 
   // nav item keys → canonical names in lib/icons.js
   const ICONS = { messages: 'messages', bell: 'bell', wallet: 'wallet', chit: 'zap', heart: 'heart' };
@@ -90,6 +93,9 @@
     profileOnline?: boolean;
     onSelect?: (i: number, item: Item) => void;
     onSelectPin?: (id: string, pin: Pin) => void;
+    /** Lets the user reorder the pins (drag and drop, or Move up / Move down): the pins' ids in their new order. The
+     *  rail keeps that order until the host passes new `pins`. Not for a guest. */
+    onReorderPins?: (ids: string[]) => void;
     /** The host's destinations at the rail's foot, above CHIT; none by default. */
     footItems?: RailFootItem[];
     onSelectFoot?: (id: string) => void;
@@ -125,6 +131,7 @@
     profileOnline = false,
     onSelect,
     onSelectPin,
+    onReorderPins,
     footItems = [],
     onSelectFoot,
     exploreActive = false,
@@ -156,11 +163,181 @@
     return undefined;
   });
 
+  // the pins in the order the user last left them (drag and drop, Move up / down), until the host
+  // passes new pins (in that order, once it has kept it)
+  let localOrder = $derived.by<string[] | null>(() => {
+    void pins;
+    return null;
+  });
+  const shownPins = $derived.by<Pin[]>(() => {
+    if (localOrder === null) return pins;
+    const byId = new Map(pins.map((p) => [p.id, p]));
+    return localOrder.flatMap((id) => byId.get(id) ?? []);
+  });
+  const reorderable = $derived(onReorderPins !== undefined && !guest && pins.length > 1);
+
+  const pinIndex = $derived(activePin !== undefined ? activePin : (localPin ?? null));
+  // the selected pin, by id: pinIndex is the host's index, which a local order doesn't follow
+  const activePinId = $derived(pinIndex !== null ? pins[pinIndex]?.id : undefined);
+  const active = $derived(pinIndex !== null ? -1 : (localActive ?? activeIndex));
+
   // the open pin menu: which pin, and where (the pointer, or under the pin from the keyboard)
   let pinMenu = $state<{ id: string; point: { x: number; y: number } | null; anchor: { left: number; right: number; top: number; bottom: number } | null } | null>(null);
-  const pinMenuItems = $derived(pinMenu ? (pins.find((p) => p.id === pinMenu?.id)?.menu ?? []) : []);
-  const pinIndex = $derived(activePin !== undefined ? activePin : (localPin ?? null));
-  const active = $derived(pinIndex !== null ? -1 : (localActive ?? activeIndex));
+  const pinMenuItems = $derived.by<MenuItem[]>(() => {
+    if (!pinMenu) return [];
+    const id = pinMenu.id;
+    const own = pins.find((p) => p.id === id)?.menu ?? [];
+    return [...own, ...(own.length > 0 && reorderable ? [{ label: '', variant: 'separator' as const }] : []), ...moveItems(id)];
+  });
+
+  // Move up / Move down, the keyboard's way to reorder (and the pointer's, without a drag)
+  function moveItems(id: string): MenuItem[] {
+    if (!reorderable) return [];
+    const i = shownPins.findIndex((p) => p.id === id);
+    if (i < 0) return [];
+    const out: MenuItem[] = [];
+    if (i > 0) out.push({ id: 'move-up', label: 'ui.navRail.moveUp', icon: 'arrow-up', onSelect: () => movePin(i, i - 1) });
+    if (i < shownPins.length - 1) out.push({ id: 'move-down', label: 'ui.navRail.moveDown', icon: 'arrow-down', onSelect: () => movePin(i, i + 1) });
+    return out;
+  }
+
+  function hasMenu(pin: Pin) {
+    return (pin.menu?.length ?? 0) > 0 || reorderable;
+  }
+
+  // the pin at `from` goes to `to`: shown at once, and reported to the host
+  function movePin(from: number, to: number) {
+    if (from === to) return;
+    const ids = moveItem(
+      shownPins.map((p) => p.id),
+      from,
+      to,
+    );
+    localOrder = ids;
+    onReorderPins?.(ids);
+  }
+
+  // ---- drag and drop (the pure parts, where a pin lands and how the others make room, are pinDrag's)
+
+  // a press on a pin, which becomes a drag once it moves far enough (else it's a click)
+  let press: { from: number; startY: number; pointerId: number; row: HTMLElement } | null = null;
+  // the drag: the pin's index (from) and where it would land (to), how far it has moved (dy), and
+  // how far each row it passes makes room (pitch)
+  let drag = $state<{ from: number; to: number; dy: number; pitch: number } | null>(null);
+  // dropped: the rows take their new places without sliding there again
+  let settling = $state(false);
+  // the click that ends a drag isn't a pick
+  let dragClick = false;
+  let dragMids: number[] = [];
+  let dragStartScroll = 0;
+  let dragY = 0;
+  let dragFrame = 0;
+
+  function pinRows(): HTMLElement[] {
+    return pinList ? [...pinList.querySelectorAll<HTMLElement>(':scope > .row')] : [];
+  }
+
+  function onPinPointerDown(e: PointerEvent, i: number) {
+    // touch scrolls the list; the keyboard and the menu reorder there
+    if (!reorderable || e.button !== 0 || e.pointerType === 'touch') return;
+    press = { from: i, startY: e.clientY, pointerId: e.pointerId, row: e.currentTarget as HTMLElement };
+  }
+
+  function onPinPointerMove(e: PointerEvent) {
+    if (!press || e.pointerId !== press.pointerId) return;
+    dragY = e.clientY;
+    if (!drag) {
+      if (!dragStarted(e.clientY - press.startY) || !pinList) return;
+      startDrag(press);
+    }
+    updateDrag();
+  }
+
+  function startDrag(p: NonNullable<typeof press>) {
+    if (!pinList) return;
+    p.row.setPointerCapture(p.pointerId);
+    const listTop = pinList.getBoundingClientRect().top - pinList.scrollTop;
+    const rows = pinRows();
+    dragMids = rows.map((r) => {
+      const box = r.getBoundingClientRect();
+      return box.top - listTop + box.height / 2;
+    });
+    const pitch = dragMids.length > 1 ? dragMids[1] - dragMids[0] : 0;
+    dragStartScroll = pinList.scrollTop;
+    drag = { from: p.from, to: p.from, dy: 0, pitch };
+    pinMenu = null;
+    dragFrame = requestAnimationFrame(dragTick);
+  }
+
+  function updateDrag() {
+    if (!drag || !press || !pinList) return;
+    const dy = dragY - press.startY + (pinList.scrollTop - dragStartScroll);
+    const to = dropIndex(drag.from, dragMids[drag.from] + dy, dragMids);
+    drag = { ...drag, dy, to };
+  }
+
+  // each frame of a drag: the list scrolls while the pin is held near its edges, and the accent bar
+  // follows the active pin (moving with the drag, or making room)
+  function dragTick() {
+    if (!drag || !pinList) return;
+    const box = pinList.getBoundingClientRect();
+    const step = autoScrollStep(dragY, box.top, box.bottom);
+    if (step !== 0) {
+      pinList.scrollTop += step;
+      updateDrag();
+    }
+    trackBar();
+    dragFrame = requestAnimationFrame(dragTick);
+  }
+
+  // the drag ends: dropped (`commit`) where it was held, or cancelled (Esc, the pointer lost)
+  function endDrag(commit: boolean) {
+    cancelAnimationFrame(dragFrame);
+    const ended = drag;
+    if (press?.row.hasPointerCapture(press.pointerId)) press.row.releasePointerCapture(press.pointerId);
+    press = null;
+    if (!ended) return;
+    settling = true;
+    drag = null;
+    if (commit) movePin(ended.from, ended.to);
+    requestAnimationFrame(() => (settling = false));
+  }
+
+  function onPinPointerUp(e: PointerEvent) {
+    if (!press || e.pointerId !== press.pointerId) return;
+    if (drag) {
+      dragClick = true;
+      // a release away from the pin fires no click to swallow
+      setTimeout(() => (dragClick = false), 0);
+      endDrag(true);
+    } else {
+      press = null;
+    }
+  }
+
+  function onPinPointerCancel(e: PointerEvent) {
+    if (press && e.pointerId === press.pointerId) endDrag(false);
+  }
+
+  // Alt+↑ / Alt+↓ on a focused pin moves it; focus stays on it
+  async function movePinByKey(i: number, by: -1 | 1) {
+    const to = i + by;
+    if (to < 0 || to >= shownPins.length) return;
+    const id = shownPins[i].id;
+    movePin(i, to);
+    await tick();
+    pinRows()
+      .find((r) => r.dataset.pinId === id)
+      ?.focus({ preventScroll: false });
+  }
+
+  // a pin's offset while one is dragged: the dragged pin follows the pointer, the ones it passed make room
+  function dragOffset(i: number): number | undefined {
+    if (!drag) return undefined;
+    if (i === drag.from) return drag.dy;
+    const shift = shiftFor(i, drag.from, drag.to, drag.pitch);
+    return shift === 0 ? undefined : shift;
+  }
 
   let root: HTMLDivElement;
   let barTop = $state<number | null>(null);
@@ -178,7 +355,7 @@
   // the active pin is scrolled wholly out of view: the bar is hidden, parked inside the list
   let barHidden = $state(false);
   // the pin the list last brought into view, so it does that once per pick, not on every sync
-  let shownPin: number | null | undefined = undefined;
+  let shownPin: string | null | undefined = undefined;
 
   // where the bar goes for the active row (its top in the rail), and how much of it the
   // communities list's edges cut off (railBar's barPlacement)
@@ -194,7 +371,7 @@
 
   // a newly active pin outside the list's view scrolls into it (to the nearest edge)
   function revealPin(row: Element) {
-    if (!pinList || !pinList.contains(row) || pinIndex === shownPin) return;
+    if (!pinList || !pinList.contains(row) || (activePinId ?? null) === shownPin) return;
     const box = pinList.getBoundingClientRect();
     const r = row.getBoundingClientRect();
     // the list's own padding keeps a pin's ring and dot clear of its edges
@@ -237,11 +414,11 @@
       barTop = null;
       barClip = null;
       barHidden = false;
-      shownPin = pinIndex;
+      shownPin = activePinId ?? null;
       return;
     }
     revealPin(row);
-    shownPin = pinIndex;
+    shownPin = activePinId ?? null;
     const { top, clip, hidden } = measure(row);
     barClip = clip;
     barHidden = hidden;
@@ -268,7 +445,7 @@
     void exploreActive;
     void guest;
     void items;
-    void pins;
+    void shownPins;
     void footItems;
     syncBar();
   });
@@ -294,8 +471,21 @@
     const away = (e: PointerEvent) => {
       if (overlaying() && !root.contains(e.target as Node)) open = false;
     };
+    // Esc puts a dragged pin back where it was
+    const escape = (e: KeyboardEvent) => {
+      if (drag && e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        endDrag(false);
+      }
+    };
     document.addEventListener('pointerdown', away, true);
-    return () => document.removeEventListener('pointerdown', away, true);
+    document.addEventListener('keydown', escape, true);
+    return () => {
+      document.removeEventListener('pointerdown', away, true);
+      document.removeEventListener('keydown', escape, true);
+      cancelAnimationFrame(dragFrame);
+    };
   });
 
   const chitTitle = $derived(
@@ -352,27 +542,46 @@
   </div>
   <div class="pins">
     <!-- the communities fill the rail down to Create and Explore, and scroll on their own past that -->
-    {#if pins.length > 0}
-      <div class="pin-list" bind:this={pinList} onscroll={trackBar}>
-        {#each pins as pin, i (pin.id)}
-          {@const selected = i === pinIndex}
-          {@const hasMenu = (pin.menu?.length ?? 0) > 0}
+    {#if shownPins.length > 0}
+      <div class="pin-list" class:reordering={drag !== null} class:settling bind:this={pinList} onscroll={trackBar}>
+        {#each shownPins as pin, i (pin.id)}
+          {@const selected = pin.id === activePinId}
+          {@const withMenu = hasMenu(pin)}
+          {@const offset = dragOffset(i)}
           <div
             class="row"
             class:active={selected}
+            class:dragged={drag?.from === i}
             data-active-row={selected ? '' : undefined}
+            data-pin-id={pin.id}
+            style:transform={offset === undefined ? undefined : `translateY(${offset}px)`}
             onclick={() => {
+              if (dragClick) {
+                dragClick = false;
+                return;
+              }
               picked();
-              localPin = i;
+              localPin = pins.findIndex((p) => p.id === pin.id);
               onSelectPin?.(pin.id, pin);
             }}
+            onpointerdown={(e) => onPinPointerDown(e, i)}
+            onpointermove={onPinPointerMove}
+            onpointerup={onPinPointerUp}
+            onpointercancel={onPinPointerCancel}
+            onlostpointercapture={onPinPointerCancel}
             oncontextmenu={(e) => {
-              if (!hasMenu) return;
+              if (!withMenu || drag) return;
               e.preventDefault();
               pinMenu = { id: pin.id, point: { x: e.clientX, y: e.clientY }, anchor: null };
             }}
             onkeydown={(e) => {
-              if (!hasMenu || e.target !== e.currentTarget) return;
+              if (e.target !== e.currentTarget) return;
+              if (reorderable && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                e.preventDefault();
+                movePinByKey(i, e.key === 'ArrowUp' ? -1 : 1);
+                return;
+              }
+              if (!withMenu) return;
               if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
                 e.preventDefault();
                 const r = e.currentTarget.getBoundingClientRect();
@@ -381,7 +590,7 @@
             }}
             role="button"
             tabindex="0"
-            aria-haspopup={hasMenu ? 'menu' : undefined}
+            aria-haspopup={withMenu ? 'menu' : undefined}
             aria-label={pin.label ? t(pin.label) : pin.name || t('ui.navRail.communityN', { n: i + 1 })}
             aria-current={selected ? 'page' : undefined}
           >
@@ -786,6 +995,34 @@
 
     &::-webkit-scrollbar {
       display: none;
+    }
+
+    /* a pin being dragged: the others slide to make room, the dragged one follows the pointer */
+    &.reordering .row {
+      user-select: none;
+      transition: transform var(--duration-base) var(--ease-out);
+    }
+
+    &.reordering .row.dragged {
+      z-index: 2;
+      cursor: grabbing;
+      transition: none;
+      background: var(--overlay-1);
+    }
+
+    &.reordering .row.dragged .pin {
+      box-shadow: var(--shadow-panel);
+    }
+
+    /* dropped: each row is already where it lands */
+    &.settling .row {
+      transition: none;
+    }
+
+    @include reduced-motion {
+      &.reordering .row {
+        transition: none;
+      }
     }
   }
 

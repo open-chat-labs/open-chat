@@ -17121,6 +17121,17 @@
         "doc": "The picked community, by id."
       },
       {
+        "name": "onReorderPins",
+        "type": "(ids: string[]) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Lets the user reorder the pins (drag and drop, or Move up / Move down in a pin's menu, or Alt+↑ / Alt+↓): the pins' ids in their new order. The rail keeps that order until the host passes new pins. Not for a guest."
+      },
+      {
         "name": "footItems",
         "type": "RailFootItem[]",
         "default": null,
