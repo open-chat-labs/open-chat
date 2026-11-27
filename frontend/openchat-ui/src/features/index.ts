@@ -85,4 +85,5 @@ export type { ExploreLanguage, ExploreQuery } from './components/ExploreCommunit
 export type { AuthPerson } from './components/AuthDialog.svelte';
 export type { ClaimDay } from './components/ClaimCalendar.svelte';
 export type { ProfileCommunity } from './components/ProfileDialog.svelte';
+export type { RailFootItem } from './components/NavRail.svelte';
 export type { DisappearSetting } from './components/DmChatSettings.svelte';

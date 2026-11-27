@@ -4163,9 +4163,16 @@ design export needs. Each entry says where it came up.
       words ("Moderation report") in a text bubble, as before: moderators work from a desktop.
       Native can draw them the same way, with the same logic, if they're wanted there.
     TODO(design): no report cards or their dialogs in the design.
-  - **The old main menu's Admin item** (operators only), which the console came with: its
-    place would be the profile dialog's rail foot, above Log out (a new `ProfileDialog` prop). An
-    operator opens `/admin` by its URL meanwhile.
+  - **The old main menu's Admin item** (operators only): done, TODO(design), web only. An Admin
+    destination (shield icon) at the NavRail's foot, above CHIT, for a platform operator
+    (`platformOperatorStore`; not a group's or community's admins, nor a guest), through
+    `NavRail`'s `footItems` (`rail.adapter`'s `railFootItems`); it goes to `/admin` and has the
+    rail's highlight while the console is open, as the wallet's does. Considered first and dropped:
+    a row in the profile dialog's rail (the console is a place in the app, not part of your
+    profile; the user's decision, 2026-11-27). New string: `adminConsole` (the old item's "Admin"
+    was literal text). Not there: a badge for what needs a person (a proposal awaiting you, an
+    overdue report), which would mean loading both in the background for operators. No rail foot
+    destination or icon for it in the design. Web only (the user's decision, 2026-11-26).
   - **The native half**: `src/native` has none of the above (nor did components_mobile have
     the console hooks or the console); not needed while native builds keep the old UI (PLAN L6).
     The native apps' event listeners and `svelteReady` are "Native apps" (above).

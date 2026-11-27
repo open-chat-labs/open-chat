@@ -178,6 +178,7 @@
         "title": "Libreta de direcciones"
     },
     "admin": "admin",
+    "adminConsole": "Administración",
     "advanced": "Avanzado",
     "airdropWarning": "Para poder participar del próximo Airdrop, debes ser miembro del canal **{channelName}** en la comunidad **{communityName}**. [Haz clic aquí para unirte.]({url})",
     "andNMore": "y {n} más",

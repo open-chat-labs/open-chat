@@ -13,6 +13,7 @@
         lastRightPanelState,
         latestSuccessfulUpdatesLoop,
         messageActivitySummaryStore,
+        platformOperatorStore,
         OpenChat,
         ownUserAvatarUrl,
         postLoginCreateCommunity,
@@ -57,7 +58,7 @@
     import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
     import { askToSignIn } from "@src/logic/auth/guestPass";
     import { join } from "../join/join";
-    import { pinsFor, railItemUnread } from "../rail/rail.adapter";
+    import { pinsFor, railFootItems, railItemUnread } from "../rail/rail.adapter";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { chitRailProps } from "../chit/chit.adapter";
     import AchievementToastHost from "../chit/AchievementToastHost.svelte";
@@ -166,6 +167,14 @@
     const me = $derived($currentUserStore.userId);
     const profileAvatarUrl = $derived(ownUserAvatarUrl($allUsersStore.get(me)));
     const activeItem = $derived(railShown.findIndex((item) => item.id === selection.item));
+    // the operator console, at the rail's foot for a platform operator (the old main menu's Admin)
+    const footItems = $derived(
+        railFootItems(
+            !$anonUserStore && $platformOperatorStore,
+            $routeStore.kind === "admin_route",
+            $_("adminConsole"),
+        ),
+    );
     // the rail's CHIT button, which opens ?chit (8d)
     const chit = $derived(
         chitRailProps(
@@ -277,8 +286,7 @@
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
     onCloseRight={closeRight}
-    rightLabel="ui.panelCover.info"
->
+    rightLabel="ui.panelCover.info">
     {#snippet rail()}
         <NavRail
             expanded={railState.expanded}
@@ -298,6 +306,10 @@
             profileColor={senderColor(me)}
             onSelect={(i) => selectRail(i)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
+            {footItems}
+            onSelectFoot={(id) => {
+                if (id === "admin") navigate("/admin");
+            }}
             onExplore={() => navigate("/communities")}
             onProfile={() => navigate(withQueryStringFlag("profile"), "overlay")}
             chitShown={!$anonUserStore && chit.chitShown}
@@ -307,8 +319,7 @@
                 (playableDailyPuzzleRows($dailyPuzzleStore) ?? []).some((r) => r.status === "play")}
             onChit={() => openLinked({ kind: "chit" })}
             onCreateCommunity={createCommunity}
-            onSignIn={() => askToSignIn(client)}
-        />
+            onSignIn={() => askToSignIn(client)} />
     {/snippet}
     {#snippet middle()}
         <RegionScreen
@@ -316,8 +327,7 @@
             screens={middleScreens}
             {context}
             column="middle"
-            toolbar={middleToolbar}
-        />
+            toolbar={middleToolbar} />
     {/snippet}
 </Shell>
 

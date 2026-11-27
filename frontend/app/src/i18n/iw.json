@@ -178,6 +178,7 @@
         "title": "פנקס כתובות"
     },
     "admin": "אדמין",
+    "adminConsole": "ניהול",
     "advanced": "מִתקַדֵם",
     "airdropWarning": "כדי להעפיל ל-Airdrop הבא, עליך להיות חבר בערוץ **{channelName}** בקהילת **{communityName}**. [לחץ כאן כדי להצטרף.]({url})",
     "andNMore": ", ועוד {n}",

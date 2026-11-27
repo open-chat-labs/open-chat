@@ -6,6 +6,7 @@ import {
     type UnreadCounts,
 } from "@client";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
+import type { RailFootItem } from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
 import { swatchFor } from "@src/logic/swatch";
 import type { RailItem } from "../../router/regions";
@@ -81,4 +82,19 @@ export function railItemUnread(
 function chatsUnread(counts: UnreadCounts): Pick<Item, "dot" | "count"> {
     if (!lit(counts)) return { dot: false };
     return counts.unmuted > 0 ? { dot: true, count: counts.unmuted } : { dot: true };
+}
+
+/**
+ * The rail's foot, above CHIT: the operator console (/admin) for a platform operator only, not
+ * a group's or community's admins (the old desktop main menu's Admin item), highlighted while
+ * it's open. Signed-in users only: the caller passes false for a guest.
+ */
+export function railFootItems(
+    isPlatformOperator: boolean,
+    adminOpen: boolean,
+    adminLabel: string,
+): RailFootItem[] {
+    return isPlatformOperator
+        ? [{ id: "admin", icon: "shield", label: adminLabel, active: adminOpen }]
+        : [];
 }

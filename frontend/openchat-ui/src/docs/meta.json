@@ -16168,6 +16168,28 @@
         "doc": "The picked community, by id."
       },
       {
+        "name": "footItems",
+        "type": "RailFootItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The host's destinations at the rail's foot, above CHIT; none by default."
+      },
+      {
+        "name": "onSelectFoot",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "exploreActive",
         "type": "boolean",
         "default": false,

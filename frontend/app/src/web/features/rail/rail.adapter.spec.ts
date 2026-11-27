@@ -6,7 +6,7 @@ import {
     type ReadonlyMap,
     type UnreadCounts,
 } from "@client";
-import { pinsFor, railItemUnread, type RailUnread } from "./rail.adapter";
+import { pinsFor, railFootItems, railItemUnread, type RailUnread } from "./rail.adapter";
 
 const community = (communityId: string, name: string, avatar?: string) =>
     ({
@@ -126,5 +126,18 @@ describe("a rail item's unread mark", () => {
         });
         expect(railItemUnread("notifications", unread({}))).toEqual({ dot: false });
         expect(railItemUnread("wallet", unread({ activity: 2 }))).toEqual({ dot: false });
+    });
+});
+
+describe("the rail's foot", () => {
+    test("has the operator console for a platform operator, highlighted while it's open", () => {
+        expect(railFootItems(true, false, "Admin")).toEqual([
+            { id: "admin", icon: "shield", label: "Admin", active: false },
+        ]);
+        expect(railFootItems(true, true, "Admin")[0].active).toBe(true);
+    });
+
+    test("has nothing for anyone else, a group's or community's admins included", () => {
+        expect(railFootItems(false, false, "Admin")).toEqual([]);
     });
 });

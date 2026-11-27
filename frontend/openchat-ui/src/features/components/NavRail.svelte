@@ -3,7 +3,23 @@
      When the host says so (`floating`), or gives the rail a fixed slot ([data-rail-slot] narrower than 200px), the
      expanded rail floats over the content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
      Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl.
-     A pin with a `menu` opens it on right-click (at the pointer) or Shift+F10 / the Menu key (under the pin). -->
+     A pin with a `menu` opens it on right-click (at the pointer) or Shift+F10 / the Menu key (under the pin).
+     `footItems` are the host's own destinations at the rail's foot, above CHIT (the app's Admin, for platform
+     operators); onSelectFoot reports one's id. -->
+<script lang="ts" module>
+  /** A destination of the host's at the rail's foot, above CHIT (the app's Admin, for platform operators). */
+  export interface RailFootItem {
+    /** Reported by onSelectFoot. */
+    id: string;
+    /** Icon name (the library's icon set). */
+    icon: string;
+    /** Resource key (or literal text): the expanded rail's label, the collapsed one's tooltip and accessible name. */
+    label: string;
+    /** It's the page open: the rail's highlight and accent bar (the host leaves activeIndex at -1 meanwhile). */
+    active?: boolean;
+  }
+</script>
+
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { useT } from '../../lib/i18n';
@@ -72,6 +88,9 @@
     profileOnline?: boolean;
     onSelect?: (i: number, item: Item) => void;
     onSelectPin?: (id: string, pin: Pin) => void;
+    /** The host's destinations at the rail's foot, above CHIT; none by default. */
+    footItems?: RailFootItem[];
+    onSelectFoot?: (id: string) => void;
     exploreActive?: boolean;
     onExplore?: () => void;
     guest?: boolean;
@@ -104,6 +123,8 @@
     profileOnline = false,
     onSelect,
     onSelectPin,
+    footItems = [],
+    onSelectFoot,
     exploreActive = false,
     onExplore,
     guest = false,
@@ -141,6 +162,12 @@
 
   let root: HTMLDivElement;
   let barTop = $state<number | null>(null);
+  // a move into or out of the foot (far down the rail) grows the bar in place rather than sliding it
+  // there: a new bar each time (barGen), so it has no top to slide from
+  let barGen = $state(0);
+  let barGrows = $state(false);
+  // where the bar last showed (null before it first has), kept while no row is active in between
+  let barInFoot: boolean | null = null;
 
   // the accent bar slides to whichever row is active
   async function syncBar() {
@@ -148,7 +175,22 @@
     // the rail may have been unmounted while it waited
     if (!root) return;
     const row = root.querySelector('[data-active-row]');
-    barTop = row ? Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7 : null;
+    if (!row) {
+      barTop = null;
+      return;
+    }
+    const top = Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7;
+    const inFoot = row.hasAttribute('data-foot-row');
+    if (barInFoot !== null && inFoot !== barInFoot) {
+      // across the spacer, either way: grow a new bar where it lands
+      barGrows = true;
+      barGen += 1;
+    } else if (barTop !== null && top !== barTop) {
+      // a move within one group slides (a re-run that leaves the bar where it is keeps a grow playing)
+      barGrows = false;
+    }
+    barInFoot = inFoot;
+    barTop = top;
   }
 
   $effect(() => {
@@ -159,6 +201,7 @@
     void guest;
     void items;
     void pins;
+    void footItems;
     syncBar();
   });
 
@@ -193,7 +236,9 @@
 </script>
 
 <div class="rail" class:open bind:this={root} data-rail-expanded={open ? 'true' : 'false'}>
-  <span class="bar" style:top="{barTop ?? 13}px" style:opacity={barTop === null ? 0 : 1}></span>
+  {#key barGen}
+    <span class="bar" class:grows={barGrows} style:top="{barTop ?? 13}px" style:opacity={barTop === null ? 0 : 1}></span>
+  {/key}
   {#if !guest}
     {#each items as item, i}
       <div
@@ -304,6 +349,31 @@
 
   <div class="grow"></div>
 
+  {#if !guest}
+    {#each footItems as item (item.id)}
+      <div
+        class="row"
+        class:active={item.active}
+        data-active-row={item.active ? '' : undefined}
+        data-foot-row=""
+        onclick={() => {
+          picked();
+          localActive = -1;
+          localPin = null;
+          onSelectFoot?.(item.id);
+        }}
+        role="button"
+        tabindex="0"
+        aria-label={t(item.label)}
+        aria-current={item.active ? 'page' : undefined}
+        title={t(item.label)}
+      >
+        <span class="item-icon" style:mask="var(--icon-{item.icon}) center/contain no-repeat"></span>
+        <span class="label fold">{t(item.label)}</span>
+      </div>
+    {/each}
+  {/if}
+
   <!-- CHIT is a personal action, so it never takes the destination highlight -->
   {#if chitShown && !guest}
     <div class="row chit" class:claimable={chitClaimable} onclick={() => onChit?.()} role="button" tabindex="0" aria-label={chitTitle} title={chitTitle}>
@@ -385,6 +455,24 @@
     transition:
       top 0.3s var(--ease-out),
       opacity var(--duration-base) ease;
+
+    &.grows {
+      animation: bar-grow 0.2s var(--ease-out);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+
+      &.grows {
+        animation: none;
+      }
+    }
+  }
+
+  @keyframes bar-grow {
+    from {
+      transform: scaleY(0);
+    }
   }
 
   .row {

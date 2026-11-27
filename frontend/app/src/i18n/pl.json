@@ -178,6 +178,7 @@
         "title": "Książka adresowa"
     },
     "admin": "Admin",
+    "adminConsole": "Administracja",
     "advanced": "Zaawansowany",
     "airdropWarning": "Aby zakwalifikować się do następnego Airdropu, musisz być członkiem kanału **{channelName}** w społeczności **{communityName}**. [Kliknij tutaj, aby dołączyć.]({url})",
     "andNMore": "i {n} więcej",
