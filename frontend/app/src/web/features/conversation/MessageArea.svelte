@@ -1806,6 +1806,12 @@
                                 avatarColor={typingBubble.color} />
                         </div>
                     {/if}
+                    <!-- where the strip shows who's typing, the room it rises into, always there
+                         (so nothing moves as it comes and goes): it covers this, not the newest
+                         message. Not under a preview's Join bar or a blocked entry: no strip there -->
+                    {#if typingAt === "strip" && composerShown && block === undefined}
+                        <div class="typing-room"></div>
+                    {/if}
                 {/snippet}
                 {#snippet fabs({ showGoToBottom, scrollToLast, scrollToMention })}
                     <!-- TODO(design): no go-to-mention button in the design or web/05; the old
@@ -2243,6 +2249,12 @@
     // newest message, standing apart from it as a new sender's run does (.row.starts)
     .typing-bubble {
         padding-block-start: var(--space-16);
+    }
+
+    // the typing strip's rise above the composer (ComposerBar's `.typing`: 24px tall, 6px of it
+    // over the bar's own padding)
+    .typing-room {
+        height: var(--space-18);
     }
 
     .composer {
