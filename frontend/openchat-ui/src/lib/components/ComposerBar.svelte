@@ -63,6 +63,10 @@
     insert?: ComposerProps['insert'];
     /** The host's own editor in place of the text box, passed to the composer (see MessageComposer). */
     editor?: ComposerProps['editor'];
+    /** The host's emoji for the picker, and what's picked from them, passed to the composer (see MessageComposer). */
+    emoji?: ComposerProps['emoji'];
+    onEmojiPicked?: ComposerProps['onEmojiPicked'];
+    onLockedEmoji?: ComposerProps['onLockedEmoji'];
   }
 
   let {

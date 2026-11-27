@@ -2,10 +2,10 @@
      its `editor` seam: the composer drives it (ComposerEditor) and gets its markdown as the draft.
      The composer's own lists stand in for the editor's pickers: its mention list (the "@word" the
      editor reports; the one picked put in as a mention, sent as `@UserId`), and no ":word" emoji
-     list. `Editor` is the loaded component (RichTextEditorLoad), so the editor's chunk stays out of
+     list. A custom emoji picked from the composer's picker goes in as one (`insertEmoji`). `Editor` is the loaded component (RichTextEditorLoad), so the editor's chunk stays out of
      the initial one. -->
 <script lang="ts">
-    import type { UserOrUserGroup } from "@client";
+    import { customEmojis, type UserOrUserGroup } from "@client";
     import type {
         ComposerEditor,
         ComposerEditorArgs,
@@ -43,6 +43,12 @@
             insertMention: (mention) => {
                 const picked = resolveMention(mention);
                 if (picked !== undefined) ed.insertMention(picked);
+            },
+            // a custom emoji picked, as one, as the old pickers put it in (`!emoji(code)` in the
+            // markdown)
+            insertEmoji: (code) => {
+                const custom = customEmojis.get(code);
+                if (custom !== undefined) ed.insertEmoji(custom);
             },
         };
         return args.register(driven);

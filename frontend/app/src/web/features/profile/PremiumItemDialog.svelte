@@ -1,7 +1,8 @@
-<!-- Paying CHIT for a premium item (the profile background) before using it, as the old UI's
-     PremiumItemPayment did (app/src/logic/premium). Once paid, the item is used from a button here:
-     a click, so the browser still lets it open a file chooser, which it may not after the payment's
-     round trip. -->
+<!-- Paying CHIT for a premium item (the profile background, an emoji pack) before using it, as the
+     old UI's PremiumItemPayment did (app/src/logic/premium). Once paid, the item is used from a
+     button here where there's a `useLabel`: a click, so the browser still lets it open a file
+     chooser, which it may not after the payment's round trip. Without one (an emoji picked), it's
+     used as soon as it's paid, as the old picker did. -->
 <script lang="ts">
     import { OpenChat, type PremiumItem } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
@@ -16,8 +17,9 @@
         item: PremiumItem;
         // the user's CHIT balance
         balance: number;
-        // what using the item is called (an i18n key), and doing it
-        useLabel: string;
+        // what using the item is called (an i18n key), and doing it; without a label, it's used
+        // once it's paid
+        useLabel?: string;
         onUse: () => void;
         onClose: () => void;
     }
@@ -35,8 +37,9 @@
 
     async function pay() {
         const outcome = await payment.pay();
-        if (outcome.kind === "paid") paid = true;
-        else toastStore.showFailureToast(outcome.reason);
+        if (outcome.kind !== "paid") toastStore.showFailureToast(outcome.reason);
+        else if (useLabel === undefined) onUse();
+        else paid = true;
     }
 
     // a payment on its way can't be walked away from: its outcome has to be seen
@@ -57,7 +60,7 @@
         {/if}
     </p>
     <div class="actions">
-        {#if paid}
+        {#if paid && useLabel !== undefined}
             <Button label={$_(useLabel)} onClick={onUse} />
         {:else}
             {#if payment.paying}<Spinner />{/if}

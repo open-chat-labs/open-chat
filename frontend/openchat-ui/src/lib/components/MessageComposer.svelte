@@ -11,7 +11,8 @@
      into the draft without focusing it (insert), and size the bar with --composer-radius, --composer-min-h,
      --composer-pad, --composer-btn and --composer-btn-radius.
      A host's own editor (a rich-text one) can stand in for the textarea (`editor`): the composer drives it through
-     ComposerEditor and keeps the draft as the text it gives; without one, or until it's given, the textarea. -->
+     ComposerEditor and keeps the draft as the text it gives; without one, or until it's given, the textarea.
+     The emoji picker shows the host's emoji where it gives them (`emoji`: every emoji, its custom ones), else its own set. -->
 <script lang="ts">
   import { onMount, tick, untrack, type Snippet } from 'svelte';
   import type {
@@ -25,7 +26,9 @@
     ComposerGif,
     ComposerGifs,
     ComposerMention,
+    EmojiPickerSource,
     MenuItem,
+    PickerEmojiItem,
   } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
@@ -164,6 +167,12 @@
     /** The host's own editor in the textarea's place (a rich-text one), once it can be shown: it registers itself
      *  (ComposerEditor) and gives the text as it changes. Without it, the textarea. */
     editor?: Snippet<[ComposerEditorArgs]>;
+    /** The host's emoji for the emoji picker (every emoji, its custom ones), in place of the picker's own set. */
+    emoji?: EmojiPickerSource;
+    /** With `emoji`: one of them was put in at the caret (the host keeps its recent ones). */
+    onEmojiPicked?: (item: PickerEmojiItem) => void;
+    /** With `emoji`: a locked one was picked (not put in; the picker closes): the host offers to unlock it. */
+    onLockedEmoji?: (item: PickerEmojiItem & { kind: 'image' }) => void;
   }
 
   let {
@@ -213,6 +222,9 @@
     onClearMedia,
     clearMediaLabel = 'ui.messageComposer.clearMedia',
     editor,
+    emoji,
+    onEmojiPicked,
+    onLockedEmoji,
   }: Props = $props();
   const t = useT();
 
@@ -522,6 +534,19 @@
   function insert(text: string) {
     if (hostEditor) hostEditor.insertText(text, true);
     else void editDraft((d, a, b) => insertAt(d, a, b, text), true);
+  }
+
+  // one of the host's emoji picked: a character as the picker's own, an image emoji as one (the host's editor's) or
+  // its text; a locked one is the host's to offer
+  function pickEmoji(item: PickerEmojiItem) {
+    if (item.kind === 'char') insert(item.char);
+    else if (item.locked) {
+      menu = null;
+      onLockedEmoji?.(item);
+      return;
+    } else if (hostEditor?.insertEmoji) hostEditor.insertEmoji(item.code);
+    else insert(item.text);
+    onEmojiPicked?.(item);
   }
 
   // GIFs: the host searches what the tab asks for (`onGifSearch`), once per change, or again after it failed
@@ -1153,7 +1178,9 @@
       {/if}
       {#if tab === 0}
         <div class="emoji-area">
-          <div class="fill"><EmojiPicker onPick={insert} onClose={() => (menu = null)} autoFocus={demo === 'interactive'} /></div>
+          <div class="fill">
+            <EmojiPicker onPick={insert} onClose={() => (menu = null)} autoFocus={demo === 'interactive'} source={emoji} onPickItem={pickEmoji} columns={emoji ? 10 : 8} />
+          </div>
         </div>
       {:else}
         <div class="search">
@@ -1428,9 +1455,11 @@
     z-index: 20;
   }
 
+  // the emoji / GIF picker: as wide as the composer allows (about 450px in the web's narrowest window), and no taller
+  // than the window leaves above the composer (with the chat's header showing)
   .picker {
-    width: min(360px, 100%);
-    height: 400px;
+    width: min(var(--composer-picker-w), 100%);
+    height: min(var(--composer-picker-h), calc(100dvh - 180px));
     box-sizing: border-box;
     display: flex;
     flex-direction: column;

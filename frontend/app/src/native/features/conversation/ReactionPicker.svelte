@@ -11,7 +11,7 @@
     import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import EmojiGrid from "./EmojiGrid.svelte";
-    import { EmojiSections } from "./emojiSections.svelte";
+    import { EmojiSections } from "@src/logic/composer/emojiSections.svelte";
     import EmojiSearchField from "./EmojiSearchField.svelte";
 
     type Props = {
