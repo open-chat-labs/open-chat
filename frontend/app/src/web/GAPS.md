@@ -3570,7 +3570,10 @@ design export needs. Each entry says where it came up.
   for it, and back down as it goes); scrolled up, it's below, out of view, and nothing visible
   moves. It shows only after the latest message: while newer messages are still to load
   (`moreNewMessagesAvailable`, after a jump back), a DM's typing goes to the composer's strip. In a group or channel (and any thread) the strip
-  resting on the composer (`ComposerBar`), as before. The rule is `typingPlacement`
+  resting on the composer (`ComposerBar`), as before. The strip rises 18px over the list, so
+  wherever it's the placement the list's footer always ends with 18px of room for it
+  (`.typing-room`, #10646): it covers that, not the newest message, and nothing moves as it
+  comes and goes. The rule is `typingPlacement`
   (`logic/conversation/timeline`, spec'd), shared with the native conversation, whose bubble has
   no avatar (native plan 04: "three dots, no avatar"; its DMs show no avatars at all). Checked end
   to end on the local replica (two signed-in browsers, a DM).
