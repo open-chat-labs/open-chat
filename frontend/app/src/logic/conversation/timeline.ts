@@ -28,6 +28,15 @@ export function firstUnreadOnOpen(
 }
 
 /**
+ * How the unread divider goes once it has been read through (`FirstUnread.readThrough`): it
+ * lingers 3s, so the reader sees where the new messages began, then fades and folds away over
+ * 0.3s (`FirstUnread.seen` at the end). The old trees have no divider to match; the native
+ * conversation's timing, which the web's follows.
+ */
+export const UNREAD_DIVIDER_LINGER_MS = 3000;
+export const UNREAD_DIVIDER_FADE_MS = 300;
+
+/**
  * The first unread message when a chat was opened: the unread divider stays above it while the
  * chat is open, as messages are read. Worked out once per chat, so a new chat never shows the
  * last one's.

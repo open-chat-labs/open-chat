@@ -290,6 +290,8 @@
         MessageLink,
         othersTyping,
         typingPlacement,
+        UNREAD_DIVIDER_FADE_MS,
+        UNREAD_DIVIDER_LINGER_MS,
     } from "@src/logic/conversation/timeline";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
@@ -1111,10 +1113,14 @@
     }
 
     // The first unread message when the chat was opened: the unread divider stays above it while
-    // the chat is open, as messages are read. Worked out with the chat, so a new chat never shows
-    // the last one's. A thread has none, as in the old trees
+    // the chat is open, until every message from there on has been read: then it lingers a moment
+    // and fades (FirstUnread.seen), as the native conversation's. Worked out with the chat, so a
+    // new chat never shows the last one's. A thread has none, as in the old trees
     const firstUnreadMarker = new FirstUnread();
+    let dividerSeen = $state(0);
+    let dividerFading = $state(false);
     const firstUnread = $derived.by(() => {
+        void dividerSeen;
         if (thread !== undefined) return undefined;
         const current = chat;
         return firstUnreadMarker.of(current.id, () =>
@@ -1124,6 +1130,30 @@
                 ),
             ),
         );
+    });
+    const unreadLeft = $derived.by(() => {
+        // follows the read state as messages are read
+        void $messagesRead;
+        return messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
+    });
+    $effect(() => {
+        const current = chat;
+        const selected =
+            $selectedChatIdStore !== undefined &&
+            chatIdentifiersEqual($selectedChatIdStore, current.id);
+        if (!FirstUnread.readThrough(firstUnread, selected, () => unreadLeft)) return;
+        const fade = setTimeout(() => (dividerFading = true), UNREAD_DIVIDER_LINGER_MS);
+        const gone = setTimeout(() => {
+            firstUnreadMarker.seen(current.id);
+            dividerFading = false;
+            dividerSeen += 1;
+        }, UNREAD_DIVIDER_LINGER_MS + UNREAD_DIVIDER_FADE_MS);
+        // stopped part way (another chat opened as it fades): back in full, to linger again
+        return () => {
+            clearTimeout(fade);
+            clearTimeout(gone);
+            dividerFading = false;
+        };
     });
 
     // Go to the route's message (a deep link), as the old list does: when it changes, and when the
@@ -1934,7 +1964,11 @@
                 }}
             >
                 {#if firstUnread === msg.messageIndex && msg.sender !== me}
-                    <div class="unread"><UnreadDivider /></div>
+                    <div class="unread" class:fading={dividerFading}>
+                        <div class="unread-inner">
+                            <div class="unread-pad"><UnreadDivider /></div>
+                        </div>
+                    </div>
                 {/if}
                 <MessageGroup
                     side={row.side}
@@ -2207,6 +2241,8 @@
 {/if}
 
 <style lang="scss">
+    @use "@openchat/ui/src/lib/styles/mixins" as *;
+
     .area {
         position: relative;
         display: flex;
@@ -2301,7 +2337,30 @@
         margin-block-end: 0;
     }
 
+    // fades and folds away once it has been read past (UNREAD_DIVIDER_FADE_MS)
     .unread {
+        display: grid;
+        grid-template-rows: 1fr;
+        transition:
+            grid-template-rows 0.3s var(--ease-out),
+            opacity 0.3s ease;
+
+        &.fading {
+            grid-template-rows: 0fr;
+            opacity: 0;
+        }
+
+        @include reduced-motion {
+            transition: none;
+        }
+    }
+
+    .unread-inner {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .unread-pad {
         padding-block-end: var(--space-12);
     }
 

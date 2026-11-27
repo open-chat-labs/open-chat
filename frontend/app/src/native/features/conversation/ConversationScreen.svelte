@@ -185,6 +185,8 @@
         OpenAtUnread,
         othersTyping,
         typingPlacement,
+        UNREAD_DIVIDER_FADE_MS,
+        UNREAD_DIVIDER_LINGER_MS,
     } from "@src/logic/conversation/timeline";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
@@ -1046,8 +1048,6 @@
 
     // the unread divider stays above the first message unread when the chat opened, until every
     // message from there on has been read: then it lingers a moment and fades (FirstUnread.seen)
-    const DIVIDER_LINGER_MS = 3000;
-    const DIVIDER_FADE_MS = 300;
     const firstUnreadMarker = new FirstUnread();
     let dividerSeen = $state(0);
     let dividerFading = $state(false);
@@ -1075,12 +1075,12 @@
         const current = chat;
         if (current === undefined) return;
         if (!FirstUnread.readThrough(firstUnread, selected, () => unreadLeft)) return;
-        const fade = setTimeout(() => (dividerFading = true), DIVIDER_LINGER_MS);
+        const fade = setTimeout(() => (dividerFading = true), UNREAD_DIVIDER_LINGER_MS);
         const gone = setTimeout(() => {
             firstUnreadMarker.seen(current.id);
             dividerFading = false;
             dividerSeen += 1;
-        }, DIVIDER_LINGER_MS + DIVIDER_FADE_MS);
+        }, UNREAD_DIVIDER_LINGER_MS + UNREAD_DIVIDER_FADE_MS);
         // stopped part way (the chat deselected as it fades): back in full, to linger again
         return () => {
             clearTimeout(fade);
