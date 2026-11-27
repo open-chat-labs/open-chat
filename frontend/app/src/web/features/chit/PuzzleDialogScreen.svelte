@@ -21,7 +21,7 @@
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
-    import { puzzleTitle } from "./puzzle.adapter";
+    import { puzzleTitle } from "@src/logic/dailyPuzzle/puzzleCard";
     import PuzzleSession from "./PuzzleSession.svelte";
 
     let { dialog, onClose }: DialogProps<Extract<LinkedDialog, { kind: "puzzle" }>> = $props();

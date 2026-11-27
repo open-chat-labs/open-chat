@@ -34,6 +34,7 @@ const demo: DemoSpec = {
             // The goal, stated once against an empty grid.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // The rule people get wrong. Cells 3 and 11 sit on the corners of tree 6 and 15 is
@@ -44,6 +45,7 @@ const demo: DemoSpec = {
                 [15, 0],
             ],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [3, 11, 15],
         },
         {
@@ -55,6 +57,7 @@ const demo: DemoSpec = {
                 [7, 1],
             ],
             caption: "demo.3",
+            title: "demoTitle.3",
             target: [3, 7, 11, 15],
         },
         {
@@ -69,6 +72,7 @@ const demo: DemoSpec = {
                 [8, 1],
             ],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [5, 8],
         },
         {
@@ -86,6 +90,7 @@ const demo: DemoSpec = {
                 [8, 1],
             ],
             caption: "demo.5",
+            title: "demoTitle.5",
             target: [8, 9],
         },
         {
@@ -106,6 +111,7 @@ const demo: DemoSpec = {
                 [15, 0],
             ],
             caption: "demo.6",
+            title: "demoTitle.6",
         },
     ],
 };

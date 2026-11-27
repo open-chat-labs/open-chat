@@ -1,21 +1,5 @@
-import {
-    achievementList,
-    achievements,
-    toMonthString,
-    type ChitState,
-    type StreakInsurance,
-} from "@client";
-import {
-    achievementItems,
-    achievementsCount,
-    chitDialogProps,
-    chitRailProps,
-    leaderboardBoards,
-    streakInsuranceBalance,
-    streakInsuranceDialogPrices,
-    streakInsurancePurchase,
-    type ChitInputs,
-} from "./chit.adapter";
+import { toMonthString, type ChitState, type StreakInsurance } from "@client";
+import { chitDialogProps, chitRailProps, leaderboardBoards, type ChitInputs } from "./chit.adapter";
 
 const NOW = 10 * 24 * 60 * 60 * 1000;
 const MINUTE = 60_000;
@@ -135,54 +119,6 @@ describe("the rail's CHIT button", () => {
     });
 });
 
-describe("the ways to earn", () => {
-    const entries = achievementList(
-        achievements,
-        new Set(["sent_text"]),
-        [
-            {
-                id: 7,
-                url: "https://partner.example",
-                name: "Partner quest",
-                chitReward: 5000,
-                expires: BigInt(NOW + 1000),
-                budgetExhausted: false,
-            },
-        ],
-        NOW,
-    );
-
-    test("put each achievement in its group, with its reward, band and the old UI's name", () => {
-        const items = achievementItems(entries, (id) => `name of ${id}`);
-        expect(items.find((a) => a.id === "sent_text")).toEqual({
-            id: "sent_text",
-            group: "messaging",
-            reward: 700,
-            done: true,
-            band: "quick",
-            label: "name of sent_text",
-        });
-        expect(items.find((a) => a.id === "referred_1st_user")?.group).toBe("referrals");
-        expect(items.find((a) => a.id === "streak_30")).toMatchObject({
-            group: "streaks",
-            band: "big",
-        });
-        // a partner's, under its name
-        expect(items.find((a) => a.id === "Partner quest")).toMatchObject({
-            group: "partners",
-            reward: 5000,
-            label: "Partner quest",
-        });
-    });
-
-    test("count what's left for ChitDialog", () => {
-        expect(achievementsCount(entries)).toEqual({
-            total: entries.length,
-            left: entries.length - 1,
-        });
-    });
-});
-
 describe("the leaderboard's boards", () => {
     // 2026-03-01, 00:30 UTC: still March in UTC, whatever the local date
     const MARCH = Date.UTC(2026, 2, 1, 0, 30);
@@ -232,49 +168,5 @@ describe("the leaderboard's boards", () => {
             "All time",
         );
         expect(boards.allTime.rows).toEqual([]);
-    });
-});
-
-describe("streak insurance", () => {
-    const CHAT = 100_000_000n;
-
-    test("a streak insurance purchase sends streakInsurancePrice(daysInsured, days) computed from streakInsuranceStore, never the dialog's cost, and cover bought never passes 30 days", () => {
-        // 3 bought, 1 used: the next two are the 4th and 5th bought
-        expect(streakInsurancePurchase({ daysInsured: 3, daysMissed: 1 }, 2)).toEqual({
-            days: 2,
-            price: (8n + 16n) * CHAT,
-        });
-        // 28 bought: only 2 more
-        expect(streakInsurancePurchase({ daysInsured: 28, daysMissed: 0 }, 5).days).toBe(2);
-        expect(streakInsurancePurchase({ daysInsured: 30, daysMissed: 4 }, 1)).toEqual({
-            days: 0,
-            price: 0n,
-        });
-    });
-
-    test("the balance the insurance dialog checks against is the CHAT balance less the approval fee, so a day it offers can be paid", () => {
-        // a 0.001 CHAT transfer fee, which the approval costs
-        const fee = 100_000n;
-        expect(streakInsuranceBalance(5n * CHAT, fee)).toBe(4.999);
-        // 2 CHAT less the fee can't pay a 2 CHAT day
-        expect(streakInsuranceBalance(2n * CHAT, fee)).toBeLessThan(2);
-        expect(streakInsuranceBalance(0n, fee)).toBe(0);
-        // CHAT's fee not known yet: nothing known to be spendable
-        expect(streakInsuranceBalance(5n * CHAT, undefined)).toBe(0);
-    });
-
-    test("the dialog's prices are what the backend charges, after missed days too", () => {
-        // nothing used: 1, 2, 4 … CHAT, 30 positions
-        const fresh = streakInsuranceDialogPrices({ daysInsured: 0, daysMissed: 0 });
-        expect(fresh.slice(0, 3)).toEqual([1, 2, 4]);
-        expect(fresh).toHaveLength(30);
-        // 3 bought, 1 used: 2 held, so the dialog's next position (2) must cost the 4th bought day
-        const prices = streakInsuranceDialogPrices({ daysInsured: 3, daysMissed: 1 });
-        const held = 3 - 1;
-        expect(BigInt(prices[held] + prices[held + 1]) * CHAT).toBe(
-            streakInsurancePurchase({ daysInsured: 3, daysMissed: 1 }, 2).price,
-        );
-        // and no more positions than days left to buy: 2 held + 27 more = 29 = 30 - 1 used
-        expect(prices).toHaveLength(29);
     });
 });

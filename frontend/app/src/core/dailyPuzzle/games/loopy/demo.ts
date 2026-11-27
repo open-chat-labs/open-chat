@@ -19,6 +19,7 @@ const demo: DemoSpec = {
             // The goal, stated once against an empty grid.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // The cheapest deduction in the game, and the one to look for first: a 0 rules out
@@ -30,6 +31,7 @@ const demo: DemoSpec = {
                 [22, 0],
             ],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [8, 23, 11, 22],
         },
         {
@@ -40,6 +42,7 @@ const demo: DemoSpec = {
                 [14, 1],
             ],
             caption: "demo.3",
+            title: "demoTitle.3",
         },
         {
             // A loose end. The other edge at the top-left dot is crossed off so the checker can
@@ -50,6 +53,7 @@ const demo: DemoSpec = {
                 [12, 0],
             ],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [0, 12],
         },
         {
@@ -60,6 +64,7 @@ const demo: DemoSpec = {
                 [13, 1],
             ],
             caption: "demo.5",
+            title: "demoTitle.5",
             target: [0, 1, 13],
         },
         {
@@ -75,6 +80,7 @@ const demo: DemoSpec = {
                 [16, 1],
             ],
             caption: "demo.6",
+            title: "demoTitle.6",
         },
     ],
 };

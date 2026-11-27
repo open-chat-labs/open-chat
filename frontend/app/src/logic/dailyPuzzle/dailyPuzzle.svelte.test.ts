@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
     DailyPuzzleGame,
     hintButtonKeys,
+    hintButtonParts,
     type HintButton,
     type PuzzleHost,
 } from "./dailyPuzzle.svelte";
@@ -1032,6 +1033,34 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         g.toggleTutorial();
         expect(g.tutorialOpen).toBe(false);
     });
+    test("the demo before Start can be skipped for the inert board, and asked for again", () => {
+        const g = build(undefined, fakeClient(), true);
+        expect(g.showsDemo).toBe(true);
+        expect(g.canSkipDemo).toBe(true);
+        expect(g.offersHowToPlay).toBe(false);
+        g.skipDemo();
+        expect(g.showsDemo).toBe(false);
+        expect(g.canSkipDemo).toBe(false);
+        expect(g.offersHowToPlay).toBe(true);
+        g.showHowToPlay();
+        expect(g.showsDemo).toBe(true);
+    });
+
+    test("how to play over a game under way is the tutorial", () => {
+        const g = build(userState(), fakeClient(), true);
+        expect(g.canSkipDemo).toBe(false);
+        expect(g.offersHowToPlay).toBe(true);
+        g.showHowToPlay();
+        expect(g.tutorialOpen).toBe(true);
+        expect(g.offersHowToPlay).toBe(false);
+    });
+
+    test("a game without a demo offers neither", () => {
+        const g = build(undefined, fakeClient(), false);
+        expect(g.canSkipDemo).toBe(false);
+        g.skipDemo();
+        expect(g.offersHowToPlay).toBe(false);
+    });
 });
 
 describe("DailyPuzzleGame is the one source of truth for a play session (#9824)", () => {
@@ -1200,6 +1229,29 @@ describe("the hint button's label", () => {
         expect(hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 0 }).map((k) => k.key)).toEqual(
             ["dailyPuzzle.hintCost"],
         );
+    });
+});
+
+describe("the native hint button's parts", () => {
+    const text = ({ key, params }: { key: string; params?: object }) =>
+        params === undefined ? key : `${key}${JSON.stringify(params)}`;
+
+    test("is Use a hint, with the price and what's left beside it", () => {
+        const parts = hintButtonParts({ kind: "hint", price: 100, hintsLeft: 3, checksLeft: 1 });
+        expect(text(parts.label)).toBe("dailyPuzzle.useHint");
+        expect(parts.meta.map(text)).toEqual([
+            'dailyPuzzle.hintPrice{"price":100}',
+            'dailyPuzzle.hintsLeft{"count":3}',
+            'dailyPuzzle.checksLeft{"count":1}',
+        ]);
+    });
+
+    test("says why there's no hint, with nothing beside it", () => {
+        expect(hintButtonParts({ kind: "mistake" })).toEqual({
+            label: expect.objectContaining({ key: "dailyPuzzle.fixMistakeFirst" }),
+            meta: [],
+        });
+        expect(hintButtonParts({ kind: "noneLeft" }).label.key).toBe("dailyPuzzle.noHintsLeft");
     });
 });
 

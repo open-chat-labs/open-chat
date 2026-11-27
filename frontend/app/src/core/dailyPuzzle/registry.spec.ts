@@ -78,11 +78,15 @@ describe("daily puzzle demos", () => {
 
         const boardFor = (i: number) => def.newBoard(spec.description, spec.frames[i].marks);
 
-        test(`${id} demo has frames and a caption on each`, () => {
+        test(`${id} demo has frames, and a caption and a title on each`, () => {
             expect(spec.frames.length).toBeGreaterThan(1);
+            const strings = stringsOf(def.i18nPrefix);
             for (const f of spec.frames) {
-                expect(stringsOf(def.i18nPrefix)[f.caption]).toBeTruthy();
+                expect(strings[f.caption], f.caption).toBeTruthy();
+                expect(strings[f.title], f.title).toBeTruthy();
             }
+            // one title per frame, not one shared
+            expect(new Set(spec.frames.map((f) => f.title)).size).toBe(spec.frames.length);
         });
 
         test(`${id} demo ends on a solved grid`, () => {

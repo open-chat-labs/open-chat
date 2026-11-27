@@ -403,9 +403,9 @@ design export needs. Each entry says where it came up.
     checked yet.
   - **The CHIT card** shows the balance and the streak, and today's claim once the first sync is in
     (`dailyClaim`), with the confetti on a claim and a spinner in Claim's place while it's on its
-    way; its head opens CHIT (N11's placeholder). The daily
+    way; its head opens CHIT (N11, "Native CHIT"). The daily
     puzzle row (only when opted in) isn't there: the app has no opt-in (the web's profile hides its
-    puzzle setting too), and the puzzle screen is N11's.
+    puzzle setting too); the puzzle is on the CHIT screen.
   - **Diamond** (the web's `?diamond`, here a URL over the You tab): the membership (Lifetime, until
     when, or none), what Diamond gives (the app's own `upgrade.*` list: the prototype's sample perks,
     10 GB and unlimited groups, aren't what Diamond gives), the invite link to share, and a pinned
@@ -1429,6 +1429,100 @@ design export needs. Each entry says where it came up.
     Payments), the tabs, opening a row (its message pushed over the tab, the older row read, the
     newer two still unread) and Back to the feed, Mark all read (faded out, the tabs unmoved, the
     tab bar's dot gone, no error), the empty feed, light and dark. Not checked: iOS, Android.
+- **Native CHIT** (native N11, #10379; the native plan's 14 of 2026-11-08;
+  `src/native/features/chit`). Built: the CHIT screen, pushed from the Chats header's bolt and the
+  You tab's CHIT card (a local push, no URL): the hero (the balance, "Lifetime N", the streak's
+  pill, the last seven days as bars, the 52px Claim with the confetti inside the screen, and along
+  the hero's foot the streak insurance row, "Insured for N days · streak covered" with a pip a
+  day or "No insurance · streak at risk" on a warning tint, and today's puzzle row, "Daily puzzle ·
+  Bridges" with Play / Continue / Solved), Streak milestones (each with what a claim pays a day
+  from it on, the next with a bar and "streak / days"), "Achievements · N of M" (the partners'
+  counted, as the Achievements screen counts) over the four latest with their group and View all,
+  and the claim history calendar (`ClaimCalendar`'s `layout="card"`, as the prototype's: the month
+  over a card of square days, the picked day, today at first, described under the grid, the
+  month's totals and Local / UTC at its foot, its own Claim on today); the gear pushes CHIT's
+  settings. Streak insurance (as the prototype: "Insured for N days" or "No insurance" over a
+  bar a day of cover, Add cover's stepper with a line a day added and its price, the CHAT balance
+  and the pinned "Buy N days · X CHAT" with the shield), the Achievements
+  screen, and the daily puzzle as its own screen, laid out as the prototype's PuzzleDialog
+  `layout="screen"` and the same for every game (the puzzle's number over its game and tier, or
+  "How Bridges works" while the demo shows; the time, hints and streak as three chips; the board
+  on a card; Reset over "Use a hint · 100 CHIT · 3 left" at the bottom, Start before the game
+  starts; a solve made there plays the "Challenge solved" banner just above the bottom buttons,
+  a tap skipping it, then the solved view: the 160px trophy tile, "Solved in 3:44" over the
+  number, the countdown to the next puzzle, the tiles, Share to chat and Done side by side). Share to chat is a sheet of the chats the
+  user can send in; the chat picked opens with the result card staged in its composer (the
+  web's `sharedToChatStore`, which the native conversation now takes, asking first in place of a
+  staged payment). A result card's Play in a conversation pushes the puzzle (`cardOffersPlayWith`,
+  as the web's). On the web's logic, moved rather than copied: `logic/chit/achievements`,
+  `logic/chit/streakInsurance` and `logic/chit/externalAchievements` (were the web's CHIT
+  adapter's and `externalAchievements`), `logic/dailyPuzzle/puzzleCard` (was the web's puzzle
+  adapter); new and shared: `logic/chit/chitScreen` (the milestones, the 7-day strip, the
+  insurance row), `latestAchievements`, `insuranceQuote`, `logic/dailyPuzzle/solveReveal` (the
+  banner, then the solved view); `ClaimHistory.claim` now says whether a claim was made (the
+  confetti). An app store build has no streak insurance: no row, and no screen in its bundle
+  (`disableStreakInsuranceFeature`, specced with the flag on). Left, or decided where the plan is
+  silent (to ask):
+  - **PuzzleDialog's `layout="screen"`** isn't ported: the library's PuzzleDialog plays Bridges
+    only, so the native puzzle is a screen around the app's own boards, as the web's dialog is
+    (`PuzzleSession`'s flow, laid out to the plan). Its tutorial is the prototype's, on the
+    game's demo (stepped by `core/dailyPuzzle/DemoSteps`, as the web's `GameDemo`): the board on
+    the play card without the chips, the step's title and text under it, text Back / the step
+    dots / Next, and on the last step an inline Resume pill (back to the puzzle, where
+    Start with its fee is: the tutorial doesn't charge) or Back to puzzle; the header says "Step 2 of 6" (the demo's own frame count) and has Skip, which leaves
+    the inert board and Start until "How to play" shows the demo again
+    (`DailyPuzzleGame.skipDemo`). The prototype's step titles are inferred from each frame's
+    caption (`demoTitle.N` beside its `demo.N`); only the native tutorial shows them, the web's
+    and the old trees' `GameDemo` leave them out. Not there: the prototype's "about 30 seconds"
+    (each game's demo has its own length), and finishing a little board yourself (the demo's
+    frames are stills, the same for every game).
+  - **No Undo** on the puzzle: the shared game (`DailyPuzzleGame`) has none, so Reset has the
+    prototype's Undo / Reset row to itself. The buttons are the library's 52px `lg`, not the
+    prototype's 48px.
+  - **The boards keep their own colours**: the prototype draws Bridges on the dark dotted card;
+    the app's boards are light on purpose, the same in every theme (`games/README.md`), and
+    shared with the web and the result cards, so they sit on the card as they are.
+  - **No "Islands complete" bar**: it's Bridges' own count, and the shared game has no progress
+    for every game to show.
+  - **The solved tiles** are Hints, Day streak and the CHIT won: the prototype's Time is in the
+    title already. No "Remind me each day?": the app has no puzzle reminder (as CHIT's settings).
+  - **The 7-day strip** is the last seven days, today last (claimed, insured, missed, open, or
+    before the account was made), from the claim history: the plan names it only.
+  - **Streak milestones** list the claim schedule's milestones (3, 7, 14, 30, 100, 365) with the
+    daily CHIT each pays from then on ("1,000/day"): the prototype shows a one-off reward a
+    milestone pays ("+5,000"), which the backend has no such thing as. TODO(design): the value at a
+    milestone's end, if a rate isn't it.
+  - **The claimed button**: once today's is claimed the prototype's button turns into a plain bar
+    (tint, a check, "Claimed · next in …"), so it's drawn as that, not as a disabled Button.
+  - **An earned achievement's icon** is its group's (`ACHIEVEMENT_GROUPS`): the app has no icon per
+    achievement, the prototype draws one each.
+  - **Latest achievements** are the four most recently earned, from the CHIT events the calendar
+    loads (newest first); with none, a line saying each one pays CHIT. The Achievements screen
+    (View all) lists every achievement by AchievementsDialog's groups (its `ACHIEVEMENT_GROUPS`,
+    now exported) in the settings kit's cards: the plan has no layout for it.
+  - **The cover's bars**: the prototype has seven and stops there; the backend allows 30, so
+    there are seven at least and another row of seven as the cover held and added passes them.
+    The prices are the backend's (each day twice the one before), not the prototype's sample
+    (1, 2, 4, 12, 28, 60, 124). Days used so far show under the bars (the prototype has none).
+    Too little CHAT shows as the balance in the danger colour, Buy disabled.
+  - **Buying insurance with a PIN**: the client asks for the PIN through a prompt the native tree
+    doesn't show yet (N10b's PIN sheet), so with a PIN set, Buy says so in a small alert and
+    points to oc.app; without a PIN it buys (paid in CHAT, the approval's fee on top, the price
+    worked out from the cover bought). Not bought locally (no CHAT on the local ledger).
+  - **Share to chat** takes no message (the web's picker has one): the card is staged in the
+    chat's composer, where a caption can be written.
+  - **The puzzle row with every puzzle solved** opens the solved puzzle (its result), where the
+    web's card opens the leaderboard: the native design has no leaderboard.
+  - **"Daily puzzle" on the You tab's card** (only when opted in): still not there, as the app has
+    no opt-in.
+  - Checked in the browser (390×844, dark, port 5059): a fresh account's CHIT screen from the
+    Chats header, claiming (the balance, ring, strip and calendar follow), the
+    calendar, streak insurance (the stepper and ladder; "Not enough CHAT"), the Achievements
+    screen; the puzzle planted in the store (the local replica has none): the row, the screen,
+    Start, the banner then the solved view, Share to chat into a DM (staged, then sent), and the
+    card's Play on the other account opening the puzzle; and an app store build (no insurance
+    row, no wallet tab). Not checked: a real solve (no puzzle locally), buying insurance (no
+    CHAT), iOS, the light theme.
 - **Native Communities tab** (native N8a, #10374; the native plan's 12 of 2026-11-08 and 10
   "Threads"; `src/native/features/communities`, `features/threads`). Built: a member's page at
   the tab's root (CommunityHome: the header with its 42px avatar, name and "Public · N members",
@@ -3138,15 +3232,15 @@ design export needs. Each entry says where it came up.
   caption is plain text, where the old trees rendered it as markdown (as the other cards' captions
   in the new UI). The old desktop hid the verified line on a narrow window; it always shows. The
   native conversation shows the card too (the library's `MessageGroup`, `messageRow`), with its
-  grid and no Play (the native tree has no daily puzzle yet); its pinned messages and message info
-  show it without the grid.
+  grid, and Play (N11) as the web's, pushing the native puzzle screen; its pinned messages and
+  message info show it without the grid or Play.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, with its Invaders game behind the joystick (8f: the old game, now
   `core/invaders`, for both trees), where the device can play it (a keyboard, or iOS, which steers
   by tilting); it now starts again after a game ends, keeps the final score on screen, and fits
   its waves to the field (fewer rows on a short one, a phone on its side).
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The
-  dialog's groups and its "next up" bands are the app's (`chit.adapter.ts`: each achievement
+  dialog's groups and its "next up" bands are the app's (`logic/chit/achievements`: each achievement
   given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old
   UI had; no achievement has an icon of its own (the old UI had none).
 - **Achievement toast** (`AchievementToast`, for the client's `chitEarned`): only with the popup

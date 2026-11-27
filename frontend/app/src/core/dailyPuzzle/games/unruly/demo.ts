@@ -31,6 +31,7 @@ const demo: DemoSpec = {
             // The goal, stated once against the bare givens.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // Two lights placed to the left of the given light at cell 2: three across the top
@@ -40,6 +41,7 @@ const demo: DemoSpec = {
                 [1, 1],
             ],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [0, 1, 2],
         },
         {
@@ -52,6 +54,7 @@ const demo: DemoSpec = {
                 [23, 2],
             ],
             caption: "demo.3",
+            title: "demoTitle.3",
             target: [18, 19, 22, 23],
         },
         {
@@ -59,6 +62,7 @@ const demo: DemoSpec = {
             // one gap between them, so cell 10 can only be dark.
             marks: [[10, 2]],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [9, 10, 11],
         },
         {
@@ -84,6 +88,7 @@ const demo: DemoSpec = {
                 [35, 2],
             ],
             caption: "demo.5",
+            title: "demoTitle.5",
         },
     ],
 };

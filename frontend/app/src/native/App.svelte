@@ -183,6 +183,11 @@
     {/if}
 
     {#snippet failed(_error, reset)}
-        <EmptyState preset="error" actionHandler={reset} />
+        <!-- anything in the app can land here, so not the preset's "Couldn't load messages" -->
+        <EmptyState
+            preset="error"
+            title="ui.emptyState.crashTitle"
+            body="ui.emptyState.crashBody"
+            actionHandler={reset} />
     {/snippet}
 </svelte:boundary>

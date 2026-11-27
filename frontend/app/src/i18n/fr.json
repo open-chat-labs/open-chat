@@ -815,6 +815,8 @@
         "startFee": "Commencer pour {fee} CHIT",
         "hintsUsed": "{count} indices",
         "hintCost": "Indice ({price} CHIT)",
+        "useHint": "Utiliser un indice",
+        "hintPrice": "{price} CHIT",
         "hintsLeft": "{count} restants",
         "noHintsLeft": "Plus d'indices pour le puzzle du jour",
         "streakDays": "Série de {streak} jours",
@@ -834,7 +836,10 @@
         "mistake": "Quelque chose cloche dans les cases rouges. Corrigez-les, puis redemandez un indice.",
         "fixMistakeFirst": "Corrigez d'abord les cases rouges",
         "howToPlay": "Comment jouer",
+        "howGameWorks": "Comment marche {game}",
+        "demoStep": "Étape {step} sur {count}",
         "backToPuzzle": "Retour au puzzle",
+        "resume": "Reprendre",
         "noFreeChecks": "Plus de vérifications gratuites pour le puzzle du jour",
         "checksLeft": "{count} vérifications restantes",
         "reset": "Réinitialiser",
@@ -865,6 +870,14 @@
                     "4": "Aucune île ne peut dépasser son nombre. Celle-ci a besoin de trois ponts et en a quatre.",
                     "5": "Un pont sur le côté au lieu de deux, et elle a ses trois.",
                     "6": "Chaque nombre est respecté, et chaque île est reliée aux autres. C'est terminé."
+                },
+                "demoTitle": {
+                    "1": "Reliez les îles",
+                    "2": "Droits, sans croisement",
+                    "3": "Pont double",
+                    "4": "Jamais plus que le nombre",
+                    "5": "Un seul sur le côté",
+                    "6": "Tout est relié"
                 },
                 "hint": {
                     "allSpaces": {
@@ -901,6 +914,14 @@
                     "4": "Ce coin est encore sombre, et rien d'autre ne peut l'atteindre, donc il lui faut sa propre ampoule.",
                     "5": "Aucune ampoule ne doit en éclairer une autre. Ces deux-là sont dans la même colonne sans rien entre elles.",
                     "6": "Chaque case blanche est éclairée, le 4 a ses quatre ampoules, et aucune ampoule n'en éclaire une autre."
+                },
+                "demoTitle": {
+                    "1": "Éclairez chaque case",
+                    "2": "Lignes et colonnes",
+                    "3": "Comptez les ampoules",
+                    "4": "Un coin sombre",
+                    "5": "Aucune ampoule n'en voit une autre",
+                    "6": "Tout est éclairé"
                 },
                 "hint": {
                     "onlyWay": {
@@ -941,6 +962,14 @@
                     "4": "Un trait qui s'arrête net n'est pas une boucle. Chaque point a besoin de deux traits, ou d'aucun.",
                     "5": "Elle ne peut pas non plus se ramifier. Trois traits à un point, c'est trop.",
                     "6": "Un seul circuit fermé, et chaque nombre respecté. Suivez-le et vous revenez à votre point de départ."
+                },
+                "demoTitle": {
+                    "1": "Tracez une boucle",
+                    "2": "Commencez par un 0",
+                    "3": "De point en point",
+                    "4": "Pas d'impasse",
+                    "5": "Pas de branche",
+                    "6": "Boucle fermée"
                 }
             },
             "slant": {
@@ -961,6 +990,14 @@
                     "4": "Ce coin en a besoin de quatre, donc les quatre cases autour doivent pointer vers lui. Il n'y a qu'une façon de le faire.",
                     "5": "Ces quatre-là se sont rejointes en anneau fermé. Les anneaux sont interdits, donc l'une d'elles doit pencher dans l'autre sens.",
                     "6": "Chaque case remplie, chaque nombre respecté, et aucun anneau nulle part."
+                },
+                "demoTitle": {
+                    "1": "Une diagonale par case",
+                    "2": "Comptez les coins",
+                    "3": "Coins vides libres",
+                    "4": "Un coin à quatre",
+                    "5": "Pas d'anneau fermé",
+                    "6": "Tout est rempli"
                 },
                 "hint": {
                     "satisfied": {
@@ -1007,6 +1044,14 @@
                     "4": "Les tentes ne se touchent jamais, pas même par un coin. Ces deux-là se touchent, donc l'une doit bouger.",
                     "5": "Une seule case à côté de cet arbre est encore libre, donc sa tente va là.",
                     "6": "Chaque arbre a une tente à côté de lui, aucune tente n'en touche une autre, et tous les comptes sont bons."
+                },
+                "demoTitle": {
+                    "1": "Une tente par arbre",
+                    "2": "Juste à côté",
+                    "3": "Comptez-les",
+                    "4": "Les tentes ne se touchent pas",
+                    "5": "La dernière case libre",
+                    "6": "Chaque arbre a la sienne"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1060,6 +1105,13 @@
                     "4": "Deux clairs avec un trou. Clair au milieu en ferait trois, donc ce doit être foncé.",
                     "5": "Chaque case remplie, aucune série de trois, et trois de chaque couleur dans chaque ligne et colonne."
                 },
+                "demoTitle": {
+                    "1": "Clair ou foncé",
+                    "2": "Jamais trois d'affilée",
+                    "3": "Trois de chaque",
+                    "4": "Comblez le trou",
+                    "5": "Tout est équilibré"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "Les cases encadrées de la ligne {line} sont côte à côte et toutes deux en {colour}. Mettre aussi la case ? en {colour} ferait trois cases en {colour} à la suite, donc il faut la mettre en {other}.",
@@ -1103,6 +1155,13 @@
                     "3": "Chaque pièce contient un CHAT. La pièce du haut en a deux.",
                     "4": "Cette pièce ne fait qu'une case, donc son CHAT va là. Toutes les cases qu'il exclut sont barrées pour vous.",
                     "5": "Un CHAT dans chaque ligne, colonne et pièce, et aucun ne se touche."
+                },
+                "demoTitle": {
+                    "1": "Placez les CHAT",
+                    "2": "Pas de contact",
+                    "3": "Un par pièce",
+                    "4": "Une pièce d'une case",
+                    "5": "Tout est placé"
                 },
                 "hint": {
                     "shadow": "Le CHAT en ligne {row}, colonne {column} exclut toutes les autres cases de sa ligne, de sa colonne et de {room}, ainsi que toutes les cases qui le touchent, donc les cases ? ne peuvent pas recevoir de CHAT.",
@@ -2908,6 +2967,56 @@
                 "all": "Rien ici pour l’instant.",
                 "mentions": "Aucune mention pour l’instant. Quand quelqu’un vous @mentionne, cela apparaît ici.",
                 "payments": "Aucun paiement pour l’instant."
+            }
+        },
+        "chit": {
+            "settings": "Paramètres CHIT",
+            "lifetime": "Au total {amount}",
+            "lastSevenDays": "Les sept derniers jours",
+            "claimAmount": "Réclamer {amount} CHIT",
+            "claimedNext": "Réclamé · prochain dans {time}",
+            "insurance": "Assurance de série",
+            "insuranceHintOn": "{streak, plural, =0 {Si vous manquez un jour, un jour est utilisé et votre série continue.} other {Si vous manquez un jour, un jour est utilisé et votre série de # jours continue.}}",
+            "insuranceHintOff": "{streak, plural, =0 {La protection garde votre série si vous manquez un jour.} other {Manquez demain et votre série de # jours est perdue.}} Protection dès {price} CHAT.",
+            "insuredFor": "{count, plural, one {Assuré pour # jour} other {Assuré pour # jours}}",
+            "noInsurance": "Aucune assurance",
+            "streakCovered": "série protégée",
+            "streakAtRisk": "série menacée",
+            "dailyPuzzle": "Énigme du jour",
+            "milestones": "Paliers de série",
+            "milestoneDay": "Série de {days} jours",
+            "milestoneRate": "{amount}/jour",
+            "achievements": "Succès",
+            "achievementsOf": "Succès · {done} sur {total}",
+            "unlocked": "{group} · Débloqué",
+            "viewAll": "Tout voir",
+            "noAchievements": "Aucun pour l'instant. Chaque succès accompli rapporte des CHIT.",
+            "achievementsDone": "{done} sur {total} accomplis",
+            "achievementDone": "Accompli",
+            "claimHistory": "Historique des réclamations",
+            "insuranceUsed": "{count, plural, one {# jour utilisé jusqu'ici} other {# jours utilisés jusqu'ici}}",
+            "insuranceAdd": "Ajouter une protection",
+            "insuranceUpTo": "Jusqu'à {count} de plus",
+            "insuranceFewer": "Moins de jours",
+            "insuranceMore": "Plus de jours",
+            "insuranceLadderNote": "Chaque jour de couverture coûte le double du précédent.",
+            "insuranceDay": "Jour {n}",
+            "insuranceBuy": "{count, plural, one {Acheter # jour} other {Acheter # jours}} · {amount} CHAT",
+            "insuranceBalance": "Solde",
+            "insuranceFull": "Entièrement couvert",
+            "insuranceBought": "{count, plural, one {# jour de couverture ajouté} other {# jours de couverture ajoutés}}",
+            "insurancePinSoon": "Votre portefeuille a un code PIN. L'achat d'une assurance de série avec celui-ci arrivera avec l'écran PIN de l'application, bientôt disponible. En attendant, vous pouvez l'acheter sur oc.app.",
+            "challengeSolved": "Défi résolu",
+            "solvedIn": "Résolu en {time}",
+            "nextPuzzle": "Prochain puzzle dans {time}",
+            "shareToChat": "Partager dans un chat",
+            "done": "Terminé",
+            "strip": {
+                "claimed": "Réclamé",
+                "insured": "Couvert par l'assurance",
+                "missed": "Manqué",
+                "open": "Pas encore réclamé",
+                "none": "Avant votre arrivée"
             }
         }
     },

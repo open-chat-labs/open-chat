@@ -793,6 +793,8 @@
         "startFee": "Start for {fee} CHIT",
         "hintsUsed": "{count} hints",
         "hintCost": "Hint ({price} CHIT)",
+        "useHint": "Use a hint",
+        "hintPrice": "{price} CHIT",
         "hintsLeft": "{count} left",
         "noHintsLeft": "No hints left for today's puzzle",
         "streakDays": "{streak} day streak",
@@ -812,7 +814,10 @@
         "mistake": "Something is wrong in the red cells. Fix them, then ask for a hint again.",
         "fixMistakeFirst": "Fix the red cells first",
         "howToPlay": "How to play",
+        "howGameWorks": "How {game} works",
+        "demoStep": "Step {step} of {count}",
         "backToPuzzle": "Back to puzzle",
+        "resume": "Resume",
         "noFreeChecks": "No free checks left for today's puzzle",
         "checksLeft": "{count} checks left",
         "reset": "Reset",
@@ -843,6 +848,14 @@
                     "4": "No island can go over its number. This one needs three bridges and has four.",
                     "5": "One bridge down the side instead of two, and it has its three.",
                     "6": "Every number matched, and every island joined to the rest. That finishes it."
+                },
+                "demoTitle": {
+                    "1": "Join the islands",
+                    "2": "Straight, never crossing",
+                    "3": "Double up",
+                    "4": "Never over the number",
+                    "5": "One down the side",
+                    "6": "All joined up"
                 },
                 "hint": {
                     "allSpaces": {
@@ -879,6 +892,14 @@
                     "4": "This corner is still dark, and nothing else can reach it, so it takes a bulb of its own.",
                     "5": "No bulb may shine on another. These two are in the same column with nothing between them.",
                     "6": "Every white cell is lit, the 4 has its four bulbs, and no bulb shines on another."
+                },
+                "demoTitle": {
+                    "1": "Light every cell",
+                    "2": "Rows and columns",
+                    "3": "Count the bulbs",
+                    "4": "A dark corner",
+                    "5": "No bulb sees another",
+                    "6": "All lit up"
                 },
                 "hint": {
                     "onlyWay": {
@@ -919,6 +940,14 @@
                     "4": "A line that stops dead is not a loop. Every dot needs two lines, or none at all.",
                     "5": "It cannot branch either. Three lines at a dot is too many.",
                     "6": "One closed circuit, and every number matched. Follow it round and you arrive back where you started."
+                },
+                "demoTitle": {
+                    "1": "Draw one loop",
+                    "2": "Start with a 0",
+                    "3": "Dot to dot",
+                    "4": "No dead ends",
+                    "5": "No branches",
+                    "6": "Loop closed"
                 }
             },
             "slant": {
@@ -939,6 +968,14 @@
                     "4": "This corner needs four, so all four cells around it have to point at it. There is only one way to do that.",
                     "5": "These four have joined up into a closed ring. Rings are not allowed, so one of them must lean the other way.",
                     "6": "Every cell filled, every number matched, and no ring anywhere."
+                },
+                "demoTitle": {
+                    "1": "One diagonal each",
+                    "2": "Count the corners",
+                    "3": "Blank corners are free",
+                    "4": "A corner of four",
+                    "5": "No closed rings",
+                    "6": "All filled in"
                 },
                 "hint": {
                     "satisfied": {
@@ -985,6 +1022,14 @@
                     "4": "Tents never touch, not even at a corner. These two do, so one of them has to move.",
                     "5": "Only one cell beside this tree is still free, so its tent goes there.",
                     "6": "Every tree has a tent beside it, no two tents touch, and the counts all match."
+                },
+                "demoTitle": {
+                    "1": "A tent per tree",
+                    "2": "Right beside it",
+                    "3": "Count them up",
+                    "4": "Tents never touch",
+                    "5": "The last free cell",
+                    "6": "Every tree has one"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1038,6 +1083,13 @@
                     "4": "Two lights with a gap. Light in between would make three, so it has to be dark.",
                     "5": "Every cell filled, no run of three, and three of each colour in every row and column."
                 },
+                "demoTitle": {
+                    "1": "Light or dark",
+                    "2": "No runs of three",
+                    "3": "Three of each",
+                    "4": "Fill the gap",
+                    "5": "All balanced"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "The outlined cells in row {line} are side by side and both {colour}. Making the ? cell {colour} too would put three {colour} in a line, so it must be {other}.",
@@ -1081,6 +1133,13 @@
                     "3": "Every room holds one CHAT. The top room has two.",
                     "4": "This room is a single cell, so its CHAT goes there. Every cell it rules out is crossed off for you.",
                     "5": "One CHAT in every row, column and room, and none touching."
+                },
+                "demoTitle": {
+                    "1": "Place the CHATs",
+                    "2": "No touching",
+                    "3": "One per room",
+                    "4": "A one-cell room",
+                    "5": "All placed"
                 },
                 "hint": {
                     "shadow": "The CHAT in row {row}, column {column} rules out every other cell in its row, its column and {room}, and every cell touching it, so the ? cells can't hold a CHAT.",
@@ -2817,6 +2876,56 @@
                 "all": "Nothing here yet.",
                 "mentions": "No mentions yet. When someone @mentions you, it shows up here.",
                 "payments": "No payments yet."
+            }
+        },
+        "chit": {
+            "settings": "CHIT settings",
+            "lifetime": "Lifetime {amount}",
+            "lastSevenDays": "The last seven days",
+            "claimAmount": "Claim {amount} CHIT",
+            "claimedNext": "Claimed · next in {time}",
+            "insurance": "Streak insurance",
+            "insuranceHintOn": "{streak, plural, =0 {Miss a day and one is spent, so your streak carries on.} other {Miss a day and one is spent, so your #-day streak carries on.}}",
+            "insuranceHintOff": "{streak, plural, =0 {Cover keeps your streak going when you miss a day.} other {Miss tomorrow and your #-day streak is gone.}} Cover starts at {price} CHAT.",
+            "insuredFor": "{count, plural, one {Insured for # day} other {Insured for # days}}",
+            "noInsurance": "No insurance",
+            "streakCovered": "streak covered",
+            "streakAtRisk": "streak at risk",
+            "dailyPuzzle": "Daily puzzle",
+            "milestones": "Streak milestones",
+            "milestoneDay": "{days}-day streak",
+            "milestoneRate": "{amount}/day",
+            "achievements": "Achievements",
+            "achievementsOf": "Achievements · {done} of {total}",
+            "unlocked": "{group} · Unlocked",
+            "viewAll": "View all",
+            "noAchievements": "None yet. Each achievement you complete pays CHIT.",
+            "achievementsDone": "{done} of {total} done",
+            "achievementDone": "Done",
+            "claimHistory": "Claim history",
+            "insuranceUsed": "{count, plural, one {# day used so far} other {# days used so far}}",
+            "insuranceAdd": "Add cover",
+            "insuranceUpTo": "Up to {count} more",
+            "insuranceFewer": "Fewer days",
+            "insuranceMore": "More days",
+            "insuranceLadderNote": "Each day of cover costs twice the one before it.",
+            "insuranceDay": "Day {n}",
+            "insuranceBuy": "{count, plural, one {Buy # day} other {Buy # days}} · {amount} CHAT",
+            "insuranceBalance": "Balance",
+            "insuranceFull": "Fully covered",
+            "insuranceBought": "{count, plural, one {# day of cover added} other {# days of cover added}}",
+            "insurancePinSoon": "Your wallet has a PIN. Buying streak insurance with it comes with the app's PIN screen, which is on its way. Meanwhile you can buy it on oc.app.",
+            "challengeSolved": "Challenge solved",
+            "solvedIn": "Solved in {time}",
+            "nextPuzzle": "Next puzzle in {time}",
+            "shareToChat": "Share to chat",
+            "done": "Done",
+            "strip": {
+                "claimed": "Claimed",
+                "insured": "Covered by insurance",
+                "missed": "Missed",
+                "open": "Not claimed yet",
+                "none": "Before you joined"
             }
         }
     },

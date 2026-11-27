@@ -815,6 +815,8 @@
         "startFee": "Inizia per {fee} CHIT",
         "hintsUsed": "{count} suggerimenti",
         "hintCost": "Suggerimento ({price} CHIT)",
+        "useHint": "Usa un suggerimento",
+        "hintPrice": "{price} CHIT",
         "hintsLeft": "{count} rimasti",
         "noHintsLeft": "Nessun suggerimento rimasto per il puzzle di oggi",
         "streakDays": "Serie di {streak} giorni",
@@ -834,7 +836,10 @@
         "mistake": "C'è qualcosa che non va nelle celle rosse. Correggile, poi chiedi di nuovo un suggerimento.",
         "fixMistakeFirst": "Prima correggi le celle rosse",
         "howToPlay": "Come si gioca",
+        "howGameWorks": "Come funziona {game}",
+        "demoStep": "Passo {step} di {count}",
         "backToPuzzle": "Torna al puzzle",
+        "resume": "Riprendi",
         "noFreeChecks": "Nessun controllo gratuito rimasto per il puzzle di oggi",
         "checksLeft": "{count} controlli rimasti",
         "reset": "Azzera",
@@ -865,6 +870,14 @@
                     "4": "Nessuna isola può superare il suo numero. Questa ha bisogno di tre ponti e ne ha quattro.",
                     "5": "Un ponte sul lato invece di due, e ha i suoi tre.",
                     "6": "Ogni numero rispettato e ogni isola collegata alle altre. Così è finito."
+                },
+                "demoTitle": {
+                    "1": "Unisci le isole",
+                    "2": "Dritti, mai incrociati",
+                    "3": "Ponte doppio",
+                    "4": "Mai oltre il numero",
+                    "5": "Uno sul lato",
+                    "6": "Tutto collegato"
                 },
                 "hint": {
                     "allSpaces": {
@@ -901,6 +914,14 @@
                     "4": "Questo angolo è ancora buio e nient'altro può raggiungerlo, quindi gli serve una lampadina tutta sua.",
                     "5": "Nessuna lampadina può illuminarne un'altra. Queste due sono nella stessa colonna senza niente in mezzo.",
                     "6": "Ogni cella bianca è illuminata, il 4 ha le sue quattro lampadine e nessuna lampadina ne illumina un'altra."
+                },
+                "demoTitle": {
+                    "1": "Illumina ogni cella",
+                    "2": "Righe e colonne",
+                    "3": "Conta le lampadine",
+                    "4": "Un angolo buio",
+                    "5": "Nessuna lampadina ne vede un'altra",
+                    "6": "Tutto illuminato"
                 },
                 "hint": {
                     "onlyWay": {
@@ -941,6 +962,14 @@
                     "4": "Un tratto che finisce nel nulla non è un anello. Ogni punto ha bisogno di due tratti, o di nessuno.",
                     "5": "Non può nemmeno ramificarsi. Tre tratti a un punto sono troppi.",
                     "6": "Un solo circuito chiuso e ogni numero rispettato. Seguilo e torni al punto di partenza."
+                },
+                "demoTitle": {
+                    "1": "Disegna un anello",
+                    "2": "Parti da uno 0",
+                    "3": "Da punto a punto",
+                    "4": "Niente vicoli ciechi",
+                    "5": "Niente diramazioni",
+                    "6": "Anello chiuso"
                 }
             },
             "slant": {
@@ -961,6 +990,14 @@
                     "4": "Questo angolo ne vuole quattro, quindi tutte e quattro le celle intorno devono puntare verso di lui. C'è un solo modo per farlo.",
                     "5": "Queste quattro si sono unite in un anello chiuso. Gli anelli non sono ammessi, quindi una di loro deve inclinarsi dall'altra parte.",
                     "6": "Ogni cella piena, ogni numero rispettato e nessun anello da nessuna parte."
+                },
+                "demoTitle": {
+                    "1": "Una diagonale per cella",
+                    "2": "Conta gli angoli",
+                    "3": "Angoli vuoti liberi",
+                    "4": "Un angolo da quattro",
+                    "5": "Niente anelli chiusi",
+                    "6": "Tutto riempito"
                 },
                 "hint": {
                     "satisfied": {
@@ -1007,6 +1044,14 @@
                     "4": "Le tende non si toccano mai, nemmeno a un angolo. Queste due si toccano, quindi una deve spostarsi.",
                     "5": "Accanto a questo albero è rimasta libera una sola cella, quindi la sua tenda va lì.",
                     "6": "Ogni albero ha una tenda accanto, nessuna tenda ne tocca un'altra e tutti i conti tornano."
+                },
+                "demoTitle": {
+                    "1": "Una tenda per albero",
+                    "2": "Proprio accanto",
+                    "3": "Contale",
+                    "4": "Le tende non si toccano",
+                    "5": "L'ultima cella libera",
+                    "6": "Ogni albero ha la sua"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1060,6 +1105,13 @@
                     "4": "Due chiari con uno spazio. Chiaro in mezzo ne farebbe tre, quindi deve essere scuro.",
                     "5": "Ogni cella piena, nessuna serie di tre e tre di ogni colore in ogni riga e colonna."
                 },
+                "demoTitle": {
+                    "1": "Chiaro o scuro",
+                    "2": "Mai tre di fila",
+                    "3": "Tre per colore",
+                    "4": "Riempi il buco",
+                    "5": "Tutto bilanciato"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "Le celle contornate nella riga {line} sono una accanto all'altra ed entrambe di colore {colour}. Rendere anche la cella ? di colore {colour} metterebbe tre celle di colore {colour} di fila, quindi deve essere di colore {other}.",
@@ -1103,6 +1155,13 @@
                     "3": "Ogni stanza contiene un CHAT. La stanza in alto ne ha due.",
                     "4": "Questa stanza è una sola cella, quindi il suo CHAT va lì. Ogni cella che esclude viene barrata per te.",
                     "5": "Un CHAT in ogni riga, colonna e stanza, e nessuno si tocca."
+                },
+                "demoTitle": {
+                    "1": "Metti i CHAT",
+                    "2": "Niente contatti",
+                    "3": "Uno per stanza",
+                    "4": "Una stanza di una cella",
+                    "5": "Tutto piazzato"
                 },
                 "hint": {
                     "shadow": "Il CHAT in riga {row}, colonna {column} esclude ogni altra cella della sua riga e della sua colonna, ogni cella che lo tocca e ogni altra cella della sua stanza, cioè {room}, quindi le celle ? non possono averne uno.",
@@ -2908,6 +2967,56 @@
                 "all": "Ancora niente qui.",
                 "mentions": "Ancora nessuna menzione. Quando qualcuno ti @menziona, apparirà qui.",
                 "payments": "Ancora nessun pagamento."
+            }
+        },
+        "chit": {
+            "settings": "Impostazioni CHIT",
+            "lifetime": "In totale {amount}",
+            "lastSevenDays": "Gli ultimi sette giorni",
+            "claimAmount": "Riscuoti {amount} CHIT",
+            "claimedNext": "Riscosso · prossimo tra {time}",
+            "insurance": "Assicurazione serie",
+            "insuranceHintOn": "{streak, plural, =0 {Se salti un giorno, ne viene usato uno e la serie continua.} other {Se salti un giorno, ne viene usato uno e la tua serie di # giorni continua.}}",
+            "insuranceHintOff": "{streak, plural, =0 {La copertura tiene viva la serie se salti un giorno.} other {Salta domani e la tua serie di # giorni è persa.}} Copertura da {price} CHAT.",
+            "insuredFor": "{count, plural, one {Assicurata per # giorno} other {Assicurata per # giorni}}",
+            "noInsurance": "Nessuna assicurazione",
+            "streakCovered": "serie coperta",
+            "streakAtRisk": "serie a rischio",
+            "dailyPuzzle": "Rompicapo del giorno",
+            "milestones": "Traguardi della serie",
+            "milestoneDay": "Serie di {days} giorni",
+            "milestoneRate": "{amount}/giorno",
+            "achievements": "Obiettivi",
+            "achievementsOf": "Obiettivi · {done} di {total}",
+            "unlocked": "{group} · Sbloccato",
+            "viewAll": "Vedi tutti",
+            "noAchievements": "Ancora nessuno. Ogni obiettivo completato paga CHIT.",
+            "achievementsDone": "{done} di {total} completati",
+            "achievementDone": "Completato",
+            "claimHistory": "Cronologia riscossioni",
+            "insuranceUsed": "{count, plural, one {# giorno usato finora} other {# giorni usati finora}}",
+            "insuranceAdd": "Aggiungi copertura",
+            "insuranceUpTo": "Fino a {count} in più",
+            "insuranceFewer": "Meno giorni",
+            "insuranceMore": "Più giorni",
+            "insuranceLadderNote": "Ogni giorno di copertura costa il doppio del precedente.",
+            "insuranceDay": "Giorno {n}",
+            "insuranceBuy": "{count, plural, one {Compra # giorno} other {Compra # giorni}} · {amount} CHAT",
+            "insuranceBalance": "Saldo",
+            "insuranceFull": "Copertura completa",
+            "insuranceBought": "{count, plural, one {# giorno di copertura aggiunto} other {# giorni di copertura aggiunti}}",
+            "insurancePinSoon": "Il tuo portafoglio ha un PIN. L'acquisto dell'assicurazione serie con il PIN arriverà con la schermata PIN dell'app, in arrivo. Nel frattempo puoi acquistarla su oc.app.",
+            "challengeSolved": "Sfida risolta",
+            "solvedIn": "Risolto in {time}",
+            "nextPuzzle": "Prossimo puzzle tra {time}",
+            "shareToChat": "Condividi in una chat",
+            "done": "Fatto",
+            "strip": {
+                "claimed": "Riscosso",
+                "insured": "Coperto dall'assicurazione",
+                "missed": "Saltato",
+                "open": "Non ancora riscosso",
+                "none": "Prima della tua iscrizione"
             }
         }
     },

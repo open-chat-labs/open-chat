@@ -27,12 +27,13 @@
     import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
-    import { achievementsCount, chitDialogProps } from "./chit.adapter";
-    import { puzzleCardProps } from "./puzzle.adapter";
+    import { achievementsCount } from "@src/logic/chit/achievements";
+    import { chitDialogProps } from "./chit.adapter";
+    import { puzzleCardProps } from "@src/logic/dailyPuzzle/puzzleCard";
     import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";
     import { interpolateNewUi } from "@src/i18n/i18n";
     import { _ } from "svelte-i18n";
-    import { loadExternalAchievements, type Loaded } from "./externalAchievements";
+    import { loadExternalAchievements, type Loaded } from "@src/logic/chit/externalAchievements";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
 

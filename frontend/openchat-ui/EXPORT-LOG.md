@@ -1269,3 +1269,18 @@
 - `meta.json` entries and `index.ts` exports for all seven.
 - Used by the app: the operator console (`/admin/:section`), laid out from the Claude Design canvas "Admin Console" (2026-11-26).
 - Not in the design export (the canvas is the app's, not the export's): to take back to it.
+
+## 2026-11-24 — AchievementsDialog: its groups exported, for native CHIT (N11 #10379), by hand
+- `AchievementsDialog`: the groups' metadata (key, label, icon, colour), which the dialog kept inline, moved to its module script as `ACHIEVEMENT_GROUPS` and exported, so the native Achievements screen lists the achievements under the same groups in the same order. The dialog reads it as before: its look and behaviour are as they were. No props changed, so `meta.json` is as it was.
+- Used by the app: the native Achievements screen (CHIT's View all). `ClaimCalendar`, `AchievementToast` (`speed` 1.25, `outroSpeed` 1.8, the "Challenge solved" kicker) and `Confetti` (`within`) are used as they are.
+- Not ported: `PuzzleDialog`'s `layout="screen"` (`topInset`, `backIcon`, `backFlip`). The dialog plays Bridges only, so the app's puzzle (every game) is drawn by the app on both trees (the app's `GAPS.md`, "Native CHIT").
+- Not in the design export: the export keeps the groups inside the dialog.
+
+## 2026-11-26 — ClaimCalendar: `layout="card"`, for the native CHIT screen (N11 #10379), by hand
+- `ClaimCalendar`: `layout` (optional, `'bar'` by default: as before) and `label`. `"card"` is the native prototype's: the heading (`label`, a `ListSectionLabel`) with the month and its previous / next (36px, chevrons) above a card (`--overlay-1`, 16px corners); the days square tiles (10px corners): claimed on `--status-chit-soft` with the amount, insured on the online tint with a tick, today's Claim ringed in `--status-chit`, days to come at .4, the months either side at .35. A tap picks a day (a 1.5px `--ink-2` ring; today at first, a past month's last day) and a line under the grid (`--tint-row`) says what happened on it, in place of the popover: "Thu 22 Oct · 09:12 · +500 CHIT · day 21", "· missed, covered by streak insurance" (online), "· not claimed", or today's "· today's CHIT is ready to claim" (chit). A tap on today's Claim claims it. The foot is the month's CHIT, claims and insured days and the Local / UTC toggle on `--tint-pill`. New strings `ui.claimCalendar.claimedCount`, `.claimedShort`, `.insuredInfo`, `.notClaimedInfo`, `.readyToClaim`, `.streakDay`. `meta.json` (`layout`, `label`).
+- Used by the app: the native CHIT screen's claim history. The web's `ClaimHistoryDialog` keeps the bar.
+- Not in the design export: the export's calendar is the bar's; the card is the native prototype's, drawn inline there.
+
+## 2026-11-27 — EmptyState: strings for an app-wide error, by hand
+- `ui.emptyState.crashTitle` ("Something went wrong") and `ui.emptyState.crashBody`, for the apps' top-level error boundary (web and native `App.svelte`), which showed the `error` preset's "Couldn't load messages" for any crash anywhere (the user's report, 2026-11-27, from the puzzle screen). The preset itself is unchanged.
+- Not in the design export.

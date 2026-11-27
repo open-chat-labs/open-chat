@@ -815,6 +815,8 @@
         "startFee": "Für {fee} CHIT starten",
         "hintsUsed": "{count} Tipps",
         "hintCost": "Tipp ({price} CHIT)",
+        "useHint": "Tipp nutzen",
+        "hintPrice": "{price} CHIT",
         "hintsLeft": "{count} übrig",
         "noHintsLeft": "Keine Tipps mehr für das heutige Rätsel",
         "streakDays": "{streak} Tage in Folge",
@@ -834,7 +836,10 @@
         "mistake": "In den roten Zellen stimmt etwas nicht. Korrigieren Sie sie und fragen Sie dann erneut nach einem Tipp.",
         "fixMistakeFirst": "Korrigieren Sie zuerst die roten Zellen",
         "howToPlay": "So wird gespielt",
+        "howGameWorks": "So funktioniert {game}",
+        "demoStep": "Schritt {step} von {count}",
         "backToPuzzle": "Zurück zum Rätsel",
+        "resume": "Fortsetzen",
         "noFreeChecks": "Keine kostenlosen Prüfungen mehr für das heutige Rätsel",
         "checksLeft": "{count} Prüfungen übrig",
         "reset": "Zurücksetzen",
@@ -865,6 +870,14 @@
                     "4": "Keine Insel darf ihre Zahl überschreiten. Diese braucht drei Brücken und hat vier.",
                     "5": "Eine Brücke an der Seite statt zwei, und sie hat ihre drei.",
                     "6": "Jede Zahl stimmt, und jede Insel ist mit den übrigen verbunden. Damit ist es gelöst."
+                },
+                "demoTitle": {
+                    "1": "Inseln verbinden",
+                    "2": "Gerade, nie gekreuzt",
+                    "3": "Doppelt hält besser",
+                    "4": "Nie über die Zahl",
+                    "5": "Eine an der Seite",
+                    "6": "Alles verbunden"
                 },
                 "hint": {
                     "allSpaces": {
@@ -901,6 +914,14 @@
                     "4": "Diese Ecke ist noch dunkel, und nichts anderes erreicht sie, also bekommt sie eine eigene Lampe.",
                     "5": "Keine Lampe darf eine andere anstrahlen. Diese beiden stehen in derselben Spalte, ohne etwas dazwischen.",
                     "6": "Jede weiße Zelle ist beleuchtet, die 4 hat ihre vier Lampen, und keine Lampe strahlt eine andere an."
+                },
+                "demoTitle": {
+                    "1": "Alles beleuchten",
+                    "2": "Zeilen und Spalten",
+                    "3": "Lampen zählen",
+                    "4": "Eine dunkle Ecke",
+                    "5": "Lampen sehen sich nie",
+                    "6": "Alles hell"
                 },
                 "hint": {
                     "onlyWay": {
@@ -941,6 +962,14 @@
                     "4": "Eine Linie, die einfach endet, ist keine Schleife. Jeder Punkt braucht zwei Linien oder gar keine.",
                     "5": "Sie darf sich auch nicht verzweigen. Drei Linien an einem Punkt sind zu viele.",
                     "6": "Ein geschlossener Rundweg, und jede Zahl stimmt. Folgen Sie ihm, und Sie kommen wieder dort an, wo Sie begonnen haben."
+                },
+                "demoTitle": {
+                    "1": "Eine Schleife zeichnen",
+                    "2": "Mit der 0 beginnen",
+                    "3": "Von Punkt zu Punkt",
+                    "4": "Keine Sackgassen",
+                    "5": "Keine Abzweigungen",
+                    "6": "Schleife geschlossen"
                 }
             },
             "slant": {
@@ -961,6 +990,14 @@
                     "4": "Diese Ecke braucht vier, also müssen alle vier Zellen um sie herum auf sie zeigen. Dafür gibt es nur eine Möglichkeit.",
                     "5": "Diese vier haben sich zu einem geschlossenen Ring verbunden. Ringe sind nicht erlaubt, also muss eine davon in die andere Richtung geneigt sein.",
                     "6": "Jede Zelle ausgefüllt, jede Zahl erfüllt, und nirgends ein Ring."
+                },
+                "demoTitle": {
+                    "1": "Eine Diagonale je Zelle",
+                    "2": "Ecken zählen",
+                    "3": "Leere Ecken sind frei",
+                    "4": "Eine Ecke mit vier",
+                    "5": "Keine geschlossenen Ringe",
+                    "6": "Alles ausgefüllt"
                 },
                 "hint": {
                     "satisfied": {
@@ -1007,6 +1044,14 @@
                     "4": "Zelte berühren sich nie, auch nicht an einer Ecke. Diese beiden tun es, also muss eins davon umziehen.",
                     "5": "Neben diesem Baum ist nur noch eine Zelle frei, also kommt sein Zelt dorthin.",
                     "6": "Jeder Baum hat ein Zelt neben sich, keine zwei Zelte berühren sich, und alle Zahlen stimmen."
+                },
+                "demoTitle": {
+                    "1": "Ein Zelt pro Baum",
+                    "2": "Direkt daneben",
+                    "3": "Zelte zählen",
+                    "4": "Zelte berühren sich nie",
+                    "5": "Die letzte freie Zelle",
+                    "6": "Jeder Baum hat eins"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1060,6 +1105,13 @@
                     "4": "Zwei helle mit einer Lücke. Hell dazwischen ergäbe drei, also muss es dunkel sein.",
                     "5": "Jede Zelle ausgefüllt, keine Dreierreihe, und drei von jeder Farbe in jeder Zeile und Spalte."
                 },
+                "demoTitle": {
+                    "1": "Hell oder dunkel",
+                    "2": "Keine Dreierreihen",
+                    "3": "Drei von jeder",
+                    "4": "Die Lücke füllen",
+                    "5": "Alles ausgeglichen"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "Die umrandeten Zellen in Zeile {line} liegen nebeneinander und sind beide {colour}. Wäre die ?-Zelle auch {colour}, wären drei Zellen hintereinander {colour}, also muss sie {other} sein.",
@@ -1103,6 +1155,13 @@
                     "3": "Jeder Raum enthält ein CHAT. Der obere Raum hat zwei.",
                     "4": "Dieser Raum ist eine einzelne Zelle, also kommt sein CHAT dorthin. Jede Zelle, die es ausschließt, wird für Sie gestrichen.",
                     "5": "Ein CHAT in jeder Zeile, Spalte und jedem Raum, und keine berühren sich."
+                },
+                "demoTitle": {
+                    "1": "CHATs setzen",
+                    "2": "Keine Berührung",
+                    "3": "Eins pro Raum",
+                    "4": "Ein Raum aus einer Zelle",
+                    "5": "Alles gesetzt"
                 },
                 "hint": {
                     "shadow": "Das CHAT in Zeile {row}, Spalte {column} schließt jede andere Zelle in seiner Zeile und Spalte aus, dazu jede Zelle, die es berührt, und jede andere Zelle in seinem Raum, denn {room} hat damit sein CHAT. Die ?-Zellen können also kein CHAT aufnehmen.",
@@ -2908,6 +2967,56 @@
                 "all": "Hier ist noch nichts.",
                 "mentions": "Noch keine Erwähnungen. Wenn dich jemand @erwähnt, erscheint es hier.",
                 "payments": "Noch keine Zahlungen."
+            }
+        },
+        "chit": {
+            "settings": "CHIT-Einstellungen",
+            "lifetime": "Insgesamt {amount}",
+            "lastSevenDays": "Die letzten sieben Tage",
+            "claimAmount": "{amount} CHIT abholen",
+            "claimedNext": "Abgeholt · nächste in {time}",
+            "insurance": "Serienversicherung",
+            "insuranceHintOn": "{streak, plural, =0 {Verpasst du einen Tag, wird einer verbraucht und deine Serie läuft weiter.} other {Verpasst du einen Tag, wird einer verbraucht und deine #-Tage-Serie läuft weiter.}}",
+            "insuranceHintOff": "{streak, plural, =0 {Der Schutz hält deine Serie, wenn du einen Tag verpasst.} other {Verpasst du morgen, ist deine #-Tage-Serie weg.}} Schutz ab {price} CHAT.",
+            "insuredFor": "{count, plural, one {Für # Tag versichert} other {Für # Tage versichert}}",
+            "noInsurance": "Keine Versicherung",
+            "streakCovered": "Serie geschützt",
+            "streakAtRisk": "Serie in Gefahr",
+            "dailyPuzzle": "Tägliches Rätsel",
+            "milestones": "Serien-Meilensteine",
+            "milestoneDay": "{days}-Tage-Serie",
+            "milestoneRate": "{amount}/Tag",
+            "achievements": "Erfolge",
+            "achievementsOf": "Erfolge · {done} von {total}",
+            "unlocked": "{group} · Freigeschaltet",
+            "viewAll": "Alle anzeigen",
+            "noAchievements": "Noch keine. Jeder Erfolg, den du abschließt, bringt CHIT.",
+            "achievementsDone": "{done} von {total} erledigt",
+            "achievementDone": "Erledigt",
+            "claimHistory": "Abholverlauf",
+            "insuranceUsed": "{count, plural, one {bisher # Tag genutzt} other {bisher # Tage genutzt}}",
+            "insuranceAdd": "Schutz hinzufügen",
+            "insuranceUpTo": "Bis zu {count} weitere",
+            "insuranceFewer": "Weniger Tage",
+            "insuranceMore": "Mehr Tage",
+            "insuranceLadderNote": "Jeder Tag Absicherung kostet doppelt so viel wie der vorige.",
+            "insuranceDay": "Tag {n}",
+            "insuranceBuy": "{count, plural, one {# Tag kaufen} other {# Tage kaufen}} · {amount} CHAT",
+            "insuranceBalance": "Guthaben",
+            "insuranceFull": "Voll abgedeckt",
+            "insuranceBought": "{count, plural, one {# Tag Absicherung hinzugefügt} other {# Tage Absicherung hinzugefügt}}",
+            "insurancePinSoon": "Deine Wallet hat eine PIN. Serienversicherung damit zu kaufen kommt mit dem PIN-Bildschirm der App, der bald folgt. Bis dahin kannst du sie auf oc.app kaufen.",
+            "challengeSolved": "Herausforderung gelöst",
+            "solvedIn": "Gelöst in {time}",
+            "nextPuzzle": "Nächstes Rätsel in {time}",
+            "shareToChat": "In Chat teilen",
+            "done": "Fertig",
+            "strip": {
+                "claimed": "Abgeholt",
+                "insured": "Von der Versicherung abgedeckt",
+                "missed": "Verpasst",
+                "open": "Noch nicht abgeholt",
+                "none": "Vor deinem Beitritt"
             }
         }
     },

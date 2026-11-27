@@ -815,6 +815,8 @@
         "startFee": "Zacznij za {fee} CHIT",
         "hintsUsed": "Podpowiedzi: {count}",
         "hintCost": "Podpowiedź ({price} CHIT)",
+        "useHint": "Użyj podpowiedzi",
+        "hintPrice": "{price} CHIT",
         "hintsLeft": "Pozostało: {count}",
         "noHintsLeft": "Brak podpowiedzi do dzisiejszej łamigłówki",
         "streakDays": "Seria: {streak} dni",
@@ -834,7 +836,10 @@
         "mistake": "W czerwonych polach jest błąd. Popraw je, a potem poproś o podpowiedź ponownie.",
         "fixMistakeFirst": "Najpierw popraw czerwone pola",
         "howToPlay": "Jak grać",
+        "howGameWorks": "Jak działa {game}",
+        "demoStep": "Krok {step} z {count}",
         "backToPuzzle": "Wróć do łamigłówki",
+        "resume": "Wznów",
         "noFreeChecks": "Brak darmowych sprawdzeń do dzisiejszej łamigłówki",
         "checksLeft": "Pozostałe sprawdzenia: {count}",
         "reset": "Resetuj",
@@ -865,6 +870,14 @@
                     "4": "Żadna wyspa nie może przekroczyć swojej liczby. Ta potrzebuje trzech mostów, a ma cztery.",
                     "5": "Jeden most w dół wzdłuż boku zamiast dwóch i ma swoje trzy.",
                     "6": "Każda liczba się zgadza i każda wyspa jest połączona z resztą. To kończy sprawę."
+                },
+                "demoTitle": {
+                    "1": "Połącz wyspy",
+                    "2": "Prosto, bez krzyżowania",
+                    "3": "Podwójny most",
+                    "4": "Nigdy ponad liczbę",
+                    "5": "Jeden z boku",
+                    "6": "Wszystko połączone"
                 },
                 "hint": {
                     "allSpaces": {
@@ -901,6 +914,14 @@
                     "4": "Ten róg wciąż jest ciemny i nic innego do niego nie sięga, więc potrzebuje własnej żarówki.",
                     "5": "Żadna żarówka nie może świecić na inną. Te dwie stoją w tej samej kolumnie i nic ich nie rozdziela.",
                     "6": "Każde białe pole jest oświetlone, 4 ma swoje cztery żarówki i żadna żarówka nie świeci na inną."
+                },
+                "demoTitle": {
+                    "1": "Oświetl każde pole",
+                    "2": "Wiersze i kolumny",
+                    "3": "Policz żarówki",
+                    "4": "Ciemny róg",
+                    "5": "Żarówki się nie widzą",
+                    "6": "Wszystko oświetlone"
                 },
                 "hint": {
                     "onlyWay": {
@@ -941,6 +962,14 @@
                     "4": "Linia, która się urywa, to nie pętla. Każda kropka potrzebuje dwóch linii albo żadnej.",
                     "5": "Nie może się też rozgałęziać. Trzy linie przy kropce to za dużo.",
                     "6": "Jeden zamknięty obwód i każda liczba się zgadza. Przejdź go dookoła, a wrócisz do punktu wyjścia."
+                },
+                "demoTitle": {
+                    "1": "Narysuj jedną pętlę",
+                    "2": "Zacznij od 0",
+                    "3": "Od kropki do kropki",
+                    "4": "Bez ślepych końców",
+                    "5": "Bez rozgałęzień",
+                    "6": "Pętla zamknięta"
                 }
             },
             "slant": {
@@ -961,6 +990,14 @@
                     "4": "Ten róg potrzebuje czterech, więc wszystkie cztery pola wokół niego muszą wskazywać na niego. Da się to zrobić tylko w jeden sposób.",
                     "5": "Te cztery połączyły się w zamknięty pierścień. Pierścienie są niedozwolone, więc jedno z nich musi być nachylone w drugą stronę.",
                     "6": "Każde pole wypełnione, każda liczba się zgadza i nigdzie nie ma pierścienia."
+                },
+                "demoTitle": {
+                    "1": "Jedna przekątna na pole",
+                    "2": "Policz rogi",
+                    "3": "Puste rogi są dowolne",
+                    "4": "Róg z czwórką",
+                    "5": "Bez zamkniętych pierścieni",
+                    "6": "Wszystko wypełnione"
                 },
                 "hint": {
                     "satisfied": {
@@ -1007,6 +1044,14 @@
                     "4": "Namioty nigdy się nie stykają, nawet rogiem. Te dwa się stykają, więc jeden z nich musi się przesunąć.",
                     "5": "Obok tego drzewa wolne jest tylko jedno pole, więc jego namiot staje tam.",
                     "6": "Każde drzewo ma namiot obok siebie, żadne dwa namioty się nie stykają i wszystkie liczby się zgadzają."
+                },
+                "demoTitle": {
+                    "1": "Namiot dla każdego drzewa",
+                    "2": "Tuż obok",
+                    "3": "Policz je",
+                    "4": "Namioty się nie stykają",
+                    "5": "Ostatnie wolne pole",
+                    "6": "Każde drzewo ma swój"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1060,6 +1105,13 @@
                     "4": "Dwa jasne z przerwą. Jasne pomiędzy dałoby trzy, więc musi być ciemne.",
                     "5": "Każde pole wypełnione, żadnej trójki pod rząd i po trzy każdego koloru w każdym wierszu i kolumnie."
                 },
+                "demoTitle": {
+                    "1": "Jasne lub ciemne",
+                    "2": "Nigdy trzy z rzędu",
+                    "3": "Po trzy z każdego",
+                    "4": "Wypełnij lukę",
+                    "5": "Wszystko w równowadze"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "Pola w obwódce w wierszu {line} leżą obok siebie i oba są {colour}. Gdyby pole ? też było {colour}, trzy pola pod rząd byłyby {colour}, więc musi być {other}.",
@@ -1103,6 +1155,13 @@
                     "3": "Każdy pokój ma jeden CHAT. Górny pokój ma dwa.",
                     "4": "Ten pokój to jedno pole, więc jego CHAT trafia tam. Każde pole, które wyklucza, zostaje skreślone za ciebie.",
                     "5": "Jeden CHAT w każdym wierszu, kolumnie i pokoju, i żadne się nie stykają."
+                },
+                "demoTitle": {
+                    "1": "Rozstaw CHAT-y",
+                    "2": "Bez stykania",
+                    "3": "Jeden na pokój",
+                    "4": "Pokój z jednego pola",
+                    "5": "Wszystko rozstawione"
                 },
                 "hint": {
                     "shadow": "CHAT w wierszu {row}, kolumnie {column} wyklucza każde inne pole w swoim wierszu, w swojej kolumnie i w swoim pokoju, którym jest {room}, a także każde pole, które go dotyka, więc w polach ? nie może być CHAT-a.",
@@ -2908,6 +2967,56 @@
                 "all": "Na razie nic tu nie ma.",
                 "mentions": "Brak wzmianek. Gdy ktoś Cię @wspomni, pojawi się to tutaj.",
                 "payments": "Brak płatności."
+            }
+        },
+        "chit": {
+            "settings": "Ustawienia CHIT",
+            "lifetime": "Łącznie {amount}",
+            "lastSevenDays": "Ostatnie siedem dni",
+            "claimAmount": "Odbierz {amount} CHIT",
+            "claimedNext": "Odebrano · następny za {time}",
+            "insurance": "Ubezpieczenie serii",
+            "insuranceHintOn": "{streak, plural, =0 {Gdy opuścisz dzień, jeden zostanie zużyty, a seria trwa dalej.} other {Gdy opuścisz dzień, jeden zostanie zużyty, a seria (dni: #) trwa dalej.}}",
+            "insuranceHintOff": "{streak, plural, =0 {Ochrona utrzyma serię, gdy opuścisz dzień.} other {Opuść jutro, a seria (dni: #) przepadnie.}} Ochrona od {price} CHAT.",
+            "insuredFor": "{count, plural, one {Ubezpieczona na # dzień} other {Ubezpieczona na # dni}}",
+            "noInsurance": "Brak ubezpieczenia",
+            "streakCovered": "seria chroniona",
+            "streakAtRisk": "seria zagrożona",
+            "dailyPuzzle": "Codzienna łamigłówka",
+            "milestones": "Kamienie milowe serii",
+            "milestoneDay": "Seria {days} dni",
+            "milestoneRate": "{amount}/dzień",
+            "achievements": "Osiągnięcia",
+            "achievementsOf": "Osiągnięcia · {done} z {total}",
+            "unlocked": "{group} · Odblokowane",
+            "viewAll": "Pokaż wszystkie",
+            "noAchievements": "Jeszcze żadnych. Każde ukończone osiągnięcie daje CHIT.",
+            "achievementsDone": "Ukończono {done} z {total}",
+            "achievementDone": "Ukończone",
+            "claimHistory": "Historia odbiorów",
+            "insuranceUsed": "{count, plural, one {wykorzystano # dzień} few {wykorzystano # dni} many {wykorzystano # dni} other {wykorzystano # dnia}}",
+            "insuranceAdd": "Dodaj ochronę",
+            "insuranceUpTo": "Jeszcze do {count}",
+            "insuranceFewer": "Mniej dni",
+            "insuranceMore": "Więcej dni",
+            "insuranceLadderNote": "Każdy dzień ochrony kosztuje dwa razy więcej niż poprzedni.",
+            "insuranceDay": "Dzień {n}",
+            "insuranceBuy": "{count, plural, one {Kup # dzień} few {Kup # dni} many {Kup # dni} other {Kup # dnia}} · {amount} CHAT",
+            "insuranceBalance": "Saldo",
+            "insuranceFull": "Pełna ochrona",
+            "insuranceBought": "{count, plural, one {Dodano # dzień ochrony} few {Dodano # dni ochrony} many {Dodano # dni ochrony} other {Dodano # dnia ochrony}}",
+            "insurancePinSoon": "Twój portfel ma PIN. Zakup ubezpieczenia serii z PIN-em pojawi się wraz z ekranem PIN aplikacji, który jest w drodze. Do tego czasu możesz je kupić na oc.app.",
+            "challengeSolved": "Wyzwanie rozwiązane",
+            "solvedIn": "Rozwiązano w {time}",
+            "nextPuzzle": "Następna łamigłówka za {time}",
+            "shareToChat": "Udostępnij na czacie",
+            "done": "Gotowe",
+            "strip": {
+                "claimed": "Odebrano",
+                "insured": "Objęte ubezpieczeniem",
+                "missed": "Opuszczono",
+                "open": "Jeszcze nie odebrano",
+                "none": "Przed dołączeniem"
             }
         }
     },

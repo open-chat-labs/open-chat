@@ -32,12 +32,14 @@ const demo: DemoSpec = {
             // The goal, stated once against an empty grid.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // One bridge, along the bottom. Neither island is finished, and neither has all of
             // its bridges settled, so nothing is flagged yet.
             marks: [[24, 1]],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [13, 14],
         },
         {
@@ -47,6 +49,7 @@ const demo: DemoSpec = {
                 [0, 2],
             ],
             caption: "demo.3",
+            title: "demoTitle.3",
             target: [1, 2],
         },
         {
@@ -57,6 +60,7 @@ const demo: DemoSpec = {
                 [1, 2],
             ],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [0],
         },
         {
@@ -66,6 +70,7 @@ const demo: DemoSpec = {
                 [1, 1],
             ],
             caption: "demo.5",
+            title: "demoTitle.5",
             target: [0],
         },
         {
@@ -77,6 +82,7 @@ const demo: DemoSpec = {
                 [24, 1],
             ],
             caption: "demo.6",
+            title: "demoTitle.6",
         },
     ],
 };

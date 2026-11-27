@@ -32,6 +32,7 @@ const demo: DemoSpec = {
             // The goal, stated once against an empty grid.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // What a number means. Both diagonals touch the corner marked 2, so it is satisfied,
@@ -41,6 +42,7 @@ const demo: DemoSpec = {
                 [2, 1],
             ],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [11],
         },
         {
@@ -52,6 +54,7 @@ const demo: DemoSpec = {
                 [2, 1],
             ],
             caption: "demo.3",
+            title: "demoTitle.3",
             target: [16],
         },
         {
@@ -64,6 +67,7 @@ const demo: DemoSpec = {
                 [4, 1],
             ],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [14, 0, 1, 3, 4],
         },
         {
@@ -78,6 +82,7 @@ const demo: DemoSpec = {
                 [5, 2],
             ],
             caption: "demo.5",
+            title: "demoTitle.5",
             target: [1, 2, 4, 5],
         },
         {
@@ -94,6 +99,7 @@ const demo: DemoSpec = {
                 [8, 2],
             ],
             caption: "demo.6",
+            title: "demoTitle.6",
         },
     ],
 };

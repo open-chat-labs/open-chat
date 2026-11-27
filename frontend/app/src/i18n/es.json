@@ -815,6 +815,8 @@
         "startFee": "Empezar por {fee} CHIT",
         "hintsUsed": "{count} pistas",
         "hintCost": "Pista ({price} CHIT)",
+        "useHint": "Usar una pista",
+        "hintPrice": "{price} CHIT",
         "hintsLeft": "Quedan {count}",
         "noHintsLeft": "No quedan pistas para el puzle de hoy",
         "streakDays": "Racha de {streak} días",
@@ -834,7 +836,10 @@
         "mistake": "Algo falla en las casillas rojas. Corrígelas y vuelve a pedir una pista.",
         "fixMistakeFirst": "Corrige primero las casillas rojas",
         "howToPlay": "Cómo se juega",
+        "howGameWorks": "Cómo funciona {game}",
+        "demoStep": "Paso {step} de {count}",
         "backToPuzzle": "Volver al puzle",
+        "resume": "Reanudar",
         "noFreeChecks": "No quedan comprobaciones gratis para el puzle de hoy",
         "checksLeft": "Quedan {count} comprobaciones",
         "reset": "Reiniciar",
@@ -865,6 +870,14 @@
                     "4": "Ninguna isla puede pasarse de su número. Esta necesita tres puentes y tiene cuatro.",
                     "5": "Un puente por el lado en vez de dos, y ya tiene sus tres.",
                     "6": "Todos los números cuadran y todas las islas están unidas al resto. Con eso queda terminado."
+                },
+                "demoTitle": {
+                    "1": "Une las islas",
+                    "2": "Rectos, sin cruzarse",
+                    "3": "Puente doble",
+                    "4": "Nunca más del número",
+                    "5": "Uno por el lado",
+                    "6": "Todo unido"
                 },
                 "hint": {
                     "allSpaces": {
@@ -901,6 +914,14 @@
                     "4": "Esta esquina sigue a oscuras y nada más puede llegar a ella, así que necesita su propia bombilla.",
                     "5": "Ninguna bombilla puede alumbrar a otra. Estas dos están en la misma columna sin nada en medio.",
                     "6": "Todas las casillas blancas están iluminadas, el 4 tiene sus cuatro bombillas y ninguna bombilla alumbra a otra."
+                },
+                "demoTitle": {
+                    "1": "Ilumina cada casilla",
+                    "2": "Filas y columnas",
+                    "3": "Cuenta las bombillas",
+                    "4": "Una esquina oscura",
+                    "5": "Ninguna bombilla ve otra",
+                    "6": "Todo iluminado"
                 },
                 "hint": {
                     "onlyWay": {
@@ -941,6 +962,14 @@
                     "4": "Una línea que se corta en seco no es un bucle. Cada punto necesita dos líneas, o ninguna.",
                     "5": "Tampoco puede ramificarse. Tres líneas en un punto son demasiadas.",
                     "6": "Un solo circuito cerrado y todos los números cuadran. Síguelo y vuelves al punto de partida."
+                },
+                "demoTitle": {
+                    "1": "Dibuja un bucle",
+                    "2": "Empieza por un 0",
+                    "3": "De punto a punto",
+                    "4": "Sin callejones",
+                    "5": "Sin ramas",
+                    "6": "Bucle cerrado"
                 }
             },
             "slant": {
@@ -961,6 +990,14 @@
                     "4": "Esta esquina necesita cuatro, así que las cuatro casillas a su alrededor tienen que apuntar hacia ella. Solo hay una forma de hacerlo.",
                     "5": "Estas cuatro se han unido formando un anillo cerrado. Los anillos no están permitidos, así que una de ellas debe inclinarse hacia el otro lado.",
                     "6": "Todas las casillas rellenas, todos los números cumplidos y ningún anillo."
+                },
+                "demoTitle": {
+                    "1": "Una diagonal por casilla",
+                    "2": "Cuenta las esquinas",
+                    "3": "Esquinas en blanco libres",
+                    "4": "Una esquina de cuatro",
+                    "5": "Sin anillos cerrados",
+                    "6": "Todo relleno"
                 },
                 "hint": {
                     "satisfied": {
@@ -1007,6 +1044,14 @@
                     "4": "Las tiendas nunca se tocan, ni siquiera por una esquina. Estas dos se tocan, así que una tiene que moverse.",
                     "5": "Solo queda libre una casilla junto a este árbol, así que su tienda va ahí.",
                     "6": "Cada árbol tiene una tienda al lado, ninguna tienda toca a otra y todos los números cuadran."
+                },
+                "demoTitle": {
+                    "1": "Una tienda por árbol",
+                    "2": "Justo al lado",
+                    "3": "Cuéntalas",
+                    "4": "Las tiendas no se tocan",
+                    "5": "La última casilla libre",
+                    "6": "Cada árbol con la suya"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1060,6 +1105,13 @@
                     "4": "Dos claros con un hueco. Claro en medio haría tres, así que tiene que ser oscuro.",
                     "5": "Todas las casillas rellenas, ninguna serie de tres y tres de cada color en cada fila y columna."
                 },
+                "demoTitle": {
+                    "1": "Claro u oscuro",
+                    "2": "Nunca tres seguidas",
+                    "3": "Tres de cada",
+                    "4": "Rellena el hueco",
+                    "5": "Todo equilibrado"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "Las casillas recuadradas de la fila {line} están una al lado de la otra y ambas son de color {colour}. Si la casilla ? también fuera de color {colour}, habría tres de color {colour} seguidas, así que debe ser de color {other}.",
@@ -1103,6 +1155,13 @@
                     "3": "Cada habitación tiene un CHAT. La habitación de arriba tiene dos.",
                     "4": "Esta habitación es una sola casilla, así que su CHAT va ahí. Todas las casillas que descarta se tachan por ti.",
                     "5": "Un CHAT en cada fila, columna y habitación, y ninguno se toca."
+                },
+                "demoTitle": {
+                    "1": "Coloca los CHAT",
+                    "2": "Sin tocarse",
+                    "3": "Uno por habitación",
+                    "4": "Una habitación de una casilla",
+                    "5": "Todo colocado"
                 },
                 "hint": {
                     "shadow": "El CHAT de la fila {row}, columna {column} descarta todas las demás casillas de su fila, su columna y {room}, y todas las casillas que lo tocan, así que las casillas ? no pueden tener un CHAT.",
@@ -2908,6 +2967,56 @@
                 "all": "Aún no hay nada aquí.",
                 "mentions": "Aún no hay menciones. Cuando alguien te @mencione, aparecerá aquí.",
                 "payments": "Aún no hay pagos."
+            }
+        },
+        "chit": {
+            "settings": "Ajustes de CHIT",
+            "lifetime": "Total {amount}",
+            "lastSevenDays": "Los últimos siete días",
+            "claimAmount": "Reclamar {amount} CHIT",
+            "claimedNext": "Reclamado · próximo en {time}",
+            "insurance": "Seguro de racha",
+            "insuranceHintOn": "{streak, plural, =0 {Si te saltas un día, se gasta uno y tu racha sigue.} other {Si te saltas un día, se gasta uno y tu racha de # días sigue.}}",
+            "insuranceHintOff": "{streak, plural, =0 {La cobertura mantiene tu racha si te saltas un día.} other {Si mañana no reclamas, pierdes tu racha de # días.}} Cobertura desde {price} CHAT.",
+            "insuredFor": "{count, plural, one {Asegurada por # día} other {Asegurada por # días}}",
+            "noInsurance": "Sin seguro",
+            "streakCovered": "racha cubierta",
+            "streakAtRisk": "racha en riesgo",
+            "dailyPuzzle": "Puzle diario",
+            "milestones": "Hitos de racha",
+            "milestoneDay": "Racha de {days} días",
+            "milestoneRate": "{amount}/día",
+            "achievements": "Logros",
+            "achievementsOf": "Logros · {done} de {total}",
+            "unlocked": "{group} · Desbloqueado",
+            "viewAll": "Ver todo",
+            "noAchievements": "Aún ninguno. Cada logro que completes paga CHIT.",
+            "achievementsDone": "{done} de {total} hechos",
+            "achievementDone": "Hecho",
+            "claimHistory": "Historial de reclamos",
+            "insuranceUsed": "{count, plural, one {# día usado hasta ahora} other {# días usados hasta ahora}}",
+            "insuranceAdd": "Añadir cobertura",
+            "insuranceUpTo": "Hasta {count} más",
+            "insuranceFewer": "Menos días",
+            "insuranceMore": "Más días",
+            "insuranceLadderNote": "Cada día de cobertura cuesta el doble que el anterior.",
+            "insuranceDay": "Día {n}",
+            "insuranceBuy": "{count, plural, one {Comprar # día} other {Comprar # días}} · {amount} CHAT",
+            "insuranceBalance": "Saldo",
+            "insuranceFull": "Cobertura completa",
+            "insuranceBought": "{count, plural, one {# día de cobertura añadido} other {# días de cobertura añadidos}}",
+            "insurancePinSoon": "Tu monedero tiene un PIN. Comprar el seguro de racha con él llegará con la pantalla de PIN de la app, que está en camino. Mientras tanto puedes comprarlo en oc.app.",
+            "challengeSolved": "Desafío resuelto",
+            "solvedIn": "Resuelto en {time}",
+            "nextPuzzle": "Próximo puzle en {time}",
+            "shareToChat": "Compartir en un chat",
+            "done": "Listo",
+            "strip": {
+                "claimed": "Reclamado",
+                "insured": "Cubierto por el seguro",
+                "missed": "Perdido",
+                "open": "Aún sin reclamar",
+                "none": "Antes de unirte"
             }
         }
     },

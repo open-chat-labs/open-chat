@@ -77,7 +77,7 @@ describe("claiming from the calendar", () => {
         client.chitHistory.mockImplementationOnce(
             () => new Promise((resolve) => (reload = resolve)),
         );
-        await history.claim(MARCH_1 + DAY + 60_000);
+        expect(await history.claim(MARCH_1 + DAY + 60_000)).toBe(true);
         expect(history.days.find((d) => d.amount === 200 && d.streakDay === 2)).toBeDefined();
         reload([claim(MARCH_1 + DAY + 60_000)]);
     });
@@ -88,7 +88,8 @@ describe("claiming from the calendar", () => {
             async () => ({ kind: "already_claimed", nextDailyChitClaim: BigInt(MARCH_1 + DAY) }),
         );
         const history = new ClaimHistory(client, JOINED);
-        await history.claim(MARCH_1 + 60_000);
+        // nothing claimed here: no celebration
+        expect(await history.claim(MARCH_1 + 60_000)).toBe(false);
         expect(client.chitHistory).toHaveBeenCalledTimes(1);
     });
 
