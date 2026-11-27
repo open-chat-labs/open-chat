@@ -18,7 +18,7 @@
     } from "@src/logic/admin/adminSections";
     import { now } from "@src/stores/time";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onDestroy, onMount } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import type { LeftRegion, ScreenProps } from "../app/screens";
     import { adminConsole, closeAdminConsole } from "./adminConsole.svelte";
 
@@ -27,8 +27,13 @@
     const client = getContext<OpenChat>("client");
     const admin = adminConsole(client);
 
-    onMount(() => {
-        if (!platformOperatorStore.value) return;
+    // the rows' counts, and the Pending proposals and Authority reports sections, need these;
+    // loaded once the user is an operator (who may become one while the console is open, as the
+    // old console's panels mounted only then)
+    let loaded = false;
+    $effect(() => {
+        if (!$platformOperatorStore || loaded) return;
+        loaded = true;
         void admin.proposals.refresh();
         void admin.reports.load();
     });
