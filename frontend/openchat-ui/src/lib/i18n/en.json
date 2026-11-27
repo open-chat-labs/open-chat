@@ -1240,6 +1240,8 @@
     "emptyState": {
       "errorBody": "Something went wrong on our side. Your drafts are safe.",
       "errorTitle": "Couldn't load messages",
+      "crashBody": "Something went wrong on our side. Try again, or reload if it keeps happening.",
+      "crashTitle": "Something went wrong",
       "invitePeople": "Invite people",
       "newMessage": "New message",
       "noConversationsBody": "Start a direct message or join a community to see it here.",

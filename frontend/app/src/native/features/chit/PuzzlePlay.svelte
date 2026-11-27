@@ -290,7 +290,8 @@
     // that has started), which would cancel the pointer; only a listener that isn't passive can.
     $effect(() => {
         const el = demoEl;
-        if (el === undefined) return;
+        // bind:this sets null, not undefined, once the tutorial goes (Skip, Resume)
+        if (el == null) return;
         const holdPan = (e: TouchEvent) => {
             if (gesture?.axis === "sideways" && e.cancelable) e.preventDefault();
         };
