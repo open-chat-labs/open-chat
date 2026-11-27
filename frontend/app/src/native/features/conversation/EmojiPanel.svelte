@@ -21,7 +21,7 @@
     import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import EmojiGrid from "./EmojiGrid.svelte";
-    import { EMOJI_SEARCH_DELAY_MS, EmojiSections } from "./emojiSections.svelte";
+    import { EMOJI_SEARCH_DELAY_MS, EmojiSections } from "@src/logic/composer/emojiSections.svelte";
     import EmojiSearchField from "./EmojiSearchField.svelte";
     import { panelContentPull } from "./panelDragHandle";
     import type { Search } from "./keyboardSlot";

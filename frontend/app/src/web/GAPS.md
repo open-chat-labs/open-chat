@@ -3961,9 +3961,11 @@ design export needs. Each entry says where it came up.
   - a proposal's collapse waits for the proposals filters (proposals show: 5a, "Proposals in the
     conversation"; the thread's items, reply in thread and follow / unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is the native tree's (N15), not this tree's;
-  - the library's `EmojiPicker` has a fixed set of about 56 emoji: no search over all of them,
-    no custom emoji (`@CE(code)`, which the old pickers offered) and no skin tones. A custom
-    emoji someone else reacted with shows as its code on the chip, and it can't be picked;
+  - the reaction picker is the library's `EmojiPicker` with its own fixed set of about 56 emoji:
+    no search over all of them, no custom emoji (`@CE(code)`, which the old pickers offered) and
+    no skin tones. A custom emoji someone else reacted with shows as its code on the chip, and it
+    can't be picked. The composer's picker has them all now ("Composer emoji picker", below):
+    the same `source` would give reactions every emoji too (custom ones need `@CE(code)`);
   - every reaction added counts towards the quick reactions (the library's picker keeps no
     favourites of its own, where the old trees' picker counted its picks);
   - the delete confirm and the "don't show again" toggle have no design (`TODO(design)`);
@@ -3975,6 +3977,25 @@ design export needs. Each entry says where it came up.
   takes focus when a chat is opened, on screens 992px and wider that aren't touch-only
   (`focusEntryOnOpen`, as the old entry), unless a dialog is open. A thread's composer (4c) takes
   focus as the thread opens, the same way.
+- **Composer emoji picker** (by hand, EXPORT-LOG 2026-11-27; #10638, #10639, #10640): the
+  library's picker had a fixed set of about 56 emoji and no custom emoji. `EmojiPicker` now takes
+  the host's emoji (`source`): the web composer gives it Recent (`EmojiSections`, shared with the
+  native panel, now in `logic/composer`), OpenChat's custom emoji packs (OC Bots, Popular:
+  `logic/composer/customEmoji`), then every emoji the device draws by category, from the old
+  pickers' emoji data (`utils/emojis`, emoji-picker-element's database, from its CDN the first
+  time), in the skin tone the old pickers set (no skin tone picker, as native), with a category
+  bar to go to a section and a search over names and keywords, custom emoji first
+  (`composerEmoji.adapter`). A custom emoji goes into the rich-text editor as one (`!emoji(code)`
+  in the markdown, as the old composer), and shows as its picture there and in the message. A
+  pack not bought yet is greyed with its price; picking one of its emoji offers to buy it
+  (`PremiumItemDialog`, `TODO(design)` as for the profile background), and once paid the emoji
+  goes in, as the old picker did. The section names are the native panel's strings; the pack
+  names are the old picker's (not translated there either). The picker is bigger too:
+  `--composer-picker-w` × `--composer-picker-h` (480 × 520px, was 360 × 400), as wide as the
+  composer allows (about 450px in the narrowest window) and no taller than the window less 180px.
+  To take back to the design export: the category bar, the custom packs and their locked state,
+  and the size. Custom emoji picked aren't kept in Recent (the native panel shares it and doesn't
+  draw them).
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in

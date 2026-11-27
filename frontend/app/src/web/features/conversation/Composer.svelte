@@ -13,7 +13,11 @@
      commands the screen offers for it; a pick runs it, or asks for its arguments first (the
      screen's). The text box is the old trees' rich-text editor (core/richText, #10576), once its
      chunk is here (App warms it): formatting shows as it's typed, a mention picked goes in as one
-     (sent as `@UserId`), and the draft is its markdown. Mount it once per chat (keyed). -->
+     (sent as `@UserId`), and the draft is its markdown. The emoji picker offers Recent, OpenChat's
+     custom emoji packs and every emoji the device draws, by category, with a search (the old
+     picker's, from the same emoji data: EmojiSections, composerEmoji.adapter); a custom emoji goes
+     in as one, and one from a pack not bought yet offers to buy it (PremiumItemDialog), then goes
+     in. Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
@@ -26,9 +30,21 @@
         ComposerEditorArgs,
         ComposerGif,
         ComposerMention,
+        ComposerEditor,
+        PickerEmojiItem,
     } from "@openchat/ui/src/lib/types";
-    import type { GiphyContent, UserOrUserGroup } from "@client";
+    import {
+        customEmojis,
+        type GiphyContent,
+        type PremiumItem,
+        type UserOrUserGroup,
+    } from "@client";
     import ComposerRichText from "@src/core/richText/ComposerRichText.svelte";
+    import { customEmojiMatching, customEmojiPacks } from "@src/logic/composer/customEmoji";
+    import { EmojiSections } from "@src/logic/composer/emojiSections.svelte";
+    import { countEmojiPicked } from "@src/utils/emojis";
+    import PremiumItemDialog from "../profile/PremiumItemDialog.svelte";
+    import { composerEmojiSource } from "./composerEmoji.adapter";
     import { RichTextEditorLoad } from "@src/core/richText/richTextEditorLoad.svelte";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
@@ -79,7 +95,16 @@
         commands,
         onPickCommand,
         onSignIn,
+        userId,
+        premiumItems,
+        chitBalance,
     }: {
+        // whose Recent emoji the picker shows
+        userId: string;
+        // the premium items the user has bought (the custom emoji packs among them), and their CHIT
+        // balance, to buy one with
+        premiumItems: ReadonlySet<PremiumItem>;
+        chitBalance: number;
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
         // a guest's Sign in, where that's why they can't send
@@ -161,6 +186,112 @@
     function pickGif(picked: ComposerGif) {
         const gif = feed?.gifs.find((g) => g.id === picked.key);
         if (gif !== undefined) onGif?.(gifContent(gif));
+    }
+
+    // ---- the emoji picker's emoji: Recent and every emoji by category, got as it first opens
+    // (again after they failed), and the custom ones
+
+    const emojiSections = new EmojiSections(untrack(() => userId));
+    let emojiAsked = false;
+    let emojiQuery = $state("");
+    $effect(() => () => emojiSections.dispose());
+
+    function emojiOpened() {
+        emojiQuery = "";
+        emojiSections.clearSearch();
+        if (!emojiAsked || emojiSections.failed) {
+            emojiAsked = true;
+            emojiSections.failed = false;
+            void emojiSections.load();
+        }
+    }
+
+    function emojiQueried(query: string) {
+        emojiQuery = query;
+        emojiSections.search(query);
+    }
+
+    const emojiPacks = $derived(customEmojiPacks(customEmojis, premiumItems));
+    const emoji = $derived(
+        composerEmojiSource({
+            recent: emojiSections.recent,
+            categories: emojiSections.categories,
+            loading: emojiSections.loading,
+            failed: emojiSections.failed,
+            packs: emojiPacks,
+            customMatches:
+                emojiQuery.trim() === ""
+                    ? undefined
+                    : customEmojiMatching(emojiQuery, customEmojis),
+            matches: emojiSections.matches,
+            labels: {
+                recent: $_("native.composer.emoji.recent"),
+                categories: {
+                    smileys: $_("native.composer.emoji.smileys"),
+                    people: $_("native.composer.emoji.people"),
+                    animals: $_("native.composer.emoji.animals"),
+                    food: $_("native.composer.emoji.food"),
+                    travel: $_("native.composer.emoji.travel"),
+                    activities: $_("native.composer.emoji.activities"),
+                    objects: $_("native.composer.emoji.objects"),
+                    symbols: $_("native.composer.emoji.symbols"),
+                    flags: $_("native.composer.emoji.flags"),
+                },
+                unavailable: $_("native.composer.emoji.unavailable"),
+                categoriesBar: $_("native.composer.emoji.categories"),
+                price: (chit) =>
+                    $_("premiumItem.priceTooltip", { values: { price: chit.toLocaleString() } }),
+            },
+            onQuery: emojiQueried,
+            onOpen: emojiOpened,
+        }),
+    );
+
+    // a character picked counts towards Recent and the emoji data's favourites (as the old
+    // pickers); custom emoji aren't kept in Recent, which the native tree shares
+    function emojiPicked(item: PickerEmojiItem) {
+        if (item.kind !== "char") return;
+        emojiSections.picked(item.char);
+        countEmojiPicked(emojiBase(item.char));
+    }
+
+    // the emoji without its skin tone, which its use is counted by
+    function emojiBase(char: string): string {
+        for (const list of [emojiSections.matches, ...emojiSections.categories]) {
+            const found = list?.find((e) => e.char === char);
+            if (found !== undefined) return found.base;
+        }
+        return char;
+    }
+
+    // a custom emoji from a pack not bought yet: buy the pack, then it goes in
+    let buyingEmoji = $state<{ code: string; item: PremiumItem }>();
+    // the editor in the text box, while it's there, for an emoji bought to go in
+    let textEditor: ComposerEditor | undefined;
+
+    function lockedEmoji(item: PickerEmojiItem & { kind: "image" }) {
+        const custom = customEmojis.get(item.code);
+        if (custom !== undefined) buyingEmoji = { code: custom.code, item: custom.premiumItem };
+    }
+
+    function boughtEmoji() {
+        const code = buyingEmoji?.code;
+        buyingEmoji = undefined;
+        if (code !== undefined) textEditor?.insertEmoji?.(code);
+    }
+
+    function withEditorHandle(args: ComposerEditorArgs): ComposerEditorArgs {
+        return {
+            ...args,
+            register: (ed) => {
+                textEditor = ed;
+                const unregister = args.register(ed);
+                return () => {
+                    if (textEditor === ed) textEditor = undefined;
+                    unregister();
+                };
+            },
+        };
     }
 
     let mediaInput = $state<HTMLInputElement>();
@@ -268,13 +399,26 @@
             {onCommandQuery}
             {commands}
             {onPickCommand}
+            {emoji}
+            onEmojiPicked={emojiPicked}
+            onLockedEmoji={lockedEmoji}
             editor={richText.component === undefined ? undefined : richTextField} />
         {#snippet richTextField(args: ComposerEditorArgs)}
             {#if richText.component !== undefined}
-                <ComposerRichText Editor={richText.component} {args} {resolveMention} />
+                <ComposerRichText
+                    Editor={richText.component}
+                    args={withEditorHandle(args)}
+                    {resolveMention} />
             {/if}
         {/snippet}
     </div>
+    {#if buyingEmoji !== undefined}
+        <PremiumItemDialog
+            item={buyingEmoji.item}
+            balance={chitBalance}
+            onUse={boughtEmoji}
+            onClose={() => (buyingEmoji = undefined)} />
+    {/if}
     {#if onFile !== undefined}
         <input
             bind:this={mediaInput}

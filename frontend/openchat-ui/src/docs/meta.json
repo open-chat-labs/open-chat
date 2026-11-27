@@ -3634,6 +3634,39 @@
         "required": false,
         "componentDefault": null,
         "doc": "The host's own editor in place of the text box, passed to the composer (see MessageComposer)."
+      },
+      {
+        "name": "emoji",
+        "type": "ComposerProps['emoji']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's emoji for the picker, passed to the composer (see MessageComposer)."
+      },
+      {
+        "name": "onEmojiPicked",
+        "type": "ComposerProps['onEmojiPicked']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "onLockedEmoji",
+        "type": "ComposerProps['onLockedEmoji']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
       }
     ],
     "group": "library"
@@ -12202,6 +12235,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "source",
+        "type": "EmojiPickerSource",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's emoji in place of the picker's own set: by section, with a category bar under the search to go to one, and what the host's search found."
+      },
+      {
+        "name": "onPickItem",
+        "type": "(item: PickerEmojiItem) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "With `source`: one of its emoji picked."
+      },
+      {
+        "name": "columns",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "8",
+        "doc": "Emoji in a row (a wider surface takes more)."
       }
     ],
     "group": "library"
@@ -16597,6 +16663,39 @@
         "required": false,
         "componentDefault": "undefined",
         "doc": "The host's own editor in the textarea's place (a rich-text one), once it can be shown: it registers itself (ComposerEditor) and gives the text as it changes. Without it, the textarea."
+      },
+      {
+        "name": "emoji",
+        "type": "EmojiPickerSource",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "The host's emoji for the emoji picker (every emoji, its custom ones), in place of the picker's own set."
+      },
+      {
+        "name": "onEmojiPicked",
+        "type": "(item: PickerEmojiItem) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "With `emoji`: one of them was put in at the caret (the host keeps its recent ones)."
+      },
+      {
+        "name": "onLockedEmoji",
+        "type": "(item: PickerEmojiItem & { kind: 'image' }) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "With `emoji`: a locked one was picked (not put in; the picker closes): the host offers to unlock it."
       }
     ],
     "group": "library"

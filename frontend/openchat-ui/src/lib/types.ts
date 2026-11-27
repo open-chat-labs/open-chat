@@ -327,6 +327,8 @@ export interface ComposerEditor {
   deleteBackward(): void;
   /** Puts the one picked from the composer's mention list in place of the "@word" at the caret. */
   insertMention(mention: ComposerMention): void;
+  /** Puts in an image emoji picked (a custom emoji, by its code) at the caret, focused, as one; without it, its text. */
+  insertEmoji?(code: string): void;
 }
 
 /** The "@word" being typed in a host's editor: where its "@" is (the editor's position) and what's typed after it. */
@@ -378,6 +380,59 @@ export interface ComposerGifs {
   /** The search found none: "No GIFs for …", with related terms to search for; with no terms, `items` are the
    *  trending GIFs shown under it. */
   notFound?: { query: string; terms: string[] };
+}
+
+/** An emoji a host offers in EmojiPicker (its `source`): a character, or an image of the host's own (a custom emoji). */
+export type PickerEmojiItem =
+  | {
+      kind: 'char';
+      char: string;
+      /** Literal text: its name, for its accessible name. */
+      name: string;
+    }
+  | {
+      kind: 'image';
+      /** The host's code for it: what its editor puts in (ComposerEditor's `insertEmoji`). */
+      code: string;
+      url: string;
+      /** Literal text: its name, for its accessible name. */
+      name: string;
+      /** What a plain text box gets for it (the composer's textarea, without the host's editor). */
+      text: string;
+      /** Not the user's to use yet: drawn dimmed, and picking it is the host's (MessageComposer's `onLockedEmoji`). */
+      locked: boolean;
+    };
+
+/** A section of a host's emoji in EmojiPicker: a heading over its emoji, and a button on the category bar. */
+export interface PickerEmojiSection {
+  /** The same while it's the same section. */
+  id: string;
+  /** Literal text: the heading, and its category button's label. */
+  label: string;
+  /** What its category button shows. */
+  icon: PickerEmojiItem;
+  /** Literal text after the heading, with a lock (a locked pack's price); none for a section that's the user's. */
+  lockedNote?: string;
+  /** Its emoji, in order (none yet while the source is loading). */
+  items: PickerEmojiItem[];
+}
+
+/**
+ * The emoji a host gives EmojiPicker in place of its own small set: by section, with a category bar to go to one, and
+ * what the host's search found for what's typed.
+ */
+export interface EmojiPickerSource {
+  sections: PickerEmojiSection[];
+  /** Sections the host is still getting show a spinner; `failed`'s text (translated) shows if they couldn't be had. */
+  status: { kind: 'loading' } | { kind: 'ready' } | { kind: 'failed'; text: string };
+  /** What the search found for the query last given to `onQuery`; undefined while there's none, or it's on its way. */
+  matches: PickerEmojiItem[] | undefined;
+  /** The search field's text as it changes ("" once it's cleared). */
+  onQuery: (query: string) => void;
+  /** The picker opened, its search empty: the host gets its emoji now if it hasn't yet. */
+  onOpen: () => void;
+  /** Translated: the category bar's accessible name. */
+  categoriesLabel: string;
 }
 
 /** A bot command the composer offers for the "/" typed at the start of the draft. */

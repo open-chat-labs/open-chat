@@ -10,7 +10,7 @@
     import { onDestroy, type Snippet } from "svelte";
     import type { Attachment } from "svelte/attachments";
     import { _ } from "svelte-i18n";
-    import type { EmojiSections } from "./emojiSections.svelte";
+    import type { EmojiSections } from "@src/logic/composer/emojiSections.svelte";
 
     type Props = {
         emoji: EmojiSections;

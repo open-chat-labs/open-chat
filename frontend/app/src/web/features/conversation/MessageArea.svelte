@@ -28,6 +28,7 @@
         currentUserStore,
         cryptoLookup,
         currentUserIdStore,
+        premiumItemsStore,
         directChatBotsStore,
         eventsStore,
         exchangeRatesLookupStore,
@@ -2087,6 +2088,9 @@
                     onCommandQuery={commandQueried}
                     {commands}
                     onPickCommand={(command) => pickCommand(context, command)}
+                    userId={me}
+                    premiumItems={$premiumItemsStore}
+                    chitBalance={$chitStateStore.chitBalance}
                 />
             {/key}
         </div>

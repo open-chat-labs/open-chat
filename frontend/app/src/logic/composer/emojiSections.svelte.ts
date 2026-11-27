@@ -3,9 +3,10 @@ import { EMOJI_CATEGORIES, type PickerEmoji } from "@src/utils/emojiCategories";
 import { emojiInCategory, emojiMatching } from "@src/utils/emojis";
 
 // The emoji a picker offers (native plan 07 "Emoji tab"): Recent, as kept on the device for the
-// user, then every emoji the phone draws, by category; and those matching a search. The composer's
-// emoji panel and the reaction sheet each make one as they open (EmojiGrid shows it), so both read
-// and keep the same Recent.
+// user, then every emoji the phone draws, by category; and those matching a search. The native
+// composer's emoji panel and reaction sheet each make one as they open (EmojiGrid shows it), so both
+// read and keep the same Recent; so does the web composer's emoji picker (its emoji, for the
+// library's EmojiPicker: web/features/conversation/composerEmoji).
 
 /** How long typing pauses before the search runs. */
 export const EMOJI_SEARCH_DELAY_MS = 250;
