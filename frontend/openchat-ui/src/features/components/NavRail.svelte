@@ -3,6 +3,7 @@
      When the host says so (`floating`), or gives the rail a fixed slot ([data-rail-slot] narrower than 200px), the
      expanded rail floats over the content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
      Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl.
+     The pins fill the rail down to Create and Explore, and past that scroll on their own.
      A pin with a `menu` opens it on right-click (at the pointer) or Shift+F10 / the Menu key (under the pin).
      `footItems` are the host's own destinations at the rail's foot, above CHIT (the app's Admin, for platform
      operators); onSelectFoot reports one's id. -->
@@ -27,6 +28,7 @@
   import ContextMenu from '../../lib/components/ContextMenu.svelte';
   import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
   import type { MenuItem } from '../../lib/types';
+  import { barJumps, barPlacement, type BarClip, type ListView } from './railBar';
 
   // nav item keys → canonical names in lib/icons.js
   const ICONS = { messages: 'messages', bell: 'bell', wallet: 'wallet', chit: 'zap', heart: 'heart' };
@@ -168,6 +170,58 @@
   let barGrows = $state(false);
   // where the bar last showed (null before it first has), kept while no row is active in between
   let barInFoot: boolean | null = null;
+  // the communities scroll on their own: the bar of a pin follows it as the list scrolls (with no
+  // slide), and is clipped to the list's edges (hidden once the pin is scrolled out of view)
+  let pinList = $state<HTMLDivElement>();
+  let barTracks = $state(false);
+  let barClip = $state<BarClip | null>(null);
+  // the active pin is scrolled wholly out of view: the bar is hidden, parked inside the list
+  let barHidden = $state(false);
+  // the pin the list last brought into view, so it does that once per pick, not on every sync
+  let shownPin: number | null | undefined = undefined;
+
+  // where the bar goes for the active row (its top in the rail), and how much of it the
+  // communities list's edges cut off (railBar's barPlacement)
+  function measure(row: Element) {
+    const rootTop = root.getBoundingClientRect().top;
+    let list: ListView | null = null;
+    if (pinList && pinList.contains(row)) {
+      const box = pinList.getBoundingClientRect();
+      list = { top: box.top - rootTop, bottom: box.bottom - rootTop };
+    }
+    return barPlacement(row.getBoundingClientRect().top - rootTop, list);
+  }
+
+  // a newly active pin outside the list's view scrolls into it (to the nearest edge)
+  function revealPin(row: Element) {
+    if (!pinList || !pinList.contains(row) || pinIndex === shownPin) return;
+    const box = pinList.getBoundingClientRect();
+    const r = row.getBoundingClientRect();
+    // the list's own padding keeps a pin's ring and dot clear of its edges
+    const pad = parseFloat(getComputedStyle(pinList).paddingTop) || 0;
+    if (r.top < box.top + pad) pinList.scrollTop -= box.top + pad - r.top;
+    else if (r.bottom > box.bottom - pad) pinList.scrollTop += r.bottom - (box.bottom - pad);
+  }
+
+  // the list scrolled or changed size: the bar of an active pin moves with it, at once
+  function trackBar() {
+    if (!root) return;
+    const row = root.querySelector('[data-active-row]');
+    if (!row || !pinList?.contains(row)) return;
+    const { top, clip, hidden } = measure(row);
+    if (top !== barTop) barTracks = true;
+    barTop = top;
+    barClip = clip;
+    barHidden = hidden;
+  }
+
+  $effect(() => {
+    const list = pinList;
+    if (!list) return;
+    const observer = new ResizeObserver(trackBar);
+    observer.observe(list);
+    return () => observer.disconnect();
+  });
 
   // the accent bar slides to whichever row is active
   async function syncBar() {
@@ -175,11 +229,25 @@
     // the rail may have been unmounted while it waited
     if (!root) return;
     const row = root.querySelector('[data-active-row]');
+    // from a bar the list's edges cut off, a slide would start outside the list, over the rows
+    // around it: it jumps instead (fading in where it lands, if it was hidden)
+    const jumps = barJumps(barTop === null ? null : { clip: barClip, hidden: barHidden });
     if (!row) {
+      barTracks = false;
       barTop = null;
+      barClip = null;
+      barHidden = false;
+      shownPin = pinIndex;
       return;
     }
-    const top = Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7;
+    revealPin(row);
+    shownPin = pinIndex;
+    const { top, clip, hidden } = measure(row);
+    barClip = clip;
+    barHidden = hidden;
+    // only a move decides: a re-run that leaves the bar where it is (several changes in one pick)
+    // keeps the way it's going there
+    if (top !== barTop) barTracks = jumps;
     const inFoot = row.hasAttribute('data-foot-row');
     if (barInFoot !== null && inFoot !== barInFoot) {
       // across the spacer, either way: grow a new bar where it lands
@@ -237,7 +305,14 @@
 
 <div class="rail" class:open bind:this={root} data-rail-expanded={open ? 'true' : 'false'}>
   {#key barGen}
-    <span class="bar" class:grows={barGrows} style:top="{barTop ?? 13}px" style:opacity={barTop === null ? 0 : 1}></span>
+    <span
+      class="bar"
+      class:grows={barGrows}
+      class:tracks={barTracks}
+      style:top="{barTop ?? 13}px"
+      style:opacity={barTop === null || barHidden ? 0 : 1}
+      style:clip-path={barClip ? `inset(${barClip.top}px 0 ${barClip.bottom}px 0)` : undefined}
+    ></span>
   {/key}
   {#if !guest}
     {#each items as item, i}
@@ -276,56 +351,61 @@
     <div class="heading-line"></div>
   </div>
   <div class="pins">
-    {#each pins as pin, i (pin.id)}
-      {@const selected = i === pinIndex}
-      {@const hasMenu = (pin.menu?.length ?? 0) > 0}
-      <div
-        class="row"
-        class:active={selected}
-        data-active-row={selected ? '' : undefined}
-        onclick={() => {
-          picked();
-          localPin = i;
-          onSelectPin?.(pin.id, pin);
-        }}
-        oncontextmenu={(e) => {
-          if (!hasMenu) return;
-          e.preventDefault();
-          pinMenu = { id: pin.id, point: { x: e.clientX, y: e.clientY }, anchor: null };
-        }}
-        onkeydown={(e) => {
-          if (!hasMenu || e.target !== e.currentTarget) return;
-          if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
-            e.preventDefault();
-            const r = e.currentTarget.getBoundingClientRect();
-            pinMenu = { id: pin.id, point: null, anchor: { left: r.left, right: r.right, top: r.top, bottom: r.bottom } };
-          }
-        }}
-        role="button"
-        tabindex="0"
-        aria-haspopup={hasMenu ? 'menu' : undefined}
-        aria-label={pin.label ? t(pin.label) : pin.name || t('ui.navRail.communityN', { n: i + 1 })}
-        aria-current={selected ? 'page' : undefined}
-      >
-        <span class="slot">
-          <span
-            class="pin"
-            class:selected
-            class:preview={selected && pin.preview}
-            style:background={pin.avatarUrl ? `center/cover no-repeat ${cssUrl(pin.avatarUrl)}` : (GRADIENTS[pin.color] ?? GRADIENTS.blue)}
+    <!-- the communities fill the rail down to Create and Explore, and scroll on their own past that -->
+    {#if pins.length > 0}
+      <div class="pin-list" bind:this={pinList} onscroll={trackBar}>
+        {#each pins as pin, i (pin.id)}
+          {@const selected = i === pinIndex}
+          {@const hasMenu = (pin.menu?.length ?? 0) > 0}
+          <div
+            class="row"
+            class:active={selected}
+            data-active-row={selected ? '' : undefined}
+            onclick={() => {
+              picked();
+              localPin = i;
+              onSelectPin?.(pin.id, pin);
+            }}
+            oncontextmenu={(e) => {
+              if (!hasMenu) return;
+              e.preventDefault();
+              pinMenu = { id: pin.id, point: { x: e.clientX, y: e.clientY }, anchor: null };
+            }}
+            onkeydown={(e) => {
+              if (!hasMenu || e.target !== e.currentTarget) return;
+              if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+                e.preventDefault();
+                const r = e.currentTarget.getBoundingClientRect();
+                pinMenu = { id: pin.id, point: null, anchor: { left: r.left, right: r.right, top: r.top, bottom: r.bottom } };
+              }
+            }}
+            role="button"
+            tabindex="0"
+            aria-haspopup={hasMenu ? 'menu' : undefined}
+            aria-label={pin.label ? t(pin.label) : pin.name || t('ui.navRail.communityN', { n: i + 1 })}
+            aria-current={selected ? 'page' : undefined}
           >
-            {#if selected && pin.preview}
-              <span class="pin-veil"></span>
-              <span class="pin-eye" title={t('ui.navRail.previewing')}><span class="pin-eye-icon"></span></span>
-            {/if}
-            {#if pin.dot}
-              <span class="pin-dot"></span>
-            {/if}
-          </span>
-        </span>
-        <span class="label">{pin.name ?? t('ui.navRail.community')}{#if selected && pin.preview}<span class="preview-tag"> {t('ui.navRail.previewTag')}</span>{/if}</span>
+            <span class="slot">
+              <span
+                class="pin"
+                class:selected
+                class:preview={selected && pin.preview}
+                style:background={pin.avatarUrl ? `center/cover no-repeat ${cssUrl(pin.avatarUrl)}` : (GRADIENTS[pin.color] ?? GRADIENTS.blue)}
+              >
+                {#if selected && pin.preview}
+                  <span class="pin-veil"></span>
+                  <span class="pin-eye" title={t('ui.navRail.previewing')}><span class="pin-eye-icon"></span></span>
+                {/if}
+                {#if pin.dot}
+                  <span class="pin-dot"></span>
+                {/if}
+              </span>
+            </span>
+            <span class="label">{pin.name ?? t('ui.navRail.community')}{#if selected && pin.preview}<span class="preview-tag"> {t('ui.navRail.previewTag')}</span>{/if}</span>
+          </div>
+        {/each}
       </div>
-    {/each}
+    {/if}
     {#if !guest}
       <div class="row" onclick={() => onCreateCommunity?.()} role="button" tabindex="0" aria-label={t('ui.navRail.createCommunity')} title={t('ui.navRail.createCommunity')}>
         <span class="slot"><span class="create"><span class="create-icon"></span></span></span>
@@ -458,6 +538,11 @@
 
     &.grows {
       animation: bar-grow 0.2s var(--ease-out);
+    }
+
+    /* following a pin as the communities scroll: at once, not a slide */
+    &.tracks {
+      transition: opacity var(--duration-base) ease;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -676,10 +761,32 @@
   .pins {
     position: relative;
     z-index: 1;
-    flex: none;
+    /* shrinks below its content (the communities scrolling) to leave room for the rail's foot */
+    flex: 0 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: var(--space-14);
+  }
+
+  .pin-list {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-14);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* room for a pin's ring and unread dot at the list's edges, without moving the rows */
+    padding-block: var(--space-6);
+    margin-block: calc(-1 * var(--space-6));
+    /* no scrollbar: in the collapsed rail it would push the pins off centre; a cut-off pin shows there's more */
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .pins .row {
