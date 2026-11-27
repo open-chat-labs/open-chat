@@ -10,7 +10,6 @@
     import TextInput from "@openchat/ui/src/lib/components/TextInput.svelte";
     import { thresholdProblem, wholeNumberProblem } from "@src/logic/admin/fieldChecks";
     import { REFERRAL_CATEGORIES } from "@src/logic/admin/operatorFunctions.svelte";
-    import { onMount } from "svelte";
     import type { AdminConsole } from "../adminConsole.svelte";
 
     interface Props {
@@ -21,7 +20,6 @@
     let { admin, translate }: Props = $props();
 
     const ops = $derived(admin.ops);
-    onMount(() => admin.loadOperatorFunctions());
 
     const out = (form: string, busy: boolean) => admin.cardOutcome(form, busy, translate);
 
@@ -33,7 +31,7 @@
     let clearing = $state(false);
 
     async function clearHold(): Promise<void> {
-        await admin.outcomes.run("legalHold", () => ops.setVaultLegalHold(false));
+        await admin.run("legalHold", () => ops.setVaultLegalHold(false));
         clearing = false;
     }
 </script>
@@ -61,7 +59,7 @@
             busy={ops.busy.has("referralConfig")}
             disabled={ops.busy.has("referralConfig") || ops.referralThresholdsInvalid}
             onClick={() =>
-                void admin.outcomes.run("referral", () => ops.setModerationReferralConfig())} />
+                void admin.run("referral", () => ops.setModerationReferralConfig())} />
     {/snippet}
 </SettingsCard>
 
@@ -94,7 +92,7 @@
             busy={ops.busy.has("legalHold") && !clearing}
             disabled={ops.busy.has("legalHold") || !holdReady}
             onClick={() =>
-                void admin.outcomes.run("legalHold", () => ops.setVaultLegalHold(true))} />
+                void admin.run("legalHold", () => ops.setVaultLegalHold(true))} />
     {/snippet}
 </SettingsCard>
 

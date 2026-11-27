@@ -1,7 +1,9 @@
 import type { OpenChat, ResourceKey } from "@client";
+import type { AdminSectionId } from "@src/logic/admin/adminSections";
 import { AuthorityReports, slaStanding } from "@src/logic/admin/authorityReports.svelte";
+import { ConsoleLoads } from "@src/logic/admin/consoleLoads";
 import { DailyPuzzleOperator } from "@src/logic/admin/dailyPuzzleOperator.svelte";
-import { FormOutcomes } from "@src/logic/admin/formOutcomes.svelte";
+import { FormOutcomes, type ActionOutcome } from "@src/logic/admin/formOutcomes.svelte";
 import { OperatorFunctions } from "@src/logic/admin/operatorFunctions.svelte";
 import { isOwnProposal, PendingProposals } from "@src/logic/admin/pendingProposals.svelte";
 import { TranslationCorrections } from "@src/logic/admin/translationCorrections.svelte";
@@ -11,7 +13,8 @@ import { VaultLog } from "@src/logic/admin/vaultLog.svelte";
 // section open in the main pane) while /admin shows: the `logic/admin` classes, made when the
 // console opens and dropped when it closes, so it opens afresh as the old one did; and how each
 // form last went (FormOutcomes). The list panel loads the proposals and the register for its
-// counts; a section loads what it shows as it opens.
+// counts; a section reads what it shows each time it opens, and a proposal that went through
+// reads the proposals again (ConsoleLoads).
 
 /** What a settings card's footer says: busy while its action runs, else how it last went. */
 export type CardOutcome = { kind: "busy" | "success" | "proposed" | "failed"; text: string };
@@ -24,7 +27,7 @@ export class AdminConsole {
     readonly corrections: TranslationCorrections;
     readonly vault: VaultLog;
     readonly outcomes = new FormOutcomes();
-    #opsLoaded = false;
+    readonly loads: ConsoleLoads;
 
     constructor(client: OpenChat) {
         this.proposals = new PendingProposals(client);
@@ -33,13 +36,28 @@ export class AdminConsole {
         this.puzzle = new DailyPuzzleOperator(client);
         this.corrections = new TranslationCorrections(client);
         this.vault = new VaultLog(client);
+        this.loads = new ConsoleLoads({
+            proposals: () => this.proposals.refresh(),
+            reports: () => this.reports.load(),
+            operatorConfig: () => this.ops.load(),
+        });
     }
 
-    /** The operator functions' current settings, read once while the console is open. */
-    loadOperatorFunctions(): void {
-        if (this.#opsLoaded) return;
-        this.#opsLoaded = true;
-        this.ops.load();
+    /** Reads what a section shows, as it opens (as the old console's tabs did on mounting). */
+    sectionOpened(section: AdminSectionId): Promise<void> {
+        return this.loads.sectionOpened(section);
+    }
+
+    /** Runs a form's action, keeps how it went, and reads again what that calls for (a
+     * proposal: the pending proposals). */
+    async run(
+        form: string,
+        action: () => Promise<ActionOutcome | undefined>,
+        proposal = false,
+    ): Promise<void> {
+        await this.outcomes.run(form, action, proposal);
+        // not waited for: the form is done once its outcome is in
+        void this.loads.outcomeRecorded(this.outcomes.of(form)?.kind);
     }
 
     /** The proposals awaiting you (another operator's) and yours; none until they've loaded. */

@@ -10,7 +10,6 @@
     import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
     import { e8sAmount, principalProblem, wholeNumberProblem } from "@src/logic/admin/fieldChecks";
     import type { FeesForm } from "@src/logic/admin/operatorFunctions.svelte";
-    import { onMount } from "svelte";
     import type { AdminConsole } from "../adminConsole.svelte";
 
     interface Props {
@@ -21,7 +20,6 @@
     let { admin, translate }: Props = $props();
 
     const ops = $derived(admin.ops);
-    onMount(() => admin.loadOperatorFunctions());
 
     const out = (form: string, busy: boolean) => admin.cardOutcome(form, busy, translate);
 
@@ -79,7 +77,7 @@
             label="Apply"
             busy={ops.busy.has("diamondFees")}
             disabled={ops.busy.has("diamondFees") || feesInvalid}
-            onClick={() => void admin.outcomes.run("fees", () => ops.setDiamondMembershipFees())} />
+            onClick={() => void admin.run("fees", () => ops.setDiamondMembershipFees())} />
     {/snippet}
 </SettingsCard>
 
@@ -113,7 +111,7 @@
                 principalProblem(ops.governanceCanisterId) !== undefined ||
                 wholeNumberProblem(ops.stake) !== undefined}
             onClick={() =>
-                void admin.outcomes.run("stake", () => ops.stakeNeuronForSubmittingProposals())} />
+                void admin.run("stake", () => ops.stakeNeuronForSubmittingProposals())} />
     {/snippet}
 </SettingsCard>
 
@@ -140,7 +138,7 @@
             label="Apply"
             busy={ops.busy.has("tokenEnabled")}
             disabled={ops.busy.has("tokenEnabled") || !ops.tokenLedgerValid}
-            onClick={() => void admin.outcomes.run("token", () => ops.setTokenEnabled())} />
+            onClick={() => void admin.run("token", () => ops.setTokenEnabled())} />
     {/snippet}
 </SettingsCard>
 

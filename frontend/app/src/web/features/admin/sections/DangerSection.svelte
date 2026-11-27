@@ -20,7 +20,6 @@
         OperatorOutcome,
     } from "@src/logic/admin/operatorFunctions.svelte";
     import { navigate } from "@src/utils/navigation";
-    import { onMount } from "svelte";
     import type { AdminConsole } from "../adminConsole.svelte";
 
     interface Props {
@@ -31,12 +30,11 @@
     let { admin, translate }: Props = $props();
 
     const ops = $derived(admin.ops);
-    onMount(() => admin.loadOperatorFunctions());
 
     const out = (form: OperatorAction) =>
         admin.cardOutcome(form, ops.busy.has(form), translate, "Proposing…");
     const propose = (form: OperatorAction, action: () => Promise<OperatorOutcome>) =>
-        void admin.outcomes.run(form, action, true);
+        void admin.run(form, action, true);
 
     const pending = $derived(admin.proposals.pending.length);
 
@@ -48,7 +46,7 @@
     let destroying = $state(false);
 
     async function proposeDestroy(): Promise<void> {
-        await admin.outcomes.run("destroyEvidence", () => ops.proposeDestroyVaultEvidence(), true);
+        await admin.run("destroyEvidence", () => ops.proposeDestroyVaultEvidence(), true);
         destroying = false;
     }
 </script>

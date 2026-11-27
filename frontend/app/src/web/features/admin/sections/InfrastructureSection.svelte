@@ -7,7 +7,7 @@
     import SettingsCard from "@openchat/ui/src/lib/components/SettingsCard.svelte";
     import TextInput from "@openchat/ui/src/lib/components/TextInput.svelte";
     import { principalProblem, wholeNumberProblem } from "@src/logic/admin/fieldChecks";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { sessionPolling, type AdminConsole } from "../adminConsole.svelte";
 
     interface Props {
@@ -19,7 +19,6 @@
 
     const client = getContext<OpenChat>("client");
     const ops = $derived(admin.ops);
-    onMount(() => admin.loadOperatorFunctions());
 
     const out = (form: string, busy: boolean) => admin.cardOutcome(form, busy, translate);
 </script>
@@ -44,7 +43,7 @@
                 ops.groupUpgradeConcurrencyInvalid ||
                 wholeNumberProblem(ops.groupUpgradeConcurrency) !== undefined}
             onClick={() =>
-                void admin.outcomes.run("groupConcurrency", () =>
+                void admin.run("groupConcurrency", () =>
                     ops.setGroupUpgradeConcurrency(),
                 )} />
     {/snippet}
@@ -70,7 +69,7 @@
                 ops.communityUpgradeConcurrencyInvalid ||
                 wholeNumberProblem(ops.communityUpgradeConcurrency) !== undefined}
             onClick={() =>
-                void admin.outcomes.run("communityConcurrency", () =>
+                void admin.run("communityConcurrency", () =>
                     ops.setCommunityUpgradeConcurrency(),
                 )} />
     {/snippet}
@@ -97,7 +96,7 @@
             disabled={ops.busy.has("multiUserCanister") ||
                 ops.multiUserCanisterLocalUserIndexInvalid}
             onClick={() =>
-                void admin.outcomes.run("multiUser", () => ops.createMultiUserCanister())} />
+                void admin.run("multiUser", () => ops.createMultiUserCanister())} />
     {/snippet}
 </SettingsCard>
 

@@ -18,7 +18,7 @@
     } from "@src/logic/admin/adminSections";
     import { now } from "@src/stores/time";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onDestroy, untrack } from "svelte";
     import type { LeftRegion, ScreenProps } from "../app/screens";
     import { adminConsole, closeAdminConsole } from "./adminConsole.svelte";
 
@@ -34,8 +34,10 @@
     $effect(() => {
         if (!$platformOperatorStore || loaded) return;
         loaded = true;
-        void admin.proposals.refresh();
-        void admin.reports.load();
+        untrack(() => {
+            void admin.loads.load("proposals");
+            void admin.loads.load("reports");
+        });
     });
     onDestroy(closeAdminConsole);
 

@@ -10,7 +10,6 @@
     import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
     import { principalProblem } from "@src/logic/admin/fieldChecks";
     import { BRIDGE_PLATFORMS } from "@src/logic/admin/operatorFunctions.svelte";
-    import { onMount } from "svelte";
     import type { AdminConsole } from "../adminConsole.svelte";
 
     interface Props {
@@ -21,13 +20,12 @@
     let { admin, translate }: Props = $props();
 
     const ops = $derived(admin.ops);
-    onMount(() => admin.loadOperatorFunctions());
 
     const out = (form: string, busy: boolean) => admin.cardOutcome(form, busy, translate);
 
     function setCallPush(on: boolean): void {
         ops.callPushEnabled = on;
-        void admin.outcomes.run("callPush", () => ops.applyCallPush());
+        void admin.run("callPush", () => ops.applyCallPush());
     }
 </script>
 
@@ -62,13 +60,13 @@
             variant="secondary"
             disabled={ops.busy.has("alchemyKey")}
             onClick={() =>
-                void admin.outcomes.run("alchemy", () => ops.setAlchemyApiKey(undefined))} />
+                void admin.run("alchemy", () => ops.setAlchemyApiKey(undefined))} />
         <Button
             label="Set"
             busy={ops.busy.has("alchemyKey")}
             disabled={ops.busy.has("alchemyKey") || ops.alchemyApiKey.trim() === ""}
             onClick={() =>
-                void admin.outcomes.run("alchemy", () =>
+                void admin.run("alchemy", () =>
                     ops.setAlchemyApiKey(ops.alchemyApiKey.trim()),
                 )} />
     {/snippet}
@@ -94,7 +92,7 @@
                 ops.miniAppServicePrincipal.trim() === "" ||
                 principalProblem(ops.miniAppServicePrincipal) !== undefined}
             onClick={() =>
-                void admin.outcomes.run("miniApp", () => ops.setMiniAppServicePrincipal())} />
+                void admin.run("miniApp", () => ops.setMiniAppServicePrincipal())} />
     {/snippet}
 </SettingsCard>
 
@@ -118,13 +116,13 @@
                 variant="secondary"
                 disabled={busy}
                 onClick={() =>
-                    void admin.outcomes.run(form, () => ops.setBridgeBot(platform, undefined))} />
+                    void admin.run(form, () => ops.setBridgeBot(platform, undefined))} />
             <Button
                 label="Set"
                 {busy}
                 disabled={busy || ops.bridgeBotIds[platform].trim() === ""}
                 onClick={() =>
-                    void admin.outcomes.run(form, () =>
+                    void admin.run(form, () =>
                         ops.setBridgeBot(platform, ops.bridgeBotIds[platform].trim()),
                     )} />
         {/snippet}

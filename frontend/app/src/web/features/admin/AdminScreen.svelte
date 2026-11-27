@@ -14,7 +14,7 @@
     import PageHeader from "@openchat/ui/src/lib/components/PageHeader.svelte";
     import { adminSection } from "@src/logic/admin/adminSections";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { adminConsole } from "./adminConsole.svelte";
@@ -46,13 +46,20 @@
     });
     onDestroy(() => reviewingTranslations.set(false));
 
+    // a section reads what it shows each time it opens, as the old console's tabs did
+    $effect(() => {
+        if (!$platformOperatorStore) return;
+        const id = section.id;
+        untrack(() => void admin.sectionOpened(id));
+    });
+
     const translate = (key: ResourceKey): string => interpolateNewUi($_, key);
 
     const refreshing = $derived(section.id === "proposals" ? admin.proposals.loading : false);
 
     function refresh(): void {
-        if (section.id === "proposals") void admin.proposals.refresh();
-        else if (section.id === "reports") void admin.reports.load();
+        if (section.id === "proposals") void admin.loads.load("proposals");
+        else if (section.id === "reports") void admin.loads.load("reports");
     }
 </script>
 
