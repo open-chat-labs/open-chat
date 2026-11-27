@@ -1251,9 +1251,8 @@
 - Used by the app: the web's and the native tree's composers put the old trees' rich-text editor here (app `core/richText`, the user's decision of 2026-11-26: a seam, the library stays editor-free).
 - Not in the design export: the design's composer is a plain text box.
 
-## 2026-11-26 — ProfileDialog: the host's links at the rail's foot, by hand
-- `ProfileDialog`: `railFootItems` (optional, default none), `ProfileRailItem[]` (`{ label, icon, onClick }`, the label a resource key or literal text), rows at the rail's foot above Log out, drawn as the rail's other rows (a `nav-item`: 15px icon in `--nav-ink`, medium `--text-md` label, 36px). A click closes the dialog (its exit plays), then calls `onClick`. The foot's rows are 4px apart, as a nav group's.
-- The card's height grows by a row (36px and the gap) for each of them: 770px with none (unchanged), 810px with one, so the rail doesn't scroll at its normal size. The window still caps it (`max-height: 100%` of the layer's box, the viewport less `--space-22` each side); then the rail's sections and the section's content each scroll on their own, and the foot (the host's rows and Log out) stays in view.
-- `meta.json` updated. `ProfileRailItem` exported with the component's other types.
-- Used by the app: the web tree's Admin row for platform operators, to the operator console (the user's request, 2026-11-26).
+## 2026-11-27 — NavRail: the host's destinations at the rail's foot, by hand
+- `NavRail`: `footItems` (optional, default none), `RailFootItem[]` (`{ id, icon, label, active? }`, the label a resource key or literal text), rows after the rail's spacer and above CHIT, drawn as the rail's destinations (20px icon in `--ink-3`, the label folding away when collapsed, where it's the tooltip and accessible name). `active` gives a row the rail's highlight and accent bar (`aria-current="page"`); the host leaves `activeIndex` at -1 meanwhile. A click reports the id (`onSelectFoot`) and closes a floating rail, as a destination's does. None for a guest.
+- `meta.json` updated. `RailFootItem` exported with the features' other types.
+- Used by the app: the web tree's Admin for platform operators, to the operator console (the user's decision, 2026-11-27, in place of a row in the profile dialog's rail).
 - Not in the design export.

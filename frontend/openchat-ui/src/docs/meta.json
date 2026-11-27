@@ -16168,6 +16168,28 @@
         "doc": "The picked community, by id."
       },
       {
+        "name": "footItems",
+        "type": "RailFootItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The host's destinations at the rail's foot, above CHIT; none by default."
+      },
+      {
+        "name": "onSelectFoot",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "exploreActive",
         "type": "boolean",
         "default": false,
@@ -17715,17 +17737,6 @@
         "required": false,
         "componentDefault": null,
         "doc": "Log out; the dialog closes once it resolves. Hidden without it."
-      },
-      {
-        "name": "railFootItems",
-        "type": "ProfileRailItem[]",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "[]",
-        "doc": "Links of the host's at the rail's foot, above Log out; each closes the dialog, then calls its onClick."
       },
       {
         "name": "onDeleteAccount",

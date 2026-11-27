@@ -4131,7 +4131,8 @@ design export needs. Each entry says where it came up.
     …) clash with the library's tokens, so it would need a themed island of its own, its menus
     and dialogs (portalled to `<body>`) outside it. Its logic is in the components, so a port
     first extracts it to `app/src/logic/admin`, as the rules say. With it comes the old main
-    menu's Admin item (operators only), now in the profile dialog's rail foot (below).
+    menu's Admin item (operators only), whose place would be the profile dialog's rail foot,
+    above Log out (a new `ProfileDialog` prop).
   - **Report review** (built, L6c #10610, `features/moderation`): the moderation channel's
     report cards, ported plainly on library parts (the user's decision, 2026-11-12), drawn in
     the conversation through `MessageGroup`'s `customContent` (by hand, EXPORT-LOG 2026-11-25;
@@ -4162,16 +4163,16 @@ design export needs. Each entry says where it came up.
       words ("Moderation report") in a text bubble, as before: moderators work from a desktop.
       Native can draw them the same way, with the same logic, if they're wanted there.
     TODO(design): no report cards or their dialogs in the design.
-  - **The old main menu's Admin item** (operators only): done, TODO(design), web only. The
-    profile dialog's rail foot has an Admin row (shield icon) above Log out for a platform
-    operator (`platformOperatorStore`; not a group's or community's admins), through
-    `ProfileDialog`'s `railFootItems` (`profile.adapter`'s `railFootItemsProps`); it closes the
-    dialog and goes to `/admin`. New string: `adminConsole` (the old item's "Admin" was literal
-    text). The dialog grows by the row's height (770px to 810px) only when it has one, so it
-    doesn't scroll at 1400×900; a shorter window caps it (as before), and then the rail and the
-    section each scroll on their own, Admin and Log out pinned at the rail's foot. Under an
-    800px-high window the rail scrolls a little, as it already did there before (by 14px). No
-    row, rail foot or icon for it in the design. Web only (the user's decision, 2026-11-26).
+  - **The old main menu's Admin item** (operators only): done, TODO(design), web only. An Admin
+    destination (shield icon) at the NavRail's foot, above CHIT, for a platform operator
+    (`platformOperatorStore`; not a group's or community's admins, nor a guest), through
+    `NavRail`'s `footItems` (`rail.adapter`'s `railFootItems`); it goes to `/admin` and has the
+    rail's highlight while the console is open, as the wallet's does. Considered first and dropped:
+    a row in the profile dialog's rail (the console is a place in the app, not part of your
+    profile; the user's decision, 2026-11-27). New string: `adminConsole` (the old item's "Admin"
+    was literal text). Not there: a badge for what needs a person (a proposal awaiting you, an
+    overdue report), which would mean loading both in the background for operators. No rail foot
+    destination or icon for it in the design. Web only (the user's decision, 2026-11-26).
   - **The native half**: `src/native` has none of the above (nor did components_mobile have
     the console hooks or the console); not needed while native builds keep the old UI (PLAN L6).
     The native apps' event listeners and `svelteReady` are "Native apps" (above).

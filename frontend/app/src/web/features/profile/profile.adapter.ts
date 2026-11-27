@@ -16,7 +16,6 @@ import {
 import type {
     ChatSettings,
     ProfileCommunity,
-    ProfileRailItem,
     SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
@@ -248,16 +247,4 @@ export function signinMethodsProps(
 /** A device-link code for the dialog: when it expires, in ms. */
 export function linkCodeProps(code: AccountLinkingCode): { code: string; expiresAt: number } {
     return { code: code.value, expiresAt: Number(code.expiresAt) };
-}
-
-/**
- * The rail's links above Log out: the operator console (/admin), for platform operators only
- * (not a group's or community's admins), as the old main menu's Admin item.
- */
-export function railFootItemsProps(
-    isPlatformOperator: boolean,
-    adminLabel: string,
-    openAdmin: () => void,
-): ProfileRailItem[] {
-    return isPlatformOperator ? [{ label: adminLabel, icon: "shield", onClick: openAdmin }] : [];
 }
