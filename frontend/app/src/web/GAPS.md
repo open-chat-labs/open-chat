@@ -4123,7 +4123,7 @@ design export needs. Each entry says where it came up.
     danger card's note of its own pending proposal (nothing ties a proposal to its setting but the
     summary's words), Undo (nothing here can be undone), the corrections' count in the list (they
     load only as the section opens, switching locales), and stopping a correction's preview (the
-    client has no call for it). The old main menu's Admin item is at the rail's foot, PR #10630.
+    client has no call for it). The old main menu's Admin item is at the rail's foot (#10630, merged).
   Built since (the old desktop had the only ones):
   - **Report review** (built, L6c #10610, `features/moderation`): the moderation channel's
     report cards, ported plainly on library parts (the user's decision, 2026-11-12), drawn in
