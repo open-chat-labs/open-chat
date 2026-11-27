@@ -802,8 +802,8 @@ design export needs. Each entry says where it came up.
     the list, as the old app's (`OpenAtUnread`: the client loads them as it selects the chat,
     before the pushed screen's list is there to hear it), under an "Unread messages" divider. The
     divider goes once every message after it has been read: it lingers 3s, then fades and folds
-    away (`FirstUnread.seen`), and isn't back that visit. Ours: the old app has no divider, the
-    web's stays for the visit, and the design doesn't show one in a conversation.
+    away (`FirstUnread.seen`), and isn't back that visit, as on the web (#10647). Ours: the old
+    app has no divider, and the design doesn't show one in a conversation.
   - **Going back** keeps the messages showing until the screen is gone (`HeldWhileLeaving`, and
     ChatEventList's `loadedRange`, which the conversation holds with them), as it does when
     another chat replaces it.
@@ -3549,6 +3549,12 @@ design export needs. Each entry says where it came up.
   place, then the pinned one, with the day's own hidden as it scrolls on up under it, so a date
   never shows twice (the list's hand-off is told the pinned pill's place 16px lower, the 16px a
   day's pill sits into its row). One "Today" pill; the Unread divider doesn't stick.
+- **The unread divider** (`features/conversation`, #10647): "Unread messages" over the first
+  message unread when the chat opened goes once every message has been read: it lingers 3s, then
+  fades and folds away over 0.3s, and isn't back that visit (`FirstUnread.readThrough` and
+  `UNREAD_DIVIDER_LINGER_MS` in `logic/conversation/timeline`, the native conversation's rule and
+  timing). The old desktop UI has no divider to match, and web/05 doesn't show one
+  (`TODO(design)`: the timing).
 - **Go to first mention** (`features/conversation`, L2; web/05 doesn't cover it: `TODO(design)`).
   An @ button over go-to-latest goes to the chat's first unread mention (`IconButton` "at", as
   go-to-latest is drawn; the old ones were round fabs with a bold "@"), and goes once that mention
