@@ -207,11 +207,13 @@ export class RtcConnectionsManager {
                 [`m_${them}`, `d_${them}`]
                     .filter((c) => !this.exists(c))
                     .forEach((c) => {
-                        this.cacheConnection(
-                            peer.id,
-                            c,
-                            peer.connect(c, { serialization: "json" }),
-                        );
+                        // peerjs returns nothing from connect() while the peer is disconnected
+                        // from the signalling server (Rollbar #32194); the reconnect is already
+                        // scheduled, and the next create connects
+                        const conn: DataConnection | undefined = peer.connect(c, {
+                            serialization: "json",
+                        });
+                        if (conn) this.cacheConnection(peer.id, c, conn);
                     });
             })
             .catch((err) => console.debug("RTC: no peer to connect to the user from: ", err));

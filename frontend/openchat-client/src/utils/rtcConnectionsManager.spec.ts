@@ -40,6 +40,8 @@ class FakePeer {
         this.handlers.set(evt, h);
     }
     connect(id: string) {
+        // as peerjs does while disconnected from the signalling server
+        if (this.disconnected) return undefined;
         const c = new FakeConn(id);
         this.connections.push(c);
         return c;
@@ -217,6 +219,26 @@ describe("RtcConnectionsManager", () => {
         mgr.disconnectFromUser("them");
         mgr.sendMessage(["them"], msg);
         expect(peer.connections[0].sent).toEqual([msg]);
+    });
+
+    // Rollbar #32194: connect() returns undefined while the peer is disconnected
+    it("makes no connections while the peer is disconnected, and connects once it's back", async () => {
+        const { mgr, peer } = await setup();
+        const unhandled = vi.fn();
+        process.on("unhandledRejection", unhandled);
+        try {
+            peer.disconnected = true;
+            mgr.create("me", "them", "api-key");
+            await new Promise((r) => setTimeout(r, 0));
+            expect(unhandled).not.toHaveBeenCalled();
+            expect(peer.connections.length).toBe(0);
+
+            peer.disconnected = false;
+            mgr.create("me", "them", "api-key");
+            await vi.waitFor(() => expect(peer.connections.length).toBe(2));
+        } finally {
+            process.off("unhandledRejection", unhandled);
+        }
     });
 
     it("delivers incoming data to the subscriber", async () => {
