@@ -150,7 +150,7 @@ test("mediaScanSummary", () => {
 describe("proposalOutcome", () => {
     test("a proposal says it isn't applied yet", () => {
         const outcome = proposalOutcome({ actionId: 9n, alreadyPending: false }, "thing");
-        expect(outcome.kind).toBe("success");
+        expect(outcome).toMatchObject({ kind: "success", proposed: true });
         expect(outcome.message.key).toBe(
             "Proposed thing as action #9 - NOT yet applied: a different platform operator must confirm it under Pending proposals",
         );

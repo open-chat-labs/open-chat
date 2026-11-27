@@ -60,6 +60,9 @@ export async function loadLocales(locales: string[]): Promise<void> {
 
 export class TranslationCorrections {
     corrections = $state<TranslationCorrection[]>([]);
+    /** Whether the list has come (the new web UI's console shows a loading and a failed state).
+     * A failed load still rejects, as it always has. */
+    status = $state<"loading" | "ready" | "failed">("loading");
     /** The correction shown in English instead of as proposed, if any. */
     verifying = $state<TranslationCorrection | undefined>(undefined);
     chatBalance = $state(0n);
@@ -79,10 +82,19 @@ export class TranslationCorrections {
     }
 
     async load(): Promise<void> {
-        const res = await this.#client.getProposedTranslationCorrections();
-        const corrections = flattenCorrections(res);
-        await this.#loadLocales(requiredLocales(corrections));
-        this.corrections = corrections;
+        this.status = "loading";
+        try {
+            const res = await this.#client.getProposedTranslationCorrections();
+            const corrections = flattenCorrections(res);
+            await this.#loadLocales(requiredLocales(corrections));
+            this.corrections = corrections;
+            this.status = "ready";
+        } catch (err) {
+            // the failure still goes on as it did (the old console's unhandled rejection: the
+            // crash log, a logout when the session has gone); the status is for the new console
+            this.status = "failed";
+            throw err;
+        }
     }
 
     async refreshBalance(): Promise<void> {

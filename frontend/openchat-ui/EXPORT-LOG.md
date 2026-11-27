@@ -1257,3 +1257,15 @@
 - `meta.json` updated. `RailFootItem` exported with the features' other types.
 - Used by the app: the web tree's Admin for platform operators, to the operator console (the user's decision, 2026-11-27, in place of a row in the profile dialog's rail).
 - Not in the design export.
+
+## 2026-11-26 — form and table parts for the operator console, by hand
+- New `TextInput`: a single-line field at `--control-xl` (44px) on `--field`, the placeholder saying what goes in (a visible `label`, with `aside`, only where it can't); `mono`, `unit` ("e8s"), `type` text or password, `inputmode`, `valid` (a tick), `paste` and `copy` buttons, `help` and a mono `note` under it, or an `error` (outlined, `aria-invalid`, `role="alert"`). Strings `ui.textInput.paste`, `ui.common.copy` / `copied`.
+- New `SelectInput`: the browser's select in TextInput's look (44px, the field surface, a chevron); an option's label can say what it is ("Game: as scheduled") where there's no label.
+- New `SettingsCard`: one settings form as a card, an icon tile, title and help, a `tag` pill, the fields in one or two columns (`cols`, stacking under 520px of card), and a footer with the last outcome (busy with a spinner, success, proposed, failed) beside the form's buttons. A single-switch form puts the switch on the title line (`aside`) and has no button. Tones `danger` and `destructive`; `dual` heads the fields Current / Proposed (not under 520px of card, where each CompareRow captions its own). Strings `ui.settingsCard.current` / `proposed`.
+- New `CompareRow`: a value now (mono, `empty` when blank: `ui.compareRow.notSet`) beside the field for the proposed one; stacked with a "Current" caption under 520px.
+- New `DataTable` (generic over the row): a card with a heading and count, sticky mono caps column headings, rows drawn by a `cell` snippet, a row tone (danger, warning, busy), its loading (shimmering rows), empty and error states (with Retry) in place of the rows, scrolling sideways under `minWidth` and down past `maxHeight`, and a `footer` for "Load more". Strings `ui.dataTable.emptyTitle` / `errorTitle`.
+- New `ConfirmDialog`: a 460px `DialogShell` asking before an action that can't be undone: what will happen, the facts it acts on, optionally a word to type first (`ui.confirmDialog.typeToConfirm`), Cancel and the danger action (busy while it runs).
+- New `SectionNav`: a list panel of sections for a workspace whose list column holds pages rather than chats: a title with a tag pill, groups under mono caps headings, rows of a 34px icon tile, label, a toned status line and a count; the open row marked (`aria-current`), a `danger` row red. WalletPanel's header, rows and headings.
+- `meta.json` entries and `index.ts` exports for all seven.
+- Used by the app: the operator console (`/admin/:section`), laid out from the Claude Design canvas "Admin Console" (2026-11-26).
+- Not in the design export (the canvas is the app's, not the export's): to take back to it.

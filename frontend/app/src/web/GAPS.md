@@ -4098,41 +4098,33 @@ design export needs. Each entry says where it came up.
     summary instead of changing it in place, which the header's `$derived` user didn't see.
     TODO(design): no suspend dialog, busy button, suspend or pending toast in the design; naming
     the user in a member row under the title is ours.
-  - **`/admin`** (`features/admin/AdminScreen`): someone who isn't a platform operator gets the
-    old page's refusal ("Unauthorised", Back to safety); an operator gets **the operator console**
-    (L6b #10609), the old desktop's `home/admin` ported plainly, without a design (the user's
-    decision, 2026-11-12): the same five tabs (a `SegmentedTabs`), each made afresh when it's
-    opened as the old ones were, with the same forms, words (English only, as the old console's),
-    client calls and toasts. Its logic was extracted to `app/src/logic/admin`, which the old
-    console now runs on too: `TranslationCorrections` (the list, approve, reject for its meaning
-    or its length, preview, the suggestion in English, the translators' CHAT balance),
-    `OperatorFunctions` (every form, its validation and its busy button, the dual authorized
-    proposals and their "NOT yet applied" toast, a refused legal hold clear proposed instead),
-    `DailyPuzzleOperator` (the kill switch, regenerate today), `PendingProposals` (confirm, not
-    your own; reject; the proposers looked up), `AuthorityReports` (due and filed, overdue against
-    the internal SLA targets) and `VaultLog` (the bucket picked or pasted, pages of 100 from the
-    bucket loaded). Translation corrections' row actions are the library's `ContextMenu` from a ⋯
-    button, as the old row's menu. A failure the old console showed under the form still is
-    (`admin-error`), besides its toast. No dialogs: the old console had none. TODO(design): plain
-    cards, fields (`input`, `select`), tables and a danger zone card, styled from the tokens in
-    `AdminScreen` (`admin-*`); the library has no text field, select, table or card.
-
-  Not yet, and both needed before cutover (the old desktop has the only ones; both are big
-  screens with no design):
-  - **The operator console** (the old `home/admin`, about 2,300 lines): Translation corrections
-    (review, approve, reject), Operator functions (upgrade concurrency, MultiUser canisters,
-    Diamond fees, tokens, the proposals neuron, the OpenAI and Alchemy keys, the MiniApp
-    principal, bridge bots, the moderation config: the internal channel, referral thresholds,
-    vault reviewers, media scanning, the authority reporter, legal holds and destroy requests;
-    native call push; the daily puzzle; the dual-authorized actions), Pending operator proposals
-    (confirming another operator's), Authority reports and the Vault log. Mounting the old
-    component in this tree as a stop-gap was considered and dropped: `src/web` would depend on
-    `components/`, which goes at cutover, and the desktop theme's variables (`--accent`, `--bg`
-    …) clash with the library's tokens, so it would need a themed island of its own, its menus
-    and dialogs (portalled to `<body>`) outside it. Its logic is in the components, so a port
-    first extracts it to `app/src/logic/admin`, as the rules say. With it comes the old main
-    menu's Admin item (operators only), whose place would be the profile dialog's rail foot,
-    above Log out (a new `ProfileDialog` prop).
+  - **`/admin`** (L6b #10609, `features/admin`): someone who isn't a platform operator gets the
+    old page's refusal ("Unauthorised", Back to safety) and an empty list column; an operator
+    gets **the operator console**, laid out from the Claude Design canvas "Admin Console"
+    (2026-11-26) in the app shell as the wallet is: its sections in the list column
+    (`AdminPanelScreen`, the library's `SectionNav`: Review, Operator functions, Content,
+    Compliance), the open one in the main pane at `/admin/:section` (`AdminScreen`; `/admin`
+    alone opens Pending proposals). Pending proposals' and Authority reports' rows say what needs
+    a person (awaiting you, yours; overdue, due soon, filed) with a count, from
+    `logic/admin/adminSections`. The state of both screens is one `AdminConsole`
+    (`features/admin/adminConsole.svelte`), made as the console opens and dropped as it closes,
+    on the `logic/admin` classes the old console runs on too. Every operator function is a
+    `SettingsCard` (fields from `TextInput` and `SelectInput`, 44px, checked as they're typed by
+    `logic/admin/fieldChecks`) whose footer says how its last action went (`FormOutcomes`), in
+    place of the old toasts and the error line under the tab; a proposal that went through says
+    "proposed", never a success. A single switch (native call push, the daily puzzle) sits on its
+    card's title line and applies as it's flipped. The danger zone shows each setting's value now
+    beside the proposed one (`CompareRow`); destroying evidence asks for the report index to be
+    typed, and clearing a legal hold and confirming a proposal ask first (`ConfirmDialog`). Tables
+    are `DataTable` (the reports, the corrections, the vault log), with loading, empty and failed
+    states. Confirming or rejecting a proposal, and a correction's approve or reject failing, are
+    still toasts: the card or row leaves the list. Words are English only, as the old console's.
+    Not there: a proposal's current and proposed values (the canister gives only a summary), a
+    danger card's note of its own pending proposal (nothing ties a proposal to its setting but the
+    summary's words), Undo (nothing here can be undone), the corrections' count in the list (they
+    load only as the section opens, switching locales), and stopping a correction's preview (the
+    client has no call for it). The old main menu's Admin item is at the rail's foot (#10630, merged).
+  Built since (the old desktop had the only ones):
   - **Report review** (built, L6c #10610, `features/moderation`): the moderation channel's
     report cards, ported plainly on library parts (the user's decision, 2026-11-12), drawn in
     the conversation through `MessageGroup`'s `customContent` (by hand, EXPORT-LOG 2026-11-25;

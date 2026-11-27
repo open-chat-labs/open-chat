@@ -114,7 +114,7 @@ export const routeTable: RouteEntry[] = [
         parse: selectedChannelRoute(true),
     },
     { path: "/share", parse: shareRoute },
-    { path: "/admin", parse: adminRoute },
+    { path: "/admin/:section?", parse: adminRoute },
     { path: "/", parse: () => ({ kind: "home_route", scope: { kind: "none" } }) },
 
     // legacy links to a group: a principal at the root, or not found

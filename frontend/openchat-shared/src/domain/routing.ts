@@ -107,6 +107,8 @@ export type CommunitiesRoute = NoScope & {
 
 export type AdminRoute = NoScope & {
     kind: "admin_route";
+    /** The new web UI's console section (/admin/:section), as the URL has it; unchecked. */
+    section?: string;
 };
 
 export type ProfileSummaryRoute = NoScope & {

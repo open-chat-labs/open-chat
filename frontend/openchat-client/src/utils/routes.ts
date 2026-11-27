@@ -16,10 +16,13 @@ function qs(ctx: PageJS.Context): URLSearchParams {
     return new URLSearchParams(ctx.querystring);
 }
 
-export function adminRoute(_ctx: PageJS.Context): RouteParams {
+// /admin/:section? (the new web UI's console sections; the old consoles have /admin only)
+export function adminRoute(ctx: PageJS.Context): RouteParams {
+    const section: string | undefined = ctx.params?.section;
     return {
         kind: "admin_route",
         scope: noScope,
+        ...(section === undefined || section === "" ? {} : { section }),
     };
 }
 export function profileSummaryRoute(_ctx: PageJS.Context): RouteParams {

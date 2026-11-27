@@ -7,6 +7,7 @@ import {
     type WalletPage,
     type WalletRoute,
 } from "@client";
+import { adminSection, type AdminSectionId } from "@src/logic/admin/adminSections";
 import { guestRouteAccess } from "@src/logic/auth/guestPass";
 import { isLandingPageRoute } from "@src/utils/urls";
 
@@ -24,15 +25,17 @@ export type Regions =
               | { kind: "threads"; scope: ChatListScope }
               // `over`: opened over another page's middle (?panel=activity), with Back to its own
               | { kind: "activity"; over?: true }
-              | { kind: "wallet" };
-          middle:
-              // nothing selected; `chatList`: beside a chat list, by its scope (none beside the
+              | { kind: "wallet" }
+              // the operator console's sections (only an operator's console lists them)
+              | { kind: "admin" };
+          middle: // nothing selected; `chatList`: beside a chat list, by its scope (none beside the
               // activity feed or the threads)
               | { kind: "empty"; chatList?: ChatListScope }
               | { kind: "conversation"; route: Extract<RouteParams, { chatId: unknown }> }
               | { kind: "explore" }
               | ({ kind: "wallet" } & WalletPage)
-              | { kind: "admin" };
+              // the console's section (/admin/:section; /admin, or one it hasn't, is the first)
+              | { kind: "admin"; section: AdminSectionId };
           // the column a narrow screen shows
           narrowView: "left" | "middle";
           // a route with no right column (details) says so; the others have one (ROUTES.md)
@@ -54,9 +57,7 @@ export function regionsFor(
     guest = false,
 ): Regions {
     const regions =
-        guest && guestRouteAccess(route) === "sign_in"
-            ? EXPLORE
-            : routeRegions(route, signedOut);
+        guest && guestRouteAccess(route) === "sign_in" ? EXPLORE : routeRegions(route, signedOut);
     if (regions.area !== "app") return regions;
     const left = regions.left;
     // a guest has no activity: the page shows as it is
@@ -146,7 +147,15 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
                 rightColumn: false,
             };
         case "admin_route":
-            return { area: "app", middle: { kind: "admin" }, narrowView: "middle" };
+            return {
+                area: "app",
+                left: { kind: "admin" },
+                middle: { kind: "admin", section: adminSection(route.section).id },
+                // the sections are its home on a narrow screen, as the wallet's tokens are
+                narrowView: route.section === undefined ? "left" : "middle",
+                // nothing of the console's opens in the right column
+                rightColumn: false,
+            };
         default:
             // the chat lists (and routes that redirect to one: "/", /community/:id, /share)
             return {
@@ -225,7 +234,7 @@ export function railSelectionFor(route: RouteParams): RailSelection {
 
 /**
  * Where a narrow screen's Back goes from the middle: the list it came from (the thread list
- * keeping its ?threads), or the wallet's tokens; nowhere for the others.
+ * keeping its ?threads), the wallet's tokens or the console's sections; nowhere for the others.
  */
 export function narrowBack(regions: Regions): string | undefined {
     if (regions.area !== "app") return undefined;
@@ -237,6 +246,8 @@ export function narrowBack(regions: Regions): string | undefined {
             return `${routeForScope(left.scope)}?threads`;
         case "wallet":
             return "/wallet";
+        case "admin":
+            return "/admin";
         default:
             return undefined;
     }

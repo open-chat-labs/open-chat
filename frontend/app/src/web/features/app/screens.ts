@@ -66,6 +66,9 @@ export const leftScreens: Screens<LeftRegion> = {
 
     // the wallet's tokens (6a)
     wallet: () => import("../wallet/WalletPanelScreen.svelte"),
+
+    // the operator console's sections (its design, 2026-11-26)
+    admin: () => import("../admin/AdminPanelScreen.svelte"),
 };
 
 export const middleScreens: Screens<MiddleRegion> = {
@@ -81,7 +84,7 @@ export const middleScreens: Screens<MiddleRegion> = {
     // the wallet's page: All activity, a token's page (6a)
     wallet: () => import("../wallet/WalletMainScreen.svelte"),
 
-    // the platform operator console (TODO(design): a note for now, L6)
+    // the platform operator console: the section open (its design, 2026-11-26)
     admin: () => import("../admin/AdminScreen.svelte"),
 };
 
