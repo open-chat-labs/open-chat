@@ -281,6 +281,21 @@ describe("a message row", () => {
         });
     });
 
+    test("shows the picture of those in its thread who have one, else their colour", () => {
+        const threaded = message({
+            thread: {
+                numberOfReplies: 2,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["alice", "bob"]),
+            } as Message["thread"],
+        });
+        const avatar = (userId: string) =>
+            userId === "alice" ? "https://oc.app/avatar/alice" : undefined;
+        expect(messageRow(threaded, "sent", { ...ctx, avatar }).message).toMatchObject({
+            threadFaces: ["https://oc.app/avatar/alice", "face:bob"],
+        });
+    });
+
     test("has no thread without one", () => {
         expect(messageRow(message(), "sent", ctx).message).toMatchObject({
             threadCount: 0,

@@ -53,7 +53,7 @@ interface GroupMessageBase {
   /** Replies in the message's thread: "N replies" under it (when the last came, `threadLastAt`), opening it (`onOpenThread`). */
   threadCount?: number;
   threadLastAt?: string;
-  /** Up to three of those in the thread, as CSS backgrounds: overlapping faces in the thread link. */
+  /** Up to three of those in the thread, as CSS backgrounds or image URLs: overlapping faces in the thread link. */
   threadFaces?: string[];
   /** Unread replies: "· N new" in the thread link. */
   threadNew?: number;

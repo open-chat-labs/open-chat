@@ -1035,7 +1035,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Up to three of those in the thread, as CSS backgrounds (colours or gradients); the reply arrow without them."
+        "doc": "Up to three of those in the thread, as CSS backgrounds (colours or gradients) or image URLs; the reply arrow without them."
       },
       {
         "name": "threadNew",
@@ -2343,7 +2343,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Those in the thread, as CSS backgrounds (colours or gradients): up to three show; the reply arrow without them."
+        "doc": "Those in the thread, as CSS backgrounds (colours or gradients) or image URLs (their pictures): up to three show; the reply arrow without them."
       },
       {
         "name": "newCount",

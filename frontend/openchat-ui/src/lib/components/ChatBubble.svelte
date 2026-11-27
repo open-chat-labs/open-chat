@@ -80,7 +80,7 @@
     /** Replies in the message's thread: the thread link under the reactions. */
     threadCount?: number;
     threadLastAt?: string;
-    /** Up to three of those in the thread, as CSS backgrounds (colours or gradients); the reply arrow without them. */
+    /** Up to three of those in the thread, as CSS backgrounds (colours or gradients) or image URLs; the reply arrow without them. */
     threadFaces?: string[];
     /** Unread replies: "· N new" after the count. */
     threadNew?: number;

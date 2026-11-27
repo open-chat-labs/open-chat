@@ -1304,3 +1304,8 @@
 - `meta.json` updated.
 - Used by the app: the web tree's Explore loads 20 communities at a time (the polish list #10637, #10652).
 - Not in the design export.
+
+## 2026-11-27 — ThreadLink: the faces' pictures (#10645), by hand
+- `ThreadLink`: `faces` takes image URLs as well as CSS backgrounds, as `CallEvent`'s faces do: a URL (http(s), data, blob or a path) covers its face, on `--surface-3` while it loads. `ChatBubble`'s `threadFaces` and `GroupMessage.threadFaces` say so. `meta.json` updated.
+- Used by the app: a thread's link shows the pictures of those in it, and their avatar colour without one, as the old trees' thread summary shows their avatars (pass 8 drew the colours only).
+- Not in the design export: to take back to it.
