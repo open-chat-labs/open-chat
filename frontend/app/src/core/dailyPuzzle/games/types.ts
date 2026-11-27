@@ -44,6 +44,9 @@ export type DemoFrame = {
     marks: [number, number][];
     /** i18n key under the game's prefix, e.g. "demo.1". */
     caption: string;
+    /** The step's short title, over the caption on the native tutorial: an i18n key under the
+     *  game's prefix, e.g. "demoTitle.1". The web's and the old trees' GameDemo don't show it. */
+    title: string;
     /** Keys the caption points at; drawn with the hint highlight. */
     target?: number[];
 };

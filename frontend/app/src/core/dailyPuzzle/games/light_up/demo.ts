@@ -41,12 +41,14 @@ const demo: DemoSpec = {
             // The goal, stated once against an empty grid.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // One bulb on its own, so the light it casts is the only thing on the board: the
             // whole of its row, and its column up to the black cell below it.
             marks: [[7, 1]],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [7],
         },
         {
@@ -54,6 +56,7 @@ const demo: DemoSpec = {
             // hold a bulb. None of them see each other, because the 4 stands between them.
             marks: CLUE_BULBS,
             caption: "demo.3",
+            title: "demoTitle.3",
             target: [7, 11, 13, 17],
         },
         {
@@ -61,6 +64,7 @@ const demo: DemoSpec = {
             // the right column can light key 4 without shining on a bulb, so it takes its own.
             marks: [...CLUE_BULBS, [4, 1]],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [4],
         },
         {
@@ -68,12 +72,14 @@ const demo: DemoSpec = {
             // 21 looks straight up column 1 at the bulb at 11, so the checker paints both red.
             marks: [...CLUE_BULBS, [4, 1], [21, 1]],
             caption: "demo.5",
+            title: "demoTitle.5",
             target: [11, 21],
         },
         {
             // The finished grid.
             marks: [...CLUE_BULBS, [4, 1], [20, 1]],
             caption: "demo.6",
+            title: "demoTitle.6",
         },
     ],
 };

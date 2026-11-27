@@ -238,9 +238,15 @@
                         disabled
                         onTap={() => {}} />
                 </div>
-                <p class="step-text" aria-live="polite">
-                    {tr(i18nKey(`${def?.i18nPrefix}.${steps.frame.caption}`))}
-                </p>
+                <!-- the step's title over its text, read out together as the step changes -->
+                <div class="step-copy" aria-live="polite" aria-atomic="true">
+                    <h3 class="step-title">
+                        {tr(i18nKey(`${def?.i18nPrefix}.${steps.frame.title}`))}
+                    </h3>
+                    <p class="step-text">
+                        {tr(i18nKey(`${def?.i18nPrefix}.${steps.frame.caption}`))}
+                    </p>
+                </div>
             </div>
         </div>
         <div class="step-bar">
@@ -513,11 +519,23 @@
         }
     }
 
-    // the step's text, under the board, at the board's start edge
-    .step-text {
+    // the step's title and text, under the board, at the board's start edge
+    .step-copy {
         min-height: 64px;
-        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
         padding: 0 4px;
+    }
+
+    .step-title {
+        margin: 0;
+        font: var(--weight-semibold) text-size(14px) / 1.3 var(--font-sans);
+        color: var(--ink);
+    }
+
+    .step-text {
+        margin: 0;
         font: var(--weight-regular) text-size(13px) / 1.5 var(--font-sans);
         color: var(--ink-2);
         text-wrap: pretty;

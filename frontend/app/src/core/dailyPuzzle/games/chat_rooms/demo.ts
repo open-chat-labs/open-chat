@@ -25,6 +25,7 @@ const demo: DemoSpec = {
             // The goal, stated once against the bare rooms.
             marks: [],
             caption: "demo.1",
+            title: "demoTitle.1",
         },
         {
             // Diagonal neighbours in different rows, columns and rooms: only the touch is wrong.
@@ -33,6 +34,7 @@ const demo: DemoSpec = {
                 [20, 1],
             ],
             caption: "demo.2",
+            title: "demoTitle.2",
             target: [16, 20],
         },
         {
@@ -42,6 +44,7 @@ const demo: DemoSpec = {
                 [7, 1],
             ],
             caption: "demo.3",
+            title: "demoTitle.3",
             target: [0, 7],
         },
         {
@@ -49,6 +52,7 @@ const demo: DemoSpec = {
             // everything that logo rules out.
             marks: [[20, 1]],
             caption: "demo.4",
+            title: "demoTitle.4",
             target: [20],
         },
         {
@@ -61,6 +65,7 @@ const demo: DemoSpec = {
                 [20, 1],
             ],
             caption: "demo.5",
+            title: "demoTitle.5",
         },
     ],
 };

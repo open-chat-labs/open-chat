@@ -871,6 +871,14 @@
                     "5": "Đổi cạnh này thành một cầu thay vì hai, và nó có đúng ba.",
                     "6": "Mọi con số đều khớp, mọi đảo đều nối với phần còn lại. Thế là xong."
                 },
+                "demoTitle": {
+                    "1": "Nối các đảo",
+                    "2": "Thẳng, không cắt nhau",
+                    "3": "Cầu đôi",
+                    "4": "Không vượt quá số",
+                    "5": "Một cầu bên cạnh",
+                    "6": "Đã nối hết"
+                },
                 "hint": {
                     "allSpaces": {
                         "plain": "Số {n} ở hàng {row}, cột {column} cần mọi cây cầu còn đặt vừa quanh nó mới đạt đủ {n}. Vì vậy mỗi khe ? còn mở nhận nhiều cầu nhất có thể.",
@@ -906,6 +914,14 @@
                     "4": "Góc này vẫn tối và không bóng nào khác chiếu tới được, nên nó cần một bóng đèn riêng.",
                     "5": "Không bóng nào được chiếu vào bóng khác. Hai bóng này cùng cột và không có gì chắn giữa.",
                     "6": "Mọi ô trắng đều sáng, số 4 có đủ bốn bóng, và không bóng nào chiếu vào bóng khác."
+                },
+                "demoTitle": {
+                    "1": "Thắp sáng mọi ô",
+                    "2": "Hàng và cột",
+                    "3": "Đếm bóng đèn",
+                    "4": "Một góc tối",
+                    "5": "Đèn không chiếu nhau",
+                    "6": "Đã sáng hết"
                 },
                 "hint": {
                     "onlyWay": {
@@ -946,6 +962,14 @@
                     "4": "Đường dừng lại giữa chừng thì không phải vòng. Mỗi điểm cần hai đường, hoặc không có đường nào.",
                     "5": "Vòng cũng không được rẽ nhánh. Ba đường tại một điểm là quá nhiều.",
                     "6": "Một vòng khép kín, và mọi con số đều khớp. Đi theo nó một vòng, bạn sẽ về đúng nơi xuất phát."
+                },
+                "demoTitle": {
+                    "1": "Vẽ một vòng",
+                    "2": "Bắt đầu từ số 0",
+                    "3": "Từ chấm tới chấm",
+                    "4": "Không có ngõ cụt",
+                    "5": "Không rẽ nhánh",
+                    "6": "Vòng đã khép"
                 }
             },
             "slant": {
@@ -966,6 +990,14 @@
                     "4": "Góc này cần bốn, nên cả bốn ô quanh nó phải hướng vào nó. Chỉ có một cách để làm vậy.",
                     "5": "Bốn đường này đã nối thành một vòng khép kín. Vòng không được phép, nên một trong số chúng phải nghiêng theo hướng kia.",
                     "6": "Mọi ô đều được điền, mọi con số đều khớp, và không có vòng nào."
+                },
+                "demoTitle": {
+                    "1": "Mỗi ô một đường chéo",
+                    "2": "Đếm các góc",
+                    "3": "Góc trống tùy ý",
+                    "4": "Góc số bốn",
+                    "5": "Không có vòng kín",
+                    "6": "Đã điền hết"
                 },
                 "hint": {
                     "satisfied": {
@@ -1012,6 +1044,14 @@
                     "4": "Lều không bao giờ chạm nhau, kể cả ở góc. Hai lều này chạm nhau, nên một trong hai phải dời đi.",
                     "5": "Chỉ còn một ô trống cạnh cây này, nên lều của nó đặt ở đó.",
                     "6": "Mỗi cây đều có lều bên cạnh, không hai lều nào chạm nhau, và các con số đều khớp."
+                },
+                "demoTitle": {
+                    "1": "Mỗi cây một lều",
+                    "2": "Ngay bên cạnh",
+                    "3": "Đếm lều",
+                    "4": "Lều không chạm nhau",
+                    "5": "Ô trống cuối cùng",
+                    "6": "Cây nào cũng có lều"
                 },
                 "hint": {
                     "noFreeTree": {
@@ -1065,6 +1105,13 @@
                     "4": "Hai ô sáng cách nhau một ô. Sáng ở giữa sẽ thành ba, nên phải là tối.",
                     "5": "Mọi ô đều được tô, không có ba ô liên tiếp cùng màu, và mỗi hàng, mỗi cột có ba ô mỗi màu."
                 },
+                "demoTitle": {
+                    "1": "Sáng hay tối",
+                    "2": "Không ba ô liền",
+                    "3": "Mỗi màu ba ô",
+                    "4": "Lấp khoảng trống",
+                    "5": "Đã cân bằng"
+                },
                 "hint": {
                     "pairEnd": {
                         "row": "Các ô có viền ở hàng {line} nằm cạnh nhau và đều màu {colour}. Tô ô ? cũng màu {colour} sẽ tạo ba ô {colour} liên tiếp, nên nó phải là màu {other}.",
@@ -1108,6 +1155,13 @@
                     "3": "Mỗi phòng có một CHAT. Phòng trên cùng đang có hai.",
                     "4": "Phòng này chỉ có một ô, nên CHAT của nó ở đó. Mọi ô mà nó loại trừ đều được gạch sẵn cho bạn.",
                     "5": "Một CHAT trong mỗi hàng, cột và phòng, và không cái nào chạm nhau."
+                },
+                "demoTitle": {
+                    "1": "Đặt các CHAT",
+                    "2": "Không chạm nhau",
+                    "3": "Mỗi phòng một",
+                    "4": "Phòng một ô",
+                    "5": "Đã đặt hết"
                 },
                 "hint": {
                     "shadow": "CHAT ở hàng {row}, cột {column} loại mọi ô khác trong hàng, cột của nó và trong {room}, cùng mọi ô chạm vào nó, nên các ô ? không thể có CHAT.",
