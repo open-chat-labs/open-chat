@@ -1808,8 +1808,8 @@
                     {/if}
                     <!-- where the strip shows who's typing, the room it rises into, always there
                          (so nothing moves as it comes and goes): it covers this, not the newest
-                         message -->
-                    {#if typingAt === "strip" && composerShown}
+                         message. Not under a preview's Join bar or a blocked entry: no strip there -->
+                    {#if typingAt === "strip" && composerShown && block === undefined}
                         <div class="typing-room"></div>
                     {/if}
                 {/snippet}
