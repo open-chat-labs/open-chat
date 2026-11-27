@@ -1284,3 +1284,10 @@
 ## 2026-11-27 — EmptyState: strings for an app-wide error, by hand
 - `ui.emptyState.crashTitle` ("Something went wrong") and `ui.emptyState.crashBody`, for the apps' top-level error boundary (web and native `App.svelte`), which showed the `error` preset's "Couldn't load messages" for any crash anywhere (the user's report, 2026-11-27, from the puzzle screen). The preset itself is unchanged.
 - Not in the design export.
+
+## 2026-11-27 — NavRail: the communities scroll on their own (#10641), by hand
+- `NavRail`: the pins (communities) fill the rail's height down to Create community and Explore communities, and past that only they scroll (`.pin-list`), so Create, Explore and the foot (the host's foot items, CHIT, profile, collapse) stay in view. With few communities the rail is as before. The list has no scrollbar (it would push the collapsed rail's pins off centre); a cut-off pin shows there's more. Its padding keeps a selected pin's ring and unread dot clear of its edges.
+- The accent bar follows an active pin as the list scrolls (at once, no slide) and is clipped to the list's edges, hidden once the pin is out of view. A pin made active from outside (the host's `activePin`) scrolls into view, to the nearer edge. The foot's grow-in-place is unchanged.
+- No prop changes, so `meta.json` is unchanged.
+- Used by the app: the web tree's rail with many communities (#10641).
+- Not in the design export, which shows a few communities.

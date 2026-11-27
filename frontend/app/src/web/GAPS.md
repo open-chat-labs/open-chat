@@ -1744,6 +1744,15 @@ design export needs. Each entry says where it came up.
   (`shell/railState.svelte.ts`); floating, it starts collapsed. The host also says whether the
   rail floats (`floating`), rather than the rail measuring its animating slot, and the collapse
   toggle works with Enter and Space.
+- **Nav rail's communities scroll on their own** (by hand, #10641, EXPORT-LOG 2026-11-27), to
+  take back to the design export: the communities fill the rail down to Create community and
+  Explore communities, which stay in view with the foot (Admin, CHIT, profile, collapse), and
+  past that only the communities scroll (no scrollbar, which would push the collapsed rail's pins
+  off centre; a cut-off pin shows there's more). The accent bar follows an active pin as the
+  list scrolls and is clipped at its edges, and a community picked elsewhere (a link, the chat
+  list) scrolls into view. The whole rail still scrolls in the shell's slot only when even the
+  foot doesn't fit, which the shell's 720px minimum keeps from happening. The design has no
+  overflow for the communities: it shows a few.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
   as does the shell's rail slot. Confirm 60px against the prototype. Floating over the island
