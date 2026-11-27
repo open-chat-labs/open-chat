@@ -28,6 +28,7 @@
   import ContextMenu from '../../lib/components/ContextMenu.svelte';
   import { AVATAR_GRADIENTS } from '../../lib/components/Avatar.svelte';
   import type { MenuItem } from '../../lib/types';
+  import { barJumps, barPlacement, type BarClip, type ListView } from './railBar';
 
   // nav item keys → canonical names in lib/icons.js
   const ICONS = { messages: 'messages', bell: 'bell', wallet: 'wallet', chit: 'zap', heart: 'heart' };
@@ -173,28 +174,22 @@
   // slide), and is clipped to the list's edges (hidden once the pin is scrolled out of view)
   let pinList = $state<HTMLDivElement>();
   let barTracks = $state(false);
-  let barClip = $state<{ top: number; bottom: number } | null>(null);
+  let barClip = $state<BarClip | null>(null);
+  // the active pin is scrolled wholly out of view: the bar is hidden, parked inside the list
+  let barHidden = $state(false);
   // the pin the list last brought into view, so it does that once per pick, not on every sync
   let shownPin: number | null | undefined = undefined;
 
-  const BAR_INSET = 7;
-  const BAR_HEIGHT = 28;
-
   // where the bar goes for the active row (its top in the rail), and how much of it the
-  // communities list's edges clip
+  // communities list's edges cut off (railBar's barPlacement)
   function measure(row: Element) {
     const rootTop = root.getBoundingClientRect().top;
-    const top = Math.round(row.getBoundingClientRect().top - rootTop) + BAR_INSET;
-    let clip: { top: number; bottom: number } | null = null;
+    let list: ListView | null = null;
     if (pinList && pinList.contains(row)) {
       const box = pinList.getBoundingClientRect();
-      const visibleTop = box.top - rootTop;
-      const visibleBottom = box.bottom - rootTop;
-      const clipTop = Math.max(0, Math.min(BAR_HEIGHT, visibleTop - top));
-      const clipBottom = Math.max(0, Math.min(BAR_HEIGHT, top + BAR_HEIGHT - visibleBottom));
-      if (clipTop > 0 || clipBottom > 0) clip = { top: clipTop, bottom: clipBottom };
+      list = { top: box.top - rootTop, bottom: box.bottom - rootTop };
     }
-    return { top, clip };
+    return barPlacement(row.getBoundingClientRect().top - rootTop, list);
   }
 
   // a newly active pin outside the list's view scrolls into it (to the nearest edge)
@@ -213,10 +208,11 @@
     if (!root) return;
     const row = root.querySelector('[data-active-row]');
     if (!row || !pinList?.contains(row)) return;
-    const { top, clip } = measure(row);
+    const { top, clip, hidden } = measure(row);
     if (top !== barTop) barTracks = true;
     barTop = top;
     barClip = clip;
+    barHidden = hidden;
   }
 
   $effect(() => {
@@ -233,17 +229,25 @@
     // the rail may have been unmounted while it waited
     if (!root) return;
     const row = root.querySelector('[data-active-row]');
-    barTracks = false;
+    // from a bar the list's edges cut off, a slide would start outside the list, over the rows
+    // around it: it jumps instead (fading in where it lands, if it was hidden)
+    const jumps = barJumps(barTop === null ? null : { clip: barClip, hidden: barHidden });
     if (!row) {
+      barTracks = false;
       barTop = null;
       barClip = null;
+      barHidden = false;
       shownPin = pinIndex;
       return;
     }
     revealPin(row);
     shownPin = pinIndex;
-    const { top, clip } = measure(row);
+    const { top, clip, hidden } = measure(row);
     barClip = clip;
+    barHidden = hidden;
+    // only a move decides: a re-run that leaves the bar where it is (several changes in one pick)
+    // keeps the way it's going there
+    if (top !== barTop) barTracks = jumps;
     const inFoot = row.hasAttribute('data-foot-row');
     if (barInFoot !== null && inFoot !== barInFoot) {
       // across the spacer, either way: grow a new bar where it lands
@@ -306,7 +310,7 @@
       class:grows={barGrows}
       class:tracks={barTracks}
       style:top="{barTop ?? 13}px"
-      style:opacity={barTop === null ? 0 : 1}
+      style:opacity={barTop === null || barHidden ? 0 : 1}
       style:clip-path={barClip ? `inset(${barClip.top}px 0 ${barClip.bottom}px 0)` : undefined}
     ></span>
   {/key}
