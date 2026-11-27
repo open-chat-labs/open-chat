@@ -137,11 +137,11 @@
 <div class="thread">
   <div class="header" class:modal={asModal}>
     {#if !asModal}
-      <div class="icon-slot"><IconButton label="ui.threadPanel.backToDetails" variant="ghost" icon="back" onClick={() => onClose?.()} /></div>
+      <div class="icon-slot"><IconButton label="ui.threadPanel.backToDetails" variant="ghost" size="lg" icon="back" onClick={() => onClose?.()} /></div>
     {/if}
     <span class="heading"><span class="title">{t('ui.threadPanel.title')}</span><span class="chat">{chatName}</span></span>
     {#if asModal}
-      <div class="icon-slot"><IconButton label="ui.threadPanel.closeThread" variant="ghost" icon="close" onClick={() => onClose?.()} /></div>
+      <div class="icon-slot"><IconButton label="ui.threadPanel.closeThread" variant="ghost" size="lg" icon="close" onClick={() => onClose?.()} /></div>
     {/if}
   </div>
   <div class="summary">

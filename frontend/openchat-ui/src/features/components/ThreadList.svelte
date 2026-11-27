@@ -46,7 +46,7 @@
 <div class="threads">
   {#if header}
     <div class="header" style:height={headerHeight}>
-      <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
+      <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" size="lg" icon="back" onClick={() => onBack?.()} /></div>
       <span class="heading"><span class="title">{t('ui.threadList.title')}</span><span class="scope">{t(scopeLabel)}</span></span>
     </div>
   {/if}

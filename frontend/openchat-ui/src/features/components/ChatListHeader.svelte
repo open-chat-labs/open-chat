@@ -126,7 +126,7 @@
   {/if}
   <div class="menu-anchor" bind:this={menuBox}>
     <div class="menu-button" onclick={() => (open = !open)} role="presentation">
-      <IconButton variant="ghost" pressed={open} icon="more" />
+      <IconButton variant="ghost" size="lg" pressed={open} icon="more" />
     </div>
     {#if open}
       <div class="popover">
@@ -224,6 +224,8 @@
     flex: none;
     position: relative;
     display: flex;
+    /* the 40px button (one size up) takes no more height than the 34px one did: the header stays as designed */
+    margin-block: calc((var(--control-md) - var(--control-lg)) / 2);
   }
 
   .menu-button {

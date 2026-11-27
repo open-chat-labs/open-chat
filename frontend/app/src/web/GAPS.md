@@ -3420,6 +3420,14 @@ design export needs. Each entry says where it came up.
   others' runs do (display name, else username; once per run, at its start, in `--ink-3`), and
   no name in a DM, where neither side has one (`showsSenderName` in `logic/conversation/messageRow`,
   L2, at the user's request; web/05 doesn't say, and the design's "You" gives way to the name).
+- **The header's buttons, one size up** (#10643, by hand, EXPORT-LOG 2026-11-27, to take back to
+  the design export): `ConversationHeader`'s calls, pins, kebab and panel toggle are 40px
+  (`--control-lg`, `IconButton`'s new `size="lg"`, a 20px icon) where the design has 34px
+  (`--control-md`), at the user's request. The header keeps its height (the 42px avatar sets it).
+  The middle's stand-in toolbar (`MiddleToolbar`) matches, and so, at the user's call, do the
+  threads panel's Back / Close (`ThreadPanel`), the list of threads' Back (`ThreadList`) and the
+  chat list's kebab, a community's included (`ChatListHeader`, whose height stays as designed:
+  the button takes back the 6px it grew). No other header changes.
 - **Sticky date** (`features/conversation`, L2): as web/05 says ("Date pills stick: the date of
   the messages at the top of the window stays pinned at the top of the conversation while
   scrolling"), the list (a thread's too) pins the day of the messages at its top, in the inline

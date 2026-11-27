@@ -16,6 +16,7 @@
         <IconButton
             icon="back"
             variant="ghost"
+            size="lg"
             label="ui.common.back"
             onClick={() => navigate(back)}
         />
@@ -25,6 +26,7 @@
         <IconButton
             icon="panel"
             variant="ghost"
+            size="lg"
             pressed={context.rightColumn.open}
             label={context.rightColumn.open
                 ? "ui.conversationHeader.hidePanel"

@@ -15,11 +15,13 @@
     variant?: 'surface' | 'ghost' | 'accent' | 'overlay';
     state?: 'default' | 'hover' | 'focus' | 'active';
     pressed?: boolean;
+    /** md: 34px (--control-md), the default; lg: 40px (--control-lg), a 20px icon, where the button stands alone in a header. Not for `overlay`. */
+    size?: 'md' | 'lg';
     label?: string;
     onClick?: () => void;
   }
 
-  let { icon, variant = 'surface', state: look = 'default', pressed = false, label = '', onClick }: Props = $props();
+  let { icon, variant = 'surface', state: look = 'default', pressed = false, size = 'md', label = '', onClick }: Props = $props();
 
   const t = useT();
 
@@ -34,8 +36,8 @@
   const name = $derived(t(label || LABELS[icon] || icon.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())));
 </script>
 
-<div class="box" class:accent={variant === 'accent'}>
-  <div class="button {variant} {look}" class:pressed onclick={onClick} {onkeydown} role="button" tabindex="0" aria-label={name} title={name}>
+<div class="box" class:accent={variant === 'accent'} class:lg={size === 'lg'}>
+  <div class="button {variant} {look}" class:pressed class:lg={size === 'lg'} onclick={onClick} {onkeydown} role="button" tabindex="0" aria-label={name} title={name}>
     <span class="icon" style:mask="var(--icon-{ALIASES[icon] ?? icon}) center/contain no-repeat" data-oc-flip={DIRECTIONAL.has(icon) ? '' : undefined}></span>
   </div>
 </div>
@@ -116,6 +118,18 @@
     &.hover {
       background: var(--accent-hover);
     }
+  }
+
+  /* one size up (--control-lg), the icon in proportion */
+  .box.lg,
+  .button.lg {
+    width: var(--control-lg);
+    height: var(--control-lg);
+  }
+
+  .button.lg .icon {
+    width: 20px;
+    height: 20px;
   }
 
   .overlay {
