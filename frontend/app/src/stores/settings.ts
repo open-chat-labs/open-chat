@@ -92,3 +92,8 @@ export const referredUsersOpen = new LocalStorageBoolStore(configKeys.referredUs
 export const linkDeviceSectionOpen = new LocalStorageBoolStore(configKeys.linkDeviceSection, false);
 
 export const chatListFilterStore = new LocalStorageStore(configKeys.chatListFilter, "all");
+// the web chat list's filter in Favourites (src/web only)
+export const favouritesListFilterStore = new LocalStorageStore(
+    configKeys.favouritesListFilter,
+    "all",
+);

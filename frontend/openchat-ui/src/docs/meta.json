@@ -10092,6 +10092,17 @@
         "doc": ""
       },
       {
+        "name": "scrollThreads",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The Thread replies row scrolls away with the chats (the first thing in the list) instead of staying above them."
+      },
+      {
         "name": "showTabs",
         "type": "boolean",
         "default": true,
@@ -10100,7 +10111,7 @@
         "section": null,
         "required": false,
         "componentDefault": "true",
-        "doc": ""
+        "doc": "The filter tabs. Without them the rows aren't filtered, whatever `selectedFilter` says."
       },
       {
         "name": "selectedFilter",
@@ -10112,6 +10123,17 @@
         "required": false,
         "componentDefault": "0",
         "doc": ""
+      },
+      {
+        "name": "onFilter",
+        "type": "(index: number) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user picked a filter tab: its index in `filterLabels` (so the host can remember it)."
       },
       {
         "name": "filterLabels",

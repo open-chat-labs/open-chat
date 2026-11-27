@@ -85,8 +85,13 @@
     showThreads?: boolean;
     threadCount?: number;
     threadsAction?: () => void;
+    /** The Thread replies row scrolls away with the chats (the first thing in the list) instead of staying above them. */
+    scrollThreads?: boolean;
+    /** The filter tabs. Without them the rows aren't filtered, whatever `selectedFilter` says. */
     showTabs?: boolean;
     selectedFilter?: number;
+    /** The user picked a filter tab: its index in `filterLabels` (so the host can remember it). */
+    onFilter?: (index: number) => void;
     /** Filter keys by label: All, Direct, Groups, Unread. */
     filterLabels?: string[];
     emptyPreset?: ComponentProps<typeof EmptyState>['preset'];
@@ -122,8 +127,10 @@
     showThreads = true,
     threadCount = 0,
     threadsAction,
+    scrollThreads = false,
     showTabs = true,
     selectedFilter = 0,
+    onFilter,
     filterLabels = ['All', 'Direct', 'Groups', 'Unread'],
     emptyPreset = 'no-conversations',
     loading = false,
@@ -135,6 +142,10 @@
   let filter = $derived(selectedFilter);
   // the user's typing sticks until the host sends a different text (it clears the search with '')
   let query = $derived(initialQuery);
+  const pickFilter = (i: number) => {
+    filter = i;
+    onFilter?.(i);
+  };
   const search = (q: string) => {
     query = q;
     onSearch?.(q);
@@ -151,7 +162,8 @@
 
   const withDefaults = (r: Row) => ({ ...r, kind: r.kind ?? 'user', pinned: r.pinned ?? r.section === 'Pinned' });
   const all = $derived(rows.map(withDefaults));
-  const filterKey = $derived(searching ? 'all' : (filterLabels[filter] ?? 'All').toLowerCase());
+  // hidden tabs filter nothing: a filter picked where they show doesn't carry over to a list without them
+  const filterKey = $derived(searching || !showTabs ? 'all' : (filterLabels[filter] ?? 'All').toLowerCase());
   // with onSearch the host has already filtered `rows` and `people`
   const localTerm = $derived(searchable && !onSearch ? query.trim().toLowerCase() : '');
   const matches = (r: Row) => !localTerm || r.title.toLowerCase().includes(localTerm);
@@ -222,6 +234,16 @@
   </div>
 {/snippet}
 
+{#snippet threads()}
+  <div class="threads" onclick={threadsAction} role="button" tabindex="0">
+    <span class="threads-slot"><span class="threads-icon"></span></span>
+    <span class="threads-label">{t('ui.chatListPanel.threadReplies')}</span>
+    {#if threadCount > 0}
+      <span class="threads-badge"><Badge label={String(threadCount)} variant="count" /></span>
+    {/if}
+  </div>
+{/snippet}
+
 {#snippet searchBar()}
   <SegmentedTabs labels={SEARCH_TAB_KEYS} counts={badges} selectedIndex={searchTab} dotIndexes={[]} onSelect={(i) => (searchTab = i)} />
 {/snippet}
@@ -255,7 +277,7 @@
     <div class="tab-rows">
       <div class="tab-track" class:searching>
         <div class="cell tab-row" inert={searching} aria-hidden={searching}>
-          <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread && filterLabels.includes('Unread') ? [filterLabels.indexOf('Unread')] : []} onSelect={(i) => (filter = i)} />
+          <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread && filterLabels.includes('Unread') ? [filterLabels.indexOf('Unread')] : []} onSelect={pickFilter} />
         </div>
         <div class="cell tab-row" inert={!searching} aria-hidden={!searching}>
           {@render searchBar()}
@@ -266,14 +288,8 @@
     <div class="cell">{@render searchBar()}</div>
   {/if}
   <!-- the Thread replies row isn't a search result: it hides while a search is on (web plan 04) -->
-  {#if showThreads && shown.length > 0 && !searching}
-    <div class="threads" onclick={threadsAction} role="button" tabindex="0">
-      <span class="threads-slot"><span class="threads-icon"></span></span>
-      <span class="threads-label">{t('ui.chatListPanel.threadReplies')}</span>
-      {#if threadCount > 0}
-        <span class="threads-badge"><Badge label={String(threadCount)} variant="count" /></span>
-      {/if}
-    </div>
+  {#if showThreads && shown.length > 0 && !searching && !scrollThreads}
+    {@render threads()}
   {/if}
   {#if searching}
     <!-- a search's tab: its results fade in as the search starts and as another tab is picked -->
@@ -302,6 +318,9 @@
     {/key}
   {:else if shown.length > 0}
     <div class="list">
+      {#if showThreads && scrollThreads}
+        {@render threads()}
+      {/if}
       {#if loading}
         <Skeleton variant="chat" count={7} />
       {:else}
@@ -432,6 +451,12 @@
     padding: 0 var(--space-12);
     border-radius: var(--radius-lg);
     cursor: pointer;
+  }
+
+  // in the list, as far from the first section as it is above the list
+  .list > .threads {
+    flex: none;
+    margin-bottom: calc(var(--space-10) - var(--space-4));
   }
 
   .threads:hover {

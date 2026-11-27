@@ -1964,6 +1964,13 @@ design export needs. Each entry says where it came up.
   content and a label ending in an ellipsis, so no bar spills out (`lib/tabsFit`, review of
   #10477). TODO(design): the tight bar; web/04 has no groups: the tab, the section and its rows (the chat list's
   `ChatRow`: avatar or swatch, name, member count in the preview's place).
+- **A community's chat list, and the filter remembered** (by hand, polish #10648–#10651, EXPORT-LOG
+  2026-11-27), to take back to the design export: `ChatListPanel` reports a filter tab picked
+  (`onFilter`, its index) so the host can remember it; with `showTabs` off the rows aren't
+  filtered, whatever `selectedFilter` says; `scrollThreads` puts the Thread replies row in the
+  list, first, so it scrolls away with the chats instead of staying above them. The web uses all
+  three in a community's panel (no filter, Thread replies scrolling with the channels) and the
+  remembered filter in Direct and groups and in Favourites.
 - **A DM's typing bubble** (by hand, L1, EXPORT-LOG 2026-11-10), to take back to the design export:
   `TypingIndicator` takes `variant: 'bubble'`, native plan 04's DM bubble (received style, three
   dots, 34px tall, the small corner top-left, fading in), which the native conversation drew
@@ -3314,6 +3321,13 @@ design export needs. Each entry says where it came up.
 - **Chat list** (`features/chats`, phase 3a, then L1 #10136): the rows are the old rows'
   (`logic/chats/chatRow`, shared with the native Chats tab): the preview line
   (`logic/chats/latestMessagePreview`), the search in the list (`chatMatchesSearch`), and since L1:
+  - **the filter** (All / Direct / Groups / Unread) is remembered on this browser, per scope
+    (`features/chats/listFilter`, polish #10648): Direct and groups keep the one the mobile and
+    native lists keep (`chatListFilterStore`), Favourites one of its own
+    (`favouritesListFilterStore`; mobile shows no filter there). A community's panel has no filter
+    (#10649), its search says "Search for channels…" (the old trees' `searchChannelsPlaceholder`,
+    #10651) and its Thread replies row scrolls away with the channels, only the header and the
+    search staying put (#10650).
   - **nothing selected**: the middle with nothing selected (region `empty`) is `NoChatScreen`, in
     place of the development placeholder ("middle: empty"). Beside a chat list with chats it has
     the kit's `EmptyState` with the old desktop's words by scope (`noChatSelectedText` in

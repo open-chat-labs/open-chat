@@ -60,6 +60,8 @@ export const configKeys = {
     walletCurrency: "openchat_wallet_currency",
     linkDeviceSection: "link_account_with_native_app",
     chatListFilter: "openchat_chat_list_filter",
+    // the web chat list's filter in Favourites (DMs and groups use chatListFilter)
+    favouritesListFilter: "openchat_favourites_list_filter",
     softDisabled: "openchat_softdisabled",
     hideBlocked: "openchat_hideblocked",
     minLogLevel: "openchat_min_log_level",
