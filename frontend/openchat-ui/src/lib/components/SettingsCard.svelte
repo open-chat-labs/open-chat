@@ -244,12 +244,12 @@
   }
 
   @container (max-width: 520px) {
-    .body.two,
-    .dual-head {
+    .body.two {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .dual-head span:last-child {
+    /* stacked, each CompareRow captions its own current value */
+    .dual-head {
       display: none;
     }
   }
