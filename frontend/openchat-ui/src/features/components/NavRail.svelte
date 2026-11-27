@@ -162,6 +162,11 @@
 
   let root: HTMLDivElement;
   let barTop = $state<number | null>(null);
+  // a move into or out of the foot (far down the rail) grows the bar in place rather than sliding it
+  // there: a new bar each time (barGen), so it has no top to slide from
+  let barGen = $state(0);
+  let barGrows = $state(false);
+  let barInFoot = false;
 
   // the accent bar slides to whichever row is active
   async function syncBar() {
@@ -169,6 +174,14 @@
     // the rail may have been unmounted while it waited
     if (!root) return;
     const row = root.querySelector('[data-active-row]');
+    const inFoot = row?.hasAttribute('data-foot-row') ?? false;
+    if (row && barTop !== null && inFoot !== barInFoot) {
+      barGrows = true;
+      barGen += 1;
+    } else if (row && barTop !== null) {
+      barGrows = false;
+    }
+    if (row) barInFoot = inFoot;
     barTop = row ? Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7 : null;
   }
 
@@ -215,7 +228,9 @@
 </script>
 
 <div class="rail" class:open bind:this={root} data-rail-expanded={open ? 'true' : 'false'}>
-  <span class="bar" style:top="{barTop ?? 13}px" style:opacity={barTop === null ? 0 : 1}></span>
+  {#key barGen}
+    <span class="bar" class:grows={barGrows} style:top="{barTop ?? 13}px" style:opacity={barTop === null ? 0 : 1}></span>
+  {/key}
   {#if !guest}
     {#each items as item, i}
       <div
@@ -332,6 +347,7 @@
         class="row"
         class:active={item.active}
         data-active-row={item.active ? '' : undefined}
+        data-foot-row=""
         onclick={() => {
           picked();
           localActive = -1;
@@ -431,6 +447,24 @@
     transition:
       top 0.3s var(--ease-out),
       opacity var(--duration-base) ease;
+
+    &.grows {
+      animation: bar-grow 0.2s var(--ease-out);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+
+      &.grows {
+        animation: none;
+      }
+    }
+  }
+
+  @keyframes bar-grow {
+    from {
+      transform: scaleY(0);
+    }
   }
 
   .row {

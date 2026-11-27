@@ -1253,6 +1253,7 @@
 
 ## 2026-11-27 — NavRail: the host's destinations at the rail's foot, by hand
 - `NavRail`: `footItems` (optional, default none), `RailFootItem[]` (`{ id, icon, label, active? }`, the label a resource key or literal text), rows after the rail's spacer and above CHIT, drawn as the rail's destinations (20px icon in `--ink-3`, the label folding away when collapsed, where it's the tooltip and accessible name). `active` gives a row the rail's highlight and accent bar (`aria-current="page"`); the host leaves `activeIndex` at -1 meanwhile. A click reports the id (`onSelectFoot`) and closes a floating rail, as a destination's does. None for a guest.
+- The accent bar slides between the rail's destinations as before, but a move into or out of the foot (far down the rail, where the slide read as a shot) grows a new bar in place instead (`scaleY` 0 → 1, 0.2s; neither under reduced motion), the user's call of 2026-11-27.
 - `meta.json` updated. `RailFootItem` exported with the features' other types.
 - Used by the app: the web tree's Admin for platform operators, to the operator console (the user's decision, 2026-11-27, in place of a row in the profile dialog's rail).
 - Not in the design export.
