@@ -1291,3 +1291,11 @@
 - No prop changes, so `meta.json` is unchanged.
 - Used by the app: the web tree's rail with many communities (#10641).
 - Not in the design export, which shows a few communities.
+
+## 2026-11-27 — ChatListPanel: a community's panel and a remembered filter, by hand
+- `ChatListPanel`: `onFilter` (optional) reports a filter tab picked, its index in `filterLabels`, so the host can remember it and pass it back as `selectedFilter`.
+- With `showTabs` off the rows aren't filtered, whatever `selectedFilter` says (a filter picked where the tabs show no longer narrows a list without them).
+- `scrollThreads` (default false): the Thread replies row is the list's first item, scrolling away with the chats, instead of staying above them; only the header and the search stay put. Hidden while a search is on, as before.
+- `meta.json` updated.
+- Used by the app: the web tree's community panel (no filter, Thread replies scrolling with the channels; the polish list #10637) and the remembered filter in Direct and groups and in Favourites.
+- Not in the design export.

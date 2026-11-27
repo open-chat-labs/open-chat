@@ -89,6 +89,8 @@
         type RowContext,
     } from "@src/logic/chats/chatRow";
     import { botAvatarUrl, outsideList, searchTerm } from "@src/logic/chats/chatSearch";
+    import { chatListFilterStore, favouritesListFilterStore } from "@src/stores/settings";
+    import { listFilterIndex, listFilterMemory, rememberListFilter } from "./listFilter";
     import { OnlineUsers } from "@src/logic/chats/onlineUsers.svelte";
     import { TermSearch } from "@src/logic/chats/termSearch.svelte";
 
@@ -134,6 +136,21 @@
         void scopeKey;
         untrack(() => found.set(""));
     });
+
+    // the filter (All / Direct / Groups / Unread), remembered on this browser: DMs and groups keep
+    // the one the mobile and native lists keep, Favourites one of its own, and a community's
+    // channels have none (listFilter)
+    const filterMemory = $derived(listFilterMemory(scope.kind));
+    const filterStore = $derived(
+        filterMemory === "favourite" ? favouritesListFilterStore : chatListFilterStore,
+    );
+    const selectedFilter = $derived(
+        filterMemory === "favourite"
+            ? listFilterIndex($favouritesListFilterStore)
+            : filterMemory === "chats"
+              ? listFilterIndex($chatListFilterStore)
+              : 0,
+    );
 
     function onSearch(text: string) {
         query = text;
@@ -446,7 +463,7 @@
     }
 </script>
 
-<!-- a new scope starts the panel again: an empty field, the filter back to All -->
+<!-- a new scope starts the panel again: an empty field, the scope's remembered filter -->
 {#key scopeKey}
     <ChatListPanel
         rows={chatRows}
@@ -466,9 +483,14 @@
         onHeaderDetails={community &&
             (() => screen.dialogs.open({ kind: "manage", target: community.id, section: "main" }))}
         searchable
+        searchPlaceholder={scope.kind === "community" ? $_("searchChannelsPlaceholder") : undefined}
         {query}
         {onSearch}
+        showTabs={filterMemory !== undefined}
+        {selectedFilter}
+        onFilter={(i) => rememberListFilter(filterStore, i)}
         showThreads={$numberOfThreadsStore > 0}
+        scrollThreads={scope.kind === "community"}
         {threadCount}
         threadsAction={() => navigate(withQueryStringFlag("threads"), "overlay")}
         loading={!$chatsInitialisedStore}
