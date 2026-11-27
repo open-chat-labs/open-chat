@@ -28,9 +28,12 @@
         label: `Game: ${o.value === "" ? "as scheduled" : o.label}`,
     }));
 
-    function setEnabled(on: boolean): void {
+    // The switch applies as it's flipped, so it shows what's set: a save that failed puts it back
+    // to the config (a success has read the config again already)
+    async function setEnabled(on: boolean): Promise<void> {
         puzzle.enabled = on;
-        void puzzle.saveEnabled((o) => admin.outcomes.record("puzzleEnabled", o));
+        await puzzle.saveEnabled((o) => admin.outcomes.record("puzzleEnabled", o));
+        if (puzzle.config !== undefined) puzzle.enabled = puzzle.config.enabled;
     }
 </script>
 
@@ -61,7 +64,7 @@
                 on={puzzle.enabled}
                 ariaLabel="Daily puzzle enabled"
                 disabled={puzzle.busy.has("enabled")}
-                onChange={setEnabled} />
+                onChange={(on) => void setEnabled(on)} />
         {/snippet}
     </SettingsCard>
 
