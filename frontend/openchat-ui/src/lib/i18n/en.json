@@ -2265,6 +2265,8 @@
       "favourites": "Favourites",
       "home": "Home",
       "itemLabel": "{count, plural, =0 {{name}} other {{name}, {count} unread}}",
+      "moveDown": "Move down",
+      "moveUp": "Move up",
       "notifications": "Notifications",
       "previewing": "Previewing",
       "previewTag": "· Preview",

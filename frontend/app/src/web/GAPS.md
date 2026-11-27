@@ -1753,6 +1753,20 @@ design export needs. Each entry says where it came up.
   list) scrolls into view. The whole rail still scrolls in the shell's slot only when even the
   foot doesn't fit, which the shell's 720px minimum keeps from happening. The design has no
   overflow for the communities: it shows a few.
+- **Nav rail: communities reordered** (by hand, #10642, EXPORT-LOG 2026-11-27), to take back to
+  the design export: `NavRail`'s `onReorderPins`. A community is dragged by pointer (the others
+  slide to make room, the list scrolls while it's held near an edge, Esc puts it back; no slide
+  under reduced motion), or moved with Move up / Move down in its menu (right-click, Shift+F10)
+  or Alt+↑ / Alt+↓. The app saves the order with the client's `updateCommunityIndexes`, as the
+  old left nav's drag and the native switcher do, so it's kept across devices and UIs; it shows at
+  once through `localUpdates`. Not there, decided where the issue is silent:
+  - no undo when saving fails: the client sends the indexes and ignores a failure (its local
+    index never expires, and the old trees behave the same), so the order stays as the user left
+    it on this device until the app is reloaded. Changing that is a client change the old trees
+    would see too;
+  - no drag by touch (a touch on the list scrolls it); the menu works there;
+  - nothing is announced to a screen reader when a pin moves (focus stays on it).
+  TODO(design): no drag state or reorder items in the design.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
   as does the shell's rail slot. Confirm 60px against the prototype. Floating over the island
@@ -2622,7 +2636,8 @@ design export needs. Each entry says where it came up.
   (`resolveReferrer`: its `ref` is the referrer's user id; bots and suspended users, whose referral the sign-up refuses, are neither found nor searched for, `canRefer`) and says "Invited by" for the link's
   referrer, and Swap shows only the best quote. Not yet:
   - `NavRail` pins take a `menu` (right-click, Shift+F10), but the rail adapter gives the
-    community pins none: the community menu's actions live in the chat list header for now.
+    community pins none: the community menu's actions live in the chat list header for now (the
+    menu has only the rail's own Move up / Move down, #10642).
   - `ChatPicker`'s multi-select (forward to several chats; the old trees forwarded to one, as 5b
     does), `ChatListPanel`'s grouped search
     (messages need search in the app; people and bots show under their own heading since L1, see

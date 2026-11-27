@@ -58,7 +58,12 @@
     import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
     import { askToSignIn } from "@src/logic/auth/guestPass";
     import { join } from "../join/join";
-    import { pinsFor, railFootItems, railItemUnread } from "../rail/rail.adapter";
+    import {
+        communitiesInOrder,
+        pinsFor,
+        railFootItems,
+        railItemUnread,
+    } from "../rail/rail.adapter";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { chitRailProps } from "../chit/chit.adapter";
     import AchievementToastHost from "../chit/AchievementToastHost.svelte";
@@ -93,6 +98,13 @@
     // only Diamond members can create one; a guest is sent to sign in (from the rail or Explore)
     function createCommunity() {
         openCommunityCreation(client, dialogStack);
+    }
+
+    // the communities reordered on the rail: the client keeps each one's index (shown at once, through
+    // localUpdates, and saved for the user's other devices), as the old left nav's drag and the native
+    // switcher do
+    function reorderCommunities(ids: string[]) {
+        client.updateCommunityIndexes(communitiesInOrder(ids, $sortedCommunitiesStore));
     }
 
     // a guest who chose to create a community carries on once signed in, wherever they are; the
@@ -306,6 +318,7 @@
             profileColor={senderColor(me)}
             onSelect={(i) => selectRail(i)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
+            onReorderPins={$anonUserStore ? undefined : reorderCommunities}
             {footItems}
             onSelectFoot={(id) => {
                 if (id === "admin") navigate("/admin");

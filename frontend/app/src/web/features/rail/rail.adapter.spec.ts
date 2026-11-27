@@ -6,7 +6,13 @@ import {
     type ReadonlyMap,
     type UnreadCounts,
 } from "@client";
-import { pinsFor, railFootItems, railItemUnread, type RailUnread } from "./rail.adapter";
+import {
+    communitiesInOrder,
+    pinsFor,
+    railFootItems,
+    railItemUnread,
+    type RailUnread,
+} from "./rail.adapter";
 
 const community = (communityId: string, name: string, avatar?: string) =>
     ({
@@ -83,6 +89,25 @@ describe("the rail's pins", () => {
             ["thread", false],
             ["none", false],
         ]);
+    });
+});
+
+describe("the rail's pins, reordered", () => {
+    const a = community("a", "A");
+    const b = community("b", "B");
+    const c = community("c", "C");
+    const ids = (list: CommunitySummary[]) => list.map((x) => x.id.communityId);
+
+    test("are the communities in the order the user left them", () => {
+        expect(ids(communitiesInOrder(["c", "a", "b"], [a, b, c]))).toEqual(["c", "a", "b"]);
+    });
+
+    test("a community the rail didn't have yet goes after them, in its place", () => {
+        expect(ids(communitiesInOrder(["b", "a"], [a, b, c]))).toEqual(["b", "a", "c"]);
+    });
+
+    test("one that's gone (left meanwhile) is left out", () => {
+        expect(ids(communitiesInOrder(["c", "x", "a", "b"], [a, b, c]))).toEqual(["c", "a", "b"]);
     });
 });
 
