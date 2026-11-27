@@ -93,7 +93,7 @@ describe("TranslationCorrections", () => {
         expect(corrections.status).toBe("ready");
     });
 
-    test("a list that can't be loaded says so", async () => {
+    test("a list that can't be loaded says so, and still rejects as it did", async () => {
         const failing = {
             ...client(),
             getProposedTranslationCorrections: async () => {
@@ -101,7 +101,7 @@ describe("TranslationCorrections", () => {
             },
         };
         const corrections = new TranslationCorrections(failing, async () => undefined);
-        await corrections.load();
+        await expect(corrections.load()).rejects.toThrow("offline");
         expect(corrections.status).toBe("failed");
         expect(corrections.corrections).toEqual([]);
     });
