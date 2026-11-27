@@ -4612,6 +4612,20 @@
         "doc": ""
       },
       {
+        "name": "size",
+        "type": "'md' | 'lg'",
+        "default": "md",
+        "editor": "enum",
+        "options": [
+          "md",
+          "lg"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": "md: 34px (--control-md), the default; lg: 40px (--control-lg), a 20px icon, where the button stands alone in a header. Not for `overlay`."
+      },
+      {
         "name": "label",
         "type": "string",
         "default": "",

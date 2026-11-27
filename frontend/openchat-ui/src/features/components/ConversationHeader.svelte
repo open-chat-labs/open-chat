@@ -224,17 +224,17 @@
   <div class="actions">
     {#if showCall}
       {#if onVoiceCall}
-        <div class="slot" title={t('ui.conversationHeader.voiceCall')}><IconButton variant="ghost" icon="phone" label="ui.conversationHeader.voiceCall" onClick={onVoiceCall} /></div>
+        <div class="slot" title={t('ui.conversationHeader.voiceCall')}><IconButton variant="ghost" size="lg" icon="phone" label="ui.conversationHeader.voiceCall" onClick={onVoiceCall} /></div>
       {/if}
-      <div class="slot" data-oc-call title={t(callLabel)}><IconButton variant="ghost" icon={callIcon} label={callLabel} onClick={onCall} /></div>
+      <div class="slot" data-oc-call title={t(callLabel)}><IconButton variant="ghost" size="lg" icon={callIcon} label={callLabel} onClick={onCall} /></div>
     {/if}
     {#each shownActions as action}
-      <div class="slot"><IconButton variant="ghost" icon={action.icon} onClick={action.onPress} /></div>
+      <div class="slot"><IconButton variant="ghost" size="lg" icon={action.icon} onClick={action.onPress} /></div>
     {/each}
     {#if showMenu}
       <div class="menu-anchor" bind:this={menuBox}>
         <div class="menu-button" onclick={() => (menuOpen = !menuOpen)} role="presentation">
-          <IconButton variant="ghost" pressed={menuOpen} icon="more" />
+          <IconButton variant="ghost" size="lg" pressed={menuOpen} icon="more" />
         </div>
         {#if menuOpen}
           <div class="popover">
@@ -419,8 +419,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--control-md);
-    height: var(--control-md);
+    width: var(--control-lg);
+    height: var(--control-lg);
     border-radius: var(--radius-md);
     background: transparent;
     cursor: pointer;
@@ -432,8 +432,8 @@
   }
 
   .panel-icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     background: var(--ink-2);
     mask: var(--icon-panel) center/contain no-repeat;
   }

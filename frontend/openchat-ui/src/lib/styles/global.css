@@ -30,7 +30,7 @@ body{--msg-link-weight:var(--weight-semibold)}
 
 /* 2026-10-13 — pass 2: rules from new/changed component helmets */
 [data-oc-header]{container-type:inline-size}
-@container (max-width:520px){[data-oc-call-label]{display:none}[data-oc-call]{width:var(--control-md);padding:0}}
+@container (max-width:520px){[data-oc-call-label]{display:none}[data-oc-call]{width:var(--control-lg);padding:0}}
 a{color:var(--accent)}
 a:hover{color:var(--accent-bright)}
 [role="button"]:focus{outline:none}
