@@ -1298,4 +1298,9 @@
 - `scrollThreads` (default false): the Thread replies row is the list's first item, scrolling away with the chats, instead of staying above them; only the header and the search stay put. Hidden while a search is on, as before.
 - `meta.json` updated.
 - Used by the app: the web tree's community panel (no filter, Thread replies scrolling with the channels; the polish list #10637) and the remembered filter in Direct and groups and in Favourites.
+
+## 2026-11-27 — ExploreCommunities: the page size, by hand
+- `ExploreCommunities`: `pageSize` (default 6, the size it had as a constant): the rows a page of the table shows, the `limit` asked of the host in onQuery mode, and Load more's count.
+- `meta.json` updated.
+- Used by the app: the web tree's Explore loads 20 communities at a time (the polish list #10637, #10652).
 - Not in the design export.

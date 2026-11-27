@@ -2679,6 +2679,9 @@ design export needs. Each entry says where it came up.
   - the Lifetime Diamond pitch ("60 CHAT, once") is the library's own copy;
   - nothing says which gates the backend found unmet (the old `AccessGateCheckFailed`): the app
     toasts "Access gate not met".
+- **`ExploreCommunities`' page size, by hand** (polish #10652, EXPORT-LOG 2026-11-27, to take back
+  to the design export): `pageSize` (default 6, the export's) sets the rows a page shows, the
+  `limit` it asks the host for and Load more's count. The web passes 20.
 - **`ExploreCommunities`, by hand** (8a, to take back to the design export): a community's
   `avatarUrl` and `coverUrl` (images over the swatches, as `NavRail`'s pins); `languageOptions`
   as `{ code, label }` (the filter picks by code, shows the label and the code's flag; the app's

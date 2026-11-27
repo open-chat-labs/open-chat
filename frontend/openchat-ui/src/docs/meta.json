@@ -12341,6 +12341,17 @@
         "doc": "Matching communities in all (onQuery mode); defaults to communities.length."
       },
       {
+        "name": "pageSize",
+        "type": "number",
+        "default": 6,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "6",
+        "doc": "Rows per page: the table's (Load more shows this many more) and, in onQuery mode, the `limit` asked of the host."
+      },
+      {
         "name": "loading",
         "type": "boolean",
         "default": null,

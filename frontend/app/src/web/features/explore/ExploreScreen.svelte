@@ -249,6 +249,7 @@
                 {failed}
                 showSort={false}
                 {joinedKeys}
+                pageSize={EXPLORE_PAGE_SIZE}
                 {languageOptions}
                 initialQuery={query.text}
                 initialLanguages={query.languages}

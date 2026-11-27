@@ -52,8 +52,6 @@
     violet: 'linear-gradient(120deg,#1e1a44,#332a70)',
     rose: 'linear-gradient(120deg,#3b1522,#5a1f36)',
   };
-  // rows per page in the table (and the page size asked of the host)
-  const PAGE = 6;
   const SORT_KEYS: ExploreQuery['sort'][] = ['members', 'active', 'newest'];
   const fmt = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : String(n));
 
@@ -96,6 +94,9 @@
     onQuery?: (q: ExploreQuery) => void;
     /** Matching communities in all (onQuery mode); defaults to communities.length. */
     total?: number;
+    /** Rows per page: the table's (Load more shows this many more) and, in onQuery mode, the `limit` asked of the
+     *  host. */
+    pageSize?: number;
     /** A page is being fetched (onQuery mode). */
     loading?: boolean;
     /** The page last asked for couldn't be loaded (onQuery mode): a first page shows an error with a retry in place of
@@ -127,6 +128,7 @@
     onPreview,
     onQuery,
     total,
+    pageSize = 6,
     loading = false,
     showSort = true,
     failed = false,
@@ -150,7 +152,7 @@
   let searchInput = $state<HTMLInputElement>();
   let langs = $state<string[]>(untrack(() => [...initialLanguages]));
   let langOpen = $state(false);
-  let shown = $state(PAGE);
+  let shown = $state(untrack(() => pageSize));
   let root = $state<HTMLElement>();
 
   onMount(() => {
@@ -257,7 +259,7 @@
       askedOn = communities;
       sawLoading = false;
     }
-    onQuery?.({ text, languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
+    onQuery?.({ text, languages: [...langs], sort: SORT_KEYS[sort], offset, limit: pageSize });
   };
   $effect(() => {
     void text;
@@ -333,7 +335,7 @@
   function loadMore() {
     if (remote) {
       if (!loading) ask(list.length);
-    } else shown += PAGE;
+    } else shown += pageSize;
   }
 
   // a first page that failed, asked for again as things stand
@@ -342,7 +344,7 @@
   }
 
   function toggleLang(l: string) {
-    shown = PAGE;
+    shown = pageSize;
     langs = langs.includes(l) ? langs.filter((k) => k !== l) : [...langs, l];
   }
 
@@ -572,7 +574,7 @@
         {#if remote && hasMore && found.length > 0}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(pageSize, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
             <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
           </div>
@@ -692,7 +694,7 @@
                   class:on={sort === i}
                   onclick={() => {
                     sort = i;
-                    shown = PAGE;
+                    shown = pageSize;
                   }}
                   role="button"
                   tabindex="0">{t(label)}</span
@@ -744,7 +746,7 @@
         {#if hasMore && !homeStale && !firstPageFailed}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(pageSize, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
             <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>

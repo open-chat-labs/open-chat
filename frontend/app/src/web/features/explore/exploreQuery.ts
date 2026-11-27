@@ -19,8 +19,11 @@ export {
 // Explore's query in the URL (ROUTES.md, "Explore query"): /communities?q=<text>&lang=<codes>, and
 // the decisions the screen makes around it.
 
-/** The page the library asks for (DATA.md): its own page size. */
-export const EXPLORE_PAGE_SIZE = 6;
+/**
+ * Communities per page (DATA.md): the library's `pageSize`, which it asks for and shows Load more
+ * by, 20 at a time (#10652). The old Explores keep theirs (desktop by screen width, mobile 32).
+ */
+export const EXPLORE_PAGE_SIZE = 20;
 
 const EXPLORE_PATH = "/communities";
 const TEXT = "q";
