@@ -3,6 +3,7 @@
      when the last reply came, opening the thread. On the accent while it's the thread open beside the conversation.
      Its own component, by hand, so MessageGroup shows the same link under every other kind of message. -->
 <script lang="ts">
+  import { cssUrl } from '../cssUrl';
   import { useT } from '../i18n';
 
   interface Props {
@@ -10,7 +11,7 @@
     count: number;
     /** When the last reply came, e.g. "2:14 pm"; nothing shown without it. */
     lastAt?: string;
-    /** Those in the thread, as CSS backgrounds (colours or gradients): up to three show; the reply arrow without them. */
+    /** Those in the thread, as CSS backgrounds (colours or gradients) or image URLs (their pictures): up to three show; the reply arrow without them. */
     faces?: string[];
     /** Unread replies: "· N new" after the count. */
     newCount?: number;
@@ -24,7 +25,10 @@
   let { count, lastAt = '', faces = [], newCount = 0, active = false, mirror = false, onOpen }: Props = $props();
   const t = useT();
 
-  const shown = $derived(faces.slice(0, 3));
+  // a picture covers its face, on the empty face's fill while it loads (as CallEvent's faces)
+  const shown = $derived(
+    faces.slice(0, 3).map((x) => (/^(https?:|data:|blob:|\/|\.)/.test(x) ? `center/cover no-repeat ${cssUrl(x)}, var(--surface-3)` : x)),
+  );
   const replies = $derived(t('ui.chatBubble.replies', { count }));
   const label = $derived(
     newCount > 0 ? t('ui.chatBubble.openThreadNew', { replies, fresh: newCount }) : t('ui.chatBubble.openThread', { replies }),

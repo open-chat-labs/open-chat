@@ -4,6 +4,7 @@ import {
     isOpenThread,
     proposalVoting,
     quoteText,
+    threadFaces,
     type ConversationContext,
     type DailyResultView,
     type MessageRow,
@@ -45,11 +46,12 @@ export class RowCache {
         // is made; the sender's picture goes with their name: one loading late redoes their rows
         const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
         const names = `${ctx.userName(msg.sender)}\n${quoted ? `${name(quoted.senderId)}\n${quoteText(quoted.content, ctx)}` : ""}\n${ctx.avatar(msg.sender) ?? ""}\n${namedInRow(msg, ctx).join("\n")}`;
-        // another thread opening, or a thread's replies being read, redoes only the rows it concerns
+        // another thread opening, or a thread's replies being read, redoes only the rows it concerns;
+        // so does the picture of someone in it loading after the row is made (its link's faces)
         const thread =
             msg.thread === undefined || !ctx.threads
                 ? ""
-                : `${isOpenThread(msg, ctx.openThread)}|${ctx.unreadInThread(msg.messageIndex)}`;
+                : `${isOpenThread(msg, ctx.openThread)}|${ctx.unreadInThread(msg.messageIndex)}|${threadFaces(msg.thread, ctx).join(" ")}`;
         // a deleted message's tombstone says while it's being undeleted
         const undeleting = msg.content.kind === "deleted_content" && ctx.undeleting(msg.messageId);
         // a proposal's type (the chat's names load late), a vote cast on it this session, and how

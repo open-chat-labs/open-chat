@@ -53,6 +53,7 @@ import {
     type ReadonlyMap,
     type ResourceKey,
     type TokenExchangeRates,
+    type ThreadSummary,
     type TipsReceived,
     type TokenInfo,
     type TwitchPlayerPreview,
@@ -685,7 +686,7 @@ export function kindText(
 export type ThreadFields = {
     threadCount: number;
     threadLastAt: string | undefined;
-    /** Up to three of those in the thread, in the colours their avatars have in the conversation (`face`). */
+    /** Up to three of those in the thread, as their avatars are in the conversation (`threadFaces`). */
     threadFaces: string[];
     /** Its unread replies (`unreadInThread`): "· N new". */
     threadNew: number;
@@ -702,22 +703,36 @@ export function isOpenThread(msg: Message, openThread: number | undefined): bool
 }
 
 /**
- * A message's thread: how many replies, when the last came, who's in it (up to three, each the
- * colour of their avatar in the conversation, `face`), how many replies are unread and whether
- * it's the one open. None without a thread, or in a view that shows no threads (`threads`).
+ * The faces a thread's link shows (up to three of those in it), each as their avatar is in the
+ * conversation: their own picture (`avatar`, an image URL) where they have one, as the old trees'
+ * thread summary shows it, else their colour (`face`).
+ */
+export function threadFaces(
+    thread: ThreadSummary,
+    ctx: Pick<ConversationContext, "face" | "avatar">,
+): string[] {
+    return [...thread.participantIds]
+        .slice(0, THREAD_FACES)
+        .map((userId) => ctx.avatar(userId) ?? ctx.face(userId));
+}
+
+/**
+ * A message's thread: how many replies, when the last came, who's in it (`threadFaces`), how many
+ * replies are unread and whether it's the one open. None without a thread, or in a view that
+ * shows no threads (`threads`).
  */
 export function threadFields(
     msg: Message,
-    ctx: Pick<ConversationContext, "date" | "openThread" | "face" | "unreadInThread" | "threads">,
+    ctx: Pick<
+        ConversationContext,
+        "date" | "openThread" | "face" | "avatar" | "unreadInThread" | "threads"
+    >,
 ): ThreadFields {
     const thread = ctx.threads ? msg.thread : undefined;
     return {
         threadCount: thread?.numberOfReplies ?? 0,
         threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
-        threadFaces:
-            thread === undefined
-                ? []
-                : [...thread.participantIds].slice(0, THREAD_FACES).map(ctx.face),
+        threadFaces: thread === undefined ? [] : threadFaces(thread, ctx),
         threadNew: thread === undefined ? 0 : ctx.unreadInThread(msg.messageIndex),
         threadActive: thread !== undefined && isOpenThread(msg, ctx.openThread),
     };

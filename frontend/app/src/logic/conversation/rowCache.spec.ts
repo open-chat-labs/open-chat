@@ -187,6 +187,26 @@ describe("the rows kept per event", () => {
         expect(rows.row("p", plain, "sent", at(0))).toBe(plainBefore);
     });
 
+    test("are made again when the picture of someone in a thread arrives, for its link's faces", () => {
+        const rows = new RowCache();
+        const root = message();
+        root.event.thread = {
+            numberOfReplies: 1,
+            latestEventTimestamp: 1n,
+            participantIds: new Set(["bob"]),
+        } as Message["thread"];
+        const before = rows.row("r", root, "sent", ctx);
+        // bob's picture loads (alice, the sender, has none)
+        const pictured = {
+            ...ctx,
+            avatar: (id: string) => (id === "bob" ? "https://blobs/bob" : undefined),
+        };
+        const after = rows.row("r", root, "sent", pictured);
+        expect(after).not.toBe(before);
+        expect(after.message.threadFaces).toEqual(["https://blobs/bob"]);
+        expect(rows.row("r", root, "sent", { ...pictured })).toBe(after);
+    });
+
     test("are made again once cleared", () => {
         const rows = new RowCache();
         const evt = message();
