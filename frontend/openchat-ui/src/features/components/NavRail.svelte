@@ -166,7 +166,8 @@
   // there: a new bar each time (barGen), so it has no top to slide from
   let barGen = $state(0);
   let barGrows = $state(false);
-  let barInFoot = false;
+  // where the bar last showed (null before it first has), kept while no row is active in between
+  let barInFoot: boolean | null = null;
 
   // the accent bar slides to whichever row is active
   async function syncBar() {
@@ -174,15 +175,22 @@
     // the rail may have been unmounted while it waited
     if (!root) return;
     const row = root.querySelector('[data-active-row]');
-    const inFoot = row?.hasAttribute('data-foot-row') ?? false;
-    if (row && barTop !== null && inFoot !== barInFoot) {
+    if (!row) {
+      barTop = null;
+      return;
+    }
+    const top = Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7;
+    const inFoot = row.hasAttribute('data-foot-row');
+    if (barInFoot !== null && inFoot !== barInFoot) {
+      // across the spacer, either way: grow a new bar where it lands
       barGrows = true;
       barGen += 1;
-    } else if (row && barTop !== null) {
+    } else if (barTop !== null && top !== barTop) {
+      // a move within one group slides (a re-run that leaves the bar where it is keeps a grow playing)
       barGrows = false;
     }
-    if (row) barInFoot = inFoot;
-    barTop = row ? Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7 : null;
+    barInFoot = inFoot;
+    barTop = top;
   }
 
   $effect(() => {
