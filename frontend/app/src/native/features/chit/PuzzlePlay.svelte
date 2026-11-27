@@ -829,16 +829,6 @@
         border-radius: 20px;
         background: var(--accent);
         color: var(--on-accent);
-
-        &:disabled {
-            opacity: 0.45;
-            cursor: default;
-        }
-
-        &[aria-busy="true"] {
-            opacity: 1;
-            cursor: progress;
-        }
     }
 
     .step-chevron {

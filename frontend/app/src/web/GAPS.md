@@ -1468,8 +1468,8 @@ design export needs. Each entry says where it came up.
     (`PuzzleSession`'s flow, laid out to the plan). Its tutorial is the prototype's, on the
     game's demo (stepped by `core/dailyPuzzle/DemoSteps`, as the web's `GameDemo`): the board on
     the play card without the chips, the step's title and text under it, text Back / the step
-    dots / Next, and on the last step an inline Start pill (with the entry fee) or Back to
-    puzzle; the header says "Step 2 of 6" (the demo's own frame count) and has Skip, which leaves
+    dots / Next, and on the last step an inline Resume pill (back to the puzzle, where
+    Start with its fee is: the tutorial doesn't charge) or Back to puzzle; the header says "Step 2 of 6" (the demo's own frame count) and has Skip, which leaves
     the inert board and Start until "How to play" shows the demo again
     (`DailyPuzzleGame.skipDemo`). The prototype's step titles are inferred from each frame's
     caption (`demoTitle.N` beside its `demo.N`); only the native tutorial shows them, the web's
