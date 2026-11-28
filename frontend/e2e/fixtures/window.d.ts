@@ -17,6 +17,10 @@ declare global {
                 ): Promise<{ kind: string; chatId?: GroupId }>;
                 setSelectedChat(chatId: GroupId, ...rest: unknown[]): Promise<void>;
                 isPreviewing(chatId: GroupId): boolean;
+                sendContent(
+                    context: { chatId: GroupId },
+                    content: Record<string, unknown>,
+                ): Promise<{ kind: string }>;
             };
         };
         /** The app's last call to `setSelectedChat`, where a spec records it */
