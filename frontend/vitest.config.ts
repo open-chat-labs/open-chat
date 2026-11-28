@@ -16,8 +16,14 @@ export default defineConfig({
             ...ocPackageAliases,
             // The Tauri plugin's guest JS is resolved from source (guest-js/)
             // rather than its built dist-js output, like the sub-packages above.
-            { find: /^tauri-plugin-oc-api\/(.*)$/, replacement: src("./tauri-plugin-oc/guest-js/$1") },
-            { find: /^tauri-plugin-oc-api$/, replacement: src("./tauri-plugin-oc/guest-js/index.ts") },
+            {
+                find: /^tauri-plugin-oc-api\/(.*)$/,
+                replacement: src("./tauri-plugin-oc/guest-js/$1"),
+            },
+            {
+                find: /^tauri-plugin-oc-api$/,
+                replacement: src("./tauri-plugin-oc/guest-js/index.ts"),
+            },
             { find: "usergeek-ic-js", replacement: src("./app/test-stubs/usergeek-ic-js.ts") },
             { find: "@src", replacement: src("./app/src") },
             { find: "@actions", replacement: src("./app/src/actions") },
@@ -51,6 +57,7 @@ export default defineConfig({
             "eslint-rules/**/*.{test,spec}.ts",
             "e2e/parity/**/*.{test,spec}.ts",
             "e2e/config/**/*.{test,spec}.ts",
+            "e2e/replica/**/*.{test,spec}.ts",
         ],
         // build output of the sub-packages (openchat-*/lib); openchat-ui/src/lib is source and is tested
         exclude: ["**/node_modules/**", "*/lib/**"],

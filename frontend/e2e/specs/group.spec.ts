@@ -1,16 +1,12 @@
 import { expectMessage, sendText } from "../fixtures/messages";
 import { createPrivateGroup, groupOfTwo } from "../fixtures/groups";
 import { openGroup } from "../fixtures/routes";
-import { expect, freshUsername, signUp, test, userIdOf } from "../fixtures/users";
+import { expect, test, userIdOf } from "../fixtures/users";
 
 test("someone invited to a private group joins it, and the members see what they send", async ({
     users,
 }) => {
-    const [owner, guest] = await Promise.all([users.add("owner"), users.add("guest")]);
-    await Promise.all([
-        signUp(owner, freshUsername("e2egro")),
-        signUp(guest, freshUsername("e2egrg")),
-    ]);
+    const [owner, guest] = await Promise.all([users.signedIn("owner"), users.signedIn("guest")]);
     const guestId = await userIdOf(guest);
     const groupId = await createPrivateGroup(owner, `e2e ${Date.now().toString(36)}`, [guestId!]);
 
@@ -28,11 +24,7 @@ test("someone invited to a private group joins it, and the members see what they
 // from, so the page previews it while the chat list's updates bring it in. Holding the preview's
 // own request back until they have makes sure its answer comes in last.
 test("a group joined just before a reload opens as a member, not a preview", async ({ users }) => {
-    const [owner, guest] = await Promise.all([users.add("owner"), users.add("guest")]);
-    await Promise.all([
-        signUp(owner, freshUsername("e2egjo")),
-        signUp(guest, freshUsername("e2egjg")),
-    ]);
+    const [owner, guest] = await Promise.all([users.signedIn("owner"), users.signedIn("guest")]);
     const guestId = await userIdOf(guest);
     const groupId = await groupOfTwo(owner, guest, guestId!, `e2e ${Date.now().toString(36)}`);
 

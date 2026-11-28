@@ -1,18 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 import { localUrl } from "./config/local.mjs";
+import { canisterIdsPath, ownReplica, replicaPort } from "./replica/replica.mjs";
 
 // The new UI against a local replica (PRD #10550). By default the suite builds the app (the native
 // build, which has both new trees) and serves it on its own port and caches, so a developer's running
 // server is left alone. OC_E2E_DEV=true serves it from the Vite dev server instead, which picks up
 // edits without a rebuild, for writing a spec. OC_E2E_URL points it at a server that's already
 // running; it must have been started with OC_E2E=true.
-const port = Number(process.env.OC_E2E_PORT ?? 5011);
+//
+// The app talks to the suite's own replica, restored from a snapshot before each run
+// (replica/replica.mjs). OC_E2E_REPLICA=dev uses the developer's replica instead.
+const port = Number(process.env.OC_E2E_PORT ?? 5090);
 const baseURL = localUrl(process.env.OC_E2E_URL ?? `http://localhost:${port}`);
 const devServer = process.env.OC_E2E_DEV === "true";
+const restoresReplica = ownReplica ? ["replica"] : [];
 
 export default defineConfig({
     testDir: "./specs",
-    // sign-ups are real: each one creates a user canister on the replica
+    // a test that falls back to sign-ups (OC_E2E_REPLICA=dev) creates a user canister for each person
     timeout: 180_000,
     expect: { timeout: 30_000 },
     fullyParallel: true,
@@ -28,15 +33,24 @@ export default defineConfig({
         screenshot: "only-on-failure",
     },
     projects: [
+        ...(ownReplica
+            ? [{ name: "replica", testDir: "./replica", testMatch: /restore\.setup\.ts/ }]
+            : []),
         // src/web: a desktop viewport. A test for one tree only is tagged @desktop-only or @mobile-only, so
         // that `playwright test --list` (parity:ledger) shows where each test runs
         {
             name: "v3-desktop",
             use: { browserName: "chromium", viewport: { width: 1400, height: 900 } },
             grepInvert: /@mobile-only/,
+            dependencies: restoresReplica,
         },
         // src/native in a phone's browser: touch, no hover, a phone's width
-        { name: "v3-mobile", use: { ...devices["Pixel 7"] }, grepInvert: /@desktop-only/ },
+        {
+            name: "v3-mobile",
+            use: { ...devices["Pixel 7"] },
+            grepInvert: /@desktop-only/,
+            dependencies: restoresReplica,
+        },
     ],
     webServer: process.env.OC_E2E_URL
         ? undefined
@@ -46,12 +60,19 @@ export default defineConfig({
               url: baseURL,
               // a build takes a few minutes
               timeout: 600_000,
-              reuseExistingServer: true,
+              // a build from before an edit would test the old code; the dev server picks edits up
+              reuseExistingServer: devServer,
               env: {
                   OC_DEV_PORT: String(port),
                   OC_E2E: "true",
                   OC_E2E_BUNDLE: String(!devServer),
                   OC_VITE_CACHE_DIR: "node_modules/.vite-e2e",
+                  ...(ownReplica
+                      ? {
+                            OC_REPLICA_PORT: String(replicaPort),
+                            OC_CANISTER_IDS_PATH: canisterIdsPath,
+                        }
+                      : {}),
               },
           },
 });

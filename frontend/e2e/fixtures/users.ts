@@ -8,12 +8,14 @@ import {
     type Page,
     type TestInfo,
 } from "@playwright/test";
+import { lease } from "../replica/pool.mjs";
+import { leasesDir, ownReplica, poolDir } from "../replica/replica.mjs";
 
 /** The new UI's two trees: src/web (desktop) and src/native (mobile: phones and the native apps). */
 export type Tree = "desktop" | "mobile";
 
 /** A passkey, as the virtual authenticator holds it. */
-type Credential = {
+export type Credential = {
     credentialId: string;
     isResidentCredential: boolean;
     rpId?: string;
@@ -30,12 +32,16 @@ export type User = {
     page: Page;
     cdp: CDPSession;
     authenticatorId: string;
+    /** Once signed in by signInPooled */
+    username?: string;
 };
 
 export type Users = {
     tree: Tree;
     /** A new person with an empty authenticator, in this project's browser. */
     add(label: string): Promise<User>;
+    /** A new person, signed in (signInPooled). */
+    signedIn(label: string): Promise<User>;
 };
 
 // a test's or a worker's info: both say which project it's running in
@@ -144,6 +150,26 @@ export async function signIn(user: User, passkey: Credential): Promise<void> {
     await expect.poll(() => userIdOf(user), { timeout: 90_000 }).not.toBeUndefined();
 }
 
+/** A user from the e2e replica's pool (replica/pool.mjs). */
+type PoolUser = { username: string; userId: string; passkey: Credential };
+
+/**
+ * Signs `user` in as a pool user no other test in this run has, which is much cheaper than a
+ * sign-up: the pool's user canisters already exist. Once the pool is used up, or when the suite
+ * isn't on its own replica, signs them up instead.
+ */
+export async function signInPooled(user: User): Promise<void> {
+    const pooled: PoolUser | undefined = ownReplica ? lease(poolDir, leasesDir) : undefined;
+    if (pooled === undefined) {
+        user.username = freshUsername(`e2e${user.label}`);
+        await signUp(user, user.username);
+        return;
+    }
+    await signIn(user, pooled.passkey);
+    expect(await userIdOf(user), "the pool user's id").toBe(pooled.userId);
+    user.username = pooled.username;
+}
+
 /** The passkey a user signed up with. */
 export async function passkeyOf(user: User): Promise<Credential> {
     const { credentials } = await user.cdp.send("WebAuthn.getCredentials", {
@@ -190,11 +216,17 @@ export const test = base.extend<{ users: Users; noViteReload: void }>({
     users: async ({ browser }, use, testInfo) => {
         const made: User[] = [];
         const tree = treeOf(testInfo);
+        const add = async (label: string) => {
+            const user = await newUser(browser, contextOptions(testInfo), label, tree);
+            made.push(user);
+            return user;
+        };
         await use({
             tree,
-            async add(label) {
-                const user = await newUser(browser, contextOptions(testInfo), label, tree);
-                made.push(user);
+            add,
+            async signedIn(label) {
+                const user = await add(label);
+                await signInPooled(user);
                 return user;
             },
         });
