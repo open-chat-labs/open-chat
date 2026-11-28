@@ -14,6 +14,7 @@ import {
 } from "../fixtures/messages";
 import { groupOfTwo } from "../fixtures/groups";
 import { expect, test } from "../fixtures/pair";
+import { userIdOf } from "../fixtures/users";
 import { openDirectChat, openGroup } from "../fixtures/routes";
 
 // Messaging basics (#10550 phase 3): what one person does to a message is what the other sees.
@@ -66,8 +67,14 @@ test("a reply reaches the other person quoting the message it replies to", async
     await expect(messageRow(b, reply)).toContainText(original);
 });
 
-test("a reaction reaches the other person, and so does taking it back", async ({ pair }) => {
-    const { a, b, idA, idB } = pair;
+// Its own two people rather than the pair, so that the message is a new DM's first: a client holds
+// its own first message before it hears of the chat, and a reaction that lands before it does is
+// easily missed (#10670)
+test("a reaction to a new DM's first message reaches the other person, and so does taking it back", async ({
+    users,
+}) => {
+    const [a, b] = await Promise.all([users.signedIn("a"), users.signedIn("b")]);
+    const [idA, idB] = (await Promise.all([userIdOf(a), userIdOf(b)])) as [string, string];
     const text = unique("react to me");
     await openDirectChat(b, idA);
     await sendText(b, text);
