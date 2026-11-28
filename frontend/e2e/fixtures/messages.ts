@@ -67,8 +67,10 @@ export async function react(
     remove = false,
 ): Promise<void> {
     // desktop's reactions are in the menu; mobile's in a bar above it
+    // the app's emoji data comes from a CDN, whose emoji may or may not end in U+FE0F (1.9.0 dropped
+    // it from 👍), so `emoji` is given without it and matched either way
     const reaction = user.page.getByRole(user.tree === "desktop" ? "menuitemcheckbox" : "button", {
-        name: `${remove ? "Remove" : "React"} ${emoji}`,
+        name: new RegExp(`^${remove ? "Remove" : "React"} ${emoji}\uFE0F?$`, "u"),
     });
     await openMessageMenu(user, text, reaction);
     await reaction.click();
