@@ -1915,6 +1915,8 @@ export class OpenChatAgent extends EventTarget {
         let userCanisterLocalUserIndex: string;
         let currentDirectChats: DirectChatSummary[] = [];
         let directChatsAdded: DirectChatSummary[] = [];
+        // Only those an updates answer adds: the initial state's chats aren't new to this client
+        let directChatsNew: DirectChatSummary[] = [];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
         let directChatsRemoved: string[] = [];
         let directChats: DirectChatSummary[] = [];
@@ -2079,7 +2081,7 @@ export class OpenChatAgent extends EventTarget {
                     anyUpdates = true;
                     latestUserCanisterUpdates = userResponse.timestamp;
 
-                    directChatsAdded = userResponse.directChats.added;
+                    directChatsAdded = directChatsNew = userResponse.directChats.added;
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
                     directChatsRemoved.forEach((id) => {
@@ -2313,7 +2315,12 @@ export class OpenChatAgent extends EventTarget {
             premiumItems: premiumItems.value,
         };
 
-        const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
+        const updatedEvents = getUpdatedEvents(
+            directChatUpdates,
+            groupUpdates,
+            communityUpdates,
+            directChatsNew,
+        );
 
         const directChatsAddedUpdatedIds = new Set([
             ...directChatsAdded.map((c) => c.id.userId),

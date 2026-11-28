@@ -446,8 +446,24 @@ export function getUpdatedEvents(
     directChats: DirectChatSummaryUpdates[],
     groupChats: GroupCanisterGroupChatSummaryUpdates[],
     communities: CommunityCanisterCommunitySummaryUpdates[],
+    directChatsAdded: DirectChatSummary[] = [],
 ): ChatMap<UpdatedEvent[]> {
     const result = new ChatMap<UpdatedEvent[]>();
+
+    // The client can hold a new direct chat's events before an answer first reports the chat (its
+    // own first message, loaded once sent), and a change to them in the same window, such as a
+    // reaction, is folded into the chat's summary rather than listed. So every event of a chat
+    // first reported here counts as updated (#10670). It was created since the last answer, so it
+    // has few.
+    directChatsAdded.forEach((c) =>
+        result.set(
+            c.id,
+            Array.from({ length: c.latestEventIndex + 1 }, (_, eventIndex) => ({
+                eventIndex,
+                timestamp: c.lastUpdated,
+            })),
+        ),
+    );
 
     directChats
         .filter((c) => c.updatedEvents.length > 0)
@@ -469,10 +485,10 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
     return avatarId !== undefined
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
-        ? OPENCHAT_BOT_AVATAR_URL
-        : userId === OPENCHAT_VIDEO_CALL_USER_ID
-        ? OPENCHAT_VIDEO_CALL_AVATAR_URL
-        : buildIdenticonUrl(userId);
+          ? OPENCHAT_BOT_AVATAR_URL
+          : userId === OPENCHAT_VIDEO_CALL_USER_ID
+            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+            : buildIdenticonUrl(userId);
 }
 
 // An identicon is a pure function of the userId, but generating one means md5 +
