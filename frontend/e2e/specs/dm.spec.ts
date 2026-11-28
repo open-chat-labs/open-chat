@@ -1,10 +1,9 @@
 import { expectMessage, sendText } from "../fixtures/messages";
 import { openDirectChat } from "../fixtures/routes";
-import { freshUsername, signUp, test, userIdOf } from "../fixtures/users";
+import { test, userIdOf } from "../fixtures/users";
 
 test("a direct message reaches the person it was sent to", async ({ users }) => {
-    const [a, b] = await Promise.all([users.add("a"), users.add("b")]);
-    await Promise.all([signUp(a, freshUsername("e2edma")), signUp(b, freshUsername("e2edmb"))]);
+    const [a, b] = await Promise.all([users.signedIn("a"), users.signedIn("b")]);
     const [idA, idB] = await Promise.all([userIdOf(a), userIdOf(b)]);
 
     await openDirectChat(a, idB!);

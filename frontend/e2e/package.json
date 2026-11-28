@@ -5,6 +5,8 @@
     "description": "End-to-end tests of the new UI against a local replica (PRD #10550). See README.md.",
     "scripts": {
         "test": "playwright test",
+        "seed:base": "node replica/seed-base.mjs",
+        "seed": "node replica/seed.mjs",
         "report": "playwright show-report report"
     },
     "devDependencies": {

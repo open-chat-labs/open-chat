@@ -63,10 +63,12 @@ export function initEnv() {
     if (dfxNetwork) {
         const dfxJsonPath = path.join(__dirname, "../..", "dfx.json");
         const dfxJson = JSON.parse(fs.readFileSync(dfxJsonPath));
+        // OC_CANISTER_IDS_PATH: another replica's canisters, such as the e2e suite's (frontend/e2e)
         const canisterPath =
-            dfxJson["networks"][dfxNetwork]["type"] === "persistent"
+            process.env.OC_CANISTER_IDS_PATH ??
+            (dfxJson["networks"][dfxNetwork]["type"] === "persistent"
                 ? path.join(__dirname, "../..", "canister_ids.json")
-                : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
+                : path.join(__dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json"));
 
         if (fs.existsSync(canisterPath)) {
             const canisters = JSON.parse(fs.readFileSync(canisterPath));
