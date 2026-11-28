@@ -7,6 +7,9 @@ const MENU_ITEMS = {
     edit: { desktop: "Edit", mobile: "Edit" },
     delete: { desktop: "Delete", mobile: "Delete" },
     forward: { desktop: "Forward", mobile: "Forward" },
+    thread: { desktop: "Reply in thread", mobile: "Reply in thread" },
+    pin: { desktop: "Pin", mobile: "Pin" },
+    unpin: { desktop: "Unpin", mobile: "Unpin" },
 } satisfies Record<string, Record<Tree, string>>;
 
 export type MessageMenuItem = keyof typeof MENU_ITEMS;
