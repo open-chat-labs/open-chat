@@ -74,11 +74,11 @@ test("a reaction reaches the other person, and so does taking it back", async ({
     await openDirectChat(a, idB);
     await expectMessage(a, text);
 
-    await react(a, text, "👍️");
-    await expect(messageRow(b, text).getByRole("button", { name: /👍️/ })).toBeVisible();
+    await react(a, text, "👍");
+    await expect(messageRow(b, text).getByRole("button", { name: /👍/ })).toBeVisible();
 
-    await react(a, text, "👍️", true);
-    await expect(messageRow(b, text).getByRole("button", { name: /👍️/ })).toHaveCount(0);
+    await react(a, text, "👍", true);
+    await expect(messageRow(b, text).getByRole("button", { name: /👍/ })).toHaveCount(0);
 });
 
 test("markdown in a message reaches the other person formatted", async ({ pair }) => {
