@@ -6,7 +6,8 @@ const SEND = "a direct message reaches the person it was sent to";
 const EDIT = "an edited message reaches the other person, marked as edited";
 const DELETE = "a deleted message is gone for the other person";
 const REPLY = "a reply reaches the other person quoting the message it replies to";
-const REACT = "a reaction reaches the other person, and so does taking it back";
+const REACT =
+    "a reaction to a new DM's first message reaches the other person, and so does taking it back";
 const MARKDOWN = "markdown in a message reaches the other person formatted";
 const FORWARD = "a forwarded message reaches the chat it was forwarded to, marked as forwarded";
 const MENTION = "someone mentioned in a group sees the mention by their name";
